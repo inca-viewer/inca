@@ -8,9 +8,9 @@ No install needed or changes to computer settings<br>
 Just run inca.exe and the browser should open in your pictures folder<br>
 To 'uninstall', just close from taskbar tray and delete the inca folder<br><br>
 
-<p><img src="Screen 1.jpg" width="640"/></p><br>
+<p><img src="screens/Screen 1.jpg" width="640"/></p><br>
 
-<p><img src="Screen 2.jpg" width="640"/></p><br>
+<p><img src="screens/Screen 2.jpg" width="640"/></p><br>
 
 # Features:
 
@@ -77,7 +77,7 @@ in other app - close app
 Win + \
 - toggle browser / desktop - copy instead of move files
 
-<br><p><img src="swivel arm 3.jpg" width="200"/> <img src="swivel arm 2.jpg" width="200"/> <img src="swivel arm 1.jpg" width="200"/></p>
+<br><p><img src="screens/swivel arm 3.jpg" width="200"/> <img src="screens/swivel arm 2.jpg" width="200"/> <img src="screens/swivel arm 1.jpg" width="200"/></p>
 
 Supports rotated screen with onscreen keyboard tool<br>
 (long press on text for keyboard, wheel to close)<br><br>
