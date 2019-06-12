@@ -4,7 +4,7 @@
 An autohotkey script that creates web pages of your local media<br><br>
 Download latest build here<br>
 https://sourceforge.net/projects/inca-viewer/files/inca.zip/download <br><br>
-No install needed. Just run inca.exe and browser starts with pictures folder<br>
+No install needed. Just run inca.exe and browser starts in pictures folder<br>
 To 'uninstall', just close from taskbar tray and delete the inca folder<br><br>
 
 <p><img src="screens/Screen 1.jpg" width="640"/></p><br>
