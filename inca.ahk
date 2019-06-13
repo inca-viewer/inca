@@ -538,6 +538,7 @@
                 if !link_data
                     {
                     filter =
+                    selected =
                     search_term =
                     }
                 }
