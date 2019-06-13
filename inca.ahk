@@ -1034,10 +1034,11 @@
 
     EditFilename()
         {
+        sourcefile := StrReplace(selected, "`r`n")
+        selected =
         IfInString, media_path, \favorites\snips
             return
         edit = 1
-        sourcefile := StrReplace(selected, "`r`n")
         FileGetSize, size, %sourcefile%, K
         size := Round(size/1000,2)
         FileRead, duration, %inca%\cache\durations\%media_name%.txt
