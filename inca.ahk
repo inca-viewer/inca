@@ -364,10 +364,8 @@
       if (tab == 2 && WinActive("ahk_group Browsers") && xm > xb+10 && ym > yb+100 && xm < xb+wb-50 && ym < yb+hb-50)
           {
           inside_browser = 1
-          if !yb
-              WinMove, ahk_class MozillaWindowClass,, xb, -4, wb, hb + 4
-          else if (xb + wb < A_ScreenWidth + 12 && xb + wb > A_ScreenWidth - 8)
-              WinMove, ahk_class MozillaWindowClass,, xb, yb, A_ScreenWidth - xb + 12, hb
+          if (!yb && xb + wb < A_ScreenWidth + 12 && xb + wb > A_ScreenWidth - 8)
+              WinMove, ahk_class MozillaWindowClass,, xb, -4, A_ScreenWidth - xb + 12, hb + 4
           }
       else inside_browser =
       if (inside_browser || (video_player && !edit))					; allow gestures over tab or player
