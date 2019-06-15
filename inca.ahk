@@ -134,11 +134,8 @@
               NextMedia()
           else ThumbSheet()
           }
-      else if (tab == 2 && xm < xb + wb && xm > xb + 10 && ym > yb + 150) 
-          {
-          if !ClickWebPage()
-              PlayMedia()						; return to last_media
-          }
+      else if (tab == 2 && xm < xb + wb && xm > xb + 10 && ym > yb + 150 && !ClickWebPage()) 
+          PlayMedia()							; return to last_media
       else send, {MButton}
       return
 
