@@ -148,7 +148,7 @@
 
 
     Xbutton1::								; mouse "back" button
-      if edit 
+      if edit
           {								; context menu
           WinClose, ahk_class #32770
           edit =
@@ -174,9 +174,10 @@
 
     Xbutton1 up::
       Critical
-      if timer
+      IfWinExist, ahk_class OSKMainClass				; onscreen keyboard
+          send, !0
+      else if timer
           {
-          timer =
           WinGet, state, MinMax, ahk_group Browsers
           if (video_player || thumb_sheet)
               TaskSwitcher()
@@ -194,6 +195,7 @@
               }
           else send, {Xbutton1}
           }
+      timer =
       return
 
 
@@ -229,6 +231,7 @@
     ~Enter::								; file search - from tab input box
       if (WinActive("ahk_group Browsers") && tab == 2)
         {
+        send, !0
         Clipboard =
         send, {end}+{Home}^c
         ClipWait, 0
@@ -361,7 +364,7 @@
       if (tab == 2 && WinActive("ahk_group Browsers") && xm > xb+10 && ym > yb+100 && xm < xb+wb-50 && ym < yb+hb-50)
           {
           inside_browser = 1
-          if (!yb && xb + wb < A_ScreenWidth + 12 && xb + wb > A_ScreenWidth - 8)
+          if (!yb && xb + wb < A_ScreenWidth + 16 && xb + wb > A_ScreenWidth - 8)
               WinMove, ahk_class MozillaWindowClass,, xb, -4, A_ScreenWidth - xb + 12, hb + 4
           }
       else inside_browser =
@@ -870,7 +873,7 @@
             {
             Clipboard =
             send, {RButton}
-            sleep 200
+            sleep 100
             send, c
             ClipWait, 0
             send, {Lbutton up}
@@ -880,8 +883,11 @@
                 spool_path =
                 search_box := ClipBoard
                 ClickWebPage()
+                return
                 }
             }
+        send, !+0
+        sleep 500
         }
 
 
@@ -1039,6 +1045,7 @@
         size := Round(size/1000,2)
         FileRead, duration, %inca%\cache\durations\%media_name%.txt
         InputBox, newname,%media_path%  %ext%  size %size%  dur %duration%,,,,94,,,,, %media_name%	; box height = 90px
+        send, !0
         if !ErrorLevel
             {
             if (ext != "lnk")
