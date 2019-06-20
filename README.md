@@ -79,5 +79,5 @@ Win + \
 <br><p><img src="screens/swivel arm 3.jpg" width="200"/> <img src="screens/swivel arm 2.jpg" width="200"/> <img src="screens/swivel arm 1.jpg" width="200"/></p>
 
 Supports rotated screen with onscreen keyboard tool<br>
-(long press on text for keyboard, wheel to close)<br><br>
+(long press on text for keyboard, back to close)<br><br>
 
