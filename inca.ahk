@@ -368,10 +368,10 @@
               WinMove, ahk_class MozillaWindowClass,, xb, -4, A_ScreenWidth - xb + 12, hb + 4
           }
       else inside_browser =
-      if (inside_browser || (video_player && !edit))					; allow gestures over tab or player
+      if (inside_browser || (video_player && !edit))			; allow gestures over tab or player
           send, {Click up}
       start := A_TickCount
-      loop										; gesture detection
+      loop								; gesture detection
         {
         MouseGetPos, x, y
         x -= xm
@@ -386,7 +386,7 @@
             MouseGetPos, xm, ym
             if (video_player || click == "RButton")
                 {
-                if (xm < 10)								; edge of screen
+                if (xm < 10)						; edge of screen
                     xm := 10
                 if (ym < 10)
                     ym := 10
@@ -524,7 +524,7 @@
             if (StrLen(search_term) > 2 && link_data == "+")		; add latest search to search list
                 {
                 search_list = %search_list%|%search_term%
-                IniWrite,%search_list%,%inca%\apps\settings.ini,Settings,search_list
+                IniWrite,%search_list%,%inca%\settings.ini,Settings,search_list
                 LoadSettings()
                 RenderPage()
                 return 1
@@ -1467,7 +1467,7 @@
             xt = %inca%\cache\thumbs\%xt%.mp4
             Run %inca%\apps\ffmpeg.exe -skip_frame nokey -i "%xt%" -vsync 0 -qscale:v 1 "%inca%\cache\`%d.jpg",, Hide
             }
-        Run %inca%\apps\mpv\mpv %properties% --idle --input-ipc-server=\\.\pipe\mpv%list_id% "%inputfile%"
+        Run %inca%\apps\mpv %properties% --idle --input-ipc-server=\\.\pipe\mpv%list_id% "%inputfile%"
         WinGet, running, List, ahk_class mpv
         loop 100
             {
@@ -1531,7 +1531,7 @@
             music_speed := 0
             video_sound := 0
             WinClose, ahk_ID %music_player%
-            Run %inca%\apps\mpv\mpv --fullscreen=no --cursor-autohide=no --osc=yes --playlist-pos=%pos% --keep-open=always --input-ipc-server=\\.\pipe\mpv_music "%inca%\cache\lists\songlist.m3u"
+            Run %inca%\apps\mpv --fullscreen=no --cursor-autohide=no --osc=yes --playlist-pos=%pos% --keep-open=always --input-ipc-server=\\.\pipe\mpv_music "%inca%\cache\lists\songlist.m3u"
             loop 20
                 {
                 sleep 100
@@ -1550,7 +1550,7 @@
 
     NewPlaylist()
         {
-        IniWrite,%playlist%,%inca%\apps\settings.ini,Settings,playlist
+        IniWrite,%playlist%,%inca%\settings.ini,Settings,playlist
         FileDelete, %inca%\playlist\*.lnk
         FileRead, str, %playlist%
         songlist =
@@ -1868,17 +1868,17 @@
 
         settingsButtonCompile:
         WinClose
-        run %inca%\apps\ahk\Compile.exe
+        run %inca%\apps\Compile.exe
         return
 
         settingsButtonSource:
         WinClose
-        run, notepad %inca%\apps\ahk\inca.ahk
+        run, notepad %inca%\inca.ahk
         return
 
         settingsButtonHelp:
         WinClose
-        run, %inca%\apps\Help.txt
+        run, %inca%\help.txt
         return
 
         settingsButtonPurgeCache:
@@ -1898,12 +1898,12 @@
             new = %new%%key%/%value%|         
             }
         StringTrimRight,new,new,1
-        IniWrite,%new%,%inca%\apps\settings.ini,Settings,features
-        IniWrite,%indexed_folders%,%inca%\apps\settings.ini,Settings,indexed_folders
-        IniWrite,%context_menu%,%inca%\apps\settings.ini,Settings,context_menu
-        IniWrite,%search_folders%,%inca%\apps\settings.ini,Settings,search_folders
-        IniWrite,%search_list%,%inca%\apps\settings.ini,Settings,search_list
-        IniWrite,%folder_list%,%inca%\apps\settings.ini,Settings,folder_list
+        IniWrite,%new%,%inca%\settings.ini,Settings,features
+        IniWrite,%indexed_folders%,%inca%\settings.ini,Settings,indexed_folders
+        IniWrite,%context_menu%,%inca%\settings.ini,Settings,context_menu
+        IniWrite,%search_folders%,%inca%\settings.ini,Settings,search_folders
+        IniWrite,%search_list%,%inca%\settings.ini,Settings,search_list
+        IniWrite,%folder_list%,%inca%\settings.ini,Settings,folder_list
         Menu, ContextMenu, DeleteAll
         settingsFinished:
         WinClose
@@ -2218,17 +2218,17 @@
         inca := A_ScriptDir
         EnvGet, profile, UserProfile
         FileRead, songlist, %inca%\cache\lists\songlist.m3u
-        IniRead,playlist,%inca%\apps\settings.ini,Settings,playlist
-        IniRead,features,%inca%\apps\settings.ini,Settings,features
-        IniRead,indexed_folders,%inca%\apps\settings.ini,Settings,indexed_folders
-        IniRead,search_folders,%inca%\apps\settings.ini,Settings,search_folders
-        IniRead,folder_list,%inca%\apps\settings.ini,Settings,folder_list
+        IniRead,playlist,%inca%\settings.ini,Settings,playlist
+        IniRead,features,%inca%\settings.ini,Settings,features
+        IniRead,indexed_folders,%inca%\settings.ini,Settings,indexed_folders
+        IniRead,search_folders,%inca%\settings.ini,Settings,search_folders
+        IniRead,folder_list,%inca%\settings.ini,Settings,folder_list
         if (folder_list == "ERROR")
             folder_list = No Folder List
-        IniRead,search_list,%inca%\apps\settings.ini,Settings,search_list
+        IniRead,search_list,%inca%\settings.ini,Settings,search_list
         if (search_list == "ERROR")
             search_list = No Search List
-        IniRead,context_menu,%inca%\apps\settings.ini,Settings,context_menu
+        IniRead,context_menu,%inca%\settings.ini,Settings,context_menu
         Loop, Parse, context_menu, `|
             {
             StringGetPos, pos, A_LoopField, \, R2
