@@ -1131,7 +1131,7 @@
         FileAppend, %html_header%%menu_html%%sort_html%%media_html%, %inca%\cache\html\%tab_name%.htm        
         LoadHtml()
         if video_player
-            WinActivate, ahk_class mpv
+            WinActivate, ahk_ID %video_player%
         else WinActivate, ahk_group Browsers
         sleep 300							; in case long list view
         PopUp("",0,0)
@@ -1459,6 +1459,8 @@
             return
         history_timer := 1
         last_media := sourcefile 
+        WinGet, running, List, ahk_class mpv
+        WinSet, Transparent, 0, ahk_class Shell_TrayWnd
         if (media == "video")							; create seekbar thumbnails
             {
             xt := media_name
@@ -1468,7 +1470,6 @@
             Run %inca%\apps\ffmpeg.exe -skip_frame nokey -i "%xt%" -vsync 0 -qscale:v 1 "%inca%\cache\`%d.jpg",, Hide
             }
         Run %inca%\apps\mpv %properties% --idle --input-ipc-server=\\.\pipe\mpv%list_id% "%inputfile%"
-        WinGet, running, List, ahk_class mpv
         loop 100
             {
             sleep 25
@@ -1479,8 +1480,8 @@
                     player := array%A_Index%
                     break 2
                     }
-            }  
-        WinSet, Transparent, 0 , ahk_ID %player%
+            }
+        WinSet, Transparent, 0, ahk_ID %player%
         if (aspect := Round(skinny / 100,2))
             {
             sleep 100
@@ -1502,8 +1503,9 @@
             mask := A_Index * 6 
             WinSet, TransColor, 0 %mask%
             }
-        WinSet, Transparent, 0 , ahk_group Browsers
+        WinSet, Transparent, 0, ahk_group Browsers
         WinClose, ahk_ID %video_player%
+        WinSet, Transparent, 255, ahk_class Shell_TrayWnd
         video_player := player
         if (media == "audio")							; playing audio in video player
             FlipSound(999)
@@ -1856,8 +1858,8 @@
         gui, settings:add, edit, x180 yp+13 h32 w500 vindexed_folders, %indexed_folders%
         gui, settings:add, text, x180 yp+39, context menu
         gui, settings:add, edit, x180 yp+13 h32 w500 vcontext_menu, %context_menu%
-        gui, settings:add, button, x20 y425 w60, Compile
-        gui, settings:add, button, x90 y425 w60, Source
+        gui, settings:add, button, x20 y425 w60, Source
+        gui, settings:add, button, x90 y425 w60, Compile
         gui, settings:add, button, x270 y425 w80, Purge Cache
         gui, settings:add, button, x360 y425 w70, Help
         gui, settings:add, button, x440 y425 w70, Cancel
