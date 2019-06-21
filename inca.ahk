@@ -283,7 +283,7 @@
                     }
                 xm := xpos
                 ym := ypos
-                pan := 4
+                pan := A_ScreenWidth * 0.01
                 }
             }
         if (video_player && media != "image" && ! thumb_sheet)		; show seek bar
@@ -1392,7 +1392,7 @@
 
     NextMedia()
         {
-        pan := 100
+        pan := A_ScreenWidth * 0.06
         caption =
         last_id =
         end_time =
