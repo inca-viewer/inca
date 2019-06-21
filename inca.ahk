@@ -151,6 +151,7 @@
       if edit
           {								; context menu
           WinClose, ahk_class #32770
+          selected =
           edit =
           return
           }
@@ -1850,7 +1851,7 @@
             }
         gui, settings:add, text, x180 y10, main Folders
         gui, settings:add, edit, x180 yp+13 h70 w500 vfolder_list, %folder_list%
-        gui, settings:add, text, x180 yp+76, more folders and search terms
+        gui, settings:add, text, x180 yp+76, folders and search terms
         gui, settings:add, edit, x180 yp+13 h146 w500 vsearch_list, %search_list%
         gui, settings:add, text, x180 yp+154, folders to search
         gui, settings:add, edit, x180 yp+13 h18 w500 vsearch_folders, %search_folders%
