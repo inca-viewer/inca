@@ -1460,7 +1460,7 @@
         history_timer := 1
         last_media := sourcefile 
         WinGet, running, List, ahk_class mpv
-        WinSet, Transparent, 0, ahk_class Shell_TrayWnd
+        WinSet, Transparent, 40, ahk_class Shell_TrayWnd
         if (media == "video")							; create seekbar thumbnails
             {
             xt := media_name
