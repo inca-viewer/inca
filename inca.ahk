@@ -1392,7 +1392,7 @@
 
     NextMedia()
         {
-        pan := A_ScreenWidth * 0.06
+        pan := A_ScreenWidth * 0.1
         caption =
         last_id =
         end_time =
