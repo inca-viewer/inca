@@ -1505,7 +1505,7 @@
             }
         WinSet, Transparent, 0, ahk_group Browsers
         WinClose, ahk_ID %video_player%
-        WinSet, Transparent, 255, ahk_class Shell_TrayWnd
+        WinSet, Transparent, % Setting("Taskbar Weight"), ahk_class Shell_TrayWnd
         video_player := player
         if (media == "audio")							; playing audio in video player
             FlipSound(999)
@@ -1857,13 +1857,13 @@
         gui, settings:add, text, x180 yp+26, folders to index
         gui, settings:add, edit, x180 yp+13 h32 w500 vindexed_folders, %indexed_folders%
         gui, settings:add, text, x180 yp+39, context menu
-        gui, settings:add, edit, x180 yp+13 h32 w500 vcontext_menu, %context_menu%
-        gui, settings:add, button, x20 y425 w60, Source
-        gui, settings:add, button, x90 y425 w60, Compile
-        gui, settings:add, button, x270 y425 w80, Purge Cache
-        gui, settings:add, button, x360 y425 w70, Help
-        gui, settings:add, button, x440 y425 w70, Cancel
-        gui, settings:add, button, x520 y425 w70 default, Save
+        gui, settings:add, edit, x180 yp+13 h44 w500 vcontext_menu, %context_menu%
+        gui, settings:add, button, x20 y450 w60, Source
+        gui, settings:add, button, x90 y450 w60, Compile
+        gui, settings:add, button, x270 y450 w80, Purge Cache
+        gui, settings:add, button, x360 y450 w70, Help
+        gui, settings:add, button, x440 y450 w70, Cancel
+        gui, settings:add, button, x520 y450 w70 default, Save
         gui, settings:show
         send, +{Tab}
         }
