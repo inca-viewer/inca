@@ -93,7 +93,7 @@
 	Global caption_id		; slide number
 	Global thumb_sheet
 	Global block_wheel
-	Global xm
+	Global xm			; mouse position
 	Global ym
 	Global pan
 
@@ -250,7 +250,7 @@
         Critical
         MouseGetPos, xpos, ypos
         dim := Setting("Dim Taskbar") * 2.55
-        WinSet, Transparent, % dim , ahk_class Shell_TrayWnd
+        WinSet, Transparent, %dim%, ahk_class Shell_TrayWnd
         IfWinNotExist, ahk_ID %music_player%
             music_player =
         if history_timer
@@ -520,7 +520,10 @@
         else if DetectMedia()
             PlayMedia()
         else if (link_data == "Page" || link_data == "View")
-            RenderPage()
+                {
+                RenderPage()
+                send {Home}{Space}
+                }
         else								; link_data is sort, folder or search_term
             {
             if (StrLen(search_term) > 2 && link_data == "+")		; add latest search to search list
@@ -1388,7 +1391,7 @@
 
     NextMedia()
         {
-        pan := A_ScreenWidth * 0.1
+        pan := A_ScreenWidth * 0.15
         caption =
         last_id =
         end_time =
@@ -1490,8 +1493,9 @@
             }
         WinSet, TransColor, 0 0
         GuiControl, Caption:, GuiCap, % caption
+        x := A_ScreenWidth * 0.3
         y := A_ScreenHeight * 0.82
-        Gui, Caption:Show, y%y%, NA
+        Gui, Caption:Show, x%x%  y%y%, NA
         if caption
           loop 20
             {
