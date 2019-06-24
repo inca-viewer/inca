@@ -249,6 +249,8 @@
     TimedEvents:							; every 100mS
         Critical
         MouseGetPos, xpos, ypos
+        dim := Setting("Dim Taskbar") * 2.55
+        WinSet, Transparent, % dim , ahk_class Shell_TrayWnd
         IfWinNotExist, ahk_ID %music_player%
             music_player =
         if history_timer
@@ -441,7 +443,7 @@
                 else StringReplace, selected, selected, %sourcefile%`r`n
                 send, {RButton}{Esc}
                 }
-            else if (!edit && inside_browser)
+            else if (!edit && inside_browser && selected)
                 {
                 edit = media
                 Menu, ContextMenu, Show
@@ -451,7 +453,7 @@
             }
         if edit
             return
-        if (video_player && media != "image" && menu_item != "Cap")
+        if (video_player && media != "image" && menu_item != "Caption")
             {
             if thumb_sheet
                 ThumbSeekTime()
@@ -579,12 +581,6 @@
                 spool_name := link_data
                 if !folder_payload
                     GetPageSettings()
-                if search_box
-                    {
-                    view := 5
-                    sort = Duration
-                    toggles =
-                    }
                 spool_path := x
                 if (!folder_payload || search_box)
                     this_search := search_folders
@@ -944,7 +940,7 @@
            context_menu = %context_menu%|%menu_item%
        else menu_item =
        }
-    if (menu_item == "Cap")
+    if (menu_item == "Caption")
         {
         if slide
             SplitPath, playlist,,,,media_name
@@ -1505,7 +1501,6 @@
             }
         WinSet, Transparent, 0, ahk_group Browsers
         WinClose, ahk_ID %video_player%
-        WinSet, Transparent, % Setting("Taskbar Weight"), ahk_class Shell_TrayWnd
         video_player := player
         if (media == "audio")							; playing audio in video player
             FlipSound(999)
@@ -1622,11 +1617,11 @@
             Gui, thumbsheet: +lastfound -Caption +ToolWindow +AlwaysOnTop
             Gui, thumbsheet: Margin, 0, 0
             Gui, thumbsheet: Color,black
-            zoom := 0.5
+            zoom := 0.6
             if (magnify < 1)
                 zoom := magnify * 0.5
-            W := Floor((1 - zoom) * A_ScreenWidth / 7.5)
-            H := Floor((1 - zoom) * A_ScreenHeight / 7.5) 
+            W := Floor((1 - zoom) * A_ScreenWidth / 8)
+            H := Floor((1 - zoom) * A_ScreenHeight / 8) 
             IfNotExist, %inca%\cache\180.jpg
                 sleep 200
             Loop 36
@@ -2249,10 +2244,10 @@
         Menu, playlist, Add, - playlist %last_pl%, ContextMenu
         Menu, ContextMenu, Add, Folders, :Folders
         Menu, ContextMenu, Add, playlist, :playlist
+        Menu, ContextMenu, Add, Caption, ContextMenu
         Menu, ContextMenu, Add, Delete, ContextMenu
         Menu, ContextMenu, Add, Rename, ContextMenu
         Menu, ContextMenu, Add, Edit, ContextMenu
-        Menu, ContextMenu, Add, Cap, ContextMenu
         Menu, ContextMenu, Add, All, ContextMenu
         }
 
