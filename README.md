@@ -1,7 +1,7 @@
 
 # File explorer & media viewer in browser
 
-Autohotkey script that creates web pages of your local media<br><br>
+Autohotkey script that creates web pages of your local media<br>
 
 Download latest build...<br>
 https://sourceforge.net/projects/inca-viewer/files/inca.zip/download <br><br>
