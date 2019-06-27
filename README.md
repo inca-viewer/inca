@@ -74,12 +74,13 @@ Middle click
 - on screen far left - next song in playlist
 
 Back click
-- in media - previous media
+- in media - exit
 - on background - top of page then previous page
 
 Long back click
-in browser - close current tab
-in other app - close app
+- on image - previous image
+- in browser - close current tab
+- in other app - close app
 
 Win + \
 - toggle browser / desktop - copy instead of move files
