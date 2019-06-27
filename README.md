@@ -3,7 +3,7 @@
 
 Autohotkey script that creates web pages of your local media<br>
 
-https://youtu.be/CkTz_wJDF3M
+<iframe width="560" height="315" src="https://www.youtube.com/embed/CkTz_wJDF3M" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 
 Download latest build here<br>
 https://sourceforge.net/projects/inca-viewer/files/inca.zip/download <br><br>
