@@ -3,7 +3,7 @@
 
 Autohotkey script that creates web pages of your local media<br><br>
 
-[![inca](http://img.youtube.com/vi/CkTz_wJDF3M/0.jpg)](https://www.youtube.com/watch?v=CkTz_wJDF3M "inca")
+[![inca](http://img.youtube.com/vi/CkTz_wJDF3M/33.jpg)](https://www.youtube.com/watch?v=CkTz_wJDF3M "inca")
 
 
 Download latest build here<br>
