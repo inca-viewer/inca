@@ -5,6 +5,10 @@ Autohotkey script that creates web pages of your local media<br>
 
 Download latest build...<br>
 https://sourceforge.net/projects/inca-viewer/files/inca.zip/download <br><br>
+
+Install guide...
+https://youtu.be/1gZEiIA2G70
+
 No install needed. Just run inca.exe and browser starts in pictures folder<br>
 To 'uninstall', just close from taskbar tray and delete the inca folder<br><br>
 
