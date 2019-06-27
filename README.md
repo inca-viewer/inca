@@ -1,7 +1,7 @@
 
 # File explorer & media viewer in browser
 
-Autohotkey script that creates web pages of your local media<br><br>
+Autohotkey script that creates web pages of your local media<br>
 
 https://youtu.be/CkTz_wJDF3M
 
