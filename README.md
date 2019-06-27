@@ -4,7 +4,7 @@
 Autohotkey script that creates web pages of your local media<br>
 
 Download latest build...<br>
-https://sourceforge.net/projects/inca-viewer/files/inca.zip/download <br><br>
+https://sourceforge.net/projects/inca-viewer/files/inca.zip/download <br>
 
 Install guide...
 https://youtu.be/1gZEiIA2G70
