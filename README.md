@@ -3,8 +3,6 @@
 
 Autohotkey script that creates web pages of your local media<br>
 
-[![inca viewer](img src="screens/Screen 1.jpg" width="640"/)](https://youtu.be/CkTz_wJDF3M "inca viewer")
-
 https://youtu.be/CkTz_wJDF3M
 
 Download latest build here<br>
