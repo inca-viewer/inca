@@ -251,6 +251,9 @@
         MouseGetPos, xpos, ypos
         dim := Setting("Dim Taskbar") * 2.55
         WinSet, Transparent, %dim%, ahk_class Shell_TrayWnd
+        WinGetPos, xb, yb, wb, hb, ahk_group Browsers
+        if (!yb && xb + wb < A_ScreenWidth + 16 && xb + wb > A_ScreenWidth - 8)
+            WinMove, ahk_class MozillaWindowClass,, xb, -4, A_ScreenWidth - xb + 12, hb + 4
         IfWinNotExist, ahk_ID %music_player%
             music_player =
         if history_timer
@@ -364,11 +367,7 @@
       MouseGetPos, xm, ym
       WinGetPos, xb, yb, wb, hb, ahk_group Browsers
       if (tab == 2 && WinActive("ahk_group Browsers") && xm > xb+10 && ym > yb+100 && xm < xb+wb-50 && ym < yb+hb-50)
-          {
           inside_browser = 1
-          if (!yb && xb + wb < A_ScreenWidth + 16 && xb + wb > A_ScreenWidth - 8)
-              WinMove, ahk_class MozillaWindowClass,, xb, -4, A_ScreenWidth - xb + 12, hb + 4
-          }
       else inside_browser =
       if (inside_browser || (video_player && !edit))			; allow gestures over tab or player
           send, {Click up}
@@ -1937,7 +1936,7 @@
             random, r, 97, 122
             name .= Chr(r)
             }
-        loop 10
+        loop 20
             {
             send v
             sleep 50
