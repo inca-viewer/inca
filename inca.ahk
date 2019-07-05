@@ -340,7 +340,7 @@
                 if (mask2 := Setting("Dim Desktop"))
                   loop 20
                     {
-                    sleep 8
+                    sleep 5
                     mask1 += (Setting("Dim Desktop") * 2.55) / 20
                     mask2 -= 10
                     Gui, background:+LastFound
@@ -590,6 +590,12 @@
                     this_search = %spool_path%|%this_search%		; search this folder only
                 if (search_term != link_data)				; last search != new search
                     filter =
+                if search_box
+                    {
+                    view := 5
+                    sort = Duration
+                    toggles =
+                    }
                 search_term := link_data
                 page := 1
                 }
@@ -1856,8 +1862,8 @@
         gui, settings:add, edit, x180 yp+13 h32 w500 vindexed_folders, %indexed_folders%
         gui, settings:add, text, x180 yp+39, context menu
         gui, settings:add, edit, x180 yp+13 h44 w500 vcontext_menu, %context_menu%
-        gui, settings:add, button, x20 y450 w60, Source
-        gui, settings:add, button, x90 y450 w60, Compile
+        gui, settings:add, button, x20 y450 w60, Compile
+        gui, settings:add, button, x90 y450 w60, Source
         gui, settings:add, button, x270 y450 w80, Purge Cache
         gui, settings:add, button, x360 y450 w70, Help
         gui, settings:add, button, x440 y450 w70, Cancel
