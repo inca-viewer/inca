@@ -442,7 +442,7 @@
                 else StringReplace, selected, selected, %sourcefile%`r`n
                 send, {RButton}{Esc}
                 }
-            else if (!edit && inside_browser && selected)
+            else if (!edit && inside_browser)
                 {
                 edit = media
                 Menu, ContextMenu, Show
