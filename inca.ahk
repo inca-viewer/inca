@@ -252,7 +252,7 @@
         dim := Setting("Dim Taskbar") * 2.55
         WinSet, Transparent, %dim%, ahk_class Shell_TrayWnd
         WinGetPos, xb, yb, wb, hb, ahk_group Browsers
-        if (yb < 3 && yb > -4 && xb + wb < A_ScreenWidth + 16 && xb + wb > A_ScreenWidth - 8)
+        if (!yb && xb + wb < A_ScreenWidth + 16 && xb + wb > A_ScreenWidth - 8)
             WinMove, ahk_class MozillaWindowClass,, xb, -4, A_ScreenWidth - xb + 12, hb + 4
         IfWinNotExist, ahk_ID %music_player%
             music_player =
