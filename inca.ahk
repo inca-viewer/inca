@@ -1315,7 +1315,7 @@
     DecodeExt(ex)
         {
         StringLower ex, ex
-        if (ex == "jpg" || ex == "png" || ex == "jpeg")
+        if (ex == "jpg" || ex == "png" || ex == "jpeg" || ex == "webp")
             return "image"
         if (ex == "mp4" || ex == "wmv" || ex == "avi" || ex == "mov" || ex == "webm" || ex == "mpg" || ex == "mpeg" ||ex == "flv" || ex == "divx" || ex == "mkv" || ex == "asf" || ex == "m4v" || ex == "mvb" || ex == "rmvb" || ex == "vob" || ex == "rm" || ex == "gif")
             return "video"
@@ -1396,7 +1396,7 @@
 
     NextMedia()
         {
-        pan := A_ScreenWidth * 0.15
+        pan := A_ScreenWidth * 0.12
         caption =
         last_id =
         end_time =
@@ -1676,7 +1676,7 @@
             ControlSend,, 1, ahk_ID %music_player%		; un pause music
             ControlSend,, 3, ahk_ID %music_player%		; un mute music
             ControlSend,, 4, ahk_ID %video_player%		; mute video
-        GetSeekTime(music_player)
+            GetSeekTime(music_player)
             }
         else
             {
@@ -1889,8 +1889,7 @@
 
         settingsButtonPurgeCache:
         WinClose
-        CheckLinks()
-        RemoveOrphans()
+        PurgeCache()
         return
 
         settingsButtonSave:
@@ -1990,67 +1989,54 @@
         }
 
 
-    RemoveOrphans()
+    PurgeCache()
         {
-        folders := indexed_folders
-        Loop, Parse, folder_list, `|
-            IfNotInString, folders, %A_LoopField%				; combine lists
-               folders = %folders%|%A_LoopField%
-        Loop, Parse, folders, `|						; remove self folder if exist
-            IfInString, A_LoopField, thumbs
-                StringReplace, folders, folders, |%A_LoopField%
-        Loop, Files, %inca%\cache\thumbs\*.mp4, F				; remove orphan thumbnails
-            if !Found(folders)
+        Loop, Files, %inca%\favorites\*.lnk, FR
+            if !CheckLink(A_LoopFileFullPath)
+                FileRecycle, %A_LoopFileFullPath%
+        Loop, Files, %inca%\history\*.lnk, FR
+            if !CheckLink(A_LoopFileFullPath)
+                FileRecycle, %A_LoopFileFullPath%
+        Loop, Files, %inca%\cache\thumbs\*.mp4, F			; remove orphan thumbnails
+            if !CheckFile(A_LoopFileFullPath)
                 FileRecycle, %inca%\cache\thumbs\%A_LoopFileName%
-        Loop, Files, %inca%\cache\durations\*.txt, F				; remove orphan durations
-            if !Found(folders)
+        Loop, Files, %inca%\cache\durations\*.txt, F			; remove orphan durations
+            if !CheckFile(A_LoopFileFullPath)
                 FileRecycle, %inca%\cache\durations\%A_LoopFileName%
         GuiControl, Indexer:, GuiInd 
         }
 
 
-    Found(folders)
-        {
-        GuiControl, Indexer:, GuiInd, %A_LoopFileFullPath% 			; show file on screen 
-        SplitPath, A_LoopFileFullPath,,,,filen
-        Loop, Parse, folders, `|
-            {
-            IfExist, %A_LoopField%%filen%.*
-                return 1
-            Loop, %A_LoopField%*.*, 2, 1					; recurse search into subfolders
-                IfExist, %A_LoopFileFullPath%\%filen%.*
-                    return 1
-            }
-        }
-
-
-    CheckLinks()
-       {
-       Loop, Files, %inca%\history\*.lnk, FR
-           if !Check()
-               FileRecycle, %A_LoopFileFullPath%
-       Loop, Files, %inca%\favorites\*.lnk, FR
-           if !Check()
-               FileRecycle, %A_LoopFileFullPath%
-       GuiControl, Indexer:, GuiInd 
-       }
-
-
-    Check()
+    CheckLink(input)
         {
         GuiControl, Indexer:, GuiInd, %A_LoopFileDir%
-        FileGetShortcut, %A_LoopFileFullPath%, link_file
+        FileGetShortcut, %input%, link_file
         IfExist, %link_file%
             return 1
         SplitPath, link_file,,,ex,filen
-        Loop, Parse, indexed_folders, `|
-            IfExist, %A_LoopField%\%filen%.*
+        Loop, Parse, indexed_folders, `|				; search for file
+            IfExist, %A_LoopField%\%filen%.*				; and make sure link date matches file date
                 {
-                FileCreateShortcut, %A_LoopField%\%filen%.%ex%, %inca%\cache\temp.lnk
-                runwait, %COMSPEC% /c %inca%\apps\touch.exe -r "%A_LoopFileFullPath%" "%inca%\cache\temp.lnk",,hide
-                FileMove, %inca%\cache\temp.lnk, %A_LoopFileFullPath%, 1
+                FileCreateShortcut, %A_LoopField%\%filen%.%ex%, %inca%\cache\%filen%.lnk
+                runwait, %COMSPEC% /c %inca%\apps\touch.exe -r "%input%" "%inca%\cache\%filen%.lnk",,hide
+                FileMove, %inca%\cache\%filen%.lnk, %input%, 1
                 return 1
                 }
+        }
+
+
+    CheckFile(input)
+        {
+        GuiControl, Indexer:, GuiInd, %input% 				; show file on screen 
+        SplitPath, input,,,,filen
+        Loop, Parse, indexed_folders, `|
+            {
+            IfExist, %A_LoopField%%filen%.*
+                return 1
+            Loop, %A_LoopField%*.*, 2, 1				; recurse search into subfolders
+                IfExist, %input%\%filen%.*
+                    return 1
+            }
         }
 
 
