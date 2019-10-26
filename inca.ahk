@@ -2347,6 +2347,13 @@
         if (state > -1)
             WinMinimize, ahk_group Browsers
         else WinRestore, ahk_group Browsers
+        IfWinNotExist, ahk_group Browsers
+            {
+            run, %inca%\cache\html\downloads.htm
+            sleep 1000
+            WinActivate, ahk_group Browsers
+            send, ^w							; close tab
+            }
         WinSet, Transparent, off, ahk_group Browsers
         last_status =
         }
