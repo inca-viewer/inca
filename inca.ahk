@@ -136,7 +136,7 @@
           }
       else if (tab == 2 && xm < xb + wb && xm > xb + 10 && ym > yb + 150 && !ClickWebPage()) 
           PlayMedia()							; return to last_media
-      else if (tab != 2) 
+      else if (tab != 2 || ym < yb + 150) 
           send, {MButton}
       return
 
