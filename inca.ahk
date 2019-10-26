@@ -136,7 +136,8 @@
           }
       else if (tab == 2 && xm < xb + wb && xm > xb + 10 && ym > yb + 150 && !ClickWebPage()) 
           PlayMedia()							; return to last_media
-      else send, {MButton}
+      else if (tab != 2) 
+          send, {MButton}
       return
 
 
@@ -1133,6 +1134,7 @@
         media_html = <div class="container" oncontextmenu="return(false);">`r`n`r`n<ul class="list">`r`n`r`n%media_html%</ul>`r`n</div>`r`n`r`n<div class="container"><div align="center" style="margin-right:12`%;"><a href="#Page#%previous%" class='footer' style="width:16`%;">Previous</a><a href="%html_spool_name%.htm#Page" id='slider3' class='footer' style="height:2em; font-size:1.1em;" onmousemove='getCoords(event, id, "%Pages%", "%html_spool_name%", "")' onmouseleave='getCoords(event, id, "%Pages%", "%html_spool_name%", "%page%")'>Page %page% of %pages%</a><a href="#Page#%next%" class='footer' style="width:16`%;">Next</a></div>`r`n<a href=""><p style="height:250px; clear:left;"></p></a>`r`n</div>`r`n</body>`r`n</html>`r`n`r`n
         FileDelete, %inca%\cache\html\%tab_name%.htm
         FileAppend, %html_header%%menu_html%%sort_html%%media_html%, %inca%\cache\html\%tab_name%.htm        
+        sleep 44
         LoadHtml()
         if video_player
             WinActivate, ahk_ID %video_player%
