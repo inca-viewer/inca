@@ -1134,7 +1134,7 @@
         media_html = <div class="container" oncontextmenu="return(false);">`r`n`r`n<ul class="list">`r`n`r`n%media_html%</ul>`r`n</div>`r`n`r`n<div class="container"><div align="center" style="margin-right:12`%;"><a href="#Page#%previous%" class='footer' style="width:16`%;">Previous</a><a href="%html_spool_name%.htm#Page" id='slider3' class='footer' style="height:2em; font-size:1.1em;" onmousemove='getCoords(event, id, "%Pages%", "%html_spool_name%", "")' onmouseleave='getCoords(event, id, "%Pages%", "%html_spool_name%", "%page%")'>Page %page% of %pages%</a><a href="#Page#%next%" class='footer' style="width:16`%;">Next</a></div>`r`n<a href=""><p style="height:250px; clear:left;"></p></a>`r`n</div>`r`n</body>`r`n</html>`r`n`r`n
         FileDelete, %inca%\cache\html\%tab_name%.htm
         FileAppend, %html_header%%menu_html%%sort_html%%media_html%, %inca%\cache\html\%tab_name%.htm        
-        sleep 44
+        sleep 100
         LoadHtml()
         if video_player
             WinActivate, ahk_ID %video_player%
@@ -1970,7 +1970,7 @@
         if !seek
             seek := seek_time
         popup = + favorite
-        FileCreateShortcut, %inputfile%, %inca%\favorites\%media_name%.lnk	; inc. images
+        FileCreateShortcut, %inputfile%, %inca%\favorites\%media_name%.lnk
         if (media == "video" && duration > 30 && !InStr(sourcefile, "\favorites"))
               Loop 10
                 IfNotExist, %inca%\favorites\snips\%media_name% - %A_Index%.mp4     
@@ -1991,14 +1991,14 @@
         }
 
 
-    PurgeCache()
-        {
         Loop, Files, %inca%\favorites\*.lnk, FR
             if !CheckLink(A_LoopFileFullPath)
                 FileRecycle, %A_LoopFileFullPath%
         Loop, Files, %inca%\history\*.lnk, FR
             if !CheckLink(A_LoopFileFullPath)
                 FileRecycle, %A_LoopFileFullPath%
+    PurgeCache()
+        {
         Loop, Files, %inca%\cache\thumbs\*.mp4, F			; remove orphan thumbnails
             if !CheckFile(A_LoopFileFullPath)
                 FileRecycle, %inca%\cache\thumbs\%A_LoopFileName%
@@ -2036,7 +2036,7 @@
             IfExist, %A_LoopField%%filen%.*
                 return 1
             Loop, %A_LoopField%*.*, 2, 1				; recurse search into subfolders
-                IfExist, %input%\%filen%.*
+                IfExist, %A_LoopField%\%filen%.*
                     return 1
             }
         }
@@ -2316,7 +2316,7 @@
             Gui, pic: Cancel
             FileDelete, %inca%\cache\*.jpg
             GetSeekTime(video_player)
-            if (history_timer > Setting("History Timer") * 10 && !InStr(spool_path, "\history"))
+            if (history_timer > Setting("History Timer") * 10 && !InStr(spool_path, "\history") && media != "audio")
                 FileCreateShortcut, %inputfile%, %inca%\history\%media_name%.lnk
             WinActivate, ahk_group Browsers
             MouseGetPos, xm1,ym1
