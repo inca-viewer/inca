@@ -1991,19 +1991,26 @@
         }
 
 
+    PurgeCache()
+        {
         Loop, Files, %inca%\favorites\*.lnk, FR
             if !CheckLink(A_LoopFileFullPath)
                 FileRecycle, %A_LoopFileFullPath%
         Loop, Files, %inca%\history\*.lnk, FR
             if !CheckLink(A_LoopFileFullPath)
                 FileRecycle, %A_LoopFileFullPath%
-    PurgeCache()
-        {
-        Loop, Files, %inca%\cache\thumbs\*.mp4, F			; remove orphan thumbnails
-            if !CheckFile(A_LoopFileFullPath)
+        folders := indexed_folders
+        Loop, Parse, folder_list, `|
+            IfNotInString, folders, %A_LoopField%				; combine lists
+               folders = %folders%|%A_LoopField%
+        Loop, Parse, folders, `|						; remove self folder if exist
+            IfInString, A_LoopField, thumbs
+                StringReplace, folders, folders, |%A_LoopField%
+        Loop, Files, %inca%\cache\thumbs\*.mp4, F				; remove orphan thumbnails
+            if !Found(folders)
                 FileRecycle, %inca%\cache\thumbs\%A_LoopFileName%
-        Loop, Files, %inca%\cache\durations\*.txt, F			; remove orphan durations
-            if !CheckFile(A_LoopFileFullPath)
+        Loop, Files, %inca%\cache\durations\*.txt, F				; remove orphan durations
+            if !Found(folders)
                 FileRecycle, %inca%\cache\durations\%A_LoopFileName%
         GuiControl, Indexer:, GuiInd 
         }
@@ -2027,16 +2034,16 @@
         }
 
 
-    CheckFile(input)
+    Found(folders)
         {
-        GuiControl, Indexer:, GuiInd, %input% 				; show file on screen 
-        SplitPath, input,,,,filen
-        Loop, Parse, indexed_folders, `|
+        GuiControl, Indexer:, GuiInd, %A_LoopFileFullPath% 		; show file on screen 
+        SplitPath, A_LoopFileFullPath,,,,filen
+        Loop, Parse, folders, `|
             {
             IfExist, %A_LoopField%%filen%.*
                 return 1
             Loop, %A_LoopField%*.*, 2, 1				; recurse search into subfolders
-                IfExist, %A_LoopField%\%filen%.*
+                IfExist, %A_LoopFileFullPath%\%filen%.*
                     return 1
             }
         }
