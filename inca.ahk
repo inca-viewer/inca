@@ -1469,7 +1469,7 @@
             {
             clipboard =
             Run %COMSPEC% /c %inca%\apps\ffmpeg.exe -i "%inputfile%" 2>&1 | find "Duration" | Clip, , hide && exit
-            ClipWait, 0.5
+            ClipWait, 1
             if ErrorLevel
                 {
                 PopUp("Disk Not Ready", 1200, 0)
