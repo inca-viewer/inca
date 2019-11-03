@@ -631,10 +631,11 @@
         StringReplace, li, li, :, `;, All
         cache_file = %inca%\cache\lists\%li%%sort%%toggles%.txt
         FileGetSize, cache_size, %cache_file%, K
-        if (silent ||(!search_box && cache_size > 1000 && timer < 350))
+        if (silent ||(!search_box && cache_size > 700 && timer < 350))
             FileRead, list, %cache_file%
         if !list
             {
+            PopUp("....",0,0)
             if (InStr(toggles, "Recurse") || search_term)
                 recurse = R
             Loop, Parse, this_search, `|
@@ -909,9 +910,7 @@
             previous_tab := tab_name
             GetLocationBar(0)
             sleep 34
-            sendraw, %new_html%
-            sleep 24
-            send, {Enter}
+            sendraw, %new_html%`n
             }
         Loop, 100							; allow time for page to load before TimedEvents()
             {
@@ -1468,11 +1467,12 @@
         WinSet, Transparent, 40, ahk_class Shell_TrayWnd
         if (media == "video")							; create seekbar thumbnails
             {
+            clipboard =
             Run %COMSPEC% /c %inca%\apps\ffmpeg.exe -i "%inputfile%" 2>&1 | find "Duration" | Clip, , hide && exit
             ClipWait, 0.5
             if ErrorLevel
                 {
-                PopUp("Disk Not Ready", 2000, 0)
+                PopUp("Disk Not Ready", 1200, 0)
                 return
                 }
             xt := media_name
