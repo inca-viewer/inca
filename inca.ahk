@@ -2,7 +2,6 @@
 
 	;   Inca Media Viewer		Windows - Firefox - Chrome
 
-
 	#NoEnv
 	#UseHook, On
 	SetWinDelay, 0
@@ -911,6 +910,7 @@
             GetLocationBar(0)
             sleep 34
             sendraw, %new_html%
+            sleep 24
             send, {Enter}
             }
         Loop, 100							; allow time for page to load before TimedEvents()
@@ -1134,7 +1134,6 @@
         media_html = <div class="container" oncontextmenu="return(false);">`r`n`r`n<ul class="list">`r`n`r`n%media_html%</ul>`r`n</div>`r`n`r`n<div class="container"><div align="center" style="margin-right:12`%;"><a href="#Page#%previous%" class='footer' style="width:16`%;">Previous</a><a href="%html_spool_name%.htm#Page" id='slider3' class='footer' style="height:2em; font-size:1.1em;" onmousemove='getCoords(event, id, "%Pages%", "%html_spool_name%", "")' onmouseleave='getCoords(event, id, "%Pages%", "%html_spool_name%", "%page%")'>Page %page% of %pages%</a><a href="#Page#%next%" class='footer' style="width:16`%;">Next</a></div>`r`n<a href=""><p style="height:250px; clear:left;"></p></a>`r`n</div>`r`n</body>`r`n</html>`r`n`r`n
         FileDelete, %inca%\cache\html\%tab_name%.htm
         FileAppend, %html_header%%menu_html%%sort_html%%media_html%, %inca%\cache\html\%tab_name%.htm        
-        sleep 100
         LoadHtml()
         if video_player
             WinActivate, ahk_ID %video_player%
@@ -1464,11 +1463,18 @@
         if !(DetectMedia() && list_id != last_id)
             return
         history_timer := 1
-        last_media := sourcefile 
+        last_media := sourcefile
         WinGet, running, List, ahk_class mpv
         WinSet, Transparent, 40, ahk_class Shell_TrayWnd
         if (media == "video")							; create seekbar thumbnails
             {
+            Run %COMSPEC% /c %inca%\apps\ffmpeg.exe -i "%inputfile%" 2>&1 | find "Duration" | Clip, , hide && exit
+            ClipWait, 0.5
+            if ErrorLevel
+                {
+                PopUp("Disk Not Ready", 2000, 0)
+                return
+                }
             xt := media_name
             IfInString, inputfile, \favorites\snips
                 xt := SubStr(xt, 1, -4)
@@ -1476,7 +1482,8 @@
             Run %inca%\apps\ffmpeg.exe -skip_frame nokey -i "%xt%" -vsync 0 -qscale:v 1 "%inca%\cache\`%d.jpg",, Hide
             }
         Run %inca%\apps\mpv %properties% --idle --input-ipc-server=\\.\pipe\mpv%list_id% "%inputfile%"
-        loop 100
+        player =
+        loop 50
             {
             sleep 25
             WinGet, array, List, ahk_class mpv
@@ -2096,8 +2103,9 @@
               FileRead, dur, %inca%\cache\durations\%filen%.txt
               if !dur
                 {
-                x = %fol%\%Filen%.%ex%.part
-                IfExist, %x%						; file still downloading
+                x = %fol%\%Filen%.%ex%
+                FileMove, %x%, %x%
+                if ErrorLevel						; file open or still downloading
                     continue
                 filedelete, %inca%\cache\durations\%filen%.txt
                 Critical
