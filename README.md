@@ -46,19 +46,19 @@ Click
 - on image - next image
 - on video - toggle pause
 - on thumbnail - play from frame
-- on folder - show media
+- on folder - show media inside
 - on search term - find matching media
 
 Long click
 - on background - toggle list / thumbs view
 - on folder - refresh cache
 - on media link - play from start
-- on highlighted text - search files for match
+- on highlighted text - search media files for title match
 - in media - slide down for speed, up for pitch
 
 Long right click
 - on image - save image under cursor
-- on media - add favorite + create 10 second snip
+- on media - add favorite + create 10 second gif/snip
 
 Slide gestures
 - in media - magnify, width, speed or pitch
@@ -70,13 +70,13 @@ Right click slide gesture
 Middle click
 - on image - next image
 - on video - show 6 x 6 thumb sheet
-- on background - return to last media
+- on background - return to last media position
 - on folder - open in new tab
 - on screen far left - next song in playlist
 
 Back click
 - in media - exit
-- on background - top of page then previous page
+- on background - top of page (then previous page)
 
 Long back click
 - on image - previous image
@@ -84,7 +84,7 @@ Long back click
 - in other app - close app
 
 Win + \
-- toggle browser / desktop - copy instead of move files
+- toggle browser / desktop - (copy instead of move files)
 
 <br><p><img src="screens/swivel arm 3.jpg" width="200"/> <img src="screens/swivel arm 2.jpg" width="200"/> <img src="screens/swivel arm 1.jpg" width="200"/></p>
 
