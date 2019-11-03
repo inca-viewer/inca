@@ -31,7 +31,7 @@ Middle click for 6 x 6 thumbsheet<br>
 Mouse gestures for magnify, width, speed or pitch<br>
 Long click background to toggle thumbnail or list view<br>
 Sleep timer gradually lowers the volume if mouse quiet<br><br>
-To search for local media files from text in other web sites,<br>
+To search for local media files from titles in other web sites,<br>
 Select the text then 'long click' on it<br>
 First use of folder needs time to index videos, but then everything is very fast.<br>
 (Thumbnails index at about 250 files per hour into the cache once only)<br><br>
