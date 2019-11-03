@@ -32,7 +32,7 @@ Mouse gestures for magnify, width, speed or pitch<br>
 Long click background to toggle thumbnail or list view<br>
 Sleep timer gradually lowers the volume if mouse quiet<br><br>
 To see if you already have a video you find on another site,<br>
-Select part of the title text then 'long click' on it<br><br>
+Select part of the title text then 'long click' on it<br>
 First use of folder needs time to index videos, but then everything is very fast.<br>
 (Thumbnails index at about 250 videos per hour into the cache once only)<br><br>
 Written in a simple scripting language - AutoHotkey<br>
