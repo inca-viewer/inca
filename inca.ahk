@@ -635,7 +635,6 @@
             FileRead, list, %cache_file%
         if !list
             {
-            PopUp("....",0,0)
             if (InStr(toggles, "Recurse") || search_term)
                 recurse = R
             Loop, Parse, this_search, `|
@@ -910,7 +909,7 @@
             previous_tab := tab_name
             GetLocationBar(0)
             sleep 34
-            sendraw, %new_html%`n
+            sendraw, %new_html%%A_Space%`n
             }
         Loop, 100							; allow time for page to load before TimedEvents()
             {
