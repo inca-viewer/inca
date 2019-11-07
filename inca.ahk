@@ -519,10 +519,10 @@
         else if DetectMedia()
             PlayMedia()
         else if (link_data == "Page" || link_data == "View")
-                {
-                RenderPage()
-                send {Home}{Space}
-                }
+            {
+            RenderPage()
+            send {Home}{Space}
+            }
         else								; link_data is sort, folder or search_term
             {
             if (StrLen(search_term) > 2 && link_data == "+")		; add latest search to search list
@@ -588,8 +588,7 @@
                     this_search := search_folders
                 if (search_box && !InStr(this_search, spool_path))	; search this folder, then search paths
                     this_search = %spool_path%|%this_search%		; search this folder only
-                if (search_term != link_data)				; last search != new search
-                    filter =
+                filter =
                 if search_box
                     {
                     view := 5
