@@ -1722,7 +1722,7 @@
         if volume < 10
             change /= 2						; finer adj at low volume
         if change < 100						; stop any big volume jumps
-            volume += change/15
+            volume += change/20
         SoundGet, current
         if (volume < 0)
             volume := 0
