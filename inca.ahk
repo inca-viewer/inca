@@ -1176,7 +1176,7 @@
         IfNotExist, %inputfile%
             return
         page_media = %page_media%%i%/
-        width := "34,20,14,10"
+        width := "34,19,13,9"
         width := StrSplit(width, ",")
         width := width[view]
         width1 := width * 2
@@ -1213,7 +1213,7 @@
             Loop, 9								; add snip buttons
               IfExist, %inca%\favorites\snips\%media_name% - %A_Index%.mp4
                 snips = %snips%<a href="#" id="snip%i%%A_Index%" name="media%i%" onmousedown="select(event, id, name)" onmouseenter="snip(event, name, '%A_Index%')" style="opacity:0.5; display:flex; justify-content:center; width:%width%px; height:%height1%px;"><div style="background:orange; width:0.2em; height:0.2em;"></div></a>
-            media_html = %media_html%<li style="display:inline-block; vertical-align:top; width:%width%em; padding-bottom:5em; color:%font%; transition:color 1.4s;"><a href="#media%i%0" id="title%i%0" name="media%i%" onmouseenter="snip(event, name, '%html_spool_name%')" onmousedown="select(event, id, name)"><div style="margin-left:8`%; color:#555351; font-size:0.9em; text-align:center; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; %highlight%;">%sort_filter% &nbsp;&nbsp;%no_index% %link_name%</div></a><a href="#" name="media%i%" id="vid%i%" onmousedown="select(event, id, name)" onmousemove="seek(event, id, name)" style="transform-origin:0 0;"><%source% %transform% %select%" id="media%i%" src="file:///%inputfile%" muted></a><div style="margin-left:8`%; color:#aaaaaa; font-size:1.4em; text-align:center;">%caption%</div></li><div style="display:inline-block; width:%width1%px; margin-top:20px; vertical-align:top;">%snips%</div>`r`n`r`n
+            media_html = %media_html%<li style="display:inline-block; vertical-align:top; width:%width%em; margin-bottom:10em; margin-left:2`%; color:%font%; transition:color 1.4s;"><a href="#media%i%0" id="title%i%0" name="media%i%" onmouseenter="snip(event, name, '%html_spool_name%')" onmousedown="select(event, id, name)"><div style="margin-left:8`%; color:#555351; font-size:0.9em; text-align:center; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; %highlight%;">%sort_filter% &nbsp;&nbsp;%no_index% %link_name%</div></a><a href="#" name="media%i%" id="vid%i%" onmousedown="select(event, id, name)" onmousemove="seek(event, id, name)" style="transform-origin:0 0;"><%source% %transform% %select%" id="media%i%" src="file:///%inputfile%" muted></a><div style="margin-left:8`%; color:#aaaaaa; font-size:1.4em; text-align:center;">%caption%</div></li><div style="display:inline-block; width:%width1%px; margin-top:20px; vertical-align:top;">%snips%</div>`r`n`r`n
             }
         skinny =
         }
