@@ -1677,7 +1677,7 @@
         {
         SoundSet, 0
         song_timer =
-        if (change > 0 && (video_player || timer > 800))	; always flip source if long press
+        if (change > 0 && (video_player || timer > 200))	; always flip source if long press
             video_sound ^= 1
         if (change > 0 && music_player && !video_sound)
             {
@@ -1762,7 +1762,6 @@
                 if (direction < 0)
                     speed := video_speed += 5
                 video_speed := speed
-                speed := Round(speed / 5)
                 }
             else if music_player
                 {
