@@ -1497,7 +1497,7 @@
         if (aspect := Round(skinny / 100,2))
             {
             sleep 100
-            RunWait %COMSPEC% /c echo add aspect %aspect% > \\.\pipe\mpv%list_id%,, hide && exit
+            RunWait %COMSPEC% /c echo add video-aspect %aspect% > \\.\pipe\mpv%list_id%,, hide && exit
             }
         loop 15
             {
@@ -1634,13 +1634,10 @@
             Gui, thumbsheet: +lastfound -Caption +ToolWindow +AlwaysOnTop
             Gui, thumbsheet: Margin, 0, 0
             Gui, thumbsheet: Color,black
-            zoom := 0.6
-            if (magnify < 1)
-                zoom := magnify * 0.5
-            W := Floor((1 - zoom) * A_ScreenWidth / 8)
-            H := Floor((1 - zoom) * A_ScreenHeight / 8) 
             IfNotExist, %inca%\cache\180.jpg
                 sleep 200
+            W := A_ScreenWidth/12
+            H := A_ScreenHeight/12
             Loop 36
                 {
                 X := Mod((A_Index-1) * W, 6 * W), Y := (A_Index-1) // 6 * H
@@ -1677,7 +1674,7 @@
         {
         SoundSet, 0
         song_timer =
-        if (change > 0 && (video_player || timer > 200))	; always flip source if long press
+        if (change > 0 && (video_player || timer > 800))	; always flip source if long press
             video_sound ^= 1
         if (change > 0 && music_player && !video_sound)
             {
@@ -1762,6 +1759,7 @@
                 if (direction < 0)
                     speed := video_speed += 5
                 video_speed := speed
+                speed := Round(speed / 5)
                 }
             else if music_player
                 {
