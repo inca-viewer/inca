@@ -1545,7 +1545,7 @@
             music_speed := 0
             video_sound := 0
             WinClose, ahk_ID %music_player%
-            Run %inca%\apps\mpv --fullscreen=no --cursor-autohide=no --osc=yes --playlist-pos=%pos% --keep-open=always --input-ipc-server=\\.\pipe\mpv_music "%inca%\cache\lists\songlist.m3u"
+            Run %inca%\apps\mpv --fullscreen=no --cursor-autohide=no --osc=yes --keep-open=always --playlist-start=%pos% --input-ipc-server=\\.\pipe\mpv_music "%inca%\cache\lists\songlist.m3u"
             loop 20
                 {
                 sleep 120
