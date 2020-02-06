@@ -1698,7 +1698,7 @@
             vol_ref := 2
             SetTimer, VolUp
             }
-        if (change != 999 && WinActive("ahk_group Browsers") && tab != 2)
+        if (change < 0 && WinActive("ahk_group Browsers") && tab != 2)
             {
             send, {Space}
             sleep 600
