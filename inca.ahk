@@ -55,7 +55,7 @@
         Global media =			; current media type
         Global page := 1		; current page within list
         Global sort			; current sorting mode
-        Global sort_filter
+        Global sort_filter		; sorted value
         Global tab			; media webpage exists = 1, is active = 2
         Global click			; click key or process
         Global timer			; click timer
@@ -1199,6 +1199,7 @@
         if (skinny > 0)
             transform = transform:scaleY(%height_t%);
         FileRead, caption, %inca%\cache\captions\%media_name%.txt
+        dur := Round(duration / 3600,1)
         if (view == 5)							; list view 
             {
             loop, 9
@@ -1206,7 +1207,7 @@
                    snips = %snips% *
             if snips
                 snips = <span style="color:orange;">%snips%</span>
-            media_html = %media_html%<a href="#" id="item%i%" name="media%i%" onmousedown="select(event, id, name)"><li id="media%i%" src="file:///%inputfile%" style="float:left; width:100`%; margin:0;"><table><tr><td id="hover_image"><%source% %select%" src="file:///%inputfile%"></td></tr></table><table><tr><td style="color:#555351; width:4em; text-align:right; padding-right:1em;">%sort_filter%</td><td class="sorts">%ext%</td><td class="sorts">%size%</td><td style="%select% %highlight% overflow:hidden; white-space:nowrap; text-overflow:ellipsis; text-align:left; padding-left:2em;">%link_name% %snips%</td></tr></table></li></a>`r`n`r`n
+            media_html = %media_html%<a href="#" id="item%i%" name="media%i%" onmousedown="select(event, id, name)"><li id="media%i%" src="file:///%inputfile%" style="float:left; width:100`%; margin:0;"><table><tr><td id="hover_image"><%source% %select%" src="file:///%inputfile%"></td></tr></table><table><tr><td style="color:#555351; width:4em; text-align:right; padding-right:1em;">%sort_filter%</td><td class="sorts">%ext%</td><td class="sorts">%size%</td><td class="sorts">%dur%</td><td style="%select% %highlight% overflow:hidden; white-space:nowrap; text-overflow:ellipsis; text-align:left; padding-left:1em;">%link_name% %snips%</td></tr></table></li></a>`r`n`r`n
             }
         else 
             {
