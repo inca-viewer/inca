@@ -1699,11 +1699,6 @@
             vol_ref := 2
             SetTimer, VolUp
             }
-        if (change < 0 && WinActive("ahk_group Browsers") && tab != 2)
-            {
-            send, {Space}
-            sleep 600
-            }
         }
 
 
@@ -2290,7 +2285,7 @@
         GuiControl, Caption:Font, GuiCap
         Gui Status:+lastfound +AlwaysOnTop -Caption +ToolWindow
         Gui Status:Color, Black
-        ix := Round(A_ScreenWidth * 0.05)
+        ix := Round(A_ScreenWidth * 0.06)
         Gui Status:Add, Text, vGuiSta w%ix% h35 Right
         Gui Status: Show, Hide
         SysGet, Mon, Monitor
