@@ -246,6 +246,20 @@
       return
 
 
+    #/::
+      SetTimer, button2_Timer, -200
+      return
+
+    button2_Timer:
+      WinGetTitle title, YouTube
+      if GetKeyState("LWin")
+          send, {Space}
+      else if title
+          send, {Left}
+      return
+
+
+
     TimedEvents:							; every 100mS
         Critical
         MouseGetPos, xpos, ypos
