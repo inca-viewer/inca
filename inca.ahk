@@ -252,7 +252,7 @@
 
     button2_Timer:
       WinGetTitle title, YouTube
-      if GetKeyState("LWin")
+      if GetKeyState("LWin")						; YouTube rewind / pause toggle 
           send, {Space}
       else if title
           send, {Left}
@@ -262,12 +262,15 @@
 
     TimedEvents:							; every 100mS
         Critical
+        xt =
         MouseGetPos, xpos, ypos
         dim := Setting("Dim Taskbar") * 2.55
         WinSet, Transparent, %dim%, ahk_class Shell_TrayWnd
         WinGetPos, xb, yb, wb, hb, ahk_group Browsers
-        if (!yb && xb + wb < A_ScreenWidth + 16 && xb + wb > A_ScreenWidth - 8)
-            WinMove, ahk_class MozillaWindowClass,, xb, -4, A_ScreenWidth - xb + 12, hb + 4
+        if (xb + wb < A_ScreenWidth + 16 && xb + wb > A_ScreenWidth - 8)
+            xt := A_ScreenWidth - xb + 12
+        if (!yb || xt)
+            WinMove, ahk_class MozillaWindowClass,, xb, -4, xt, hb
         IfWinNotExist, ahk_ID %music_player%
             music_player =
         if history_timer
