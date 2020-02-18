@@ -255,7 +255,7 @@
       if GetKeyState("LWin")						; YouTube rewind / pause toggle 
           send, {Space}
       else if title
-          send, {Left}
+          send, {Left}{Left}
       return
 
 
