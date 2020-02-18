@@ -1456,7 +1456,9 @@
         video_sound := 0
         mute = --mute=yes
         video_speed := Setting("Default Speed") - 100				; display format
-        FileRead, duration, %inca%\cache\durations\%media_name%.txt
+        FileRead, dur, %inca%\cache\durations\%media_name%.txt
+        if dur
+            duration := dur
         if !slide
             FileRead, caption, %inca%\cache\captions\%media_name%.txt
         speed := Round((video_speed + 100)/100,1)				; mpv format
