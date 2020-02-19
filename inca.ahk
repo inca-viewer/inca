@@ -269,7 +269,7 @@
         WinGetPos, xb, yb, wb, hb, ahk_group Browsers
         if (xb + wb < A_ScreenWidth + 16 && xb + wb > A_ScreenWidth - 8)
             xt := A_ScreenWidth - xb + 12
-        if (!yb || xt)
+        if (!yb || wb < xt)
             WinMove, ahk_class MozillaWindowClass,, xb, -4, xt, hb
         IfWinNotExist, ahk_ID %music_player%
             music_player =
