@@ -270,7 +270,7 @@
         if (xb + wb < A_ScreenWidth + 16 && xb + wb > A_ScreenWidth - 8)
             xt := A_ScreenWidth - xb + 12
         if (!yb || wb < xt)
-            WinMove, ahk_class MozillaWindowClass,, xb, -4, xt, hb
+            WinMove, ahk_class MozillaWindowClass,, xb, -4, xt, hb + 4
         IfWinNotExist, ahk_ID %music_player%
             music_player =
         if history_timer
@@ -1422,8 +1422,8 @@
         Loop, Parse, str, `/
             if (A_LoopField == list_id)						; current media id found in list
                 page_ptr := A_Index + 1						; next media 
-        if (timer > 350)
-            seek := 0
+        if (timer < 350)
+            seek := 20
         if (timer > 350 && click == "Back")
             {
             page_ptr -= 2							; previous media
