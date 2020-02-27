@@ -1422,8 +1422,8 @@
         Loop, Parse, str, `/
             if (A_LoopField == list_id)						; current media id found in list
                 page_ptr := A_Index + 1						; next media 
-        if (timer < 350)
-            seek := 20
+        if (timer > 350)
+            seek := 0
         if (timer > 350 && click == "Back")
             {
             page_ptr -= 2							; previous media
