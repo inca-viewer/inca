@@ -242,7 +242,7 @@
 
 
     #\::
-      SetTimer, button1_Timer, -144
+      SetTimer, button1_Timer, -200
       return
 
     button1_Timer:
@@ -250,21 +250,31 @@
       if GetKeyState("LWin")						; YouTube rewind / pause toggle 
           TaskSwitcher()
       else if title
-          send, f							; youtube fullscreen
-      else send, {f11}
+              send, f							; youtube fullscreen
+           else send, {f11}
       return
 
 
     #/::
-      SetTimer, button2_Timer, -144
+      WinGetTitle timer, YouTube
+      if timer
+          SetTimer, button2_Timer, -200
+      return
+
+    #/ up::
+      timer =
       return
 
     button2_Timer:
-      if !(WinGetTitle title, YouTube)
-          if GetKeyState("LWin")					; YouTube rewind / pause toggle 
-              send, {Space}
-          else
-              send, {Left}{Left}
+      if !timer								; pause toggle YouTube
+          send, {Space}
+        else loop 10
+          {
+          if !timer
+              break
+          send, {Left}{Left}						; rewind YouTube 10 secs
+          sleep 444
+          }
       return
 
 
