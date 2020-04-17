@@ -241,13 +241,27 @@
       return
 
 
+      WinGetTitle title, YouTube
+      if GetKeyState("LWin")						; YouTube rewind / pause toggle 
+          TaskSwitcher()
+      else if title
+              send, f							; youtube fullscreen
+           else send, {f11}
+      return
+
+
     #\::
+      timer = set
       SetTimer, button1_Timer, -200
+      return
+
+    #\ up::
+      timer =
       return
 
     button1_Timer:
       WinGetTitle title, YouTube
-      if GetKeyState("LWin")						; YouTube rewind / pause toggle 
+      if timer
           TaskSwitcher()
       else if title
               send, f							; youtube fullscreen
