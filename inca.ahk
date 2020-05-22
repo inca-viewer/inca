@@ -174,8 +174,8 @@
 
     Xbutton1 up::
       Critical
-      IfWinExist, ahk_class OSKMainClass				; onscreen keyboard
-          send, !0
+      IfWinExist, ahk_class OSKMainClass
+          send, !0							; trigger onscreen keyboard app
       else if timer
           {
           WinGet, state, MinMax, ahk_group Browsers
@@ -242,17 +242,17 @@
 
 
     #\::
-      timer = set
-      SetTimer, button1_Timer, -200
+      timer3 = set
+      SetTimer, button1_Timer, -240
       return
 
     #\ up::
-      timer =
+      timer3 =
       return
 
     button1_Timer:
       WinGetTitle title, YouTube
-      if timer
+      if timer3
           TaskSwitcher()
       else if title
               send, f							; youtube fullscreen
@@ -263,7 +263,7 @@
     #/::
       WinGetTitle timer, YouTube
       if timer
-          SetTimer, button2_Timer, -200
+          SetTimer, button2_Timer, -240
       return
 
     #/ up::
