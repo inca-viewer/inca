@@ -485,6 +485,7 @@
                 }
             else if (!edit && inside_browser)
                 {
+                sleep 10
                 edit = media
                 Menu, ContextMenu, Show
                 }
