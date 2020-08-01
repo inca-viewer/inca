@@ -252,7 +252,7 @@
 
     button1_Timer:
       WinGetTitle title, YouTube
-      if timer3
+      if !timer3
           TaskSwitcher()
       else if title
               send, f							; youtube fullscreen
@@ -529,6 +529,7 @@
         {
         media =
         last_id =
+        PopUp(".",0,0)
         If (timer > 350)
             subfolders =
         if (StrLen(search_box) > 2)
@@ -1872,7 +1873,7 @@
             {
             WinActivate, ahk_group Browsers
             if (direction < -3)
-                send, ^0
+                send, ^{-}
             else  if (direction > 3)
                 send, ^{+}
             sleep 120
