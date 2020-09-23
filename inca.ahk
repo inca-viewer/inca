@@ -148,15 +148,21 @@
 
 
     Xbutton1::								; mouse "back" button
+      MouseGetPos, xm, ym
       if edit
           {								; context menu
           WinClose, ahk_class #32770
           edit =
           return
           }
-      click = Back
-      timer = set
-      SetTimer, Xbutton_Timer, -300
+      else if (music_player && xm < 100)
+          PlaySong(song_id -2)
+      else
+          {
+          click = Back
+          timer = set
+          SetTimer, Xbutton_Timer, -300
+          }
       return
 
     Xbutton_Timer:							; long back key press
@@ -202,12 +208,24 @@
     ~WheelUp::
     ~WheelDown::
       Critical
+      if (A_TickCount < block_wheel)
+          return 
       click =
       wheel := 1
       if (A_ThisHotkey == "~WheelDown")
           wheel := 0
       if Setting("Reverse Wheel")
           wheel ^= 1
+      MouseGetPos, xm, ym
+      WinGetPos,xb,yb,wb,, ahk_group Browsers
+      WinGetTitle title, YouTube
+      if (title && xm < 100)						; wheel to scan back/forward in youtube videos
+          {
+          if wheel
+              send, {.}
+          else send, {,}
+          block_wheel := A_TickCount + 99
+          }
       if (video_player && media != "image" && A_TickCount > block_wheel)
           {
           WinActivate, ahk_ID %video_player%
@@ -251,18 +269,19 @@
       return
 
     button1_Timer:
-      WinGetTitle title, YouTube
+      title =
+      WinGetTitle, title, YouTube
       if !timer3
           TaskSwitcher()
       else if title
               send, f							; youtube fullscreen
-           else send, {f11}
+      else send, {f11}
       return
 
 
     #/::
-      WinGetTitle timer, YouTube
-      if timer
+      timer = set
+      IfWinActive, ahk_group Browsers
           SetTimer, button2_Timer, -240
       return
 
@@ -277,8 +296,9 @@
           {
           if !timer
               break
+          WinActivate, ahk_group Browsers
           send, {Left}{Left}						; rewind YouTube 10 secs
-          sleep 444
+          sleep 624
           }
       return
 
@@ -673,7 +693,7 @@
         StringReplace, li, li, :, `;, All
         cache_file = %inca%\cache\lists\%li%%sort%%toggles%.txt
         FileGetSize, cache_size, %cache_file%, K
-        if (silent ||(!search_box && cache_size > 700 && timer < 350))
+        if (silent ||(!search_box && cache_size > 600 && timer < 350))
             FileRead, list, %cache_file%
         if !list
             {
@@ -1577,6 +1597,10 @@
 
     PlaySong(pos)
         {
+        click = 
+        IfWinActive, ahk_group Browsers
+            flag = set
+        else flag =
         SoundSet, 1
         volume := 1
         if !vol_ref
@@ -1603,7 +1627,9 @@
         WinMinimize, ahk_ID %music_player%
         GetSeekTime(music_player)
         SetTimer, VolUp
-        if (WinActive("ahk_group Browsers") && tab == 2 && InStr(tab_name, "playlist"))
+        if flag
+            WinActivate, ahk_group Browsers
+        if (flag && tab == 2 && InStr(tab_name, "playlist"))
             RenderPage()
         }
 
