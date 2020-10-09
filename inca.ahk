@@ -314,7 +314,7 @@
         if (xb + wb < A_ScreenWidth + 16 && xb + wb > A_ScreenWidth - 8)
             xt := A_ScreenWidth - xb + 12
         if (!yb || wb < xt)
-            WinMove, ahk_class MozillaWindowClass,, xb, -4, xt, hb + 4
+            WinMove, ahk_class MozillaWindowClass,, xb, -4, xt, hb + 12
         IfWinNotExist, ahk_ID %music_player%
             music_player =
         if history_timer
@@ -2439,6 +2439,10 @@
             WinActivate, ahk_group Browsers
             send, ^w							; close tab
             }
+        MouseGetPos, xm1,ym1
+        xt := A_ScreenWidth / 2
+        MouseMove, % xt, 0
+        MouseMove, % xm1, % ym1, 0					; to reset cursor (windows bug)
         WinSet, Transparent, off, ahk_group Browsers
         last_status =
         }
