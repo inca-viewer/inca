@@ -377,8 +377,10 @@
             tab := 0
             WinGetTitle title, Inca -
             tab_name := SubStr(title, 8)
-            StringGetPos, pos, tab_name, -, R
-            StringLeft, tab_name, tab_name, % pos - 1
+            StringGetPos, pos, tab_name, mozilla firefox, R
+            if (pos < 1)
+                StringGetPos, pos, tab_name, google chrome, R
+            StringLeft, tab_name, tab_name, % pos - 3
             WinGet, state, MinMax, ahk_group Browsers
             if tab_name
                 tab := 1
