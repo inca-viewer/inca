@@ -821,9 +821,9 @@
         Loop 2
             {
             clipboard =
-            sleep 40
+            sleep 34
             send, ^l
-            sleep 40
+            sleep 34
             send, ^c
             Clipwait, 0
             if ClipBoard
