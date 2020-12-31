@@ -1,7 +1,9 @@
 
 # File explorer & media viewer in browser
 
-Autohotkey script that creates web pages of your local media<br>
+If you are bedridden or disabled and can only use a mouse<br>
+this Autohotkey script creates web pages of your local media<br>
+with everything on mouse gestures<br>
 
 No install needed. Just run inca.exe and browser starts in pictures folder<br>
 To 'uninstall', just close from taskbar tray and delete the inca folder<br><br>
