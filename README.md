@@ -1,8 +1,7 @@
 
-# File explorer, media viewer & music player<br>
-# in web browser for bed-ridden or disabled
+# File explorer, media viewer & music player for disabled
 
-If you are bedridden or disabled and can only use a mouse<br>
+If you are bedridden or disabled<br>
 this Autohotkey script creates web pages of your local media<br>
 with everything using mouse and gestures<br>
 
