@@ -15,6 +15,7 @@ To 'uninstall', just close from taskbar tray and delete the inca folder<br><br>
 
 # Features:
 
+Frame accurate video thumbnails<br>
 Find, organize, edit and view media files in browser tabs<br>
 Thumb sheets, snips, favorites, history, slideshows<br>
 Playlists, sound source flipping, speed, pitch and width control<br>
