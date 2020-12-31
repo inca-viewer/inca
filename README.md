@@ -20,8 +20,8 @@ Find, organize, edit and view media files in browser tabs<br>
 Thumb sheets, snips, favorites, history, slideshows<br>
 Playlists, sound source flipping, speed, pitch and width control<br>
 Add silence or reset volume between music tracks. Sleep timer<br><br>
-Play video at frame accurate mouseover image<br>
-Middle click for 6 x 6 thumbsheet<br>
+
+Middle click for 6 x 6 video thumbsheet<br>
 Mouse gestures for magnify, width, speed or pitch<br>
 Long click background to toggle thumbnail or list view<br>
 Sleep timer gradually lowers the volume if mouse quiet<br><br>
