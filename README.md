@@ -1,5 +1,5 @@
 
-(Windows firefox and chrome compatible only)<br>
+(Windows - firefox and chrome compatible)<br>
 # File explorer, media viewer & music player for disabled
 
 If you are bedridden or disabled<br>
