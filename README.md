@@ -4,7 +4,7 @@ Windows - firefox and chrome compatible<br>
 
 If you are bedridden or disabled<br>
 this Autohotkey script creates web pages of your local media<br>
-controlled using mouse and gestures<br>
+controlled using mouse gestures<br>
 
 No install needed. Just run inca.exe<br>
 Browser starts in pictures folder<br>
