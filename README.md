@@ -20,7 +20,9 @@ To 'uninstall', just close from taskbar tray and delete the inca folder<br><br>
 Frame accurate video thumbnails<br>
 Find, organize, edit and view media files in browser tabs<br>
 Thumb sheets, snips, favorites, history, slideshows<br>
-Playlists, sound source flipping, speed, pitch and width control<br>
+Background music playlists from web tab<br>
+Smooth sound source flipping between music and videos<br>
+Speed, pitch, width, magnify gesture controls<br>
 Add silence or reset volume between music tracks. Sleep timer<br><br>
 
 Middle click for 6 x 6 video thumbsheet<br>
