@@ -19,18 +19,17 @@ To 'uninstall', just close from taskbar tray and delete the inca folder<br><br>
 # Features:
 
 Frame accurate video thumbnails<br>
+6 x 6 vieo thumbsheets
+YouTube Style video frame timelines
 Find, organize, edit and view media files in browser tabs<br>
-Thumb sheets, snips, favorites, history, slideshows<br>
-Background music playlists from web tab<br>
-Smooth sound source flipping between music and videos<br>
-Speed, pitch, width, magnify gesture controls<br>
-Add silence or reset volume between music tracks. Sleep timer<br><br>
+10 second snips/gifs, favorites, history, slideshows<br>
+Background music playlists from browser tab<br>
+Smooth sound source switching between music and videos<br>
+Speed, pitch, width, magnify volume gesture controls<br>
+Add silence & reset volume between music tracks.<br>
+Sleep timer gradually lowers volume if mouse quiet<br><br>
 
-Middle click for 6 x 6 video thumbsheet<br>
-Mouse gestures for magnify, width, speed or pitch<br>
-Long click background to toggle thumbnail or list view<br>
-Sleep timer gradually lowers the volume if mouse quiet<br><br>
-To see if you already have a video you find on another site,<br>
+To see if you already have a video seen on another site,<br>
 Select part of the title text then 'long click' on it<br>
 First use of folder needs time to index videos, but then everything is very fast.<br>
 (Thumbnails index at about 250 videos per hour into the cache once only)<br><br>
@@ -46,21 +45,21 @@ Click
 - on video - toggle pause
 - on thumbnail - play from frame
 - on folder - show media inside
-- on search term - find matching media
+- on search term - find matching videos
 
 Long click
 - on background - toggle list / thumbs view
 - on folder - refresh cache
-- on media link - play from start
+- on video link - play from start
 - on highlighted text - search media files for title match
-- in media - slide down for speed, up for pitch
+- in video - slide down for speed, up for pitch
 
 Long right click
 - on image - save image under cursor
-- on media - add favorite + create 10 second gif/snip
+- on media - add favorite + create 10 second frame accurate gif/mp4 snip
 
 Slide gestures
-- in media - magnify, width, speed or pitch
+- in media - magnify, width, speed, volume or pitch
 - screen far left - browser magnify
 
 Right click slide gesture
@@ -69,7 +68,7 @@ Right click slide gesture
 Middle click
 - on image - next image
 - on video - show 6 x 6 thumb sheet
-- on background - return to last media position
+- on background - return to last media at position
 - on folder - open in new tab
 - on screen far left - next song in playlist
 
