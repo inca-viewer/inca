@@ -15,7 +15,7 @@ To 'uninstall', just close from taskbar tray and delete the inca folder<br><br>
 <p><img src="screens/Screen 2.jpg" width="640"/></p><br>
 
 [![inca](https://raw.githubusercontent.com/inca-viewer/inca/master/screens/youtube.jpg)](https://www.bitchute.com/video/lANVBGf4JuQ6/ "inca")<br><br><br>
-[![inca](https://raw.githubusercontent.com/inca-viewer/inca/master/screens/youtube2.jpg width="200")](https://www.bitchute.com/video/RDAhweZXeDfm/ "inca")<br>
+[![inca](https://raw.githubusercontent.com/inca-viewer/inca/master/screens/youtube2.jpg)](https://www.bitchute.com/video/RDAhweZXeDfm/ "inca")<br>
 
 # Features:
 
@@ -85,7 +85,7 @@ Long back click
 Win + \
 - toggle browser / desktop - (copy instead of move files)
 
-<br><p><img src="screens/mouse.jpg" width="200"/> <img src="screens/swivel arm 3.jpg" width="200"/> <img src="screens/swivel arm 2.jpg" width="200"/> <img src="screens/swivel arm 1.jpg" width="200"/></p>
+<br><p><img src="screens/mouse.jpg" width="160"/> <img src="screens/swivel arm 3.jpg" width="200"/> <img src="screens/swivel arm 2.jpg" width="200"/> <img src="screens/swivel arm 1.jpg" width="200"/></p>
 
 Supports rotated screen with onscreen keyboard tool<br>
 long press on text for keyboard, (back to close if run as administrator)<br><br>
