@@ -83,7 +83,11 @@ Long back click
 - in other app - close app
 
 Win + \
-- toggle browser / desktop - (copy instead of move files)
+- toggle browser & desktop - Toggle FullScreen - (copy instead of move files)
+
+Win + /
+- pause/play YouTube - reverse 10 seconds YouTube
+
 
 <br><p><img src="screens/mouse.jpg" width="160"/> <img src="screens/swivel arm 3.jpg" width="200"/> <img src="screens/swivel arm 2.jpg" width="200"/> <img src="screens/swivel arm 1.jpg" width="200"/></p>
 
