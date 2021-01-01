@@ -4,7 +4,7 @@ Windows - firefox and chrome compatible<br>
 
 If you are bedridden or disabled<br>
 this Autohotkey script creates web pages of your local media<br>
-controlled using mouse gestures<br>
+controlled with mouse gestures<br>
 
 No install needed. Just run inca.exe<br>
 Browser starts in pictures folder<br>
@@ -89,7 +89,8 @@ Win + /
 - pause/play YouTube - reverse 10 seconds YouTube
 
 
-<br><p><img src="screens/mouse.jpg" width="160"/> <img src="screens/swivel arm 3.jpg" width="200"/> <img src="screens/swivel arm 2.jpg" width="200"/> <img src="screens/swivel arm 1.jpg" width="200"/></p>
+<br><p><img src="screens/mouse.jpg" width="160"/> <img src="screens/swivel arm 3.jpg" width="200"/> <br>
+<img src="screens/swivel arm 2.jpg" width="200"/> <img src="screens/swivel arm 1.jpg" width="200"/></p>
 
 Supports rotated screen with onscreen keyboard tool<br>
 long press on text for keyboard, (back to close if run as administrator)<br><br>
