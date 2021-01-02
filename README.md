@@ -33,6 +33,7 @@ Sleep timer gradually lowers volume if mouse quiet<br><br>
 
 To see if you already have a video seen on another site,<br>
 Select part of the title text then 'long click' on it<br>
+A tab will immediately open with all matching files from your computer<br><br>
 First use of folder needs time to index videos, but then everything is very fast.<br>
 (Thumbnails index at about 250 videos per hour into the cache once only)<br><br>
 Written in a simple scripting language - AutoHotkey<br>
