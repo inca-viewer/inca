@@ -22,7 +22,7 @@ To 'uninstall', just close from taskbar tray and delete the inca folder<br><br>
 
 Frame accurate video thumbnails<br>
 6 x 6 video thumbsheets<br>
-YouTube Style video frame timelines<br>
+YouTube Style film strip beneath video<br>
 Find, organize, edit and view media files in browser tabs<br>
 10 second snips/gifs, favorites, history, slideshows<br>
 Background music playlists from browser tab<br>
