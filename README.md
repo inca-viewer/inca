@@ -39,7 +39,7 @@ First use of folder needs time to index videos, but then everything is very fast
 Written in a simple scripting language - AutoHotkey<br>
 If it's not exactly what you want, change it. It re-compiles in under a second<br>
 You don't need to be a programmer and it's really easy to customize.<br>
-Both Source and Compile buttons are in settings<br>
+Both Source and Compile buttons are in settings on the opening browser tab<br>
 
 # Usage
 
