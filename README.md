@@ -94,6 +94,6 @@ Win + /
 <br><p><img src="screens/mouse.jpg" width="160"/> <img src="screens/swivel arm 3.jpg" width="200"/> <br>
 <img src="screens/swivel arm 2.jpg" width="200"/> <img src="screens/swivel arm 1.jpg" width="200"/></p>
 
-Supports rotated screen with onscreen keyboard tool<br>
-long press on text for keyboard, (back to close if run as administrator)<br><br>
+Supports rotated screen & onscreen keyboard tool<br>
+long press on any text for keyboard, back click to close (if run as administrator)<br><br>
 
