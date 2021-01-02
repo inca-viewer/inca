@@ -6,7 +6,7 @@ If you are bedridden or disabled<br>
 this Autohotkey script creates web pages of your local media<br><br>
 Like putting file explorer into a browser tab<br>
 Creating a commercial looking website from your own media files<br><br>
-no keyboard needed, just long clicks, middle button & mouse gestures<br>
+no keyboard needed. Uses long clicks, middle button & mouse gestures<br>
 No install needed. Just run inca.exe<br>
 Browser starts in pictures folder<br>
 To 'uninstall', just close from taskbar tray and delete the inca folder<br><br>
@@ -16,7 +16,6 @@ To 'uninstall', just close from taskbar tray and delete the inca folder<br><br>
 <p><img src="screens/Screen 2.jpg" width="640"/></p><br>
 
 [![inca](https://raw.githubusercontent.com/inca-viewer/inca/master/screens/youtube.jpg)](https://www.bitchute.com/video/lANVBGf4JuQ6/ "inca")<br><br><br>
-[![inca](https://raw.githubusercontent.com/inca-viewer/inca/master/screens/youtube2.jpg)](https://www.bitchute.com/video/RDAhweZXeDfm/ "inca")<br>
 
 # Features:
 
