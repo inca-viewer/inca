@@ -1,6 +1,6 @@
 
 Windows - firefox and chrome compatible<br>
-# File explorer, media viewer & music player for disabled
+# File explorer, media viewer for disabled
 
 If you are bedridden or disabled<br>
 this Autohotkey script creates web pages of your local media<br><br>
