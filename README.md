@@ -89,7 +89,7 @@ Win + \
 Win + /
 - pause/play YouTube - reverse 10 seconds YouTube<br>
 
-Supports rotated screen & onscreen keyboard tool<br>
+<br><br>Supports rotated screen & onscreen keyboard tool<br>
 long press on any text for keyboard, back click to close (if run as administrator)<br>
 
 <img src="screens/mouse.jpg" width="160"/> <img src="screens/swivel arm 3.jpg" width="200"/> <br>
