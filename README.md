@@ -11,11 +11,12 @@ No install needed. Just run inca.exe<br>
 Browser starts in pictures folder<br>
 To 'uninstall', just close from taskbar tray and delete the inca folder<br><br>
 
+[![inca](https://raw.githubusercontent.com/inca-viewer/inca/master/screens/video.jpg)](https://www.bitchute.com/video/lANVBGf4JuQ6/ "inca")<br><br>
+
 <p><img src="screens/Screen 1.jpg" width="640"/></p><br>
 
-<p><img src="screens/Screen 2.jpg" width="640"/></p><br>
+<p><img src="screens/Screen 2.jpg" width="640"/></p><br><br>
 
-[![inca](https://raw.githubusercontent.com/inca-viewer/inca/master/screens/video.jpg)](https://www.bitchute.com/video/lANVBGf4JuQ6/ "inca")<br><br><br>
 
 # Features:
 
