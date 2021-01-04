@@ -2,19 +2,19 @@
 Windows - firefox and chrome compatible<br>
 # File explorer, media viewer for disabled
 
-this Autohotkey script creates web pages of your local media<br>
+Autohotkey script creates web pages of your local media<br>
 Like putting 'File Explorer' in your browser<br>
-A commercial looking website from your own media<br>
+Commercial looking website for your own media<br>
 
-The program is only 91kB in easy to read scripting language<br>
+The program is only 91kB of easy to read scripting language<br>
 Is lightweight, no installation, does not crash or mess with any files<br>
 
 # Features:
 
 Frame accurate video filmstrips in browser - (not just few seconds)<br>
-6 x 6 video thumbsheets. (middle click)<br>
+6 x 6 clickable video thumbsheets. (middle click)<br>
 Instant 10 sec. slo-mo snips, up to 10 per video (long right click)<br>
-Random shuffle - makes collections look new again<br>
+Random shuffle - make collections look new again<br>
 Speed, pitch, width, magnify & volume mouse gesture controls<br><br>
 
 [![inca](https://raw.githubusercontent.com/inca-viewer/inca/master/screens/video.jpg)](https://www.bitchute.com/video/lANVBGf4JuQ6/ "inca")<br><br>
@@ -29,7 +29,8 @@ Just run Ince.exe - browser will open in pictures folder<br>
 To 'uninstall', just close from taskbar tray and delete the inca folder<br>
 
 YouTube Style film strip beneath video<br>
-Find, organize, edit and view media files in browser tabs<br>
+Smooth Gif playback  with magnify, width, step forward & backward & play/pause
+Find, organize, edit & view media files in browser<br>
 10 second snips/gifs, favorites, history, slideshows<br>
 Background music playlists from browser tab<br>
 Smooth sound source switching between music and videos<br>
