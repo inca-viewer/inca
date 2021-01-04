@@ -6,7 +6,7 @@ Autohotkey script creates web pages of your local media<br>
 Like putting 'File Explorer' in your browser<br>
 Commercial looking website for your own media<br>
 
-The program is only 91kB of easy to read scripting language<br>
+Only 91kB of easy to read scripting language<br>
 Is lightweight, no installation, does not crash or mess with any files<br>
 
 # Features:
