@@ -2,11 +2,11 @@
 Windows - firefox and chrome compatible<br>
 # File explorer, media viewer for disabled
 
-Autohotkey script creates web pages of your local media<br>
+Creates web pages of your local media<br>
 Like putting 'File Explorer' in your browser<br>
-Commercial looking website for your own media<br>
+Commercial looking website from your own media<br>
 
-Only 91kB of easy to read scripting language<br>
+Only 91kB of easy to read AutoHotkey scripting language<br>
 Is lightweight, no installation, does not crash or mess with any files<br>
 
 # Features:
