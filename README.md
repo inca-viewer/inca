@@ -7,7 +7,7 @@ Like putting 'File Explorer' in your browser<br>
 Commercial looking website for your own movies<br>
 
 Only 91kB of easy to read AutoHotkey scripting language<br>
-Is lightweight, no installation, does not crash or mess with any files<br>
+Is lightweight, no installation, does not mess with any settings or files<br>
 
 # Features:
 
