@@ -308,12 +308,10 @@
         Critical
         xt =
         MouseGetPos, xpos, ypos
-        dim := Setting("Dim Taskbar") * 2.55
-        WinSet, Transparent, %dim%, ahk_class Shell_TrayWnd
         WinGetPos, xb, yb, wb, hb, ahk_group Browsers
         if (xb + wb < A_ScreenWidth + 16 && xb + wb > A_ScreenWidth - 8)
             xt := A_ScreenWidth - xb + 12
-        if (!yb || wb < xt)
+        if (!video_player && (!yb || wb < xt))
             WinMove, ahk_class MozillaWindowClass,, xb, -4, xt, hb + 12
         IfWinNotExist, ahk_ID %music_player%
             music_player =
@@ -352,7 +350,7 @@
                 pan := A_ScreenWidth * 0.002
                 }
             }
-        if (video_player && media != "image" && ! thumb_sheet)		; show seek bar
+        if (video_player && media != "image" && ! thumb_sheet)
             {
             GetSeektime(video_player)
             Gui, SeekBar:+LastFound -Caption +ToolWindow +AlwaysOnTop -DPIScale
@@ -360,9 +358,16 @@
             wp := A_ScreenWidth * (seek_time/duration)
             yp := A_ScreenHeight - 2
             if wp
-                Gui, SeekBar:Show, x0 y%yp% w%wp% h2 NA
-            if (ypos > A_ScreenHeight * 0.8)
-                ThumbsBar()
+                Gui, SeekBar:Show, x0 y%yp% w%wp% h2 NA			; show seek bar under video
+            if (ypos > A_ScreenHeight * 0.8)				; show film strip under video
+                {
+                MouseGetPos, xm, ym
+                ys := A_ScreenHeight * 0.85
+                thumb := Round((xm / A_ScreenWidth * 1.1) * 200) + 1
+                GuiControl,pic:, GuiPic, *w280 *h160 %inca%\cache\%thumb%.jpg
+                Gui, pic:show, x%xm% y%ys% w280 h160
+                CalcSeekTime((thumb-1)/200)
+                }
             else 
                 {
                 seek =
@@ -386,6 +391,12 @@
                 tab := 1
             if (tab_name && state != -1 && !edit)
                 tab := 2
+            WinGet, state, MinMax, ahk_group Browsers
+            tray_dim := Setting("Dim Taskbar") * 2.55
+            if (tab && tray_dim && state > -1)
+                WinSet, Transparent, %tray_dim%, ahk_class Shell_TrayWnd
+            else if tray_dim
+                WinSet, Transparent, 255, ahk_class Shell_TrayWnd
             if (tab != dim)
                 {
                 if (tab == 2 && Setting("Dark Cursor"))
@@ -1233,9 +1244,9 @@
             FileRead, duration, %inca%\cache\durations\%media_name%.txt
             IfExist, %inca%\cache\thumbs\%media_name%.mp4
                 inputfile = %inca%\cache\thumbs\%media_name%.mp4
-            else if (ext != "gif" && (!duration || duration >= 30) && !InStr(sourcefile, "snips"))
+            else if (ext != "gif" && (!duration || duration >= 30) && !InStr(sourcefile, "\snips\"))
                 no_index = <span style="color:red">no index&nbsp;&nbsp;&nbsp;</span>
-            if (duration || InStr(sourcefile, "snips"))
+            if (duration || InStr(sourcefile, "\snips\"))
                 source = video style="width:100`%; transform-origin:0 0;
             }
         IfNotExist, %inputfile%
@@ -1245,6 +1256,7 @@
         width := StrSplit(width, ",")
         width := width[view]
         width1 := width * 2
+        height1 := width * 0.9
         font := Setting("Font Color")
         SplitPath, sourcefile,,,,link_name
         Transform, inputfile, HTML, %inputfile%, 2			; make filenames web compatible
@@ -1277,7 +1289,7 @@
             {
             Loop, 9								; add snip buttons
               IfExist, %inca%\favorites\snips\%media_name% - %A_Index%.mp4
-                snips = %snips%<a href="#" id="snip%i%%A_Index%" name="media%i%" onmousedown="select(event, id, name)" onmouseenter="snip(event, name, '%A_Index%')" style="opacity:0.5; display:flex; justify-content:center; width:%width%px; height:%width%px;"><div style="background:orange; width:0.5em; height:0.12em;"></div></a>
+                snips = %snips%<a href="#" id="snip%i%%A_Index%" name="media%i%" onmousedown="select(event, id, name)" onmouseenter="snip(event, name, '%A_Index%')" style="opacity:0.5; display:flex; justify-content:center; width:%width%px; height:%height1%px;"><div style="background:orange; width:0.2em; height:0.2em;"></div></a>
             media_html = %media_html%<li style="display:inline-block; vertical-align:top; width:%width%em; margin-bottom:4em; margin-left:2`%; color:%font%; transition:color 1.4s;"><a href="#media%i%0" id="title%i%0" name="media%i%" onmouseenter="snip(event, name, '%html_spool_name%')" onmousedown="select(event, id, name)"><div style="margin-left:8`%; color:#555351; font-size:0.9em; text-align:center; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; %highlight%;">%sort_filter% &nbsp;&nbsp;%no_index% %link_name%</div></a><a href="#" name="media%i%" id="vid%i%" onmousedown="select(event, id, name)" onmousemove="seek(event, id, name)" style="transform-origin:0 0;"><%source% %transform% %select%" id="media%i%" src="file:///%inputfile%" muted></a><div style="margin-left:8`%; color:#aaaaaa; font-size:1.4em; text-align:center;">%caption%</div></li><div style="display:inline-block; width:%width1%px; margin-top:20px; vertical-align:top;">%snips%</div>`r`n`r`n
             }
         skinny =
@@ -1528,7 +1540,7 @@
         history_timer := 1
         last_media := sourcefile
         WinGet, running, List, ahk_class mpv
-        WinSet, Transparent, 40, ahk_class Shell_TrayWnd
+        WinSet, Transparent, 40, ahk_class Shell_TrayWnd			; reduce flickering taskbar
         if (media == "video")							; create seekbar thumbnails
             {
             xt := Clipboard
@@ -1586,6 +1598,7 @@
         WinSet, Transparent, 0, ahk_group Browsers
         WinClose, ahk_ID %video_player%
         video_player := player
+        WinSet, Transparent, 255, ahk_ID %player%
         if (media == "audio")							; playing audio in video player
             FlipSound(999)
         if (click == "MButton" && !seek)
@@ -1720,26 +1733,6 @@
             Gui, thumbsheet: Show
             WinSet, Transparent, 255
             }
-        }
-
-
-    ThumbsBar()
-        {
-        thumb := 1
-        MouseGetPos, xm, ym
-        div := A_ScreenWidth / 4
-        if (xm > div)
-            thumb := Round(100 * (xm - div) /div)
-        if (xm > div * 3)
-            thumb := 200
-        ys := A_ScreenHeight * 0.85
-        xs := div + ((thumb * div * 2) / 200) - thumb
-        GuiControl,pic:, GuiPic, *w280 *h160 %inca%\cache\%thumb%.jpg
-        Gui, pic:show, x%xs% y%ys% w280 h160
-        offset := 0
-        if (duration > 60)
-            offset := 18.5
-        seek := Round(thumb * (duration - offset) / 200,1) + offset
         }
 
 
@@ -2196,7 +2189,7 @@
                 {
                 if (dur < 20 && (ex == "mp4" || ex == "webm"))		; browser can preview instead
                     continue
-                GuiControl, Indexer:, GuiInd, indexing - %j_folder%  ;    %filen%
+                GuiControl, Indexer:, GuiInd, indexing - %j_folder% - %filen%
                 FileCreateDir, %inca%\temp
                 t := 0
                 if (dur > 60)
@@ -2430,16 +2423,9 @@
             return
             }
         WinGet, state, MinMax, ahk_group Browsers
-        if (state > -1)
+        if (state > -1) 
             WinMinimize, ahk_group Browsers
         else WinRestore, ahk_group Browsers
-        IfWinNotExist, ahk_group Browsers
-            {
-            run, %inca%\cache\html\downloads.htm
-            sleep 1000
-            WinActivate, ahk_group Browsers
-            send, ^w							; close tab
-            }
         MouseGetPos, xm1,ym1
         xt := A_ScreenWidth / 2
         MouseMove, % xt, 0
