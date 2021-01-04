@@ -31,7 +31,7 @@ To 'uninstall', just close from taskbar tray and delete the inca folder<br>
 YouTube Style film strip beneath video<br>
 Smooth Gif playback  with magnify, width, step forward & backward & play/pause<br>
 Find, organize, edit & view media files in browser<br>
-10 second snips/gifs, favorites, history, slideshows<br>
+10 second snips/gifs, favorites, history, slideshows<br><br>
 Background music playlists from browser tab<br>
 Smooth sound source switching between music and videos<br>
 Add silence & reset volume between music tracks.<br>
