@@ -26,7 +26,8 @@ Speed, pitch, width, magnify & volume mouse gesture controls<br><br>
 If you are bedridden or disabled<br>
 No keyboard is needed. Uses long clicks, middle button & mouse gestures<br>
 Just run Ince.exe - browser will open in pictures folder<br>
-To 'uninstall', just close from taskbar tray and delete the inca folder<br><br>
+To 'uninstall', just close from taskbar tray and delete the inca folder<br>
+
 YouTube Style film strip beneath video<br>
 Find, organize, edit and view media files in browser tabs<br>
 10 second snips/gifs, favorites, history, slideshows<br>
@@ -37,9 +38,11 @@ Sleep timer gradually lowers volume if mouse quiet<br>
 
 To see if you already have a video seen on another site,<br>
 Select part of the title text then 'long click' on it<br>
-A tab will immediately open with all matching files from your computer<br><br>
+A tab will immediately open with all matching files from your computer<br>
+
 First use of folder needs time to index videos, but then everything is very fast.<br>
-(Thumbnails index at about 250 videos per hour into the cache once only)<br><br>
+(Thumbnails index at about 250 videos per hour into the cache once only)<br>
+
 Written in a simple scripting language - AutoHotkey<br>
 If it's not exactly what you want, change it. It re-compiles in under a second<br>
 You don't need to be a programmer and it's really easy to customize.<br>
