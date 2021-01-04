@@ -36,6 +36,7 @@ Background music playlists from browser tab<br>
 Flip sound between music and video with volume-through-zero mouse gensture<br>
 Add silence & reset volume between music tracks.<br>
 Sleep timer gradually lowers volume if mouse quiet<br>
+When browser close to screen edge, Snaps browser to make scroll bar and tabs easier to click<br>
 
 To see if you already have a video seen on another site,<br>
 Select part of the title text then 'long click' on it<br>
