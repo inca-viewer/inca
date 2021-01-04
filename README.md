@@ -2,14 +2,25 @@
 Windows - firefox and chrome compatible<br>
 # File explorer, media viewer for disabled
 
-If you are bedridden or disabled<br>
 this Autohotkey script creates web pages of your local media<br><br>
-Like putting file explorer into a browser tab<br>
-Creating a commercial looking website from your own media files<br><br>
-no keyboard needed. Uses long clicks, middle button & mouse gestures<br>
-No install needed. Just run inca.exe<br>
-Browser starts in pictures folder<br>
+Like putting 'File Explorer' in your browser<br>
+A commercial looking website from your own media<br><br>
+
+The program is only 91kB in easy to read scripting language
+Is lightweight, no installation, does not crash or mess with any settings or files
+
+If you are bedridden or disabled<br>
+No keyboard is needed. Uses long clicks, middle button & mouse gestures<br><br>
+Just run Ince.exe - browser will open in pictures folder<br>
 To 'uninstall', just close from taskbar tray and delete the inca folder<br><br>
+
+# Features:
+
+Frame accurate video filmstrips in browser - (not just few seconds)<br>
+6 x 6 video thumbsheets. (middle click)<br>
+Instant 10 sec. slo-mo snips, up to 10 per video (long right click)
+Random shuffle - makes collections look new again
+Speed, pitch, width, magnify & volume mouse gesture controls<br>
 
 [![inca](https://raw.githubusercontent.com/inca-viewer/inca/master/screens/video.jpg)](https://www.bitchute.com/video/lANVBGf4JuQ6/ "inca")<br><br>
 
@@ -18,16 +29,11 @@ To 'uninstall', just close from taskbar tray and delete the inca folder<br><br>
 <p><img src="screens/Screen 2.jpg" width="640"/></p><br><br>
 
 
-# Features:
-
-Frame accurate video thumbnails<br>
-6 x 6 video thumbsheets<br>
 YouTube Style film strip beneath video<br>
 Find, organize, edit and view media files in browser tabs<br>
 10 second snips/gifs, favorites, history, slideshows<br>
 Background music playlists from browser tab<br>
 Smooth sound source switching between music and videos<br>
-Speed, pitch, width, magnify volume gesture controls<br>
 Add silence & reset volume between music tracks.<br>
 Sleep timer gradually lowers volume if mouse quiet<br><br>
 
