@@ -6,13 +6,8 @@ this Autohotkey script creates web pages of your local media<br><br>
 Like putting 'File Explorer' in your browser<br>
 A commercial looking website from your own media<br><br>
 
-The program is only 91kB in easy to read scripting language
-Is lightweight, no installation, does not crash or mess with any settings or files
-
-If you are bedridden or disabled<br>
-No keyboard is needed. Uses long clicks, middle button & mouse gestures<br><br>
-Just run Ince.exe - browser will open in pictures folder<br>
-To 'uninstall', just close from taskbar tray and delete the inca folder<br><br>
+The program is only 91kB in easy to read scripting language<br>
+Is lightweight, no installation, does not crash or mess with any files<br>
 
 # Features:
 
@@ -29,6 +24,10 @@ Speed, pitch, width, magnify & volume mouse gesture controls<br>
 <p><img src="screens/Screen 2.jpg" width="640"/></p><br><br>
 
 
+If you are bedridden or disabled<br>
+No keyboard is needed. Uses long clicks, middle button & mouse gestures<br>
+Just run Ince.exe - browser will open in pictures folder<br>
+To 'uninstall', just close from taskbar tray and delete the inca folder<br><br>
 YouTube Style film strip beneath video<br>
 Find, organize, edit and view media files in browser tabs<br>
 10 second snips/gifs, favorites, history, slideshows<br>
