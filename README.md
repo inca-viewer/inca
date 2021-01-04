@@ -33,7 +33,7 @@ Smooth Gif playback  with magnify, width, step forward & backward & play/pause<b
 Find, organize, edit & view media files in browser<br>
 10 second snips/gifs, favorites, history, slideshows<br><br>
 Background music playlists from browser tab<br>
-Flip sound between music and video with volume-through-zero mouse gensture<br>
+Flip sound between music and video with volume-through-zero mouse gesture<br>
 Add silence & reset volume between music tracks.<br>
 Sleep timer gradually lowers volume if mouse quiet<br>
 When browser close to screen edge, Snaps browser to make scroll bar and tabs easier to click<br>
