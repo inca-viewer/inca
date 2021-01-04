@@ -28,7 +28,7 @@ No keyboard is needed. Uses long clicks, middle button & mouse gestures<br>
 Just run Ince.exe - browser will open in pictures folder<br>
 To 'uninstall', just close from taskbar tray and delete the inca folder<br>
 
-YouTube Style film strip beneath video<br>
+YouTube style film strip beneath video<br>
 Smooth Gif playback  with magnify, width, step forward & backward & play/pause<br>
 Find, organize, edit & view media files in browser<br>
 10 second snips/gifs, favorites, history, slideshows<br><br>
@@ -48,6 +48,7 @@ First use of folder needs time to index videos, but then everything is very fast
 Written in a simple scripting language - AutoHotkey<br>
 If it's not exactly what you want, change it. It re-compiles in under a second<br>
 You don't need to be a programmer and it's really easy to customize.<br>
+Just snip out the bits you don't like and write any features you want.<br>
 Both Source and Compile buttons are in settings on the opening browser tab<br>
 
 # Usage
