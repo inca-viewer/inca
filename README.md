@@ -17,7 +17,7 @@ Create instant 10 sec. slo-mo snips, up to 10 per video (long right click)<br>
 Random shuffle - make collections look new again<br>
 Speed, pitch, width, magnify & volume mouse gesture controls<br><br>
 
-[![inca](https://raw.githubusercontent.com/inca-viewer/inca/master/screens/snips.jpg)](https://www.bitchute.com/video/lANVBGf4JuQ6/ "inca")<br><br>
+[![inca](https://raw.githubusercontent.com/inca-viewer/inca/master/screens/snips.jpg)](https://www.bitchute.com/video/lANVBGf4JuQ6/ "inca")
 [![inca](https://raw.githubusercontent.com/inca-viewer/inca/master/screens/video.jpg)](https://www.bitchute.com/video/lANVBGf4JuQ6/ "inca")<br><br>
 
 <p><img src="screens/Screen 1.jpg" width="640"/></p><br>
