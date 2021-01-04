@@ -23,7 +23,6 @@ Speed, pitch, width, magnify & volume mouse gesture controls<br><br>
 
 <p><img src="screens/Screen 2.jpg" width="640"/></p><br><br>
 
-
 If you are bedridden or disabled<br>
 No keyboard is needed. Uses long clicks, middle button & mouse gestures<br>
 Just run Ince.exe - browser will open in pictures folder<br>
@@ -34,7 +33,7 @@ Find, organize, edit and view media files in browser tabs<br>
 Background music playlists from browser tab<br>
 Smooth sound source switching between music and videos<br>
 Add silence & reset volume between music tracks.<br>
-Sleep timer gradually lowers volume if mouse quiet<br><br>
+Sleep timer gradually lowers volume if mouse quiet<br>
 
 To see if you already have a video seen on another site,<br>
 Select part of the title text then 'long click' on it<br>
