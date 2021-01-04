@@ -13,9 +13,9 @@ Is lightweight, no installation, does not crash or mess with any files<br>
 
 Frame accurate video filmstrips in browser - (not just few seconds)<br>
 6 x 6 video thumbsheets. (middle click)<br>
-Instant 10 sec. slo-mo snips, up to 10 per video (long right click)
-Random shuffle - makes collections look new again
-Speed, pitch, width, magnify & volume mouse gesture controls<br>
+Instant 10 sec. slo-mo snips, up to 10 per video (long right click)<br>
+Random shuffle - makes collections look new again<br>
+Speed, pitch, width, magnify & volume mouse gesture controls<br><br>
 
 [![inca](https://raw.githubusercontent.com/inca-viewer/inca/master/screens/video.jpg)](https://www.bitchute.com/video/lANVBGf4JuQ6/ "inca")<br><br>
 
