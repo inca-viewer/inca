@@ -187,7 +187,8 @@
               selected =
               if (A_TickCount - back_timer > 2000)
                   {
-                  send, {Home}
+                  send, 44{Home}
+                  sleep, 264
                   RenderPage()
                   send, {Home}
                   }
