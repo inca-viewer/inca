@@ -1542,7 +1542,7 @@
         WinSet, Transparent, 40, ahk_class Shell_TrayWnd			; reduce flickering taskbar
         if (media == "video")							; create seekbar thumbnails
             {
-            xt := Clipboard
+            xt := Clipboard							; ensure disk spins up
             Clipboard =
             Run %COMSPEC% /c %inca%\apps\ffmpeg.exe -i "%inputfile%" 2>&1 | find "Duration" | Clip, , hide && exit
             ClipWait, 2
@@ -1688,7 +1688,7 @@
         col := ceil((xm / (thumb_width))   )
         row := floor(ym / (thumb_height))
         thumb_number := 5 * (row * 6 + col)
-        CalcSeekTime(thumb_number / 200)
+        CalcSeekTime((thumb_number-1)/200)
         }
 
 
