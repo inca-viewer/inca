@@ -140,13 +140,7 @@
       return
 
 
-    ~Esc::
-    ~BackSpace::
-      IfWinExist, ahk_ID %video_player%
-        TaskSwitcher()
-      return
-
-
+    Esc::
     Xbutton1::								; mouse "back" button
       MouseGetPos, xm, ym
       if edit
@@ -178,6 +172,7 @@
       timer =
       return
 
+    Esc up::
     Xbutton1 up::
       Critical
       IfWinExist, ahk_class OSKMainClass
@@ -366,7 +361,11 @@
                 thumb := Round((xm / A_ScreenWidth * 1.1) * 200) + 1
                 GuiControl,pic:, GuiPic, *w280 *h160 %inca%\cache\%thumb%.jpg
                 Gui, pic:show, x%xm% y%ys% w280 h160
-                CalcSeekTime((thumb-1)/200)
+                thumb := (thumb-1)/200
+                offset := 0
+                if (duration > 60)
+                    offset := 19
+                seek := Round(thumb * duration + offset - thumb * offset, 1)
                 }
             else 
                 {
@@ -1722,8 +1721,8 @@
             Gui, thumbsheet: Color,black
             IfNotExist, %inca%\cache\180.jpg
                 sleep 200
-            W := A_ScreenWidth/12
-            H := A_ScreenHeight/12
+            W := Round(A_ScreenWidth/15)
+            H := Round(A_ScreenHeight/15)
             Loop 36
                 {
                 X := Mod((A_Index-1) * W, 6 * W), Y := (A_Index-1) // 6 * H
