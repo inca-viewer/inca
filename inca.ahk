@@ -1,4 +1,4 @@
-
+																										
 
 	;   Inca Media Viewer		Windows - Firefox - Chrome
 
@@ -15,8 +15,8 @@
 	#MaxHotkeysPerInterval 999	; allow fast spinning wheel
 	SetWorkingDir, %A_ScriptDir%	; consistent start directory
 
-        Global sort_list		:= "Shuffle|Date|Duration|Alpha|Size|ext|Reverse|Recurse|- Images|- Video||"
-        Global toggle_list		:= "ReverseRecurse- Images- Video"
+        Global sort_list		:= "Shuffle|Date|Duration|Alpha|Size|ext|Reverse|Recurse|Snips|- Images|- Video|"
+        Global toggle_list		:= "ReverseRecurseSnips- Images- Video"
         Global toggles
         Global features			; program settings
         Global folder_list		; folders to show at top of web page
@@ -131,6 +131,18 @@
           {
           if (media == "image" || slide)
               NextMedia()
+          else IfInString, media_path, \favorites\- snips			; cycle through snips
+              {
+              StringRight, snip, media_name, 1
+              StringTrimRight, media_name, media_name, 1
+              snip += 1
+              IfNotExist, %inca%\favorites\- snips\%media_name%%snip%.mp4
+                  snip = 1
+              media_name = %media_name%%snip%
+              sourcefile = %inca%\favorites\- snips\%media_name%.mp4
+              click =
+              NextMedia()
+              }
           else ThumbSheet()
           }
       else if (tab == 2 && xm < xb + wb && xm > xb + 10 && ym > yb + 150 && !ClickWebPage()) 
@@ -188,7 +200,7 @@
               if (A_TickCount - back_timer > 2000)
                   {
                   send, 44{Home}
-                  sleep, 264
+                  sleep, 224
                   RenderPage()
                   send, {Home}
                   }
@@ -391,7 +403,6 @@
                 tab := 1
             if (tab_name && state != -1 && !edit)
                 tab := 2
-            WinGet, state, MinMax, ahk_group Browsers
             tray_dim := Setting("Dim Taskbar") * 2.55
             if (tab && tray_dim && state > -1)
                 WinSet, Transparent, %tray_dim%, ahk_class Shell_TrayWnd
@@ -562,26 +573,29 @@
         {
         media =
         last_id =
-        PopUp(".",0,0)
         If (timer > 350)
             subfolders =
         if (StrLen(search_box) > 2)
             sourcefile = %search_box%					; also clears white space
         else if (tab == 2 && !GetPageLink())
             {
-            if (click == "LButton" && timer > 350)
+            if (click == "LButton")
                 {
-                page := 1
-                if (view < 5)
+                if (timer > 350)
                     {
-                    last_view := view
-                    view := 5
+                    page := 1
+                    selected =
+                    if (view < 5)
+                        {
+                        last_view := view
+                        view := 5
+                        }
+                    else view := last_view
+                    if (view == 5)
+                        PopUp("List",0,0)
+                    else PopUp("Thumbs",0,0)
+                    RenderPage()
                     }
-                else view := last_view
-                if (view == 5)
-                    PopUp("List",0,0)
-                else PopUp("Thumbs",0,0)
-                RenderPage()
                 }
             if (click == "MButton")
                 seek := seek_time
@@ -691,7 +705,7 @@
         }
 
 
-    CreateList(silent)							; of files in spool_path
+    CreateList(silent)							; list of files in spool_path
         {
         if !spool_name
             return
@@ -725,7 +739,6 @@
                             }
                         if (med := DecodeExt(ex))
                             {
-                            list_size += 1
                             data := list_size
                             if (list_size/1000 == Round(list_size/1000))
                                 PopUp(list_size,0,0)
@@ -737,7 +750,20 @@
                                 FileGetSize, data, %inputfile%, K
                             else if (sort == "Duration")
                                 FileRead, data, %inca%\cache\durations\%filen%.txt
-                            list = %list%%data%/%inputfile%/%med%`r`n
+                            IfInString, toggles, Snips				; only list favourites / snips
+                                {
+                                Loop, 9
+                                    IfExist, %inca%\favorites\- snips\%filen% - %A_Index%.mp4
+                                        {
+                                        list_size += 1
+                                        list = %list%%data%/%inca%\favorites\- snips\%filen% - %A_Index%.mp4/%med%`r`n
+                                        }
+                                }
+                            else
+                                {
+                                list_size += 1
+                                list = %list%%data%/%inputfile%/%med%`r`n
+                                }
                             }
                         }
             StringTrimRight, list, list, 2				; remove end `r`n
@@ -801,8 +827,8 @@
                     sourcefile := StrSplit(A_LoopField, "/").2
             SplitPath, sourcefile,,,,media_name
             if snip
-              IfExist, %inca%\favorites\snips\%media_name% - %snip%.mp4
-                sourcefile = %inca%\favorites\snips\%media_name% - %snip%.mp4
+              IfExist, %inca%\favorites\- snips\%media_name% - %snip%.mp4
+                sourcefile = %inca%\favorites\- snips\%media_name% - %snip%.mp4
             if !DetectMedia()
                 {
                 PopUp("Media Not Exist",600,1)
@@ -864,10 +890,10 @@
 
     GetPageSettings()							; from .htm cache file
         {
-        page := 1
-        view := 3
+        page := 1							; default view settings
+        view := 5
         toggles =
-        sort = Shuffle
+        sort = Duration
         FileReadLine, array, %inca%\cache\html\%tab_name%.htm, 2
         if array
             {
@@ -876,10 +902,15 @@
             page := array.2
             sort := array.3
             toggles := array.4
+	    toggles := Trim(toggles, OmitChars := "Snips")
             this_search := Transform_Htm(array.5)
             search_term := Transform_Htm(array.6)
             spool_path := Transform_Htm(array.7)
-            spool_name := Transform_Htm(array.8)
+            pos := InStr(spool_path,"\",,-1)
+            spool_name := SubStr(spool_path,pos+1)
+            StringTrimRight,spool_name,spool_name,1
+            if search_term
+                spool_name := search_term
             return 1
             }
         }
@@ -908,7 +939,7 @@
     CalcSeekTime(thumb)
         {
         duration := 8
-        IfNotInString, media_path, \favorites\snips
+        IfNotInString, media_path, \favorites\- snips
            FileRead, duration, %inca%\cache\durations\%media_name%.txt
         offset := 0
         if (duration > 60)
@@ -1116,7 +1147,7 @@
         {
         sourcefile := StrReplace(selected, "`r`n")
         selected =
-        IfInString, media_path, \favorites\snips
+        IfInString, media_path, \favorites\- snips
             return
         edit = 1
         FileGetSize, size, %sourcefile%, K
@@ -1143,8 +1174,8 @@
                 FileMove, %inca%\cache\durations\%media_name%.txt, %inca%\cache\durations\%newname%.txt, 1
                 FileMove, %inca%\cache\thumbs\%media_name%.mp4, %inca%\cache\thumbs\%newname%.mp4, 1
                 Loop, 9
-                  IfExist, %inca%\favorites\snips\%media_name% - %A_Index%.mp4
-                    FileMove, %inca%\favorites\snips\%media_name% - %A_Index%.mp4, %inca%\favorites\snips\%newname% - %A_Index%.mp4,1
+                  IfExist, %inca%\favorites\- snips\%media_name% - %A_Index%.mp4
+                    FileMove, %inca%\favorites\- snips\%media_name% - %A_Index%.mp4, %inca%\favorites\- snips\%newname% - %A_Index%.mp4,1
                 }
             FileRecycle, %inca%\favorites\%media_name%.lnk          
             FileRecycle, %inca%\history\%media_name%.lnk       
@@ -1156,11 +1187,10 @@
 
     RenderPage()							; construct web page from media list
         {
-        if !(spool_name || spool_path)
+        if !(spool_name && spool_path)
             return
         Transform, html_spool_name, HTML, %spool_name%, 2
         safe_spool_path := Transform_utf(spool_path)			; make filenames web compatible
-        safe_spool_name := Transform_utf(spool_name)
         safe_this_search := Transform_utf(this_search)
         FileRead, font, %inca%\apps\ClearSans-Thin.txt			; firefox bug - requires base64 font
         FileRead, script, %inca%\apps\inca - js.js
@@ -1189,7 +1219,7 @@
                 SpoolList(A_Index)
             }
         pages := ceil(list_size/size)
-        html_header = <!--`r`n%view%/%page%/%sort%/%toggles%/%safe_this_search%/%search_term%/%safe_spool_path%/%safe_spool_name%`r`n%page_media%`r`n-->`r`n<!doctype html>`r`n<html>`r`n<head>`r`n<link rel="icon" type="image/x-icon" href="file:///%inca%/apps/icons/inca.ico">`r`n<meta charset="UTF-8">`r`n<title>Inca - %html_spool_name%</title>`r`n<style>`r`n`r`n@font-face {font-family: ClearSans-Thin; src: url(data:application/font-woff;charset=utf-8;base64,%font%);}`r`nbody {font-family: 'ClearSans-Thin'; overflow-x:hidden; background:%back%; color:#666666; font-size:0.9em; margin-top:160px;}`r`na:link {color:#15110a;}`r`na:visited {color:#15110a;}`r`ntable {color:%fcol%; transition:color 1.4s; width:100`%; table-layout:fixed; border-collapse: collapse;}`r`na {text-decoration:none; color:%fcol%;}`r`nc {width:28`%; text-decoration:none; color:%fcol%;}`r`nimg {display:block; margin:0 auto; max-width:100`%; max-height:%max_height%px;}`r`n.title {clear:left; white-space:nowrap; color:#33312e;}`r`na.slider {display:inline-block; width:36`%; height:18px; border-radius:9px; color:%fcol%; transition:color 1.4s; font-size:1.1em; background-color:#1b1814; margin-right:1em; margin-left:-0.24em; text-align:center}`r`na.slider:hover {color:red; transition:color 0.36s;}`r`na.footer {display:inline-block; width:34`%; font-size:2.2em; color:#33312e; transition:color 1.4s;}`r`na.footer:hover {color:red; transition:color 0.36s;}`r`n.container {width:%width%`%; margin-left:%offset%`%;}`r`n.columns {float:left;}`r`nul.menu {width:100`%; column-gap:10px; margin:auto; list-style-type:none; padding:0; white-space:nowrap;}`r`n.sorts {color:#555351; font-size:0.8em; text-align:right; padding-right:2em; width:1.2em;}`r`nul.menu li {color:%fcol%; transition:color 1.4s;}`r`nul.menu li:hover {color:red; transition:color 0.36s;}`r`nul.list {width:100`%; margin-right:12`%; list-style-type:none; padding:0;}`r`nul.list table:hover {color:red; transition:color 0.36s;}`r`nul.list li img {border: 1px solid %back%;}`r`n#hover_image {position:absolute; opacity:0; width:170px; height:auto;}`r`n#hover_image:hover {opacity:1;}`r`n@keyframes blink {0`% {opacity:0;} 100`% {opacity:1;}`r`n</style>`r`n</head>`r`n<body>`r`n`r`n%script%`r`n`r`n<div class="container"><ul class="list"><a href=""><li class="title" style="font-size:5em">%html_spool_name%<span style="font-size:0.4em;">&nbsp;&nbsp;%list_size%</span></li></a></ul></div>`r`n
+        html_header = <!--`r`n%view%/%page%/%sort%/%toggles%/%safe_this_search%/%search_term%/%safe_spool_path%`r`n%page_media%`r`n-->`r`n<!doctype html>`r`n<html>`r`n<head>`r`n<link rel="icon" type="image/x-icon" href="file:///%inca%/apps/icons/inca.ico">`r`n<meta charset="UTF-8">`r`n<title>Inca - %html_spool_name%</title>`r`n<style>`r`n`r`n@font-face {font-family: ClearSans-Thin; src: url(data:application/font-woff;charset=utf-8;base64,%font%);}`r`nbody {font-family: 'ClearSans-Thin'; overflow-x:hidden; background:%back%; color:#666666; font-size:0.9em; margin-top:160px;}`r`na:link {color:#15110a;}`r`na:visited {color:#15110a;}`r`ntable {color:%fcol%; transition:color 1.4s; width:100`%; table-layout:fixed; border-collapse: collapse;}`r`na {text-decoration:none; color:%fcol%;}`r`nc {width:28`%; text-decoration:none; color:%fcol%;}`r`nimg {display:block; margin:0 auto; max-width:100`%; max-height:%max_height%px;}`r`n.title {clear:left; white-space:nowrap; color:#33312e;}`r`na.slider {display:inline-block; width:36`%; height:18px; border-radius:9px; color:%fcol%; transition:color 1.4s; font-size:1.1em; background-color:#1b1814; margin-right:1em; margin-left:-0.24em; text-align:center}`r`na.slider:hover {color:red; transition:color 0.36s;}`r`na.footer {display:inline-block; width:34`%; font-size:2.2em; color:#33312e; transition:color 1.4s;}`r`na.footer:hover {color:red; transition:color 0.36s;}`r`n.container {width:%width%`%; margin-left:%offset%`%;}`r`n.columns {float:left;}`r`nul.menu {width:100`%; column-gap:10px; margin:auto; list-style-type:none; padding:0; white-space:nowrap;}`r`n.sorts {color:#555351; font-size:0.8em; text-align:right; padding-right:2em; width:1.2em;}`r`nul.menu li {color:%fcol%; transition:color 1.4s;}`r`nul.menu li:hover {color:red; transition:color 0.36s;}`r`nul.list {width:100`%; margin-right:12`%; list-style-type:none; padding:0;}`r`nul.list table:hover {color:red; transition:color 0.36s;}`r`nul.list li img {border: 1px solid %back%;}`r`n#hover_image {position:absolute; opacity:0; width:170px; height:auto;}`r`n#hover_image:hover {opacity:1;}`r`n@keyframes blink {0`% {opacity:0;} 100`% {opacity:1;}`r`n</style>`r`n</head>`r`n<body>`r`n`r`n%script%`r`n`r`n<div class="container"><ul class="list"><a href=""><li class="title" style="font-size:5em">%html_spool_name%<span style="font-size:0.4em;">&nbsp;&nbsp;%list_size%</span></li></a></ul></div>`r`n
         menu_html = `r`n<div class="container">`r`n`r`n<ul class="menu" style="display:flex; justify-content:space-between;">`r`n`r`n
         HighLightMenu(sort, sort_list)
         sort_html = <div style="height:20px; clear:left;"></div><div class="container">`r`n`r`n<a href="#View#%view%" id='slider4' class='slider' style="width:8`%;" onmousemove='getCoords(event, id, "View", "%html_spool_name%","")' onmouseleave='getCoords(event, id, "View", "%html_spool_name%", "%view%")'>View %view%</a>`r`n`r`n<a href="%html_spool_name%.htm#%sort%" id='slider1' class='slider' onmousemove='getCoords(event, id, "%sort%", "%html_spool_name%", "")'>%sort%</a>`r`n`r`n<a href="%html_spool_name%.htm#Page" id='slider2' class='slider' onmousemove='getCoords(event, id, "%Pages%", "%html_spool_name%", "")' onmouseleave='getCoords(event, id, "%Pages%", "%html_spool_name%", "%page%")'>Page %page% of %pages%</a>`r`n`r`n<a href="#Page#%next%" class='slider' style="width:8`%;">Next</a></div><div style="height:6px;"></div>`r`n`r`n%menu_html%</ul><p style="height:30px;"></p></div>`r`n`r`n`r`n
@@ -1244,9 +1274,9 @@
             FileRead, duration, %inca%\cache\durations\%media_name%.txt
             IfExist, %inca%\cache\thumbs\%media_name%.mp4
                 inputfile = %inca%\cache\thumbs\%media_name%.mp4
-            else if (ext != "gif" && (!duration || duration >= 30) && !InStr(sourcefile, "\snips\"))
+            else if (ext != "gif" && (!duration || duration >= 30) && !InStr(sourcefile, "\- snips\"))
                 no_index = <span style="color:red">no index&nbsp;&nbsp;&nbsp;</span>
-            if (duration || InStr(sourcefile, "\snips\"))
+            if (duration || InStr(sourcefile, "\- snips\"))
                 source = video style="width:100`%; transform-origin:0 0;
             }
         IfNotExist, %inputfile%
@@ -1279,7 +1309,7 @@
         if (view == 5)							; list view 
             {
             loop, 9
-                IfExist, %inca%\favorites\snips\%media_name% - %A_Index%.mp4
+                IfExist, %inca%\favorites\- snips\%media_name% - %A_Index%.mp4
                    snips = %snips% *
             if snips
                 snips = <span style="color:orange;">%snips%</span>
@@ -1287,9 +1317,12 @@
             }
         else 
             {
-            Loop, 9								; add snip buttons
-              IfExist, %inca%\favorites\snips\%media_name% - %A_Index%.mp4
+            IfInString, toggles, Snips
+                StringTrimRight, media_name, media_name, 4
+            Loop, 9							; add snip buttons
+                IfExist, %inca%\favorites\- snips\%media_name% - %A_Index%.mp4
                 snips = %snips%<a href="#" id="snip%i%%A_Index%" name="media%i%" onmousedown="select(event, id, name)" onmouseenter="snip(event, name, '%A_Index%')" style="opacity:0.5; display:flex; justify-content:center; width:%width%px; height:%height1%px;"><div style="background:orange; width:0.2em; height:0.2em;"></div></a>
+
             media_html = %media_html%<li style="display:inline-block; vertical-align:top; width:%width%em; margin-bottom:4em; margin-left:2`%; color:%font%; transition:color 1.4s;"><a href="#media%i%0" id="title%i%0" name="media%i%" onmouseenter="snip(event, name, '%html_spool_name%')" onmousedown="select(event, id, name)"><div style="margin-left:8`%; color:#555351; font-size:0.9em; text-align:center; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; %highlight%;">%sort_filter% &nbsp;&nbsp;%no_index% %link_name%</div></a><a href="#" name="media%i%" id="vid%i%" onmousedown="select(event, id, name)" onmousemove="seek(event, id, name)" style="transform-origin:0 0;"><%source% %transform% %select%" id="media%i%" src="file:///%inputfile%" muted></a><div style="margin-left:8`%; color:#aaaaaa; font-size:1.4em; text-align:center;">%caption%</div></li><div style="display:inline-block; width:%width1%px; margin-top:20px; vertical-align:top;">%snips%</div>`r`n`r`n
             }
         skinny =
@@ -1489,7 +1522,7 @@
             caption_id -= 2
             }
         array := StrSplit(str, "/")						; convert page media id's string to array
-        if video_player
+        if (video_player && !InStr(media_path, "\favorites\- snips"))
             {
             list_id := array[page_ptr]
             Loop, Parse, list, `n, `r
@@ -1554,7 +1587,7 @@
                 return
                 }
             xt := media_name
-            IfInString, inputfile, \favorites\snips
+            IfInString, inputfile, \favorites\- snips
                 xt := SubStr(xt, 1, -4)
             xt = %inca%\cache\thumbs\%xt%.mp4
             Run %inca%\apps\ffmpeg.exe -skip_frame nokey -i "%xt%" -vsync 0 -qscale:v 1 "%inca%\cache\`%d.jpg",, Hide
@@ -1960,6 +1993,7 @@
 
         settingsButtonPurgeCache:
         WinClose
+        PopUp("* Monitor Recycle Bin *",4000,0)
         PurgeCache()
         return
 
@@ -2034,7 +2068,7 @@
         }
 
 
-    AddFavorites()
+    AddFavorites()					; and create 10 second snips
         {
         if !seek
             seek := seek_time
@@ -2042,12 +2076,12 @@
         FileCreateShortcut, %inputfile%, %inca%\favorites\%media_name%.lnk
         if (media == "video" && duration > 30 && !InStr(sourcefile, "\favorites"))
               Loop 10
-                IfNotExist, %inca%\favorites\snips\%media_name% - %A_Index%.mp4     
+                IfNotExist, %inca%\favorites\- snips\%media_name% - %A_Index%.mp4     
                     {
                     popup = Snip %A_Index%
                     if (A_Index < 10)
                         {
-                        run, %inca%\apps\ffmpeg.exe -ss %seek% -t 10 -i "%inputfile%" -c:v libx264 -x264opts keyint=3 -vf scale=1280:-2 -y "%inca%\favorites\snips\%media_name% - %A_Index%.mp4",,Hide
+                        run, %inca%\apps\ffmpeg.exe -ss %seek% -t 10 -i "%inputfile%" -c:v libx264 -x264opts keyint=3 -vf scale=1280:-2 -y "%inca%\favorites\- snips\%media_name% - %A_Index%.mp4",,Hide
                             if skinny
                         FileAppend, %skinny%, %inca%\cache\widths\%media_name% - %A_Index%.txt, UTF-8
                         }
@@ -2098,6 +2132,8 @@
                 FileCreateShortcut, %A_LoopField%\%filen%.%ex%, %inca%\cache\%filen%.lnk
                 runwait, %COMSPEC% /c %inca%\apps\touch.exe -r "%input%" "%inca%\cache\%filen%.lnk",,hide
                 FileMove, %inca%\cache\%filen%.lnk, %input%, 1
+tooltip ---- %inca%\cache\%filen%.lnk
+sleep 999
                 return 1
                 }
         }
@@ -2423,9 +2459,16 @@
             return
             }
         WinGet, state, MinMax, ahk_group Browsers
-        if (state > -1) 
+        if (state > -1)
             WinMinimize, ahk_group Browsers
         else WinRestore, ahk_group Browsers
+        IfWinNotExist, ahk_group Browsers
+            {
+            run, %inca%\cache\html\downloads.htm
+            sleep 1000
+            WinActivate, ahk_group Browsers
+            send, ^w							; close tab
+            }
         MouseGetPos, xm1,ym1
         xt := A_ScreenWidth / 2
         MouseMove, % xt, 0
