@@ -104,21 +104,6 @@
       return				; wait for hotkeys
 
 
-    Esc::
-
-    Loop, Files, %inca%\inputs\*.*, FR
-        touch(A_LoopFileFullPath)
-    return
-
-    touch(input)
-        {
-        SplitPath, input,,,ex,filen
-        runwait, %inca%\apps\ffmpeg.exe -i "%A_LoopFileFullPath%" -c:v libx265 -crf 34 -maxrate 10k -preset ultrafast "%inca%\outputs\%filen%.mp4",,Hide
-        }
-
-
-
-
 
     ~LButton::
     RButton::
@@ -2319,7 +2304,7 @@
             sleep 10
             mask := 55 + (A_Index * 200/ time)
             if (time > 5 && dim)
-                WinSet, transparent, %mask%, A
+                WinSet, transparent, %mask%
             mask2 := 255 - mask
             WinSet, TransColor, 0 %mask2%
             }
