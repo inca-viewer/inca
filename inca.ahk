@@ -104,6 +104,22 @@
       return				; wait for hotkeys
 
 
+    Esc::
+
+    Loop, Files, %inca%\inputs\*.*, FR
+        touch(A_LoopFileFullPath)
+    return
+
+    touch(input)
+        {
+        SplitPath, input,,,ex,filen
+        runwait, %inca%\apps\ffmpeg.exe -i "%A_LoopFileFullPath%" -c:v libx265 -crf 34 -maxrate 10k -preset ultrafast "%inca%\outputs\%filen%.mp4",,Hide
+        }
+
+
+
+
+
     ~LButton::
     RButton::
       Critical
@@ -152,7 +168,6 @@
       return
 
 
-    Esc::
     Xbutton1::								; mouse "back" button
       MouseGetPos, xm, ym
       if edit
@@ -544,11 +559,6 @@
                 ThumbSeekTime()
             if seek
                 RunWait %COMSPEC% /c echo seek %seek% absolute > \\.\pipe\mpv%list_id%,, hide && exit
-            if (seek_time >= duration - 2)
-                {
-                paused := 1
-                RunWait %COMSPEC% /c echo seek 0 absolute > \\.\pipe\mpv%list_id%,, hide && exit
-                }
             if thumb_sheet
                 ThumbSheet()
             if (!seek && timer < 350)
@@ -1608,7 +1618,7 @@
         WinSet, Transparent, 0, ahk_ID %player%
         if (aspect := Round(skinny / 100,2))
             {
-            sleep 100
+            sleep 330
             RunWait %COMSPEC% /c echo add video-aspect %aspect% > \\.\pipe\mpv%list_id%,, hide && exit
             }
         loop 15
@@ -2132,8 +2142,6 @@
                 FileCreateShortcut, %A_LoopField%\%filen%.%ex%, %inca%\cache\%filen%.lnk
                 runwait, %COMSPEC% /c %inca%\apps\touch.exe -r "%input%" "%inca%\cache\%filen%.lnk",,hide
                 FileMove, %inca%\cache\%filen%.lnk, %input%, 1
-tooltip ---- %inca%\cache\%filen%.lnk
-sleep 999
                 return 1
                 }
         }
