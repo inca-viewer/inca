@@ -104,7 +104,6 @@
       return				; wait for hotkeys
 
 
-
     ~LButton::
     RButton::
       Critical
@@ -198,12 +197,7 @@
               {
               selected =
               if (A_TickCount - back_timer > 2000)
-                  {
-                  send, 44{Home}
-                  sleep, 224
-                  RenderPage()
-                  send, {Home}
-                  }
+                  send, ^{F5}						; go to top of page
               else send, !{Left}
               back_timer := A_TickCount
               }
