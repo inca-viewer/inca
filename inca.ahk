@@ -104,6 +104,7 @@
       return				; wait for hotkeys
 
 
+
     ~LButton::
     RButton::
       Critical
@@ -131,6 +132,11 @@
           {
           if (media == "image" || slide)
               NextMedia()
+          else if thumb_sheet							; goto next video
+              {
+              NextMedia()
+              ThumbSheet()
+              }
           else IfInString, media_path, \favorites\- snips			; cycle through snips
               {
               StringRight, snip, media_name, 1
@@ -173,7 +179,13 @@
     Xbutton_Timer:							; long back key press
       Critical
       if timer
-          if (video_player && (media != "video" || slide))
+          if thumb_sheet						; goto previous video
+              {
+              thumb_sheet := 0
+              NextMedia()
+              ThumbSheet()
+              }
+          else if (video_player && (media != "video" || slide))
               NextMedia()
           else if video_player
               TaskSwitcher()
@@ -1982,7 +1994,7 @@
 
         settingsButtonPurgeCache:
         WinClose
-        PopUp("* Monitor Recycle Bin *",4000,0)
+        PopUp("* Monitor Recycle Bin *",2000,0)
         PurgeCache()
         return
 
@@ -2431,7 +2443,7 @@
                 WinSet, Transparent, % A_Index * 6, ahk_group Browsers
                 if (video_sound && volume > 1)
                     SoundSet, volume -= 0.5
-                if (A_Index == 40)
+if (A_Index == 40 && video_player != music_player)
                     WInClose, ahk_ID %video_player%			; time for Win ID to release
                 sleep 20
                 }
