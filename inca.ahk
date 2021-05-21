@@ -1046,7 +1046,9 @@
         copy = Copy
     menu_item := A_ThisMenuItem
     if video_player
-        TaskSwitcher()
+        if (A_ThisMenu == "playlist")
+            selected := inputfile
+        else    TaskSwitcher()
     if (menu_item == "New" && selected)					; new folder
        {
        FileSelectFolder, menu_item, , 3					; bring up new client window
