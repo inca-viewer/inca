@@ -2073,6 +2073,8 @@
 
     AddFavorites()					; and create 10 second snips
         {
+        if thumb_sheet
+            ThumbSeekTime()
         if !seek
             seek := seek_time
         popup = + favorite
