@@ -956,7 +956,7 @@
         clip := ClipBoard
         Clipboard =
         ControlSend,, =, ahk_ID %player%				; to mpv player - see input.conf
-        ClipWait, 0
+        ClipWait, 1
         StringReplace, input, ClipBoard, `r`n, , All
         input := StrSplit(input, "/")
         array := StrSplit(input.2, ":")
@@ -1534,6 +1534,7 @@
             }
         if slide
             {
+            str =
             paused := 1
             caption_id += 1
             SplitPath, playlist,,,,name
@@ -1635,13 +1636,14 @@
         WinClose, ahk_ID %video_player%
         video_player := player
         WinSet, Transparent, 255, ahk_ID %player%
-        if (media == "audio")							; playing audio in video player
-            FlipSound(999)
+        if (media == "audio" || !music_player)					; playing audio in video player
+            if video_sound
+                FlipSound(999)
+        sleep 444								; for mpv to close
         if (click == "MButton" && !seek)
             ThumbSheet()
         last_id := list_id
         seek =
-        sleep 50								; for mpv to close
         }
 
 
@@ -1796,9 +1798,10 @@
             }
         if ((video_player || music_player) && change == 999)	; fade volume up a little
             {
-            volume := 0
-            vol_ref := 2
-            SetTimer, VolUp
+            vol_ref := Setting("Default Volume")
+            volume := vol_ref
+  SoundSet, vol_ref
+;            SetTimer, VolUp
             }
         }
 
