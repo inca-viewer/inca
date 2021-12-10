@@ -354,14 +354,17 @@
                 key = g
             if key
                 {
-                loop 16
+                loop 10
                     {
                     ControlSend,, %key%, ahk_ID %video_player%
-                    sleep 10
+                    sleep 24
                     }
+                xpos := A_ScreenWidth / 2
+                ypos := A_ScreenHeight / 2
+                MouseMove, % xpos, % ypos, 0
                 xm := xpos
                 ym := ypos
-                pan := A_ScreenWidth * 0.002
+                pan := A_ScreenWidth * 0.003
                 }
             }
         if (video_player && media != "image" && ! thumb_sheet)
@@ -1409,7 +1412,7 @@
             if !name
                 name := array[pos-1]
             Transform, link, HTML, %A_LoopField%, 2			; make filenames web compatible
-            StringLeft, name, name, 13
+            StringLeft, name, name, 15
             if (StrLen(name) < 2)
                 name = &nbsp;
             else Transform, name, HTML, %name%, 2
@@ -1639,7 +1642,7 @@
         if (media == "audio" || !music_player)					; playing audio in video player
             if video_sound
                 FlipSound(999)
-        sleep 444								; for mpv to close
+        sleep 44								; for mpv to close
         if (click == "MButton" && !seek)
             ThumbSheet()
         last_id := list_id
@@ -1735,7 +1738,7 @@
         {
         if (slide || media != "video" || ext == "gif" || duration < 30)
             return
-        if thumb_sheet
+        if thumb_sheet								; clear thumbsheet
             {
             paused =
             thumb_sheet =
@@ -1752,14 +1755,14 @@
         else
             {
             paused = 1
-            thumb_sheet := 1
+            thumb_sheet := 1							; show thumbsheet
             Gui, thumbsheet: Destroy
             ControlSend,, 2, ahk_ID %video_player%				; pause video
             Gui, thumbsheet: +lastfound -Caption +ToolWindow +AlwaysOnTop
             Gui, thumbsheet: Margin, 0, 0
             Gui, thumbsheet: Color,black
             IfNotExist, %inca%\cache\180.jpg
-                sleep 200
+                sleep 600
             W := Round(A_ScreenWidth/15)
             H := Round(A_ScreenHeight/15)
             Loop 36
@@ -2415,12 +2418,6 @@
         if Setting("Indexer")
             SetTimer, indexer, -1500, -2				; low thread priority
         WinGet, music_player, ID, ahk_class mpv
-        sourcefile = %profile%\Pictures\
-        click = MButton
-        WinActivate, ahk_group Browsers
-        WinGetTitle title, A
-        IfNotInString, title, Inca -
-            ClickWebPage()						; open browser tab
         }
 
 
@@ -2437,6 +2434,7 @@
             GetSeekTime(video_player)
             if (history_timer > Setting("History Timer") * 10 && !InStr(spool_path, "\history") && media != "audio")
                 FileCreateShortcut, %inputfile%, %inca%\history\%media_name%.lnk
+
             WinActivate, ahk_group Browsers
             MouseGetPos, xm1,ym1
             MouseMove, % xm1 + 1, % ym1 + 1, 0				; to reset cursor
@@ -2468,13 +2466,6 @@
         if (state > -1)
             WinMinimize, ahk_group Browsers
         else WinRestore, ahk_group Browsers
-        IfWinNotExist, ahk_group Browsers
-            {
-            run, %inca%\cache\html\downloads.htm
-            sleep 1000
-            WinActivate, ahk_group Browsers
-            send, ^w							; close tab
-            }
         MouseGetPos, xm1,ym1
         xt := A_ScreenWidth / 2
         MouseMove, % xt, 0
