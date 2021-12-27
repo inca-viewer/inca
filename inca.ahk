@@ -1244,10 +1244,10 @@
         FileDelete, %inca%\cache\html\%tab_name%.htm
         FileAppend, %html_header%%menu_html%%sort_html%%media_html%, %inca%\cache\html\%tab_name%.htm        
         LoadHtml()
-        if video_player
-            WinActivate, ahk_ID %video_player%
-        else WinActivate, ahk_group Browsers
-        sleep 300							; in case long list view
+;        if video_player
+;            WinActivate, ahk_ID %video_player%
+;        else WinActivate, ahk_group Browsers
+;        sleep 300							; in case long list view
         PopUp("",0,0)
         sourcefile := last_media
         DetectMedia()							; restore media parameters
@@ -2418,6 +2418,7 @@
         if Setting("Indexer")
             SetTimer, indexer, -1500, -2				; low thread priority
         WinGet, music_player, ID, ahk_class mpv
+        WinActivate, ahk_group Browsers
         }
 
 
@@ -2432,12 +2433,14 @@
             Gui, pic: Cancel
             FileDelete, %inca%\cache\*.jpg
             GetSeekTime(video_player)
-            if (history_timer > Setting("History Timer") * 10 && !InStr(spool_path, "\history") && media != "audio")
+            FileCreateShortcut, %inputfile%, %inca%\history\- all history\%media_name%.lnk
+            if (history_timer / 10 > Setting("History Timer") && media != "audio")
                 FileCreateShortcut, %inputfile%, %inca%\history\%media_name%.lnk
-
             WinActivate, ahk_group Browsers
             MouseGetPos, xm1,ym1
             MouseMove, % xm1 + 1, % ym1 + 1, 0				; to reset cursor
+            if (view == 5)						; highlight last media page link
+                RenderPage()
             loop 50
                 {
                 ControlSend,, l, ahk_ID %video_player%			; zoom player in
