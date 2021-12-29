@@ -289,7 +289,7 @@
           TaskSwitcher()
       else if title
               send, f							; youtube fullscreen
-      else send, {f11}
+      else send, {f11}f
       return
 
 
@@ -2261,7 +2261,6 @@
         return
 
 
-
     ShowStatus()
         {
         FormatTime, time,, h : mm
@@ -2270,19 +2269,13 @@
             vol := Round(volume,1)
         if (volume <= 0)
             vol =
-        IfWinExist, ahk_ID %music_player%
-            speed := music_speed
-        if (video_player && media != "image")
-            speed := Floor(video_speed)
-        if !speed
-            speed =
-        width := skinny
         if (!skinny || !video_player)
             width =
+        else width := skinny
         if (width > 0)
             sign = +
         if Setting("Status Bar")
-            status = %sign%%width%    %speed%    %vol%    %time%
+            status = %time%    %vol%    %sign%%width%
         if (status != last_status)					; to stop flickering
             {
             Gui, Status:+lastfound
@@ -2299,7 +2292,6 @@
             gui, vol: show, x%xv% y%yv% w30 h4 NA
         else gui, vol: hide
         }
-
 
 
     PopUp(message, time, dim)
@@ -2396,7 +2388,7 @@
         Gui Status:+lastfound +AlwaysOnTop -Caption +ToolWindow
         Gui Status:Color, Black
         ix := Round(A_ScreenWidth * 0.06)
-        Gui Status:Add, Text, vGuiSta w%ix% h35 Right
+        Gui Status:Add, Text, vGuiSta w%ix% h35
         Gui Status: Show, Hide
         SysGet, Mon, Monitor
         WinGetPos,ix,iy,w,h
