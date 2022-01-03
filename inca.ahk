@@ -255,7 +255,7 @@
                   key = .
               else key = ,
           ControlSend,, %key%, ahk_ID %video_player%			; seek
-          block_wheel := A_TickCount + 34
+          block_wheel := A_TickCount + 80
           }
       return
 
@@ -287,9 +287,12 @@
       WinGetTitle, title, YouTube
       if !timer3
           TaskSwitcher()
-      else if title
-              send, f							; youtube fullscreen
-      else send, {f11}f
+      else
+          {
+          if !title
+              send, {f11}						; fullscreen
+          send, f
+          }
       return
 
 
@@ -527,7 +530,14 @@
         if (click == "RButton")
             {
             if video_player
+                {
+                if thumb_sheet
+                    {
+                    ThumbSeekTime()
+                    seek_time := seek
+                    }
                 Menu, ContextMenu, Show
+                }
             else if (inside_browser && GetPageLink())
                 {
                 last_media =
@@ -540,6 +550,7 @@
                 {
                 sleep 10
                 edit = media
+                seek_time := seek
                 Menu, ContextMenu, Show
                 }
             else send, {RButton}
