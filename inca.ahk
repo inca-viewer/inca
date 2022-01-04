@@ -2398,7 +2398,7 @@
         GuiControl, Caption:Font, GuiCap
         Gui Status:+lastfound +AlwaysOnTop -Caption +ToolWindow
         Gui Status:Color, Black
-        ix := Round(A_ScreenWidth * 0.06)
+        ix := Round(A_ScreenWidth * 0.07)
         Gui Status:Add, Text, vGuiSta w%ix% h35
         Gui Status: Show, Hide
         SysGet, Mon, Monitor
