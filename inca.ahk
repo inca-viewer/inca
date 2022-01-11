@@ -1077,8 +1077,8 @@
         FileRead, caption, %inca%\cache\captions\%media_name%.txt
         Gui, cap:+lastfound +AlwaysOnTop -Caption +ToolWindow
         gui, cap:add, edit, x10 y10 h170 w300 vcaption, %caption%
-        gui, cap:add, button, x100 y200 w60, Cancel
-        gui, cap:add, button, x200 y200 w60 default, Save
+        gui, cap:add, button, x200 y200 w60, Cancel
+        gui, cap:add, button, x100 y200 w60 default, Save
         gui, cap:show
         send, {Right}
         edit = cap
@@ -2442,8 +2442,8 @@
             WinActivate, ahk_group Browsers
             MouseGetPos, xm1,ym1
             MouseMove, % xm1 + 1, % ym1 + 1, 0				; to reset cursor
-            if (view == 5)						; highlight last media page link
-                RenderPage()
+            if (view == 5 && menu_item != "Caption")
+                RenderPage()						; highlight last played media in browser
             loop 50
                 {
                 ControlSend,, l, ahk_ID %video_player%			; zoom player in
