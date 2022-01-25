@@ -1,5 +1,7 @@
-																										
+	
+; new timer for slide end time
 
+													
 	;   Inca Media Viewer		Windows - Firefox - Chrome
 
 	#NoEnv
@@ -170,9 +172,10 @@
           }
       return
 
-    Xbutton_Timer:							; long back key press
+    Xbutton_Timer:
       Critical
-      if timer
+      if timer								; long back key press
+          {
           if thumb_sheet						; goto previous video
               {
               thumb_sheet := 0
@@ -186,6 +189,8 @@
           else IfWinActive, ahk_group Browsers
               send, ^w							; close tab
           else send, !{F4}						; close app
+          WinClose, Notepad
+          }
       if !video_player
           slide =
       timer =
@@ -195,9 +200,11 @@
     Esc up::
     Xbutton1 up::
       Critical
+      if slide
+          Winclose, Notepad
       IfWinExist, ahk_class OSKMainClass
-          send, !0							; trigger onscreen keyboard app
-      else if timer
+          send, !0							; close onscreen keyboard
+      else if timer							; quick key press
           {
           WinGet, state, MinMax, ahk_group Browsers
           if (video_player || thumb_sheet)
@@ -244,8 +251,8 @@
               key = {Right}
           if (duration < 60)
               if wheel
-                  key = e
-              else key = f
+                  key = +{Left}
+              else key = +{Right}
           if (paused || ext == "gif")
               if wheel
                   key = .
@@ -393,9 +400,9 @@
                 seek =
                 Gui, pic: Cancel
                 }
-            if (slide && !paused && (seek_time  >  end_time - 0.1) && (seek_time < end_time + 0.1))
+            if (end_time && slide && !paused && (seek_time  >  end_time - 0.1) && (seek_time < end_time + 0.1))
                 {
-                paused = 1
+                paused = 1						; pause slide at end time
                 ControlSend,, 2, ahk_ID %video_player%
                 }
             }
@@ -563,10 +570,15 @@
             {
             if thumb_sheet
                 ThumbSeekTime()
+            if (seek_time > duration - 1)				; video finished playing
+                seek := 0.1						; return to start
             if seek
                 RunWait %COMSPEC% /c echo seek %seek% absolute > \\.\pipe\mpv%list_id%,, hide && exit
+            sleep 200							; time for video to start
             if thumb_sheet
                 ThumbSheet()
+            if (seek == 0.1)
+                ControlSend,, 1, ahk_ID %video_player%
             if (!seek && timer < 350)
                 {
                 if paused
@@ -1079,11 +1091,12 @@
         EditFilename()							; edit media filename
     if (menu_item == "Slide End" || menu_item == "Slide Start" || menu_item == "Duplicate")
         {
-        if !end_time
-            end_time := seek_time
         if (menu_item == "Slide End")
             end_time := seek_time
-        else start_time := seek_time
+        if (menu_item == "Slide Start")
+            start_time := seek_time
+        if (end_time <= start_time)
+            end_time := seek_time + 20
         FileRead, str, %playlist%
         FileDelete, %playlist%
         Loop, Parse, str, `n, `r
@@ -1237,7 +1250,7 @@
                 SpoolList(A_Index)
             }
         pages := ceil(list_size/size)
-        html_header = <!--`r`n%view%/%page%/%sort%/%toggles%/%safe_this_search%/%search_term%/%safe_spool_path%`r`n%page_media%`r`n-->`r`n<!doctype html>`r`n<html>`r`n<head>`r`n<link rel="icon" type="image/x-icon" href="file:///%inca%/apps/icons/inca.ico">`r`n<meta charset="UTF-8">`r`n<title>Inca - %html_spool_name%</title>`r`n<style>`r`n`r`n@font-face {font-family: ClearSans-Thin; src: url(data:application/font-woff;charset=utf-8;base64,%font%);}`r`nbody {font-family: 'ClearSans-Thin'; overflow-x:hidden; background:%back%; color:#666666; font-size:0.9em; margin-top:160px;}`r`na:link {color:#15110a;}`r`na:visited {color:#15110a;}`r`ntable {color:%fcol%; transition:color 1.4s; width:100`%; table-layout:fixed; border-collapse: collapse;}`r`na {text-decoration:none; color:%fcol%;}`r`nc {width:28`%; text-decoration:none; color:%fcol%;}`r`nimg {display:block; margin:0 auto; max-width:100`%; max-height:%max_height%px;}`r`n.title {clear:left; white-space:nowrap; color:#33312e;}`r`na.slider {display:inline-block; width:36`%; height:18px; border-radius:9px; color:%fcol%; transition:color 1.4s; font-size:1.1em; background-color:#1b1814; margin-right:1em; margin-left:-0.24em; text-align:center}`r`na.slider:hover {color:red; transition:color 0.36s;}`r`na.footer {display:inline-block; width:34`%; font-size:2.2em; color:#33312e; transition:color 1.4s;}`r`na.footer:hover {color:red; transition:color 0.36s;}`r`n.container {width:%width%`%; margin-left:%offset%`%;}`r`n.columns {float:left;}`r`nul.menu {width:100`%; column-gap:12px; margin:auto; list-style-type:none; padding:0; white-space:nowrap;}`r`n.sorts {color:#555351; font-size:0.8em; text-align:right; padding-right:2em; width:1.2em;}`r`nul.menu li {color:%fcol%; transition:color 1.4s;}`r`nul.menu li:hover {color:red; transition:color 0.36s;}`r`nul.list {width:100`%; margin-right:12`%; list-style-type:none; padding:0;}`r`nul.list table:hover {color:red; transition:color 0.36s;}`r`nul.list li img {border: 1px solid %back%;}`r`n#hover_image {position:absolute; opacity:0; width:170px; height:auto;}`r`n#hover_image:hover {opacity:1;}`r`n@keyframes blink {0`% {opacity:0;} 100`% {opacity:1;}`r`n</style>`r`n</head>`r`n<body>`r`n`r`n%script%`r`n`r`n<div class="container"><ul class="list"><a href=""><li class="title" style="font-size:5em">%html_spool_name%<span style="font-size:0.4em;">&nbsp;&nbsp;%list_size%</span></li></a></ul></div>`r`n
+        html_header = <!--`r`n%view%/%page%/%sort%/%toggles%/%safe_this_search%/%search_term%/%safe_spool_path%`r`n%page_media%`r`n-->`r`n<!doctype html>`r`n<html>`r`n<head>`r`n<link rel="icon" type="image/x-icon" href="file:///%inca%/apps/icons/inca.ico">`r`n<meta charset="UTF-8">`r`n<title>Inca - %html_spool_name%</title>`r`n<style>`r`n`r`n@font-face {font-family: ClearSans-Thin; src: url(data:application/font-woff;charset=utf-8;base64,%font%);}`r`nbody {font-family: 'ClearSans-Thin'; overflow-x:hidden; background:%back%; color:#666666; font-size:0.85em; margin-top:160px;}`r`na:link {color:#15110a;}`r`na:visited {color:#15110a;}`r`ntable {color:%fcol%; transition:color 1.4s; width:100`%; table-layout:fixed; border-collapse: collapse;}`r`na {text-decoration:none; color:%fcol%;}`r`nc {width:28`%; text-decoration:none; color:%fcol%;}`r`nimg {display:block; margin:0 auto; max-width:100`%; max-height:%max_height%px;}`r`n.title {clear:left; white-space:nowrap; color:#33312e;}`r`na.slider {display:inline-block; width:36`%; height:18px; border-radius:9px; color:%fcol%; transition:color 1.4s; font-size:1.1em; background-color:#1b1814; margin-right:1em; margin-left:-0.24em; text-align:center}`r`na.slider:hover {color:red; transition:color 0.36s;}`r`na.footer {display:inline-block; width:34`%; font-size:2.2em; color:#33312e; transition:color 1.4s;}`r`na.footer:hover {color:red; transition:color 0.36s;}`r`n.container {width:%width%`%; margin-left:%offset%`%;}`r`n.columns {float:left;}`r`nul.menu {width:100`%; column-gap:12px; margin:auto; list-style-type:none; padding:0; white-space:nowrap;}`r`n.sorts {color:#555351; font-size:0.8em; text-align:right; padding-right:2em; width:1.2em;}`r`nul.menu li {color:%fcol%; transition:color 1.4s;}`r`nul.menu li:hover {color:red; transition:color 0.36s;}`r`nul.list {width:100`%; margin-right:12`%; list-style-type:none; padding:0;}`r`nul.list table:hover {color:red; transition:color 0.36s;}`r`nul.list li img {border: 1px solid %back%;}`r`n#hover_image {position:absolute; opacity:0; width:170px; height:auto;}`r`n#hover_image:hover {opacity:1;}`r`n@keyframes blink {0`% {opacity:0;} 100`% {opacity:1;}`r`n</style>`r`n</head>`r`n<body>`r`n`r`n%script%`r`n`r`n<div class="container"><ul class="list"><a href="#%html_spool_name%"><li class="title" style="font-size:5em">%html_spool_name%<span style="font-size:0.4em;">&nbsp;&nbsp;%list_size%</span></li></a></ul></div>`r`n
         menu_html = `r`n<div class="container">`r`n`r`n<ul class="menu" style="display:flex; justify-content:space-between;">`r`n`r`n
         HighLightMenu(sort, sort_list)
         sort_html = <div style="height:20px; clear:left;"></div><div class="container">`r`n`r`n<a href="#View#%view%" id='slider4' class='slider' style="width:8`%;" onmousemove='getCoords(event, id, "View", "%html_spool_name%","")' onmouseleave='getCoords(event, id, "View", "%html_spool_name%", "%view%")'>View %view%</a>`r`n`r`n<a href="%html_spool_name%.htm#%sort%" id='slider1' class='slider' onmousemove='getCoords(event, id, "%sort%", "%html_spool_name%", "")'>%sort%</a>`r`n`r`n<a href="#Page#%previous%" class='slider' style="width:4.5`%;">Prev</a><a href="%html_spool_name%.htm#Page" id='slider2' class='slider' onmousemove='getCoords(event, id, "%Pages%", "%html_spool_name%", "")' onmouseleave='getCoords(event, id, "%Pages%", "%html_spool_name%", "%page%")'>Page %page% of %pages%</a>`r`n`r`n<a href="#Page#%next%" class='slider' style="width:4.5`%;">Next</a></div><div style="height:6px;"></div>`r`n`r`n%menu_html%</ul><p style="height:30px;"></p></div>`r`n`r`n`r`n
@@ -1498,8 +1511,8 @@
                 NewPlaylist()
                 }
             else Loop, Parse, list, `n, `r
-                   if (StrSplit(A_LoopField, "/").3 == "playlist")		; skip over playlist entries
-                      list_id -= 1
+                   if (StrSplit(A_LoopField, "/").3 == "playlist" || StrSplit(A_LoopField, "/").3 == "document")
+                      list_id -= 1						; skip over playlist entries
             FileReadLine, str, %inca%\cache\lists\songlist.m3u,%list_id%	; get first song
             sourcefile := StrSplit(str, "/").1
             DetectMedia()
@@ -1524,6 +1537,7 @@
         last_id =
         end_time =
         last_media =
+        video_sound := 0
         Gui, Caption:+lastfound 
         GuiControl, Caption:, GuiCap
         FileReadLine, str, %inca%\cache\html\%tab_name%.htm, 3			; list of media id's in page
@@ -1542,11 +1556,7 @@
                 if (A_Index == list_id)
                     sourcefile := StrSplit(A_LoopField, "/").2
             }
-        if !DetectMedia()
-            {
-            TaskSwitcher()
-            return
-            }
+        video_speed := Setting("Default Speed") - 100				; reverse the human format
         if slide
             {
             str =
@@ -1554,8 +1564,6 @@
             SplitPath, playlist,,,,name
             FileReadLine, str, %playlist%, %list_id%
             sourcefile := StrSplit(str, "|").1
-            if !(DetectMedia() && list_id != last_id)
-                return
             seek := StrSplit(str, "|").2
             start_time := seek
             end_time := StrSplit(str, "|").3
@@ -1563,10 +1571,13 @@
             video_speed := StrSplit(str, "|").5
             caption := StrSplit(str, "|").6
             }
-        video_sound := 0
-        mute = --mute=yes
+        if !DetectMedia()
+            {
+            TaskSwitcher()
+            return
+            }
         if !slide
-            video_speed := Setting("Default Speed") - 100			; display format
+            mute = --mute=yes
         FileRead, dur, %inca%\cache\durations\%media_name%.txt
         if dur
             duration := dur
@@ -1647,9 +1658,6 @@
         WinClose, ahk_ID %video_player%
         video_player := player
         WinSet, Transparent, 255, ahk_ID %player%
-        if (media == "audio" || !music_player)					; playing audio in video player
-            if video_sound
-                FlipSound(999)
         sleep 44								; for mpv to close
         if (click == "MButton" && !seek)
             ThumbSheet()
@@ -1727,9 +1735,7 @@
 
     ThumbSeekTime()
         {
-        paused =
         thumb_number =
-        ControlSend,, 1, ahk_ID %video_player%
         MouseGetPos, xm,ym
         Gui, thumbsheet:+lastfound
         ControlGetPos,,, thumb_width, thumb_height
@@ -1789,7 +1795,7 @@
         {
         SoundSet, 0
         song_timer =
-        if (change > 0 && (video_player || timer > 800))	; always flip source if long press
+        if (change > 0 && video_player)
             video_sound ^= 1
         if (change > 0 && music_player && !video_sound)
             {
@@ -1803,9 +1809,9 @@
             video_speed := 0
             ControlSend,, 2, ahk_ID %music_player%		; pause music
             ControlSend,, 4, ahk_ID %music_player%		; mute music
-            ControlSend,, 1, ahk_ID %video_player%		; un pause video
+;            ControlSend,, 1, ahk_ID %video_player%		; un pause video
             ControlSend,, 3, ahk_ID %video_player%		; un mute video
-            ControlSend,, {BS}, ahk_ID %video_player%		; reset video speed
+;            ControlSend,, {BS}, ahk_ID %video_player%		; reset video speed
             }
         if ((video_player || music_player) && change == 999)	; fade volume up a little
             {
@@ -2170,35 +2176,6 @@
 
 
     indexer:								; update thumb cache for videos
-       FormatTime, time1,, yy MM MMM
-       Loop, Files, %inca%\favorites\*.lnk, F				; put favorites into date folders
-           {
-           FileGetTime, time2, %A_LoopFileFullPath%
-           FormatTime, time2, %time2%, yy MM MMM
-           if (time1 == time2)
-               continue
-           IfExist, %inca%\favorites\f-%time2%
-               FileMove, %A_LoopFileFullPath%, %inca%\favorites\f-%time2%
-           else
-               {
-               FileCreateDir, %inca%\favorites\f-%time2%
-               FileMove, %A_LoopFileFullPath%, %inca%\favorites\f-%time2%
-               }
-           }
-       Loop, Files, %inca%\history\*.lnk, F				; put history into date folders
-           {
-           FileGetTime, time2, %A_LoopFileFullPath%
-           FormatTime, time2, %time2%, yy MM MMM
-           if (time1 == time2)
-               continue
-           IfExist, %inca%\history\h-%time2%
-               FileMove, %A_LoopFileFullPath%, %inca%\history\h-%time2%
-           else
-               {
-               FileCreateDir, %inca%\history\h-%time2%
-               FileMove, %A_LoopFileFullPath%, %inca%\history\h-%time2%
-               }
-           }
       if indexed_folders
         Loop, Parse, indexed_folders, `|
           Loop, Files, %A_LoopField%*.*, R
@@ -2281,7 +2258,10 @@
         if (width > 0)
             sign = +
         if Setting("Status Bar")
-            status = %time%    %vol%    %sign%%width%
+        if slide
+            seek_t := seek_time
+        else seek_t =
+            status = %time%    %vol%    %seek_t%    %sign%%width%
         if (status != last_status)					; to stop flickering
             {
             Gui, Status:+lastfound
@@ -2394,7 +2374,7 @@
         GuiControl, Caption:Font, GuiCap
         Gui Status:+lastfound +AlwaysOnTop -Caption +ToolWindow
         Gui Status:Color, Black
-        ix := Round(A_ScreenWidth * 0.07)
+        ix := Round(A_ScreenWidth * 0.3)
         Gui Status:Add, Text, vGuiSta w%ix% h35
         Gui Status: Show, Hide
         SysGet, Mon, Monitor
@@ -2452,13 +2432,14 @@
                     SoundSet, volume -= 0.5
                 if (A_Index == 47 && video_player != music_player)
                     WInClose, ahk_ID %video_player%			; time for Win ID to release
-                sleep 16
+                loop 200000
+                    skinny =
                 }
             Gui, thumbsheet: Cancel
             skinny =
             paused =
             history_timer =
-            if video_sound
+            if (video_sound && music_player)
                 FlipSound(999)
             video_player =
             video_sound := 0
