@@ -1,4 +1,6 @@
-	
+
+;	soundbeep, 3000,111
+;	tooltip --- %%
 
 												
 	;   Inca Media Viewer		Windows - Firefox - Chrome
@@ -77,7 +79,6 @@
         Global last_id			; previous pointer
         Global menu_item		; context menu
         Global properties		; media properties
-        Global back_timer := 0		; back key timer
         Global playlist			; playlist filename
 	Global songlist			; playlist current song list
 	Global song_timer		; time remaining
@@ -93,10 +94,11 @@
 	Global end_time			; slide end - pause video   
 	Global start_time
 	Global thumb_sheet
-	Global block_wheel
+	Global block_input		; stop key interrupts during processing
 	Global xm			; mouse position
 	Global ym
 	Global pan
+
 
 
 
@@ -154,10 +156,10 @@
               }
           else ThumbSheet()
           }
-      else if (tab == 2 && xm < xb + wb && xm > xb + 10 && ym > yb + 150 && !ClickWebPage()) 
-          PlayMedia()							; return to last_media
-      else if (tab != 2 || ym < yb + 150) 
+      else if (tab != 2 || ym > yb + 200 || xm < xb + wb - 250) 
           send, {MButton}
+      else if (tab == 2 && xm < xb + wb - 250 && xm > xb + 10 && ym > yb + 50 && !ClickWebPage()) 
+          PlayMedia()							; return to last_media
       return
 
 
@@ -198,7 +200,7 @@
       return
 
     Esc up::
-      TaskSwitcher()
+      WInClose, ahk_ID %video_player%
     Xbutton1 up::
       Critical
       IfWinExist, ahk_class OSKMainClass
@@ -210,14 +212,6 @@
               WinClose
           else if (video_player || thumb_sheet)
               TaskSwitcher()
-          else if (WinActive("ahk_group Browsers") && state > -1 && tab == 2) 
-              {
-              selected =
-              if (A_TickCount - back_timer > 2000)
-                  send, ^{F5}						; go to top of page
-              else send, !{Left}
-              back_timer := A_TickCount
-              }
           else send, {Xbutton1}
           }
       timer =
@@ -227,7 +221,7 @@
     ~WheelUp::
     ~WheelDown::
       Critical
-      if (A_TickCount < block_wheel)
+      if (A_TickCount < block_input)
           return 
       wheel := 1
       if (A_ThisHotkey == "~WheelDown")
@@ -242,19 +236,19 @@
           if wheel
               send, .
           else send, ,
-          block_wheel := A_TickCount + 99
+          block_input := A_TickCount + 99
           }
-      if (video_player && media != "image" && A_TickCount > block_wheel && !edit)
+      if (video_player && media != "image" && A_TickCount > block_input && !edit)
           {
-          key = +{Left}+{Left}
+          key = {Left}
           if wheel
-              key = +{Right}+{Right}
+              key = {Right}
           if (paused || ext == "gif")
               if wheel
                   key = ..
               else key = ,,
           ControlSend,, %key%, ahk_ID %video_player%			; seek
-          block_wheel := A_TickCount + 80
+          block_input := A_TickCount + 80
           }
       return
 
@@ -467,7 +461,7 @@
       StringReplace, click, A_ThisHotkey, ~,, All
       MouseGetPos, xm, ym
       WinGetPos, xb, yb, wb, hb, ahk_group Browsers
-      if (tab == 2 && WinActive("ahk_group Browsers") && xm > xb+10 && ym > yb+100 && xm < xb+wb-50 && ym < yb+hb-50)
+      if (tab == 2 && WinActive("ahk_group Browsers") && xm > xb+10 && ym > yb+200 && xm < xb+wb-250 && ym < yb+hb-50)
           inside_browser = 1
       else inside_browser =
       if (inside_browser || (video_player && !edit))			; allow gestures over tab or player
@@ -482,7 +476,7 @@
         timer := A_TickCount - start
         if (!GetKeyState("LButton", "P") && !GetKeyState("RButton", "P"))
             break
-        if (xy > 3 || (click == "RButton" && (xm < 10 || xm > A_ScreenWidth - 10)))
+        if (xy > 12 || (click == "RButton" && (xm < 10 || xm > A_ScreenWidth - 10)))
             {
             gesture = 1
             MouseGetPos, xm, ym
@@ -605,10 +599,9 @@
             {
             if (click == "LButton")
                 {
-                if (timer > 350)
+                if (timer < 350)
                     {
                     page := 1
-                    selected =
                     if (view < 5)
                         {
                         last_view := view
@@ -619,6 +612,12 @@
                         PopUp("List",0,0)
                     else PopUp("Thumbs",0,0)
                     RenderPage()
+                    }
+                else
+                    {
+                    selected =
+                    RenderPage()    
+                    send, ^{F5}					; go to top of page
                     }
                 }
             if (click == "MButton")
@@ -1322,7 +1321,7 @@
         if (media == "audio")
             inputfile = %inca%\apps\icons\music.png
         if (media == "document")
-            inputfile = %inca%\apps\icons\ebook.ico
+            inputfile = %inca%\apps\icons\ebook.png
         IfExist, %spool_path%%media_name%.lnk 
             no_index = <span style="color:orange">- link - &nbsp;&nbsp;</span>
         if (media == "video")
@@ -1514,6 +1513,7 @@
 
     PlayMedia()
         {
+        Critical
         slide =
         paused =
         if !sourcefile
@@ -1522,6 +1522,8 @@
             return
         if (media == "document")
             {
+            last_media := sourcefile
+            RenderPage()						; highlight selected media
             run, %inputfile%
             sleep 600
             if (ext == "pdf")
@@ -1562,12 +1564,13 @@
 
     NextMedia()									; play next media
         {
-        pan := A_ScreenWidth * 0.1
+        Critical
         caption =
         last_id =
         end_time =
         last_media =
         video_sound := 0
+        pan := A_ScreenWidth * 0.1
         Gui, Caption:+lastfound 
         GuiControl, Caption:, GuiCap
         FileReadLine, str, %inca%\cache\html\%tab_name%.htm, 3			; list of media id's in page
@@ -1610,7 +1613,7 @@
             return
             }
         mute = --mute=yes
-        if (media == "audio")
+        if (media == "audio" && !music_player)
             mute =
         duration := GetDuration(sourcefile)
         speed := Round((video_speed + 100)/100,1)				; default speed - mpv format
@@ -1649,25 +1652,27 @@
             }
         Run %inca%\apps\mpv %properties% --idle --input-ipc-server=\\.\pipe\mpv%list_id% "%inputfile%"
         player =
-        loop 50
+        Critical
+        loop 100
             {
-            sleep 25
+            sleep 20
             WinGet, array, List, ahk_class mpv
             loop %array%
-                if (array%A_Index% != running1 && array%A_Index% != running2 && array%A_Index% != running3)
-                    {
-                    player := array%A_Index%
+                if ((player := array%A_Index%) != music_player && player != video_player)
                     break 2
-                    }
             }
-        loop 15
+        WinSet, Transparent, 0, ahk_ID %player%
+        sleep 120
+        if (aspect := Round(skinny / 100,2))
+             RunWait %COMSPEC% /c echo add video-aspect %aspect% > \\.\pipe\mpv%list_id%,, hide && exit
+        sleep 50
+        loop 10
             {
-            sleep 30
-            WinSet, Transparent, % A_Index * 17, ahk_ID %player%		; player fade up
-            if (A_Index == 5)
-                if (aspect := Round(skinny / 100,2))
-                    RunWait %COMSPEC% /c echo add video-aspect %aspect% > \\.\pipe\mpv%list_id%,, hide && exit
+            sleep 10
+            WinSet, Transparent, % A_Index * 26, ahk_ID %player%		; player fade up
             }
+        WinClose, ahk_ID %video_player%
+        video_player := player
         WinSet, TransColor, 0 0
         GuiControl, Caption:, GuiCap, % caption
         x := A_ScreenWidth * 0.38
@@ -1681,16 +1686,10 @@
             WinSet, TransColor, 0 %mask%
             }
         WinSet, Transparent, 0, ahk_group Browsers
-        WinClose, ahk_ID %video_player%
-        video_player := player
-        WinSet, Transparent, 255, ahk_ID %player%
-        sleep 44								; for mpv to close
         if (click == "MButton" && !seek)
             ThumbSheet()
         last_id := list_id
         seek =
-        if (click == "Back")
-            TaskSwitcher()
         }
 
 
@@ -1778,9 +1777,9 @@
 
     ThumbSheet()
         {
-        if (slide || media != "video" || ext == "gif" || duration < 30)
-            return
-        if thumb_sheet								; clear thumbsheet
+        if (media != "video" || ext == "gif" || duration < 30)
+           return
+        if thumb_sheet
             {
             paused =
             thumb_sheet =
@@ -1975,11 +1974,11 @@
         if (state > -1 && xm < 100)
             {
             WinActivate, ahk_group Browsers
-            if (direction < -3)
+            if (direction < -10)
                 send, ^{-}
-            else  if (direction > 3)
+            else  if (direction > 10)
                 send, ^{+}
-            sleep 120
+            sleep 200
             }
         }
 
@@ -2450,7 +2449,7 @@
                     SoundSet, volume -= 0.5
                 if (A_Index == 47 && video_player != music_player)
                     WInClose, ahk_ID %video_player%			; time for Win ID to release
-                loop 200000
+                loop 120000
                     skinny =
                 }
             Gui, thumbsheet: Cancel
