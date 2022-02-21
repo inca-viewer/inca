@@ -1,10 +1,22 @@
 
-;	soundbeep, 3000,111
-;	tooltip --- %%
+	;	Inca Media Viewer		Windows - Firefox - Chrome
+
+	;	AHK Script Operation:
+	;	file searches and selections CreateList() of local media are spooled into web pages
+	;	media is played using lightweight MPV media player
+	;	special mouse ClickEvent() & Gestures() are used to control volume, magnify, pan, seek etc.
+	;	music playlists for background music also from browser tab
+	;	0.1 second background timer updates media status bar
+	;	local video media are indexed to a small 200 keyframe .mp4 file for fast thumbsnail creation
+	;	web page clicks and tab control are through the browser location bar
+	;	DeBug tools - soundbeep, 3000,111   tooltip --- %%
 
 ; purge cache
-												
-	;   Inca Media Viewer		Windows - Firefox - Chrome
+; paused state preserved throu slides
+; pause in first
+mbutton in audiio, next in list 
+
+
 
 	#NoEnv
 	#UseHook, On
@@ -108,8 +120,6 @@
 
 
 
-
-
     ~LButton::
     RButton::
       Critical
@@ -166,7 +176,10 @@
       else if (tab != 2 || !inside_browser) 
           send, {MButton}
       else if (tab == 2 && inside_browser && !ClickWebPage())
+          {
+          click =
           PlayMedia()							; replay last_media
+          }
       return
 
 
@@ -206,6 +219,7 @@
       edit =
       return
 
+
     Esc up::
       WInClose, ahk_ID %video_player%
     Xbutton1 up::
@@ -215,7 +229,11 @@
       else if timer							; quick key press
           {
           if WinActive("ahk_class Notepad")
-              WinClose
+              {
+              Send,  ^s^w
+              if (spool_name == "slides")
+                  RenderPage()
+              }
           else if (video_player || thumb_sheet)
               TaskSwitcher()
           else if (tab == 2 && WinActive("ahk_group Browsers"))
@@ -252,10 +270,10 @@
           }
       if (video_player && media != "image" && A_TickCount > block_input && !edit)
           {
-          key = {Left}
+          key = +{Left}+{Left}
           if wheel
-              key = {Right}
-          if (paused || ext == "gif" || duration < 61)
+              key = +{Right}
+          if (paused || ext == "gif") ; || duration < 61)
               {
               paused = 1
               if wheel
@@ -408,7 +426,7 @@
                     RenderPage()					; only if folder contents changed
                 }
             }
-        ShowStatus()							; show vol, speed, width on taskbar
+        ShowStatus()							; show time, vol etc.
         return
 
 
@@ -446,7 +464,7 @@
             yp := A_ScreenHeight - 4
             ys := A_ScreenHeight - 324
             xs := A_Screenwidth * 0.5 - 240
-            thumb := Round((xp / (A_ScreenWidth)) * 200)
+            thumb := Round((xp / (A_ScreenWidth)) * 200) 
             GuiControl,pic:, GuiPic, *w480 *h320 %inca%\cache\%thumb%.jpg
             if (media == "video" && ypos > A_ScreenHeight * 0.95)
                 Gui, pic:show, x%xs% y%ys% w480 h320
@@ -476,7 +494,7 @@
       if (tab == 2 && WinActive("ahk_group Browsers") && xm > xb+10 && ym > yb+200 && xm < xb+wb-400 && ym < yb+hb-50)
           inside_browser = 1
       else inside_browser =
-      if (inside_browser || (video_player && !edit))			; allow gestures over tab or player
+      if (video_player && !edit)					; allow gestures over player
           send, {Click up}
       start := A_TickCount
       loop								; gesture detection
@@ -573,7 +591,7 @@
             {
             if thumb_sheet
                 ThumbSeekTime()
-            if (seek_time > duration - 1)				; video finished playing
+            if (!seek && seek_time > duration - 1)			; video finished playing
                 seek := 0.1						; return to start
             if seek							; eg. from thumbsheet
                 {
@@ -639,13 +657,13 @@
                 if (timer > 350)
                     {
                     page := 1
-                    if (view < 5)
+                    if (view < 7)
                         {
                         last_view := view
-                        view := 5
+                        view := 7
                         }
                     else view := last_view
-                    if (view == 5)
+                    if (view == 7)
                         PopUp("List",0,0)
                     else PopUp("Thumbs",0,0)
                     RenderPage()
@@ -740,7 +758,7 @@
                 filter =
                 if search_box
                     {
-                    view := 5
+                    view := 7
                     sort = Duration
                     toggles =
                     }
@@ -938,7 +956,7 @@
     GetPageSettings()							; from .htm cache file
         {
         page := 1							; default view settings
-        view := 5
+        view := 7
         toggles =
         sort = Duration
         FileReadLine, array, %inca%\cache\html\%tab_name%.htm, 2
@@ -1112,15 +1130,17 @@
        }
     if (menu_item == "Edit")
         {
-        selected =
         edit = cap
-        temp := inputfile
-        if slide
-            temp := playlist
-        SplitPath, temp,,,ex1
+        x := selected
+        selected =
         RenderPage()							; clear browser highlighting
-        if (ex1 == "txt" || ex1 == "m3u")
-            Run, Notepad.exe "%temp%"
+        Loop, Parse, x, `n, `r
+            if (sourcefile := A_LoopField)
+                break
+        DetectMedia()
+        if (media != "playlist" && ext != "txt")
+            sourcefile := playlist
+        Run, Notepad.exe "%sourcefile%"
         return
         }
     if (menu_item == "Rename")
@@ -1158,7 +1178,7 @@
                     input = %spool_path%%name%.lnk
                 if (menu_item == "Delete")
                     {
-                    if (spool_name == "slides")
+                    if (spool_name == "slides" && media != "playlist")
                         {
                         FileRead, str, %playlist%
                         FileDelete, %playlist%
@@ -1188,9 +1208,9 @@
             CreateList(0)
         selected =
         }
-    if popup
-        PopUp(popup,0,0)
     RenderPage()
+    if popup
+        PopUp(popup,700,0)
     return
 
 
@@ -1264,7 +1284,7 @@
         fcol := Setting("Font Color")
         back := Setting("Back Color")
         size := Setting("Thumbs Qty")
-        if (view == 5)							; no thumbnails so page list can be bigger
+        if (view == 7)							; no thumbnails so page list can be bigger
             size := Setting("List Size")
         Loop, Parse, list, `n, `r 					; split list into smaller web pages
           if FilterList(A_LoopField)
@@ -1306,9 +1326,20 @@
         {
         if !DetectMedia()
             return
+        width := "34,19,13,9,6,4,38"
+        width := StrSplit(width, ",")
+        width := width[view]
+        margin := Round(width * 0.5)
+        width1 := Round(width * 2)
+        font_size := Round((width + 20) / 34,1)
+        height1 := Round(width * 0.9)
+        font := Setting("Font Color")
         FileGetSize, size, %inputfile%, K
         size := Round(size/1000)
-        source = img style="width:100`%;				; default media source tag
+        page_media = %page_media%%i%/
+        hov := Round(100 * (width + 20)/54)
+        hov_size = img style="width:%hov%`%;				; hover image in list view
+        vid_styl = img style="width:100`%;
         IfInString, selected, %sourcefile%				; underline any selected media
             select = border-bottom:dotted #ffbf99;
         if (inputfile == last_media || (song && InStr(inputfile, song))) ; highlight media
@@ -1332,7 +1363,8 @@
             no_index = <span style="color:orange">- link - &nbsp;&nbsp;</span>
         if (media == "video")
             {								; use thumbnail from cache if exists
-            source = video style="width:100`%;
+            hov_size = video style="width:%hov%`%;			; hover image in list view
+            vid_styl = video style="width:100`%;
             FileRead, duration, %inca%\cache\durations\%media_name%.txt
             IfExist, %inca%\cache\thumbs\%media_name%.mp4
                 inputfile = %inca%\cache\thumbs\%media_name%.mp4
@@ -1341,15 +1373,6 @@
             }
         IfNotExist, %inputfile%
             return
-        page_media = %page_media%%i%/
-        width := "34,19,13,9"
-        width := StrSplit(width, ",")
-        width := width[view]
-        margin := Round(width * 0.5)
-        width1 := Round(width * 2)
-        font_size := Round(width * 0.06,1)
-        height1 := Round(width * 0.9)
-        font := Setting("Font Color")
         SplitPath, sourcefile,,,,link_name
         link_name := SubStr(link_name, 1, 62)
         Transform, inputfile, HTML, %inputfile%, 2			; make filenames web compatible
@@ -1382,7 +1405,7 @@
         else title_html = <a href="#media%i%0" id="title%i%0" name="media%i%" onmouseenter="snip(event, name, '%html_spool_name%')" onmousedown="select(event, id, name)">
         if (last_ext == "m3u" && ext != "m3u")
             media_html = %media_html%<li style="float:left; width:100`%; height:40px"></li>`r`n`r`n
-        if (view == 5 || ext == "m3u")					; list view 
+        if (view == 7 || ext == "m3u")					; list view 
             {
             loop, 9
               IfExist, %inca%\favorites\- snips\%media_name% - %A_Index%.mp4
@@ -1390,7 +1413,7 @@
                   snips = %snips% *
             if snips
               snips = <span style="color:orange;">%snips%</span>
-            media_html = %media_html%<a href="#" id="item%i%" name="media%i%" onmousedown="select(event, id, name)"><li id="media%i%" src="file:///%inputfile%" style="float:left; width:100`%; margin:0;"><table><tr><td id="hover_image"><%source% %select%" src="file:///%inputfile%"></video></tr></table><table><tr><td style="color:#555351; width:4em; text-align:right; padding-right:1em;">%sort_filter%</td><td class="sorts">%ext%</td><td class="sorts">%size%</td><td class="sorts">%dur%</td><td style="%select% %highlight% overflow:hidden; white-space:nowrap; text-overflow:ellipsis; text-align:left; padding-left:1em;">%link_name% %snips%</td></tr></table></li></a>`r`n`r`n
+            media_html = %media_html%<a href="#" id="item%i%" name="media%i%" onmousedown="select(event, id, name)"><li id="media%i%" src="file:///%inputfile%" style="float:left; width:100`%; margin:0;"><table><tr><td id="hover_image"><%hov_size% %select%" src="file:///%inputfile%"></video></tr></table><table><tr><td style="color:#555351; width:4em; text-align:right; padding-right:1em;">%sort_filter%</td><td class="sorts">%ext%</td><td class="sorts">%size%</td><td class="sorts">%dur%</td><td style="%select% %highlight% overflow:hidden; white-space:nowrap; text-overflow:ellipsis; text-align:left; padding-left:1em;">%link_name% %snips%</td></tr></table></li></a>`r`n`r`n
             }
         else 
             {
@@ -1399,8 +1422,19 @@
                 IfExist, %inca%\favorites\- snips\%media_name% - %A_Index%.mp4
                   if (!snip_id || snip_id == A_Index)
                     snips = %snips%<a href="#" id="snip%i%%A_Index%" name="media%i%" onmousedown="select(event, id, name)" onmouseenter="snip(event, name, '%A_Index%')" style="opacity:0.6; display:flex; justify-content:center; width:%width1%px;"><div style="width:%width1%px; height:%height1%px;"><div style="width:0.2em; height:0.2em; background-color:orange;"></div></div></a>
-
-            media_html = %media_html%<li style="display:inline-block; vertical-align:top; width:%width%em; margin-bottom:%margin%em; margin-left:2`%; color:%font%; transition:color 1.4s;">%title_html%<div style="margin-left:8`%; color:#555351; font-size:0.9em; text-align:center; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; %highlight%;">%sort_filter% &nbsp;&nbsp;%no_index% %link_name%</div></a><a href="#" name="media%i%" id="vid%i%" onmousedown="select(event, id, name)" onmousemove="seek(event, id, name)"><%source% %transform% %select%" id="media%i%" src="file:///%inputfile%" muted></a><div style="width:130`%; color:LightSalmon; opacity:0.7; font-size:%font_size%em;">%caption%</div></li><div style="display:inline-block; width:%width1%px; margin-top:20px; vertical-align:top;">%snips%</div>`r`n`r`n
+            if (ext == "txt")
+                {
+                Loop 40
+                    {
+                    rows := A_Index
+                    FileReadLine, str1, %sourcefile%, %A_Index%
+                    if !ErrorLevel
+                        str2 = %str2%%str1%`r`n
+                    else break
+                    }
+	        media_html = %media_html%<div style="display:inline-block; vertical-align:top; width:78`%; margin-left:2`%; color:%font%; transition:color 1.4s;">%title_html%<div style="margin-left:8`%; color:#555351; font-size:0.9em; text-align:center; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; %highlight%;">%sort_filter% &nbsp;&nbsp;%no_index% %link_name%</div></a><textarea rows="%rows%" style="display:inline-block; overflow:hidden; margin-bottom:%margin%em; margin-left:8`%; width:78`%; background-color:inherit; color:#826858; font-size:1em; font-family:ClearSans-Thin; border:none; outline:none;">%str2%</textarea></div>`r`n`r`n
+                }
+            else media_html = %media_html%<li style="display:inline-block; vertical-align:top; width:%width%em; margin-bottom:%margin%em; margin-left:2`%; color:%font%; transition:color 1.4s;">%title_html%<div style="margin-left:8`%; color:#555351; font-size:0.9em; text-align:center; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; %highlight%;">%sort_filter% &nbsp;&nbsp;%no_index% %link_name%</div></a><a href="#" name="media%i%" id="vid%i%" onmousedown="select(event, id, name)" onmousemove="seek(event, id, name)"><%vid_styl% %transform% %select%" id="media%i%" src="file:///%inputfile%" muted></a><div style="width:130`%; color:LightSalmon; opacity:0.7; font-size:%font_size%em;">%caption%</div></li><div style="display:inline-block; width:%width1%px; margin-top:20px; vertical-align:top;">%snips%</div>`r`n`r`n
             }
         last_ext := ext
         skinny =
@@ -1551,7 +1585,7 @@
             IfExist, %item%
                 {
                 index += 1
-                SplitPath, item,,,,filen 
+                SplitPath, item,,,ex,filen
                 FileCreateShortcut, %item%, %spool_path%%index% %filen%.lnk
                 songlist = %songlist%%item%`r`n
                 }
@@ -1649,7 +1683,6 @@
         if slide
             {
             str =
-;            paused = 1
             FileReadLine, str, %slide%, %list_id%
             sourcefile := StrSplit(str, "|").1
             if StrSplit(str, "|").2
@@ -1670,13 +1703,15 @@
         speed = --speed=%speed%
         if (media != "video")
             speed =
+        if (seek > (duration - 5))
+            seek := 0
         seek_t := 100 * seek / duration
         if seek_t
             seek_t = --start=%seek_t%`%
         if (magnify < 0)
             magnify := 0 
         zoom := magnify
-        if (media == "video")
+        if (media == "video" && zoom < 0.8)
             zoom := 0.8
         if (ext == "gif")
             zoom += 1
@@ -1826,8 +1861,10 @@
                 Gui, thumbsheet: Add, Picture, x%X% y%Y% w%W% h%H%, %inca%\cache\%Z%.jpg
                 }
             Gui, thumbsheet: Show
+            return
             }
-        else Gui, thumbsheet: Destroy
+        Gui, thumbsheet: Destroy
+        WinSet, Transparent, 255, ahk_ID %video_player%
         }
 
 
@@ -1984,11 +2021,11 @@
         if (state > -1 && xm < 100)
             {
             WinActivate, ahk_group Browsers
-            if (direction < -10)
+            if (direction < -6)
                 send, ^{-}
-            else  if (direction > 10)
+            else  if (direction > 6)
                 send, ^{+}
-            sleep 200
+            sleep 100
             }
         }
 
@@ -2135,7 +2172,7 @@
             ThumbSeekTime()
         if !seek
             seek := seek_time
-        popup = + Favorite
+        popup = Favorite
         FileCreateShortcut, %sourcefile%, %inca%\favorites\%media_name%.lnk
         if (media == "video" && duration > 30 && !InStr(sourcefile, "\favorites"))
               Loop 10
@@ -2160,7 +2197,7 @@
             FileAppend, %favorite%.mp4||%caption%`r`n,%x%, UTF-8
         else
             FileAppend, %sourcefile%|%seek%|%caption%`r`n,%x%, UTF-8
-        PopUp(popup,800,video_player)
+        PopUp(popup,700,video_player)
         return
         }
 
@@ -2432,7 +2469,7 @@
         }
 
 
-    TaskSwitcher()							; flip between desktop and browser
+    TaskSwitcher()							; close mpv play or flip between desktop and browser
         {
         Critical
         click =
@@ -2451,7 +2488,7 @@
             WinActivate, ahk_group Browsers
             MouseGetPos, xm1,ym1
             MouseMove, % xm1 + 1, % ym1 + 1, 0				; to reset cursor
-            if (view == 5 && menu_item != "Caption")
+            if (view == 7 && menu_item != "Caption")
                 RenderPage()						; highlight last played media in browser
             loop 50
                 {
