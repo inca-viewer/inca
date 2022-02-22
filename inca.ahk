@@ -12,10 +12,6 @@
 	;	DeBug tools - soundbeep, 3000,111   tooltip --- %%
 
 ; purge cache
-; paused state preserved throu slides
-; pause in first
-mbutton in audiio, next in list 
-
 
 
 	#NoEnv
@@ -163,7 +159,7 @@ mbutton in audiio, next in list
               click =
               NextMedia()
               }
-          else if (media == "image" || slide || duration < 30)
+          else if (media == "image" || media == "audio" || slide || duration < 30)
               NextMedia()
           else if thumb_sheet
               {
@@ -1635,6 +1631,7 @@ mbutton in audiio, next in list
                 DetectMedia()
                 if (spool_name == "slides")
                     {
+                    paused = 1
                     slide := playlist
                     NextMedia()
                     }
@@ -1754,7 +1751,7 @@ mbutton in audiio, next in list
              sleep 250
              RunWait %COMSPEC% /c echo add video-aspect %aspect% > \\.\pipe\mpv%list_id%,, hide && exit
              }
-        if (slide || click != "MButton" || media == "image")
+        if (slide || click != "MButton" || media == "image" || media == "audio")
             {
             sleep 100
             loop 10
@@ -1777,6 +1774,7 @@ mbutton in audiio, next in list
                     }
                 }
             }
+        GuiControl, Indexer:, GuiInd, %media_name%
         WinClose, ahk_ID %video_player%
         WinSet, Transparent, 0, ahk_group Browsers
         block_input := A_TickCount + 300
@@ -2332,7 +2330,7 @@ mbutton in audiio, next in list
         if (width > 0)
             sign = +
         if Setting("Status Bar")
-        if slide
+        if video_player
             seek_t := seek_time
         else seek_t =
             status = %time%    %vol%    %seek_t%    %sign%%width%
@@ -2477,6 +2475,7 @@ mbutton in audiio, next in list
         Gui, Caption: Cancel
         Gui, settings: Cancel
         Gui, ProgressBar:Cancel
+        GuiControl, Indexer:, GuiInd
         if (video_player || thumb_sheet)
             {
             thumb_sheet =
