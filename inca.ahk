@@ -1,19 +1,18 @@
 
-	;	Inca Media Viewer		Windows - Firefox - Chrome
+	;	Inca Media Viewer for Windows. Firefox & Chrome compatible
+
+	;	Why Exist - to beautify, unify and manage media
+	;	without the ugliness of windows & media players
 
 	;	AHK Script Operation:
-	;	file searches and selections CreateList() of local media are spooled into web pages
-	;	media is played using lightweight MPV media player
-	;	special mouse ClickEvent() & Gestures() are used to control volume, magnify, pan, seek etc.
-	;	music playlists for background music also from browser tab
-	;	0.1 second background timer updates media status bar
-	;	local video media are indexed to a small 200 keyframe .mp4 file for fast thumbsnail creation
-	;	web page clicks and tab control are through the browser location bar
+	;	it creates active web pages of local media and music playlists
+	;	media searches and selections are spooled into these active web pages
+	;	mouse ClickEvent() & Gestures() are used to control volume, magnify, pan, seek etc.
+	;	0.1 second background timer updates media status bar and controls
+	;	videos are indexed to a small 200 keyframe .mp4 file for fast thumbsnail creation
+	;	web page control is through reading & writing to the browser location bar
 	;	DeBug tools - soundbeep, 3000,111   tooltip --- %%
 
-; purge cache
-; delete items slides
-; music highlight
 
 
 	#NoEnv
@@ -106,8 +105,8 @@
 	Global xm			; mouse position global
 	Global ym
 	Global pan
-
-
+	Global seek_t
+	Global last_seek
 
 
     main:
@@ -142,7 +141,7 @@
       if (music_player && xm < 100)
           PlaySong(song_id)
       else if video_player
-          if (media == "video" && !thumb_sheet && !slide && !InStr(media_path, "\favorites\- snips"))
+          if (media == "video" && !thumb_sheet && !slide && duration >= 60)
               ThumbSheet()
           else Playmedia()
       else if (tab != 2 || !inside_browser) 
@@ -241,18 +240,35 @@
           }
       if (video_player && media != "image" && A_TickCount > block_input)
           {
-          key = +{Left}+{Left}
-          if wheel
-              key = +{Right}
-          if (paused || ext == "gif") ; || duration < 61)
+          if (paused || ext == "gif")
               {
               paused = 1
               if wheel
                   key = ..
               else key = ,,
+              ControlSend,, %key%, ahk_ID %video_player%
               }
-          ControlSend,, %key%, ahk_ID %video_player%			; seek
-          block_input := A_TickCount + 80
+          else
+              {              
+              step := duration / 200
+              if (duration < 1000)
+                  step := step*2
+              if (duration < 400)
+                  step := step*2
+              if (duration < 100)
+                  step := step*2
+              if (seek_time != last_seek)
+                  seek_t := seek_time
+              if wheel
+                  seek_t := Round(seek_t + step,2)
+              else seek_t := Round(seek_t - step - 0.5,2)
+              last_seek := seek_time
+              if (seek_t < 0.1)
+                  seek_t := 0.1
+              if (!wheel || seek_t < (duration - 2))
+                  RunWait %COMSPEC% /c echo seek %seek_t% absolute > \\.\pipe\mpv%list_id%,, hide && exit
+              }
+          block_input := A_TickCount + 84
           }
       return
 
@@ -1178,8 +1194,9 @@
                         FileRead, str, %playlist%
                         FileDelete, %playlist%
                         Loop, Parse, str, `n, `r
-                           IfNotInString, A_LoopField, %input%
-                               FileAppend, %A_LoopField%`r`n, %playlist%, UTF-8
+                          IfNotInString, A_LoopField, %input%
+                            if A_LoopField
+                              FileAppend, %A_LoopField%`r`n, %playlist%, UTF-8
                         }
                     else FileRecycle, %input%
                     popup = Delete %count%
@@ -1218,8 +1235,9 @@
         FileGetSize, size, %sourcefile%, K
         size := Round(size/1000,2)
         FileRead, duration, %inca%\cache\durations\%media_name%.txt
-        InputBox, newname,%media_path%  %ext%  size %size%  dur %duration%,,,,94,,,,, %media_name%	; box height = 90px
-        send, !0
+        InputBox, newname,%media_path%  %ext%  size %size%  dur %duration%,,,,94,,,,, %media_name%
+        IfWinExist, ahk_class OSKMainClass
+            send, !0
         if !ErrorLevel
             {
             if (ext != "lnk")
@@ -1288,7 +1306,7 @@
                 SpoolList(A_Index)
             }
         pages := ceil(list_size/size)
-        html_header = <!--`r`n%view%/%page%/%sort%/%toggles%/%safe_this_search%/%search_term%/%safe_spool_path%/%safe_playlist%/%safe_last_media%`r`n%page_media%`r`n-->`r`n<!doctype html>`r`n<html>`r`n<head>`r`n<link rel="icon" type="image/x-icon" href="file:///%inca%/apps/icons/inca.ico">`r`n<meta charset="UTF-8">`r`n<title>Inca - %html_spool_name%</title>`r`n<style>`r`n`r`n@font-face {font-family: ClearSans-Thin; src: url(data:application/font-woff;charset=utf-8;base64,%font%);}`r`nbody {font-family: 'ClearSans-Thin'; overflow-x:hidden; background:%back%; color:#666666; font-size:0.85em; margin-top:160px;}`r`na:link {color:#15110a;}`r`na:visited {color:#15110a;}`r`ntable {color:%fcol%; transition:color 1.4s; width:100`%; table-layout:fixed; border-collapse: collapse;}`r`na {text-decoration:none; color:%fcol%;}`r`nc {width:28`%; text-decoration:none; color:%fcol%;}`r`nimg {display:block; margin:0 auto; max-width:100`%; max-height:%max_height%px;}`r`n.title {clear:left; white-space:nowrap; color:#33312e;}`r`na.slider {display:inline-block; width:36`%; height:18px; border-radius:9px; color:%fcol%; transition:color 1.4s; font-size:1.1em; background-color:#1b1814; margin-right:1em; margin-left:-0.24em; text-align:center}`r`na.slider:hover {color:red; transition:color 0.36s;}`r`na.footer {display:inline-block; width:34`%; font-size:2.2em; color:#33312e; transition:color 1.4s;}`r`na.footer:hover {color:red; transition:color 0.36s;}`r`n.container {width:%width%`%; margin-left:%offset%`%;}`r`n.columns {float:left;}`r`nul.menu {width:100`%; column-gap:12px; margin:auto; list-style-type:none; padding:0; white-space:nowrap;}`r`n.sorts {color:#555351; font-size:0.8em; text-align:right; padding-right:2em; width:1.2em;}`r`nul.menu li {color:%fcol%; transition:color 1.4s;}`r`nul.menu li:hover {color:red; transition:color 0.36s;}`r`nul.list {width:100`%; margin-right:12`%; list-style-type:none; padding:0;}`r`nul.list table:hover {color:red; transition:color 0.36s;}`r`nul.list li img {border: 1px solid %back%;}`r`n#hover_image {position:absolute; opacity:0; transition: opacity 0.4s; width:170px; height:auto;}`r`n#hover_image:hover {opacity:1;}`r`n@keyframes blink {0`% {opacity:0;} 100`% {opacity:1;}`r`n</style>`r`n</head>`r`n<body>`r`n`r`n%script%`r`n`r`n<div class="container"><ul class="list"><a href="#%html_spool_name%"><li class="title" style="font-size:5em">%html_spool_name%<span style="font-size:0.4em;">&nbsp;&nbsp;%list_size%</span></li></a></ul></div>`r`n
+        html_header = <!--`r`n%view%/%page%/%sort%/%toggles%/%safe_this_search%/%search_term%/%safe_spool_path%/%safe_playlist%/%safe_last_media%`r`n%page_media%`r`n-->`r`n<!doctype html>`r`n<html>`r`n<head>`r`n<link rel="icon" type="image/x-icon" href="file:///%inca%/apps/icons/inca.ico">`r`n<meta charset="UTF-8">`r`n<title>Inca - %html_spool_name%</title>`r`n<style>`r`n`r`n@font-face {font-family: ClearSans-Thin; src: url(data:application/font-woff;charset=utf-8;base64,%font%);}`r`nbody {font-family: 'ClearSans-Thin'; overflow-x:hidden; background:%back%; color:#666666; font-size:0.85em; margin-top:160px;}`r`na:link {color:#15110a;}`r`na:visited {color:#15110a;}`r`ntable {color:%fcol%; transition:color 1.4s; width:100`%; table-layout:fixed; border-collapse: collapse;}`r`na {text-decoration:none; color:%fcol%;}`r`nc {width:28`%; text-decoration:none; color:%fcol%;}`r`nimg {display:block; margin:0 auto; max-width:100`%; max-height:%max_height%px;}`r`n.title {clear:left; white-space:nowrap; color:#33312e;}`r`na.slider {display:inline-block; width:36`%; height:18px; border-radius:9px; color:%fcol%; transition:color 1.4s; font-size:1.1em; background-color:#1b1814; margin-right:1em; margin-left:-0.24em; text-align:center}`r`na.slider:hover {color:red; transition:color 0.36s;}`r`na.footer {display:inline-block; width:34`%; font-size:2.2em; color:#33312e; transition:color 1.4s;}`r`na.footer:hover {color:red; transition:color 0.36s;}`r`n.container {width:%width%`%; margin-left:%offset%`%;}`r`n.columns {float:left;}`r`nul.menu {width:100`%; column-gap:12px; margin:auto; list-style-type:none; padding:0; white-space:nowrap;}`r`n.sorts {color:#555351; font-size:0.8em; text-align:right; padding-right:2em; width:1.2em;}`r`nul.menu li {color:%fcol%; transition:color 1.4s;}`r`nul.menu li:hover {color:red; transition:color 0.36s;}`r`nul.list {width:100`%; margin-right:12`%; list-style-type:none; padding:0;}`r`nul.list table:hover {color:red; transition:color 0.36s;}`r`nul.list li img {border: 1px solid %back%;}`r`n#hover_image {position:absolute; margin-left:4`%; opacity:0; transition: opacity 0.4s; width:110px; height:auto;}`r`n#hover_image:hover {opacity:1;}`r`n@keyframes blink {0`% {opacity:0;} 100`% {opacity:1;}`r`n</style>`r`n</head>`r`n<body>`r`n`r`n%script%`r`n`r`n<div class="container"><ul class="list"><a href="#%html_spool_name%"><li class="title" style="font-size:5em">%html_spool_name%<span style="font-size:0.4em;">&nbsp;&nbsp;%list_size%</span></li></a></ul></div>`r`n
         menu_html = `r`n<div class="container">`r`n`r`n<ul class="menu" style="display:flex; justify-content:space-between;">`r`n`r`n
         PostList(sort, sort_list)
         sort_html = <div style="height:20px; clear:left;"></div><div class="container">`r`n`r`n<a href="#View#%view%" id='slider4' class='slider' style="width:8`%;" onmousemove='getCoords(event, id, "View", "%html_spool_name%","")' onmouseleave='getCoords(event, id, "View", "%html_spool_name%", "%view%")'>View %view%</a>`r`n`r`n<a href="%html_spool_name%.htm#%sort%" id='slider1' class='slider' onmousemove='getCoords(event, id, "%sort%", "%html_spool_name%", "")'>%sort%</a>`r`n`r`n<a href="#Page#%previous%" class='slider' style="width:4.5`%;">Prev</a><a href="%html_spool_name%.htm#Page" id='slider2' class='slider' onmousemove='getCoords(event, id, "%Pages%", "%html_spool_name%", "")' onmouseleave='getCoords(event, id, "%Pages%", "%html_spool_name%", "%page%")'>Page %page% of %pages%</a>`r`n`r`n<a href="#Page#%next%" class='slider' style="width:4.5`%;">Next</a></div><div style="height:6px;"></div>`r`n`r`n%menu_html%</ul><p style="height:30px;"></p></div>`r`n`r`n`r`n
@@ -1862,6 +1880,8 @@
         WinMinimize, ahk_ID %music_player%
         GetSeekTime(music_player)
         SetTimer, VolUp
+        if (spool_name == "music")
+            RenderPage()
         }
 
 
@@ -2242,6 +2262,67 @@
         }
 
 
+    ShowStatus()
+        {
+        FormatTime, time,, h : mm
+        vol := Round(volume)
+        if (volume < 0.95)
+            vol := Round(volume,1)
+        if (volume <= 0)
+            vol =
+        if (!skinny || !video_player)
+            width =
+        else width := skinny
+        if (width > 0)
+            sign = +
+        if Setting("Status Bar")
+        if video_player
+            seek_t := seek_time
+        else seek_t =
+            status = %time%    %vol%    %seek_t%    %sign%%width%
+        if (status != last_status)					; to stop flickering
+            {
+            Gui, Status:+lastfound
+            WinSet, TransColor, 0 60
+            Gui, Status:Font, s20 cWhite, Segoe UI
+            GuiControl, Status:Font, GuiSta
+            GuiControl, Status:, GuiSta, %status%
+            Gui, Status:Show, NA
+            last_status := status
+            }
+        yv := A_ScreenHeight - 4
+        xv := A_ScreenWidth * volume/101
+        if vol_popup
+            gui, vol: show, x%xv% y%yv% w30 h4 NA
+        else gui, vol: hide
+        }
+
+
+    PopUp(message, time, dim)
+        {
+        MouseGetPos, xp, yp
+        time := Ceil(time / 10)
+        Gui PopUp:Destroy
+        Gui PopUp:+lastfound +AlwaysOnTop -Caption +ToolWindow
+        Gui PopUp:Color, Black
+        Gui PopUp:Font, s20 cRed, Segoe UI
+        Gui PopUp:Add, Text,, %message%
+        if video_player
+            Gui PopUp:Show, NA
+        else Gui PopUp:Show, x%xp% y%yp% NA
+        WinSet, TransColor, 0 255
+        loop %time%
+            {
+            sleep 10
+            mask := 55 + (A_Index * 200/ time)
+            if (time > 5 && dim)
+                WinSet, transparent, %mask%
+            mask2 := 255 - mask
+            WinSet, TransColor, 0 %mask2%
+            }
+        }
+
+
     PurgeCache()
         {
         Loop, Files, %inca%\favorites\*.lnk, FR
@@ -2356,67 +2437,6 @@
         SetTimer, Indexer, -%time%
         GuiControl, Indexer:, GuiInd
         return
-
-
-    ShowStatus()
-        {
-        FormatTime, time,, h : mm
-        vol := Round(volume)
-        if (volume < 0.95)
-            vol := Round(volume,1)
-        if (volume <= 0)
-            vol =
-        if (!skinny || !video_player)
-            width =
-        else width := skinny
-        if (width > 0)
-            sign = +
-        if Setting("Status Bar")
-        if video_player
-            seek_t := seek_time
-        else seek_t =
-            status = %time%    %vol%    %seek_t%    %sign%%width%
-        if (status != last_status)					; to stop flickering
-            {
-            Gui, Status:+lastfound
-            WinSet, TransColor, 0 60
-            Gui, Status:Font, s20 cWhite, Segoe UI
-            GuiControl, Status:Font, GuiSta
-            GuiControl, Status:, GuiSta, %status%
-            Gui, Status:Show, NA
-            last_status := status
-            }
-        yv := A_ScreenHeight - 4
-        xv := A_ScreenWidth * volume/101
-        if vol_popup
-            gui, vol: show, x%xv% y%yv% w30 h4 NA
-        else gui, vol: hide
-        }
-
-
-    PopUp(message, time, dim)
-        {
-        MouseGetPos, xp, yp
-        time := Ceil(time / 10)
-        Gui PopUp:Destroy
-        Gui PopUp:+lastfound +AlwaysOnTop -Caption +ToolWindow
-        Gui PopUp:Color, Black
-        Gui PopUp:Font, s20 cRed, Segoe UI
-        Gui PopUp:Add, Text,, %message%
-        if video_player
-            Gui PopUp:Show, NA
-        else Gui PopUp:Show, x%xp% y%yp% NA
-        WinSet, TransColor, 0 255
-        loop %time%
-            {
-            sleep 10
-            mask := 55 + (A_Index * 200/ time)
-            if (time > 5 && dim)
-                WinSet, transparent, %mask%
-            mask2 := 255 - mask
-            WinSet, TransColor, 0 %mask2%
-            }
-        }
 
 
     LoadSettings()
