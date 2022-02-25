@@ -12,7 +12,8 @@
 	;	DeBug tools - soundbeep, 3000,111   tooltip --- %%
 
 ; purge cache
-; fade javascript thumbs
+; delete items slides
+; music highlight
 
 
 	#NoEnv
@@ -101,6 +102,7 @@
 	Global slide_id
 	Global thumb_sheet
 	Global block_input		; stop key interrupts during processing
+	Global seeking			; thumbnail seeking mode
 	Global xm			; mouse position global
 	Global ym
 	Global pan
@@ -155,7 +157,7 @@
 
     Xbutton1::								; mouse "back" button
       MouseGetPos, xm, ym
-      if (music_player && xm < 100)
+      if (music_player && xm < 100 && !video_player)
           PlaySong(song_id -2)
       else
           {
@@ -411,10 +413,13 @@
         return
 
 
-    MediaControls()
+    MediaControls()							; from timer - every 0.1 seconds
         {
+        Static last_thumb
         key =
         MouseGetPos, xpos, ypos
+        if (xpos > A_ScreenWidth - 50)					; trigger image panning mode
+            pan := 50
         if (xm < xpos - pan)
             key = j
         if (xm > xpos + pan)
@@ -423,7 +428,7 @@
             key = h
         if (ym > ypos + pan)
             key = g
-        if (key && media == "image" && !slide)				; pan image
+        if (key && media == "image" && !slide && !seeking)		; pan image
             {
             loop 10
                 {
@@ -440,29 +445,56 @@
             }
         if (media == "video" || media == "audio")
             {
-            GetSeektime(video_player)					; scanning thumbnails
-            xp := xpos
+            xp := Round(A_ScreenWidth * seek_time / duration)
             yp := A_ScreenHeight - 4
-            ys := A_ScreenHeight - 324
-            xs := A_Screenwidth * 0.5 - 240
-            thumb := Round((xp / (A_ScreenWidth)) * 200) 
-            GuiControl,pic:, GuiPic, *w480 *h320 %inca%\cache\%thumb%.jpg
-            if (media == "video" && ypos > A_ScreenHeight * 0.95 && !InStr(media_path, "\favorites\- snips"))
-                Gui, pic:show, x%xs% y%ys% w480 h320
-            else Gui, pic: Cancel
+            GetSeektime(video_player)
+            if seeking
+                xp += 2 * (xpos - seeking)
+            thumb := Round(200 * xp / A_ScreenWidth)
             ratio := (thumb-1) / 200					; create accurate seek time
             offset := 0
             if (duration > 60)
                 offset := 19
             seek =
-            if (ypos > A_ScreenHeight * 0.95)
-                seek := Round(duration * xpos / A_ScreenWidth, 2) + 1
+            if (ypos > A_ScreenHeight * 0.9)
+                seek := Round(ratio * duration + offset - ratio * offset, 2)
             else xp := Round(A_ScreenWidth * seek_time / duration)
             Gui, ProgressBar:+LastFound -Caption +ToolWindow +AlwaysOnTop -DPIScale
             if seek
                  Gui, ProgressBar:Color, 826858
             else Gui, ProgressBar:Color, 303030
             Gui, ProgressBar:Show, x0 y%yp% w%xp% h2 NA			; seek bar under video
+            ys := A_ScreenHeight * 0.5 - 250
+            xs := A_Screenwidth * 0.5 - 400
+            if (thumb != last_thumb)					; stop flickering image
+                GuiControl,pic:, GuiPic, *w800 *h500 %inca%\cache\%thumb%.jpg
+            last_thumb := thumb
+            if (media == "video" && ypos > A_ScreenHeight * 0.98 && !InStr(media_path, "\favorites\- snips"))
+                {
+                if !seeking
+                    {
+                    seeking := xpos
+                    loop 30
+                        {
+                        loop 120000
+                            x =
+                        ControlSend,, 9, ahk_ID %video_player%
+                        }
+                    Gui, pic:show, x%xs% y%ys% w800 h500
+                    }
+                }
+            else if seeking
+                {
+                seeking =
+                RunWait %COMSPEC% /c echo seek %seek% absolute > \\.\pipe\mpv%list_id%,, hide && exit
+                loop 30
+                    {
+                    loop 120000
+                        x =
+                    ControlSend,, 0, ahk_ID %video_player%
+                    }
+                Gui, pic: Cancel
+                }
             }
         }
 
@@ -490,7 +522,7 @@
         if (xy > 8 || (click == "RButton" && (xm < 15 || xm > A_ScreenWidth - 15)))
             {
             gesture = 1
-            pan := A_ScreenWidth * 0.4
+            pan := A_ScreenWidth
             MouseGetPos, xm, ym
             Gui, ProgressBar:Cancel
             if (video_player || click == "RButton")
@@ -565,8 +597,7 @@
                 {
                 RunWait %COMSPEC% /c echo seek %seek% absolute > \\.\pipe\mpv%list_id%,, hide && exit
                 paused = 1
-                sleep 200						; time for video to start
-                seek =
+                sleep 100						; time for video to start
                 }
             if thumb_sheet
                 {
@@ -1506,7 +1537,7 @@
             return "image"
         if (ex == "mp4" || ex == "wmv" || ex == "avi" || ex == "mov" || ex == "webm" || ex == "mpg" || ex == "mpeg" ||ex == "flv" || ex == "divx" || ex == "mkv" || ex == "asf" || ex == "m4v" || ex == "mvb" || ex == "rmvb" || ex == "vob" || ex == "rm" || ex == "gif" || ex == "ts")
             return "video"
-        if (ex == "mp3" || ex == "m4a" || ex == "wma")
+        if (ex == "mp3" || ex == "m4a" || ex == "wma" || ex == "mid")
             return "audio"
         if (ex == "pdf" || ex == "txt" || ex == "doc")
             return "document"
@@ -1609,7 +1640,7 @@
                 if (A_Index == list_id)
                     sourcefile := StrSplit(A_LoopField, "/").2
             if (list_id < 1)
-                sourcefile =
+                return								; sourcefile =
             }
         else if (spool_name == "slides" || spool_name == "music")		; if 1st media, skip over playlist entries
             {
@@ -1715,8 +1746,7 @@
              }
         if (slide || click != "MButton" || media == "image" || media == "audio")
             {
-            if !skinny
-                sleep 100
+            sleep 100
             loop 10
                 {
                 sleep 20
@@ -1742,7 +1772,7 @@
         WinSet, Transparent, 255, ahk_ID %video_player%
         WinSet, Transparent, 0, ahk_group Browsers
         block_input := A_TickCount + 300
-        pan := A_ScreenWidth * 0.4
+        pan := A_ScreenWidth
         video_player := player
         if (click == "MButton" && !slide)
             ThumbSheet()
@@ -1787,9 +1817,10 @@
             if (A_Index == 47 && video_player != music_player)
                 WInClose, ahk_ID %video_player%				; time for Win ID to release
             loop 120000
-                skinny =
+                x =
             }
         Gui, thumbsheet: Cancel
+        seeking =
         skinny =
         paused =
         media =
