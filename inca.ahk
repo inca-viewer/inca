@@ -105,8 +105,12 @@
 	Global xm			; mouse position global
 	Global ym
 	Global pan
+
+
 	Global seek_t
 	Global last_seek
+
+
 
 
     main:
@@ -216,6 +220,7 @@
           }
       timer =
       return
+
 
 
     ~WheelUp::
@@ -476,6 +481,7 @@
                 seek := Round(ratio * duration + offset - ratio * offset, 2)
             else xp := Round(A_ScreenWidth * seek_time / duration)
             Gui, ProgressBar:+LastFound -Caption +ToolWindow +AlwaysOnTop -DPIScale
+
             if seek
                  Gui, ProgressBar:Color, 826858
             else Gui, ProgressBar:Color, 303030
@@ -1122,6 +1128,62 @@
         }
 
 
+    EditFilename()					; + update snips, durations, faorites, history and slides
+        {
+        sourcefile := StrReplace(selected, "`r`n")
+        selected =
+        IfInString, media_path, \favorites\- snips
+            return
+        FileGetSize, size, %sourcefile%, K
+        size := Round(size/1000,2)
+        FileRead, duration, %inca%\cache\durations\%media_name%.txt
+        InputBox, newname,%media_path%  %ext%  size %size%  dur %duration%,,,,94,,,,, %media_name%
+        IfWinExist, ahk_class OSKMainClass
+            send, !0
+        if (!ErrorLevel && ext != "lnk")
+            {
+            FileMove, %sourcefile%, %media_path%\%newname%.%ext%			; FileMove = FileRename
+            Loop, Files, %inca%\slides\*.m3u, FR
+                {
+                FileRead, str, %A_LoopFileFullPath%					; find & replace in .m3u slide files
+                FileDelete, %A_LoopFileFullPath%
+                Loop, Parse, str, `n, `r
+                    if A_LoopField
+                        IfNotInString, A_LoopField, %sourcefile%
+                            FileAppend, %A_LoopField%`r`n, %A_LoopFileFullPath%, UTF-8
+                        else 
+                            {
+                            str1 := A_LoopField
+                            StringReplace, str1, str1, %sourcefile%, %media_path%\%newname%.%ext%
+                            FileAppend, %str1%`r`n, %A_LoopFileFullPath%, UTF-8
+                            }
+                 }
+            fav_his = favorites|history
+            Loop, Parse, fav_his, `|
+              Loop, Files, %inca%\%A_LoopField%\*.lnk, FR
+                IfExist, %A_LoopFileDir%\%media_name%.lnk				; update favorites & history links
+                    {
+                    FileGetShortcut, %A_LoopFileDir%\%media_name%.lnk, link_file,, sk, se
+                    SplitPath, link_file,,fol,ext
+                    FileCreateShortcut, %fol%\%newname%.%ext%, %inca%\%A_LoopField%\%newname%.lnk,, %sk%, %se%
+                    break
+                    }
+            if (media == "video")							; update thumb, duration & snips
+                {
+                FileMove, %inca%\cache\durations\%media_name%.txt, %inca%\cache\durations\%newname%.txt, 1
+                FileMove, %inca%\cache\thumbs\%media_name%.mp4, %inca%\cache\thumbs\%newname%.mp4, 1
+                Loop, 9
+                  IfExist, %inca%\favorites\- snips\%media_name% - %A_Index%.mp4
+                    FileMove, %inca%\favorites\- snips\%media_name% - %A_Index%.mp4, %inca%\favorites\- snips\%newname% - %A_Index%.mp4,1
+                }
+            FileRecycle, %inca%\favorites\%media_name%.lnk          
+            FileRecycle, %inca%\history\%media_name%.lnk       
+            CreateList(0)
+            }
+        RenderPage()
+        LoadSettings()
+        }
+
 
     ContextMenu:							; right click menu
     copy =
@@ -1226,49 +1288,6 @@
     return
 
 
-    EditFilename()
-        {
-        sourcefile := StrReplace(selected, "`r`n")
-        selected =
-        IfInString, media_path, \favorites\- snips
-            return
-        FileGetSize, size, %sourcefile%, K
-        size := Round(size/1000,2)
-        FileRead, duration, %inca%\cache\durations\%media_name%.txt
-        InputBox, newname,%media_path%  %ext%  size %size%  dur %duration%,,,,94,,,,, %media_name%
-        IfWinExist, ahk_class OSKMainClass
-            send, !0
-        if !ErrorLevel
-            {
-            if (ext != "lnk")
-                FileMove, %sourcefile%, %media_path%\%newname%.%ext%
-            fav_his = favorites|history
-            Loop, Parse, fav_his, `|
-              Loop, Files, %inca%\%A_LoopField%\*.lnk, FR
-                IfExist, %A_LoopFileDir%\%media_name%.lnk
-                    {
-                    FileGetShortcut, %A_LoopFileDir%\%media_name%.lnk, link_file,, sk, se
-                    SplitPath, link_file,,fol,ext
-                    FileCreateShortcut, %fol%\%newname%.%ext%, %inca%\%A_LoopField%\%newname%.lnk,, %sk%, %se%
-                    break
-                    }
-            if (media == "video")
-                {
-                FileMove, %inca%\cache\durations\%media_name%.txt, %inca%\cache\durations\%newname%.txt, 1
-                FileMove, %inca%\cache\thumbs\%media_name%.mp4, %inca%\cache\thumbs\%newname%.mp4, 1
-                Loop, 9
-                  IfExist, %inca%\favorites\- snips\%media_name% - %A_Index%.mp4
-                    FileMove, %inca%\favorites\- snips\%media_name% - %A_Index%.mp4, %inca%\favorites\- snips\%newname% - %A_Index%.mp4,1
-                }
-            FileRecycle, %inca%\favorites\%media_name%.lnk          
-            FileRecycle, %inca%\history\%media_name%.lnk       
-            CreateList(0)
-            }
-        RenderPage()
-        LoadSettings()
-        }
-
-
     RenderPage()							; construct web page from media list
         {
         if !(spool_name && spool_path)
@@ -1306,7 +1325,7 @@
                 SpoolList(A_Index)
             }
         pages := ceil(list_size/size)
-        html_header = <!--`r`n%view%/%page%/%sort%/%toggles%/%safe_this_search%/%search_term%/%safe_spool_path%/%safe_playlist%/%safe_last_media%`r`n%page_media%`r`n-->`r`n<!doctype html>`r`n<html>`r`n<head>`r`n<link rel="icon" type="image/x-icon" href="file:///%inca%/apps/icons/inca.ico">`r`n<meta charset="UTF-8">`r`n<title>Inca - %html_spool_name%</title>`r`n<style>`r`n`r`n@font-face {font-family: ClearSans-Thin; src: url(data:application/font-woff;charset=utf-8;base64,%font%);}`r`nbody {font-family: 'ClearSans-Thin'; overflow-x:hidden; background:%back%; color:#666666; font-size:0.85em; margin-top:160px;}`r`na:link {color:#15110a;}`r`na:visited {color:#15110a;}`r`ntable {color:%fcol%; transition:color 1.4s; width:100`%; table-layout:fixed; border-collapse: collapse;}`r`na {text-decoration:none; color:%fcol%;}`r`nc {width:28`%; text-decoration:none; color:%fcol%;}`r`nimg {display:block; margin:0 auto; max-width:100`%; max-height:%max_height%px;}`r`n.title {clear:left; white-space:nowrap; color:#33312e;}`r`na.slider {display:inline-block; width:36`%; height:18px; border-radius:9px; color:%fcol%; transition:color 1.4s; font-size:1.1em; background-color:#1b1814; margin-right:1em; margin-left:-0.24em; text-align:center}`r`na.slider:hover {color:red; transition:color 0.36s;}`r`na.footer {display:inline-block; width:34`%; font-size:2.2em; color:#33312e; transition:color 1.4s;}`r`na.footer:hover {color:red; transition:color 0.36s;}`r`n.container {width:%width%`%; margin-left:%offset%`%;}`r`n.columns {float:left;}`r`nul.menu {width:100`%; column-gap:12px; margin:auto; list-style-type:none; padding:0; white-space:nowrap;}`r`n.sorts {color:#555351; font-size:0.8em; text-align:right; padding-right:2em; width:1.2em;}`r`nul.menu li {color:%fcol%; transition:color 1.4s;}`r`nul.menu li:hover {color:red; transition:color 0.36s;}`r`nul.list {width:100`%; margin-right:12`%; list-style-type:none; padding:0;}`r`nul.list table:hover {color:red; transition:color 0.36s;}`r`nul.list li img {border: 1px solid %back%;}`r`n#hover_image {position:absolute; margin-left:4`%; opacity:0; transition: opacity 0.4s; width:110px; height:auto;}`r`n#hover_image:hover {opacity:1;}`r`n@keyframes blink {0`% {opacity:0;} 100`% {opacity:1;}`r`n</style>`r`n</head>`r`n<body>`r`n`r`n%script%`r`n`r`n<div class="container"><ul class="list"><a href="#%html_spool_name%"><li class="title" style="font-size:5em">%html_spool_name%<span style="font-size:0.4em;">&nbsp;&nbsp;%list_size%</span></li></a></ul></div>`r`n
+        html_header = <!--`r`n%view%/%page%/%sort%/%toggles%/%safe_this_search%/%search_term%/%safe_spool_path%/%safe_playlist%/%safe_last_media%`r`n%page_media%`r`n-->`r`n<!doctype html>`r`n<html>`r`n<head>`r`n<link rel="icon" type="image/x-icon" href="file:///%inca%/apps/icons/inca.ico">`r`n<meta charset="UTF-8">`r`n<title>Inca - %html_spool_name%</title>`r`n<style>`r`n`r`n@font-face {font-family: ClearSans-Thin; src: url(data:application/font-woff;charset=utf-8;base64,%font%);}`r`nbody {font-family: 'ClearSans-Thin'; overflow-x:hidden; background:%back%; color:#666666; font-size:0.85em; margin-top:160px;}`r`na:link {color:#15110a;}`r`na:visited {color:#15110a;}`r`ntable {color:%fcol%; transition:color 1.4s; width:100`%; table-layout:fixed; border-collapse: collapse;}`r`na {text-decoration:none; color:%fcol%;}`r`nc {width:28`%; text-decoration:none; color:%fcol%;}`r`nimg {display:block; margin:0 auto; max-width:100`%; max-height:%max_height%px;}`r`n.title {clear:left; white-space:nowrap; color:#33312e;}`r`na.slider {display:inline-block; width:36`%; height:18px; border-radius:9px; color:%fcol%; transition:color 1.4s; font-size:1.1em; background-color:#1b1814; margin-right:1em; margin-left:-0.24em; text-align:center}`r`na.slider:hover {color:red; transition:color 0.36s;}`r`na.footer {display:inline-block; width:34`%; font-size:2.2em; color:#33312e; transition:color 1.4s;}`r`na.footer:hover {color:red; transition:color 0.36s;}`r`n.container {width:%width%`%; margin-left:%offset%`%;}`r`n.columns {float:left;}`r`nul.menu {width:100`%; column-gap:12px; margin:auto; list-style-type:none; padding:0; white-space:nowrap;}`r`n.sorts {color:#555351; font-size:0.8em; text-align:right; padding-right:2em; width:1.2em;}`r`nul.menu li {color:%fcol%; transition:color 1.4s;}`r`nul.menu li:hover {color:red; transition:color 0.36s;}`r`nul.list {width:100`%; margin-right:12`%; list-style-type:none; padding:0;}`r`nul.list table:hover {color:red; transition:color 0.36s;}`r`nul.list li img {border: 1px solid %back%;}`r`n#hover_image {position:absolute; margin-left:2`%; opacity:0; transition: opacity 0.4s; width:140px; height:auto;}`r`n#hover_image:hover {opacity:1;}`r`n@keyframes blink {0`% {opacity:0;} 100`% {opacity:1;}`r`n</style>`r`n</head>`r`n<body>`r`n`r`n%script%`r`n`r`n<div class="container"><ul class="list"><a href="#%html_spool_name%"><li class="title" style="font-size:5em">%html_spool_name%<span style="font-size:0.4em;">&nbsp;&nbsp;%list_size%</span></li></a></ul></div>`r`n
         menu_html = `r`n<div class="container">`r`n`r`n<ul class="menu" style="display:flex; justify-content:space-between;">`r`n`r`n
         PostList(sort, sort_list)
         sort_html = <div style="height:20px; clear:left;"></div><div class="container">`r`n`r`n<a href="#View#%view%" id='slider4' class='slider' style="width:8`%;" onmousemove='getCoords(event, id, "View", "%html_spool_name%","")' onmouseleave='getCoords(event, id, "View", "%html_spool_name%", "%view%")'>View %view%</a>`r`n`r`n<a href="%html_spool_name%.htm#%sort%" id='slider1' class='slider' onmousemove='getCoords(event, id, "%sort%", "%html_spool_name%", "")'>%sort%</a>`r`n`r`n<a href="#Page#%previous%" class='slider' style="width:4.5`%;">Prev</a><a href="%html_spool_name%.htm#Page" id='slider2' class='slider' onmousemove='getCoords(event, id, "%Pages%", "%html_spool_name%", "")' onmouseleave='getCoords(event, id, "%Pages%", "%html_spool_name%", "%page%")'>Page %page% of %pages%</a>`r`n`r`n<a href="#Page#%next%" class='slider' style="width:4.5`%;">Next</a></div><div style="height:6px;"></div>`r`n`r`n%menu_html%</ul><p style="height:30px;"></p></div>`r`n`r`n`r`n
@@ -1415,7 +1434,7 @@
             }
         else title_html = <a href="#media%i%0" id="title%i%0" name="media%i%" onmouseenter="snip(event, name, '%html_spool_name%')" onmousedown="select(event, id, name)">
         if (last_ext == "m3u" && ext != "m3u")
-            media_html = %media_html%<li style="float:left; width:100`%; height:40px"></li>`r`n`r`n
+            media_html = %media_html%<li style="float:left; width:100`%; height:40px"></li>`r`n`r`n	; gap between playlists & media
         if (view == 7 || ext == "m3u")					; list view 
             {
             loop, 9
@@ -1690,7 +1709,7 @@
         If (timer > 350)
             {
             paused =
-            seek = 20
+            seek = 10
             GetSnipSource()							; in case a snip
             }
         if !DetectMedia()
@@ -1813,9 +1832,12 @@
         thumb_sheet =
         FileDelete, %inca%\cache\*.jpg
         GetSeekTime(video_player)
-        FileCreateShortcut, %inputfile%, %inca%\history\all history\%media_name%.lnk
-        if (history_timer / 10 > Setting("History Timer") && media != "audio")
-            FileCreateShortcut, %inputfile%, %inca%\history\%media_name%.lnk
+        if !(InStr(media_path, "\favorites\- snips") || InStr(spool_path, "\slides") || ext == "lnk")
+            {
+            FileCreateShortcut, %inputfile%, %inca%\history\all history\%media_name%.lnk
+            if (history_timer / 10 > Setting("History Timer") && media != "audio")
+                FileCreateShortcut, %inputfile%, %inca%\history\%media_name%.lnk
+            }
         WinActivate, ahk_group Browsers
         MouseGetPos, xm1,ym1
         MouseMove, % xm1 + 1, % ym1 + 1, 0				; to reset cursor
@@ -1880,7 +1902,7 @@
         WinMinimize, ahk_ID %music_player%
         GetSeekTime(music_player)
         SetTimer, VolUp
-        if (spool_name == "music")
+        if (tab == 2 && spool_name == "music")
             RenderPage()
         }
 
