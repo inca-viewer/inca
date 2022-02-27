@@ -40,10 +40,10 @@ var seek = el.duration * xpos;
 var offset = el.duration * 0.01
 if (el.getAttribute("src").match(/- snips/i)) {el.currentTime = seek; return;}
 if (el.currentTime < (seek - offset) || el.currentTime > (seek + offset)){
-opacity = 0;
+opacity = 0.2;
 el.currentTime = seek;
 var intervalID = setInterval(function() {
-if (opacity < 1) {opacity = opacity + 0.05; el.style.opacity = opacity;}
+if (opacity < 1) {opacity = opacity + 0.02; el.style.opacity = opacity;}
 else {clearInterval(intervalID);}}, 15)}}
 
 function getCoords(event, id, sort, link, current) {	// return slider control position
