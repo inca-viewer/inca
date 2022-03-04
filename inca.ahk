@@ -1,6 +1,5 @@
 
 
-
 	;	Inca Media Viewer for Windows. Firefox & Chrome compatible
 
 	;	Why Exist - to beautify, unify and manage media
@@ -14,10 +13,6 @@
 	;	videos are indexed to a small 200 keyframe .mp4 file for fast thumbsnail creation
 	;	web page control is through reading & writing to the browser location bar
 	;	DeBug tools - soundbeep, 3000,111   tooltip --- %%
-
-
-
-; fade + escape during seek like java
 
 
 
@@ -90,7 +85,8 @@
         Global inside_browser		; clicked inside browser window
         Global last_media		; last media sourcefile
         Global last_thumb
-        Global caption			; media text overlay
+	Global last_status		; time, vol etc display
+        Global caption			; media subtitle
 	Global list_id			; media list pointer
 	Global song_id
         Global menu_item		; context menu
@@ -99,7 +95,6 @@
 	Global song_timer		; time remaining
         Global song			; current song inc. path
 	Global page_media		; list of media id's in .htm page header
-	Global last_status		; time, vol etc display
 	Global magnify := 0.7		; magnify video
         Global seek			; goto seek time
 	Global idle			; mpv player idle
@@ -109,10 +104,10 @@
 	Global block_input		; stop key interrupts during processing
 	Global xpos			; current mouse position - 100mS updated 
 	Global ypos
-	Global xclick			; mouse position on R or L mouse click
+	Global xclick			; mouse position on click
 	Global yclick
-	Global pan
-	Global active
+	Global pan			; image panning mode
+	Global active			; thumbsheet or seeking mode
 	Global seeking			; thumbnail seeking mode
 
 
@@ -120,15 +115,15 @@
 
 
     main:
-      initialize()			; set environment
-      SetTimer, TimedEvents, 100, -1	; every 100mS
-      return				; wait for hotkeys
+      initialize()				; set environment
+      SetTimer, TimedEvents, 100, -1		; every 100mS
+      return					; wait for hotkeys
 
 
-    ~LButton::
+    ~LButton::					; click events
     RButton::
     MButton::
-      block_input := A_TickCount + 99
+      block_input := A_TickCount + 300
       click =
       if (!Gestures() && click)
           ClickEvent()
@@ -139,8 +134,8 @@
       return
 
 
-    Xbutton1::								; mouse "back" button
-      block_input := A_TickCount + 99
+    Xbutton1::					; mouse "back" button
+      block_input := A_TickCount + 300
       timer = set
       click = Back
       SetTimer, Xbutton_Timer, -300
@@ -168,8 +163,8 @@
       return
 
 
-    ~Enter::								; file search - from input box
-      if (WinActive("ahk_group Browsers") && tab == 2)
+    ~Enter::					; file search - from html input box
+      if inside_browser
         {
         send, !0
         Clipboard =
@@ -177,11 +172,12 @@
         ClipWait, 0
         if (search_box := Clipboard)
             ClickWebPage()
+        refresh = 1
         }
       return
 
 
-    #\::
+    #\::								; mouse 1 option button win\
       timer3 = set
       SetTimer, button1_Timer, -240
       return
@@ -205,15 +201,15 @@
         last_status =
         }
       else
-          {
-          if !title
-              send, {f11}						; fullscreen
-          send, f
-          }
+        {
+        if !title
+          send, {f11}							; fullscreen
+        send, f
+        }
       return
 
 
-    #/::
+    #/::								; mouse 2 option button win/
       timer = set
       IfWinActive, ahk_group Browsers
           SetTimer, button2_Timer, -240
@@ -240,6 +236,7 @@
 
     Gestures()
       {
+      MouseGetPos, xpos, ypos
       StringReplace, click, A_ThisHotkey, ~,, All
       if video_player							; allow gestures over mpv player
           send, {Click up}
@@ -277,26 +274,18 @@
             if GetKeyState("LButton", "P")
                 if (click == "speed")
                     SetSpeed(y)
-                else if (A_Cursor != "IBeam" && video_player)
+                else if video_player
                     SetAspect(x, y)
                 else if !inside_browser
                     BrowserMagnify(y)
             }
-        if (!gesture && timer > 350)					; long click detected
-            {
-            if (click == "LButton" && A_Cursor == "IBeam")
-                SearchText()
-            if (click == "LButton" && video_player && media != "image")
-                SetSpeed(0)
-            if (inside_browser && click == "LButton" && !video_player && A_Cursor != "IBeam" && !WinExist("ahk_class OSKMainClass"))
-                 ClickWebPage()
-            else if (tab == 2 && click == "RButton" && (video_player || GetPageLink()))
-                 AddFavorites()
-            else if (tab != 2 && click == "RButton" && A_Cursor == "Unknown")
-                SaveImage()
-            else continue
-            return 1
-            }
+         if (!gesture && timer > 350)
+             {
+             if (media == "video" && GetKeyState("LButton", "P") && click != "speed")
+                 SetSpeed(0)
+             else if (click != "speed")
+                 return 0
+             }
          }
       return gesture
       }
@@ -306,7 +295,86 @@
         {
         Critical
         MouseGetPos, xclick, yclick
-        if (click == "Back")
+        if (click == "MButton")
+            {
+            if (music_player && xpos < 100)
+                PlaySong(1)
+            else if video_player
+                {
+                if (active == 2)
+                    Playmedia(1)
+                else if (click == "MButton" && media == "video")        
+                    {
+                    active = 2
+                    Gui, thumbsheet: Show
+                    block_input := A_TickCount + 1200
+                    }
+                }
+            else if (tab != 2 || !inside_browser) 
+                send, {MButton}
+            else if (tab == 2 && inside_browser && !ClickWebPage())
+                PlayMedia(0)						; replay last_media
+            }
+        else if (click == "RButton")
+            {
+            if (timer > 350 && tab == 2 && (video_player || GetPageLink()))
+                AddFavorites()
+            else if (timer > 350 && tab != 2 && A_Cursor == "Unknown")
+                SaveImage()
+            else if (inside_browser && GetPageLink())
+                {
+                last_media =
+                IfNotInString, selected, %sourcefile%
+                    selected = %selected%%sourcefile%`r`n
+                else StringReplace, selected, selected, %sourcefile%`r`n
+                send, {RButton}{Esc}
+                }
+            else if (inside_browser || video_player)
+                {
+                sleep 10
+                seek_time := seek
+                Menu, ContextMenu, Show
+                }
+            else send, {RButton}
+            }
+        else if (click == "LButton")
+          {
+          if (timer > 350 && A_Cursor == "IBeam")
+              SearchText()
+          else if (timer > 350 && inside_browser && !video_player && A_Cursor != "IBeam")
+              ClickWebPage()
+          else if (video_player && media != "image")
+              {
+              GetSeekTime(video_player)
+              if (active == 2)
+                  ThumbSeekTime()
+              if (!seek && seek_time > duration - 1)			; video finished playing
+                  seek := 0.1						; return to start
+              if seek							; eg. from thumbsheet
+                  {
+                  active =
+                  paused =
+                  RunWait %COMSPEC% /c echo seek %seek% absolute > \\.\pipe\mpv%list_id%,, hide && exit
+                  sleep 100						; time for video to start
+                  }
+              if (!seek && timer < 350)					; in case gestures
+                  {
+                  if paused
+                      paused =
+                  else paused = 1
+                  }
+              if paused
+                  ControlSend,, 2, ahk_ID %video_player%
+              else ControlSend,, 1, ahk_ID %video_player%
+              Gui, thumbsheet: Hide
+              seek := 0
+              }
+          else if video_player						; images
+              PlayMedia(1)
+          else if (inside_browser && A_Cursor != "IBeam")
+              ClickWebPage()
+          }
+        else if (click == "Back")
             {
             if timer							; long back key press
                 {
@@ -336,76 +404,96 @@
                 }
             else send, {Xbutton1}
             }
-        else if (click == "MButton")
-            {
-            seeking =
-            if (music_player && xpos < 100)
-                PlaySong(1)
-            else if video_player
-                Playmedia(1)
-            else if (tab != 2 || !inside_browser) 
-                send, {MButton}
-            else if (tab == 2 && inside_browser && !ClickWebPage())
-                PlayMedia(0)						; replay last_media
-            }
-        else if (click == "RButton")
-            {
-            if (inside_browser && GetPageLink())
-                {
-                last_media =
-                IfNotInString, selected, %sourcefile%
-                    selected = %selected%%sourcefile%`r`n
-                else StringReplace, selected, selected, %sourcefile%`r`n
-                send, {RButton}{Esc}
-                }
-            else if (inside_browser || video_player)
-                {
-                sleep 10
-                seek_time := seek
-                Menu, ContextMenu, Show
-                }
-            else send, {RButton}
-            }
-        else if (click == "LButton")
-          {
-          if (video_player && media != "image")
-            {
-            GetSeekTime(video_player)
-            if (active == 2)
-                ThumbSeekTime()
-            if (!seek && seek_time > duration - 1)			; video finished playing
-                seek := 0.1						; return to start
-            if seek							; eg. from thumbsheet
-                {
-                paused =
-                RunWait %COMSPEC% /c echo seek %seek% absolute > \\.\pipe\mpv%list_id%,, hide && exit
-                sleep 100						; time for video to start
-                }
-
-            if (!seek && timer < 350)				; in case gestures
-                {
-                if paused
-                    paused =
-                else paused = 1
-                }
-            if paused
-                ControlSend,, 2, ahk_ID %video_player%
-            else ControlSend,, 1, ahk_ID %video_player%
-            Gui, thumbsheet: Hide
-            seek := 0
-            if (media != "audio")
-                active =
-            }
-          else if video_player						; images
-            PlayMedia(1)
-          else if (inside_browser && A_Cursor != "IBeam" && !WinExist("ahk_class OSKMainClass"))
-            ClickWebPage()
-          }
         }
 
 
     MediaControl()							; from timer - every 0.1 seconds
         {
+        if (!active && xpos > A_ScreenWidth - 100)			; trigger seeking window
+            {
+            active = 1
+            paused = 1
+            ControlSend,, 2, ahk_ID %video_player%			; pause video
+            block_input := A_TickCount + 800
+            loop 30
+               {
+               loop 120000
+               x =
+               ControlSend,, 9, ahk_ID %video_player%
+               }
+            ys := A_ScreenHeight * 0.5 - 250
+            xs := A_Screenwidth * 0.5 - 400
+            Gui, pic:show, x%xs% y%ys% w800 h500
+            sleep 1000
+            MouseGetPos, xpos, ypos
+            seeking := xpos
+            }
+        if (!active && seeking)						; close seeking window
+            {
+            seeking =
+            loop 30
+                {
+                loop 120000
+                    x =
+                ControlSend,, 0, ahk_ID %video_player%
+                }
+            Gui, pic: Cancel
+            paused =
+            ControlSend,, 1, ahk_ID %video_player%
+            }
+        if (media == "video" || media == "audio")
+            {
+            xp := Round(A_ScreenWidth * seek_time / duration)
+            yp := A_ScreenHeight - 3
+            GetSeektime(video_player)
+            if active
+                xp += 2 * (xpos - seeking)
+            thumb := Round(200 * xp / A_ScreenWidth)
+            ratio := (thumb-1) / 200					; create accurate seek time
+            offset := 0
+            if (duration > 60)
+                offset := 19
+            seek =
+            if (active == 1)
+                seek := Round(ratio * duration + offset - ratio * offset, 2)
+            else xp := Round(A_ScreenWidth * seek_time / duration)
+            if active
+               xp := Round(A_ScreenWidth * seek / duration)
+            Gui, ProgressBar:+LastFound -Caption +ToolWindow +AlwaysOnTop -DPIScale
+            if seek
+                 Gui, ProgressBar:Color, 826858
+            else Gui, ProgressBar:Color, 303030
+            Gui, ProgressBar:Show, x0 y%yp% w%xp% h3 NA			; seek bar under video
+            if (thumb != last_thumb)					; stop flickering image
+                GuiControl,pic:, GuiPic, *w800 *h500 %inca%\cache\%thumb%.jpg
+            last_thumb := thumb
+            }
+        key =
+        pan := A_ScreenWidth * 0.002
+        if (xclick < xpos - pan)
+            key = j
+        if (xclick > xpos + pan)
+            key = i
+        if (yclick < ypos - pan)
+            key = h
+        if (yclick > ypos + pan)
+            key = g
+        if (active && key && media == "image")				; pan image
+            {
+            Gui, pic: Cancel
+            Gui, thumbsheet: hide
+            loop 10
+                {
+                ControlSend,, %key%, ahk_ID %video_player%
+                sleep 24
+                }
+            xpos := A_ScreenWidth / 2
+            ypos := A_ScreenHeight / 2
+            MouseMove, % xpos, % ypos, 0
+            xclick := xpos
+            yclick := ypos
+            return
+            }
         if (click == "wheel")
             {
             if (active == 2)
@@ -454,120 +542,6 @@
                 block_input := A_TickCount + 99
                 }
             }
-        if (!active && xpos > A_ScreenWidth - 100)			; trigger image panning mode
-            {
-            active = 1
-            paused = 1
-            ControlSend,, 2, ahk_ID %video_player%			; pause video
-            Gui, thumbsheet: Destroy
-            Gui, thumbsheet: +lastfound -Caption +ToolWindow +AlwaysOnTop
-            Gui, thumbsheet: Color,black
-            if (media == "audio" || duration <= 30)
-                sleep 800
-            else if (media == "video")					; create video thumbnails
-                {
-                W := Round(A_ScreenWidth/16)
-                H := Round(A_ScreenHeight/16)
-                Loop 36
-                    {
-                    X := Mod((A_Index-1) * W, 6 * W)
-                    Y := (A_Index-1) // 6 * H
-                    Z := A_Index * 5
-                    Gui, thumbsheet: Add, Picture, x%X% y%Y% w%W% h%H%, %inca%\cache\%Z%.jpg
-                    }
-                MouseGetPos, xpos, ypos
-                if (xpos > A_ScreenWidth - 100)
-                    {
-                    active = 2
-                    Gui, thumbsheet: Show
-                    }
-                else sleep 500
-                }
-            block_input := A_TickCount + 500
-            }
-        key =
-        MouseGetPos, xpos, ypos
-        pan := A_ScreenWidth * 0.002
-        if (xclick < xpos - pan)
-            key = j
-        if (xclick > xpos + pan)
-            key = i
-        if (yclick < ypos - pan)
-            key = h
-        if (yclick > ypos + pan)
-            key = g
-        if (active && key && media == "image")				; pan image
-            {
-            Gui, pic: Cancel
-            Gui, thumbsheet: Show
-            loop 10
-                {
-                ControlSend,, %key%, ahk_ID %video_player%
-                sleep 24
-                }
-            xpos := A_ScreenWidth / 2
-            ypos := A_ScreenHeight / 2
-            MouseMove, % xpos, % ypos, 0
-            xclick := xpos
-            yclick := ypos
-            return
-            }
-        if (media == "video" || media == "audio")
-            {
-            xp := Round(A_ScreenWidth * seek_time / duration)
-            yp := A_ScreenHeight - 3
-            GetSeektime(video_player)
-            if active
-                xp += 2 * (xpos - seeking)
-            thumb := Round(200 * xp / A_ScreenWidth)
-            ratio := (thumb-1) / 200					; create accurate seek time
-            offset := 0
-            if (duration > 60)
-                offset := 19
-            seek =
-            if active
-                seek := Round(ratio * duration + offset - ratio * offset, 2)
-            else xp := Round(A_ScreenWidth * seek_time / duration)
-            if active
-               xp := Round(A_ScreenWidth * seek / duration)
-            Gui, ProgressBar:+LastFound -Caption +ToolWindow +AlwaysOnTop -DPIScale
-            if seek
-                 Gui, ProgressBar:Color, 826858
-            else Gui, ProgressBar:Color, 303030
-            Gui, ProgressBar:Show, x0 y%yp% w%xp% h3 NA			; seek bar under video
-            ys := A_ScreenHeight * 0.5 - 250
-            xs := A_Screenwidth * 0.5 - 400
-            if (thumb != last_thumb)					; stop flickering image
-                GuiControl,pic:, GuiPic, *w800 *h500 %inca%\cache\%thumb%.jpg
-            last_thumb := thumb
-            if (active == 1 && duration > 30)
-                {
-                if !seeking
-                    {
-                    seeking := xpos
-                    loop 30
-                        {
-                        loop 120000
-                            x =
-                        ControlSend,, 9, ahk_ID %video_player%
-                        }
-                    Gui, pic:show, x%xs% y%ys% w800 h500
-                    }
-                }
-            else if seeking
-                {
-                seeking =
-                loop 30
-                    {
-                    loop 120000
-                        x =
-                    ControlSend,, 0, ahk_ID %video_player%
-                    }
-                Gui, pic: Cancel
-                paused =
-                ControlSend,, 1, ahk_ID %video_player%
-                }
-            }
         }
 
 
@@ -590,7 +564,8 @@
         if vol_popup							; show orange volume bar
             vol_popup -= 1
         if (music_player && song_timer && A_TickCount > song_timer)
-            PlaySong(1)
+            if (GetSeekTime(music_player) == "yes")
+                PlaySong(1)
         if (volume > 0.1 && !vol_popup && !video_player && Setting("Sleep Timer") > 10 && A_TimeIdlePhysical > 600000)
             {
             volume -= vol_ref / (Setting("Sleep Timer") * 6)		; sleep timer
@@ -664,24 +639,18 @@
             subfolders =
         if (StrLen(search_box) > 2)
             sourcefile = %search_box%					; also clears white space
-        else if (tab == 2 && !GetPageLink())
+        else if (tab == 2 && !GetPageLink())				; 
             {
-            if (click == "LButton")
+            if (click == "LButton" && timer > 140)
                 {
-                if (timer > 350)
+                if (view < 7)
                     {
-                    page := 1
-                    if (view < 7)
-                        {
-                        last_view := view
-                        view := 7
-                        }
-                    else view := last_view
-                    if (view == 7)
-                        PopUp("List",0,0)
-                    else PopUp("Thumbs",0,0)
-                    refresh = 1
+                    last_view := view
+                    view := 7
                     }
+                else view := last_view
+                page := 1
+                refresh = 1
                 }
             return
             }
@@ -796,7 +765,7 @@
                     IfNotInString, subfolders, %A_LoopFileFullPath%
                         subfolders = %subfolders%%A_LoopFileFullPath%\|
             CreateList(0)
-            refresh = 1
+            RenderPage()
             }
         search_box =
         return 1
@@ -1072,6 +1041,21 @@
         if (duration > 60)
            offset := 19
         seek := Round(seek_ratio * duration + offset - seek_ratio * offset, 2)
+        }
+
+
+    ThumbSeekTime()
+        {
+        thumb_number =
+        MouseGetPos, xpos,ypos
+        Gui, thumbsheet:+lastfound
+        ControlGetPos,,, thumb_width, thumb_height
+        xpos -= (A_ScreenWidth - (6 * thumb_width)) /2
+        ypos -= (A_ScreenHeight - (6 * thumb_height)) /2 
+        col := ceil((xpos / (thumb_width)))
+        row := floor(ypos / (thumb_height))
+        thumb_number := 5 * (row * 6 + col)
+        CalcSeekTime((thumb_number-1)/200)
         }
 
 
@@ -1699,6 +1683,10 @@
     PlayMedia(offset)								; play current, next or previous
         {
         Critical
+        active =
+        seeking =
+        if (click == "MButton")
+            seek =
         if video_player
             ControlSend,, 2, ahk_ID %video_player%				; pause video
         caption =
@@ -1763,6 +1751,8 @@
                 WinActivate, ahk_group Browsers
             return
             }
+        if (click == "MButton")
+            paused = 1
         video_sound := 0
         Gui, Caption:+lastfound 
         GuiControl, Caption:, GuiCap
@@ -1841,14 +1831,33 @@
                 WinSet, TransColor, 0 %mask%
                 }
             }
+        if (media == "video")
+          IfExist %inca%\cache\1.jpg						; create video thumbnails
+            {
+            Gui, thumbsheet: Destroy
+            Gui, thumbsheet: +lastfound -Caption +ToolWindow +AlwaysOnTop
+            Gui, thumbsheet: Color,black
+            W := Round(A_ScreenWidth/16)
+            H := Round(A_ScreenHeight/16)
+            Loop 36
+                {
+                X := Mod((A_Index-1) * W, 6 * W)
+                Y := (A_Index-1) // 6 * H
+                Z := A_Index * 5
+                Gui, thumbsheet: Add, Picture, x%X% y%Y% w%W% h%H%, %inca%\cache\%Z%.jpg
+                }
+            }
         GuiControl, Indexer:, GuiInd, %media_name%
-        block_input := A_TickCount + 500
-        seek =
-        if (active == 2)
-            active =
-        if (media == "audio")
-            active = 1
+        Gui, thumbsheet: hide
+        block_input := A_TickCount + 400
+        if (click == "MButton" && media == "video")
+            {
+            active = 2
+            Gui, thumbsheet: show
+            block_input := A_TickCount + 1200
+            }
         refresh = 1
+        seek =
         }
 
 
@@ -1878,7 +1887,6 @@
             {
             ControlSend,, l, ahk_ID %video_player%			; zoom player in
             mask := 256 - (A_Index * 6)
-            Gui, thumbsheet:+lastfound
             WinSet, Transparent, % mask
             WinSet, Transparent, % mask + 50, ahk_ID %video_player%
             WinSet, Transparent, % A_Index * 6, ahk_group Browsers
@@ -1911,21 +1919,6 @@
         sleep 100
         song_id =
         song =
-        }
-
-
-    ThumbSeekTime()
-        {
-        thumb_number =
-        MouseGetPos, xpos,ypos
-        Gui, thumbsheet:+lastfound
-        ControlGetPos,,, thumb_width, thumb_height
-        xpos -= (A_ScreenWidth - (6 * thumb_width)) /2
-        ypos -= (A_ScreenHeight - (6 * thumb_height)) /2 
-        col := ceil((xpos / (thumb_width)))
-        row := floor(ypos / (thumb_height))
-        thumb_number := 5 * (row * 6 + col)
-        CalcSeekTime((thumb_number-1)/200)
         }
 
 
@@ -1964,8 +1957,8 @@
     VolUp:
        if (volume >= vol_ref || (volume > 5 && GetKeyState("RButton", "P")))
            return
-       SoundSet, (volume += 0.25)
-       SetTimer, VolUp, -30
+       SoundSet, (volume += 0.5)
+       SetTimer, VolUp, -20
        vol_popup := 3
        ShowStatus()
        return
