@@ -2,11 +2,7 @@
 
 	;	Inca Media Viewer for Windows. Firefox & Chrome compatible
 
-	;	Why Exist - to beautify, unify and manage media
-	;	without the ugliness of windows & media players
-
-	;	AHK Script Operation:
-	;	it creates active web pages of local media and music playlists
+	;	Creates active web pages of local media and music playlists
 	;	media searches and selections are spooled into these active web pages
 	;	mouse ClickEvent() & Gestures() are used to control volume, magnify, pan, seek etc.
 	;	0.1 second background timer updates media status bar and controls
@@ -15,6 +11,7 @@
 	;	DeBug tools - soundbeep, 3000,111   tooltip --- %%
 
 
+; list headings
 
 
 	#NoEnv
@@ -296,7 +293,10 @@
             else if (tab != 2 || !inside_browser) 
                 send, {MButton}
             else if (tab == 2 && inside_browser && !ClickWebPage())
+                {
+                click =
                 PlayMedia(0)						; replay last_media
+                }
             }
         else if (click == "RButton")
             {
@@ -328,8 +328,8 @@
               GetSeekTime(video_player)
               if (active == 2)						; 6x6 thumbsheet mode
                   ThumbSeekTime()					; convert click to seek time
-              if (!seek && seek_time > duration - 1)			; video finished playing
-                  seek := 0.1						; return to start
+              if (timer > 350 || (!seek && seek_time > duration - 1))	; video finished playing
+                  seek := 1						; return to start
               if seek
                   {
                   paused =
@@ -349,17 +349,8 @@
               else ControlSend,, 1, ahk_ID %video_player%
               Gui, thumbsheet: Hide
               seek := 0
-              If (timer > 350)
-                  {
-                  if (seek_time > 2)
-                      seek_time -= 2
-                  else seek_time := 0
-                  RunWait %COMSPEC% /c echo seek %seek_time% absolute > \\.\pipe\mpv%list_id%,, hide && exit
-                  volume := 0
-                  video_speed := 0
-                  ControlSend,, {BS}, ahk_ID %video_player%		; reset speed
-                  FlipSound(999)					; video sound on, music paused
-                  }
+              if (media == "audio" && !video_sound)
+                  flipsound(1)
               }
           else if video_player						; images
               PlayMedia(1)
@@ -405,10 +396,9 @@
     MediaControl()							; from timer - every 0.1 seconds
         {
         Critical
-        if (!active && xpos > A_ScreenWidth - 100 && duration > 30)	; trigger seeking window
+        if ((!active && duration > 30 && xpos > A_ScreenWidth - 100) || active == 3)
             {
-            active = 1
-            click = pause_scan
+            active = 1							; trigger seeking window
             Gui, ProgressBar:Color, 826858
             Gui, ProgressBar:Show
             if (media == "video")
@@ -509,13 +499,6 @@
                 wheel := 0
             if Setting("Reverse Wheel")
                 wheel ^= 1
-            if (active && !wheel && media == "video")		; jump to video start
-                RunWait %COMSPEC% /c echo seek 1 absolute > \\.\pipe\mpv%list_id%,, hide && exit
-            if (click == "refresh" || active)
-                click = pause_scan
-            active =
-            Gui, thumbsheet: Hide
-            WinSet, Transparent, 255, ahk_ID %video_player%
             if (media == "video" || media == "audio")
                 {
                 key = {Left}
@@ -525,7 +508,7 @@
                   if wheel
                     key = +{Right}
                   else key = +{Left}
-                if (click != "pause_scan" && (paused || ext == "gif"))
+                if (paused || ext == "gif")
                   if wheel
                     key = ..
                   else key = ,,
@@ -620,7 +603,7 @@
                     else WinSet, Transparent, %mask2%
                     }
                 }
-            if (tab == 2 && tab_name && tab_name != previous_tab)
+            if (tab == 2 && tab_name && tab_name != previous_tab && !search_term)
                 {
                 previous_tab := tab_name
                 GetPageSettings()
@@ -639,7 +622,7 @@
             subfolders =
         if (StrLen(search_box) > 2)
             sourcefile = %search_box%					; also clears white space
-        else if (tab == 2 && !GetPageLink())				; 
+        else if (tab == 2 && !GetPageLink())
             {
             if (click == "LButton" && timer > 140)
                 {
@@ -765,7 +748,6 @@
                     if !InStr(subfolders, A_LoopFileFullPath)
                         subfolders = %subfolders%%A_LoopFileFullPath%\|
             CreateList(0)
-            click = refresh
             }
         search_box =
         return 1
@@ -852,7 +834,6 @@
                     }
                 FileDelete, %inca%\cache\playlist.m3u
                 FileAppend, %plist%, %inca%\cache\playlist.m3u, UTF-8
-                RenderPage()
                 }
             }
         else if !quick
@@ -865,6 +846,8 @@
             FileDelete, %cache_file%
             FileAppend, %list%, %cache_file%, UTF-8
             }
+        if (playlist || !quick)
+            RenderPage()
         if (StrLen(list) != StrLen(cache))
             return 1
         }
@@ -1035,15 +1018,17 @@
     ThumbSeekTime()
         {
         thumb_number =
-        MouseGetPos, xpos,ypos
+        MouseGetPos, xpos, ypos
         Gui, thumbsheet:+lastfound
         ControlGetPos,,, thumb_width, thumb_height
-        xpos -= (A_ScreenWidth - (6 * thumb_width)) /2
-        ypos -= (A_ScreenHeight - (6 * thumb_height)) /2 
-        col := ceil((xpos / (thumb_width)))
-        row := floor(ypos / (thumb_height))
+        xp := xpos - (A_ScreenWidth - (6 * thumb_width)) /2
+        yp := ypos - (A_ScreenHeight - (6 * thumb_height)) /2 
+        col := ceil((xp / (thumb_width)))
+        row := floor(yp / (thumb_height))
         thumb_number := 5 * (row * 6 + col)
         CalcSeekTime((thumb_number-1)/200)
+        if (xp < 0 || yp <0)
+            seek := seek_time
         }
 
 
@@ -1373,7 +1358,8 @@
         Transform, html_spool_name, HTML, %spool_name%, 2
         safe_spool_path := Transform_utf(spool_path)			; make filenames web compatible
         safe_this_search := Transform_utf(this_search)
-        safe_playlist := Transform_utf(playlist)
+        if (spool_name == "slides" || spool_name == "music")
+            safe_playlist := Transform_utf(playlist)
         safe_last_media := Transform_utf(last_media)
         FileRead, font, %inca%\apps\ClearSans-Thin.txt			; firefox bug - requires base64 font
         FileRead, script, %inca%\apps\inca - js.js
@@ -1559,9 +1545,9 @@
         sort_filter := item.1
         sourcefile := item.2
         media := item.3
-        if (media == "image" && InStr(toggles, "Video"))		; file still may not exist
+        if (media != "video" && InStr(toggles, "Video"))
             return
-        if (media == "video" && InStr(toggles, "Images"))
+        if (media != "image" && InStr(toggles, "Images"))
             return
         if InStr(toggles, "Snips")					; only list files with snips
             {
@@ -1655,11 +1641,11 @@
             CloseMusic()
         SoundSet, 1
         volume := 1
-        if !vol_ref
-            vol_ref := 1
         if Setting("Default Volume")
             if (vol_ref > Setting("Default Volume"))
                 vol_ref := Setting("Default Volume")
+        if (vol_ref < 15)
+            vol_ref := 15
         music_speed := 0
         video_sound := 0
         ptr := list_id -1
@@ -1757,7 +1743,8 @@
             sourcefile = %inca%\favorites\- snips\%media_name%.mp4
             if (!video_player && click == "MButton")
                 {
-                GetSnipSource()
+                if !GetSnipSource()
+                    return
                 ThumbSheet()
                 }
             }
@@ -1806,7 +1793,7 @@
         GuiControl, Caption:, GuiCap
         video_speed := Setting("Default Speed") - 100
         mute = --mute=yes
-        if ((media == "audio" && !music_player) || video_sound)
+        if video_sound
             mute =
         duration := GetDuration(sourcefile)
         if ErrorLevel
@@ -1818,10 +1805,10 @@
         speed = --speed=%speed%
         if (media != "video")
             speed =
+        if (timer > 350)
+            seek := 1
         if (duration > 120 && seek > (duration - 5))
             seek := 10
-        if (timer > 350)
-            seek := 0
         seek_t := 100 * seek / duration
         if (seek_t < 98)
             seek_t = --start=%seek_t%`%
@@ -1832,9 +1819,9 @@
             zoom := 0.8
         if (ext == "gif")
             zoom += 1
-        if (click == "MButton" && !snip && !slide)
+        if (media == "audio" || (click == "MButton" && !snip && !slide))
             paused = 1
-        else if !slide
+        else if (!slide && !snip)
             paused =
         if paused
             pause = --pause
@@ -1888,6 +1875,8 @@
         Gui, pic: Cancel
         WinClose, ahk_ID %video_player%
         video_player := player
+        if (media == "audio")
+            active = 3
         seek =
         return 1
         }
@@ -1911,6 +1900,7 @@
         if video_player
           loop 50
             {
+            seek := seek_time						; so can return to last media
             ControlSend,, l, ahk_ID %video_player%			; zoom player in
             mask := 256 - (A_Index * 6)
             Gui, thumbsheet:+lastfound					; set thumbsheet active
@@ -1935,7 +1925,7 @@
         seeking =
         history_timer =
         if (video_sound && music_player)
-            FlipSound(999)
+            FlipSound(1)
         video_sound := 0
         video_player =
         }
@@ -1951,18 +1941,18 @@
         }
 
 
-    FlipSound(change)						; between music & video player
+    FlipSound(FadeUp)							; between music & video player
         {
-        SoundSet, 0
+        SoundSet, 0						; kill sound
+        volume := 0
         song_timer =
-        if (change > 0)
-            video_sound ^= 1
-        if (change > 0 && music_player && !video_sound)
+        video_sound ^= 1
+        if !video_sound
             {
             ControlSend,, 1, ahk_ID %music_player%		; un pause music
             ControlSend,, 3, ahk_ID %music_player%		; un mute music
             ControlSend,, 4, ahk_ID %video_player%		; mute video
-            GetSeekTime(music_player)
+            GetSeekTime(music_player)				; reset song_timer
             }
         else
             {
@@ -1973,13 +1963,10 @@
             ControlSend,, 3, ahk_ID %video_player%		; un mute video
             ControlSend,, {BS}, ahk_ID %video_player%		; reset video speed
             }
-        if (change == 999)					; fade volume up a little
-            {
-            if !(vol_ref := Setting("Default Volume"))
-                vol_ref := 40
-            Critical off
+         if (vol_ref < 10)
+             vol_ref := 10
+         if FadeUp
             SetTimer, VolUp
-            }
         }
 
 
@@ -1988,15 +1975,17 @@
            return
        SoundSet, (volume += 1)
        SetTimer, VolUp, -20
-       vol_popup := 3
+       vol_popup := 3						; show volume slider
        ShowStatus()
        return
 
 
     SetVolume(change)
         {
-        if !volume
-            FlipSound(change)
+        Static last_volume
+        if (!volume && last_volume)
+            FlipSound(0)
+        last_volume := volume
         if volume < 1
             change /= 2
         if volume < 10
