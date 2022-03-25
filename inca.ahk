@@ -11,13 +11,26 @@
 	;	DeBug tools:    soundbeep, 3000,111      tooltip %%
 
 
+
+
+; use slider with alpha for search list
+; if media not exist in slide, messes up pointers
+
+; youtube horizontal wheel lists for images or search or seeks
+; mkv web compatible
+; consider mouseover picture expand in tab
+; move slides between slides
+; play snip number if clicked in slides
+; thumbsheet in slides if from tab not in video
+
+
+
 	#NoEnv
 	#UseHook, On
 	SetWinDelay, 0
 	SetKeyDelay, 0
 	SetBatchLines -1
 	SetTitleMatchMode,2
-	GroupAdd, Browsers, Nightly
 	GroupAdd, Browsers, Google Chrome
 	GroupAdd, Browsers, Mozilla Firefox
 	#SingleInstance force		; one program instance only
@@ -102,7 +115,9 @@
 	Global thumbsheet		; thumbsheet view mode
 	Global snip			; current media is a snip
 	Global snip_source		; media is orphaned, not from list
+	Global refresh			; update web page (highlighted links)
 
+	Global seeks			; snip list
 
 
     main:
@@ -120,7 +135,7 @@
       block_input := A_TickCount + 300
       if (!Gestures() && click)
           ClickEvent()
-      if (click == "refresh")
+      if refresh
           RenderPage()
       PopUp("",0,0)
       timer =
@@ -136,6 +151,7 @@
       return
     Esc up::
       ClosePlayer()
+exitapp
     Xbutton1 up::
       timer =
     Xbutton_Timer:
@@ -151,7 +167,7 @@
       return
 
 
-    ~Enter::				; file search - from html input box
+    ~Enter::						; file search - from html input box
       if inside_browser
         {
         send, !0
@@ -160,12 +176,11 @@
         ClipWait, 0
         if (search_box := Clipboard)
             ClickWebPage()
-        RenderPage()
         }
       return
 
 
-    #\::				; 1st mouse option button win\
+    #\::						; 1st mouse option button win\
       timer3 = set
       SetTimer, button1_Timer, -240
       return
@@ -257,7 +272,7 @@
                 MouseMove, % xpos, % ypos, 0
                 }
             if (GetKeyState("RButton", "P") && Setting("Volume Gesture"))
-                SetVolume(2 * x)
+                SetVolume(1.4 * x)
             if GetKeyState("LButton", "P")
                 if video_player
                     SetAspect(x, y)
@@ -285,14 +300,19 @@
                   ThumbSeekTime()					; convert click to seek time
               if (!seek && seek_time > duration - 1)			; video finished playing
                   seek := 0.5						; return to start
-              if (snip && timer > 350 && GetSnipSource())		; find & play snip source media
+              if (timer > 350)
+                  {
+                  if snip
+                      GetSnipSource()					; find snip source media
+                  else if !seek
+                      seek := seek_time
                   PlayMedia(0)
+                  }
               else if (seek && (thumbsheet || ypos > A_ScreenHeight - 100))
                   {
                   thumbsheet =
                   PlayMedia(0)
                   paused = 0
-                  seek := 0
                   }
               else
                   {
@@ -303,7 +323,7 @@
               if paused
                   ControlSend,, 2, ahk_ID %video_player%
               else ControlSend,, 1, ahk_ID %video_player%
-              if (media == "audio" && !video_sound)
+              if ((timer > 350) && !video_sound)                    ; media == "audio" || 
                   flipsound(1)
               }
           else if video_player						; images
@@ -320,7 +340,11 @@
                       PlayMedia(0)					; play first media in playlist
                   }
               else if (x == 2)						; media clicked in browser
+                  {
+                  If (timer > 350)
+                      seek :=1
                   PlayMedia(0)
+                  }
               }
           }
         else if (click == "RButton")
@@ -344,13 +368,16 @@
                 else StringReplace, selected, selected, %sourcefile%|%list_id%`r`n
                 send, {RButton}{Esc}					; inca-js.js catches Rclick & hightlights html
                 }
-            else if inside_browser
+            else if (timer < 350)
                 {
-		sleep 10
-                seek := seek_time
-                Menu, ContextMenu, Show
+                if inside_browser
+                    {
+		    sleep 10
+                    seek := seek_time
+                    Menu, ContextMenu, Show
+                    }
+                else send, {RButton}
                 }
-            else send, {RButton}
             }
         else if (click == "MButton")
             {
@@ -372,10 +399,11 @@
                     {
                     if (ext == "m3u" || ext == "txt")
                         Run, Notepad.exe "%sourcefile%"
-                    else PlayMedia(0)
+                    else PlayMedia(0)					; show thumbsheet if video
                     }
-                }
+                 }
             else send, {MButton}
+            click =
             }
         else if (click == "Back")
             {
@@ -405,9 +433,11 @@
                 ClosePlayer()
             else if (tab == 2 && WinActive("ahk_group Browsers"))
                 {
+                x := selected
                 selected =
-                RenderPage()    
-                send, ^{F5}						; go to top of page
+                RenderPage()   
+                if !x 
+                    send, ^{F5}						; go to top of page
                 }
             else send, {Xbutton1}
             }
@@ -420,8 +450,6 @@
         if (media == "video" || media == "audio")
             {
             GetSeektime(video_player)
-            if ((slide || snip) && !paused && seek_time > duration - 0.5)	; continuous play through slides
-                PlayMedia(1)
             Gui, ProgressBar:+LastFound -Caption +ToolWindow +AlwaysOnTop -DPIScale
             Gui, ProgressBar:Color, 303030
             yp := A_ScreenHeight - 3
@@ -481,7 +509,7 @@
                     key = .
                   else key = ,
                 ControlSend,, %key%, ahk_ID %video_player%		; seek
-                block_wheel := A_TickCount + 34
+                block_input := A_TickCount + 34
                 }
             WinGetTitle title, YouTube
             if (title && xpos < 100)					; wheel back/forward in youtube
@@ -540,11 +568,6 @@
                 tab := 1
             if (tab_name && state != -1)
                 tab := 2
-            tray_dim := Setting("Dim Taskbar") * 2.55
-            if (tab && tray_dim && state > -1)
-                WinSet, Transparent, %tray_dim%, ahk_class Shell_TrayWnd
-            else if tray_dim
-                WinSet, Transparent, 255, ahk_class Shell_TrayWnd
             if (tab != dim)
                 {
                 if (tab == 2 && Setting("Dark Cursor"))
@@ -628,7 +651,7 @@
                 search_list = %search_list%|%search_term%
                 IniWrite,%search_list%,%inca%\settings.ini,Settings,search_list
                 LoadSettings()
-                click = refresh
+                refresh = 1
                 return 1
                 }
             if folder_payload
@@ -785,13 +808,11 @@
                         SplitPath, input,,,ex, filen
                         med := DecodeExt(ex)
                         list = %list%%ex%/%input%/%med%`r`n
-                        if (spool_name == "music")
-                            plist = %plist%%input%`r`n
-                        else plist = %plist%%A_LoopField%`r`n
+                        plist = %plist%%input%`r`n
                         }
                     }
-                FileDelete, %inca%\cache\playlist.m3u
-                FileAppend, %plist%, %inca%\cache\playlist.m3u, UTF-8
+                FileDelete, %inca%\cache\mpv_playlist.m3u
+                FileAppend, %plist%, %inca%\cache\mpv_playlist.m3u, UTF-8     ; create mpv compatible playlist
                 }
             }
         else PopUp("Cache",0,0)
@@ -810,6 +831,8 @@
         {
         Critical
         WinActivate, ahk_group Browsers
+        if !inside_browser
+            return
         if (click == "LButton")
             send, {LButton up}
         else send, {LButton}						; so M or R Button fill location bar
@@ -835,27 +858,27 @@
         SplitPath, sourcefile,,,, link_data
         if (prefix == "media")
             {
-            StringTrimLeft, id, sourcefile, 5
-            StringRight, snp, id, 1
-            StringTrimRight, list_id, id, 1
+
+            StringTrimLeft, list_id, sourcefile, 5
             Loop, Parse, list, `n, `r
                 if (A_Index == list_id)
                     sourcefile := StrSplit(A_LoopField, "/").2
             SplitPath, sourcefile,,,,media_name
-            if snp
-              IfExist, %inca%\favorites\- snips\%media_name% - %snp%.mp4
-                sourcefile = %inca%\favorites\- snips\%media_name% - %snp%.mp4
             if !DetectMedia()
                 {
                 PopUp("Media Not Exist",600,1)
                 return
                 }
-            else if (media == "video" && !snp)
+            else if (media == "video")
                 {
-                x := Round(slider-0.002,4)
-                x := x * 36
-                x := 0.02 + Floor(x) / 40
-                CalcSeekTime(x)						;  video hover image
+                if (slider < 1)
+                  {
+                  x := Round(slider-0.002,4)
+                  x := x * 36
+                  x := 0.02 + Floor(x) / 40
+                  slider := x
+                  }
+                CalcSeekTime(slider)						;  video hover image
                 }
             else seek := 0
             }
@@ -967,15 +990,26 @@
 
     GetDuration(source)
         {
-        clip := clipboard
-        clipboard =
-        RunWait %COMSPEC% /c %inca%\apps\ffmpeg.exe -i "%source%" 2>&1 | find "Duration" | Clip, , hide && exit
-        ClipWait, 3
-        stringTrimLeft, aTime, clipboard, 12
-        StringLeft, aTime, aTime, 8
-        aTime := StrSplit(aTime, ":")
-        clipboard := clip
-        return aTime.1 * 3600 + aTime.2 * 60 + aTime.3
+        if (media != "video" && media != "audio")
+            return
+        SplitPath, source,,,,filen
+        FileRead, dur, %inca%\cache\durations\%filen%.txt
+        if !dur
+            {
+            clip := clipboard
+            clipboard =
+            RunWait %COMSPEC% /c %inca%\apps\ffmpeg.exe -i "%source%" 2>&1 | find "Duration" | Clip, , hide && exit
+            ClipWait, 3
+            stringTrimLeft, aTime, clipboard, 12
+            StringLeft, aTime, aTime, 8
+            aTime := StrSplit(aTime, ":")
+            clipboard := clip
+            if !(dur := aTime.1 * 3600 + aTime.2 * 60 + aTime.3)
+                dur := 1							; any dur is better than null
+            filedelete, %inca%\cache\durations\%filen%.txt
+            FileAppend, %dur%, %inca%\cache\durations\%filen%.txt
+            }
+        return dur
         }
 
 
@@ -986,7 +1020,8 @@
            offset := 19
         else offset := 0
         seek := Abs(Round(seek_ratio * duration + offset - seek_ratio * offset, 2))
-
+if (seek_ratio > 1)
+  seek := seek_ratio
         }
 
 
@@ -1022,6 +1057,8 @@
         {
         IfWinNotExist, ahk_ID %player%
             return
+ if thumbsheet
+return
         clip := ClipBoard
         Clipboard =
         ControlSend,, =, ahk_ID %player%					; to mpv player - see input.conf
@@ -1030,7 +1067,10 @@
         input := StrSplit(input, "/")
         array := StrSplit(input.2, ":")						; duration
         idle := input.3
-        duration := array.1 * 3600 + array.2 * 60 + array.3
+        if !(duration := array.1 * 3600 + array.2 * 60 + array.3)
+            if (player == music_player)
+                duration := GetDuration(song)
+            else duration := GetDuration(sourcefile)
         seek_time := Round((input.5 / input.6) * duration,2)			; most accurate value
         array := StrSplit(input.1, ":")
         if !seek_time
@@ -1038,11 +1078,8 @@
         if (player == music_player)
             {
             song_id := input.4 + 1
-            FileReadLine, str, %inca%\cache\playlist.m3u, %song_id%
+            FileReadLine, str, %inca%\cache\mpv_playlist.m3u, %song_id%
             song := StrSplit(str, "/").1
-            if !duration
-                if !(duration := GetDuration(song))
-                    duration := 60						; any dur is better than null
             song_timer := A_TickCount + (Setting("Silence Gap") + duration - seek_time) * 1000
             }
         ClipBoard := clip
@@ -1084,6 +1121,8 @@
                 spool_path =
                 search_box := ClipBoard
                 ClickWebPage()
+                sleep 500
+                WinActivate, ahk_group Browsers
                 return
                 }
             }
@@ -1098,7 +1137,7 @@
         WinActivate, ahk_group Browsers
         new_html = file:///%inca%\cache\html\%tab_name%.htm
         StringReplace, new_html, new_html, \,/, All
-        if (tab != 2 || click == "MButton")
+        if (tab != 2 || (!video_player && click == "MButton"))
             run, %new_html%						; open a new web tab
         else if (tab_name == previous_tab)				; just refresh existing tab
             send, {F5}
@@ -1116,6 +1155,7 @@
             if InStr(title, tab_name)
                 break
             }
+        previous_tab := tab_name
         }
 
 
@@ -1142,6 +1182,8 @@
             Loop, Files, %inca%\slides\*.m3u, FR
                 {
                 FileRead, str, %A_LoopFileFullPath%					; find & replace in .m3u slide files
+                if !InStr(str, media_name)
+                    continue
                 FileDelete, %A_LoopFileFullPath%
                 Loop, Parse, str, `n, `r
                     if A_LoopField
@@ -1178,8 +1220,9 @@
             }
           }
         LoadSettings()
-        click = refresh
+        refresh = 1
         }
+
 
 
     ContextMenu:							; right click menu
@@ -1199,24 +1242,33 @@
        }
     if (menu_item == "Settings")
         ShowSettings()
+    if (menu_item == "Source")
+        {
+        run, notepad %inca%\inca.ahk
+        return
+        }
+    if (menu_item == "Compile")
+        run %inca%\apps\Compile.exe
     else if (menu_item == "Rename")
         EditFilename()
     else if (menu_item == "All")
         {
-        page := 1
         selected =
-        CreateList()
-        if (list_size > 300)
-            PopUp("Too Many Items", 600,0)
-        else Loop, Parse, list, `n, `r 
+        FileReadLine, str, %inca%\cache\html\%tab_name%.htm, 3		; list of media id's in page
+        Loop, Parse, str, `/
             {
-            count += 1
-            input := StrSplit(A_LoopField, "/").2			;  sort_filter / sourcefile / media type
-            if selected
-                selected = %selected%`r`n%input%
-            else selected = %input%
+            x := A_Loopfield
+            Loop, Parse, list, `n, `r
+                if (A_Index == x)
+                    if (input := StrSplit(A_LoopField, "/").2)		;  sort_filter / sourcefile / media type
+                        {
+                        if selected
+                            selected = %selected%`r`n%input%
+                        else selected = %input%
+                        count +=1
+                        popup = Selected %count%
+                        }
             }
-        popup = Selected %count%
         RenderPage()
         }
     else
@@ -1228,25 +1280,26 @@
             count += 1
             SplitPath, input,,,,name
             IfExist, %spool_path%%name%.lnk
-                input = %spool_path%%name%.lnk
+                input = %spool_path%%name%.lnk				; if source was .lnk file, delete link only
             if (menu_item == "Delete")
                 {
-                if (spool_name == "slides" && media != "playlist")	; delete entries in .m3u
+                if ((spool_name == "slides" || spool_name == "music") && media != "playlist")
                     {
-                    FileRead, str, %inca%\cache\playlist.m3u		; because list_id includes .m3u entries
+                    FileRead, str, %inca%\cache\mpv_playlist.m3u	; because list_id includes .m3u entries
                     Loop, Parse, str, `n, `r
                       if !InStr(A_LoopField, "apps/icons/")		; skip non media entries
                         {
                         offset := A_Index - 1				; .m3u skip offset
                         FileRead, str, %playlist%
-                        FileDelete, %playlist%				; slide playlist (not cache full playlist)
+                        FileDelete, %playlist%
                         Loop, Parse, str, `n, `r
-                          {
-                          y := A_Index + offset
-                          y = |%y%					; make into string
-                          if !InStr(selected, y)
-                            FileAppend, %A_LoopField%`r`n, %playlist%, UTF-8
-                          }
+                          if A_LoopField
+                            {
+                            y := A_Index + offset
+                            y = |%y%					; make into string
+                            if !InStr(selected, y)
+                              FileAppend, %A_LoopField%`r`n, %playlist%, UTF-8
+                            }
                         popup = Deleted
                         break 2
                         }
@@ -1277,6 +1330,7 @@
 
     RenderPage()							; construct web page from media list
         {
+        refresh =
         if !(spool_name && spool_path)
             return
         Transform, html_spool_name, HTML, %spool_name%, 2
@@ -1332,9 +1386,9 @@
         FileDelete, %inca%\cache\html\%tab_name%.htm
         FileAppend, %html_header%%menu_html%%sort_html%%media_html%, %inca%\cache\html\%tab_name%.htm        
         LoadHtml()
+        sleep 333							; time for browser to render behind mpv
         if video_player
-            WinActivate, ahk_ID %video_player%
-        else WinActivate, ahk_group Browsers
+            WinActivate, ahk_ID %video_player%				; otherwise browser sets mouse wheel hi-res mode     
         PopUp("",0,0)
         sourcefile := last_media					
         DetectMedia()							; restore media parameters
@@ -1346,6 +1400,7 @@
         if !DetectMedia()
             return
         input := sourcefile
+        dur := Time(duration)
         width := "34,19,13,9,6,4,15"
         width := StrSplit(width, ",")
         width := width[view]
@@ -1389,15 +1444,15 @@
             vid_styl = video style="width:100`%;
             FileRead, duration, %inca%\cache\durations\%media_name%.txt
             IfExist, %inca%\cache\thumbs\%media_name%.mp4
-                input = %inca%\cache\thumbs\%media_name%.mp4
-            else if (ext != "gif" && (!duration || duration >= 30) && !InStr(sourcefile, "\- snips\"))
-                no_index = <span style="color:red">no index&nbsp;&nbsp;&nbsp;</span>
+                if (ext != "mp4")
+                    input =  %inca%\cache\thumbs\%media_name%.mp4
             }
         IfNotExist, %input%
             return
         SplitPath, sourcefile,,,,link_name
         link_name := SubStr(link_name, 1, 62)
         Transform, input, HTML, %input%, 2				; make filenames web compatible
+        Transform, html_source, HTML, %sourcefile%, 2
         Transform, link_name, HTML, %link_name%, 2
         StringReplace, input, input, \,/, All
         width_t := 1
@@ -1409,41 +1464,58 @@
             transform = transform:scaleX(%height_t%);
         if (skinny > 0)
             transform = transform:scaleY(%height_t%);
+            title_html = <a href="#media%i%0" id="title%i%0" name="media%i%" onmousedown="select(event, id, name)">
         caption =
-        if (spool_name == "slides" && ext != "m3u")
+        if (spool_name == "slides" && ext != "m3u")			; get caption if exists
             {
             slide_id +=1
             FileReadLine, str, %playlist%, %slide_id%
             caption := StrSplit(str, "|").3
             StringReplace, caption, caption, ~,<br>, All
             }
-        dur := Time(duration)
-        if snip								; if source is snip, add only one snip button
-            {
-            title_html = 
-            StringRight, snip_id, media_name, 1
-            media_name := SubStr(media_name, 1, -4)
-            }
-        else title_html = <a href="#media%i%0" id="title%i%0" name="media%i%" onmouseenter="snip(event, name, '%html_spool_name%')" onmousedown="select(event, id, name)">
         if (last_ext == "m3u" && ext != "m3u")
             media_html = %media_html%<li style="float:left; width:100`%; height:40px"></li>`r`n`r`n	; gap between playlists & media
         if (view == 7 || ext == "m3u")					; list view 
             {
-            loop, 9
-              IfExist, %inca%\favorites\- snips\%media_name% - %A_Index%.mp4
-                if !InStr(spool_path, "slides")
+            snips =
+            if (media == "video"  && ext != "m3u")
+                {
+                FileGetShortcut, %inca%\favorites\%media_name%.lnk, x,,, seeks
+                Loop, Parse, seeks, `|
                   snips = %snips% *
-            if snips
-              snips = <a href="#media%i%1" style="color:lightsalmon;">%snips%</a>
+                if snips
+                  snips = <a href="#media%i%" style="color:lightsalmon;">%snips%</a>
+                }
             media_html = %media_html%<a href="#" id="item%i%" name="media%i%" onmousedown="select(event, id, name)"><li id="media%i%" src="file:///%input%" style="float:left; width:100`%; margin:0;"><table><tr><td id="hover_image"><%hov_size% %select%" src="file:///%input%"></video></tr></table><table><tr><td class="sorts">%dur%</td><td class="sorts">%size%</td><td class="sorts">%ext%</td><td style="color:#777777; font-size:0.9em; text-align:center; width:3.5em;">%sort_filter%</td><td style="%select% %highlight% overflow:hidden; white-space:nowrap; text-overflow:ellipsis; text-align:left; padding-left:1em;">%link_name% %snips%</td></tr></table></li></a>`r`n`r`n
             }
         else 
             {
             if (media == "video")
-              Loop, 9							; add snip buttons
-                IfExist, %inca%\favorites\- snips\%media_name% - %A_Index%.mp4
-                  if (!snip_id || snip_id == A_Index)
-                    snips = %snips%<a href="#" id="snip%i%%A_Index%" name="media%i%" onmousedown="select(event, id, name)" onmouseenter="snip(event, name, '%A_Index%')" style="opacity:0.6; display:flex; justify-content:center; width:%width1%px;"><div style="width:%width1%px; height:%height1%px;"><div style="width:0.2em; height:0.2em; margin-left:25`%; margin-top:25`%; background-color:orange;"></div></div></a>
+                {
+                FileGetShortcut, %inca%\favorites\%media_name%.lnk, x,,, seeks
+                Loop, Parse, seeks, `|
+                    snips = %snips%<a href="#" id="snip%i%%A_Index%" name="media%i%" src="file:///%html_source%" onmousedown='select(event, id, name)' onmouseenter='snips(event, id, name, "%A_Loopfield%")' style="opacity:0.6; display:flex; justify-content:center; width:%width1%px;"><div style="width:%width1%px; height:%height1%px;"><div style="width:0.2em; height:0.2em; margin-left:25`%; margin-top:25`%; background-color:orange;"></div></div></a>
+
+                if !(start := StrSplit(seeks, "|").1)
+                    start := 20
+                if InStr(media_path, "\favorites\- snips")
+                    start := 0
+
+        if (spool_name == "slides")				; get seek time from slide .m3u
+{
+            FileRead, str, %inca%\cache\mpv_playlist.m3u	; because list_id includes .m3u entries
+            Loop, Parse, str, `n, `r
+                if !InStr(A_LoopField, "apps/icons/")		; skip non media entries
+                    {
+                    x := Round(i - A_Index + 1)
+                    break
+                    }
+            FileReadLine, str1, %playlist%, %x%
+            if StrSplit(str1, "|").2
+                start := StrSplit(str1, "|").2
+}
+
+                }
             if (ext == "txt")
                 {
                 Loop 40
@@ -1456,7 +1528,7 @@
                     }
 	        media_html = %media_html%<div style="display:inline-block; vertical-align:top; width:88`%; margin-left:2`%; color:%font%; transition:color 1.4s;">%title_html%<div style="margin-left:8`%; color:#555351; font-size:0.9em; text-align:center; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; %highlight%;">%sort_filter% &nbsp;&nbsp;%no_index% %link_name%</div></a><textarea rows="%rows%" style="display:inline-block; overflow:hidden; margin-bottom:%margin%em; margin-left:8`%; width:88`%; background-color:inherit; color:#826858; font-size:1.2em; font-family:ClearSans-Thin; border:none; outline:none;">%str2%</textarea></div>`r`n`r`n
                 }
-            else media_html = %media_html%<li style="display:inline-block; vertical-align:top; width:%width%em; margin-bottom:%margin%em; margin-left:2`%; color:%font%; transition:color 1.4s;">%title_html%<div style="margin-left:8`%; color:#555351; font-size:0.9em; text-align:center; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; %highlight%;">%sort_filter% &nbsp;&nbsp;%no_index% %link_name%</div></a><a href="#" name="media%i%" id="vid%i%" onmousedown="select(event, id, name)" onmousemove="seek(event, id, name)"><%vid_styl% %transform% %select%" id="media%i%" src="file:///%input%" muted></a><div style="width:110`%; color:LightSalmon; opacity:0.7; font-size:%font_size%em;">%caption%</div></li><div style="display:inline-block; width:%width%px; margin-top:10px; vertical-align:top;">%snips%</div>`r`n`r`n
+            else media_html = %media_html%<li style="display:inline-block; vertical-align:top; width:%width%em; margin-bottom:%margin%em; margin-left:2`%; color:%font%; transition:color 1.4s;">%title_html%<div style="margin-left:8`%; color:#555351; font-size:0.9em; text-align:center; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; %highlight%;">%sort_filter% &nbsp;&nbsp;%no_index% %link_name%</div></a><a href="#" name="media%i%" id="vid%i%" onmousedown="select(event, id, name)" onmousemove="seek(event, id, name, %start%)" onmouseenter="seek(event, id, name, %start%)" onmouseleave="pause(event, id, name)"><%vid_styl% %transform% %select%" id="media%i%" src="file:///%input%#t=%start%" muted></a><div style="width:110`%; color:LightSalmon; opacity:0.7; font-size:%font_size%em;">%caption%</div></li><div style="display:inline-block; width:%width%px; margin-top:10px; vertical-align:top;">%snips%</div>`r`n`r`n
             }
         last_ext := ext
         skinny =
@@ -1573,7 +1645,7 @@
             RunWait %COMSPEC% /c echo playlist-prev > \\.\pipe\mpv_music,, hide && exit
         else 
             {
-            Run %inca%\apps\mpv --fullscreen=no --cursor-autohide=no --osc=yes --playlist-start=%ptr% --keep-open=always --input-ipc-server=\\.\pipe\mpv_music "%inca%\cache\playlist.m3u"
+            Run %inca%\apps\mpv --fullscreen=no --cursor-autohide=no --osc=yes --playlist-start=%ptr% --keep-open=always --input-ipc-server=\\.\pipe\mpv_music "%inca%\cache\mpv_playlist.m3u"
             loop 100
                 {
                 sleep 20
@@ -1587,6 +1659,7 @@
             WinMinimize, ahk_ID %music_player%
         last_song := song_id
         GetSeekTime(music_player)
+        GetDuration(song)
         if (last_song == song_id)
             CloseMusic()
         else
@@ -1626,11 +1699,8 @@
         snip =
         media =
         skinny =
-        SplitPath, sourcefile,,,ext,linkname
-        if (ext == "lnk")
-            FileGetShortcut, %sourcefile%, sourcefile
-        FileRead, skinny, %inca%\cache\widths\%linkname%.txt
         SplitPath, sourcefile,,media_path,ext,media_name
+        FileRead, skinny, %inca%\cache\widths\%media_name%.txt
         stringlower, ext, ext
         media := DecodeExt(ext)
         if InStr(media_path, "\favorites\- snips")
@@ -1677,9 +1747,16 @@
         if (spool_name == "slides" && !snip_source)
             {
             slide := playlist
-            FileReadLine, str1, %inca%\cache\playlist.m3u, %list_id%
+            FileRead, str, %inca%\cache\mpv_playlist.m3u	; because list_id includes .m3u entries
+            Loop, Parse, str, `n, `r
+                if !InStr(A_LoopField, "apps/icons/")		; skip non media entries
+                    {
+                    x := Round(list_id - A_Index + 1)
+                    break
+                    }
+            FileReadLine, str1, %playlist%, %x%
             sourcefile := StrSplit(str1, "|").1
-            if (!seek && StrSplit(str1, "|").2)
+            if !seek
                 seek := StrSplit(str1, "|").2
             caption := StrSplit(str1, "|").3
             StringReplace, caption, caption, ~,`n`r, All
@@ -1722,8 +1799,6 @@
             speed =
         if (duration > 120 && seek > (duration - 5))
             seek := 10
-        if (timer > 350)
-            seek := 1
         if (duration <= 30)
             seek := 0
         seek_t := Abs(100 * seek / duration)
@@ -1743,7 +1818,7 @@
             properties = --video-zoom=-%zoom%
         history_timer := 1
         Random, random, 100, 999
-        if ((click == "MButton" || thumbsheet) && media == "video" && duration > 30 && !(slide && !snip_source))  ; thumbs
+        if ((click == "MButton" || thumbsheet) && media == "video" && duration > 30 && !(slide && video_player))  ; thumbs
             {
             RunWait %inca%\apps\ffmpeg.exe -skip_frame nokey -i "%inca%\cache\thumbs\%media_name%.mp4" -vsync 0 -qscale:v 1 "%inca%\cache\`%d.jpg",, Hide
             RunWait %inca%\apps\ffmpeg -i %inca%\cache\`%d.jpg -filter_complex "tile=6x6" -y "%inca%\cache\thumb.jpg",, Hide
@@ -1762,6 +1837,17 @@
                     break 2
             }
         WinSet, Transparent, 0, ahk_ID %player%
+        WinSet, Transparent, 0, ahk_class Shell_TrayWnd			; stop flickering taskbar
+        if (!thumbsheet && aspect := Round(skinny / 100,2))
+            {
+            sleep 250
+            RunWait %COMSPEC% /c echo add video-aspect %aspect% > \\.\pipe\mpv%random%,, hide && exit
+            }
+        loop 16
+           {
+           sleep 18
+           WinSet, Transparent, % A_Index*16, ahk_ID %player%		; new player instance fade 
+           }
         if caption
             {
             WinSet, TransColor, 0 99
@@ -1770,25 +1856,17 @@
             y := A_ScreenHeight * 0.82
             Gui, Caption:Show, x%x%  y%y%, NA
             }
-        if (!video_player && !snip && view == 7)			; highlight media in browser
-            click = refresh
-        if (!thumbsheet && aspect := Round(skinny / 100,2))
-            {
-            sleep 250
-            RunWait %COMSPEC% /c echo add video-aspect %aspect% > \\.\pipe\mpv%random%,, hide && exit
-            }
-        loop 255
-           {
-           WinSet, Transparent, % A_Index, ahk_ID %player%		; new player instance fade up
-           loop 24000
-               x =
-           }
         block_input := A_TickCount + 444				; stop residual wheel inputs
         WinSet, Transparent, 0, ahk_group Browsers
-        WinClose, ahk_ID %video_player%					; previous player instance
+        if video_player
+            {
+            WinClose, ahk_ID %video_player%				; previous player instance
+            AddHistory()
+            }
         WinActivate, ahk_ID %player%
         video_player := player
-        seek =
+        if (view == 7)
+            refresh = 1							; highlight media in browser
         return 1
         }
 
@@ -1801,26 +1879,22 @@
         Gui, ProgressBar:Cancel
         GuiControl, Indexer:, GuiInd
         FileDelete, %inca%\cache\*.jpg
-        if !(snip || slide || ext == "lnk")
-            {
-            FileCreateShortcut, %sourcefile%, %inca%\history\all history\%media_name%.lnk
-            if (history_timer / 10 > Setting("History Timer") && media != "audio")
-                FileCreateShortcut, %sourcefile%, %inca%\history\%media_name%.lnk
-            }
+        AddHistory()
         if video_player
-          loop 50
+          loop 16
             {
             seek := seek_time						; so can return to last media
             ControlSend,, l, ahk_ID %video_player%			; zoom player in
-            mask := 256 - (A_Index * 6)
+            mask := 256 - (A_Index * 16)
             WinSet, Transparent, % mask, ahk_ID %video_player%		; transition mpv out
-            WinSet, Transparent, % A_Index * 6, ahk_group Browsers
+            WinSet, Transparent, % A_Index * 16, ahk_group Browsers
             if (video_sound && volume > 1)
                 SoundSet, volume -= 0.5
-            if (A_Index == 47)						; allow time for Win ID to release
+            if (A_Index == 5)						; minimise browser flickering
+                WinActivate, ahk_group Browsers
+            if (A_Index == 15)						; allow time for Win ID to release
                 WInClose, ahk_ID %video_player%
-            loop 120000
-                x =
+            sleep 18
             }
         media =
         slide =
@@ -1829,6 +1903,7 @@
         skinny =
         paused =
         history_timer =
+        WinSet, Transparent, 255, ahk_class Shell_TrayWnd
         if (video_sound && music_player)
             FlipSound(1)
         video_sound := 0
@@ -1954,8 +2029,8 @@
             FileDelete, %inca%\cache\widths\%media_name%.txt
             if (Abs(skinny) > 2 && Abs(skinny) < 64)
                 {
+                refresh = 1
                 FileAppend, %skinny%, %inca%\cache\widths\%media_name%.txt
-                click = refresh
                 }
             }
         sleep 10
@@ -2014,8 +2089,6 @@
         gui, settings:add, edit, x180 yp+13 h32 w500 vindexed_folders, %indexed_folders%
         gui, settings:add, text, x180 yp+39, context menu
         gui, settings:add, edit, x180 yp+13 h44 w500 vcontext_menu, %context_menu%
-        gui, settings:add, button, x20 y450 w60, Compile
-        gui, settings:add, button, x90 y450 w60, Source
         gui, settings:add, button, x270 y450 w80, Purge Cache
         gui, settings:add, button, x360 y450 w70, Help
         gui, settings:add, button, x440 y450 w70, Cancel
@@ -2023,16 +2096,6 @@
         gui, settings:show
         send, +{Tab}
         }
-
-        settingsButtonCompile:
-        WinClose
-        run %inca%\apps\Compile.exe
-        return
-
-        settingsButtonSource:
-        WinClose
-        run, notepad %inca%\inca.ahk
-        return
 
         settingsButtonHelp:
         WinClose
@@ -2102,6 +2165,17 @@
         }
 
 
+    AddHistory()
+        {
+        if !(snip || slide || ext == "lnk")
+            {
+            FileCreateShortcut, %sourcefile%, %inca%\history\all history\%media_name%.lnk
+            if (history_timer / 10 > Setting("History Timer") && media != "audio")
+                FileCreateShortcut, %sourcefile%, %inca%\history\%media_name%.lnk
+            }
+        }
+
+
     AddFavorites()					; and create 10 second snips
         {
         if !DetectMedia()
@@ -2109,35 +2183,22 @@
         if thumbsheet
             ThumbSeekTime()
         if seek
-            start := seek
-        else start := seek_time
-        end := start + 10
-        if (video_player && !thumbsheet && seek)
-            end := seek_time
+            start := Round(seek,2)
+        else start := Round(seek_time,2)
         popup = Favorite
+        PopUp(popup,0,0)
+        FileGetShortcut, %inca%\favorites\%media_name%.lnk, x,,, seeks
+        if seeks
+            seeks = %seeks%|%start%
+        else seeks = %start%
         if (media != "Document" && spool_name != "music")
-            FileCreateShortcut, %sourcefile%, %inca%\favorites\%media_name%.lnk
-        if (media == "video" && duration > 30 && !InStr(sourcefile, "\favorites") && end > start)
-              Loop 10
-                IfNotExist, %inca%\favorites\- snips\%media_name% - %A_Index%.mp4
-                    {
-                    popup = Snip %A_Index%
-                    if (A_Index < 10)
-                        {
-                        favorite = %inca%\favorites\- snips\%media_name% - %A_Index%
-                        run, %inca%\apps\ffmpeg.exe -ss %start% -to %end% -i "%sourcefile%" -c:v libx264 -x264opts keyint=3 -vf scale=1280:-2 -y "%favorite%.mp4",,Hide
-                        }
-                    else popup = full
-                    click = refresh
-                    break
-                    }
+            FileCreateShortcut, %sourcefile%, %inca%\favorites\%media_name%.lnk,,, %seeks%
         if (spool_name == "music")
             x = %inca%\music\-  New Playlist.m3u
         else x = %inca%\slides\-  New Slides.m3u
-        if favorite
-            FileAppend, %favorite%.mp4|%seek%|%caption%`r`n,%x%, UTF-8
-        else FileAppend, %sourcefile%|%seek%|%caption%`r`n,%x%, UTF-8
-        PopUp(popup,700,video_player)
+        FileAppend, %sourcefile%|%start%|%caption%`r`n,%x%, UTF-8
+        RenderPage()
+        PopUp(popup,500,0)
         seek =
         }
 
@@ -2283,10 +2344,9 @@
                 FileMove, %x%, %x%
                 if ErrorLevel						; file open or still downloading
                     continue
-                filedelete, %inca%\cache\durations\%filen%.txt
-                if !(dur := GetDuration(source))
+                dur := GetDuration(source)
+                if (dur <= 1)
                     continue
-                FileAppend, %dur%, %inca%\cache\durations\%filen%.txt
                 }
               IfNotExist, %inca%\cache\thumbs\%filen%.mp4
                 {
@@ -2307,10 +2367,15 @@
                     runwait, %inca%\apps\ffmpeg.exe -ss %t% -i "%source%" -y -vf scale=480:-2 -vframes 1 "%inca%\temp\%y%.jpg",, Hide
                   t += (dur / 200)
                   }
-                runwait, %inca%\apps\ffmpeg.exe -i "%inca%\temp\`%d.jpg" -y "%inca%\cache\thumbs\%filen%.mp4",, Hide
+                runwait, %inca%\apps\ffmpeg.exe -i "%inca%\temp\`%d.jpg" -c:v libx264 -x264opts keyint=1:scenecut=-1 -y "%inca%\cache\thumbs\%filen%.mp4",, Hide
                 filen2 := StrReplace(filen, "#" , ".")			; html cannot have # in file name 
                 if InStr(filen, "#")
                     FileCopy, %inca%\cache\thumbs\%filen%.mp4, %inca%\cache\thumbs\%filen2%.mp4, 1
+                IfNotExist, %inca%\cache\thumbs\%filen%.mp4
+                    {
+                    filedelete, %inca%\cache\durations\%filen%.txt
+                    FileAppend, 1, %inca%\cache\durations\%filen%.txt
+                    }
                 }
               }
             }
@@ -2343,11 +2408,13 @@
             StringTrimRight, entry, entry, 1
             Menu, Folders, Add, %entry%, ContextMenu
             }
-        Menu, ContextMenu, Add, Settings, ContextMenu
         Menu, ContextMenu, Add, Folders, :Folders
         Menu, ContextMenu, Add, Rename, ContextMenu
         Menu, ContextMenu, Add, Delete, ContextMenu
         Menu, ContextMenu, Add, All, ContextMenu
+        Menu, ContextMenu, Add, Settings, ContextMenu
+        Menu, ContextMenu, Add, Source, ContextMenu
+        Menu, ContextMenu, Add, Compile, ContextMenu
         }
 
 
