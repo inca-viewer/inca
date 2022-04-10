@@ -1,50 +1,56 @@
 <script>
-var xpos = "0";
-var ypos = "0";
-var opacity = "0";
-var last = "0";
-
-function select(event, id, name) {			// highlight selected items
-var el = document.getElementById(name);
-document.getElementById(id).href = location.href.split('#')[0] + "#" + name + "#" + last;
-if (event.button == 2) {
-if (el.style.borderBottom == "") 
-     {el.style.borderBottom = "dotted #ffbf99"; document.getElementById(id).style.animation = "blink 0.3s 4";}
-else {el.style.border = ""}}}
 
 
-function snips(event, id, name, seek) {			// mouseover snip buttons
-var el = document.getElementById(name);	
-el.currentTime = seek;
-last = seek;
-el.play();
-setTimeout(function(){el.pause(); },3000);}
+function spool(event, id, input, output) {
+var link = " ";
+const z = input.split("|");
+var el2 = document.getElementById(output);
+var el = document.getElementById(id);
 
+if (id == "all") {
+z.sort();
+for (const x of z) {
+p = x; p=p.replace(/ /g, "%20"); link = link + "<a href=#" + p + "><li>" + x + "</li>" + "</a>";}
+el2.innerHTML = link;}
 
-function pause(event, id, name) {var el = document.getElementById(name); el.pause();last = 0;}
+if (id == "folders" || id == "sub" || id == "fav") {
+for (x of z) {
+  y = x.split("/"); 
+  var x1 = y.pop(); x1 = y.pop(); 
+  x1 = x1.substring(0, 14);
+  p=x.replace(/ /g, "%20");
+  link = link + "<a href=#" + p + "><li>" + x1 + "</li>" + "</a>";}
+el2.innerHTML = link;}
 
+if (id == "music" || id == "slides") {
+for (const x of z) {
+  const y = x.split("/"); 
+  var p = y.pop(); 
+  var q = x.replace(p, "");
+  q = p + "#" + q;
+  p=p.replace(/.m3u/g, "");
+  p = p.substring(0, 14);
+  q=q.replace(/ /g, "%20");
+  link = link + "<a href=#" + q + "><li>" + p + "</li>" + "</a>";}
+el2.innerHTML = link;}
 
-function seek(event, id, name, seek) {			// mouseover thumb image
-var el = document.getElementById(name);
-var rect = el.getBoundingClientRect();
-xpos = (event.clientX - rect.left) / el.offsetWidth;
-ypos = (event.clientY - rect.top) / el.offsetHeight;
-var sk = el.duration * xpos;
-var step = el.duration * 0.2;
-sk = Math.floor(sk / step);
-sk = Math.floor(sk * step);
-if (el.duration > 30) {sk = sk + 20;}
-if (seek != 0) {sk = seek;}
-if (sk == last) {return;}
-el.playbackRate = 0.8;
-if (!el.getAttribute("src").match(/thumbs/)) {el.currentTime = sk; el.play();}
-last = sk;
-}
+if (id == "search") {
+z.sort();
+var w = el.offsetWidth;
+var h = el.offsetHeight;
+var x = ((event.clientX - el.offsetLeft - el.scrollLeft)/w) + 0.02;
+var upper = String.fromCharCode(Math.floor(27 * x) + 64);
+var lower = upper.toLowerCase();
+const filter = z.filter(z => z.startsWith(lower));
+for (const x of filter) {
+p = x; p=p.replace(/ /g, "%20"); link = link + "<a href=#" + p + "><li>" + x + "</li>" + "</a>";}
+el2.innerHTML = link;}}
+
 
 function getCoords(event, id, sort, link, current) {	// return slider control position
-var y = "";
+var y = " ";
 var of = " ";
-var units = "";
+var units = " ";
 var el = document.getElementById(id);
 var w = el.offsetWidth;
 var x = (event.clientX - el.offsetLeft - el.scrollLeft)/w;
@@ -56,8 +62,8 @@ if (id =='slider2' || id =='slider3') {y = Math.floor(sort*x)+1; units = sort; s
 if (id =='slider4') {y = Math.floor(7 * x) + 1; sort = "View";}
 if (current != "") {y = current;}
 el.href= link + ".htm#" + sort + "#" + y;
-if (sort =='Random') {return;}
+if (sort =='Random' || sort =='ext' || sort =='Shuffle') {return;}
 if (sort == 'Alpha') {y = String.fromCharCode(y);}
-el.innerHTML = sort + " " + y + of + units;}
+el.innerHTML = y + of + units;}
 
 </script>
