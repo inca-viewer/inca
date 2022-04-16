@@ -2,10 +2,7 @@
 
 	; Inca Media Viewer for Windows. Firefox & Chrome compatible
 
-
-	; wheel to transition load pages
-	; js can highlight panel entries
-
+; loses last media on shuffle etc.
 
 	#NoEnv
 	#UseHook, On
@@ -558,7 +555,6 @@
           if (pos > 2)
             arg2 := array[pos-1]
           }
-        last_media =
         orphan_media =
         if DetectMedia(arg2)
             return "Media"
@@ -813,21 +809,6 @@
               }
             return 1
             }
-        }
-
-
-    GetPageMedia(next)
-        {
-        FileReadLine, str, %inca%\cache\html\%tab_name%.htm, 3			; list of media id's visible in page
-            Loop, Parse, str, `/
-              if (A_LoopField == list_id)					; current media id found in list
-                ptr := A_Index + next						; next media 
-        array := StrSplit(str, "/")						; convert html pointer to list ptr
-        list_id := array[ptr]
-        Loop, Parse, list, `n, `r
-            if (A_Index == list_id)
-                sourcefile := StrSplit(A_LoopField, "/").2
-        return DetectMedia(sourcefile)
         }
 
 
@@ -1301,13 +1282,24 @@
         {
         Critical
         wheel =
-        GetPageMedia(next)					; convert external html media to internal list media
-        if (!next && orphan_media) 				; not referenced in html tab
-            source_media := orphan_media			; preserve origin before any link files followed
+        FileReadLine, str, %inca%\cache\html\%tab_name%.htm, 3	; convert external html media to internal list media
+            Loop, Parse, str, `/
+              if (A_LoopField == list_id)
+                ptr := A_Index + next				; next media 
+        array := StrSplit(str, "/")				; convert html pointer to internal list ptr
+        list_id := array[ptr]
+        Loop, Parse, list, `n, `r
+            if (A_Index == list_id)
+                sourcefile := StrSplit(A_LoopField, "/").2
+        if (!next && orphan_media) 				; not referenced in any media list
+            source_media := orphan_media			; preserve origin before any link files processed
         else source_media := sourcefile
         last_media := source_media
+        if orphan_media						; not referenced in html tab
+            sourcefile := orphan_media
         DetectMedia(sourcefile)
-        IfExist, %inca%\cache\cuts\%media_name%.txt		; get sourcefile and seek from .jpg link file
+        if (media == "image")
+          IfExist, %inca%\cache\cuts\%media_name%.txt		; get sourcefile and seek from .jpg link file
             {
             FileRead, str, %inca%\cache\cuts\%media_name%.txt
             sourcefile := StrSplit(str, "|").1
@@ -1316,8 +1308,6 @@
         DetectMedia(sourcefile)
         if (click == "MButton" && InStr(sourcefile, "\Snips\"))
             GetSnipSource()					; play sourcefile not 10 sec. snip file
-        if orphan_media						; not referenced in html tab
-            sourcefile := orphan_media
         if !DetectMedia(sourcefile)
             {
             ClosePlayer()
@@ -2092,9 +2082,9 @@
                     SpoolList(A_Index, source)
                 }
         pages := ceil(list_size/size)
-        header_html = <!--`r`n%view%/%page%/%sort%/%toggles%/%safe_this_search%/%search_term%/%safe_spool_path%/%html_spool_name%/%safe_playlist%/%safe_last_media%`r`n%page_media%`r`n-->`r`n<!doctype html>`r`n<html>`r`n<head>`r`n<link rel="icon" type="image/x-icon" href="file:///%inca%/apps/icons/inca.ico">`r`n<meta charset="UTF-8">`r`n<title>Inca - %html_spool_name%</title>`r`n<style>`r`n`r`n@font-face {font-family: ClearSans-Thin; src: url(data:application/font-woff;charset=utf-8;base64,%font%);}`r`n`r`nbody {font-family: 'ClearSans-Thin'; overflow-x:hidden; background:%back%; color:#666666; font-size:0.8em; margin-top:200px;}`r`na:link {color:#15110a;}`r`na:visited {color:#15110a;}`r`ntable {color:%fcol%; transition:color 1.4s; table-layout:fixed; border-collapse: collapse;}`r`na {text-decoration:none; color:%fcol%;}`r`na.slider {display:inline-block; width:35`%; height:1.2em; border-radius:9px; color:%fcol%; transition:color 1.4s; font-size:1em; background-color:#1b1814; text-align:center}`r`na.slider:hover {color:red; transition:color 0.36s;}`r`n.columns {float:left;}`r`nul.menu {column-gap:12px; margin:auto; list-style-type:none; padding:0; white-space:nowrap;}`r`n.sorts {color:#555351; font-size:0.8em; width:3.4em; text-align:center;}`r`nul.menu li {color:%fcol%; transition:color 1.4s;}`r`nul.menu li:hover {color:red; transition:color 0.36s;}`r`nul.list {list-style-type:none;}`r`nul.list table:hover {color:red; transition:color 0.36s;}`r`nul.list li img {border: 1px solid %back%;}`r`n#hover_image {position:absolute; margin-left:3.8em; opacity:0; transition: opacity 0.4s; width:125px; height:auto;}`r`n#hover_image:hover {opacity:1;}`r`n</style>`r`n`r`n%script%`r`n</head>`r`n<body %onload%>`r`n`r`n`r`n`r`n<div style="margin-left:%offset%`%; margin-right:%offset%`%">`r`n`r`n
+        header_html = <!--`r`n%view%/%page%/%sort%/%toggles%/%safe_this_search%/%search_term%/%safe_spool_path%/%html_spool_name%/%safe_playlist%/%safe_last_media%`r`n%page_media%`r`n-->`r`n<!doctype html>`r`n<html>`r`n<head>`r`n<link rel="icon" type="image/x-icon" href="file:///%inca%/apps/icons/inca.ico">`r`n<meta charset="UTF-8">`r`n<title>Inca - %html_spool_name%</title>`r`n<style>`r`n`r`n@font-face {font-family: ClearSans-Thin; src: url(data:application/font-woff;charset=utf-8;base64,%font%);}`r`n`r`nbody {font-family: 'ClearSans-Thin'; overflow-x:hidden; background:%back%; color:#666666; font-size:0.8em; margin-top:200px;}`r`na:link {color:#15110a;}`r`na:visited {color:#15110a;}`r`na {text-decoration:none; color:%fcol%;}`r`na.slider {display:inline-block; width:35`%; height:1.2em; border-radius:9px; color:%fcol%; transition:color 1.4s; font-size:1em; background-color:#1b1814; text-align:center}`r`na.slider:hover {color:red; transition:color 0.36s;}`r`nul.menu {column-gap:12px; margin:auto; list-style-type:none; padding:0; white-space:nowrap;}`r`nul.menu li {color:%fcol%; transition:color 1.4s;}`r`nul.menu li:hover {color:red; transition:color 0.36s;}`r`ntable {color:%fcol%; transition:color 1.4s; table-layout:fixed; border-collapse: collapse;}`r`ntable:hover {color:red; transition:color 0.36s;}`r`n#hover_image {position:absolute; margin-left:3.8em; opacity:0; transition: opacity 0.4s; width:125px; height:auto;}`r`n#hover_image:hover {opacity:1;}`r`n</style>`r`n`r`n%script%`r`n</head>`r`n<body %onload%>`r`n`r`n`r`n`r`n<div style="margin-left:%offset%`%; margin-right:%offset%`%">`r`n`r`n
             panel2_html = <ul class="menu" id='all' style="background-color:inherit; column-count:8; column-fill:balanced; border-radius:9px; padding-left:1em; font-size:0.9em"></ul>`r`n`r`n
-        panel_html = %panel2_html%<ul class="menu" id='panel' style="height:6em; margin-top:1em; column-count:8; column-fill:balanced; border-radius:9px; padding-left:1em"></ul>`r`n`r`n<ul class="menu" style="display:flex; justify-content:space-between"><a class='slider' id='sub' onmouseenter='spool(event, id, "%safe_subfolders%", "panel")' style="width:12`%;">Sub</a>`r`n<a class='slider' id='folders' onmouseenter='spool(event, id, "%safe_folder_list%", "panel")' style="width:12`%;">Fol</a>`r`n<a class='slider' id='fav' onmouseenter='spool(event, id, "%safe_fav_folders%", "panel")' style="width:12`%;">Fav</a>`r`n<a class='slider' id='slides' onmouseenter='spool(event, id, "%slides%", "panel")' style="width:12`%;">Slides</a>`r`n<a class='slider' id='music' onmouseenter='spool(event, id, "%music%", "panel")' style="width:12`%;">Music</a>`r`n<a id='search' class='slider' onmousemove='spool(event, id, "%search_list%", "panel")' onmousedown='spool(event,"all","%search_list%", "all")'>Search</a></ul>`r`n`r`n
+        panel_html = %panel2_html%<ul class="menu" id='panel' style="height:6em; margin-top:1em; column-count:8; column-fill:balanced; border-radius:9px; padding-left:1em"></ul>`r`n`r`n<ul class="menu" style="display:flex; justify-content:space-between"><a class='slider' id='sub' onmouseenter='spool(event, id, "%safe_subfolders%", "panel")' style="width:7`%;">Sub</a>`r`n<a class='slider' id='folders' onmouseenter='spool(event, id, "%safe_folder_list%", "panel")' style="width:7`%;">Fol</a>`r`n<a class='slider' id='fav' onmouseenter='spool(event, id, "%safe_fav_folders%", "panel")' style="width:7`%;">Fav</a>`r`n<a href="file:///%inca%/cache/html/slides.htm" class='slider' id='slides' onmouseenter='spool(event, id, "%slides%", "panel")' style="width:7`%;">Slides</a>`r`n<a href="file:///%inca%/cache/html/music.htm" class='slider' id='music' onmouseenter='spool(event, id, "%music%", "panel")' style="width:7`%;">Music</a>`r`n<a id='search' class='slider' onmousemove='spool(event, id, "%search_list%", "panel")' onmousedown='spool(event,"all","%search_list%", "all")'>Search</a></ul>`r`n`r`n
         if search_box
             plus = <a href="#Searchbox" style="color:red;"><c>+</c></a>		; + option to add search to search list
         else plus =
