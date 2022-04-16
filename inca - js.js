@@ -10,7 +10,7 @@ var el = document.getElementById(id);
 if (id == "all") {
 z.sort();
 for (const x of z) {
-p = x; p=p.replace(/ /g, "%20"); link = link + "<a href=#" + p + "><li>" + x + "</li>" + "</a>";}
+p = x; y = p.substring(0, 14); p=p.replace(/ /g, "%20"); link = link + "<a href=#" + p + "><li>" + y + "</li>" + "</a>";}
 el2.innerHTML = link;}
 
 if (id == "folders" || id == "sub" || id == "fav") {
@@ -37,14 +37,15 @@ el2.innerHTML = link;}
 if (id == "search") {
 z.sort();
 var w = el.offsetWidth;
-var h = el.offsetHeight;
 var x = ((event.clientX - el.offsetLeft - el.scrollLeft)/w) + 0.02;
 var upper = String.fromCharCode(Math.floor(27 * x) + 64);
 var lower = upper.toLowerCase();
-const filter = z.filter(z => z.startsWith(lower));
-for (const x of filter) {
+const f_lower = z.filter(z => z.startsWith(lower));
+const f_higher = z.filter(z => z.startsWith(upper));
+y = f_higher.concat(f_lower);
+for (const x of y) {
 p = x; p=p.replace(/ /g, "%20"); link = link + "<a href=#" + p + "><li>" + x + "</li>" + "</a>";}
-el2.innerHTML = link;}}
+el2.innerHTML = link; el.innerHTML = upper;}}
 
 
 function getCoords(event, id, sort, link, current) {	// return slider control position
