@@ -311,13 +311,15 @@
               {
               if (x := ClickWebPage())
                   {
+                  if (media == "m3u" && timer > 350)
+                      list_id := 1					; play first slide/song on long click
                   if (media == "document")
                       orphan_media := sourcefile			; for edit captions - makes txt file an orphan
                   if (timer < 350)
                       seek := 0						; PlayMedia to determine seek time
                   else if (x == "Media")
                       seek_overide := 10				; force start at beginning
-                  else orphan_media := last_media    
+                  else orphan_media := last_media
                   if (x == "Media" || timer > 350)			; or play last_media
                       PlayMedia(0)
                   }
@@ -733,7 +735,7 @@
                 }
             StringTrimRight, list, list, 2				; remove end `r`n    
             }
-        if (sort == "Shuffle" && !menu_item)
+        if (sort == "Shuffle" && !playlist)
             Sort, list, Random Z
         Loop, Parse, list, `n, `r
           if FilterList(A_LoopField)
@@ -1359,7 +1361,7 @@
         if (magnify < 0)
             magnify := 0 
         zoom := magnify
-        if (media == "video" && zoom < 1)
+        if (media == "video" && zoom < 1 && !video_player)
             zoom := 1
         if paused
             pause = --pause
@@ -1407,7 +1409,7 @@
             y := A_ScreenHeight * 0.82
             Gui, Caption:Show, x%x%  y%y%, NA
             }
-        block_input := A_TickCount + 500
+        block_input := A_TickCount + 800
         if (click == "MButton")
             block_input := A_TickCount + 1600				; stop residual wheel inputs
         WinSet, Transparent, 0, ahk_group Browsers
