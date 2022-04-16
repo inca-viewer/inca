@@ -38,7 +38,7 @@ if (id == "search") {
 z.sort();
 var w = el.offsetWidth;
 var x = ((event.clientX - el.offsetLeft - el.scrollLeft)/w) + 0.02;
-var upper = String.fromCharCode(Math.floor(27 * x) + 64);
+var upper = String.fromCharCode(Math.floor(25 * x) + 65);
 var lower = upper.toLowerCase();
 const f_lower = z.filter(z => z.startsWith(lower));
 const f_higher = z.filter(z => z.startsWith(upper));
