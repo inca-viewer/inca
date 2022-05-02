@@ -2,6 +2,8 @@
 
 	; Inca Media Viewer for Windows. Firefox & Chrome compatible
 
+; transparent browser if no thumbsheet
+; list of last searches
 
 	#NoEnv
 	#UseHook, On
@@ -381,6 +383,7 @@
                 if !selected
                     send, ^{F5}						; go to top of page
                 else selected =
+                sleep 44
                 RenderPage()
                 }
             else send, {Xbutton1}
@@ -891,8 +894,6 @@
         array := StrSplit(input.1, ":")
         if !position
             position := Round(array.1 * 3600 + array.2 * 60 + array.3,1)	; or use less accurate value
-        if (player == music_player)
-            last_media := input.7
         ClipBoard := clip
         return
         }
@@ -1122,7 +1123,7 @@
                 popup = %copy% %menu_item%
                 }
             }
-        count -= 1
+        count -= 2
         selected =
         }
     pop = %popup% %count%
@@ -1276,6 +1277,8 @@
             loop %running%
                 if ((player := running%A_Index%) != music_player && player != video_player)
                     break 2
+            if (A_Index > 148)
+                return
             }
         WinSet, Transparent, 0, ahk_ID %player%
         WinSet, Transparent, 0, ahk_class Shell_TrayWnd			; stop flickering taskbar
