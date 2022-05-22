@@ -2,8 +2,6 @@
 
 	; Inca Media Viewer for Windows. Firefox & Chrome compatible
 
-; transparent browser if no thumbsheet
-; list of last searches
 
 	#NoEnv
 	#UseHook, On
@@ -220,7 +218,7 @@
         timer := A_TickCount - start
         if (!GetKeyState("LButton", "P") && !GetKeyState("RButton", "P"))
             break
-        if (xy > 10)
+        if (xy > 6)
             {
             MouseGetPos, xpos, ypos
             gesture = 1
@@ -251,6 +249,8 @@
           {
           if (timer > 350 && A_Cursor == "IBeam")
               SearchText()
+          else if (menu_item == "Caption")
+              return
           else if (video_player && type != "image")
               {
               GetSeekTime(video_player)
@@ -580,6 +580,7 @@
                 src = %arg1%%arg2%
                 if (DetectMedia(src) == "m3u")
                     playlist := src
+                if !InStr(subfolders, folder)
                     subfolders =
                 Loop, Files,%path%*.*, D
                   if A_LoopFileAttrib not contains H,S
@@ -977,8 +978,9 @@
     EditFilename()						; + durations, faorites, history and slides
         {
         selected =
-        if (folder == "Slides" || folder == "Favorites" || !GetMedia(0))
+        if (folder == "Favorites" || !GetMedia(0))
             return
+        SplitPath, src,,media_path
         FileGetSize, size, %src%, K
         size := Round(size/1000,2)
         FileRead, duration, %inca%\cache\durations\%media%.txt
@@ -986,7 +988,7 @@
             FileRead, text, %inca%\cache\captions\%media%.txt
         else text := media
         IfExist, %src%
-            InputBox, new_name, %menu_item%   %path%   %ext%   size %size%   dur %duration%,,,,94,,,,, %text%
+            InputBox, new_name, %menu_item%   %media_path%   %ext%   size %size%   dur %duration%,,,,94,,,,, %text%
         else return
         IfWinExist, ahk_class OSKMainClass
             send, !0						; close osk keyboard
@@ -1000,7 +1002,7 @@
                 }
             else
                 {
-                FileMove, %src%, %path%\%new_name%.%ext%	; FileMove = FileRename
+                FileMove, %src%, %media_path%\%new_name%.%ext%	; FileMove = FileRename
                 UpdateFiles(new_name)
                 }
             }
@@ -1011,7 +1013,7 @@
 
     UpdateFiles(new_name)
         {
-        if (ext == "lnk" && ext == "m3u")
+        if (ext == "lnk" || ext == "m3u")
             return
         Loop, Files, %inca%\slides\*.m3u, FR
             {
@@ -1250,8 +1252,9 @@
         if (magnify < 0)
             magnify := 0 
         zoom := magnify
-        if (type == "video" && zoom < 1 && !video_player)
-            zoom := 1
+        if (type == "video" && Setting("Default Magnify"))
+            zoom := 50 / Setting("Default Magnify") 
+        video_speed := Setting("Default Speed") - 100
         if (Setting("Start Paused") || type == "audio")
             paused = 1
         if paused
@@ -1813,12 +1816,12 @@
                         runwait, %inca%\apps\ffmpeg.exe -ss %t% -i "%source%" -y -vf scale=480:-2 -vframes 1 "%inca%\temp\%y%.jpg",, Hide
                     t += (dur / 200)
                     }
-                runwait, %inca%\apps\ffmpeg.exe -i "%inca%\temp\`%d.jpg" -c:v libx264 -x264opts keyint=1:scenecut=-1 -y "%inca%\cache\thumbs\%filen%.mp4",, Hide
+                FileCopy, %inca%\temp\1.jpg, %inca%\cache\thumb1\%filen%.jpg, 1
+                RunWait, %inca%\apps\ffmpeg.exe -i "%inca%\temp\`%d.jpg" -c:v libx264 -x264opts keyint=1:scenecut=-1 -y "%inca%\cache\thumbs\%filen%.mp4",, Hide
+                sleep 600
                 }
-            IfExist, %inca%\cache\thumbs\%filen%.mp4
-                source = %inca%\cache\thumbs\%filen%.mp4
             IfNotExist, %inca%\cache\thumb1\%filen%.jpg
-                runwait, %inca%\apps\ffmpeg.exe -i "%source%" -y -vf scale=480:-2 -vframes 1 "%inca%\cache\thumb1\%filen%.jpg",, Hide
+                RunWait, %inca%\apps\ffmpeg.exe -i "%source%" -y -vf scale=480:-2 -vframes 1 "%inca%\cache\thumb1\%filen%.jpg",, Hide
             }
         FileRemoveDir, %inca%\temp, 1
         time := Setting("Indexer") * 60000
