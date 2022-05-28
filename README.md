@@ -2,16 +2,14 @@
 Windows - firefox and chrome compatible<br>
 # File explorer, media viewer for disabled
 
-Creates web pages of your local media<br>
-Like putting 'File Explorer' in your browser<br>
-Or a local website of your hard drive<br>
+Creates beautiful web pages of your local media<br>
+Like putting 'File Explorer' in your browser<br><br>
 
 Only 80kB of easy to read AutoHotkey script source code<br>
 Is lightweight, portable (no installation), does not mess with any media, settings or files<br>
 
 # Features:
 
-Beautiful media viewer in browser<br>
 Instant video thumbsheets. (middle click)<br>
 Randomize / shuffle folders<br>
 Speed, width, magnify & volume with mouse gestures<br><br>
@@ -23,9 +21,8 @@ Speed, width, magnify & volume with mouse gestures<br><br>
 If you are bedridden or disabled<br>
 No keyboard is needed. Uses long clicks, middle button & mouse gestures<br>
 Just run Ince.exe - browser will open in pictures folder<br>
-To 'uninstall', just close from taskbar tray and delete the inca folder<br>
+To 'uninstall', just close from taskbar tray and delete the inca folder<br><br>
 
-YouTube style film strip beneath video<br>
 Smooth Gif playback with magnify, width, step forward & backward & play/pause<br>
 Search, organize, edit & view media files in browser<br>
 Create Favorites, history, slideshows<br><br>
@@ -74,6 +71,7 @@ Right click slide gesture
 
 Middle click
 - on image - next image
+- on thumbnail - next media
 - on video - show 6 x 6 thumb sheet
 - on background - toogle thumbnail / list view
 - on folder - open in new tab
