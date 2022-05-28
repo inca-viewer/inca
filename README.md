@@ -13,7 +13,6 @@ Is lightweight, portable (no installation), does not mess with any media, settin
 
 Beautiful media viewer in browser<br>
 Instant video thumbsheets. (middle click)<br>
-Create instant 10 sec. slo-mo snips, up to 10 per video (long right click)<br>
 Randomize / shuffle folders<br>
 Speed, width, magnify & volume with mouse gestures<br><br>
 
