@@ -6,7 +6,7 @@ Creates beautiful web pages of your local media<br>
 Like putting 'File Explorer' in your browser<br><br>
 
 Only 80kB of easy to read AutoHotkey script source code<br>
-Is lightweight, portable (no installation), does not mess with any media, settings or files<br>
+Is lightweight, portable (no installation), does not mess with any media or settings<br>
 
 # Features:
 
