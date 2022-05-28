@@ -12,8 +12,8 @@ Is lightweight, portable (no installation), does not mess with any media or sett
 
 Instant video thumbsheets. (middle click)<br>
 Randomize / shuffle folders<br>
-You can keep all videos in one folder instead of making subfolders
-because search is so fast and can be saved, so searches act like subfolders
+You can keep all videos in one folder instead of making subfolders<br>
+because search is so fast and can be saved, so searches act like subfolders<br>
 Speed, width, magnify & volume with mouse gestures<br><br>
 
 ><img src="screens/Screen 1.jpg" width="640"/></p><br>
