@@ -12,6 +12,8 @@ Is lightweight, portable (no installation), does not mess with any media, settin
 
 Instant video thumbsheets. (middle click)<br>
 Randomize / shuffle folders<br>
+You can keep all videos in one folder instead of making subfolders
+because search is so fast and can be saved, so searches act like subfolders
 Speed, width, magnify & volume with mouse gestures<br><br>
 
 ><img src="screens/Screen 1.jpg" width="640"/></p><br>
@@ -25,17 +27,18 @@ To 'uninstall', just close from taskbar tray and delete the inca folder<br><br>
 
 Smooth Gif playback with magnify, width, step forward & backward & play/pause<br>
 Search, organize, edit & view media files in browser<br>
-Create Favorites, history, slideshows<br><br>
+Add captions to images or video<br>
+Create Favorites, history, slideshows, storylines<br><br>
 Background music playlists from browser tab<br>
 Flip sound between music and video with volume-through-zero mouse gesture<br>
 Sleep timer gradually lowers volume if mouse quiet<br><br>
 
-To see if you already have a video from a website,<br>
+To see if you already have a video from an outside website,<br>
 Select part of the title text then 'long click' on it<br>
 A tab will immediately open with all matching files from your computer<br>
 
-First open of folder needs time to index videos, but then everything is very fast.<br>
-(6x6 thumbnails index at about 1000 videos per hour into the cache once only)<br>
+6x6 thumbnails index at about 1000 videos per hour into the cache once only<br>
+Then everything is very fast.<br>
 
 Written in a simple scripting language - AutoHotkey<br>
 If it's not exactly what you want, change it. It re-compiles in under a second<br>
