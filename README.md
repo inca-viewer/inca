@@ -4,18 +4,18 @@ Windows - firefox and chrome compatible<br>
 
 Creates web pages of your local media<br>
 Like putting 'File Explorer' in your browser<br>
-Commercial looking website for your own movies<br>
+Or a local website of your hard drive<br>
 
-Only 91kB of easy to read AutoHotkey scripting language<br>
-Is lightweight, portable (no installation), does not mess with any settings or files<br>
+Only 80kB of easy to read AutoHotkey script source code<br>
+Is lightweight, portable (no installation), does not mess with any media, settings or files<br>
 
 # Features:
 
-Frame accurate video filmstrips in browser - (not just few seconds)<br>
-6 x 6 clickable video thumbsheets. (middle click)<br>
+Beautiful media viewer in browser<br>
+Instant video thumbsheets. (middle click)<br>
 Create instant 10 sec. slo-mo snips, up to 10 per video (long right click)<br>
-Random shuffle - make collections look new again<br>
-Speed, pitch, width, magnify & volume mouse gesture controls<br><br>
+Randomize / shuffle folders<br>
+Speed, width, magnify & volume with mouse gestures<br><br>
 
 ><img src="screens/Screen 1.jpg" width="640"/></p><br>
 
@@ -27,50 +27,47 @@ Just run Ince.exe - browser will open in pictures folder<br>
 To 'uninstall', just close from taskbar tray and delete the inca folder<br>
 
 YouTube style film strip beneath video<br>
-Smooth Gif playback  with magnify, width, step forward & backward & play/pause<br>
-Find, organize, edit & view media files in browser<br>
-10 second snips/gifs, favorites, history, slideshows<br><br>
+Smooth Gif playback with magnify, width, step forward & backward & play/pause<br>
+Search, organize, edit & view media files in browser<br>
+Create Favorites, history, slideshows<br><br>
 Background music playlists from browser tab<br>
 Flip sound between music and video with volume-through-zero mouse gesture<br>
-Add silence & reset volume between music tracks.<br>
-Sleep timer gradually lowers volume if mouse quiet<br>
-When browser close to screen edge, Snaps browser to make scroll bar and tabs easier to click<br>
+Sleep timer gradually lowers volume if mouse quiet<br><br>
 
-To see if you already have a video seen on another site,<br>
+To see if you already have a video from a website,<br>
 Select part of the title text then 'long click' on it<br>
 A tab will immediately open with all matching files from your computer<br>
 
-First use of folder needs time to index videos, but then everything is very fast.<br>
-(Thumbnails index at about 250 videos per hour into the cache once only)<br>
+First open of folder needs time to index videos, but then everything is very fast.<br>
+(6x6 thumbnails index at about 1000 videos per hour into the cache once only)<br>
 
 Written in a simple scripting language - AutoHotkey<br>
 If it's not exactly what you want, change it. It re-compiles in under a second<br>
 You don't need to be a programmer and it's really easy to customize.<br>
 Just snip out the bits you don't like and write any features you want.<br>
-Both Source and Compile buttons are in settings on the opening browser tab<br>
+Both Source and Compile buttons in right click menu<br>
 
 # Usage
 
 Click
-- on image - next image
-- on video - toggle pause
+- on image - next image-
+- on image edge - pan image
+- on video - play/pause
 - on thumbnail - play from frame
-- on folder - show media inside
+- on folder - list media inside
 - on search term - find matching videos
 
 Long click
-- on background - toggle list / thumbs view
-- on folder - refresh cache
+- on background - return to last media
 - on video link - play from start
 - on highlighted text - search media files for title match
-- in video - slide down for speed, up for pitch
 
 Long right click
 - on image - save image under cursor
-- on media - add favorite + create 10 second frame accurate gif/mp4 snip
+- on media - add favorite and add to current slideshow
 
 Slide gestures
-- in media - magnify, width, speed, volume or pitch
+- in media - magnify, width, speed, volume
 - screen far left - browser magnify
 
 Right click slide gesture
@@ -79,13 +76,13 @@ Right click slide gesture
 Middle click
 - on image - next image
 - on video - show 6 x 6 thumb sheet
-- on background - return to last media at position
+- on background - toogle thumbnail / list view
 - on folder - open in new tab
-- on screen far left - next song in playlist
+- on screen far left - next song in music playlist
 
 Back click
 - in media - exit
-- on background - top of page (then previous page)
+- on background - clear selection, top of page
 
 Long back click
 - on image - previous image
@@ -99,7 +96,7 @@ Win + /
 - pause/play YouTube - reverse 10 seconds YouTube<br>
 
 <br><br>Supports rotated screen & onscreen keyboard tool<br>
-long press on any text for keyboard, back click to close (if run as administrator)<br>
+long press on any text for keyboard, back click to close (if tool run as administrator)<br>
 
 <img src="screens/mouse.jpg" width="160"/> <img src="screens/swivel arm 3.jpg" width="200"/> <br>
 <img src="screens/swivel arm 2.jpg" width="200"/> <img src="screens/swivel arm 1.jpg" width="200"/></p>
