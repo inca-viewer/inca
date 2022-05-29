@@ -24,7 +24,6 @@
         Global search_folders		; default search locations
         Global indexed_folders		; create thumbnails for
         Global this_search		; current search folders
-        Global context_menu		; right click menu
         Global inca			; default folder path
         Global list			; sorted file list
 	Global list_id			; pointer to media file
@@ -86,7 +85,6 @@
       initialize()			; set environment
       SetTimer, TimedEvents, 100, -1	; every 100mS
       return
-
 
 
     ~LButton::				; click events
@@ -291,6 +289,44 @@
               }
           else if (inside_browser && A_Cursor != "IBeam" && (x := ClickWebPage()))
               {
+              if (selected && !playlist && x == "Transfer")
+                  {
+                  fol := src
+                  IfExist, %fol%
+                    Loop, Parse, selected, `/
+                      {
+                      list_id := A_LoopField
+                      if GetMedia(0)
+                        {
+                        count += 1
+                        PopUp(count,0,0)
+                        if (timer < 350)
+                            FileCopy, %src%, %fol%
+                        else
+                            FileMove, %src%, %fol%
+                        }
+                      }
+                  PopUp(count,600,0)
+                  tab_name := previous_tab
+                  GetTabSettings(1)					; stay in current folder
+                  selected =
+                  CreateList()
+                  return
+                  }
+              if (selected && playlist && timer > 350)
+                  {
+                  DeleteEntry()						; remove slides from playlist
+                  if (x == "Media")
+                      AddEntry()					; add to new position in playlist
+                  else if (x == "Transfer")
+                      {
+                      FileAppend, %selected%, %src%, UTF-8		; move slides to new playlist
+                      playlist := src
+                      }
+                  selected =
+                  CreateList()  
+                  return
+                  }
               if (type == "m3u" && timer > 350)
                   list_id := 1						; play first slide/song on long click
               if (type == "document")
@@ -305,7 +341,7 @@
               if (x == "Media" || timer > 350)				; or play last_media
                   PlayMedia(0)
               }
-          }
+            }
         else if (click == "RButton")
             {
             if (timer > 350 && tab == 2 && (video_player || ClickWebPage() == "Media"))
@@ -566,20 +602,21 @@
                 search_term = %arg1%
             if s_path
                 {
-                selected =
                 search_term =
                 path := s_path
                 this_search := s_path
                 StringTrimRight, folder, path, 1
                 StringGetPos, pos, folder, \, R
                 StringTrimLeft, folder, folder, % pos + 1
-                tab_name := folder
-                if (timer < 350)
-                    GetTabSettings(0)					; from html cache
-                page := 1
                 src = %arg1%%arg2%
+                if selected
+                    return "Transfer"
+                tab_name := folder
+                GetTabSettings(0)					; from html cache
+                page := 1
                 if (DetectMedia(src) == "m3u")
                     playlist := src
+                selected =
                 if !InStr(subfolders, folder)
                     subfolders =
                 Loop, Files,%path%*.*, D
@@ -978,7 +1015,7 @@
     EditFilename()						; + durations, faorites, history and slides
         {
         selected =
-        if (folder == "Favorites" || !GetMedia(0))
+        if !GetMedia(0)
             return
         SplitPath, src,,media_path
         FileGetSize, size, %src%, K
@@ -1051,25 +1088,52 @@
         }
 
 
+    DeleteEntry()
+        {
+        select = `/%selected%
+        selected =
+        FileRead, str, %playlist%
+        FileDelete, %playlist%
+        Loop, Parse, str, `n, `r
+          if A_LoopField
+            {
+            id := A_Index
+            id = `/%id%`/
+            if !Instr(select, id)
+                FileAppend, %A_LoopField%`r`n, %playlist%, UTF-8
+            else selected = %selected%%A_LoopField%`r`n
+            }
+        }
+
+
+    AddEntry()
+        {
+        FileRead, str, %playlist%
+        FileDelete, %playlist%
+        Loop, Parse, str, `n, `r
+          if A_LoopField
+            {
+            if (list_id == A_Index)
+                {
+                FileAppend, %selected%, %playlist%, UTF-8
+                selected =
+                }   
+            FileAppend, %A_LoopField%`r`n, %playlist%, UTF-8
+            }
+        if selected
+            FileAppend, %selected%, %playlist%, UTF-8
+        selected =
+        }
+
 
     ContextMenu:							; right click menu
     Critical
     popup =
     count := 0
-    if GetKeyState("LWin")
-        copy = Copy
-    else copy =
     if video_player
         selected = %list_id%/
     menu_item := A_ThisMenuItem
-    if (menu_item == "New" && selected)					; new folder
-       {
-       FileSelectFolder, menu_item, , 3					; bring up new client window
-       if (menu_item && !ErrorLevel)
-           context_menu = %context_menu%|%menu_item%
-       else menu_item =
-       }
-    else if (menu_item == "Settings")
+    if (menu_item == "Settings")
         ShowSettings()
     else if (menu_item == "Source")
         run, notepad %inca%\inca.ahk
@@ -1079,25 +1143,15 @@
         EditFilename()
     else if (menu_item == "All")
         FileReadLine, selected, %inca%\cache\html\%tab_name%.htm, 3	; list of media id's visible in page
-    else
+    else if (menu_item == "Delete")
         {
         popup = Deleted
         ClosePlayer()
-        if (menu_item == "Delete" && playlist)
+        if playlist
             {
             x := StrSplit(selected,"/")
             count := x.MaxIndex() - 1
-            selected = `/%selected%
-            FileRead, str, %playlist%
-            FileDelete, %playlist%
-            Loop, Parse, str, `n, `r
-              if A_LoopField
-                {
-                id := A_Index
-                id = `/%id%`/
-                if !Instr(selected, id)
-                    FileAppend, %A_LoopField%`r`n, %playlist%, UTF-8
-                }
+            DeleteEntry()
             }
         else Loop, Parse, selected, `/
             {
@@ -1106,24 +1160,9 @@
             GetMedia(0)							; convert html pointers to media
             IfExist, %path%%media%.lnk
                 input = %path%%media%.lnk				; if source was .lnk file, delete link only
-            if (menu_item == "Delete")
-                {
-                IfExist, %path%%media%.lnk
-                    src = %path%%media%.lnk
-                FileRecycle, %src%
-                }
-            else
-                {
-                if menu_item
-                    Loop, Parse, context_menu, `|
-                        if InStr(A_LoopField, menu_item)
-                            IfExist, %A_LoopField%
-                                if Copy
-                                    FileCopy, %src%, %A_LoopField%
-                                else
-                                    FileMove, %src%, %A_LoopField%
-                popup = %copy% %menu_item%
-                }
+            IfExist, %path%%media%.lnk
+                src = %path%%media%.lnk
+            FileRecycle, %src%
             }
         count -= 2
         selected =
@@ -1170,6 +1209,7 @@
 
     GetMedia(next)
         {
+        src =
         FileReadLine, str, %inca%\cache\html\%tab_name%.htm, 3
             Loop, Parse, str, `/
               if (A_LoopField == list_id)
@@ -1283,18 +1323,9 @@
             if (A_Index > 148)
                 return
             }
-        WinSet, Transparent, 0, ahk_ID %player%
-        WinSet, Transparent, 0, ahk_class Shell_TrayWnd			; stop flickering taskbar
+        sleep 400							; time for player to settle
         if (!thumbsheet && aspect := Round(skinny / 100,2))
-            {
-            sleep 250
             RunWait %COMSPEC% /c echo add video-aspect %aspect% > \\.\pipe\mpv%random%,, hide && exit
-            }
-        loop 16
-           {
-           sleep 18
-           WinSet, Transparent, % A_Index*16, ahk_ID %player%		; new player instance fade 
-           }
         Gui, Caption:+lastfound
         GuiControl, Caption:, GuiCap
         IfExist, %inca%\cache\captions\%media% %seek%.txt
@@ -1558,12 +1589,10 @@
         gui, settings:add, edit, x180 yp+13 h18 w500 vsearch_folders, %search_folders%
         gui, settings:add, text, x180 yp+22, folders to index
         gui, settings:add, edit, x180 yp+13 h18 w500 vindexed_folders, %indexed_folders%
-        gui, settings:add, text, x180 yp+24, context menu
-        gui, settings:add, edit, x180 yp+13 h55 w500 vcontext_menu, %context_menu%
-        gui, settings:add, button, x270 y450 w80, Purge Cache
-        gui, settings:add, button, x360 y450 w70, Help
-        gui, settings:add, button, x440 y450 w70, Cancel
-        gui, settings:add, button, x520 y450 w70 default, Save
+        gui, settings:add, button, x270 y400 w80, Purge Cache
+        gui, settings:add, button, x360 y400 w70, Help
+        gui, settings:add, button, x440 y400 w70, Cancel
+        gui, settings:add, button, x520 y400 w70 default, Save
         gui, settings:show
         send, +{Tab}
         }
@@ -1592,7 +1621,6 @@
         StringTrimRight,new,new,1
         IniWrite,%new%,%inca%\settings.ini,Settings,features
         IniWrite,%indexed_folders%,%inca%\settings.ini,Settings,indexed_folders
-        IniWrite,%context_menu%,%inca%\settings.ini,Settings,context_menu
         IniWrite,%search_folders%,%inca%\settings.ini,Settings,search_folders
         IniWrite,%search_list%,%inca%\settings.ini,Settings,search_list
         IniWrite,%folder_list%,%inca%\settings.ini,Settings,folder_list
@@ -1746,7 +1774,7 @@
         Loop, Parse, folder_list, `|
             if !InStr(folders, A_LoopField)				; combine lists
                folders = %folders%|%A_LoopField%
-        Loop, Parse, folders, `|					; remove self folder if exist
+        Loop, Parse, folders, `|
             if InStr(A_LoopField, "thumbs")
                 StringReplace, folders, folders, |%A_LoopField%
         Loop, Files, %inca%\cache\thumbs\*.mp4, F			; remove orphan thumbnails
@@ -1845,15 +1873,6 @@
         IniRead,search_list,%inca%\settings.ini,Settings,search_list
         if (search_list == "ERROR")
             search_list = No Search List
-        IniRead,context_menu,%inca%\settings.ini,Settings,context_menu
-        Loop, Parse, context_menu, `|
-            {
-            StringGetPos, pos, A_LoopField, \, R2
-            StringTrimLeft, entry, A_LoopField, % pos + 1
-            StringTrimRight, entry, entry, 1
-            Menu, Folders, Add, %entry%, ContextMenu
-            }
-        Menu, ContextMenu, Add, Folders, :Folders
         Menu, ContextMenu, Add, Rename, ContextMenu
         Menu, ContextMenu, Add, Caption, ContextMenu
         Menu, ContextMenu, Add, Delete, ContextMenu
@@ -1963,6 +1982,7 @@
         {
         refresh =
         last := src
+        page_media = /
         if !(folder && path)
             return
         if playlist
@@ -2055,7 +2075,8 @@
         x = %inca%\cache\captions\%media%.txt
         Transform, y, HTML, %x%, 2
         FileRead, caption, %x%
-          if caption
+        caption := StrReplace(caption, "`n", "<br>")
+        if caption
             caption = <a href="#%y%#%i%" style="width:100`%; color:LightSalmon; opacity:0.7; font-size:%font_size%em;">%caption%</a>
         StringReplace, caption, caption, \,/, All      
         dur := Time(GetDuration(source))
