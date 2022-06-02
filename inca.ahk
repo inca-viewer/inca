@@ -1,7 +1,7 @@
 
 
-	; Inca Media Viewer for Windows. Firefox & Chrome compatible
 
+	; Inca Media Viewer for Windows. Firefox & Chrome compatible
 
 	#NoEnv
 	#UseHook, On
@@ -87,6 +87,12 @@
       return
 
 
+    Esc up::
+
+      ClosePlayer()
+      ExitApp
+
+
     ~LButton::				; click events
     RButton::
     MButton::
@@ -109,9 +115,6 @@
       click = Back
       SetTimer, Xbutton_Timer, -300
       return
-    Esc up::
-      ClosePlayer()
-    exitapp
     Xbutton1 up::
       timer =
     Xbutton_Timer:
@@ -148,12 +151,7 @@
       timer =
       return
     button2_Timer:
-      if video_player					; MPV screenshot
-          {
-          send, S
-          PopUp("Captured",600,0)
-          }
-      else IfWinActive, ahk_group Browsers
+      IfWinActive, ahk_group Browsers
           if !timer
               send, {Space}				; pause toggle YouTube
           else loop 10
@@ -289,44 +287,6 @@
               }
           else if (inside_browser && A_Cursor != "IBeam" && (x := ClickWebPage()))
               {
-              if (selected && !playlist && x == "Transfer")
-                  {
-                  fol := src
-                  IfExist, %fol%
-                    Loop, Parse, selected, `/
-                      {
-                      list_id := A_LoopField
-                      if GetMedia(0)
-                        {
-                        count += 1
-                        PopUp(count,0,0)
-                        if (timer < 350)
-                            FileCopy, %src%, %fol%
-                        else
-                            FileMove, %src%, %fol%
-                        }
-                      }
-                  PopUp(count,600,0)
-                  tab_name := previous_tab
-                  GetTabSettings(1)					; stay in current folder
-                  selected =
-                  CreateList()
-                  return
-                  }
-              if (selected && playlist && timer > 350)
-                  {
-                  DeleteEntry()						; remove slides from playlist
-                  if (x == "Media")
-                      AddEntry()					; add to new position in playlist
-                  else if (x == "Transfer")
-                      {
-                      FileAppend, %selected%, %src%, UTF-8		; move slides to new playlist
-                      playlist := src
-                      }
-                  selected =
-                  CreateList()  
-                  return
-                  }
               if (type == "m3u" && timer > 350)
                   list_id := 1						; play first slide/song on long click
               if (type == "document")
@@ -338,8 +298,10 @@
               else if (x == "Null")
                   seek_overide := seek
               else orphan_media := last_media
-              if (x == "Media" || timer > 350)				; or play last_media
+              if ((x == "Media" && timer < 350) || (timer > 350 && !selected))		; or play last_media
                   PlayMedia(0)
+              else if selected
+                  FileTransfer(x)					; between folders or playlists
               }
             }
         else if (click == "RButton")
@@ -353,6 +315,8 @@
                     selected = %selected%%list_id%/
                   else selected = /%list_id%/
                 else StringReplace, selected, selected, %list_id%`/
+                if (StrLen(selected) < 2)
+                    selected =
                 RenderPage()
                 }
             else if (video_player || inside_browser)
@@ -619,17 +583,18 @@
                 selected =
                 if !InStr(subfolders, folder)
                     subfolders =
-                Loop, Files,%path%*.*, D
-                  if A_LoopFileAttrib not contains H,S
-                    if !InStr(subfolders, A_LoopFileFullPath)
-                        subfolders = %subfolders%%A_LoopFileFullPath%\|
                 if playlist
                    Loop, Files, %inca%\%folder%\*.m3u, FR
                      {
                      SplitPath, A_LoopFileName,,,ex,name
-                     subfolders = %subfolders%%name%|
+                     subfolders = %subfolders%|%name%
                      }
-                StringTrimRight, subfolders, subfolders, 1
+                else Loop, Files,%path%*.*, D
+                  if A_LoopFileAttrib not contains H,S
+                    if !InStr(subfolders, A_LoopFileFullPath)
+                      if subfolders
+                        subfolders = %subfolders%|%A_LoopFileFullPath%\
+                      else subfolders = %A_LoopFileFullPath%\
                 }
             else if (arg2 && InStr(sort_list, arg2))			; sort filter
                 {
@@ -1126,6 +1091,47 @@
         }
 
 
+    FileTransfer(x)
+        {
+        destination := src
+        DetectMedia(src)
+        PopUp("Move",0,0)
+	if (timer < 350)
+            {
+            if (type == "m3u")
+                 playlist := src
+            else playlist =
+            GetTabSettings(1)
+            }
+        else if (!playlist && x == "Transfer")				; file move
+            {
+            IfExist, %destination%
+              Loop, Parse, selected, `/
+                {
+                list_id := A_LoopField
+                if GetMedia(0)						; src becomes media
+                  FileMove, %src%, %destination%
+                }
+            tab_name := previous_tab					; stay in this folder
+            GetTabSettings(1)
+            }
+        else if (playlist && (x == "Media" || type == "m3u"))
+            {
+            DeleteEntry()						; remove slides from playlist
+            if (x == "Media")
+                AddEntry()						; add to new position in playlist
+            if (x == "Transfer")
+                {
+                FileAppend, %selected%, %src%, UTF-8			; move slides to new playlist
+                playlist := src
+                }
+            }
+        else GetTabSettings(1)
+        selected =
+        CreateList()  
+        }  
+
+
     ContextMenu:							; right click menu
     Critical
     popup =
@@ -1145,12 +1151,12 @@
         FileReadLine, selected, %inca%\cache\html\%tab_name%.htm, 3	; list of media id's visible in page
     else if (menu_item == "Delete")
         {
-        popup = Deleted
+        popup = Delete
         ClosePlayer()
         if playlist
             {
             x := StrSplit(selected,"/")
-            count := x.MaxIndex() - 1
+            count := x.MaxIndex()
             DeleteEntry()
             }
         else Loop, Parse, selected, `/
@@ -1313,14 +1319,15 @@
         else Run %inca%\apps\mpv %properties% --idle --input-ipc-server=\\.\pipe\mpv%random% "%src%"
         player =
         Critical
-        loop 150							; identify new player id
+        loop 500							; identify new player id
             {
             sleep 20
             WinGet, running, List, ahk_class mpv
             loop %running%
                 if ((player := running%A_Index%) != music_player && player != video_player)
                     break 2
-            if (A_Index > 148)
+            WinGet, player, ID, ahk_class mpv
+            if (A_Index > 495)
                 return
             }
         sleep 400							; time for player to settle
@@ -1580,8 +1587,8 @@
             else gui, settings:add, checkbox, x25 yp+16 %x% vfeature%A_Index%, %A_Space%%A_Space%%A_Space%%A_Space%%A_Space%%key%
             }
         gui, settings:add, text, x180 y10, main folders
-        gui, settings:add, edit, x180 yp+13 h60 w500 vfolder_list, %folder_list%
-        gui, settings:add, text, x180 yp+68, favorite folders
+        gui, settings:add, edit, x180 yp+13 h80 w500 vfolder_list, %folder_list%
+        gui, settings:add, text, x180 yp+88, favorite folders
         gui, settings:add, edit, x180 yp+13 h80 w500 vfav_folders, %fav_folders%
         gui, settings:add, text, x180 yp+84, search terms
         gui, settings:add, edit, x180 yp+13 h80 w500 vsearch_list, %search_list%
@@ -1672,33 +1679,25 @@
         else cut := Round(position,1)
         popup = Favorite
         PopUp(popup,0,0)
-        if (folder == "music")
+        if !playlist
+            play = %inca%\slides\New.m3u
+        else play := playlist
+        if (type == "audio")
             {
-            FileAppend, %src%`r`n, %inca%\music\New.m3u, UTF-8
-            FileCopy, %inca%\apps\icons\music.png, %inca%\favorites\%media% 0.0.png, 1
+            FileAppend, %inca%\favorites\%media% %cut%.png`r`n, %play%, UTF-8
+            FileAppend, %src%|%cut%`r`n, %inca%\cache\cuts\%media% %cut%.txt, UTF-8
+            FileCopy, %inca%\apps\icons\music.png, %inca%\favorites\%media% %cut%.png, 1
             }
-        else
+        if (type == "video")
             {
-            if !playlist
-                play = %inca%\slides\New.m3u
-            else play := playlist
-            if (type == "audio")
-                {
-                FileAppend, %inca%\favorites\%media% %cut%.png`r`n, %play%, UTF-8
-                FileAppend, %src%|%cut%`r`n, %inca%\cache\cuts\%media% %cut%.txt, UTF-8
-                FileCopy, %inca%\apps\icons\music.png, %inca%\favorites\%media% %cut%.png, 1
-                }
-            if (type == "video")
-                {
-                FileAppend, %inca%\favorites\%media% %cut%.jpg`r`n, %play%, UTF-8
-                FileAppend, %src%|%cut%`r`n, %inca%\cache\cuts\%media% %cut%.txt, UTF-8
-                runwait, %inca%\apps\ffmpeg.exe -ss %cut% -i "%src%" -y -vf scale=1280:-2 -vframes 1 "%inca%\favorites\%media% %cut%.jpg",, Hide
-                }
-            if (type == "image" || ext == "txt")
-                FileAppend, %src%`r`n, %play%, UTF-8
-            if (type == "image")
-                FileCopy, %src%, %inca%\favorites\%media%.%ext%, 1
+            FileAppend, %inca%\favorites\%media% %cut%.jpg`r`n, %play%, UTF-8
+            FileAppend, %src%|%cut%`r`n, %inca%\cache\cuts\%media% %cut%.txt, UTF-8
+            runwait, %inca%\apps\ffmpeg.exe -ss %cut% -i "%src%" -y -vf scale=1280:-2 -vframes 1 "%inca%\favorites\%media% %cut%.jpg",, Hide
             }
+        if (type == "image" || ext == "txt")
+            FileAppend, %src%`r`n, %play%, UTF-8
+        if (type == "image")
+            FileCreateShortcut, %src%, %inca%\favorites\%media%.lnk
         if (folder == "Slides")
             CreateList()
         else RenderPage()
@@ -1873,13 +1872,13 @@
         IniRead,search_list,%inca%\settings.ini,Settings,search_list
         if (search_list == "ERROR")
             search_list = No Search List
+        Menu, ContextMenu, Add, All, ContextMenu
+        Menu, ContextMenu, Add, Delete, ContextMenu
         Menu, ContextMenu, Add, Rename, ContextMenu
         Menu, ContextMenu, Add, Caption, ContextMenu
-        Menu, ContextMenu, Add, Delete, ContextMenu
-        Menu, ContextMenu, Add, All, ContextMenu
         Menu, ContextMenu, Add, Settings, ContextMenu
-        Menu, ContextMenu, Add, Compile, ContextMenu
         Menu, ContextMenu, Add, Source, ContextMenu
+        Menu, ContextMenu, Add, Compile, ContextMenu
         }
 
 
@@ -2055,7 +2054,7 @@
         title_html = `r`n`r`n<div style="margin:auto; width:24`%; margin-top:1.6em; margin-bottom:0.5em;"><a href="#%safe_playlist%#" style="font-size:1.8em; color:#555351;">%safe_title% &nbsp;&nbsp;<span style="font-size:0.7em;">%list_size%</span></a></div>`r`n`r`n
         html = `r`n<div style="padding-left:6`%; ">`r`n%html%</div></div>`r`n<p style="height:240px;"></p>`r`n</body></html>`r`n
         FileDelete, %inca%\cache\html\%tab_name%.htm
-        FileAppend, %header_html%%panel_html%%sort_html%%filter_html%</ul>%title_html%%html%, %inca%\cache\html\%tab_name%.htm        
+        FileAppend, %header_html%%panel_html%%sort_html%%filter_html%</ul>%title_html%%html%, %inca%\cache\html\%tab_name%.htm     
         LoadHtml()
         sleep 333							; time for browser to render behind mpv
         if video_player
