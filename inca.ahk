@@ -1,6 +1,5 @@
 
 
-
 	; Inca Media Viewer for Windows. Firefox & Chrome compatible
 
 	#NoEnv
@@ -88,7 +87,6 @@
 
 
     Esc up::
-
       ClosePlayer()
       ExitApp
 
@@ -106,7 +104,6 @@
       Gui PopUp:Cancel
       timer =
       return
-
 
     Xbutton1::				; mouse "back" button
       Critical
@@ -130,7 +127,7 @@
       return
 
 
-    ~Enter::						; file search - from html input box
+    ~Enter::				; file search - from html input box
       if inside_browser
         {
         send, !0
@@ -143,7 +140,7 @@
       return
 
 
-    #/::						; 1st mouse option button win/
+    #/::				; 1st mouse option button win/
       timer = set
       SetTimer, button2_Timer, -240
       return
@@ -153,19 +150,19 @@
     button2_Timer:
       IfWinActive, ahk_group Browsers
           if !timer
-              send, {Space}				; pause toggle YouTube
+              send, {Space}		; pause toggle YouTube
           else loop 10
               {
               if !timer
                   break
               WinActivate, ahk_group Browsers
-              send, {Left}{Left}			; rewind YouTube 10 secs
+              send, {Left}{Left}	; rewind YouTube 10 secs
               sleep 624
               }
       return
 
 
-    #\::						; 2nd mouse option button win\
+    #\::				; 2nd mouse option button win\
       timer3 = set
       SetTimer, button1_Timer, -240
       return
@@ -1141,15 +1138,11 @@
     menu_item := A_ThisMenuItem
     if (menu_item == "Settings")
         ShowSettings()
-    else if (menu_item == "Source")
-        run, notepad %inca%\inca.ahk
-    else if (menu_item == "Compile")
-        run %inca%\apps\Compile.exe
     else if (menu_item == "Rename" || menu_item == "Caption")
         EditFilename()
     else if (menu_item == "All")
         FileReadLine, selected, %inca%\cache\html\%tab_name%.htm, 3	; list of media id's visible in page
-    else if (menu_item == "Delete")
+    else if (selected && menu_item == "Delete")
         {
         popup = Delete
         ClosePlayer()
@@ -1173,11 +1166,11 @@
         count -= 2
         selected =
         }
+    if (popup || selected)
+        CreateList()
     pop = %popup% %count%
     if pop
         PopUp(pop,600,0)
-    if (popup || selected)
-        CreateList()
     return
 
 
@@ -1315,7 +1308,7 @@
             RunWait %inca%\apps\ffmpeg -i %inca%\cache\`%d.jpg -filter_complex "tile=6x6" -y "%inca%\cache\thumb.jpg",, Hide
             Run %inca%\apps\mpv --video-zoom=-0.3 --input-ipc-server=\\.\pipe\mpv999 "%inca%\cache\thumb.jpg"
             thumbsheet = 1
-            }
+            } 
         else Run %inca%\apps\mpv %properties% --idle --input-ipc-server=\\.\pipe\mpv%random% "%src%"
         player =
         Critical
@@ -1335,9 +1328,13 @@
             RunWait %COMSPEC% /c echo add video-aspect %aspect% > \\.\pipe\mpv%random%,, hide && exit
         Gui, Caption:+lastfound
         GuiControl, Caption:, GuiCap
-        IfExist, %inca%\cache\captions\%media% %seek%.txt
-            {
+        FileRead, caption, %inca%\cache\captions\%media%.txt
+        if !caption
             FileRead, caption, %inca%\cache\captions\%media% %seek%.txt
+        if (!caption && type == "audio")
+            caption := media
+        if caption
+            {
             WinSet, TransColor, 0 99
             GuiControl, Caption:, GuiCap, % caption
             x := A_ScreenWidth * 0.38
@@ -1580,29 +1577,41 @@
             if (A_Index > 4)
                 {
                 if key
-                    gui, settings:add, edit, x20 h15 w30 vfeature%A_Index%, %value%
+                    gui, settings:add, edit, x18 h16 w30 vfeature%A_Index%, %value%
                 else gui, settings:add, text
-                gui, settings:add, text, x55 yp, %key%
+                gui, settings:add, text, x58 yp, %key%
                 }
             else gui, settings:add, checkbox, x25 yp+16 %x% vfeature%A_Index%, %A_Space%%A_Space%%A_Space%%A_Space%%A_Space%%key%
             }
         gui, settings:add, text, x180 y10, main folders
         gui, settings:add, edit, x180 yp+13 h80 w500 vfolder_list, %folder_list%
-        gui, settings:add, text, x180 yp+88, favorite folders
+        gui, settings:add, text, x180 yp+85, favorite folders
         gui, settings:add, edit, x180 yp+13 h80 w500 vfav_folders, %fav_folders%
         gui, settings:add, text, x180 yp+84, search terms
-        gui, settings:add, edit, x180 yp+13 h80 w500 vsearch_list, %search_list%
-        gui, settings:add, text, x180 yp+84, folders to search
+        gui, settings:add, edit, x180 yp+13 h120 w500 vsearch_list, %search_list%
+        gui, settings:add, text, x180 yp+125, folders to search
         gui, settings:add, edit, x180 yp+13 h18 w500 vsearch_folders, %search_folders%
         gui, settings:add, text, x180 yp+22, folders to index
         gui, settings:add, edit, x180 yp+13 h18 w500 vindexed_folders, %indexed_folders%
-        gui, settings:add, button, x270 y400 w80, Purge Cache
-        gui, settings:add, button, x360 y400 w70, Help
-        gui, settings:add, button, x440 y400 w70, Cancel
-        gui, settings:add, button, x520 y400 w70 default, Save
+        gui, settings:add, button, x20 y425 w60, Compile
+        gui, settings:add, button, x90 y425 w60, Source
+        gui, settings:add, button, x270 y425 w80, Purge Cache
+        gui, settings:add, button, x360 y425 w70, Help
+        gui, settings:add, button, x440 y425 w70, Cancel
+        gui, settings:add, button, x520 y425 w70 default, Save
         gui, settings:show
         send, +{Tab}
         }
+
+        settingsButtonCompile:
+        WinClose
+        run %inca%\apps\Compile.exe
+        return
+
+        settingsButtonSource:
+        WinClose
+        run, notepad %inca%\inca.ahk
+        return
 
         settingsButtonHelp:
         WinClose
@@ -1877,8 +1886,6 @@
         Menu, ContextMenu, Add, Rename, ContextMenu
         Menu, ContextMenu, Add, Caption, ContextMenu
         Menu, ContextMenu, Add, Settings, ContextMenu
-        Menu, ContextMenu, Add, Source, ContextMenu
-        Menu, ContextMenu, Add, Compile, ContextMenu
         }
 
 
