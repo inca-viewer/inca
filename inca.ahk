@@ -1,4 +1,5 @@
 
+; move .lnk
 
 	; Inca Media Viewer for Windows. Firefox & Chrome compatible
 
@@ -59,7 +60,6 @@
         Global music_player 		; windows id
         Global video_player
         Global vol_ref := 2
-        Global skinny			; media width
         Global wheel
         Global inside_browser		; clicked inside browser window
         Global last_media		; last media played in page
@@ -280,7 +280,8 @@
                   send, h
               else if (ypos < A_ScreenHeight * 0.1) 
                   send, g
-              else PlayMedia(1)
+              else if (timer < 350 || playlist)
+                  PlayMedia(1)
               }
           else if (inside_browser && A_Cursor != "IBeam" && (x := ClickWebPage()))
               {
@@ -380,10 +381,10 @@
                 if !selected
                     send, ^{F5}						; go to top of page
                 else selected =
-                sleep 44
-                RenderPage()
                 }
             else send, {Xbutton1}
+            sleep 44
+            RenderPage()
             }
         }
 
@@ -491,7 +492,7 @@
                 {
                 previous_tab := tab_name
                 GetTabSettings(1)					; get last tab settings
-                CreateList()						; media list to match html page
+                CreateList(0)						; media list to match html page
                 }
             }
         ShowStatus()							; show time & vol
@@ -555,7 +556,7 @@
         else
             {
             filter =
-            IfExist, %arg1%
+            if InStr(arg1, ":")						; is a path and not a search
                 s_path := arg1
             else if search_box
                 search_term = %search_box%				; clears white space
@@ -628,13 +629,13 @@
                     }
                 }
             }
-        CreateList()
+        CreateList(1)
         search_box =
         return 1
         }
 
 
-    CreateList()							; list of files in path
+    CreateList(show)							; list of files in path
         {
         if !(folder || this_search)
             return
@@ -653,10 +654,8 @@
                     input := A_LoopFileFullPath
                     SplitPath, input,,,ex, filen
                     if (ex == "lnk")
-                        {
                         FileGetShortcut, %input%, input
-                        SplitPath, input,,,ex,filen   
-                        }
+                    SplitPath, input,,,ex,filen   
                     if (med := DecodeExt(ex))
                         {
                         if (ex == "m3u")
@@ -709,7 +708,8 @@
         Loop, Parse, list, `n, `r
           if FilterList(A_LoopField)
               size += 1
-        popup = %search_term%  %size%
+        if show
+            popup = %search_term%  %size%
         Popup(popup,0,0)
         RenderPage()
         return
@@ -1006,7 +1006,7 @@
                 }
             }
         LoadSettings()
-        CreateList()
+        CreateList(0)
         }
 
 
@@ -1092,7 +1092,7 @@
         {
         destination := src
         DetectMedia(src)
-        PopUp("Move",0,0)
+        PopUp("Move",300,0)
 	if (timer < 350)
             {
             if (type == "m3u")
@@ -1102,15 +1102,17 @@
             }
         else if (!playlist && x == "Transfer")				; file move
             {
+            tab_name := previous_tab					; stay in this folder
+            GetTabSettings(1)
             IfExist, %destination%
               Loop, Parse, selected, `/
                 {
                 list_id := A_LoopField
-                if GetMedia(0)						; src becomes media
-                  FileMove, %src%, %destination%
+                GetMedia(0)						; src becomes media
+                IfExist, %path%%media%.lnk
+                    src = %path%%media%.lnk
+                FileMove, %src%, %destination%, 1
                 }
-            tab_name := previous_tab					; stay in this folder
-            GetTabSettings(1)
             }
         else if (playlist && (x == "Media" || type == "m3u"))
             {
@@ -1118,14 +1120,11 @@
             if (x == "Media")
                 AddEntry()						; add to new position in playlist
             if (x == "Transfer")
-                {
                 FileAppend, %selected%, %src%, UTF-8			; move slides to new playlist
-                playlist := src
-                }
             }
         else GetTabSettings(1)
         selected =
-        CreateList()  
+        CreateList(0)
         }  
 
 
@@ -1158,16 +1157,14 @@
             list_id := A_LoopField
             GetMedia(0)							; convert html pointers to media
             IfExist, %path%%media%.lnk
-                input = %path%%media%.lnk				; if source was .lnk file, delete link only
-            IfExist, %path%%media%.lnk
-                src = %path%%media%.lnk
+                src = %path%%media%.lnk					; if source was .lnk file, delete link only
             FileRecycle, %src%
             }
         count -= 2
         selected =
         }
     if (popup || selected)
-        CreateList()
+        CreateList(0)
     pop = %popup% %count%
     if pop
         PopUp(pop,600,0)
@@ -1195,9 +1192,7 @@
     DetectMedia(input)
         {
         type =
-        skinny =
         SplitPath, input,,,ext,media
-        FileRead, skinny, %inca%\cache\widths\%media%.txt
         stringlower, ext, ext
         type := DecodeExt(ext)
         src := input
@@ -1323,9 +1318,7 @@
             if (A_Index > 495)
                 return
             }
-        sleep 400							; time for player to settle
-        if (!thumbsheet && aspect := Round(skinny / 100,2))
-            RunWait %COMSPEC% /c echo add video-aspect %aspect% > \\.\pipe\mpv%random%,, hide && exit
+        sleep 200							; time for player to settle
         Gui, Caption:+lastfound
         GuiControl, Caption:, GuiCap
         FileRead, caption, %inca%\cache\captions\%media%.txt
@@ -1344,7 +1337,8 @@
         block_input := A_TickCount + 640
         if (click == "MButton")
             block_input := A_TickCount + 1600				; stop residual wheel inputs
-        WinSet, Transparent, 0, ahk_group Browsers
+        WinSet, Transparent, 2, ahk_group Browsers			; because 0 stops web rendering
+        WinSet, Transparent, 25, ahk_class Shell_TrayWnd
         if video_player
             WinClose, ahk_ID %video_player%				; previous player instance
         WinActivate, ahk_ID %player%
@@ -1384,7 +1378,6 @@
         type =
         thumbsheet =
         seek_overide =
-        skinny =
         history_timer =
         WinSet, Transparent, 255, ahk_class Shell_TrayWnd
         if (video_sound && music_player)
@@ -1521,23 +1514,9 @@
                 magnify += 0.04
             else magnify -= 0.04
             }
-        else
-            {
-            skinny -= 1						; adjust width
-            if (direction > 0)
+        else if (direction > 0)
                 ControlSend,, 5, ahk_ID %video_player%
-            else
-                {
-                ControlSend,, 6, ahk_ID %video_player%
-                skinny += 2
-                }
-            if !skinny
-                PopUp("Reset",500,0)
-            FileDelete, %inca%\cache\widths\%media%.txt
-            if (Abs(skinny) > 2 && Abs(skinny) < 64)
-                FileAppend, %skinny%, %inca%\cache\widths\%media%.txt
-            refresh = 1
-            }
+             else ControlSend,, 6, ahk_ID %video_player%
         }
 
 
@@ -1708,7 +1687,7 @@
         if (type == "image")
             FileCreateShortcut, %src%, %inca%\favorites\%media%.lnk
         if (folder == "Slides")
-            CreateList()
+            CreateList(0)
         else RenderPage()
         seek_overide =
         seek =
@@ -1723,16 +1702,11 @@
             vol := Round(volume,1)
         if (volume <= 0)
             vol =
-        if (!skinny || !video_player)
-            width =
-        else width := skinny
-        if (width > 0)
-            sign = +
         if Setting("Status Bar")
         if (video_player && type != "image")
             seek_t := Time(position)
         else seek_t =
-            status = %time%    %vol%    %seek_t%    %sign%%width%
+            status = %time%    %vol%    %seek_t%
         if (status != last_status)					; to stop flickering
             {
             Gui, Status:+lastfound
@@ -2116,15 +2090,6 @@
         Transform, thumb, HTML, %thumb%, 2				; make filenames web compatible
         Transform, name, HTML, %name%, 2
         StringReplace, thumb, thumb, \,/, All
-        width_t := 1
-        ratio := 1.007
-        Loop % Abs(skinny)
-            width_t  *= ratio
-        height_t := 1 - (width_t - 1)
-        if (skinny && skinny < 0)
-            transform = transform:scaleX(%height_t%);
-        if (skinny > 0)
-            transform = transform:scaleY(%height_t%);
         if (view == 7)							; list view 
             {
             entry = <a href="#Media#%i%"><table><tr><td id="hover_image"><%hov_size% %select%" src="file:///%thumb%"></tr></table><table style="table-layout:fixed; width:100`%"><tr><td style="color:#777777; width:4em; text-align:center">%sort_filter%</td><td style="width:4em; font-size:0.7em; text-align:center">%dur%</td><td style="width:3em; font-size:0.7em; text-align:center">%size%</td><td style="width:4em; padding-right:3.2em;  font-size:0.7em; text-align:center">%ext%</td><td style="%select% %highlight% white-space:nowrap; text-overflow:ellipsis; font-size:1em">%name% %fav%</td></tr></table></a>`r`n`r`n
@@ -2143,10 +2108,9 @@
                     }
 	        entry = <a href="#Media#%i%"><div style="display:inline-block; width:88`%; color:#555351; transition:color 1.4s; margin-left:8`%; text-align:center; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; %highlight%;">%sort_filter% &nbsp;&nbsp;%link% %name%</div></a><textarea rows=%rows% style="display:inline-block; overflow:hidden; margin-bottom:%margin%em; margin-left:8`%; width:88`%; background-color:inherit; color:#826858; font-size:1.2em; font-family:inherit; border:none; outline:none;">%str2%</textarea>`r`n`r`n
                 }
-            else entry = <li style="display:inline-block; vertical-align:top; width:%width%em; margin-bottom:%margin%em;margin-right:5`%;color:%font%; transition:color 1.4s;"><div style="margin-left:8`%; color:#555351; text-align:center; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; %highlight%;">%sort_filter% &nbsp;&nbsp;%link% %fav% %name%</div><a href="#Media#%i%"><%vid_styl% %transform% %select%" src="file:///%thumb%"></a>%caption%</li>`r`n`r`n
+            else entry = <li style="display:inline-block; vertical-align:top; width:%width%em; margin-bottom:%margin%em;margin-right:5`%;color:%font%; transition:color 1.4s;"><div style="margin-left:8`%; color:#555351; text-align:center; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; %highlight%;">%sort_filter% &nbsp;&nbsp;%link% %fav% %name%</div><a href="#Media#%i%"><%vid_styl% %select%" src="file:///%thumb%"></a>%caption%</li>`r`n`r`n
             }
         last_ext := ext
-        skinny =
         return entry
         }
 
