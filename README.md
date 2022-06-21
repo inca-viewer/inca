@@ -2,19 +2,16 @@
 Windows - firefox and chrome compatible<br>
 # File explorer, media viewer for disabled
 
-Creates beautiful web pages of your local media<br>
-Like putting 'File Explorer' in your browser<br><br>
+Creates web pages of your local media<br><br>
 
-Only 80kB of easy to read AutoHotkey script source code<br>
+Only 77kB of easy to read AutoHotkey script<br>
 Is lightweight, portable (no installation), does not mess with any media or settings<br>
 
 # Features:
 
-Instant video thumbsheets. (middle click)<br>
+6 x 6 Video thumbsheets. (middle click)<br>
 Randomize / shuffle folders<br>
-You can keep all videos in one folder instead of making subfolders<br>
-because search is so fast and can be saved, so searches act like subfolders<br>
-Speed, width, magnify & volume with mouse gestures<br><br>
+Speed, width, magnify, speed & volume with mouse gestures<br><br>
 
 ><img src="screens/Screen 1.jpg" width="640"/></p><br>
 
@@ -27,7 +24,7 @@ To 'uninstall', just close from taskbar tray and delete the inca folder<br><br>
 
 Smooth Gif playback with magnify, width, step forward & backward & play/pause<br>
 Search, organize, edit & view media files in browser<br>
-Add captions to images or video<br>
+Add captions to images & video<br>
 Create Favorites, history, slideshows, storylines<br><br>
 Background music playlists from browser tab<br>
 Flip sound between music and video with volume-through-zero mouse gesture<br>
@@ -44,7 +41,7 @@ Written in a simple scripting language - AutoHotkey<br>
 If it's not exactly what you want, change it. It re-compiles in under a second<br>
 You don't need to be a programmer and it's really easy to customize.<br>
 Just snip out the bits you don't like and write any features you want.<br>
-Both Source and Compile buttons in right click menu<br>
+Edit and Compile your script within browser<br>
 
 # Usage
 
@@ -53,17 +50,16 @@ Click
 - on image edge - pan image
 - on video - play/pause
 - on thumbnail - play from frame
-- on folder - list media inside
+- on folder - show media inside
 - on search term - find matching videos
 
 Long click
 - on background - return to last media
 - on video link - play from start
-- on highlighted text - search media files for title match
+- on highlighted text - search media files for match
 
 Long right click
-- on image - save image under cursor
-- on media - add favorite and add to current slideshow
+- on media - adds to favorites & slides
 
 Slide gestures
 - in media - magnify, width, speed, volume
@@ -73,16 +69,16 @@ Right click slide gesture
 - volume control
 
 Middle click
-- on image - next image
-- on thumbnail - next media
+- on media - next media
 - on video - show 6 x 6 thumb sheet
-- on background - toogle thumbnail / list view
+- on background - toogle thumbnails / list view
 - on folder - open in new tab
 - on screen far left - next song in music playlist
 
 Back click
 - in media - exit
 - on background - clear selection, top of page
+- on screen far left - previous song in music playlist
 
 Long back click
 - on image - previous image
@@ -90,10 +86,10 @@ Long back click
 - in other app - close app
 
 Win + \
-- toggle browser & desktop - Toggle FullScreen - (copy instead of move files)
+- toggle browser & desktop - Long press - Toggle FullScreen
 
 Win + /
-- pause/play YouTube - reverse 10 seconds YouTube<br>
+- pause/play YouTube - Long press - back 10 seconds YouTube<br>
 
 <br><br>Supports rotated screen & onscreen keyboard tool<br>
 long press on any text for keyboard, back click to close (if tool run as administrator)<br>
