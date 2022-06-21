@@ -2,7 +2,7 @@
 Windows - firefox and chrome compatible<br>
 # File explorer, media viewer for disabled
 
-Creates web pages of your local media<br><br>
+Creates web pages of your local media<br>
 
 Only 77kB of easy to read AutoHotkey script<br>
 Is lightweight, portable (no installation), does not mess with any media or settings<br>
@@ -18,7 +18,7 @@ Speed, width, magnify, speed & volume with mouse gestures<br><br>
 <p><img src="screens/Screen 2.jpg" width="640"/></p><br><br>
 
 If you are bedridden or disabled<br>
-No keyboard is needed. Uses long clicks, middle button & mouse gestures<br>
+No keyboard is needed. Uses long clicks, middle\back buttons & mouse gestures<br>
 Just run Ince.exe - browser will open in pictures folder<br>
 To 'uninstall', just close from taskbar tray and delete the inca folder<br><br>
 
