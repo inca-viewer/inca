@@ -9,6 +9,7 @@ Is lightweight, portable (no installation), does not mess with any media or sett
 
 # Features:
 
+All common media formats<br>
 6 x 6 Video thumbsheets. (middle click)<br>
 Randomize / shuffle folders<br>
 Speed, width, magnify, speed & volume with mouse gestures<br><br>
@@ -18,7 +19,7 @@ Speed, width, magnify, speed & volume with mouse gestures<br><br>
 <p><img src="screens/Screen 2.jpg" width="640"/></p><br><br>
 
 If you are bedridden or disabled<br>
-No keyboard is needed. Uses long clicks, middle\back buttons & mouse gestures<br>
+No keyboard is needed. Uses long clicks, mouse gestures, middle click & back button<br>
 Just run Ince.exe - browser will open in pictures folder<br>
 To 'uninstall', just close from taskbar tray and delete the inca folder<br><br>
 
