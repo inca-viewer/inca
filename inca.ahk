@@ -2,6 +2,7 @@
 
 	; Inca Media Viewer for Windows. Firefox & Chrome compatible
 
+
 	#NoEnv
 	#UseHook, On
 	SetWinDelay, 0
@@ -76,7 +77,6 @@
 	Global filter			; secondary search filter eg. date, duration, Alpha letter
 	Global source_media		; eg. jpg link files used in favs and slides
 	Global orphan_media		; eg. caption txt file, snip source file (i.e no web page id)
-
 
 
     main:
@@ -227,8 +227,11 @@
                     SetAspect(x, y)
                 else BrowserMagnify(y)
             }
-         if (!gesture && timer > 350 && !ClickEvent())
-             gesture = 1				; escape - once only
+        if (!gesture && timer > 350)
+             {
+             gesture = 1				; once only
+             ClickEvent()
+             }
          }
       return gesture
       }
@@ -305,11 +308,13 @@
             }
         else if (click == "RButton")
             {
-            if (timer > 350 && tab == 2 && (video_player || ClickWebPage() == "Media"))
-                AddFavorites()       
-            else if (!video_player && inside_browser && ClickWebPage()== "Media")
+            if (timer > 350)
+                if (tab == 2 && (video_player || ClickWebPage() == "Media"))
+                    AddFavorites()
+                 else return       
+            else if (!video_player && inside_browser && ClickWebPage() == "Media")
                 {
-                if !InStr(selected, list_id "/")
+                if !InStr(selected, "/" list_id "/")
                   if selected
                     selected = %selected%%list_id%/
                   else selected = /%list_id%/
@@ -821,6 +826,7 @@
         if (type != "video" && type != "audio")
             return
         SplitPath, source,,,,filen
+        dur =
         FileRead, dur, %inca%\cache\durations\%filen%.txt
         if !dur
             {
@@ -831,9 +837,8 @@
             StringTrimLeft, aTime, clipboard, 12
             StringLeft, aTime, aTime, 8
             aTime := StrSplit(aTime, ":")
+            dur := aTime.1 * 3600 + aTime.2 * 60 + aTime.3
             clipboard := clip
-            if !(dur := aTime.1 * 3600 + aTime.2 * 60 + aTime.3)
-                dur := 1							; any dur is better than null
             filedelete, %inca%\cache\durations\%filen%.txt
             FileAppend, %dur%, %inca%\cache\durations\%filen%.txt
             }
@@ -1101,12 +1106,19 @@
             IfExist, %destination%
               Loop, Parse, selected, `/
                 {
+                SplitPath, destination,,,ext
+                if (ext == "m3u")
+                    playlist := destination
                 list_id := A_LoopField
-                GetMedia(0)						; src becomes media
+                GetMedia(0)						; src becomes selected media
                 IfExist, %path%%media%.lnk
                     src = %path%%media%.lnk
-                FileMove, %src%, %destination%, 1
+                if src
+                  if playlist
+                    FileAppend, %src%`n, %playlist%, UTF-8		; add media entry to playlist
+                  else FileMove, %src%, %destination%, 1		; move file to new folder
                 }
+            playlist =
             }
         else if (playlist && (x == "Media" || type == "m3u"))
             {
@@ -1624,6 +1636,7 @@
         WinClose
         return
 
+
     Setting(key)
         {
         Loop, Parse, features, `|
@@ -1809,11 +1822,7 @@
         IniRead,search_folders,%inca%\settings.ini,Settings,search_folders
         IniRead,folder_list,%inca%\settings.ini,Settings,folder_list
         IniRead,fav_folders,%inca%\settings.ini,Settings,fav_folders
-        if (folder_list == "ERROR")
-            folder_list = No Folder List
         IniRead,search_list,%inca%\settings.ini,Settings,search_list
-        if (search_list == "ERROR")
-            search_list = No Search List
         Menu, ContextMenu, Add, All, ContextMenu
         Menu, ContextMenu, Add, Delete, ContextMenu
         Menu, ContextMenu, Add, Rename, ContextMenu
@@ -1926,11 +1935,12 @@
             return
         if playlist
             SplitPath, playlist,,,,title
-        else title := folder
+        else title := tab_name
         safe_title := Transform_utf(title)
-        Transform, html_folder, HTML, %folder%, 2
+        safe_folder := Transform_utf(tab_name)
         safe_playlist := Transform_utf(playlist)
-        safe_path := Transform_utf(path)				; make filenames web compatible
+        safe_path := Transform_utf(path)
+        safe_subfolders := Transform_utf(subfolders)
         safe_this_search := Transform_utf(this_search)
         safe_last_media := Transform_utf(last_media)
         FileRead, font, %inca%\apps\ClearSans-Thin.txt			; firefox bug - requires base64 font
@@ -1943,7 +1953,7 @@
         StringReplace, music, music, \,/, All
         StringReplace, safe_folder_list, folder_list, \,/, All
         StringReplace, safe_fav_folders, fav_folders, \,/, All
-        StringReplace, safe_subfolders, subfolders, \,/, All
+        StringReplace, safe_subfolders, safe_subfolders, \,/, All
         max_height := Floor(A_ScreenHeight * 0.34)			; max image height in web page
         menu_item =
         list_size := 0
@@ -1973,7 +1983,7 @@
                         }
                 }
         pages := ceil(list_size/size)
-        header_html = <!--`r`n%view%/%page%/%sort%/%toggles%/%safe_this_search%/%search_term%/%safe_path%/%html_folder%/%safe_playlist%/%safe_last_media%`r`n%page_media%`r`n-->`r`n<!doctype html>`r`n<html>`r`n<head>`r`n<link rel="icon" type="image/x-icon" href="file:///%inca%/apps/icons/inca.ico">`r`n<meta charset="UTF-8">`r`n<title>Inca - %html_folder%</title>`r`n<style>`r`n`r`n@font-face {font-family: ClearSans-Thin; src: url(data:application/font-woff;charset=utf-8;base64,%font%);}`r`n`r`nbody {font-family: 'ClearSans-Thin'; overflow-x:hidden; background:%back%; color:#666666; font-size:0.8em; margin-top:200px;}`r`na:link {color:#15110a;}`r`na:visited {color:#15110a;}`r`na {text-decoration:none; color:%fcol%;}`r`na.slider {display:inline-block; width:35`%; height:1.2em; border-radius:9px; color:%fcol%; transition:color 1.4s; font-size:1em; background-color:#1b1814; text-align:center}`r`na.slider:hover {color:red; transition:color 0.36s;}`r`nul.menu {column-gap:12px; margin:auto; list-style-type:none; padding:0; white-space:nowrap;}`r`nul.menu li {color:%fcol%; transition:color 1.4s;}`r`nul.menu li:hover {color:red; transition:color 0.36s;}`r`ntable {color:%fcol%; transition:color 1.4s; table-layout:fixed; border-collapse: collapse;}`r`ntable:hover {color:red; transition:color 0.36s;}`r`n#hover_image {position:absolute; margin-left:3.8em; opacity:0; transition: opacity 0.4s; width:125px; height:auto;}`r`n#hover_image:hover {opacity:1;}`r`n</style>`r`n`r`n%script%`r`n</head>`r`n<body>`r`n`r`n`r`n`r`n<div style="margin-left:%offset%`%; margin-right:%offset%`%">`r`n`r`n
+        header_html = <!--`r`n%view%/%page%/%sort%/%toggles%/%safe_this_search%/%search_term%/%safe_path%/%safe_folder%/%safe_playlist%/%safe_last_media%`r`n%page_media%`r`n-->`r`n<!doctype html>`r`n<html>`r`n<head>`r`n<link rel="icon" type="image/x-icon" href="file:///%inca%/apps/icons/inca.ico">`r`n<meta charset="UTF-8">`r`n<title>Inca - %safe_folder%</title>`r`n<style>`r`n`r`n@font-face {font-family: ClearSans-Thin; src: url(data:application/font-woff;charset=utf-8;base64,%font%);}`r`n`r`nbody {font-family: 'ClearSans-Thin'; overflow-x:hidden; background:%back%; color:#666666; font-size:0.8em; margin-top:200px;}`r`na:link {color:#15110a;}`r`na:visited {color:#15110a;}`r`na {text-decoration:none; color:%fcol%;}`r`na.slider {display:inline-block; width:35`%; height:1.2em; border-radius:9px; color:%fcol%; transition:color 1.4s; font-size:1em; background-color:#1b1814; text-align:center}`r`na.slider:hover {color:red; transition:color 0.36s;}`r`nul.menu {column-gap:12px; margin:auto; list-style-type:none; padding:0; white-space:nowrap;}`r`nul.menu li {color:%fcol%; transition:color 1.4s;}`r`nul.menu li:hover {color:red; transition:color 0.36s;}`r`ntable {color:%fcol%; transition:color 1.4s; table-layout:fixed; border-collapse: collapse;}`r`ntable:hover {color:red; transition:color 0.36s;}`r`n#hover_image {position:absolute; margin-left:3.8em; opacity:0; transition: opacity 0.4s; width:125px; height:auto;}`r`n#hover_image:hover {opacity:1;}`r`n</style>`r`n`r`n%script%`r`n</head>`r`n<body>`r`n`r`n`r`n`r`n<div style="margin-left:%offset%`%; margin-right:%offset%`%">`r`n`r`n
             panel2_html = <ul class="menu" id='all' style="background-color:inherit; column-count:8; column-fill:balanced; border-radius:9px; padding-left:1em; font-size:0.9em"></ul>`r`n`r`n
         panel_html = %panel2_html%<ul class="menu" id='panel' style="height:6em; margin-top:1em; column-count:8; column-fill:balanced; border-radius:9px; padding-left:1em"></ul>`r`n`r`n<ul class="menu" style="display:flex; justify-content:space-between"><a class='slider' id='sub' onmouseenter='spool(event, id, "%safe_subfolders%", "panel")' style="width:7`%;">Sub</a>`r`n<a class='slider' id='folders' onmouseenter='spool(event, id, "%safe_folder_list%", "panel")' style="width:7`%;">Fol</a>`r`n<a class='slider' id='fav' onmouseenter='spool(event, id, "%safe_fav_folders%", "panel")' style="width:7`%;">Fav</a>`r`n<a href="file:///%inca%/cache/html/slides.htm" class='slider' id='slides' onmouseenter='spool(event, id, "%slides%", "panel")' style="width:7`%;">Slides</a>`r`n<a href="file:///%inca%/cache/html/music.htm" class='slider' id='music' onmouseenter='spool(event, id, "%music%", "panel")' style="width:7`%;">Music</a>`r`n<a id='search' class='slider' onmousemove='spool(event, id, "%search_list%", "panel")' onmousedown='spool(event,"all","%search_list%", "all")'>Search</a></ul>`r`n`r`n
         if search_box
@@ -1990,7 +2000,7 @@
                     name = <span style="color:LightSalmon;">%name%</span>
                 filter_html = %filter_html%<a href="#%A_LoopField%#" %x%>%name%</a>`r`n
                 }
-        sort_html = <ul class="menu" style="margin-top:1em; margin-bottom:1em; display:flex; justify-content:space-between">`r`n<a href="#View#%view%" id='slider4' class='slider' style="width:12`%;" onmousemove='getCoords(event, id, "View", "%html_folder%","")' onmouseleave='getCoords(event, id, "View", "%html_folder%", "%view%")'>View %view%</a>`r`n<a href="%html_folder%.htm#%sort%" id='slider1' class='slider' onmousemove='getCoords(event, id, "%sort%", "%html_folder%", "")'>%sort%</a>`r`n<a href="%html_folder%.htm#Page" id='slider2' class='slider' onmousemove='getCoords(event, id, "%Pages%", "%html_folder%", "")' onmouseleave='getCoords(event, id, "%Pages%", "%html_folder%", "%page%")'>Page %page% of %pages%</a>`r`n<a href="#Page#%next%" class='slider' style="width:12`%;">Next</a></ul>
+        sort_html = <ul class="menu" style="margin-top:1em; margin-bottom:1em; display:flex; justify-content:space-between">`r`n<a href="#View#%view%" id='slider4' class='slider' style="width:12`%;" onmousemove='getCoords(event, id, "View", "%safe_folder%","")' onmouseleave='getCoords(event, id, "View", "%safe_folder%", "%view%")'>View %view%</a>`r`n<a href="%safe_folder%.htm#%sort%" id='slider1' class='slider' onmousemove='getCoords(event, id, "%sort%", "%safe_folder%", "")'>%sort%</a>`r`n<a href="%safe_folder%.htm#Page" id='slider2' class='slider' onmousemove='getCoords(event, id, "%Pages%", "%safe_folder%", "")' onmouseleave='getCoords(event, id, "%Pages%", "%safe_folder%", "%page%")'>Page %page% of %pages%</a>`r`n<a href="#Page#%next%" class='slider' style="width:12`%;">Next</a></ul>
         title_html = `r`n`r`n<div style="margin:auto; width:24`%; margin-top:1.6em; margin-bottom:0.5em;"><a href="#%safe_playlist%#" style="font-size:1.8em; color:#555351;">%safe_title% &nbsp;&nbsp;<span style="font-size:0.7em;">%list_size%</span></a></div>`r`n`r`n
         html = `r`n<div style="padding-left:6`%; ">`r`n%html%</div></div>`r`n<p style="height:240px;"></p>`r`n</body></html>`r`n
         FileDelete, %inca%\cache\html\%tab_name%.htm
