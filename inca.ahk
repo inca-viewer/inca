@@ -1,5 +1,4 @@
 
-
 	; Inca Media Viewer for Windows. Firefox & Chrome compatible
 
 
@@ -586,6 +585,7 @@
                 if selected
                     return "Transfer"
                 tab_name := folder
+                Popup(tab_name,0,0)
                 GetTabSettings(0)					; from html cache
                 page := 1
                 if (DetectMedia(src) == "m3u")
@@ -656,7 +656,9 @@
         list =
         count := 0
         list_size := 0
-        Popup(search_term,0,0)
+        if search_term
+            Popup(search_term,0,0)
+;        else Popup(folder,0,0)
         if (InStr(toggles, "Recurse") || search_term)
             recurse = R
         Loop, Parse, this_search, `|
@@ -1311,6 +1313,8 @@
             properties = --video-zoom=-%zoom%
         if ((click == "MButton" || thumbsheet) && type == "video" && duration > 20)
             {
+            IfNotExist, %inca%\cache\thumbs\%media%.mp4
+                return
             RunWait %inca%\apps\ffmpeg.exe -skip_frame nokey -i "%inca%\cache\thumbs\%media%.mp4" -vsync 0 -qscale:v 1 "%inca%\cache\`%d.jpg",, Hide
             RunWait %inca%\apps\ffmpeg -i %inca%\cache\`%d.jpg -filter_complex "tile=6x6" -y "%inca%\cache\thumb.jpg",, Hide
             Run %inca%\apps\mpv --video-zoom=-0.3 "%inca%\cache\thumb.jpg"
