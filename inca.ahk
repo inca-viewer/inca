@@ -254,9 +254,7 @@
                   send, h
               else if (ypos < A_ScreenHeight * 0.1) 
                   send, g
-              else if (timer < 350 || playlist)
-                  PlayMedia(1)						; next media
-              else PlayMedia(0)						; refresh media
+              else PlayMedia(1)						; next media
               }
           else if video_player
               {
@@ -431,17 +429,20 @@
                 thumbsheet =
             if (type == "video" || type == "audio" || ext == "gif")
                 {
-                key = {Left}
-                if wheel
-                    key = {Right}
+                block_input := A_TickCount + 44
+                key = {Right}
                 if (paused && (type == "video" || ext == "gif"))
                   {
                   if wheel
                     key = .
                   else key = ,
                   }
+                else if (!wheel && ext != "gif")
+                  {
+                  block_input := A_TickCount + 999
+                  key = +{BS}+^{BS}					; goto & reset seek point
+                  }
                 ControlSend,, %key%, ahk_ID %video_player%		; seek
-                block_input := A_TickCount + 44
                 }
             wheel =
             }
@@ -1288,24 +1289,19 @@
             speed =
         if (!seek || (timer > 350 && folder != "Slides"))
             GetSeek(1)						; 1st thumbnail seek point
-        if (duration <= 20)
+        if (duration <= 20 || seek > (duration -3))
             seek := 0
         if seek_overide
             seek := seek_overide
         seek_overide := 0
-        seek_t := Time(duration)
-        if (type != "image" && !video_player)
-            PopUp(seek_t,0,0)
-        seek_t := Abs(100 * seek / duration)
-        if (seek_t < 98)
-            seek_t = --start=%seek_t%`%
+        x := Time(seek)
+        seek_t = --start=%x%
         if (magnify < 0)
             magnify := 0 
         zoom := magnify
         if (type == "video" && Setting("Default Magnify"))
             zoom := 50 / Setting("Default Magnify") 
-        video_speed := Setting("Default Speed") - 100
-        if (Setting("Start Paused") || type == "audio")
+        if Setting("Start Paused")
             paused = --pause
         else paused =
         properties = --loop --video-zoom=-%zoom% %mute% %paused% %speed% %seek_t% 
@@ -1358,6 +1354,7 @@
         if video_player
             WinClose, ahk_ID %video_player%				; previous player instance
         WinActivate, ahk_ID %player%
+        ControlSend,, +^{BS}, ahk_ID %player%				; set seek point
         video_player := player
         history_timer := 1
         Gui PopUp:Cancel
