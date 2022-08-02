@@ -1,3 +1,9 @@
+; last media in playlists
+; filenames   ASMR Hair Brushing 🎀 Soft Spoken
+; current music highlight
+; rename fav or slide media
+; select all vid/image filter error
+
 
 	; Inca Media Viewer for Windows. Firefox & Chrome compatible
 
@@ -51,7 +57,7 @@
         Global page := 1		; current page within list
         Global sort			; eg. Alpha
         Global sort_filter		; eg. 't'
-        Global tab			; media webpage exists = 1, is active = 2
+        Global inca_tab			; media webpage exists = 1, is active = 2
         Global click			; mouse click value
         Global timer			; click or back timer
         Global view := 4	 	; thumbnail size
@@ -71,11 +77,12 @@
 	Global xpos			; current mouse position - 100mS updated 
 	Global ypos
 	Global thumbsheet		; thumbsheet view mode
-	Global refresh			; update web page (highlighted links)
 	Global seek_overide
 	Global filter			; secondary search filter eg. date, duration, Alpha letter
 	Global source_media		; eg. jpg link files used in favs and slides
 	Global orphan_media		; eg. caption txt file, snip source file (i.e no web page id)
+	Global skinny			; media width
+	Global cue			; snip cue point
 
 
     main:
@@ -97,11 +104,10 @@
       block_input := A_TickCount + 300
       if (!Gestures() && click)
           ClickEvent()
-      if refresh
-          RenderPage()
       Gui PopUp:Cancel
       timer =
       return
+
 
     Xbutton1::				; mouse "back" button
       Critical
@@ -223,15 +229,15 @@
                 SetVolume(1.4 * x)
             if GetKeyState("LButton", "P")
                 if video_player
-                    SetAspect(x, y)
+                    AdjustMedia(x, y)
                 else BrowserMagnify(y)
             }
         if (!gesture && timer > 350)
-             {
-             gesture = 1				; once only
-             ClickEvent()
-             }
-         }
+            {
+            gesture = 1					; once only
+            ClickEvent()
+            }
+        }
       return gesture
       }
 
@@ -250,10 +256,6 @@
                   send, j
               else if (xpos < A_ScreenWidth * 0.1) 
                   send, i
-              else if (ypos > A_ScreenHeight * 0.9) 
-                  send, h
-              else if (ypos < A_ScreenHeight * 0.1) 
-                  send, g
               else PlayMedia(1)						; next media
               }
           else if video_player
@@ -277,10 +279,10 @@
                   if paused
                       paused =
                   else paused = 1
+                  if paused
+                      ControlSend,, 2, ahk_ID %video_player%
+                  else ControlSend,, 1, ahk_ID %video_player%
                   }
-              if paused
-                  ControlSend,, 2, ahk_ID %video_player%
-              else ControlSend,, 1, ahk_ID %video_player%
               }
           else if (inside_browser && A_Cursor != "IBeam" && (x := ClickWebPage()))
               {
@@ -306,7 +308,7 @@
         else if (click == "RButton")
             {
             if (timer > 350)
-                if (tab == 2 && (video_player || ClickWebPage() == "Media"))
+                if (inca_tab && (video_player || ClickWebPage() == "Media"))
                     AddFavorites()
                  else return       
             else if (!video_player && inside_browser && ClickWebPage() == "Media")
@@ -379,13 +381,12 @@
             else if WinActive("ahk_class Notepad")
                 {
                 Send,  ^s^w
-                WinGet, state, MinMax, ahk_group Browsers
-                if (state > -1)
+                if inca_tab 
                     RenderPage()
                 }
             else if video_player
                 ClosePlayer()
-            else if (tab == 2 && WinActive("ahk_group Browsers"))
+            else if inca_tab
                 {
                 if !selected
                     send, ^{F5}						; go to top of page
@@ -416,6 +417,8 @@
                  seek_t := Time(seek)
                  PopUp(seek_t,0,0)
                  }
+            else if cue
+                 PopUp(Round((position - cue),1),0,0)
             else  Gui PopUp:Cancel
             Gui, ProgressBar:Show, x0 y%yp% w%xp% h3 NA			; seek bar under video
             }
@@ -426,23 +429,25 @@
             if Setting("Reverse Wheel")
                 wheel ^= 1
             if (type == "image")
+                {
+                if wheel
+                  send, h
+                else send, g
                 thumbsheet =
+                }
             if (type == "video" || type == "audio" || ext == "gif")
                 {
-                block_input := A_TickCount + 44
-                key = {Right}
+                key = {Left}
+                if wheel
+                  key = {Right}
                 if (paused && (type == "video" || ext == "gif"))
                   {
                   if wheel
-                    key = .
-                  else key = ,
-                  }
-                else if (!wheel && ext != "gif")
-                  {
-                  block_input := A_TickCount + 999
-                  key = +{BS}+^{BS}					; goto & reset seek point
+                    key = ..
+                  else key = ,,
                   }
                 ControlSend,, %key%, ahk_ID %video_player%		; seek
+                block_input := A_TickCount + 44
                 }
             wheel =
             }
@@ -453,7 +458,7 @@
         Critical
         MouseGetPos, xpos, ypos
         WinGetPos, xb, yb, wb, hb, ahk_group Browsers
-        if (tab == 2 && WinActive("ahk_group Browsers") && xpos > xb+10 && ypos > yb+200 && xpos < xb+wb-300 && ypos < yb+hb-50)
+        if (WinActive("ahk_group Browsers") && inca_tab && xpos > xb+10 && ypos > yb+200 && xpos < xb+wb-300 && ypos < yb+hb-50)
             inside_browser = 1
         else inside_browser =
         IfWinNotExist, ahk_ID %music_player%
@@ -472,8 +477,8 @@
             MediaControl()						; video scanning, image panning
         if !video_player
             {
-            dim := tab
-            tab := 0
+            dim := inca_tab
+            inca_tab := 0
             WinGetTitle title, Inca -
             tab_name := SubStr(title, 8)
             StringGetPos, pos, tab_name, mozilla firefox, R
@@ -481,11 +486,9 @@
                 StringGetPos, pos, tab_name, google chrome, R
             StringLeft, tab_name, tab_name, % pos - 3
             WinGet, state, MinMax, ahk_group Browsers
-            if tab_name
-                tab := 1
-            if (tab_name && state != -1)
-                tab := 2
-            if (tab != dim)
+            if (tab_name && state > -1)
+                inca_tab := 1
+            if (inca_tab != dim)
                 {
                 mask1 := 0
                 if (mask2 := Setting("Dim Desktop"))
@@ -495,12 +498,12 @@
                     mask1 += (Setting("Dim Desktop") * 2.55) / 20
                     mask2 -= 10
                     Gui, background:+LastFound
-                    if (tab == 2)
+                    if inca_tab
                         WinSet, Transparent, %mask1%
                     else WinSet, Transparent, %mask2%
                     }
                 }
-            if (tab == 2 && tab_name && tab_name != previous_tab)	; is switched inca tab
+            if (inca_tab && tab_name != previous_tab)			; is switched inca tab
                 {
                 previous_tab := tab_name
                 GetTabSettings(1)					; get last tab settings
@@ -659,7 +662,6 @@
         list_size := 0
         if search_term
             Popup(search_term,0,0)
-;        else Popup(folder,0,0)
         if (InStr(toggles, "Recurse") || search_term)
             recurse = R
         Loop, Parse, this_search, `|
@@ -902,7 +904,7 @@
         ClipWait, 1
         StringReplace, input, ClipBoard, `r`n, , All
         input := StrSplit(input, "/")
-        array := StrSplit(input.2, ":")						; duration
+        array := StrSplit(input.2, ":")
         if !(duration := array.1 * 3600 + array.2 * 60 + array.3)
             duration := GetDuration(src)
         position := Round((input.5 / input.6) * duration,1)			; most accurate value
@@ -947,7 +949,7 @@
         WinActivate, ahk_group Browsers
         new_html = file:///%inca%\cache\html\%tab_name%.htm
         StringReplace, new_html, new_html, \,/, All
-        if (tab != 2 || (!video_player && click == "MButton"))
+        if (!inca_tab || (!video_player && click == "MButton"))
             run, %new_html%						; open a new web tab
         else if (tab_name == previous_tab)				; just refresh existing tab
             send, {F5}
@@ -989,7 +991,7 @@
         }
 
 
-    EditFilename()						; + durations, faorites, history and slides
+    EditFilename()							; + durations, faorites, history and slides
         {
         selected =
         if !GetMedia(0)
@@ -1002,10 +1004,10 @@
             InputBox, new_name, %menu_item%   %media_path%   %ext%   size %size%   dur %duration%,,,,94,,,,, %media%
         else return
         IfWinExist, ahk_class OSKMainClass
-            send, !0						; close osk keyboard
+            send, !0							; close osk keyboard
         if ErrorLevel
             return
-        FileMove, %src%, %media_path%\%new_name%.%ext%		; FileMove = FileRename
+        FileMove, %src%, %media_path%\%new_name%.%ext%			; FileMove = FileRename
         UpdateFiles(new_name)
         LoadSettings()
         CreateList(0)
@@ -1018,7 +1020,7 @@
             return
         Loop, Files, %inca%\slides\*.m3u, FR
             {
-            FileRead, str, %A_LoopFileFullPath%			; find & replace in .m3u slide files
+            FileRead, str, %A_LoopFileFullPath%				; find & replace in .m3u slide files
             if !InStr(str, media)
                 continue
             FileDelete, %A_LoopFileFullPath%
@@ -1141,13 +1143,17 @@
     Critical
     popup =
     count := 0
-    if video_player
-        selected = %list_id%/
     menu_item := A_ThisMenuItem
     if (menu_item == "Settings")
         ShowSettings()
     else if (menu_item == "Rename")
         EditFilename()
+    else if (menu_item == "Cue")
+        cue := position
+    else if (menu_item == "Mp3")
+        run, %inca%\apps\ffmpeg.exe -ss %cue% -to %position% -i "%src%" -y "%inca%\snips\%media% %seek%.mp3",,Hide
+    else if (menu_item == "Snip")
+        run, %inca%\apps\ffmpeg.exe -ss %cue% -to %position% -i "%src%" -c:v libx264 -x264opts keyint=3 -vf scale=1280:-2 -y "%inca%\snips\%media% %seek%.mp4",,Hide
     else if (menu_item == "Caption")
         {
         selected =
@@ -1163,6 +1169,8 @@
         FileReadLine, selected, %inca%\cache\html\%tab_name%.htm, 3	; list of media id's visible in page
     else if (selected && menu_item == "Delete")
         {
+        if video_player
+            selected = %list_id%/
         popup = Delete
         ClosePlayer()
         if playlist
@@ -1202,7 +1210,7 @@
             return "video"
         if InStr("mp3 m4a wma mid", ex)
             return "audio"
-        if InStr("pdf txt doc", ex)
+        if InStr("pdf txt doc epub mobi", ex)
             return "document"
         if (ex == "m3u")
             return "m3u"
@@ -1213,6 +1221,7 @@
         {
         type =
         SplitPath, input,,,ext,media
+        FileRead, skinny, %inca%\cache\widths\%media%.txt
         stringlower, ext, ext
         type := DecodeExt(ext)
         src := input
@@ -1273,7 +1282,6 @@
         if (folder == "music")
             {
             PlaySong(0)
-            refresh = 1
             return 1
             }
         duration := GetDuration(src)
@@ -1304,6 +1312,7 @@
         if Setting("Start Paused")
             paused = --pause
         else paused =
+        Random, random, 100, 999
         properties = --loop --video-zoom=-%zoom% %mute% %paused% %speed% %seek_t% 
         if (type == "image")
             properties = --video-zoom=-%zoom%
@@ -1316,7 +1325,7 @@
             Run %inca%\apps\mpv --video-zoom=-0.3 "%inca%\cache\thumb.jpg"
             thumbsheet = 1
             } 
-        else Run %inca%\apps\mpv %properties% --idle "%src%"
+        else Run %inca%\apps\mpv %properties% --idle --input-ipc-server=\\.\pipe\mpv%random% "%src%"
         player =
         Critical
         loop 500							; identify new player id
@@ -1331,6 +1340,8 @@
                 return
             }
         sleep 400							; time for player to settle
+        if (aspect := Round(skinny / 100,2))
+            RunWait %COMSPEC% /c echo add video-aspect %aspect% > \\.\pipe\mpv%random%,, hide && exit
         Gui, Caption:+lastfound
         GuiControl, Caption:, GuiCap
         FileRead, caption, %inca%\cache\captions\%media% %seek%.txt
@@ -1354,11 +1365,9 @@
         if video_player
             WinClose, ahk_ID %video_player%				; previous player instance
         WinActivate, ahk_ID %player%
-        ControlSend,, +^{BS}, ahk_ID %player%				; set seek point
         video_player := player
         history_timer := 1
         Gui PopUp:Cancel
-        refresh = 1							; highlight media in browser
         return 1
         }
 
@@ -1388,6 +1397,7 @@
                 WInClose, ahk_ID %video_player%
             sleep 18
             }
+        cue =
         type =
         thumbsheet =
         seek_overide =
@@ -1397,6 +1407,7 @@
             FlipSound(1)
         video_sound := 0
         video_player =
+        RenderPage()
         }
 
 
@@ -1498,10 +1509,10 @@
         }
 
 
-    SetAspect(x, y)
+    AdjustMedia(x, y)
         {
         direction := x + y
-        if (xpos < 200)						; adjust video speed
+        if (xpos < 200)						; media speed
             {
             if direction
                 {
@@ -1517,19 +1528,30 @@
                 }
             return
             }
-        WinGet, state, MinMax, ahk_group Browsers
         if (!Setting("Width Gesture") || Abs(x) < Abs(y))
             {
             if (direction > 0)
-                ControlSend,, 0, ahk_ID %video_player%		; adjust magnify
+                ControlSend,, 0, ahk_ID %video_player%		; media magnify
             else ControlSend,, 9, ahk_ID %video_player%
             if (direction < 0)
                 magnify += 0.04
             else magnify -= 0.04
             }
-        else if (direction > 0)
+        else
+            {
+            skinny -= 1						; adjust width
+            if (direction > 0)
                 ControlSend,, 5, ahk_ID %video_player%
-             else ControlSend,, 6, ahk_ID %video_player%
+            else
+                {
+                ControlSend,, 6, ahk_ID %video_player%
+                skinny += 2
+                }
+            if !skinny
+                PopUp("Reset",500,0)
+            FileDelete, %inca%\cache\widths\%media%.txt
+            FileAppend, %skinny%, %inca%\cache\widths\%media%.txt
+            }
         }
 
 
@@ -1631,7 +1653,7 @@
         WinClose
         LoadSettings()
         RenderPage()
-        tab =
+        inca_tab =
         return
         settingsButtonCancel:
         WinClose
@@ -1680,12 +1702,14 @@
         if (type == "audio")
             {
             FileAppend, %inca%\favorites\%media% %cut%.png`r`n, %play%, UTF-8
+            FileDelete, %inca%\cache\cuts\%media% %cut%.txt
             FileAppend, %src%|%cut%`r`n, %inca%\cache\cuts\%media% %cut%.txt, UTF-8
             FileCopy, %inca%\apps\icons\music.png, %inca%\favorites\%media% %cut%.png, 1
             }
         if (type == "video")
             {
             FileAppend, %inca%\favorites\%media% %cut%.jpg`r`n, %play%, UTF-8
+            FileDelete, %inca%\cache\cuts\%media% %cut%.txt
             FileAppend, %src%|%cut%`r`n, %inca%\cache\cuts\%media% %cut%.txt, UTF-8
             runwait, %inca%\apps\ffmpeg.exe -ss %cut% -i "%src%" -y -vf scale=1280:-2 -vframes 1 "%inca%\favorites\%media% %cut%.jpg",, Hide
             }
@@ -1817,7 +1841,6 @@
         {
         Global
         inca := A_ScriptDir
-        EnvGet, profile, UserProfile
         IniRead,features,%inca%\settings.ini,Settings,features
         IniRead,indexed_folders,%inca%\settings.ini,Settings,indexed_folders
         IniRead,search_folders,%inca%\settings.ini,Settings,search_folders
@@ -1828,6 +1851,9 @@
         Menu, ContextMenu, Add, Delete, ContextMenu
         Menu, ContextMenu, Add, Rename, ContextMenu
         Menu, ContextMenu, Add, Caption, ContextMenu
+        Menu, ContextMenu, Add, Cue, ContextMenu
+        Menu, ContextMenu, Add, Snip, ContextMenu
+        Menu, ContextMenu, Add, mp3, ContextMenu
         Menu, ContextMenu, Add, Settings, ContextMenu
         }
 
@@ -2015,7 +2041,7 @@
         }
 
 
-    SpoolList(i, input)						; spool sorted media files into web page
+    SpoolList(i, input)							; spool sorted media files into web page
         {
         caption =
         start := 0
@@ -2042,6 +2068,15 @@
         width := StrSplit(width, ",")
         width := width[view]
         width1 := width * 2
+        width_t := 1
+        ratio := 1.009
+        Loop % Abs(skinny)
+            width_t  *= ratio
+        height_t := 1 - (width_t - 1)
+        if (skinny && skinny < 0)
+            transform = transform:scaleX(%height_t%);
+        if (skinny > 0)
+            transform = transform:scaleY(%height_t%);
         if !caption
             margin := Round(width * 0.5)
         font_size := Round((width + 20) / 34,1)
@@ -2085,7 +2120,7 @@
                     }
 	        entry = <a href="#Media#%i%"><div style="display:inline-block; width:88`%; color:#555351; transition:color 1.4s; margin-left:8`%; text-align:center; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; %highlight%;">%sort_filter% &nbsp;&nbsp;%link% %name%</div></a><textarea rows=%rows% style="display:inline-block; overflow:hidden; margin-left:8`%; width:88`%; background-color:inherit; color:#826858; font-size:1.2em; font-family:inherit; border:none; outline:none;">%str2%</textarea>`r`n`r`n
                 }
-            else entry = <li style="display:inline-block; vertical-align:top; width:%width%em; margin-bottom:%margin%em; margin-right:5`%; color:%font%; transition:color 1.4s;"><div style="margin-left:8`%; color:#555351; text-align:center; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; %highlight%;">%sort_filter% &nbsp;&nbsp;%link% %fav% %name%</div><a href="#Media#%i%"><%vid_styl% %select%" src="file:///%thumb%"></a>%caption%</li>`r`n`r`n
+            else entry = <li style="display:inline-block; vertical-align:top; width:%width%em; margin-bottom:%margin%em; margin-right:5`%; color:%font%; transition:color 1.4s;"><div style="margin-left:8`%; color:#555351; text-align:center; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; %highlight%;">%sort_filter% &nbsp;&nbsp;%link% %fav% %name%</div><a href="#Media#%i%"><%vid_styl% %transform% %select%" src="file:///%thumb%"></a>%caption%</li>`r`n`r`n
             }
         last_ext := ext
         return entry
