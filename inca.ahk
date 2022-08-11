@@ -1,8 +1,3 @@
-; last media in playlists
-; filenames   ASMR Hair Brushing 🎀 Soft Spoken
-; current music highlight
-; rename fav or slide media
-; select all vid/image filter error
 
 
 	; Inca Media Viewer for Windows. Firefox & Chrome compatible
@@ -250,22 +245,14 @@
           {
           if (timer > 350 && A_Cursor == "IBeam")			; mouse long click over text
               SearchText()						; list search results
-          else if (video_player && type == "image" && ext != "gif")
-              {
-              if (xpos > A_ScreenWidth * 0.9) 
-                  send, j
-              else if (xpos < A_ScreenWidth * 0.1) 
-                  send, i
-              else PlayMedia(1)						; next media
-              }
-          else if video_player
+          if video_player
               {
               GetSeekTime(video_player)
               if thumbsheet						; 6x6 thumbsheet mode
                   GetSeek(0)						; convert click to seek time
               if (!seek && position > duration - 1)			; video finished playing
                   seek := 0.5						; return to start
-              if (timer > 350)
+              if ((type == "image" && ext != "gif") || timer > 350)
                   PlayMedia(1)
               else if (seek && (thumbsheet || ypos > A_ScreenHeight - 100))
                   {
@@ -380,7 +367,7 @@
                 PlaySong(-1)
             else if WinActive("ahk_class Notepad")
                 {
-                Send,  ^s^w
+                Send,  {Esc}^s^w
                 if inca_tab 
                     RenderPage()
                 }
@@ -428,9 +415,13 @@
                 wheel := 0
             if Setting("Reverse Wheel")
                 wheel ^= 1
-            if (type == "image")
+            if (type == "image" && ext != "gif" && magnify < 0)
                 {
-                if wheel
+                if (xpos > A_ScreenWidth * 0.9)
+                  if wheel
+                    send, j
+                  else send, i
+                else if wheel
                   send, h
                 else send, g
                 thumbsheet =
@@ -908,6 +899,8 @@
         if !(duration := array.1 * 3600 + array.2 * 60 + array.3)
             duration := GetDuration(src)
         position := Round((input.5 / input.6) * duration,1)			; most accurate value
+        if (folder == "music")
+            FileReadLine, last_media, %playlist%, (1 + input.4)			; current song
         array := StrSplit(input.1, ":")
         if !position
             position := Round(array.1 * 3600 + array.2 * 60 + array.3,1)	; or use less accurate value
@@ -994,7 +987,7 @@
     EditFilename()							; + durations, faorites, history and slides
         {
         selected =
-        if !GetMedia(0)
+        if (!GetMedia(0) || playlist || folder == "Favorites" || folder == "History")
             return
         SplitPath, src,,media_path
         FileGetSize, size, %src%, K
@@ -1100,7 +1093,7 @@
 	if (timer < 350)
             {
             if (type == "m3u")
-                 playlist := src
+                 playlist := src					; stay in this playlist
             else playlist =
             GetTabSettings(1)
             }
@@ -1191,8 +1184,7 @@
         count -= 2
         selected =
         }
-    if (popup || selected)
-        CreateList(0)
+    CreateList(0)
     pop = %popup% %count%
     if pop
         PopUp(pop,600,0)
@@ -1314,7 +1306,7 @@
         else paused =
         Random, random, 100, 999
         properties = --loop --video-zoom=-%zoom% %mute% %paused% %speed% %seek_t% 
-        if (type == "image")
+        if (type == "image" && ext != "gif")
             properties = --video-zoom=-%zoom%
         if ((click == "MButton" || thumbsheet) && type == "video" && duration > 20)
             {
@@ -1443,7 +1435,9 @@
                 }
             }
         SetTimer, VolUp
-        WinActivate, ahk_group Browsers
+        click =
+        if inca_tab
+            RenderPage()
         }
 
 
@@ -2054,8 +2048,6 @@
         FileRead, caption, %cap%
         Transform, cap, HTML, %cap%, 2
         caption := StrReplace(caption, "`n", "<br>")
-        if caption
-            caption = <a href="#%cap%#%i%" style="width:100`%; color:LightSalmon; opacity:0.7; font-size:%font_size%em;">%caption%</a>
         if ((folder == "Favorites" || folder == "Slides") && type == "image")
             IfExist, %inca%\cache\cuts\%media%.txt			; get inner src from .jpg link file
                 {
@@ -2077,9 +2069,10 @@
             transform = transform:scaleX(%height_t%);
         if (skinny > 0)
             transform = transform:scaleY(%height_t%);
-        if !caption
-            margin := Round(width * 0.5)
         font_size := Round((width + 20) / 34,1)
+        if caption
+            caption = <a href="#%cap%#%i%" style="width:100`%; color:LightSalmon; opacity:0.7; font-size:%font_size%em;">%caption%</a>
+        else margin := Round(width * 0.5)
         height1 := Round(width * 0.9)
         font := Setting("Font Color")
         FileGetSize, size, %src%, K
@@ -2104,7 +2097,7 @@
         StringReplace, thumb, thumb, \,/, All
         if (view == 7)							; list view 
             {
-            entry = <a href="#Media#%i%"><table><tr><td id="hover_image"><%hov_size% %select%" src="file:///%thumb%"></tr></table><table style="table-layout:fixed; width:100`%"><tr><td style="color:#777777; width:4em; text-align:center">%sort_filter%</td><td style="width:4em; font-size:0.7em; text-align:center">%dur%</td><td style="width:3em; font-size:0.7em; text-align:center">%size%</td><td style="width:4em; padding-right:3.2em;  font-size:0.7em; text-align:center">%ext%</td><td style="%select% %highlight% white-space:nowrap; text-overflow:ellipsis; font-size:1em">%name% %fav%</td></tr></table></a>`r`n`r`n
+            entry = <a href="#Media#%i%"><table><tr><td id="hover_image"><%hov_size% %select%" src="file:///%thumb%"></tr></table><table style="table-layout:fixed; width:100`%"><tr><td style="color:#777777; width:4em; text-align:center">%sort_filter%</td><td style="width:4em; font-size:0.7em; text-align:center">%dur%</td><td style="width:3em; font-size:0.7em; text-align:center">%size%</td><td style="width:4em; padding-right:3.2em;  font-size:0.7em; text-align:center">%ext%</td><td style="%select% %highlight% white-space:nowrap; text-overflow:ellipsis; font-size:1em">%name%  %fav%</td></tr></table></a>`r`n`r`n
             }
         else
             {
