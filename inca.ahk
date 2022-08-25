@@ -1,6 +1,6 @@
+; hover starts playing media
 
-
-	; Inca Media Viewer for Windows. Firefox & Chrome compatible
+	; Inca Media Viewer for Windows - Firefox & Chrome compatible
 
 
 	#NoEnv
@@ -25,7 +25,7 @@
         Global indexed_folders		; create thumbnails for
         Global this_search		; current search folders
         Global inca			; default folder path
-        Global list			; sorted file list
+        Global list			; sorted media file list
 	Global list_id			; pointer to media file
         Global list_size
         Global selected			; selected files from web page
@@ -35,7 +35,7 @@
         Global media			; media filename, no path or ext
         Global type			; eg. video
 	Global subfolders
-        Global folder
+        Global folder			; no path
         Global path
         Global ext
         Global last_ext
@@ -386,7 +386,7 @@
         }
 
 
-    MediaControl()							; from timer every 0.1 seconds
+    MediaControl()							; from timer every 100mS
         {
         Critical
         if (type == "video" || type == "audio")
@@ -464,8 +464,8 @@
             SoundSet, volume						; slowly reduce volume
             vol_popup := 100						; check every 10 seconds
             }
-        if (video_player && timer < 350)				; not gesture
-            MediaControl()						; video scanning, image panning
+        if (video_player && timer < 350)
+            MediaControl()
         if !video_player
             {
             dim := inca_tab
@@ -498,7 +498,9 @@
                 {
                 previous_tab := tab_name
                 GetTabSettings(1)					; get last tab settings
-                CreateList(0)						; media list to match html page
+                IfExist, %inca%\cache\lists\%folder%.txt
+                    FileRead, list, %inca%\cache\lists\%folder%.txt
+                else CreateList(0)					; media list to match html page
                 }
             }
         ShowStatus()							; show time & vol
@@ -716,6 +718,8 @@
         Loop, Parse, list, `n, `r
           if FilterList(A_LoopField)
               size += 1
+        FileDelete, %inca%\cache\lists\%folder%.txt
+        FileAppend, %list%, %inca%\cache\lists\%folder%.txt
         if show
             popup = %search_term%  %size%
         Popup(popup,0,0)
@@ -793,13 +797,11 @@
         }
 
 
-    GetSnipSource()
+    FindSource()
         {
         name := media
-        Loop, 8
-           if (SubStr(name, 0) != A_Space)
-              StringTrimRight, name, name, 1
-        StringTrimRight, name, name, 1
+        if InStr(src, "\Snips\")
+            StringTrimRight, name, name, 2				; legacy hack
         Loop, Parse, search_folders, `|
            IfExist, %A_LoopField%\%name%.*
                {
@@ -835,7 +837,7 @@
             aTime := StrSplit(aTime, ":")
             dur := aTime.1 * 3600 + aTime.2 * 60 + aTime.3
             clipboard := clip
-            filedelete, %inca%\cache\durations\%filen%.txt
+            FileDelete, %inca%\cache\durations\%filen%.txt
             FileAppend, %dur%, %inca%\cache\durations\%filen%.txt
             }
         return dur
@@ -1003,7 +1005,7 @@
         FileMove, %src%, %media_path%\%new_name%.%ext%			; FileMove = FileRename
         UpdateFiles(new_name)
         LoadSettings()
-        CreateList(0)
+        RenderPage()
         }
 
 
@@ -1044,6 +1046,7 @@
         FileMove, %inca%\cache\durations\%media%.txt, %inca%\cache\durations\%new_name%.txt, 1
         FileMove, %inca%\cache\thumbs\%media%.mp4, %inca%\cache\thumbs\%new_name%.mp4, 1
         FileMove, %inca%\cache\thumb1\%media%.jpg, %inca%\cache\thumb1\%new_name%.jpg, 1
+        list := StrReplace(list, media, new_name)
         }
 
 
@@ -1145,8 +1148,6 @@
         cue := position
     else if (menu_item == "Mp3")
         run, %inca%\apps\ffmpeg.exe -ss %cue% -to %position% -i "%src%" -y "%inca%\snips\%media% %seek%.mp3",,Hide
-    else if (menu_item == "Snip")
-        run, %inca%\apps\ffmpeg.exe -ss %cue% -to %position% -i "%src%" -c:v libx264 -x264opts keyint=3 -vf scale=1280:-2 -y "%inca%\snips\%media% %seek%.mp4",,Hide
     else if (menu_item == "Caption")
         {
         selected =
@@ -1154,12 +1155,14 @@
             return
         ClosePlayer()
         orphan_media = %inca%\cache\captions\%media%.txt
-        FileAppend, , %orphan_media%
+        FileAppend, , %orphan_media%					; create empty caption file
         PlayMedia(0)
-        return
         }
     else if (menu_item == "All")
+        {
         FileReadLine, selected, %inca%\cache\html\%tab_name%.htm, 3	; list of media id's visible in page
+        RenderPage()
+        }
     else if (selected && menu_item == "Delete")
         {
         if video_player
@@ -1183,8 +1186,8 @@
             }
         count -= 2
         selected =
+        CreateList(0)
         }
-    CreateList(0)
     pop = %popup% %count%
     if pop
         PopUp(pop,600,0)
@@ -1258,10 +1261,10 @@
             seek := Round(StrSplit(str, "|").2,1)
             }
         DetectMedia(src)
-        if (click == "MButton" && InStr(src, "\Snips\"))
-            GetSnipSource()					; play src not 10 sec. snip file
-        if !DetectMedia(src)
-            return
+        if (!FileExist(src) || (click == "MButton" && InStr(src, "\Snips\")))
+            if !FindSource()
+                return
+        AddHistory()
         if (type == "document" || type == "m3u")
             {
             RenderPage()					; highlight last media
@@ -1300,8 +1303,9 @@
             magnify := 0 
         zoom := magnify
         if (type == "video" && Setting("Default Magnify"))
-            zoom := 50 / Setting("Default Magnify") 
-        if Setting("Start Paused")
+            zoom := 50 / Setting("Default Magnify")
+        cap = %inca%\cache\captions\%media% %seek%.txt
+        if (Setting("Start Paused") || FileExist(cap))		; also pause captioned media
             paused = --pause
         else paused =
         Random, random, 100, 999
@@ -1372,7 +1376,6 @@
         Gui, ProgressBar:Cancel
         GuiControl, Indexer:, GuiInd
         FileDelete, %inca%\cache\*.jpg
-        AddHistory()
         if video_player
           loop 16
             {
@@ -1625,6 +1628,10 @@
         run, %inca%\apps\help.txt
         return
 
+        settingsButtonCancel:
+        WinClose
+        return
+
         settingsButtonSave:
         gui, settings:submit
         new =
@@ -1647,10 +1654,6 @@
         WinClose
         LoadSettings()
         RenderPage()
-        inca_tab =
-        return
-        settingsButtonCancel:
-        WinClose
         return
 
 
@@ -1731,7 +1734,7 @@
         if (video_player && type != "image")
             seek_t := Time(position)
         else seek_t =
-            status = %time%    %vol%    %seek_t%
+            status = %time%    %vol%    %seek_t%    %skinny%
         if (status != last_status)					; to stop flickering
             {
             Gui, Status:+lastfound
@@ -1846,7 +1849,6 @@
         Menu, ContextMenu, Add, Rename, ContextMenu
         Menu, ContextMenu, Add, Caption, ContextMenu
         Menu, ContextMenu, Add, Cue, ContextMenu
-        Menu, ContextMenu, Add, Snip, ContextMenu
         Menu, ContextMenu, Add, mp3, ContextMenu
         Menu, ContextMenu, Add, Settings, ContextMenu
         }
@@ -1949,11 +1951,10 @@
 
     RenderPage()							; construct web page from media list
         {
-        refresh =
-        last := src
-        page_media = /
         if !(folder && path)
             return
+        last := src
+        page_media = /
         if playlist
             SplitPath, playlist,,,,title
         else title := tab_name
@@ -2032,6 +2033,7 @@
             WinActivate, ahk_ID %video_player%				; otherwise browser sets mouse wheel hi-res mode
         PopUp("",0,0)					
         DetectMedia(last)						; restore media parameters
+        skinny =
         }
 
 
