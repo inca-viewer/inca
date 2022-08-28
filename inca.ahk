@@ -1,4 +1,4 @@
-; hover starts playing media
+
 
 	; Inca Media Viewer for Windows - Firefox & Chrome compatible
 
@@ -38,7 +38,6 @@
         Global folder			; no path
         Global path
         Global ext
-        Global last_ext
         Global tab_name			; browser tab title
 	Global previous_tab
         Global history_timer		; timer to add files to history 
@@ -53,7 +52,7 @@
         Global sort			; eg. Alpha
         Global sort_filter		; eg. 't'
         Global inca_tab			; media webpage exists = 1, is active = 2
-        Global click			; mouse click value
+        Global click			; mouse click type
         Global timer			; click or back timer
         Global view := 4	 	; thumbnail size
 	Global last_view := 4
@@ -68,7 +67,7 @@
         Global playlist			; slide playlist - full path
 	Global magnify := 0.7		; magnify video
         Global seek			; goto seek time
-	Global block_input		; stop key interrupts
+	Global block_input		; pause key interrupts
 	Global xpos			; current mouse position - 100mS updated 
 	Global ypos
 	Global thumbsheet		; thumbsheet view mode
@@ -549,8 +548,9 @@
             IniWrite,%search_list%,%inca%\settings.ini,Settings,search_list
             LoadSettings()
             PopUp("Added",600,0)
+            return
             }
-        else if (arg1 && arg2 && InStr(sort_list, arg2))
+        if (arg1 && arg2 && InStr(sort_list, arg2))
                 filter := arg1
         else if (arg2 == "Page" || arg2 == "View")
             {
@@ -719,7 +719,7 @@
           if FilterList(A_LoopField)
               size += 1
         FileDelete, %inca%\cache\lists\%folder%.txt
-        FileAppend, %list%, %inca%\cache\lists\%folder%.txt
+        FileAppend, %list%, %inca%\cache\lists\%folder%.txt, UTF-8
         if show
             popup = %search_term%  %size%
         Popup(popup,0,0)
@@ -989,21 +989,25 @@
     EditFilename()							; + durations, faorites, history and slides
         {
         selected =
-        if (!GetMedia(0) || playlist || folder == "Favorites" || folder == "History")
+        if !GetMedia(0)
             return
+        if (type == "image")
+            FileRead, str, %inca%\cache\cuts\%media%.txt		; get src from .jpg link file
+        if str
+            src := StrSplit(str, "|").1
+        DetectMedia(src)
         SplitPath, src,,media_path
         FileGetSize, size, %src%, K
         size := Round(size/1000,2)
         FileRead, duration, %inca%\cache\durations\%media%.txt
-        IfExist, %src%
-            InputBox, new_name, %menu_item%   %media_path%   %ext%   size %size%   dur %duration%,,,,94,,,,, %media%
-        else return
+        InputBox, new_name, %menu_item%   %media_path%   %ext%   size %size%   dur %duration%,,,,94,,,,, %media%
         IfWinExist, ahk_class OSKMainClass
             send, !0							; close osk keyboard
-        if ErrorLevel
-            return
-        FileMove, %src%, %media_path%\%new_name%.%ext%			; FileMove = FileRename
-        UpdateFiles(new_name)
+        if (!ErrorLevel && StrLen(new_name) > 3 && ext != "lnk" && ext != "m3u")
+            {
+            FileMove, %src%, %media_path%\%new_name%.%ext%		; FileMove = FileRename
+            UpdateFiles(new_name)
+            }
         LoadSettings()
         RenderPage()
         }
@@ -1011,8 +1015,6 @@
 
     UpdateFiles(new_name)
         {
-        if (ext == "lnk" || ext == "m3u")
-            return
         Loop, Files, %inca%\slides\*.m3u, FR
             {
             FileRead, str, %A_LoopFileFullPath%				; find & replace in .m3u slide files
@@ -1734,7 +1736,7 @@
         if (video_player && type != "image")
             seek_t := Time(position)
         else seek_t =
-            status = %time%    %vol%    %seek_t%    %skinny%
+        status = %time%    %vol%    %seek_t%    %skinny%
         if (status != last_status)					; to stop flickering
             {
             Gui, Status:+lastfound
@@ -2117,7 +2119,6 @@
                 }
             else entry = <li style="display:inline-block; vertical-align:top; width:%width%em; margin-bottom:%margin%em; margin-right:5`%; color:%font%; transition:color 1.4s;"><div style="margin-left:8`%; color:#555351; text-align:center; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; %highlight%;">%sort_filter% &nbsp;&nbsp;%link% %fav% %name%</div><a href="#Media#%i%"><%vid_styl% %transform% %select%" src="file:///%thumb%"></a>%caption%</li>`r`n`r`n
             }
-        last_ext := ext
         return entry
         }
 
