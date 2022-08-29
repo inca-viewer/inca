@@ -239,6 +239,7 @@
     ClickEvent()
         {
         Critical
+        orphan_media =
         seek_overide =
         if (click == "LButton")
           {
@@ -318,7 +319,6 @@
                 PlaySong(1)
             else if video_player
                 {
-                orphan_media =
                 if (!thumbsheet && type != "image")
                     Playmedia(0)
                 else Playmedia(1)
@@ -351,7 +351,6 @@
                 if video_player
                     {
                     timer =
-                    orphan_media =
                     if !PlayMedia(-1)
                         ClosePlayer()
                     }
@@ -986,7 +985,7 @@
         }
 
 
-    EditFilename()							; + durations, faorites, history and slides
+    EditFilename()							; + durations, favorites, history and slides
         {
         selected =
         if !GetMedia(0)
@@ -1022,13 +1021,12 @@
                 continue
             FileDelete, %A_LoopFileFullPath%
             Loop, Parse, str, `n, `r
-                IfExist, %A_LoopField%
-                    {
-                    new := StrReplace(A_LoopField, media, new_name)
-                    if InStr(A_LoopField, media)
-                        FileAppend, %new%`r`n, %A_LoopFileFullPath%, UTF-8
-                    else FileAppend, %A_LoopField%`r`n, %A_LoopFileFullPath%, UTF-8
-                    }
+                {
+                new := StrReplace(A_LoopField, media, new_name)
+                if InStr(A_LoopField, media)
+                    FileAppend, %new%`r`n, %A_LoopFileFullPath%, UTF-8
+                else FileAppend, %A_LoopField%`r`n, %A_LoopFileFullPath%, UTF-8
+                }
             }
         folders = %inca%\favorites\|%inca%\cache\cuts\|%inca%\cache\captions\
         Loop, Parse, folders, `|
