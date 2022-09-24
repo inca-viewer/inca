@@ -33,11 +33,12 @@
         Global search_term		; text search filter
         Global src			; current file incl. path
         Global media			; media filename, no path or ext
+        Global media_path
         Global type			; eg. video
 	Global subfolders
         Global folder			; no path
         Global path
-        Global ext
+        Global ext			; file extension
         Global tab_name			; browser tab title
 	Global previous_tab
         Global history_timer		; timer to add files to history 
@@ -336,6 +337,7 @@
                         }
                     else view := last_view
                     page := 1
+                    Popup(view,0,0)
                     RenderPage()
                     }
                 else if (x == "Media")
@@ -413,7 +415,7 @@
                 wheel := 0
             if Setting("Reverse Wheel")
                 wheel ^= 1
-            if (type == "image" && ext != "gif" && magnify < 0)
+            if (type == "image" && ext != "gif")
                 {
                 if (xpos > A_ScreenWidth * 0.9)
                   if wheel
@@ -550,13 +552,17 @@
             return
             }
         if (arg1 && arg2 && InStr(sort_list, arg2))
-                filter := arg1
+            {
+            page := 1
+            filter := arg1
+            }
         else if (arg2 == "Page" || arg2 == "View")
             {
             if (arg2 == "Page")
                 page := arg1
             if (arg2 == "View")
                 view := arg1
+            Popup(arg1,0,0)
             RenderPage()
             return 1
             }
@@ -995,7 +1001,6 @@
         if str
             src := StrSplit(str, "|").1
         DetectMedia(src)
-        SplitPath, src,,media_path
         FileGetSize, size, %src%, K
         size := Round(size/1000,2)
         FileRead, duration, %inca%\cache\durations\%media%.txt
@@ -1003,10 +1008,7 @@
         IfWinExist, ahk_class OSKMainClass
             send, !0							; close osk keyboard
         if (!ErrorLevel && StrLen(new_name) > 3 && ext != "lnk" && ext != "m3u")
-            {
-            FileMove, %src%, %media_path%\%new_name%.%ext%		; FileMove = FileRename
             UpdateFiles(new_name)
-            }
         LoadSettings()
         RenderPage()
         }
@@ -1014,6 +1016,7 @@
 
     UpdateFiles(new_name)
         {
+        FileMove, %src%, %media_path%\%new_name%.%ext%			; FileMove = FileRename
         Loop, Files, %inca%\slides\*.m3u, FR
             {
             FileRead, str, %A_LoopFileFullPath%				; find & replace in .m3u slide files
@@ -1042,6 +1045,7 @@
                         FileAppend, %str%`r`n, %A_LoopFileFullPath%
                         }
                     FileMove, %A_LoopFileFullPath%, %new%, 1
+                    break
                     }
         FileMove, %inca%\cache\durations\%media%.txt, %inca%\cache\durations\%new_name%.txt, 1
         FileMove, %inca%\cache\thumbs\%media%.mp4, %inca%\cache\thumbs\%new_name%.mp4, 1
@@ -1147,7 +1151,7 @@
     else if (menu_item == "Cue")
         cue := position
     else if (menu_item == "Mp3")
-        run, %inca%\apps\ffmpeg.exe -ss %cue% -to %position% -i "%src%" -y "%inca%\snips\%media% %seek%.mp3",,Hide
+        run, %inca%\apps\ffmpeg.exe -ss %cue% -to %position% -i "%src%" -y "%media_path%\%media% %seek%.mp3",,Hide
     else if (menu_item == "Caption")
         {
         selected =
@@ -1215,7 +1219,7 @@
     DetectMedia(input)
         {
         type =
-        SplitPath, input,,,ext,media
+        SplitPath, input,,media_path,ext,media
         FileRead, skinny, %inca%\cache\widths\%media%.txt
         stringlower, ext, ext
         type := DecodeExt(ext)
@@ -1288,7 +1292,7 @@
         else mute = --mute=yes
         speed := Round((video_speed + 100)/100,1)		; default speed - mpv format
         speed = --speed=%speed%
-        if (type != "video")
+        if (type != "video" || video_sound)
             speed =
         if (!seek || (timer > 350 && folder != "Slides"))
             GetSeek(1)						; 1st thumbnail seek point
@@ -1849,7 +1853,7 @@
         Menu, ContextMenu, Add, Rename, ContextMenu
         Menu, ContextMenu, Add, Caption, ContextMenu
         Menu, ContextMenu, Add, Cue, ContextMenu
-        Menu, ContextMenu, Add, mp3, ContextMenu
+        Menu, ContextMenu, Add, Mp3, ContextMenu
         Menu, ContextMenu, Add, Settings, ContextMenu
         }
 
@@ -1986,8 +1990,6 @@
         type = video							; prime for list parsing
         width := Setting("Page Width")
         offset := Setting("Page Offset")
-        fcol := Setting("Font Color")
-        back := Setting("Back Color")
         size := Setting("Thumbs Qty")
         if (folder == "music")
             GetSeekTime(music_player)
@@ -2005,7 +2007,7 @@
                         }
                 }
         pages := ceil(list_size/size)
-        header_html = <!--`r`n%view%/%page%/%sort%/%toggles%/%safe_this_search%/%search_term%/%safe_path%/%safe_folder%/%safe_playlist%/%safe_last_media%`r`n%page_media%`r`n-->`r`n<!doctype html>`r`n<html>`r`n<head>`r`n<link rel="icon" type="image/x-icon" href="file:///%inca%/apps/icons/inca.ico">`r`n<meta charset="UTF-8">`r`n<title>Inca - %safe_folder%</title>`r`n<style>`r`n`r`n@font-face {font-family: ClearSans-Thin; src: url(data:application/font-woff;charset=utf-8;base64,%font%);}`r`n`r`nbody {font-family: 'ClearSans-Thin'; overflow-x:hidden; background:%back%; color:#666666; font-size:0.8em; margin-top:200px;}`r`na:link {color:#15110a;}`r`na:visited {color:#15110a;}`r`na {text-decoration:none; color:%fcol%;}`r`na.slider {display:inline-block; width:35`%; height:1.2em; border-radius:9px; color:%fcol%; transition:color 1.4s; font-size:1em; background-color:#1b1814; text-align:center}`r`na.slider:hover {color:red; transition:color 0.36s;}`r`nul.menu {column-gap:12px; margin:auto; list-style-type:none; padding:0; white-space:nowrap;}`r`nul.menu li {color:%fcol%; transition:color 1.4s;}`r`nul.menu li:hover {color:red; transition:color 0.36s;}`r`ntable {color:%fcol%; transition:color 1.4s; table-layout:fixed; border-collapse: collapse;}`r`ntable:hover {color:red; transition:color 0.36s;}`r`n#hover_image {position:absolute; margin-left:3.8em; opacity:0; transition: opacity 0.4s; width:125px; height:auto;}`r`n#hover_image:hover {opacity:1;}`r`n</style>`r`n`r`n%script%`r`n</head>`r`n<body>`r`n`r`n`r`n`r`n<div style="margin-left:%offset%`%; margin-right:%offset%`%">`r`n`r`n
+        header_html = <!--`r`n%view%/%page%/%sort%/%toggles%/%safe_this_search%/%search_term%/%safe_path%/%safe_folder%/%safe_playlist%/%safe_last_media%`r`n%page_media%`r`n-->`r`n<!doctype html>`r`n<html>`r`n<head>`r`n<link rel="icon" type="image/x-icon" href="file:///%inca%/apps/icons/inca.ico">`r`n<meta charset="UTF-8">`r`n<title>Inca - %safe_folder%</title>`r`n<style>`r`n`r`n@font-face {font-family: ClearSans-Thin; src: url(data:application/font-woff;charset=utf-8;base64,%font%);}`r`n`r`nbody {font-family: 'ClearSans-Thin'; overflow-x:hidden; background:#15110a; color:#666666; font-size:0.8em; margin-top:200px;}`r`na:link {color:#15110a;}`r`na:visited {color:#15110a;}`r`na {text-decoration:none; color:#826858;}`r`na.slider {display:inline-block; width:35`%; height:1.2em; border-radius:9px; color:#826858; transition:color 1.4s; font-size:1em; background-color:#1b1814; text-align:center}`r`na.slider:hover {color:red; transition:color 0.36s;}`r`nul.menu {column-gap:12px; margin:auto; list-style-type:none; padding:0; white-space:nowrap;}`r`nul.menu li {color:#826858; transition:color 1.4s;}`r`nul.menu li:hover {color:red; transition:color 0.36s;}`r`ntable {color:#826858; transition:color 1.4s; table-layout:fixed; border-collapse: collapse;}`r`ntable:hover {color:red; transition:color 0.36s;}`r`n#hover_image {position:absolute; margin-left:3.8em; opacity:0; transition: opacity 0.4s; width:125px; height:auto;}`r`n#hover_image:hover {opacity:1;}`r`n</style>`r`n`r`n%script%`r`n</head>`r`n<body>`r`n`r`n`r`n`r`n<div style="margin-left:%offset%`%; margin-right:%offset%`%">`r`n`r`n
             panel2_html = <ul class="menu" id='all' style="background-color:inherit; column-count:8; column-fill:balanced; border-radius:9px; padding-left:1em; font-size:0.9em"></ul>`r`n`r`n
         panel_html = %panel2_html%<ul class="menu" id='panel' style="height:6em; margin-top:1em; column-count:8; column-fill:balanced; border-radius:9px; padding-left:1em"></ul>`r`n`r`n<ul class="menu" style="display:flex; justify-content:space-between"><a class='slider' id='sub' onmouseenter='spool(event, id, "%safe_subfolders%", "panel")' style="width:7`%;">Sub</a>`r`n<a class='slider' id='folders' onmouseenter='spool(event, id, "%safe_folder_list%", "panel")' style="width:7`%;">Fol</a>`r`n<a class='slider' id='fav' onmouseenter='spool(event, id, "%safe_fav_folders%", "panel")' style="width:7`%;">Fav</a>`r`n<a href="file:///%inca%/cache/html/slides.htm" class='slider' id='slides' onmouseenter='spool(event, id, "%slides%", "panel")' style="width:7`%;">Slides</a>`r`n<a href="file:///%inca%/cache/html/music.htm" class='slider' id='music' onmouseenter='spool(event, id, "%music%", "panel")' style="width:7`%;">Music</a>`r`n<a id='search' class='slider' onmousemove='spool(event, id, "%search_list%", "panel")' onmousedown='spool(event,"all","%search_list%", "all")'>Search</a></ul>`r`n`r`n
         if search_box
