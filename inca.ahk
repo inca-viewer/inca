@@ -1265,7 +1265,7 @@
             seek := Round(StrSplit(str, "|").2,1)
             }
         DetectMedia(src)
-        if (!FileExist(src) || (click == "MButton" && InStr(src, "\Snips\")))
+        if (!FileExist(src) || ((click == "MButton" || seek) && InStr(src, "\Snips\")))
             if !FindSource()
                 return
         AddHistory()
@@ -1296,7 +1296,7 @@
             speed =
         if (!seek || (timer > 350 && folder != "Slides"))
             GetSeek(1)						; 1st thumbnail seek point
-        if (duration <= 20 || seek > (duration -3))
+        if (duration <= 70 || seek > (duration -3))
             seek := 0
         if seek_overide
             seek := seek_overide
