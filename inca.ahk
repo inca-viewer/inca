@@ -169,8 +169,6 @@
       timer3 =
       return
     button1_Timer:
-      title =
-      WinGetTitle, title, YouTube
       if !timer3					; toggle browser / desktop
         {
         WinGet, state, MinMax, ahk_group Browsers
@@ -185,7 +183,9 @@
         }
       else
         {
-        if !title
+        title =
+        
+        if !WinGetTitle, title, YouTube
           send, {f11}					; fullscreen
         send, f
         }
@@ -255,7 +255,7 @@
                   seek := 0.5						; return to start
               if ((type == "image" && ext != "gif") || timer > 350)
                   PlayMedia(1)
-              else if (seek && (thumbsheet || ypos > A_ScreenHeight - 100))
+              else if (thumbsheet || ypos > A_ScreenHeight - 100)
                   {
                   seek_overide := seek
                   thumbsheet =
@@ -352,9 +352,9 @@
                 {
                 if video_player
                     {
-                    timer =
                     if !PlayMedia(-1)
                         ClosePlayer()
+                    timer =
                     }
                 else IfWinActive, ahk_group Browsers
                     send, ^w						; close tab
@@ -396,12 +396,12 @@
             Gui, ProgressBar:Color, 303030
             yp := A_ScreenHeight - 3
             xp := Round(A_ScreenWidth * position / duration)
-            if (ypos > A_ScreenHeight - 100)
+            seek := Round(duration * xpos / A_ScreenWidth,1)
+            if (seek && ypos > A_ScreenHeight - 100)
                  {
                  xp := xpos
-                 Gui, ProgressBar:Color, 826858
-                 seek := Round(duration * xpos / A_ScreenWidth,1)
                  seek_t := Time(seek)
+                 Gui, ProgressBar:Color, 826858
                  PopUp(seek_t,0,0)
                  }
             else if cue
@@ -1026,6 +1026,8 @@
             Loop, Parse, str, `n, `r
                 {
                 new := StrReplace(A_LoopField, media, new_name)
+                IfNotExist, %new%
+                    new := A_LoopField
                 if InStr(A_LoopField, media)
                     FileAppend, %new%`r`n, %A_LoopFileFullPath%, UTF-8
                 else FileAppend, %A_LoopField%`r`n, %A_LoopFileFullPath%, UTF-8
@@ -1150,8 +1152,8 @@
         EditFilename()
     else if (menu_item == "Cue")
         cue := position
-    else if (menu_item == "Mp3")
-        run, %inca%\apps\ffmpeg.exe -ss %cue% -to %position% -i "%src%" -y "%media_path%\%media% %seek%.mp3",,Hide
+    else if (menu_item == "Mp4")
+        run, %inca%\apps\ffmpeg.exe -ss %cue% -to %position% -i "%src%" "%media_path%\%media% %seek%.mp4",,Hide
     else if (menu_item == "Caption")
         {
         selected =
@@ -1167,7 +1169,7 @@
         FileReadLine, selected, %inca%\cache\html\%tab_name%.htm, 3	; list of media id's visible in page
         RenderPage()
         }
-    else if (selected && menu_item == "Delete")
+    else if (menu_item == "Delete")
         {
         if video_player
             selected = %list_id%/
@@ -1308,8 +1310,10 @@
         zoom := magnify
         if (type == "video" && Setting("Default Magnify"))
             zoom := 50 / Setting("Default Magnify")
-        cap = %inca%\cache\captions\%media% %seek%.txt
-        if (Setting("Start Paused") || FileExist(cap))		; also pause captioned media
+        FileRead, caption, %inca%\cache\captions\%media% %seek%.txt
+        if !caption
+            FileRead, caption, %inca%\cache\captions\%media%.txt
+        if (Setting("Start Paused") || caption)			; also pause captioned media
             paused = --pause
         else paused =
         Random, random, 100, 999
@@ -1344,9 +1348,6 @@
             RunWait %COMSPEC% /c echo add video-aspect %aspect% > \\.\pipe\mpv%random%,, hide && exit
         Gui, Caption:+lastfound
         GuiControl, Caption:, GuiCap
-        FileRead, caption, %inca%\cache\captions\%media% %seek%.txt
-        if !caption
-            FileRead, caption, %inca%\cache\captions\%media%.txt
         if (!caption && type == "audio")
             caption := media
         if caption
@@ -1853,7 +1854,7 @@
         Menu, ContextMenu, Add, Rename, ContextMenu
         Menu, ContextMenu, Add, Caption, ContextMenu
         Menu, ContextMenu, Add, Cue, ContextMenu
-        Menu, ContextMenu, Add, Mp3, ContextMenu
+        Menu, ContextMenu, Add, Mp4, ContextMenu
         Menu, ContextMenu, Add, Settings, ContextMenu
         }
 
@@ -2009,7 +2010,7 @@
         pages := ceil(list_size/size)
         header_html = <!--`r`n%view%/%page%/%sort%/%toggles%/%safe_this_search%/%search_term%/%safe_path%/%safe_folder%/%safe_playlist%/%safe_last_media%`r`n%page_media%`r`n-->`r`n<!doctype html>`r`n<html>`r`n<head>`r`n<link rel="icon" type="image/x-icon" href="file:///%inca%/apps/icons/inca.ico">`r`n<meta charset="UTF-8">`r`n<title>Inca - %safe_folder%</title>`r`n<style>`r`n`r`n@font-face {font-family: ClearSans-Thin; src: url(data:application/font-woff;charset=utf-8;base64,%font%);}`r`n`r`nbody {font-family: 'ClearSans-Thin'; overflow-x:hidden; background:#15110a; color:#666666; font-size:0.8em; margin-top:200px;}`r`na:link {color:#15110a;}`r`na:visited {color:#15110a;}`r`na {text-decoration:none; color:#826858;}`r`na.slider {display:inline-block; width:35`%; height:1.2em; border-radius:9px; color:#826858; transition:color 1.4s; font-size:1em; background-color:#1b1814; text-align:center}`r`na.slider:hover {color:red; transition:color 0.36s;}`r`nul.menu {column-gap:12px; margin:auto; list-style-type:none; padding:0; white-space:nowrap;}`r`nul.menu li {color:#826858; transition:color 1.4s;}`r`nul.menu li:hover {color:red; transition:color 0.36s;}`r`ntable {color:#826858; transition:color 1.4s; table-layout:fixed; border-collapse: collapse;}`r`ntable:hover {color:red; transition:color 0.36s;}`r`n#hover_image {position:absolute; margin-left:3.8em; opacity:0; transition: opacity 0.4s; width:125px; height:auto;}`r`n#hover_image:hover {opacity:1;}`r`n</style>`r`n`r`n%script%`r`n</head>`r`n<body>`r`n`r`n`r`n`r`n<div style="margin-left:%offset%`%; margin-right:%offset%`%">`r`n`r`n
             panel2_html = <ul class="menu" id='all' style="background-color:inherit; column-count:8; column-fill:balanced; border-radius:9px; padding-left:1em; font-size:0.9em"></ul>`r`n`r`n
-        panel_html = %panel2_html%<ul class="menu" id='panel' style="height:6em; margin-top:1em; column-count:8; column-fill:balanced; border-radius:9px; padding-left:1em"></ul>`r`n`r`n<ul class="menu" style="display:flex; justify-content:space-between"><a class='slider' id='sub' onmouseenter='spool(event, id, "%safe_subfolders%", "panel")' style="width:7`%;">Sub</a>`r`n<a class='slider' id='folders' onmouseenter='spool(event, id, "%safe_folder_list%", "panel")' style="width:7`%;">Fol</a>`r`n<a class='slider' id='fav' onmouseenter='spool(event, id, "%safe_fav_folders%", "panel")' style="width:7`%;">Fav</a>`r`n<a href="file:///%inca%/cache/html/slides.htm" class='slider' id='slides' onmouseenter='spool(event, id, "%slides%", "panel")' style="width:7`%;">Slides</a>`r`n<a href="file:///%inca%/cache/html/music.htm" class='slider' id='music' onmouseenter='spool(event, id, "%music%", "panel")' style="width:7`%;">Music</a>`r`n<a id='search' class='slider' onmousemove='spool(event, id, "%search_list%", "panel")' onmousedown='spool(event,"all","%search_list%", "all")'>Search</a></ul>`r`n`r`n
+        panel_html = %panel2_html%<ul class="menu" id='panel' style="height:6em; margin-top:1em; column-count:8; column-fill:balanced; border-radius:9px; padding-left:1em"></ul>`r`n`r`n<ul class="menu" style="display:flex; justify-content:space-between"><a class='slider' id='sub' onmouseenter='spool(event, id, "%safe_subfolders%", "panel")' style="width:7`%;">Sub</a>`r`n<a href="file:///%inca%/cache/html/downloads.htm" class='slider' id='folders' onmouseenter='spool(event, id, "%safe_folder_list%", "panel")' style="width:7`%;">Fol</a>`r`n<a  href="file:///%inca%/cache/html/favorites.htm" class='slider' id='fav' onmouseenter='spool(event, id, "%safe_fav_folders%", "panel")' style="width:7`%;">Fav</a>`r`n<a href="file:///%inca%/cache/html/slides.htm" class='slider' id='slides' onmouseenter='spool(event, id, "%slides%", "panel")' style="width:7`%;">Slides</a>`r`n<a href="file:///%inca%/cache/html/music.htm" class='slider' id='music' onmouseenter='spool(event, id, "%music%", "panel")' style="width:7`%;">Music</a>`r`n<a id='search' class='slider' onmousemove='spool(event, id, "%search_list%", "panel")' onmousedown='spool(event,"all","%search_list%", "all")'>Search</a></ul>`r`n`r`n
         if search_box
             plus = <a href="#Searchbox" style="color:red;"><c>+</c></a>		; + option to add search to search list
         else plus =
