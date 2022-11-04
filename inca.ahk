@@ -1,4 +1,4 @@
-
+; on hover, create thumb size mp4 segments to play
 
 	; Inca Media Viewer for Windows - Firefox & Chrome compatible
 
@@ -397,16 +397,25 @@
             yp := A_ScreenHeight - 3
             xp := Round(A_ScreenWidth * position / duration)
             seek := Round(duration * xpos / A_ScreenWidth,1)
-            if (seek && ypos > A_ScreenHeight - 100)
-                 {
-                 xp := xpos
-                 seek_t := Time(seek)
-                 Gui, ProgressBar:Color, 826858
-                 PopUp(seek_t,0,0)
-                 }
-            else if cue
-                 PopUp(Round((position - cue),1),0,0)
-            else  Gui PopUp:Cancel
+            if (seek && ypos > A_ScreenHeight - 44)
+                {
+                xs := xpos - 120
+                ys := A_ScreenHeight - 320
+                thumb := Round((xpos / A_ScreenWidth) * 36) + 1
+                GuiControl,pic:, GuiPic, *w320 *h240 %inca%\cache\%thumb%.jpg
+                Gui, pic:show, x%xs% y%ys% w320 h240
+                xp := xpos
+                seek_t := Time(seek)
+                Gui, ProgressBar:Color, 826858
+                PopUp(seek_t,0,0)
+                }
+            else 
+                {
+                if cue
+                     PopUp(Round((position - cue),1),0,0)
+                else Gui, PopUp: Cancel
+                Gui, pic: Cancel
+                }
             Gui, ProgressBar:Show, x0 y%yp% w%xp% h3 NA			; seek bar under video
             }
         if wheel
@@ -1152,8 +1161,8 @@
         EditFilename()
     else if (menu_item == "Cue")
         cue := position
-    else if (menu_item == "Mp4")
-        run, %inca%\apps\ffmpeg.exe -ss %cue% -to %position% -i "%src%" "%media_path%\%media% %seek%.mp4",,Hide
+    else if (menu_item == "Snip")
+        run, %inca%\apps\ffmpeg.exe -ss %cue% -to %position% -i "%src%" "%media_path%\%media% %seek%.%ext%",,Hide
     else if (menu_item == "Caption")
         {
         selected =
@@ -1320,11 +1329,11 @@
         properties = --loop --video-zoom=-%zoom% %mute% %paused% %speed% %seek_t% 
         if (type == "image" && ext != "gif")
             properties = --video-zoom=-%zoom%
+        RunWait %inca%\apps\ffmpeg.exe -skip_frame nokey -i "%inca%\cache\thumbs\%media%.mp4" -vsync 0 -qscale:v 1 "%inca%\cache\`%d.jpg",, Hide
         if ((click == "MButton" || thumbsheet) && type == "video" && duration > 20)
             {
             IfNotExist, %inca%\cache\thumbs\%media%.mp4
                 return
-            RunWait %inca%\apps\ffmpeg.exe -skip_frame nokey -i "%inca%\cache\thumbs\%media%.mp4" -vsync 0 -qscale:v 1 "%inca%\cache\`%d.jpg",, Hide
             RunWait %inca%\apps\ffmpeg -i %inca%\cache\`%d.jpg -filter_complex "tile=6x6" -y "%inca%\cache\thumb.jpg",, Hide
             Run %inca%\apps\mpv --video-zoom=-0.3 "%inca%\cache\thumb.jpg"
             thumbsheet = 1
@@ -1376,6 +1385,7 @@
     ClosePlayer()
         {
         Critical
+        Gui, pic: Cancel
         Gui, Caption: Cancel
         Gui, settings: Cancel
         Gui, ProgressBar:Cancel
@@ -1717,8 +1727,6 @@
             }
         if (type == "image" || ext == "txt")
             FileAppend, %src%`r`n, %play%, UTF-8
-        if (type == "image")
-            FileCreateShortcut, %src%, %inca%\favorites\%media%.lnk
         if (folder == "Slides")
             CreateList(0)
         else RenderPage()
@@ -1854,7 +1862,7 @@
         Menu, ContextMenu, Add, Rename, ContextMenu
         Menu, ContextMenu, Add, Caption, ContextMenu
         Menu, ContextMenu, Add, Cue, ContextMenu
-        Menu, ContextMenu, Add, Mp4, ContextMenu
+        Menu, ContextMenu, Add, Snip, ContextMenu
         Menu, ContextMenu, Add, Settings, ContextMenu
         }
 
@@ -1864,6 +1872,10 @@
         Global
         LoadSettings()
         CoordMode, Mouse, Screen
+        Gui, pic:+lastfound -Caption +ToolWindow +AlwaysOnTop -DPIScale 
+        Gui, pic:Color,black
+        Gui, pic:Margin, 0, 0
+        Gui, pic:Add, Picture, vGuiPic
         gui, vol: +lastfound -Caption +ToolWindow +AlwaysOnTop -DPIScale
         gui, vol: color, db9062
         Gui, background:+lastfound -Caption +ToolWindow -DPIScale
