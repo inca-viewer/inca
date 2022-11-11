@@ -405,6 +405,8 @@
                 GuiControl,pic:, GuiPic, *w320 *h240 %inca%\cache\%thumb%.jpg
                 Gui, pic:show, x%xs% y%ys% w320 h240
                 xp := xpos
+                if (type != "audio")
+                    GetSeek(thumb * 5)
                 seek_t := Time(seek)
                 Gui, ProgressBar:Color, 826858
                 PopUp(seek_t,0,0)
@@ -873,7 +875,7 @@
         xp -= 0.072 * A_ScreenWidth
         yp -= 0.12 * A_ScreenHeight
         if thumb
-            thumb_number := 5
+            thumb_number := thumb
         else thumb_number := 5 * (6 * Floor(yp / row) + Ceil(xp / col))
         ratio := (thumb_number-1)/200
         seek := Round(ratio * duration + offset - ratio * offset, 1)
@@ -1260,7 +1262,11 @@
         {
         Critical
         wheel =
-        GetMedia(next)						; convert external html media to internal list media
+        if !GetMedia(next)					; convert external html media to internal list media
+            {
+            list_id := 1
+            GetMedia(0)
+            }
         if (!next && orphan_media) 				; not referenced in any media list
             source_media := orphan_media			; preserve origin before any link files processed
         else source_media := src
@@ -1306,7 +1312,7 @@
         if (type != "video" || video_sound)
             speed =
         if (!seek || (timer > 350 && folder != "Slides"))
-            GetSeek(1)						; 1st thumbnail seek point
+            GetSeek(5)						; 1st thumbnail seek point
         if (duration <= 70 || seek > (duration -3))
             seek := 0
         if seek_overide
@@ -1702,7 +1708,7 @@
         if thumbsheet
             GetSeek(0)
         if !video_player
-            seek_overide := GetSeek(1)
+            seek_overide := GetSeek(5)
         if seek_overide
             cut := Round(seek_overide,1)
         else cut := Round(position,1)
