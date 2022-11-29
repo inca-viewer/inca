@@ -1,4 +1,7 @@
-; on hover, create thumb size mp4 segments to play
+; on hover, create thumb size mp4 segments to play FileWriter
+; multi clip edit
+; slow music option
+; random on slides
 
 	; Inca Media Viewer for Windows - Firefox & Chrome compatible
 
@@ -1163,8 +1166,10 @@
         EditFilename()
     else if (menu_item == "Cue")
         cue := position
-    else if (menu_item == "Snip")
-        run, %inca%\apps\ffmpeg.exe -ss %cue% -to %position% -i "%src%" "%media_path%\%media% %seek%.%ext%",,Hide
+    else if (menu_item == "Mp3")
+        run, %inca%\apps\ffmpeg.exe -ss %cue% -to %position% -i "%src%" "%media_path%\%media% %seek%.mp3",,Hide
+    else if (menu_item == "Mp4")
+        run, %inca%\apps\ffmpeg.exe -ss %cue% -to %position% -i "%src%" "%media_path%\%media% %seek%.mp4",,Hide
     else if (menu_item == "Caption")
         {
         selected =
@@ -1309,7 +1314,7 @@
         else mute = --mute=yes
         speed := Round((video_speed + 100)/100,1)		; default speed - mpv format
         speed = --speed=%speed%
-        if (type != "video" || video_sound)
+        if (type != "video" || video_sound || !Setting("Default Speed"))
             speed =
         if (!seek || (timer > 350 && folder != "Slides"))
             GetSeek(5)						; 1st thumbnail seek point
@@ -1484,7 +1489,6 @@
             ControlSend,, 4, ahk_ID %music_player%		; mute music
             ControlSend,, 1, ahk_ID %video_player%		; un pause video
             ControlSend,, 3, ahk_ID %video_player%		; un mute video
-            ControlSend,, {BS}, ahk_ID %video_player%		; reset video speed
             }
          if (vol_ref < 10)
              vol_ref := 10
@@ -1733,6 +1737,8 @@
             }
         if (type == "image" || ext == "txt")
             FileAppend, %src%`r`n, %play%, UTF-8
+        if (type == "image")
+            FileCreateShortcut, %src%, %inca%\favorites\%media%.lnk
         if (folder == "Slides")
             CreateList(0)
         else RenderPage()
@@ -1868,7 +1874,8 @@
         Menu, ContextMenu, Add, Rename, ContextMenu
         Menu, ContextMenu, Add, Caption, ContextMenu
         Menu, ContextMenu, Add, Cue, ContextMenu
-        Menu, ContextMenu, Add, Snip, ContextMenu
+        Menu, ContextMenu, Add, Mp3, ContextMenu
+        Menu, ContextMenu, Add, Mp4, ContextMenu
         Menu, ContextMenu, Add, Settings, ContextMenu
         }
 
@@ -1933,8 +1940,10 @@
         if search_term
             {
             SplitPath, source,,,,name
-                if !InStr(name, search_term)
-                     return
+            StringSplit, array, search_term, %A_Space%
+            Loop, %array0%
+              if !InStr(name, array%A_Index%)
+                return
             }
         if (sort == "Date")
             {
