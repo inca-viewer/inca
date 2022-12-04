@@ -2,6 +2,7 @@
 ; multi clip edit
 ; slow music option
 ; random on slides
+; search list dropdown
 
 	; Inca Media Viewer for Windows - Firefox & Chrome compatible
 
@@ -137,7 +138,7 @@
         send, {end}+{Home}^c
         ClipWait, 0
         if (search_box := Clipboard)
-            ClickWebPage()
+            ClickWebPage(1)
         }
       return
 
@@ -275,7 +276,7 @@
                   else ControlSend,, 1, ahk_ID %video_player%
                   }
               }
-          else if (inside_browser && A_Cursor != "IBeam" && (x := ClickWebPage()))
+          else if (inside_browser && A_Cursor != "IBeam" && (x := ClickWebPage(0)))
               {
               if (type == "m3u" && timer > 350)
                   list_id := 1						; play first slide/song on long click
@@ -299,10 +300,10 @@
         else if (click == "RButton")
             {
             if (timer > 350)
-                if (inca_tab && (video_player || ClickWebPage() == "Media"))
+                if (inca_tab && (video_player || ClickWebPage(0) == "Media"))
                     AddFavorites()
                  else return       
-            else if (!video_player && inside_browser && ClickWebPage() == "Media")
+            else if (!video_player && inside_browser && ClickWebPage(0) == "Media")
                 {
                 if !InStr(selected, "/" list_id "/")
                   if selected
@@ -329,7 +330,7 @@
                 }
             else if inside_browser
                 {
-                x := ClickWebPage()
+                x := ClickWebPage(0)
                 if (x == "Null")
                     {
                     click =
@@ -521,13 +522,13 @@
         return
 
 
-    ClickWebPage()
+    ClickWebPage(search)
         {
         arg1 =
         arg2 =
         type =
         WinActivate, ahk_group Browsers
-        if !search_box
+        if !search
           {
           if !inside_browser
             return
@@ -945,15 +946,13 @@
                 {
                 path =
                 search_box := ClipBoard
-                ClickWebPage()
-                sleep 500
+                ClickWebPage(1)
                 WinActivate, ahk_group Browsers
-                return
                 }
+            else send, !+0
             Clipboard := clip
             }
-        send, !+0							; trigger osk keyboard
-        sleep 500
+        else send, !+0							; trigger osk keyboard
         }
 
 
@@ -2038,10 +2037,7 @@
         header_html = <!--`r`n%view%/%page%/%sort%/%toggles%/%safe_this_search%/%search_term%/%safe_path%/%safe_folder%/%safe_playlist%/%safe_last_media%`r`n%page_media%`r`n-->`r`n<!doctype html>`r`n<html>`r`n<head>`r`n<link rel="icon" type="image/x-icon" href="file:///%inca%/apps/icons/inca.ico">`r`n<meta charset="UTF-8">`r`n<title>Inca - %safe_folder%</title>`r`n<style>`r`n`r`n@font-face {font-family: ClearSans-Thin; src: url(data:application/font-woff;charset=utf-8;base64,%font%);}`r`n`r`nbody {font-family: 'ClearSans-Thin'; overflow-x:hidden; background:#15110a; color:#666666; font-size:0.8em; margin-top:200px;}`r`na:link {color:#15110a;}`r`na:visited {color:#15110a;}`r`na {text-decoration:none; color:#826858;}`r`na.slider {display:inline-block; width:35`%; height:1.2em; border-radius:9px; color:#826858; transition:color 1.4s; font-size:1em; background-color:#1b1814; text-align:center}`r`na.slider:hover {color:red; transition:color 0.36s;}`r`nul.menu {column-gap:12px; margin:auto; list-style-type:none; padding:0; white-space:nowrap;}`r`nul.menu li {color:#826858; transition:color 1.4s;}`r`nul.menu li:hover {color:red; transition:color 0.36s;}`r`ntable {color:#826858; transition:color 1.4s; table-layout:fixed; border-collapse: collapse;}`r`ntable:hover {color:red; transition:color 0.36s;}`r`n#hover_image {position:absolute; margin-left:3.8em; opacity:0; transition: opacity 0.4s; width:125px; height:auto;}`r`n#hover_image:hover {opacity:1;}`r`n</style>`r`n`r`n%script%`r`n</head>`r`n<body>`r`n`r`n`r`n`r`n<div style="margin-left:%offset%`%; margin-right:%offset%`%">`r`n`r`n
             panel2_html = <ul class="menu" id='all' style="background-color:inherit; column-count:8; column-fill:balanced; border-radius:9px; padding-left:1em; font-size:0.9em"></ul>`r`n`r`n
         panel_html = %panel2_html%<ul class="menu" id='panel' style="height:6em; margin-top:1em; column-count:8; column-fill:balanced; border-radius:9px; padding-left:1em"></ul>`r`n`r`n<ul class="menu" style="display:flex; justify-content:space-between"><a class='slider' id='sub' onmouseenter='spool(event, id, "%safe_subfolders%", "panel")' style="width:7`%;">Sub</a>`r`n<a href="file:///%inca%/cache/html/downloads.htm" class='slider' id='folders' onmouseenter='spool(event, id, "%safe_folder_list%", "panel")' style="width:7`%;">Fol</a>`r`n<a  href="file:///%inca%/cache/html/favorites.htm" class='slider' id='fav' onmouseenter='spool(event, id, "%safe_fav_folders%", "panel")' style="width:7`%;">Fav</a>`r`n<a href="file:///%inca%/cache/html/slides.htm" class='slider' id='slides' onmouseenter='spool(event, id, "%slides%", "panel")' style="width:7`%;">Slides</a>`r`n<a href="file:///%inca%/cache/html/music.htm" class='slider' id='music' onmouseenter='spool(event, id, "%music%", "panel")' style="width:7`%;">Music</a>`r`n<a id='search' class='slider' onmousemove='spool(event, id, "%search_list%", "panel")' onmousedown='spool(event,"all","%search_list%", "all")'>Search</a></ul>`r`n`r`n
-        if search_box
-            plus = <a href="#Searchbox" style="color:red;"><c>+</c></a>		; + option to add search to search list
-        else plus =
-        filter_html =`r`n`r`n<ul class="menu" style="display:flex; justify-content:space-between;">`r`n<input type="search" class="searchbox" value="%search_box%" style="width:14`%; border-radius:8px; height:16px; border:none; color:#888888; background-color:#1b1814;">%plus%`r`n`r`n
+        filter_html =`r`n`r`n<ul class="menu" style="display:flex; justify-content:space-between;">`r`n<input type="search" class="searchbox" value="%safe_title%" style="width:14`%; border-radius:8px; height:16px; border:none; color:#666666; background-color:#1b1814;"><a href="#Searchbox" style="color:LightSalmon;"><c>+</c></a>`r`n`r`n
         Loop, Parse, sort_list, `|
             if A_LoopField
                 {
