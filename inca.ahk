@@ -2,7 +2,9 @@
 ; multi clip edit
 ; slow music option
 ; random on slides
-; search list dropdown
+; chinese chars
+; m3u opens in inca
+
 
 	; Inca Media Viewer for Windows - Firefox & Chrome compatible
 
@@ -1052,6 +1054,8 @@
                 if InStr(A_LoopFileFullPath, media)
                     {
                     new := StrReplace(A_LoopFileFullPath, media, new_name)
+                    IfNotExist, %new%
+                        new := A_LoopFileFullPath
                     if InStr(A_LoopFileFullPath, "\cuts\")
                         {
                         FileRead, str, %A_LoopFileFullPath%
@@ -1317,6 +1321,9 @@
             speed =
         if (!seek || (timer > 350 && folder != "Slides"))
             GetSeek(5)						; 1st thumbnail seek point
+        FileRead, caption, %inca%\cache\captions\%media% %seek%.txt
+        if !caption
+            FileRead, caption, %inca%\cache\captions\%media%.txt
         if (duration <= 70 || seek > (duration -3))
             seek := 0
         if seek_overide
@@ -1329,9 +1336,6 @@
         zoom := magnify
         if (type == "video" && Setting("Default Magnify"))
             zoom := 50 / Setting("Default Magnify")
-        FileRead, caption, %inca%\cache\captions\%media% %seek%.txt
-        if !caption
-            FileRead, caption, %inca%\cache\captions\%media%.txt
         if (Setting("Start Paused") || caption)			; also pause captioned media
             paused = --pause
         else paused =
@@ -1388,6 +1392,7 @@
         video_player := player
         history_timer := 1
         Gui PopUp:Cancel
+;        send, ^-^-							; tweak audio video sync
         return 1
         }
 
@@ -1941,8 +1946,13 @@
             SplitPath, source,,,,name
             StringSplit, array, search_term, %A_Space%
             Loop, %array0%
+              {
               if !InStr(name, array%A_Index%)
                 return
+              if (StrLen(array%A_Index%) < 2)
+                if !InStr(name, search_term)
+                  return
+              }
             }
         if (sort == "Date")
             {
@@ -1999,9 +2009,9 @@
         FileRead, font, %inca%\apps\ClearSans-Thin.txt			; firefox bug - requires base64 font
         FileRead, script, %inca%\apps\inca - js.js
         Loop, Files, %inca%\music\*.m3u
-           music = %music%|%A_LoopFileFullPath%
+            music = %music%|%A_LoopFileFullPath%
         Loop, Files, %inca%\Slides\*.m3u
-           slides = %slides%|%A_LoopFileFullPath%
+            slides = %slides%|%A_LoopFileFullPath%
         StringReplace, slides, slides, \,/, All
         StringReplace, music, music, \,/, All
         StringReplace, safe_folder_list, folder_list, \,/, All
