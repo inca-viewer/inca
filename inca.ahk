@@ -1,10 +1,9 @@
 ; on hover, create thumb size mp4 segments to play FileWriter
 ; multi clip edit
 ; slow music option
-; random on slides
 ; chinese chars
 ; m3u opens in inca
-
+; set easy playback loops
 
 	; Inca Media Viewer for Windows - Firefox & Chrome compatible
 
@@ -53,7 +52,7 @@
         Global duration			; media duration
         Global volume
         Global paused
-        Global video_speed := 0
+        Global video_speed
         Global video_sound := 0		; video or music sound source
         Global page := 1		; current page within list
         Global sort			; eg. Alpha
@@ -229,9 +228,7 @@
             if (GetKeyState("RButton", "P") && Setting("Volume Gesture"))
                 SetVolume(1.4 * x)
             if GetKeyState("LButton", "P")
-                if video_player
-                    AdjustMedia(x, y)
-                else BrowserMagnify(y)
+                AdjustMedia(x, y)
             }
         if (!gesture && timer > 350)
             {
@@ -397,7 +394,10 @@
         Critical
         if (type == "video" || type == "audio")
             {
+            x := position
             GetSeektime(video_player)
+            if (position < x && xpos > A_ScreenWidth * 0.1)
+                ControlSend,, aaa, ahk_ID %video_player%
             Gui, ProgressBar:+LastFound -Caption +ToolWindow +AlwaysOnTop -DPIScale
             Gui, ProgressBar:Color, 303030
             yp := A_ScreenHeight - 3
@@ -735,7 +735,7 @@
                 }
             StringTrimRight, list, list, 2				; remove end `r`n    
             }
-        if (sort == "Shuffle" && !playlist)
+        if (sort == "Shuffle")
             Sort, list, Random Z
         Loop, Parse, list, `n, `r
           if FilterList(A_LoopField)
@@ -1339,7 +1339,6 @@
         if (Setting("Start Paused") || caption)			; also pause captioned media
             paused = --pause
         else paused =
-        Random, random, 100, 999
         properties = --loop --video-zoom=-%zoom% %mute% %paused% %speed% %seek_t% 
         if (type == "image" && ext != "gif")
             properties = --video-zoom=-%zoom%
@@ -1352,7 +1351,7 @@
             Run %inca%\apps\mpv --video-zoom=-0.3 "%inca%\cache\thumb.jpg"
             thumbsheet = 1
             } 
-        else Run %inca%\apps\mpv %properties% --idle --input-ipc-server=\\.\pipe\mpv%random% "%src%"
+        else Run %inca%\apps\mpv %properties% --idle "%src%"
         player =
         Critical
         loop 500							; identify new player id
@@ -1366,9 +1365,6 @@
             if (A_Index > 495)
                 return
             }
-        sleep 400							; time for player to settle
-        if (aspect := Round(skinny / 100,2))
-            RunWait %COMSPEC% /c echo add video-aspect %aspect% > \\.\pipe\mpv%random%,, hide && exit
         Gui, Caption:+lastfound
         GuiControl, Caption:, GuiCap
         if (!caption && type == "audio")
@@ -1384,15 +1380,21 @@
         block_input := A_TickCount + 640
         if (click == "MButton")
             block_input := A_TickCount + 1600				; stop residual wheel inputs
-        WinSet, Transparent, 2, ahk_group Browsers			; because 0 stops web rendering
-        WinSet, Transparent, 25, ahk_class Shell_TrayWnd
         if video_player
             WinClose, ahk_ID %video_player%				; previous player instance
         WinActivate, ahk_ID %player%
         video_player := player
+        if (skinny < 0)
+            x := 5
+        else x := 6
+        y := Abs(skinny)
+        loop %y%
+            ControlSend,, %x%, ahk_ID %video_player%
+        sleep 200
+        WinSet, Transparent, 2, ahk_group Browsers			; because 0 stops web rendering
+        WinSet, Transparent, 25, ahk_class Shell_TrayWnd
         history_timer := 1
         Gui PopUp:Cancel
-;        send, ^-^-							; tweak audio video sync
         return 1
         }
 
@@ -1537,6 +1539,22 @@
 
     AdjustMedia(x, y)
         {
+        WinGet, state, MinMax, ahk_group Browsers
+        if !video_player
+            {
+            if (state > -1 && xpos < 100)
+                {
+                WinActivate, ahk_group Browsers
+                if (y < -20)
+                    send, ^0
+                else if (y < -6)
+                    send, ^{-}
+                else  if (y > 6)
+                    send, ^{+}
+                sleep 140
+                }
+            return
+            }
         direction := x + y
         if (xpos < 200)						; media speed
             {
@@ -1548,7 +1566,8 @@
                 if (direction > 0)
                     video_speed -= 1
                 else video_speed := 0
-                PopUp(video_speed,0,0)
+                speed := video_speed + 100
+                PopUp(speed,0,0)
                 if !video_speed
                     sleep 500
                 }
@@ -1577,26 +1596,6 @@
                 PopUp("Reset",500,0)
             FileDelete, %inca%\cache\widths\%media%.txt
             FileAppend, %skinny%, %inca%\cache\widths\%media%.txt
-            }
-        }
-
-
-    BrowserMagnify(direction)
-        {
-        WinGet, state, MinMax, ahk_group Browsers
-        if (state > -1 && xpos < 100)
-            {
-            WinActivate, ahk_group Browsers
-            if (direction < -20)
-                {
-                send, ^0
-                sleep 400
-                }
-            else if (direction < -6)
-                send, ^{-}
-            else  if (direction > 6)
-                send, ^{+}
-            sleep 120
             }
         }
 
@@ -1763,7 +1762,10 @@
         if (video_player && type != "image")
             seek_t := Time(position)
         else seek_t =
-        status = %time%    %vol%    %seek_t%    %skinny%
+        speed =
+        if (video_player && video_speed < -100)
+            speed := video_speed + 100
+        status = %time%    %vol%    %seek_t%    %skinny%    %speed%
         if (status != last_status)					; to stop flickering
             {
             Gui, Status:+lastfound
