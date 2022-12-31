@@ -1,24 +1,26 @@
 
 Windows - firefox and chrome compatible<br>
-# File explorer, media viewer for disabled
+# A browser based file explorer & media viewer/concentrator<br>
 
-Creates web pages of your local media<br>
+With a YouTube style view of your local media files<br> 
+Create background (e.g music) and forground playlists for your media<br>
 
-Only 77kB of easy to read AutoHotkey script<br>
+Playlists are plain text .m3u files containing pointers to your media<br>
+
+Only 79kB of easy to read AutoHotkey script<br>
 Is lightweight, portable (no installation), does not mess with any media or settings<br>
 
 # Features:
 
 All common media formats<br>
 6 x 6 Video thumbsheets. (middle click)<br>
-Randomize / shuffle folders<br>
-Speed, width, magnify, speed & volume with mouse gestures<br><br>
+Randomize / shuffle folders, media, playlists<br>
+Speed, width, magnify & volume with mouse gestures<br><br>
 
 ><img src="screens/Screen 1.jpg" width="640"/></p><br>
 
 <p><img src="screens/Screen 2.jpg" width="640"/></p><br><br>
 
-If you are bedridden or disabled<br>
 No keyboard is needed. Uses long clicks, mouse gestures, middle click & back button<br>
 Just run Ince.exe - browser will open in pictures folder<br>
 To 'uninstall', just close from taskbar tray and delete the inca folder<br><br>
