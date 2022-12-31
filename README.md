@@ -1,7 +1,7 @@
 
-Windows - firefox and chrome compatible<br>
 # A browser based file explorer & media viewer<br>
 
+Windows - firefox and chrome compatible<br>
 YouTube style view of your local media files<br> 
 Foreground and background media playlists and players<br>
 Playlists are plain text .m3u files of pointers to media<br>
