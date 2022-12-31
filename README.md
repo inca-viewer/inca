@@ -1,11 +1,10 @@
 
 Windows - firefox and chrome compatible<br>
-# A browser based file explorer & media viewer/concentrator<br>
+# A browser based file explorer & media viewer<br>
 
-With a YouTube style view of your local media files<br> 
-Create background (e.g music) and forground playlists for your media<br>
-
-Playlists are plain text .m3u files containing pointers to your media<br>
+YouTube style view of your local media files<br> 
+Foreground and background media playlists and players<br>
+Playlists are plain text .m3u files of pointers to media<br>
 
 Only 79kB of easy to read AutoHotkey script<br>
 Is lightweight, portable (no installation), does not mess with any media or settings<br>
@@ -30,27 +29,26 @@ Search, organize, edit & view media files in browser<br>
 Add captions to images & video<br>
 Create Favorites, history, slideshows, storylines<br><br>
 Background music playlists from browser tab<br>
-Flip sound between music and video with volume-through-zero mouse gesture<br>
-Sleep timer gradually lowers volume if mouse quiet<br><br>
+Flip sound between music and forground video with volume-through-zero mouse gesture<br>
+Sleep timer gradually lowers master volume if mouse quiet<br><br>
 
 To see if you already have a video from an outside website,<br>
 Select part of the title text then 'long click' on it<br>
 A tab will immediately open with all matching files from your computer<br>
 
-6x6 thumbnails index at about 1000 videos per hour into the cache once only<br>
+thumbnails index at about 1000 videos per hour into the cache once only<br>
 Then everything is very fast.<br>
 
 Written in a simple scripting language - AutoHotkey<br>
 If it's not exactly what you want, change it. It re-compiles in under a second<br>
 You don't need to be a programmer and it's really easy to customize.<br>
 Just snip out the bits you don't like and write any features you want.<br>
-Edit and Compile your script within browser<br>
+Edit and Compile your script all within browser<br>
 
 # Usage
 
 Click
 - on image - next image-
-- on image edge - pan image
 - on video - play/pause
 - on thumbnail - play from frame
 - on folder - show media inside
@@ -65,14 +63,13 @@ Long right click
 - on media - adds to favorites & slides
 
 Slide gestures
-- in media - magnify, width, speed, volume
-- screen far left - browser magnify
+- in media - magnify, width
+- screen far left - browser magnify or media speed
 
 Right click slide gesture
 - volume control
 
 Middle click
-- on media - next media
 - on video - show 6 x 6 thumb sheet
 - on background - toogle thumbnails / list view
 - on folder - open in new tab
@@ -94,8 +91,8 @@ Win + \
 Win + /
 - pause/play YouTube - Long press - back 10 seconds YouTube<br>
 
-<br><br>Supports rotated screen & onscreen keyboard tool<br>
-long press on any text for keyboard, back click to close (if tool run as administrator)<br>
+<br><br>Supports rotated screen & osk onscreen keyboard<br>
+long press on any text for osk, back click to close (if osk run as administrator)<br>
 
 <img src="screens/mouse.jpg" width="160"/> <img src="screens/swivel arm 3.jpg" width="200"/> <br>
 <img src="screens/swivel arm 2.jpg" width="200"/> <img src="screens/swivel arm 1.jpg" width="200"/></p>
