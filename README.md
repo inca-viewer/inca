@@ -61,7 +61,7 @@ Long click
 - on highlighted text - search media files for match
 
 Long right click
-- on media - adds to favorites & slides
+- on media - adds timestamp to favorites & slides playlist
 
 Slide gestures
 - in media - magnify, width
