@@ -49,7 +49,7 @@ Edit and Compile your script all within browser<br>
 # Usage
 
 Click
-- on image - next image-
+- on image - next image
 - on video - play/pause
 - on thumbnail - play from frame
 - on folder - show media inside
