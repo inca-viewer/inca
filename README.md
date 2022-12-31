@@ -20,7 +20,8 @@ Speed, width, magnify & volume with mouse gestures<br><br>
 
 <p><img src="screens/Screen 2.jpg" width="640"/></p><br><br>
 
-No keyboard is needed. Uses long clicks, mouse gestures, middle click & back button<br>
+No keyboard is needed. (although supports osk)<br>
+Uses long clicks, mouse gestures, middle click & back button<br>
 Just run Ince.exe - browser will open in pictures folder<br>
 To 'uninstall', just close from taskbar tray and delete the inca folder<br><br>
 
