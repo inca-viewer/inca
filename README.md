@@ -30,8 +30,8 @@ Search, organize, edit & view media files in browser<br>
 Add captions to images & video<br>
 Create Favorites, history, slideshows, storylines<br><br>
 Background music playlists from browser tab<br>
-Flip sound between music and forground video with volume-through-zero mouse gesture<br>
-Sleep timer gradually lowers master volume if mouse quiet<br><br>
+Flip sound between background music playlist and forground video<br>
+Sleep timer gradually lowers master volume when mouse quiet<br><br>
 
 To see if you already have a video from an outside website,<br>
 Select part of the title text then 'long click' on it<br>
