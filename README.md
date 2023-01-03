@@ -30,15 +30,15 @@ Search, organize, edit & view media files in browser<br>
 Add captions to images & video<br>
 Create Favorites, history, slideshows, storylines<br><br>
 Background music playlists from browser tab<br>
-Flip sound between background music playlist and forground video<br>
+Fade sound between background music playlist and forground video<br>
 Sleep timer gradually lowers master volume when mouse quiet<br><br>
 
 To see if you already have a video from an outside website,<br>
 Select part of the title text then 'long click' on it<br>
 A tab will immediately open with all matching files from your computer<br>
 
-thumbnails index at about 1000 videos per hour into the cache once only<br>
-Then everything is very fast.<br>
+Downloads folder is indexed at about 1000 videos per hour<br>
+into the cache once only. Then everything is very fast.<br>
 
 Written in a simple scripting language - AutoHotkey<br>
 If it's not exactly what you want, change it. It re-compiles in under a second<br>
@@ -86,14 +86,15 @@ Long back click
 - in browser - close current tab
 - in other app - close app
 
-Win + \
+Win + \ (optional)
 - toggle browser & desktop - Long press - Toggle FullScreen
 
-Win + /
+Win + / (optional)
 - pause/play YouTube - Long press - back 10 seconds YouTube<br>
 
 <br><br>Supports rotated screen & osk onscreen keyboard<br>
-long press on any text for osk, back click to close (if osk run as administrator)<br>
+long press on any text for osk, back click or enter to close<br>
+(if osk keyboard script is set to run as administrator)<br>
 
 <img src="screens/mouse.jpg" width="160"/> <img src="screens/swivel arm 3.jpg" width="200"/> <br>
 <img src="screens/swivel arm 2.jpg" width="200"/> <img src="screens/swivel arm 1.jpg" width="200"/></p>
