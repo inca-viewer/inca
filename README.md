@@ -27,7 +27,7 @@ Just run Ince.exe - browser will open in pictures folder<br>
 To 'uninstall', just close from taskbar tray and delete the inca folder<br><br>
 
 Smooth Gif playback with magnify, width, step forward & backward & play/pause<br>
-TikTok video cycling, speed decending, playlists etc. 
+TikTok video cycling, speed decending, playlists etc.<br>
 Search, organize, edit & view media files in browser<br>
 Associate captions and text files to images & video<br>
 Create Favorites, history, slideshows, storylines<br><br>
