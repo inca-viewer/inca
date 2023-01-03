@@ -4,7 +4,7 @@
 Windows - firefox and chrome compatible<br>
 YouTube style view of your local media files<br> 
 Foreground and background media playlists and players<br>
-Playlists are plain text .m3u files of pointers to media<br>
+Playlists are plain text .m3u files of start-time pointers to your media<br>
 
 Only 79kB of easy to read AutoHotkey script<br>
 Is lightweight, portable (no installation), does not mess with any media or settings<br>
