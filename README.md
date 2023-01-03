@@ -1,13 +1,14 @@
 
 # A browser based file explorer & media viewer<br>
 
-Windows - firefox and chrome compatible<br>
+Windows - Firefox and Chrome compatible<br>
 YouTube style view of your local media files<br> 
 Foreground and background media playlists and players<br>
 Playlists are plain text .m3u files of start-time pointers to your media<br>
 
 Only 79kB of easy to read AutoHotkey script<br>
-Is lightweight, portable (no installation), does not mess with any media or settings<br>
+Is lightweight, portable (no installation)<br>
+and does not mess with any media or settings<br>
 
 # Features:
 
@@ -20,17 +21,18 @@ Speed, width, magnify & volume with mouse gestures<br><br>
 
 <p><img src="screens/Screen 2.jpg" width="640"/></p><br><br>
 
-No keyboard is needed. (although supports osk)<br>
-Uses long clicks, mouse gestures, middle click & back button<br>
+No keyboard is needed. (although long click on text invokes osk)<br>
+Uses mouse clicks, gestures & back button<br>
 Just run Ince.exe - browser will open in pictures folder<br>
 To 'uninstall', just close from taskbar tray and delete the inca folder<br><br>
 
 Smooth Gif playback with magnify, width, step forward & backward & play/pause<br>
+TikTok video cycling, speed decending, playlists etc. 
 Search, organize, edit & view media files in browser<br>
-Add captions to images & video<br>
+Associate captions and text files to images & video<br>
 Create Favorites, history, slideshows, storylines<br><br>
 Background music playlists from browser tab<br>
-Fade sound between background music playlist and forground video<br>
+Fade sound between background music and forground video<br>
 Sleep timer gradually lowers master volume when mouse quiet<br><br>
 
 To see if you already have a video from an outside website,<br>
