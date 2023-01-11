@@ -2,7 +2,9 @@
 ; ffmpeg -i ---.mkv -codec copy ---.mp4
 ; new thumbs not on legacy 200 frames
 ; consider using browser instead of mpv?
-; rename folders 
+; rename folders
+
+
 
 	; Inca Media Viewer for Windows - Firefox & Chrome compatible
 
@@ -119,9 +121,9 @@
       return
     Xbutton1 up::
       timer =
-      return
     Xbutton_Timer:
       ClickEvent()
+      click =
       return
 
 
@@ -188,7 +190,6 @@
       else
         {
         title =
-        
         if !WinGetTitle, title, YouTube
           send, {f11}					; fullscreen
         send, f
@@ -254,7 +255,7 @@
               if (!seek && position > duration - 1)			; video finished playing
                   seek := 0.5						; return to start
               if ((type == "image" && ext != "gif") || timer > 350)
-                  PlayMedia(0)
+                  PlayMedia(1)
               else if (thumbsheet || ypos > A_ScreenHeight - 100)
                   {
                   GetSeek(0)						; convert click to seek time
@@ -275,7 +276,7 @@
               }
           else if (inside_browser && A_Cursor != "IBeam" && (link := ClickWebPage(0)))
               {
-;              seek := 0
+              thumbsheet =
               if (timer > 350 && type == "m3u")
                   list_id := 1						; play first slide/song on long click
               if (type == "document")
@@ -349,6 +350,7 @@
                     PlayMedia(0)
                 }
             else send, {MButton}
+            click =
             }
         else if (click == "Back")
             {
@@ -454,10 +456,10 @@
             {
             if (wheel && xpos < A_ScreenWidth * 0.1)
                 {
-                ControlSend,, a, ahk_ID %video_player%		; adjust video speed
+                ControlSend,, a, ahk_ID %video_player%			; adjust video speed
                 video_speed -= 0.05
-                if (video_speed == 0.8)
-                    Popup(Round(video_speed,2),600,0.47)
+                if (Round(video_speed,2) == 0.8)
+                    Popup(Round(video_speed,2),800,0.47)
                 else Popup(Round(video_speed,2),100,0.47)
                }
             else if (type == "image" && ext != "gif")
@@ -473,7 +475,7 @@
                 }
             else if (type == "video" || type == "audio" || ext == "gif")
                 {
-                if (ypos > A_ScreenHeight * 0.9)
+                if (xpos < A_ScreenWidth * 0.1)
                   {
                   ControlSend,, b, ahk_ID %video_player%
                   video_speed := 1
@@ -556,9 +558,7 @@
                 {
                 previous_tab := tab_name
                 GetTabSettings(1)					; get last tab settings
-                IfExist, %inca%\cache\lists\%folder%.txt
-                    FileRead, list, %inca%\cache\lists\%folder%.txt
-                else CreateList(0)					; media list to match html page
+                CreateList(0)						; media list to match html page
                 }
             }
         ShowStatus()							; show time & vol
@@ -781,8 +781,6 @@
         Loop, Parse, list, `n, `r
             if FilterList(A_LoopField)
                 size += 1
-        FileDelete, %inca%\cache\lists\%folder%.txt
-        FileAppend, %list%, %inca%\cache\lists\%folder%.txt, UTF-8
         if show
             popup = %search_term%  %size%
         Popup(popup,0,0)
@@ -843,8 +841,7 @@
             page := array.2
             sort := array.3
             toggles := array.4
-            if (tab_name == "Slides" || tab_name == "music")
-                playlist := array.9
+            playlist := array.9
             last_media := array.10
             if extended
               {
@@ -1316,9 +1313,10 @@
             seek := Round(StrSplit(str, "|").2,1)
             }
         DetectMedia(src)
-        if (!FileExist(src) || ((timer > 350 || seek) && InStr(src, "\Snips\")))
+        if (!FileExist(src) || ((timer > 350 || seek_overide || click == "MButton") && InStr(src, "\snips\")))
             if !FindSource()
                 return
+
         AddHistory()
         if (type == "document" || type == "m3u")
             {
@@ -1346,7 +1344,7 @@
         FileRead, caption, %inca%\cache\captions\%media% %seek%.txt
         if !caption
             FileRead, caption, %inca%\cache\captions\%media%.txt
- if (seek > duration -3)       ; duration <= 70 || 
+        if (duration <= 20 || seek > duration - 6 || seek < 5) 
             seek := 0
         if seek_overide
             seek := seek_overide
@@ -1389,7 +1387,7 @@
         GuiControl, Caption:, GuiCap
         if (!caption && type == "audio")
             caption := media
-        if caption
+        if (caption && !thumbsheet)
             {
             WinSet, TransColor, 0 99
             GuiControl, Caption:, GuiCap, % caption
@@ -1978,6 +1976,7 @@
         if playlist
             SplitPath, playlist,,,,title
         else title := tab_name
+        tab_name := title
         FileRead, font, %inca%\apps\ClearSans-Thin.txt			; firefox bug - requires base64 font
         FileRead, script, %inca%\apps\inca - js.js
         Loop, Files, %inca%\music\*.m3u
@@ -2012,10 +2011,10 @@
                         }
                 }
         pages := ceil(list_size/size)
-        header_html = <!--`r`n%view%>%page%>%sort%>%toggles%>%this_search%>%search_term%>%path%>%folder%>%playlist%>%last_media%`r`n%page_media%`r`n-->`r`n<!doctype html>`r`n<html>`r`n<head>`r`n<link rel="icon" type="image/x-icon" href="file:///%inca%\apps\icons\inca.ico">`r`n<meta charset="UTF-8">`r`n<title>Inca - %folder%</title>`r`n<style>`r`n`r`n@font-face {font-family: ClearSans-Thin; src: url(data:application/font-woff;charset=utf-8;base64,%font%);}`r`n`r`nbody {font-family: 'ClearSans-Thin'; overflow-x:hidden; background:#15110a; color:#666666; font-size:0.8em; margin-top:200px;}`r`na:link {color:#15110a;}`r`na:visited {color:#15110a;}`r`na {text-decoration:none; color:#826858;}`r`na.slider {display:inline-block; width:35`%; height:1.2em; border-radius:9px; color:#826858; transition:color 1.4s; font-size:1em; background-color:#1b1814; text-align:center}`r`na.slider:hover {color:red; transition:color 0.36s;}`r`nul.menu {column-gap:12px; margin:auto; list-style-type:none; padding:0; white-space:nowrap;}`r`nul.menu li {color:#826858; transition:color 1.4s;}`r`nul.menu li:hover {color:red; transition:color 0.36s;}`r`ntable {color:#826858; transition:color 1.4s; table-layout:fixed; border-collapse: collapse;}`r`ntable:hover {color:red; transition:color 0.36s;}`r`n#hover_image {position:absolute; margin-left:3.8em; opacity:0; transition: opacity 0.4s; width:125px; height:auto;}`r`n#hover_image:hover {opacity:1;}`r`n</style>`r`n`r`n%script%`r`n</head>`r`n<body>`r`n`r`n`r`n`r`n<div style="margin-left:%offset%`%; margin-right:%offset%`%">`r`n`r`n
+        header_html = <!--`r`n%view%>%page%>%sort%>%toggles%>%this_search%>%search_term%>%path%>%folder%>%playlist%>%last_media%`r`n%page_media%`r`n-->`r`n<!doctype html>`r`n<html>`r`n<head>`r`n<link rel="icon" type="image/x-icon" href="file:///%inca%\apps\icons\inca.ico">`r`n<meta charset="UTF-8">`r`n<title>Inca - %title%</title>`r`n<style>`r`n`r`n@font-face {font-family: ClearSans-Thin; src: url(data:application/font-woff;charset=utf-8;base64,%font%);}`r`n`r`nbody {font-family: 'ClearSans-Thin'; overflow-x:hidden; background:#15110a; color:#666666; font-size:0.8em; margin-top:200px;}`r`na:link {color:#15110a;}`r`na:visited {color:#15110a;}`r`na {text-decoration:none; color:#826858;}`r`na.slider {display:inline-block; width:35`%; height:1.2em; border-radius:9px; color:#826858; transition:color 1.4s; font-size:1em; background-color:#1b1814; text-align:center}`r`na.slider:hover {color:red; transition:color 0.36s;}`r`nul.menu {column-gap:12px; margin:auto; list-style-type:none; padding:0; white-space:nowrap;}`r`nul.menu li {color:#826858; transition:color 1.4s;}`r`nul.menu li:hover {color:red; transition:color 0.36s;}`r`ntable {color:#826858; transition:color 1.4s; table-layout:fixed; border-collapse: collapse;}`r`ntable:hover {color:red; transition:color 0.36s;}`r`n#hover_image {position:absolute; margin-left:3.8em; opacity:0; transition: opacity 0.4s; width:125px; height:auto;}`r`n#hover_image:hover {opacity:1;}`r`n</style>`r`n`r`n%script%`r`n</head>`r`n<body>`r`n`r`n`r`n`r`n<div style="margin-left:%offset%`%; margin-right:%offset%`%">`r`n`r`n
             panel2_html = <ul class="menu" id='all' style="background-color:inherit; column-count:8; border-radius:9px; padding-left:1em; font-size:0.9em"></ul>`r`n`r`n
         panel_html = %panel2_html%<ul class="menu" id='panel' style="height:6em; margin-top:1em; column-count:8; border-radius:9px; padding-left:1em"></ul>`r`n`r`n<ul class="menu" style="display:flex; justify-content:space-between"><a class='slider' id='sub' onmouseover='spool(event, id, "%subfolders%", "panel")' style="width:7`%;">Sub</a>`r`n<a href="file:///%inca%/cache/html/downloads.htm" class='slider' id='folders' onmouseover='spool(event, id, "%folder_list%", "panel")' style="width:7`%;">Fol</a>`r`n<a  href="file:///%inca%/cache/html/favorites.htm" class='slider' id='fav' onmouseover='spool(event, id, "%fav_folders%", "panel")' style="width:7`%;">Fav</a>`r`n<a href="file:///%inca%/cache/html/slides.htm" class='slider' id='slides' onmouseover='spool(event, id, "%slides%", "panel")' style="width:7`%;">Slides</a>`r`n<a href="file:///%inca%/cache/html/music.htm" class='slider' id='music' onmouseover='spool(event, id, "%music%", "panel")' style="width:7`%;">Music</a>`r`n<a id='search' class='slider' onmousemove='spool(event, id, "%search_list%", "panel")' onmousedown='spool(event,"all","%search_list%", "all")'>Search</a></ul>`r`n`r`n
-        filter_html =`r`n`r`n<ul class="menu" style="display:flex; justify-content:space-between;">`r`n<input type="search" class="searchbox" value="%title%" style="width:14`%; border-radius:8px; height:16px; border:none; color:#666666; background-color:#1b1814;"><a href="#Searchbox" style="color:LightSalmon;"><c>+</c></a>`r`n`r`n
+        filter_html =`r`n`r`n<ul class="menu" style="display:flex; justify-content:space-between;">`r`n<input type="search" class="searchbox" value="%search_term%" style="width:14`%; border-radius:8px; height:16px; border:none; color:#666666; background-color:#1b1814;"><a href="#Searchbox" style="color:LightSalmon;"><c>+</c></a>`r`n`r`n
         Loop, Parse, sort_list, `|
             if A_LoopField
                 {
@@ -2037,7 +2036,8 @@
         sleep 333							; time for browser to render behind mpv
         if video_player
             WinActivate, ahk_ID %video_player%				; otherwise browser sets mouse wheel hi-res mode
-        PopUp("",0,0)					
+        else WinActivate, ahk_group Browsers
+        PopUp("",0,0)
         DetectMedia(last)						; restore media parameters
         skinny =
         }
@@ -2059,7 +2059,7 @@
             IfExist, %inca%\cache\cuts\%media%.txt			; get inner src from .jpg link file
                 {
                 FileRead, str, %inca%\cache\cuts\%media%.txt
- start := Round(StrSplit(str, "|").2,1)
+                start := Round(StrSplit(str, "|").2,1)
                 DetectMedia(StrSplit(str, "|").1)
                 }
         width := "34,19,13,9,6,4,15"
@@ -2075,9 +2075,9 @@
             transform = transform:scaleX(%height_t%);
         if (skinny > 0)
             transform = transform:scaleY(%height_t%);
-        font_size := Round((width + 20) / 34,1)
+        font_size := Round((width + 22) / 34,1)
         if caption
-            caption = <a href="#%cap%#%i%" style="width:100`%; color:LightSalmon; opacity:0.7; font-size:%font_size%em;">%caption%</a>
+            caption = <a href="#%cap%#%i%" style="width:100`%; color:#826858; font-size:%font_size%em;">%caption%</a>
         else margin := Round(width * 0.5)
         height1 := Round(width * 0.9)
         font := Setting("Font Color")
@@ -2131,8 +2131,6 @@
         return entry
         }
 
-; controls autoplay onmouseout="this.pause()" 
- 
 
 
 
