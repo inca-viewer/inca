@@ -1,14 +1,12 @@
 <script>
 
-
 function play_media(id, source) {
 var el = document.getElementById(id);
 var rect = el.getBoundingClientRect();
 xpos = (event.clientX - rect.left) / el.offsetWidth;
 if (xpos > 0.8) {el.setAttribute("src", source); el.pause();}
 else if (xpos < 0.2) {el.setAttribute("src", source); el.playbackRate = 0.8; el.play();}
-else {el.currentTime = el.duration * xpos;}
-}
+else {el.currentTime = el.duration * xpos;}}
 
 function spool(event, id, input, output) {	// spool folders, playlists, searches etc. into top html panel
 var link = " ";
