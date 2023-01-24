@@ -1,12 +1,73 @@
 <script>
 
-function play_media(id, source) {
+//setTimeout(function(){element.pause();},1000);
+//if (start != 0) {el.controls = true}
+//else {el.controls = false}
+
+var wheel = 0;
+var timer = 1;
+var scale = 1;
+
+function getControls(event, element) {
+if (wheel > 30) {
+var seek = el.duration / 50
+el = document.getElementById("modal-content");
+if (timer == 1) {
+timer = 0;
+wheel = 0;
+if (event.deltaY > 0) {scale -= 0.01;}
+else  {scale += 0.01;}
+el.style.transform = "scaleX(" + scale + ")";
+setTimeout(function(){timer = 1;},100);}}
+}
+
+
+function open_modal(event, element, start) {
+var rect = element.getBoundingClientRect();
+var xpos = (event.clientX - rect.left) / element.offsetWidth;
+var ypos = (event.clientY - rect.top) / element.offsetHeight;
+el = document.getElementById("modal-content");
+el.src=element.src;
+el.poster=element.src;
+if (xpos < 0.1 && ypos < 0.9 && ypos > 0.05) {
+el.playbackRate = 0.8; el.currentTime = start;
+el2 = document.getElementById("myModal");
+el2.style.display="flex";
+el2.addEventListener("animationend", modal2_end);
+wheel=0;}
+}
+
+function close_modal(event, element) {
+var rect = element.getBoundingClientRect();
+var xpos = (event.clientX - rect.left) / element.offsetWidth;
+var y = Math.abs(event.deltaY);
+wheel += y;
+if (xpos > 0.12 && wheel > 40) {						// chrome modal shutdown issue
+document.querySelector("body").style.overflow = "auto";
+el=document.getElementById("myModal");
+el.style.animationName="fadeOut";
+el.addEventListener("animationend", modal_end);
+el.removeEventListener("animationend", modal2_end);
+wheel=0;}
+}
+
+function modal_end() {
+el=document.getElementById("myModal");
+el.style.display="none";
+el.style.animationName="fadeIn";
+el.removeEventListener("animationend", modal_end);
+}
+
+function modal2_end() {document.querySelector("body").style.overflow = "hidden";wheel=0;}	// stop bouncing scrollbar chrome
+
+
+function play_media(id, start) {
 var el = document.getElementById(id);
 var rect = el.getBoundingClientRect();
 xpos = (event.clientX - rect.left) / el.offsetWidth;
-if (xpos > 0.8) {el.setAttribute("src", source); el.pause();}
-else if (xpos < 0.2) {el.setAttribute("src", source); el.playbackRate = 0.8; el.play();}
-else {el.currentTime = el.duration * xpos;}}
+if (xpos < 0.2) {el.currentTime = start; el.playbackRate = 0.8; el.play();}
+else if (el.currentTime != 0) {el.currentTime = el.duration * xpos; el.play();}
+}
 
 function spool(event, id, input, output) {	// spool folders, playlists, searches etc. into top html panel
 var link = " ";
@@ -67,7 +128,7 @@ if (sort == 'Size') {y = Math.floor(100 * x) * 10;units = "Mb +"}
 if (sort == 'Date') {y = Math.floor(37 * x);units = "months +"}
 if (sort == 'Duration') {y = Math.floor(60 * x);units = "minutes +"}
 if (id =='slider2' || id =='slider3') {y = Math.floor(sort*x)+1; units = sort; sort = "Page"; of = " of "}
-if (id =='slider4') {y = Math.floor(6 * x) + 1; sort = "View";}
+if (id =='slider4') {sort = "View";}
 if (current != "") {y = current;}
 el.href= link + ".htm#" + sort + "#" + y;
 if (sort =='Random' || sort =='ext' || sort =='Shuffle') {return;}
