@@ -1,3 +1,5 @@
+; onkeydown
+; <span class="controls" onwheel='getControls(event,this)'></span>   - after progress bar span
 ; progress under thumb vid
 ; need to index thumb sheets
 ; File f = new File(filePathString);
@@ -7,6 +9,8 @@
 ; next / back media, speed, magnify, skinny, seek, thumbsheet, save, seek cursor, progress bar
 ; mute, full screen, favorite, slide, set seek point, loop, loop adj click and slide
 ; ' in filename problem ceara
+; fav 0.0 time make 0.1
+; ffmpeg time loop creator?
 
 
 
@@ -88,8 +92,6 @@
 
 
 
-
-
     SpoolList(i, input)							; spool sorted media files into web page
         {
         caption =
@@ -141,6 +143,7 @@
                 fav = <span style="font-size:0.7em;">&#x2764;&#xFE0F;</span>	; red favorite heart symbol
         name := SubStr(media, 1, 99)
         StringReplace, thumb, thumb, #, `%23, All			; html cannot have # in filename
+        StringReplace, src, src, #, `%23, All			; html cannot have # in filename
         FileRead, dur, %inca%\cache\durations\%media%.txt
         if (!start && dur > 60)
             start := 19 + (4 * dur/197)					; match thumb img to video start time
@@ -151,7 +154,7 @@
             modal = onmouseleave`="open_modal(event, this, '%start%')" 
         if !view							; list view 
             {
-            entry = <a href="#Media#%i%"><table><tr><td id="hover_image"><video id="media%i%" style="width:100`%; %select%" onmouseout="this.pause()" %modal% onmouseenter="play_media(id, '%start%', %i%)" poster="file:///%thumb%" src="file:///%src%" type="video/mp4" muted></video></tr></table><table style="table-layout:fixed; width:100`%"><tr><td style="color:#777777; width:4em; text-align:center">%sort_index%</td><td style="width:4em; font-size:0.7em; text-align:center">%dur%</td><td style="width:3em; font-size:0.7em; text-align:center">%size%</td><td style="width:4em; padding-right:3.2em;  font-size:0.7em; text-align:center">%ext%</td><td style="%select% %highlight% white-space:nowrap; text-overflow:ellipsis; font-size:1em">%name% %fav%</td></tr></table></a>`r`n`r`n
+            entry = <a href="#Media#%i%"><table><tr><td id="hover_image"><video id="media%i%" style="width:100`%; %select%" onmouseout="this.pause()" %modal% onmouseenter="play_media(id, '%start%', %i%)" poster="file:///%thumb%" src="file:///%src%" type="video/mp4" muted></video></tr></table><table style="table-layout:fixed; width:100`%"><tr><td style="color:#777777; width:4em; text-align:center">%sort_index%</td><td style="width:4em; font-size:0.7em; text-align:center">%dur%</td><td style="width:3em; font-size:0.7em; text-align:center">%size%</td><td style="width:4em; padding-right:3.2em;  font-size:0.7em; text-align:center">%ext%</td><td style="%select% %highlight% white-space:nowrap; text-overflow:ellipsis; font-size:1em"><span><div style="text-overflow:ellipsis; overflow:hidden; white-space:nowrap;  width:40em"> %name% %fav%</div></span></td></tr></table></a>`r`n`r`n
             }
         else
             {
@@ -167,9 +170,7 @@
                     }
 	        entry = <a href="#Media#%i%"><div style="display:inline-block; width:88`%; color:#555351; transition:color 1.4s; margin-left:8`%; text-align:center; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; %highlight%;">%sort_index% &nbsp;&nbsp;%link% %name%</div></a><textarea rows=%rows% style="display:inline-block; overflow:hidden; margin-left:8`%; width:88`%; background-color:inherit; color:#826858; font-size:1.2em; font-family:inherit; border:none; outline:none;">%str2%</textarea>`r`n`r`n
                 }
-
-
-            else entry = <li style="display:inline-block; vertical-align:top; width:10em; margin-bottom:%margin%em; margin-right:5`%; color:%font%; transition:color 1.4s;"><div style="margin-left:8`%; color:#555351; text-align:center; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; %highlight%;">%sort_index% &nbsp;&nbsp;%link% %fav% %name%</div><a href="#Media#%i%"><video id="media%i%" style="width:100`%; %transform% %select%" onmouseenter="play_media(id, '%start%', %i%)" onmouseout="this.pause()" %modal% src="file:///%src%" poster="file:///%thumb%" muted type="video/mp4"></video></a><span id="seek%i%" class="progress_bar"></span>%caption%</li>`r`n`r`n
+            else entry = <li style="display:inline-block; vertical-align:top; width:10em; margin-bottom:%margin%em; margin-right:5`%; color:%font%; transition:color 1.4s;"><div style="margin-left:8`%; color:#555351; text-align:center; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; %highlight%;">%sort_index% &nbsp;&nbsp;%link% %fav% %name%</div><a href="#Media#%i%"><video id="media%i%" style="width:100`%; %transform% %select%" onmousemove="play_media(id, '%start%', %i%)" onmouseout="this.pause()" %modal% src="file:///%src%" poster="file:///%thumb%" muted type="video/mp4"></video></a><span id="seek%i%" class="progress_bar"></span>%caption%</li>`r`n`r`n
             }
         return entry
         }
@@ -186,7 +187,7 @@
         else title := tab_name
         tab_name := title
         FileRead, font, %inca%\apps\font.txt			; firefox bug - requires base64 font
-        FileRead, java, %inca%\apps\java.txt
+        FileRead, java, %inca%\java.txt
         Loop, Files, %inca%\music\*.m3u					; for top panel
             music = %music%|%A_LoopFileFullPath%
         Loop, Files, %inca%\slides\*.m3u
@@ -234,7 +235,7 @@
                 filter_html = %filter_html%<a href="#%A_LoopField%#" %x%>%name%</a>`r`n
                 }
         sort_html = <ul class="menu" style="margin-top:1em; margin-bottom:1em; display:flex; justify-content:space-between">`r`n<a href="#View#%view%" id='slider4' class='slider' style="width:12`%;" onmousemove='getCoords(event, id, "View", "%title%","")' onmouseleave='getCoords(event, id, "View", "%title%", "%view%")'>View %view%</a>`r`n<a href="%title%.htm#%sort%" id='slider1' class='slider' onmousemove='getCoords(event, id, "%sort%", "%title%", "")'>%sort%</a>`r`n<a href="%title%.htm#Page" id='slider2' class='slider' onmousemove='getCoords(event, id, "%Pages%", "%title%", "")' onmouseleave='getCoords(event, id, "%Pages%", "%title%", "%page%")'>Page %page% of %pages%</a>`r`n<a href="#Page#%next%" class='slider' style="width:12`%;">Next</a></ul>
-        title_html = `r`n`r`n<div style="margin-left:8`%; width:100`%; margin-top:1.6em; margin-bottom:0.5em;"><a href="#%playlist%#" style="font-size:1.8em; color:#555351;">%title% &nbsp;&nbsp;<span style="font-size:0.7em;">%list_size%</span></a></div>`r`n`r`n<div id="myModal" class="modal" onwheel='close_modal(event, this)'>`r`n<div><video class="modal-content" id="modal-content" onmouseenter="play_media(id, '%start%', '1')" src="" poster="" muted autoplay type="video/mp4"></video><span id="seek1" class="progress_bar" style="margin-left:-16em"></span><span class="controls" onwheel='getControls(event,this)'></span></div></div>`r`n`r`n
+        title_html = `r`n`r`n<div style="margin-left:8`%; width:100`%; margin-top:1.6em; margin-bottom:0.5em;"><a href="#%playlist%#" style="font-size:1.8em; color:#555351;">%title% &nbsp;&nbsp;<span style="font-size:0.7em;">%list_size%</span></a></div>`r`n`r`n<div id="myModal" class="modal" onmousemove='gesture(event)' onmousedown='mouseDown(event)' onmouseup='mouseUp(event)' onwheel='close_modal(event, this)'>`r`n<div><video class="modal-content" id="modal-content" onclick="playpause(id)" onmousemove="play_media(id, 1, 999)" src="" poster="" muted autoplay type="video/mp4"></video><span id="seek999" class="progress_bar" style="margin-left:-16em"></span></div></div>`r`n`r`n
         html = `r`n<div style="padding-left:6`%; ">`r`n%html%</div></div>`r`n<p style="height:240px;"></p>`r`n
         FileDelete, %inca%\cache\html\%tab_name%.htm
         x = %header_html%%panel_html%
@@ -396,7 +397,7 @@
             if (GetKeyState("LButton", "P"))
                 AdjustMedia(x, y)
             }
- if (!gesture && timer > 400)
+        if (!gesture && timer > 400)
             {
             gesture = 1					; once only
             ClickEvent()
@@ -417,6 +418,8 @@
               SearchText()						; list search results
           if video_player
               {
+if (!thumbsheet && xpos < A_ScreenWidth * 0.9)
+return
               GetSeekTime(video_player)
               if (!seek && position > duration - 1)			; video finished playing
                   seek := 0.5						; return to start
@@ -631,6 +634,8 @@
             }
         else if video_player
             {
+            if (xpos < A_ScreenWidth * 0.9)
+                ClosePlayer()
             if (type == "image" && ext != "gif" && magnify < 0)		; pan image
                 {
                 if (xpos > A_ScreenWidth * 0.9)
@@ -640,19 +645,10 @@
                 else if wheel
                   send, h
                 else send, g
-                thumbsheet =
                 }
-            else if (type == "video" && wheel && xpos < A_ScreenWidth * 0.1)
-                {
-                ControlSend,, a, ahk_ID %video_player%			; adjust video speed
-                video_speed -= 0.05
-                if (Round(video_speed,2) == 0.75)
-                    Popup(Round(video_speed,2),800,0.47)
-                else Popup(Round(video_speed,2),100,0.47)
-               }
             else if (type == "video" || type == "audio" || ext == "gif")
                 {
-                if (xpos < A_ScreenWidth * 0.1)
+                if (!wheel && xpos < A_ScreenWidth * 0.05)
                   {
                   ControlSend,, b, ahk_ID %video_player%
                   video_speed := 1
@@ -1756,21 +1752,37 @@
             }
         if (!Setting("Width Gesture") || Abs(x) < Abs(y))
             {
-            if (direction > 0)
-                ControlSend,, 0, ahk_ID %video_player%		; media magnify
-            else ControlSend,, 9, ahk_ID %video_player%
-            if (direction < 0)
+            if (xpos < A_ScreenWidth * 0.05)
+              {
+              video_speed += 0.05
+              if (direction > 0)
+                {
+                send, a
+                video_speed -= 0.1
+                }
+              else send, c
+              if (Round(video_speed,2) == 0.75)
+                Popup(Round(video_speed,2),800,0.47)
+              else Popup(Round(video_speed,2),220,0.47)
+              }
+            else if (xpos > A_ScreenWidth * 0.05)
+              {
+              if (direction > 0)
+                send, 0
+              else send 9						; media magnify
+              if (direction < 0)
                 magnify += 0.04
-            else magnify -= 0.04
+              else magnify -= 0.04
+              }
             }
         else
             {
             skinny -= 1						; adjust width
             if (direction > 0)
-                ControlSend,, 5, ahk_ID %video_player%
+                send, 5
             else
                 {
-                ControlSend,, 6, ahk_ID %video_player%
+                send, 6
                 skinny += 2
                 }
             if !skinny

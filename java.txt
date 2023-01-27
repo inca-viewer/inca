@@ -1,80 +1,113 @@
 <script>
 
-//setTimeout(function(){element.pause();},1000);
 //if (start != 0) {el.controls = true}
 //else {el.controls = false}
 
 var wheel = 0;
 var timer = 1;
-var scale = 1;
+var seek = 0;
 
+var scaleX = 1;		// gesture globals
+var scaleY = 1;
+var lastX = 1;
+var lastY = 1;
+var gest = 0;
+var xp;
+var yp;
 
-function getControls(event, element) {
-if (wheel > 30) {
-var seek = el.duration / 50
-el = document.getElementById("modal-content");
-if (timer == 1) {
-timer = 0;
-wheel = 0;
-if (event.deltaY > 0) {scale -= 0.01;}
-else  {scale += 0.01;}
-el.style.transform = "scaleX(" + scale + ")";
-setTimeout(function(){timer = 1;},100);}}
+function mouseDown(event) {xp = event.clientX; yp = event.clientY;}
+function mouseUp(event) {xp = 0; gest = 0; lastX = scaleX; lastY = scaleY;}
+
+function gesture(event) {						// on mouse move
+var el = document.getElementById("modal-content");
+if (!xp) {return;}
+// if (gest == "skinny" && scaleX == 1) {lastX = 1; return;}
+if (Math.abs(xp - event.clientX) > 5 && !gest) {gest = "skinny"; xp = event.clientX; xp = event.clientX;}
+if (Math.abs(yp - event.clientY) > 5 && !gest) {gest = "magnify"; xp = event.clientX; yp = event.clientY;}
+if (gest == "skinny") {scaleX = lastX + ((xp - event.clientX) / 500); el.style.transform = "scale(" + scaleX + "," + scaleY + ")";}
+if (gest == "magnify") {scaleY = lastY - ((yp - event.clientY) / 250); scaleX = lastX - ((yp - event.clientY) / 250); el.style.transform = "scale(" + scaleX + "," + scaleY + ")";}
 }
 
+function playpause(id) {var el = document.getElementById(id); if (el.paused==true) {el.play(); el.muted=false;} else{el.pause();el.muted=true;}}
 
-function open_modal(event, element, start) {
+function play_media(id, start, index) {					// on mouse move
+var el = document.getElementById(id);
+var rect = el.getBoundingClientRect();
+var xpos = (event.clientX - rect.left) / el.offsetWidth;
+var ypos = (event.clientY - rect.top) / el.offsetHeight;
+el.playbackRate = 0.8;
+if (ypos > 0.9 && el.currentTime > start) {
+el.currentTime = el.duration * xpos;
+el.play();
+document.getElementById("seek" + index).style.width = Math.ceil(xpos * el.offsetWidth) + "px";}
+if (xpos < 0.1 && el.currentTime < start) {el.currentTime = start; el.play();}
+seek = el.currentTime;
+}
+
+function open_modal(event, element, start) {				// on mouse leave
 var rect = element.getBoundingClientRect();
 var xpos = (event.clientX - rect.left) / element.offsetWidth;
 var ypos = (event.clientY - rect.top) / element.offsetHeight;
-el = document.getElementById("modal-content");
+var el = document.getElementById("modal-content");
 el.src=element.src;
 el.poster=element.src;
-if (xpos < 0.1 && ypos < 0.9 && ypos > 0.05) {
-el.playbackRate = 0.8; el.currentTime = start;
-el2 = document.getElementById("myModal");
+// alert(el.src);
+if (xpos > 0.8 && ypos < 0.9) {
+el.playbackRate = 0.8;
+if (seek < start) {el.currentTime = start;}
+else {el.currentTime = seek;}
+el.loop = true;
+var el2 = document.getElementById("myModal");
 el2.style.display="flex";
 el2.addEventListener("animationend", modal2_end);
+document.getElementById("seek999").style.width = 0;
 wheel=0;}
 }
 
-function close_modal(event, element) {
+function close_modal(event, element) {					// on wheel move
 var rect = element.getBoundingClientRect();
 var xpos = (event.clientX - rect.left) / element.offsetWidth;
+var ypos = (event.clientY - rect.top) / element.offsetHeight;
+var el=document.getElementById("myModal");
+var el2 = document.getElementById("modal-content");
 var y = Math.abs(event.deltaY);
 wheel += y;
-if (xpos > 0.12 && wheel > 40) {						// chrome modal shutdown issue
+if (xpos < 0.7 && wheel > 30) {						// close modal
 document.querySelector("body").style.overflow = "auto";
-document.getElementById("seek1").style.width = 0;
-el=document.getElementById("myModal");
 el.style.animationName="fadeOut";
 el.addEventListener("animationend", modal_end);
 el.removeEventListener("animationend", modal2_end);
-wheel=0;}
+el2.pause();el2.muted = true;
+wheel=0;scaleX=1;scaleY=1;seek=0;}
+else if (ypos > 0.5 && wheel > 30 && timer == 1) {			// adjust video speed
+timer = 0;
+wheel = 0;
+if (event.deltaY > 0) {speed = -0.05;}
+else  {speed = 0.05;}
+el2.playbackRate += speed;
+setTimeout(function(){timer = 1;},200);}
+else if (wheel > 30 && timer == 1) {					// fast seek video on wheel
+timer = 0;
+wheel = 0;
+if (el2.paused == true) {interval = 0.1}
+else {interval = el2.duration / 100}
+if (event.deltaY > 0) {el2.currentTime += interval}
+else  {el2.currentTime -= interval}
+setTimeout(function(){timer = 1;},100);}
 }
 
 function modal_end() {
-el=document.getElementById("myModal");
+var el=document.getElementById("myModal");
 el.style.display="none";
 el.style.animationName="fadeIn";
 el.removeEventListener("animationend", modal_end);
 }
 
-function modal2_end() {document.querySelector("body").style.overflow = "hidden";wheel=0;}	// stop bouncing scrollbar chrome
+function modal2_end() {document.querySelector("body").style.overflow="hidden";
+wheel=0;}	// stop bouncing scrollbar chrome
 
-function play_media(id, start, index) {
-var el = document.getElementById(id);
-var rect = el.getBoundingClientRect();
-xpos = (event.clientX - rect.left) / el.offsetWidth;
-if (xpos < 0.05) {el.currentTime = start; 
-el.playbackRate = 0.8; 
-el.play();}
-else if (el.currentTime != 0) {
-el.currentTime = el.duration * xpos; 
-el.play();
-xpos = Math.ceil(xpos * el.offsetWidth);
-document.getElementById("seek" + index).style.width = xpos + "px";}
-}
+
+
 
 function spool(event, id, input, output) {	// spool folders, playlists, searches etc. into top html panel
 var link = " ";
@@ -175,7 +208,7 @@ table:hover {color:red; transition:color 0.36s;}
   left:2em;
   height:40em;
   width:7em;
-  background-color:rgba(255,255,255,0.0)}
+  background-color:rgba(255,255,255,0)}
 
 .modal {
   display:none;
