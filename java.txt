@@ -1,30 +1,39 @@
 <script>
 
-//if (start != 0) {el.controls = true}
-//else {el.controls = false}
-// .toFixed() source = source.replace("cache/thumbs/", "favorites/snips/"); 
+// source = source.replace("cache/thumbs/", "favorites/snips/"); 
+// list slide error
+// media content window size varies
+// use interrupt for cursor speed?? or xclient dirX
+// use loop count
+// change transition container media
+// show duration when play eg 10sec
+// controls bottom right corner like yt shorts
+// slow main playerto  0.5 while seeking
 
-var wheel = 0;
+
+
+var wheel = 0;		// mouse wheel count
 var timer = 1;		// block wheel input
 var timout;		// long click to toggle mute
+var start;		// video initial start time
+var index;		// media id index (e.g. media14)
 var type;
-var source;
-var thumb;
 
-var active = 0;		// mouse movement globals
+var cursor = "left";	// mouse movement globals
+var active = 0;
 var scaleX = 1;
 var scaleY = 1;
 var lastX = 1;
 var lastY = 1;
+var speed = 0;
 var gest = 0;
-var xref;
-var yref;
-var direction;
-var c1 = 0;
-var c2 = 0;
 var dirX = 0;
 var dirY = 0;
-var cnt=0;
+var c1 = 0;
+var c2 = 0;
+var xref;
+var yref;
+
 
 
 
@@ -32,7 +41,7 @@ function mouseDown(event) {
 xref=event.clientX; 
 yref=event.clientY; 
 active=1;timout=1; 
-if (type == "thumbsheet") {play_modal()}
+if (type == "thumbsheet") {play_thumb()}
 else {setTimeout(function(){togglemute();},350);}}
 
 function mouseUp(event) {if (!gest && timout==1) {timout=0; var el = document.getElementById("modal-content"); if (el.paused==true) {el.play();} else{el.pause();}} xref=0; gest=0; lastX=scaleX; lastY=scaleY; active=0;}
@@ -42,137 +51,161 @@ function togglemute() {if (!gest && timout==1) {timout=0; var el = document.getE
 
 function gesture(event) {						// mouse move over modal
 if (active) {								// click down
-var media = document.getElementById("modal-content");			// skinny, magnify
 if (Math.abs(xref - event.clientX) > 5 && !gest) {gest = "skinny"; xref = event.clientX;}
 if (Math.abs(yref - event.clientY) > 5 && !gest) {gest = "magnify"; xref = event.clientX; yref = event.clientY;}
-if (gest == "skinny") {scaleX = lastX + ((xref - event.clientX) / 500); media.style.transform = "scale(" + scaleX + "," + scaleY + ")";}
-if (gest == "magnify") {scaleY = lastY - ((yref - event.clientY) / 250); scaleX = lastX - ((yref - event.clientY) / 250); media.style.transform = "scale(" + scaleX + "," + scaleY + ")";}}
-else if (type == "video") {
+if (gest == "skinny") {scaleX = lastX + ((xref - event.clientX) / 674); media.style.transform = "scale(" + scaleX + "," + scaleY + ")";}
+if (gest == "magnify") {scaleY = lastY - ((yref - event.clientY) / 142); scaleX = lastX - ((yref - event.clientY) / 142); media.style.transform = "scale(" + scaleX + "," + scaleY + ")";}}
+else if (type == "video") {						// skinny, magnify
 var c3 = "";								// measure mouse movements
 if (event.clientX > dirX) {c1 += event.clientX - dirX;}
 if (event.clientX < dirX) {c1 -= dirX - event.clientX;}
 if (event.clientY > dirY) {c2 += event.clientY - dirY;}
 if (event.clientY < dirY) {c2 -= dirY - event.clientY;}
-if (c2 > 12) {c3="down";}
-if (c2 < -12) {c3="up";}
-if (c1 > 12) {c3="right";}
-if (c1 < -12) {c3="left";}
+if (c2 > 14) {c3="down";}
+if (c2 < -14) {c3="up";}
+if (c1 > 14) {c3="right";}
+if (c1 < -14) {c3="left";}
+if (c3) {c1=0; c2=0; cursor=c3; if (cursor == "down") {show_progress();}}}
 dirX = event.clientX;
 dirY = event.clientY;
-if (c3) {
-c1=0; c2=0; direction=c3; cnt = cnt ^ 1;
-var progress = document.getElementById("modal-progress-bar");
-var media = document.getElementById("modal-content");
-var rect2 = media.getBoundingClientRect();
-progress.style.animationName="";
-if (direction == "left") { x = rect2.top; y = rect2.left-4; w=0; z=media.offsetHeight+cnt + "px"}
-if (direction == "right") { x = rect2.top; y = rect2.left+2 + media.offsetWidth; w=0; z=media.offsetHeight+cnt + "px"}
-if (direction == "up") { x= rect2.top; y = rect2.left; z=0; w=media.offsetWidth+cnt + "px"}
-if (direction == "down") { x = rect2.top + media.offsetHeight; y = rect2.left; z=0; w=media.offsetWidth+cnt + "px"}
-progress.style.top = x + "px";
-progress.style.left = y + "px";
-progress.style.height = z;
-progress.style.width = w;
-progress.style.animationName="fadeOut";}}
+if(!active && event.clientY/window.innerHeight > 0.95) {media.pause(); media.currentTime = media.duration * event.clientX/window.innerWidth; show_progress();}
 }
 
 
-function open_modal(event, element, start, ext) {			// on mouse leaves thumbnail
-type = ext;
-if (type != "video" && type != "image") {return}
-var rect = element.getBoundingClientRect();
-var xpos = (event.clientX - rect.left) / element.offsetWidth;
-var ypos = (event.clientY - rect.top) / element.offsetHeight;
-if (xpos < 0.5 || ypos > 0.9 || ypos < 0.05) {return}
-var media = document.getElementById("modal-content");			// open modal player
-var modal = document.getElementById("myModal");
-if (type == "image") {media.src = element.poster;}
-else {media.src = element.src;}
-media.poster = element.poster;
-source = media.src;
+function open_media(event, thumb, s, t, i) {				// on mouse leaving page thumbnail
+start = s; type = t; index = i;
+media = document.getElementById("modal-content");			// set globals
+progress = document.getElementById("modal-progress-bar");
+container = document.getElementById("myModal");
+if (type == "video" || type == "image") {
+var rect = thumb.getBoundingClientRect();				// page thumbnail image
+var xpos = (event.clientX - rect.left) / thumb.offsetWidth;
+var ypos = (event.clientY - rect.top) / thumb.offsetHeight;
+if (xpos > 0.75 && ypos < 0.1) {					// open media
+if (type == "image") {media.src = thumb.poster;}
+else {media.src = thumb.src;}
+media.poster = thumb.poster;
+setTimeout(function(){
 media.currentTime = start;
+media.playbackRate = 1;
 media.play();
-modal.style.display="flex";
-setTimeout(function(){media.loop=true; media.playbackRate=1;},100);
-modal.addEventListener("animationend", fadein_end);
-wheel=0; c2 = 0; c1 = 99;
-}
+container.style.display="flex";},100);
+container.addEventListener("animationend", fadein_end);
+media.addEventListener('ended', video_loop, false);}			// video looping
+wheel=0; c2 = 0; c1 = 99;}
+
+setInterval(function(){							// keep video centered but within window
+x=screen.width/2 - media.offsetWidth/2;
+if ( x > window.screenLeft) { x = 0 }
+else {x -= window.screenLeft}
+media.style.marginLeft = -window.screenLeft - x*2 + "px"},100);
+var rect = thumb.getBoundingClientRect();}				// page thumbnail image
+
+function video_loop(e) {if (media.playbackRate > 0.75) {media.playbackRate -= 0.05; show_speed();} media.play();}
 
 
-function wheel_modal(event, element) {					// wheel move over modal
-var rect = element.getBoundingClientRect();
-var xpos = (event.clientX - rect.left) / element.offsetWidth;
-var ypos = (event.clientY - rect.top) / element.offsetHeight;
-var media = document.getElementById("modal-content");
-var progress = document.getElementById("modal-progress-bar");
-var container = document.getElementById("myModal");
-var rect2 = media.getBoundingClientRect();
+function wheel_controls(event) {					// wheel over modal
 var y = Math.abs(event.deltaY);
-if (timer) {wheel += y}
-if ((type == "image" || direction == "right") && wheel > 30) {
-if (event.deltaY < 0 && type == "video") {				// wheel up, show media thumbsheet
-media.poster = media.poster.replace("/posters/", "/sheets/");
-media.src = media.poster; 
+if (!timer) {return}
+wheel += y; 
+if (wheel < 30) {return}
+var rect2 = container.getBoundingClientRect();
+var xpos = (event.clientX - rect2.left) / container.offsetWidth;
+var ypos = (event.clientY - rect2.top) / container.offsetHeight;
+var rect = media.getBoundingClientRect();
+if (type == "video" && event.deltaY < 0 && xpos < 0.8 && media.duration > 60) {		// wheel up
+media.poster = media.poster.replace("/posters/", "/sheets/");		// show thumbsheet
+media.load();
 type = "thumbsheet";
 media.style.cursor = "default";
-return;}
+timer = 0; wheel = 0; setTimeout(function(){timer = 1;},500);}
+else if (type == "thumbsheet" && event.deltaY > 0) {			// close thumbsheet
+media.style.cursor = "none"; 
+type = "video";
+media.currentTime = start;
+media.play();
+timer = 0; wheel = 0; setTimeout(function(){timer = 1;},500);}
+else if (event.deltaY > 0 && xpos < 0.8) {				// close player
 document.querySelector("body").style.overflow = "auto";
-container.style.animationName="fadeOut";				// close player
+container.style.animationName="fadeOut";
 container.addEventListener("animationend", fadeout_end);
 container.removeEventListener("animationend", fadein_end);
-media.pause();media.muted = true;
-wheel=0;scaleX=1;scaleY=1;type=""}
-else if (direction == "left" && wheel > 30 && timer) {			// video speed
-timer = 0; wheel = 0;
-if (event.deltaY > 0) {speed = -0.04;}
-else  {speed = 0.04;}
+media.pause();
+media.muted = true;
+wheel=0;scaleX=1;scaleY=1;type="";}
+else if (xpos > 0.8 && ypos > 0.66) {					// video speed
+if (event.deltaY > 0) {speed = -0.05;}
+else  {speed = 0.05;}
 media.playbackRate += speed;
-progress.style.animationName="";					// progress bar
-progress.style.width = 0;
-progress.style.top = rect2.top + "px";
-progress.style.left = rect2.left + 2*media.offsetWidth*(1-media.playbackRate) + "px";
-progress.style.height = media.offsetHeight + "px";
-progress.style.animationName="fadeOut";
-setTimeout(function(){timer = 1;},224);}
-else if (direction == "down" && wheel > 30 && timer == 1) {		// video seek
-timer = 0; wheel = 0;
+show_speed();
+timer = 0; wheel = 0; setTimeout(function(){timer = 1;},224);}
+else if (xpos > 0.8 && ypos > 0.33) {					// video seek
 if (media.paused == true) {interval = 0.05}				// frame advance
 else if (media.duration < 120) {interval = 1}
 else {interval = 5}
 if (event.deltaY > 0) {media.currentTime += interval}
 else  {media.currentTime -= interval}
-progress.style.height = 0;
+show_progress();
+timer = 0; wheel = 0; setTimeout(function(){timer = 1;},100);}		// block wheel interval
+else if (xpos > 0.8) {
+if (event.deltaY < 0) {index -= 1}
+else {index += 1}
+x = "media" + index;
+var next = document.getElementById(x);
+if (next == null) {index = 1; next = document.getElementById('media1')}
+x = next.src
+if (x.endsWith("mp4")==true || x.endsWith("mkv")==true) {type = "video"; media.src = next.src}
+else {type = "image"; media.src = next.poster;}
+media.poster = next.poster;
+timer = 0; wheel = 0; setTimeout(function(){
+thumb = 4 / 200
+if (media.duration > 60) {offset = 20}
+else {offset = 0;}
+if (type == "video") {media.currentTime = offset - (thumb*offset) + media.duration*thumb;}
+media.play(); timer = 1;},100);}
+else {timer = 0; wheel = 0; setTimeout(function(){timer = 1;},200);}}
+
+
+function show_progress() {
+var rect = media.getBoundingClientRect();
 progress.style.animationName="";
-progress.style.top = rect2.top + media.offsetHeight+9 + "px";
-progress.style.left = rect2.left+9 + "px";
+progress.style.top = rect.top + media.offsetHeight+9 + "px";
+progress.style.left = rect.left+9 + "px";
 progress.style.width = (media.offsetWidth * media.currentTime / media.duration) + "px";
-progress.style.animationName="fadeOut";
-setTimeout(function(){timer = 1;},100);}				// block wheel interval
-}
+progress.style.animationName="fadeOut";}
 
 
-function play_modal() {							// on mouse enter modal player
-var media = document.getElementById("modal-content");
+function show_speed() {
+var rect = media.getBoundingClientRect();
+progress.style.animationName="";
+progress.style.top = rect.top + 2.5*media.offsetHeight*(1-media.playbackRate) + "px";
+progress.style.left = rect.left + "px";
+progress.style.width = media.offsetWidth + "px";
+progress.style.animationName="fadeOut";}
+
+
+function play_thumb() {							// from thumbsheet click
 var rect = media.getBoundingClientRect();
 var xpos = (event.clientX - rect.left) / media.offsetWidth;
 var ypos = (event.clientY - rect.top) / media.offsetHeight;
-if(!active) {if (ypos > 0.9) {media.pause(); media.currentTime = media.duration * xpos;}}
-else if (type == "thumbsheet") {
-media.src = source;
 media.style.cursor = "none";
-row = Math.floor(ypos * 6);
-col = Math.ceil(xpos * 6);
-if (row > 0) {thumb = 5 * ((row * 6) + col);}
-ratio = (thumb - 1) / 200
-setTimeout(function(){media.currentTime = 20 - (ratio*20) + media.duration*ratio;},180);
+var row = Math.floor(ypos * 6);
+var col = Math.ceil(xpos * 6);
+var thumb = 5 * ((row * 6) + col);
+if (xpos > 1 || ypos < 0) {thumb = 5}
+thumb = (thumb - 1) / 200
+if (media.duration > 60) {offset = 20}
+else {offset = 0;}
+media.currentTime = offset - (thumb*offset) + media.duration*thumb;
 type = "video";
-}}
+}
 
 
 function fadeout_end() {
 var el=document.getElementById("myModal");
 el.style.display="none";
 el.style.animationName="fadeIn";
+document.getElementById("modal-progress-bar").style.width = 0;
 el.removeEventListener("animationend", fadeout_end);
 }
 
@@ -268,20 +301,9 @@ table:hover {color:red; transition:color 0.36s;}
   display:fixed;
   position:absolute;
   border-bottom:1px solid Salmon;
-  border-left:2px solid Salmon;
   animation-duration:0.7s;
   animation-delay:0.3s;
   animation-fill-mode:forwards;}
-
-.controls {
-  display:fixed;
-  position:absolute;
-  z-index:2;
-  top:10em;
-  left:2em;
-  height:40em;
-  width:7em;
-  background-color:rgba(255,255,255,0)}
 
 .modal {
   display:none;
@@ -300,13 +322,12 @@ table:hover {color:red; transition:color 0.36s;}
   transition-timing-function:ease;}
 
 .modal-content {
+  border-radius:6%;
   width:auto;
   height:auto;
-  margin-left:-16em;
   max-width:600px;
   max-height:650px;
-  cursor:none;
-  border-radius:5%;}
+  cursor:none;}
 
 @keyframes fadeIn {
   from {opacity:0; transform: scale(0.8,0.8);} 
