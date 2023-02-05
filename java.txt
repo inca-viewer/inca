@@ -9,15 +9,20 @@
 // buttons bot right next to speed
 // up down next thmbsheet, next media
 
+// seek transition back to scale1,1
+// swipe left over player to close
+// chrome not show snips
+// progress bar stops working on cur down 
+
 
 
   var wheel = 0;		// mouse wheel count
-  var timer = 1;		// block wheel input
+  var timer = 0;		// block wheel input
   var start;			// video initial start time
   var index;			// media id index (e.g. media14)
   var type;
 
-  var cursor = "left";		// mouse movement globals
+  var cursor = "";		// mouse movement globals
   var mouse_down = 0;
   var scaleX = 1;
   var scaleY = 1;
@@ -36,24 +41,20 @@
   var ypos;
 
 
-function status(event, id) {
-status = document.getElementById("ttt");
-status.style.opacity = 0.4;
-}
 
 function mouseDown(event) {				// toggle pause & mute
   timout = 0; 
   mouse_down = 1; 
   xref = event.clientX; 
   yref = event.clientY; 
-  if (type == "thumbsheet") {play_thumb()}
-  else {setTimeout(function(){togglemute();},350);}}
+  setTimeout(function(){togglemute();},350);}
 
 function mouseUp(event) {				// !!!! inca.exe forces up immediately
   lastX = scaleX;
   lastY = scaleY;
   mouse_down = 0;
-  if (!gest && !timout) {
+  if (!gest && type == "thumbsheet") {play_thumb()}
+  else if (!gest && !timout) {
     timout=1; 
     if (media.paused==true) {media.play();} 
     else {media.pause();}}
@@ -136,7 +137,9 @@ function open_media(event, thumb, s, t, i) {				// on mouse leaving page thumbna
       media.style.maxHeight = window.innerHeight * 0.7 + "px";
       media.style.transform = "scale(" + scaleX + "," + scaleY + ")";
       media.poster = "";
-      if (type == "image") {media.src = thumb.poster; media.poster = thumb.poster;}
+      if (type == "image") {
+        media.src = thumb.poster; 
+        media.poster = thumb.poster;}
       else {media.src = thumb.src;}
       media.currentTime = start;
       media.playbackRate = 1;
@@ -166,15 +169,15 @@ function open_media(event, thumb, s, t, i) {				// on mouse leaving page thumbna
 
 
 function wheel_controls(event) {					// wheel over modal
-  if (!timer) {return}
+  if (timer) {return}
   wheel += Math.abs(event.deltaY);
   if (wheel < 40) {return}
-  var block_wheel = 300;
+  var block_wheel = 300;						// block wheel input timer
   var rect = media.getBoundingClientRect();
   if (type == "video" && event.deltaY < 0 && xpos < 0.8) {
     media.load();
-    type = "thumbsheet";}						// open thumbsheet
-  else if (type == "thumbsheet" && event.deltaY > 0) {			// close thumbsheet
+    type = "thumbsheet";}						// show thumbsheet
+  else if (type == "thumbsheet" && event.deltaY > 0) {			// play thumbsheet
     type = "video";
     media.currentTime = start;
     media.play();}
@@ -200,20 +203,25 @@ function wheel_controls(event) {					// wheel over modal
     show_speed();}
   else if (event.deltaY < 0) {						// next media
     index *= 1;
- if (xpos > 0.8) { index -= 1;}
-   else { index += 1;}
+    if (xpos > 0.8) {index -= 1;}
+    else {index += 1;}
     var next = document.getElementById("media" + index);
     if (next == null) {index = 1; next = document.getElementById('media1')}
     if (next.src.endsWith("jpg") || next.src.endsWith("png") || next.src.endsWith("webp") || next.src.endsWith("jpeg")) {
       type = "image";}
-    else {type = "video"}
+    else {type = "thumbsheet"}
     media.poster = "";
     if (type == "image") {media.src = next.poster;}
-    else {media.src = next.src; type = "thumbsheet";}
-    get_start(next.poster);						// decode inca.exe internal format
-    setTimeout(function(){timer = 1;},block_wheel);}
-  setTimeout(function(){timer = 1; wheel = 0;},block_wheel);		// block wheel input
-  timer = 0; wheel = 0;}
+    else {media.src = next.src;}
+    get_start(next.poster);}
+  setTimeout(function() {						// wait for media to load
+    timer = 0;
+    if (start == null && type != "image") {
+      var thmb = 4 / 200;
+      if (media.duration > 60) {offset = 20}
+      else {offset = 0;}
+      start = offset - (thmb * offset) + media.duration * thmb;}},block_wheel);
+  timer = 1; wheel = 0;}						// block wheel until timer reset
 
 
 function get_start(input) {						// inca.exe internal formatting
@@ -226,12 +234,7 @@ function get_start(input) {						// inca.exe internal formatting
     z = '%20' + start
     x = input.replace(z, "");
     media.poster = x.replace("/favorites/", "/cache/sheets/");}
-  else {media.poster = input.replace("/posters/", "/sheets/");}
-  if (type != "image" && start == null) {
-    thmb = 4 / 200;
-    if (media.duration > 60) {offset = 20}
-    else {offset = 0;}
-    start = offset - (thmb * offset) + media.duration * thmb;}}
+  else {media.poster = input.replace("/posters/", "/sheets/");}}
 
 
 function show_speed() {
@@ -357,19 +360,6 @@ table:hover {color:red; transition:color 0.36s;}
 #hover_image:hover {opacity:1;}
 
 
-.status {
-  display:none;
-  position:fixed;
-  bottom:40px;
-  right:40px;
-  width:200px;
-  height:100px;
-  border-radius:12%;
-  border:1px solid Salmon;
-  animation-name:fadeIn;
-  animation-duration:0.7s;
-  animation-delay:0.3s;
-  animation-fill-mode:backwards;}
 
 .progress_bar {
   display:fixed;
@@ -407,6 +397,9 @@ table:hover {color:red; transition:color 0.36s;}
 @keyframes fadeOut {
   from {opacity:1; transform: scale(1,1);} 
   to {opacity:0; transform: scale(0.8,0.8);}}
+
+
+
 
 </style>
 
