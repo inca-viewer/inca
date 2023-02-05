@@ -1,289 +1,348 @@
 <script>
 
-// source = source.replace("cache/thumbs/", "favorites/snips/"); 
-// list slide error
-// media content window size varies
-// use interrupt for cursor speed?? or xclient dirX
-// use loop count
-// change transition container media
+// list slide error if reverse
 // show duration when play eg 10sec
-// controls bottom right corner like yt shorts
-// slow main playerto  0.5 while seeking
+// status panel
+// captions
+// merge duplicate open player code with next media
+// wheel down from thumb should return to last time seek not start
+// buttons bot right next to speed
+// up down next thmbsheet, next media
 
 
 
-var wheel = 0;		// mouse wheel count
-var timer = 1;		// block wheel input
-var timout;		// long click to toggle mute
-var start;		// video initial start time
-var index;		// media id index (e.g. media14)
-var type;
+  var wheel = 0;		// mouse wheel count
+  var timer = 1;		// block wheel input
+  var start;			// video initial start time
+  var index;			// media id index (e.g. media14)
+  var type;
 
-var cursor = "left";	// mouse movement globals
-var active = 0;
-var scaleX = 1;
-var scaleY = 1;
-var lastX = 1;
-var lastY = 1;
-var speed = 0;
-var gest = 0;
-var dirX = 0;
-var dirY = 0;
-var c1 = 0;
-var c2 = 0;
-var xref;
-var yref;
+  var cursor = "left";		// mouse movement globals
+  var mouse_down = 0;
+  var scaleX = 1;
+  var scaleY = 1;
+  var lastX = 1;
+  var lastY = 1;
+  var speed = 0;
+  var gest = 0;
+  var dirX = 0;
+  var dirY = 0;
+  var cur_ref;			// show cursor on move
+  var c1 = 0;
+  var c2 = 0;
+  var xref;
+  var yref;
+  var xpos;
+  var ypos;
 
 
+function status(event, id) {
+status = document.getElementById("ttt");
+status.style.opacity = 0.4;
+}
 
+function mouseDown(event) {				// toggle pause & mute
+  timout = 0; 
+  mouse_down = 1; 
+  xref = event.clientX; 
+  yref = event.clientY; 
+  if (type == "thumbsheet") {play_thumb()}
+  else {setTimeout(function(){togglemute();},350);}}
 
-function mouseDown(event) {
-xref=event.clientX; 
-yref=event.clientY; 
-active=1;timout=1; 
-if (type == "thumbsheet") {play_thumb()}
-else {setTimeout(function(){togglemute();},350);}}
+function mouseUp(event) {				// !!!! inca.exe forces up immediately
+  lastX = scaleX;
+  lastY = scaleY;
+  mouse_down = 0;
+  if (!gest && !timout) {
+    timout=1; 
+    if (media.paused==true) {media.play();} 
+    else {media.pause();}}
+  xref = 0; gest = 0;}
 
-function mouseUp(event) {if (!gest && timout==1) {timout=0; var el = document.getElementById("modal-content"); if (el.paused==true) {el.play();} else{el.pause();}} xref=0; gest=0; lastX=scaleX; lastY=scaleY; active=0;}
-
-function togglemute() {if (!gest && timout==1) {timout=0; var el = document.getElementById("modal-content"); if (el.muted==true) {el.muted=false;} else if (el.paused==false) {el.muted=true;} el.play();}}
+function togglemute() {
+  if (!gest && !timout) {
+    timout=1; 
+    if (media.muted == true) {media.muted = false;} 
+    else if (media.paused == false) {media.muted = true;} 
+    media.play();}}
 
 
 function gesture(event) {						// mouse move over modal
-if (active) {								// click down
-if (Math.abs(xref - event.clientX) > 5 && !gest) {gest = "skinny"; xref = event.clientX;}
-if (Math.abs(yref - event.clientY) > 5 && !gest) {gest = "magnify"; xref = event.clientX; yref = event.clientY;}
-if (gest == "skinny") {scaleX = lastX + ((xref - event.clientX) / 674); media.style.transform = "scale(" + scaleX + "," + scaleY + ")";}
-if (gest == "magnify") {scaleY = lastY - ((yref - event.clientY) / 142); scaleX = lastX - ((yref - event.clientY) / 142); media.style.transform = "scale(" + scaleX + "," + scaleY + ")";}}
-else if (type == "video") {						// skinny, magnify
-var c3 = "";								// measure mouse movements
-if (event.clientX > dirX) {c1 += event.clientX - dirX;}
-if (event.clientX < dirX) {c1 -= dirX - event.clientX;}
-if (event.clientY > dirY) {c2 += event.clientY - dirY;}
-if (event.clientY < dirY) {c2 -= dirY - event.clientY;}
-if (c2 > 14) {c3="down";}
-if (c2 < -14) {c3="up";}
-if (c1 > 14) {c3="right";}
-if (c1 < -14) {c3="left";}
-if (c3) {c1=0; c2=0; cursor=c3; if (cursor == "down") {show_progress();}}}
-dirX = event.clientX;
-dirY = event.clientY;
-if(!active && event.clientY/window.innerHeight > 0.95) {media.pause(); media.currentTime = media.duration * event.clientX/window.innerWidth; show_progress();}
-}
+  if (mouse_down) {
+    if (Math.abs(xref - event.clientX) > 5 && !gest) {gest = "skinny"; xref = event.clientX;}
+    if (Math.abs(yref - event.clientY) > 5 && !gest) {gest = "magnify"; xref = event.clientX; yref = event.clientY;}
+    if (gest == "skinny") {
+      scaleX = lastX + ((xref - event.clientX) / 674); 			// skinny or magnify
+      media.style.transform = "scale(" + scaleX + "," + scaleY + ")";}
+    if (gest == "magnify") {
+      scaleY = lastY - ((yref - event.clientY) / 142); 
+      scaleX = lastX - ((yref - event.clientY) / 142); 
+      media.style.transform = "scale(" + scaleX + "," + scaleY + ")";}
+    }
+  else {
+    var rect = container.getBoundingClientRect();
+    xpos = (event.clientX - rect.left) / container.offsetWidth;		// global cursor position
+    ypos = (event.clientY - rect.top) / container.offsetHeight;
+    var c3 = "";
+    if (event.clientX > dirX) {c1 += event.clientX - dirX;}
+    if (event.clientX < dirX) {c1 -= dirX - event.clientX;}
+    if (event.clientY > dirY) {c2 += event.clientY - dirY;}
+    if (event.clientY < dirY) {c2 -= dirY - event.clientY;}
+    if (c2 > 14) {c3 = "down";}						// cursor move > threshold
+    if (c2 < -14) {c3 = "up";}
+    if (c1 > 14) {c3 = "right";}
+    if (c1 < -14) {c3 = "left";}
+    if (c3) {
+      c1 = 0; 
+      c2 = 0; 
+      cursor = c3;
+      if (type == "video" && !mouse_down) { 
+        var rect = media.getBoundingClientRect();
+        if (cursor == "down") {show_seekbar();}  				// flash seekbar
+        if (cursor != "up" && event.clientY/window.innerHeight > 0.85) {	// seeking video
+          if (event.clientX > rect.left && event.clientX < rect.left + media.offsetWidth) {
+            media.style.transform = "scale(" + 0.5 + "," + 0.5 + ")";
+            media.currentTime = media.duration * (event.clientX - rect.left) / media.offsetWidth; 
+            show_seekbar(); 
+            media.playbackRate = 0.6; c4 = 1;}}
+        else if (c4) {
+          c4 = 0; media.playbackRate = 1;
+          media.style.transform = "scale(" + scaleX + "," + scaleY + ")";}}}
+    dirX = event.clientX;
+    dirY = event.clientY;}}
+
+
+function show_seekbar() {
+  var rect = media.getBoundingClientRect();
+  progress.style.animationName="";
+  progress.style.top = rect.top + scaleY * media.offsetHeight+9 + "px";
+  progress.style.left = rect.left+9 + "px";
+  progress.style.width = (scaleX * media.offsetWidth * media.currentTime / media.duration) + "px";
+  progress.style.animationName="fadeOut";}
 
 
 function open_media(event, thumb, s, t, i) {				// on mouse leaving page thumbnail
-start = s; type = t; index = i;
-media = document.getElementById("modal-content");			// set globals
-progress = document.getElementById("modal-progress-bar");
-container = document.getElementById("myModal");
-if (type == "video" || type == "image") {
-var rect = thumb.getBoundingClientRect();				// page thumbnail image
-var xpos = (event.clientX - rect.left) / thumb.offsetWidth;
-var ypos = (event.clientY - rect.top) / thumb.offsetHeight;
-if (xpos > 0.75 && ypos < 0.1) {					// open media
-if (type == "image") {media.src = thumb.poster;}
-else {media.src = thumb.src;}
-media.poster = thumb.poster;
-setTimeout(function(){
-media.currentTime = start;
-media.playbackRate = 1;
-media.play();
-container.style.display="flex";},100);
-container.addEventListener("animationend", fadein_end);
-media.addEventListener('ended', video_loop, false);}			// video looping
-wheel=0; c2 = 0; c1 = 99;}
+  start = s; type = t; index = i;
+  media = document.getElementById("modal-content");			// set globals
+  progress = document.getElementById("modal-progress-bar");
+  container = document.getElementById("myModal");
+  if (type == "video" || type == "image") {
+    var rect = thumb.getBoundingClientRect();				// of page thumbnail image
+    var xp = (event.clientX - rect.left) / thumb.offsetWidth;
+    var yp = (event.clientY - rect.top) / thumb.offsetHeight;
+    if (xp > 0.8 && yp < 0.8) {						// open media
+      if (scaleY > 1.4) {scaleX = 1.4; scaleY = 1.4; lastX = 1.4; lastY = 1.4;}
+      media.style.maxWidth = window.innerWidth * 0.6 + "px";
+      media.style.maxHeight = window.innerHeight * 0.7 + "px";
+      media.style.transform = "scale(" + scaleX + "," + scaleY + ")";
+      media.poster = "";
+      if (type == "image") {media.src = thumb.poster; media.poster = thumb.poster;}
+      else {media.src = thumb.src;}
+      media.currentTime = start;
+      media.playbackRate = 1;
+      media.muted = true;
+      media.play();
+      container.style.display="flex"; 
+      setTimeout(function() {get_start(thumb.poster)},500);
+      container.addEventListener("animationend", fadein_end);
+      media.addEventListener('ended', video_loop, false);		// video looping
+      timedEvents = setInterval(interval_timer,150);}}}
 
-setInterval(function(){							// keep video centered but within window
-x=screen.width/2 - media.offsetWidth/2;
-if ( x > window.screenLeft) { x = 0 }
-else {x -= window.screenLeft}
-media.style.marginLeft = -window.screenLeft - x*2 + "px"},100);
-var rect = thumb.getBoundingClientRect();}				// page thumbnail image
 
-function video_loop(e) {if (media.playbackRate > 0.75) {media.playbackRate -= 0.05; show_speed();} media.play();}
+  function interval_timer() {
+    if (xpos != cur_ref) {container.style.cursor = "crosshair"; cur_ref = xpos;}	// hide cursor
+    else {container.style.cursor = "none"}
+    if (window.innerWidth > screen.width * 0.9) {media.style.marginLeft = 0;}		// position player window
+    else if (media.offsetHeight / media.offsetWidth > 1.5) {
+      media.style.marginLeft = - window.innerWidth * 0.3 + "px";}
+      else {media.style.marginLeft = - window.innerWidth * 0.2 + "px"}}
+
+
+  function video_loop(e) {
+    media.play();
+    if (ypos > 0.6) {
+      if (media.playbackRate > 0.65) {media.playbackRate -= 0.05; show_speed();}
+      media.style.transform = "scale(" + (scaleX+=0.1) + "," + (scaleY+=0.1) + ")";}}
 
 
 function wheel_controls(event) {					// wheel over modal
-var y = Math.abs(event.deltaY);
-if (!timer) {return}
-wheel += y; 
-if (wheel < 30) {return}
-var rect2 = container.getBoundingClientRect();
-var xpos = (event.clientX - rect2.left) / container.offsetWidth;
-var ypos = (event.clientY - rect2.top) / container.offsetHeight;
-var rect = media.getBoundingClientRect();
-if (type == "video" && event.deltaY < 0 && xpos < 0.8 && media.duration > 60) {		// wheel up
-media.poster = media.poster.replace("/posters/", "/sheets/");		// show thumbsheet
-media.load();
-type = "thumbsheet";
-media.style.cursor = "default";
-timer = 0; wheel = 0; setTimeout(function(){timer = 1;},500);}
-else if (type == "thumbsheet" && event.deltaY > 0) {			// close thumbsheet
-media.style.cursor = "none"; 
-type = "video";
-media.currentTime = start;
-media.play();
-timer = 0; wheel = 0; setTimeout(function(){timer = 1;},500);}
-else if (event.deltaY > 0 && xpos < 0.8) {				// close player
-document.querySelector("body").style.overflow = "auto";
-container.style.animationName="fadeOut";
-container.addEventListener("animationend", fadeout_end);
-container.removeEventListener("animationend", fadein_end);
-media.pause();
-media.muted = true;
-wheel=0;scaleX=1;scaleY=1;type="";}
-else if (xpos > 0.8 && ypos > 0.66) {					// video speed
-if (event.deltaY > 0) {speed = -0.05;}
-else  {speed = 0.05;}
-media.playbackRate += speed;
-show_speed();
-timer = 0; wheel = 0; setTimeout(function(){timer = 1;},224);}
-else if (xpos > 0.8 && ypos > 0.33) {					// video seek
-if (media.paused == true) {interval = 0.05}				// frame advance
-else if (media.duration < 120) {interval = 1}
-else {interval = 5}
-if (event.deltaY > 0) {media.currentTime += interval}
-else  {media.currentTime -= interval}
-show_progress();
-timer = 0; wheel = 0; setTimeout(function(){timer = 1;},100);}		// block wheel interval
-else if (xpos > 0.8) {
-if (event.deltaY < 0) {index -= 1}
-else {index += 1}
-x = "media" + index;
-var next = document.getElementById(x);
-if (next == null) {index = 1; next = document.getElementById('media1')}
-x = next.src
-if (x.endsWith("mp4")==true || x.endsWith("mkv")==true) {type = "video"; media.src = next.src}
-else {type = "image"; media.src = next.poster;}
-media.poster = next.poster;
-timer = 0; wheel = 0; setTimeout(function(){
-thumb = 4 / 200
-if (media.duration > 60) {offset = 20}
-else {offset = 0;}
-if (type == "video") {media.currentTime = offset - (thumb*offset) + media.duration*thumb;}
-media.play(); timer = 1;},100);}
-else {timer = 0; wheel = 0; setTimeout(function(){timer = 1;},200);}}
+  if (!timer) {return}
+  wheel += Math.abs(event.deltaY);
+  if (wheel < 40) {return}
+  var block_wheel = 300;
+  var rect = media.getBoundingClientRect();
+  if (type == "video" && event.deltaY < 0 && xpos < 0.8) {
+    media.load();
+    type = "thumbsheet";}						// open thumbsheet
+  else if (type == "thumbsheet" && event.deltaY > 0) {			// close thumbsheet
+    type = "video";
+    media.currentTime = start;
+    media.play();}
+  else if (event.deltaY > 0 && xpos < 0.8) {				// close player
+    document.querySelector("body").style.overflow = "auto";
+    container.style.animationName="fadeOut";
+    container.addEventListener("animationend", fadeout_end);
+    clearInterval(timedEvents);
+    media.pause();
+    type="";}
+  else if (xpos > 0.8 && ypos < 0.6 && type != "thumbsheet") {		// video seek
+    if (media.paused == true) {interval = 0.05}
+    else if (media.duration < 120) {interval = 1}
+    else {interval = 5}
+    if (event.deltaY > 0) {media.currentTime += interval}
+    else  {media.currentTime -= interval}
+    show_seekbar();
+    block_wheel = 100;}
+  else if (xpos > 0.8 && type != "thumbsheet") {			// video speed
+    if (event.deltaY > 0) {speed = -0.05;}
+    else  {speed = 0.05;}
+    media.playbackRate += speed;
+    show_speed();}
+  else if (event.deltaY < 0) {						// next media
+    index *= 1;
+ if (xpos > 0.8) { index -= 1;}
+   else { index += 1;}
+    var next = document.getElementById("media" + index);
+    if (next == null) {index = 1; next = document.getElementById('media1')}
+    if (next.src.endsWith("jpg") || next.src.endsWith("png") || next.src.endsWith("webp") || next.src.endsWith("jpeg")) {
+      type = "image";}
+    else {type = "video"}
+    media.poster = "";
+    if (type == "image") {media.src = next.poster;}
+    else {media.src = next.src; type = "thumbsheet";}
+    get_start(next.poster);						// decode inca.exe internal format
+    setTimeout(function(){timer = 1;},block_wheel);}
+  setTimeout(function(){timer = 1; wheel = 0;},block_wheel);		// block wheel input
+  timer = 0; wheel = 0;}
 
 
-function show_progress() {
-var rect = media.getBoundingClientRect();
-progress.style.animationName="";
-progress.style.top = rect.top + media.offsetHeight+9 + "px";
-progress.style.left = rect.left+9 + "px";
-progress.style.width = (media.offsetWidth * media.currentTime / media.duration) + "px";
-progress.style.animationName="fadeOut";}
+function get_start(input) {						// inca.exe internal formatting
+  start = null;
+  if (input.match(/favorites/)) {
+    end = input.split('%20').pop();
+    x = end.split('.')[0];
+    y = end.split('.')[1];
+    start = x + '.' + y;
+    z = '%20' + start
+    x = input.replace(z, "");
+    media.poster = x.replace("/favorites/", "/cache/sheets/");}
+  else {media.poster = input.replace("/posters/", "/sheets/");}
+  if (type != "image" && start == null) {
+    thmb = 4 / 200;
+    if (media.duration > 60) {offset = 20}
+    else {offset = 0;}
+    start = offset - (thmb * offset) + media.duration * thmb;}}
 
 
 function show_speed() {
-var rect = media.getBoundingClientRect();
-progress.style.animationName="";
-progress.style.top = rect.top + 2.5*media.offsetHeight*(1-media.playbackRate) + "px";
-progress.style.left = rect.left + "px";
-progress.style.width = media.offsetWidth + "px";
-progress.style.animationName="fadeOut";}
+  rect = container.getBoundingClientRect();
+  progress.style.animationName="";
+  progress.style.top = rect.top + 2.4*window.innerHeight*(1-media.playbackRate) + "px";
+  rect = media.getBoundingClientRect();
+  progress.style.left = rect.left + "px";
+  progress.style.width = scaleX * media.offsetWidth + "px";
+  progress.style.animationName="fadeOut";}
 
 
 function play_thumb() {							// from thumbsheet click
-var rect = media.getBoundingClientRect();
-var xpos = (event.clientX - rect.left) / media.offsetWidth;
-var ypos = (event.clientY - rect.top) / media.offsetHeight;
-media.style.cursor = "none";
-var row = Math.floor(ypos * 6);
-var col = Math.ceil(xpos * 6);
-var thumb = 5 * ((row * 6) + col);
-if (xpos > 1 || ypos < 0) {thumb = 5}
-thumb = (thumb - 1) / 200
-if (media.duration > 60) {offset = 20}
-else {offset = 0;}
-media.currentTime = offset - (thumb*offset) + media.duration*thumb;
-type = "video";
-}
+  var rect = media.getBoundingClientRect();
+  var xp = (event.clientX - rect.left) / (media.offsetWidth * scaleX);
+  var yp = (event.clientY - rect.top) / (media.offsetHeight * scaleY);
+  var row = Math.floor(yp * 6);
+  var col = Math.ceil(xp * 6);
+  var thumb = 5 * ((row * 6) + col);
+  if (xp > 1 || yp < 0) {thumb = 5}
+  thumb = (thumb - 1) / 200
+  if (media.duration > 60) {offset = 20}
+  else {offset = 0;}
+  media.currentTime = offset - (thumb*offset) + media.duration*thumb;
+  type = "video";}
 
 
 function fadeout_end() {
-var el=document.getElementById("myModal");
-el.style.display="none";
-el.style.animationName="fadeIn";
-document.getElementById("modal-progress-bar").style.width = 0;
-el.removeEventListener("animationend", fadeout_end);
-}
+  container.style.display="none";
+  container.style.animationName="fadeIn";
+  progress.style.width = 0;
+  container.removeEventListener("animationend", fadeout_end);}
 
-
-function fadein_end() {document.querySelector("body").style.overflow="hidden"; wheel=0;}
+function fadein_end() {
+  document.querySelector("body").style.overflow="hidden";
+  container.removeEventListener("animationend", fadein_end);}
 
 
 function spool(event, id, input, output) {	// spool folders, playlists, searches etc. into top html panel
-var link = " ";
-const z = input.split("|");
-var el2 = document.getElementById(output);
-var el = document.getElementById(id);
-
-if (id == "all") {				// all search terms
-z.sort();
-for (const x of z) {
-p = x; y = p.substring(0, 14); p=p.replace(/ /g, "%20"); link = link + "<a href=#" + p + "><li>" + y + "</li>" + "</a>";}
-el2.innerHTML = link;}
-
-if (id == "folders" || id == "sub" || id == "fav") {
-for (x of z) {
-  y = x.split("/"); 
-  var x1 = y.pop(); x1 = y.pop();
-  x1 = x1.substring(0, 14);
-  p=x.replace(/ /g, "%20");
-  link = link + "<a href=#" + p + "><li>" + x1 + "</li>" + "</a>";}
-el2.innerHTML = link;}
-
-if (id == "music" || id == "slides") {		// media pointer playlists
-for (const x of z) {
-  const y = x.split("/"); 
-  var p = y.pop(); 
-  var q = x.replace(p, "");
-  q = p + "#" + q;
-  p=p.replace(/.m3u/g, "");
-  p = p.substring(0, 14);
-  q=q.replace(/ /g, "%20");
-  link = link + "<a href=#" + q + "><li>" + p + "</li>" + "</a>";}
-el2.innerHTML = link;}
-
-if (id == "search") {				// alpha selected search terms
-z.sort();
-var w = el.offsetWidth;
-var x = ((event.clientX - el.offsetLeft - el.scrollLeft)/w) + 0.02;
-var upper = String.fromCharCode(Math.floor(25 * x) + 65);
-var lower = upper.toLowerCase();
-const f_lower = z.filter(z => z.startsWith(lower));
-const f_higher = z.filter(z => z.startsWith(upper));
-y = f_higher.concat(f_lower);
-for (const x of y) {
-p = x; p=p.replace(/ /g, "%20"); link = link + "<a href=#" + p + "><li>" + x + "</li>" + "</a>";}
-el2.innerHTML = link; el.innerHTML = upper;}}
+  var link = " ";
+  const z = input.split("|");
+  var el2 = document.getElementById(output);
+  var el = document.getElementById(id);
+  if (id == "all") {				// all search terms
+    z.sort();
+    for (const x of z) {
+      p = x; 
+      y = p.substring(0, 14); 
+      p=p.replace(/ /g, "%20"); 
+      link = link + "<a href=#" + p + "><li>" + y + "</li>" + "</a>";}
+    el2.innerHTML = link;}
+  if (id == "folders" || id == "sub" || id == "fav") {
+    for (x of z) {
+      y = x.split("/"); 
+      var x1 = y.pop(); x1 = y.pop();
+      x1 = x1.substring(0, 14);
+      p=x.replace(/ /g, "%20");
+      link = link + "<a href=#" + p + "><li>" + x1 + "</li>" + "</a>";}
+    el2.innerHTML = link;}
+  if (id == "music" || id == "slides") {		// media pointer playlists
+    for (const x of z) {
+      const y = x.split("/"); 
+      var p = y.pop(); 
+      var q = x.replace(p, "");
+      q = p + "#" + q;
+      p=p.replace(/.m3u/g, "");
+      p = p.substring(0, 14);
+      q=q.replace(/ /g, "%20");
+      link = link + "<a href=#" + q + "><li>" + p + "</li>" + "</a>";}
+    el2.innerHTML = link;}
+  if (id == "search") {				// alpha selected search terms
+    z.sort();
+    var w = el.offsetWidth;
+    var x = ((event.clientX - el.offsetLeft - el.scrollLeft)/w) + 0.02;
+    var upper = String.fromCharCode(Math.floor(25 * x) + 65);
+    var lower = upper.toLowerCase();
+    const f_lower = z.filter(z => z.startsWith(lower));
+    const f_higher = z.filter(z => z.startsWith(upper));
+    y = f_higher.concat(f_lower);
+    for (const x of y) {
+      p = x; 
+      p=p.replace(/ /g, "%20"); 
+      link = link + "<a href=#" + p + "><li>" + x + "</li>" + "</a>";}
+    el2.innerHTML = link; el.innerHTML = upper;}}
 
 
 function getCoords(event, id, sort, link, current) {	// return mouse over controls from html selection strip
-var y = " ";
-var of = " ";
-var units = " ";
-var el = document.getElementById(id);
-var w = el.offsetWidth;
-var x = (event.clientX - el.offsetLeft - el.scrollLeft)/w;
-if (sort == 'Alpha') {y = Math.floor(26.9 * x) + 64;}
-if (sort == 'Size') {y = Math.floor(100 * x) * 10;units = "Mb +"}
-if (sort == 'Date') {y = Math.floor(37 * x);units = "months +"}
-if (sort == 'Duration') {y = Math.floor(60 * x);units = "minutes +"}
-if (id =='slider2' || id =='slider3') {y = Math.floor(sort*x)+1; units = sort; sort = "Page"; of = " of "}
-if (id =='slider4') {sort = "View";}
-if (current != "") {y = current;}
-el.href= link + ".htm#" + sort + "#" + y;
-if (sort =='Random' || sort =='ext' || sort =='Shuffle') {return;}
-if (sort == 'Alpha') {y = String.fromCharCode(y);}
-el.innerHTML = y + of + units;}
+  var y = " ";
+  var of = " ";
+  var units = " ";
+  var el = document.getElementById(id);
+  var w = el.offsetWidth;
+  var x = (event.clientX - el.offsetLeft - el.scrollLeft)/w;
+  if (sort == 'Alpha') {y = Math.floor(26.9 * x) + 64;}
+  if (sort == 'Size') {y = Math.floor(100 * x) * 10;units = "Mb +"}
+  if (sort == 'Date') {y = Math.floor(37 * x);units = "months +"}
+  if (sort == 'Duration') {y = Math.floor(60 * x);units = "minutes +"}
+  if (id =='slider2' || id =='slider3') {y = Math.floor(sort*x)+1; units = sort; sort = "Page"; of = " of "}
+  if (id =='slider4') {sort = "View";}
+  if (current != "") {y = current;}
+  el.href= link + ".htm#" + sort + "#" + y;
+  if (sort =='Random' || sort =='ext' || sort =='Shuffle') {return;}
+  if (sort == 'Alpha') {y = String.fromCharCode(y);}
+  el.innerHTML = y + of + units;}
+
 
 </script>
 
 <style>
 
-body {font-family: 'ClearSans-Thin'; overflow-x:hidden; background:#15110a; cursor:crosshair; color:#666666; font-size:0.8em; margin-top:200px;}
+body {font-family: 'ClearSans-Thin'; overflow-x:hidden; background:#15110a; cursor:crosshair; color:#666666; font-size:0.8em; margin-top:100px;}
 a:link {color:#15110a;}
 a:visited {color:#15110a;}
 a {text-decoration:none; color:#826858;}
@@ -296,6 +355,21 @@ table {color:#826858; transition:color 1.4s; table-layout:fixed; border-collapse
 table:hover {color:red; transition:color 0.36s;}
 #hover_image {position:absolute; margin-left:3.8em; opacity:0; transition: opacity 0.4s; width:125px; height:auto;}
 #hover_image:hover {opacity:1;}
+
+
+.status {
+  display:none;
+  position:fixed;
+  bottom:40px;
+  right:40px;
+  width:200px;
+  height:100px;
+  border-radius:12%;
+  border:1px solid Salmon;
+  animation-name:fadeIn;
+  animation-duration:0.7s;
+  animation-delay:0.3s;
+  animation-fill-mode:backwards;}
 
 .progress_bar {
   display:fixed;
@@ -315,19 +389,16 @@ table:hover {color:red; transition:color 0.36s;}
   align-items:center;
   height:100vh;
   width:100vw;
-  cursor:crosshair;
   background-color:#15110a;
   animation-name:fadeIn;
   animation-duration:0.3s;
   transition-timing-function:ease;}
 
 .modal-content {
-  border-radius:6%;
   width:auto;
   height:auto;
-  max-width:600px;
-  max-height:650px;
-  cursor:none;}
+  border-radius:4%;
+}
 
 @keyframes fadeIn {
   from {opacity:0; transform: scale(0.8,0.8);} 
