@@ -13,7 +13,7 @@
 // swipe left over player to close
 // chrome not show snips
 // progress bar stops working on cur down 
-
+// cursor not disappearing far left
 
 
   var wheel = 0;		// mouse wheel count
@@ -84,6 +84,7 @@ function gesture(event) {						// mouse move over modal
     var rect = container.getBoundingClientRect();
     xpos = (event.clientX - rect.left) / container.offsetWidth;		// global cursor position
     ypos = (event.clientY - rect.top) / container.offsetHeight;
+    if (xpos < 0.1) {close_media(0)}
     var c3 = "";
     if (event.clientX > dirX) {c1 += event.clientX - dirX;}
     if (event.clientX < dirX) {c1 -= dirX - event.clientX;}
@@ -131,7 +132,7 @@ function open_media(event, thumb, s, t, i) {				// on mouse leaving page thumbna
     var rect = thumb.getBoundingClientRect();				// of page thumbnail image
     var xp = (event.clientX - rect.left) / thumb.offsetWidth;
     var yp = (event.clientY - rect.top) / thumb.offsetHeight;
-    if (xp > 0.8 && yp < 0.8) {						// open media
+    if (xp > 0.9 && yp < 0.9) {						// open media
       if (scaleY > 1.4) {scaleX = 1.4; scaleY = 1.4; lastX = 1.4; lastY = 1.4;}
       media.style.maxWidth = window.innerWidth * 0.6 + "px";
       media.style.maxHeight = window.innerHeight * 0.7 + "px";
@@ -168,27 +169,24 @@ function open_media(event, thumb, s, t, i) {				// on mouse leaving page thumbna
       media.style.transform = "scale(" + (scaleX+=0.1) + "," + (scaleY+=0.1) + ")";}}
 
 
+function close_media(e) {						// on mouse leaving media
+  var rect = media.getBoundingClientRect();				// of page thumbnail image
+  if (!e || e.clientX < rect.left) {
+  document.querySelector("body").style.overflow = "auto";
+  container.style.animationName="fadeOut";
+  container.addEventListener("animationend", fadeout_end);
+  clearInterval(timedEvents);
+  media.pause();
+  type="";}}
+
+
 function wheel_controls(event) {					// wheel over modal
   if (timer) {return}
   wheel += Math.abs(event.deltaY);
   if (wheel < 40) {return}
   var block_wheel = 300;						// block wheel input timer
   var rect = media.getBoundingClientRect();
-  if (type == "video" && event.deltaY < 0 && xpos < 0.8) {
-    media.load();
-    type = "thumbsheet";}						// show thumbsheet
-  else if (type == "thumbsheet" && event.deltaY > 0) {			// play thumbsheet
-    type = "video";
-    media.currentTime = start;
-    media.play();}
-  else if (event.deltaY > 0 && xpos < 0.8) {				// close player
-    document.querySelector("body").style.overflow = "auto";
-    container.style.animationName="fadeOut";
-    container.addEventListener("animationend", fadeout_end);
-    clearInterval(timedEvents);
-    media.pause();
-    type="";}
-  else if (xpos > 0.8 && ypos < 0.6 && type != "thumbsheet") {		// video seek
+  if (xpos > 0.8 && ypos < 0.6 && type == "video") {			// video seek
     if (media.paused == true) {interval = 0.05}
     else if (media.duration < 120) {interval = 1}
     else {interval = 5}
@@ -196,14 +194,18 @@ function wheel_controls(event) {					// wheel over modal
     else  {media.currentTime -= interval}
     show_seekbar();
     block_wheel = 100;}
-  else if (xpos > 0.8 && type != "thumbsheet") {			// video speed
+  else if (type == "video" && xpos > 0.5 && xpos < 0.8) {		// show thumbsheet
+   media.load();
+
+   type = "thumbsheet";}
+  else if (xpos > 0.8 && type == "video") {				// video speed
     if (event.deltaY > 0) {speed = -0.05;}
     else  {speed = 0.05;}
     media.playbackRate += speed;
     show_speed();}
-  else if (event.deltaY < 0) {						// next media
+  else if (xpos < 0.8 || type == "image") {				// next media
     index *= 1;
-    if (xpos > 0.8) {index -= 1;}
+    if (event.deltaY < 0) {index -= 1;}
     else {index += 1;}
     var next = document.getElementById("media" + index);
     if (next == null) {index = 1; next = document.getElementById('media1')}
@@ -220,7 +222,13 @@ function wheel_controls(event) {					// wheel over modal
       var thmb = 4 / 200;
       if (media.duration > 60) {offset = 20}
       else {offset = 0;}
-      start = offset - (thmb * offset) + media.duration * thmb;}},block_wheel);
+      start = offset - (thmb * offset) + media.duration * thmb;
+      if (type == "video") {media.currentTime = start;}}},block_wheel);
+   if (xpos < 0.5 && type != "image") {
+     type = "video";
+     media.poster = "";
+     media.currentTime = start;
+     media.play();}
   timer = 1; wheel = 0;}						// block wheel until timer reset
 
 
