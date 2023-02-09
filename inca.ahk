@@ -15,7 +15,7 @@
 ; so both send LButton signals to java
 ; back button is intercepted and converted to {Pause} for java to close media
 ; onclick has different operation to onmousedown
-
+; thumb size
 
 
 	; Inca Media Viewer for Windows - Firefox & Chrome compatible
@@ -99,13 +99,15 @@
         {
         caption =
         start := 0
+        width := Setting("Thumb Width")
+        gap := Setting("Thumb Gap")
         if DetectMedia(input)
             thumb := src
         else thumb = %inca%\apps\icons\no link.png
         if (type == "video")
             thumb =  %inca%\cache\posters\%media%.jpg
-        FileRead, cap, %inca%\cache\captions\%media%.txt
-        caption := StrReplace(cap, "`n", "<br>")
+        cap_src = %inca%\cache\captions\%media%.txt
+        FileRead, cap, %cap_src%
         if ((folder == "Favorites" || folder == "slides") && type == "image")
             IfExist, %inca%\cache\cuts\%media%.txt			; get inner src from .jpg link file
                 {
@@ -122,10 +124,8 @@
             transform = transform:scaleX(%x%);
         if (skinny > 0)
             transform = transform:scaleY(%x%);
-        margin := 2
-        if caption
-            caption = <a href="#%cap%#%i%" style="width:100`%; color:#826858; font-size:0.85em;">%caption%</a>
-        else margin := 4
+        cap := StrReplace(cap, "`r`n", "<br>")
+        caption = <a id="cap%i%" href="#%cap_src%#%i%" style="width:100`%; color:#826858; font-size:0.85em;">%cap%</a>
         font := Setting("Font Color")
         if (type == "video")
             FileGetSize, size, %src%, M
@@ -177,7 +177,7 @@ if (type == "video")
                     }
 	        entry = <a href="#Media#%i%"><div style="display:inline-block; width:88`%; color:#555351; transition:color 1.4s; margin-left:8`%; text-align:center; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; %highlight%;">%sort_index% &nbsp;&nbsp;%link% %media%</div></a><textarea rows=%rows% style="display:inline-block; overflow:hidden; margin-left:8`%; width:88`%; background-color:inherit; color:#826858; font-size:1.2em; font-family:inherit; border:none; outline:none;">%str2%</textarea>`r`n`r`n
                 }
-            else entry = <li style="display:inline-block; vertical-align:top; margin-left:4`%; width:19`%; margin-bottom:%margin%em; margin-color:%font%; transition:color 1.4s;"><div style="color:#555351; text-align:center; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; %highlight%;">%sort_index% &nbsp;&nbsp;%link% %fav% %media%</div><a href="#Media#%i%"><video id="media%i%" style="width:100`%; %transform% %select%" onclick="open_media(event, this, '%start%', '%type%', %i%)" src="file:///%src%" %poster% muted type="video/mp4"></video></a>%caption%</li>`r`n`r`n
+            else entry = <li style="display:inline-block; vertical-align:top; margin-left:%gap%`%; width:%width%`%; margin-bottom:%gap%`%; margin-color:%font%; transition:color 1.4s;"><div style="color:#555351; text-align:center; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; %highlight%;">%sort_index% &nbsp;&nbsp;%link% %fav% %media%</div><a href="#Media#%i%"><video id="media%i%" style="width:100`%; %transform% %select%" onclick="open_media(event, this, '%start%', '%type%', %i%)" src="file:///%src%" %poster% muted type="video/mp4"></video></a>%caption%</li>`r`n`r`n
             }
         return entry
         }
@@ -207,7 +207,6 @@ if (type == "video")
             previous := page - 1
         next := page + 1
         type = video							; prime for list parsing
-        width := Setting("Page Width")
         offset := Setting("Page Offset")
         size := Setting("Thumbs Qty")
         if (folder == "music")
@@ -242,7 +241,7 @@ if (type == "video")
                 filter_html = %filter_html%<a href="#%A_LoopField%#" %x%>%name%</a>`r`n
                 }
         sort_html = <ul class="menu" style="margin-top:1em; margin-bottom:1em; display:flex; justify-content:space-between">`r`n<a href="#View#%view%" id='slider4' class='slider' style="width:12`%;" onmousemove='getCoords(event, id, "View", "%title%","")' onmouseleave='getCoords(event, id, "View", "%title%", "%view%")'>View %view%</a>`r`n<a href="%title%.htm#%sort%" id='slider1' class='slider' onmousemove='getCoords(event, id, "%sort%", "%title%", "")'>%sort%</a>`r`n<a href="%title%.htm#Page" id='slider2' class='slider' onmousemove='getCoords(event, id, "%Pages%", "%title%", "")' onmouseleave='getCoords(event, id, "%Pages%", "%title%", "%page%")'>Page %page% of %pages%</a>`r`n<a href="#Page#%next%" class='slider' style="width:12`%;">Next</a></ul>
-        title_html = `r`n`r`n<div style="margin-left:5em; width:100`%; margin-top:2em; margin-bottom:1.2em;"><a href="#%playlist%#" style="font-size:1.8em; color:#555351;">%title% &nbsp;&nbsp;<span style="font-size:0.7em;">%list_size%</span></a></div>`r`n`r`n<div id="myModal" class="modal" onmousemove='gesture(event)' onmousedown='mouseDown(event)' onmouseup='mouseUp(event)' onwheel='wheel_controls(event)'>`r`n<div><video id="modal-content" class="modal-content" type="video/mp4"></video><span id="modal-progress-bar" class="progress_bar"></span><span id="modal-seek-bar" class="seek_bar"></span></div></div>`r`n`r`n
+        title_html = `r`n`r`n<div style="margin-left:5em; width:100`%; margin-top:2em; margin-bottom:1.2em;"><a href="#%playlist%#" style="font-size:1.8em; color:#555351;">%title% &nbsp;&nbsp;<span style="font-size:0.7em;">%list_size%</span></a></div>`r`n`r`n<div id="myModal" class="modal" onmousemove='gesture(event)' onmousedown='mouseDown(event)' onmouseup='mouseUp(event)' onwheel='wheel_controls(event)'>`r`n<div><video id="modal-content" class="modal-content" onmouseover='mouseOver(true)' onmouseout='mouseOver(false)' type="video/mp4"></video><span id="modal-progress-bar" class="progress_bar"></span><span id="modal-seek-bar" class="seek_bar"></span><span id="myCap" class="caption"></span></div></div>`r`n`r`n
         html = `r`n%html%</div>`r`n<p style="height:240px;"></p>`r`n
         FileDelete, %inca%\cache\html\%tab_name%.htm
         x = %header_html%%panel_html%
@@ -718,9 +717,9 @@ else
             history_timer += 1
         if vol_popup							; show volume popup bar
             vol_popup -= 1
-        if (volume > 0.1 && !vol_popup && !video_player && Setting("Sleep Timer") > 10 && A_TimeIdlePhysical > 600000)
+        if (volume > 0.1 && !vol_popup && !video_player && Setting("Sleep Timer(mins)") > 10 && A_TimeIdlePhysical > 600000)
             {
-            volume -= vol_ref / (Setting("Sleep Timer") * 6)		; sleep timer
+            volume -= vol_ref / (Setting("Sleep Timer(mins)") * 6)		; sleep timer
             SoundSet, volume						; slowly reduce volume
             vol_popup := 100						; check every 10 seconds
             }
@@ -1774,7 +1773,7 @@ else
         WinGet, state, MinMax, ahk_group Browsers
         if !video_player
             {
-            if (state > -1 && xpos < 500)
+            if (state > -1 && xpos < 50)
                 {
                 WinActivate, ahk_group Browsers
                 if (y > 6)
