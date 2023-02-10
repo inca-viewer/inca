@@ -1,20 +1,15 @@
 <script>
 
-// show duration when play eg 10sec
 // status panel
 // sort out start times < 60 delete all sheets < 20 dur
-// have direction controls stay faint to aligned screen not to content 
-// i know modal open in inca because mbutton pressed!!!
-// ... so can stop click issues 
-// posible use only click for both browsers, not use mclick or rclick
-// instead long click to favorite or list / thumb toggle
+// position:fixed; 
+// scale crashes
+// next/back - thumb/next/back - select/unselect - play/pause - mute/unmute
+// play last - list/thumb - delete - rename - caption - cue/mp3/mp4
+// speed panel rename progress
 
-// move video relative to modal and keep ref. with Lbut down on media
-// show speed centre as 75% etc 
 
-// major issue - need to change inca index to add a sequential page id index using name%% 
 
-// position:fixed; reverse mouse_over function 
 
 
   var wheel = 0;		// mouse wheel count
@@ -33,64 +28,69 @@
   var lastY = 1;
   var speed = 0;
   var gest = 0;
-  var dirX = 0;
-  var dirY = 0;
   var cur_ref;			// show cursor when move
-  var c1 = 0;
-  var c2 = 0;
   var xref;
   var yref;
   var xpos = 0.5;
   var ypos = 0.5;
+  var RightClick;
+  var MiddleClick;
+  var thumb_mode = 0;
 
 
   var offset_top = window.innerHeight/4;
   var offset_left = window.innerWidth/8;
 
-  window.addEventListener('keydown', (event) => {	// close modal from inca.exe sending Pause key.. 
-   if (event.key == 'Pause') {close_media();}})		// ..instead of the mouse 'Back' key
+  window.addEventListener('keydown', (event) => {		// inca.exe passing control keys
+    if (event.key == 'Pause') {close_media();}			// close modal from inca.exe mouseback button
+    if (event.key == 'k') {RightClick = true;}
+    if (event.key == 'h') {MiddleClick = true; wheel_controls(event);}})		
 
   function mouseOver(x) {if (!mouse_down) {mouse_over = x}}	// is mouse over media window 
      
-  function mouseDown(e) {				// toggle pause & mute
+  function mouseDown(e) {					// toggle pause & mute
     timout = 0; 
     mouse_down = 1; 
     xref = e.clientX; 
     yref = e.clientY; 
     setTimeout(function(){togglemute();},450);}
 
-  function mouseUp(e) {					// !!!! inca.exe forces 'up' immediately..
-    lastX = scaleX;					// ..so must use timout complexity
+  function mouseUp(e) {						// !!!! inca.exe forces 'up' immediately..
+    lastX = scaleX;						// ..so must use timout complexity
     lastY = scaleY;
     mouse_down = 0;
     if (!gest && !timout) {
       if (type == "thumbsheet") {play_thumb()}
-else {
- 
-      if (media.paused==true) {
- if(media.volume > 0.5) {
-        media.volume = 0; 
-        timedVolUp = setInterval(vol_up_timer,20);}
-        media.play();} 
-      else {media.pause();}}}
-    gest = 0;      timout=1;}
+      else {
+        if (thumb_mode) {thumb_mode = 0}
+        else {
+          if (media.paused==true) {
+            if(media.volume > 0.5) {
+              media.volume = 0; 
+              timedVolUp = setInterval(vol_up_timer,50);}
+            media.play();} 
+          else {media.pause();}}}}
+    gest = 0; timout=1;}
 
   function togglemute() {
     if (!gest && !timout) {
       timout=1; 
       if (media.volume > 0.1) {timedVolDown = setInterval(vol_down_timer,20)} 
-      else {timedVolUp = setInterval(vol_up_timer,20)}}}
+      else {timedVolUp = setInterval(vol_up_timer,50)}}}
 
   function vol_up_timer() {
-    media.volume += 0.04;
-    if (media.volume >= 0.9) {media.volume = 1; clearInterval(timedVolUp)}}
+  if (media.volume < 0.00097 ) {media.volume = 0.00097}
+    media.volume += media.volume;
+    if (media.volume >= 0.9) {clearInterval(timedVolUp)}}
   function vol_down_timer() {
     media.volume -= 0.1;
     if (media.volume <= 0.11) {media.volume = 0; clearInterval(timedVolDown)}}
 
 
-
 function gesture(e) {							// mouse move over modal
+  var rect = container.getBoundingClientRect();
+  xpos = (e.clientX - rect.left) / container.offsetWidth;		// global cursor position
+  ypos = (e.clientY - rect.top) / container.offsetHeight;
   if (mouse_down) {
     if (Math.abs(xref - e.clientX) > 5 && !gest) {gest = "skinny";}
     if (Math.abs(yref - e.clientY) > 5 && !gest) {gest = "magnify";}
@@ -109,54 +109,20 @@ function gesture(e) {							// mouse move over modal
       yref = e.clientY;
       media.style.top = offset_top + "px";
       media.style.left = offset_left + "px";}}
-  else {
-    var rect = container.getBoundingClientRect();
-    xpos = (e.clientX - rect.left) / container.offsetWidth;		// global cursor position
-    ypos = (e.clientY - rect.top) / container.offsetHeight;
-    var c3 = "";
-    if (e.clientX > dirX) {c1 += e.clientX - dirX;}
-    if (e.clientX < dirX) {c1 -= dirX - e.clientX;}
-    if (e.clientY > dirY) {c2 += e.clientY - dirY;}
-    if (e.clientY < dirY) {c2 -= dirY - e.clientY;}
-    if (c2 > 14) {c3 = "down";}						// cursor move > threshold
-    if (c2 < -14) {c3 = "up";}
-    if (c1 > 14) {c3 = "right";}
-    if (c1 < -14) {c3 = "left";}
-    if (c3) {
-      c1 = 0; c2 = 0;
-      cursor = c3; 
-      if (type != "image" && !mouse_down && !seek_active) {show_direction()}}}
-  dirX = e.clientX;
-  dirY = e.clientY;
-  if (e.clientY/window.innerHeight > 0.85) {
+  xp = e.clientX/window.innerWidth; yp = e.clientY/window.innerHeight;
+  if (yp > 0.85 && xp < 0.72 && !mouse_down && type == "video") {
     media.style.transform = "scale(" + 0.5 + "," + 0.5 + ")";
-    media.currentTime = media.duration * e.clientX / window.innerWidth; 
-    media.playbackRate = 0.7; 
+    media.currentTime = media.duration * e.clientX * 1.4 / window.innerWidth; 	// fast seek video
+    media.playbackRate = 0.5; 
+    media.muted = true; 
     show_seekbar(); 
     seek_active = 1;}
   else if (seek_active) {
-    seek_active = 0; media.playbackRate = 1;
+    seek_active = 0; media.playbackRate = 1; media.muted = false; 
     media.style.transform = "scale(" + scaleX + "," + scaleY + ")";}}
 
-
-function show_direction() {						// cursor movement direction
-return;
-  var x; var y; var z; var w;
-  var rect2 = media.getBoundingClientRect();
-  progress.style.animationName="";
-  if (cursor == "left") {w=0; z=media.offsetHeight * scaleY; x = rect2.top + z/3; y = rect2.left-4;}
-  if (cursor == "right") {w=0; z=media.offsetHeight * scaleY; x = rect2.top + z/3; y = rect2.left+4 + media.offsetWidth * scaleX;}
-  if (cursor == "up") {z=0; w=media.offsetWidth * scaleX; x = rect2.top-4; y = rect2.left + w/3;}
-  if (cursor == "down") {z=0; w=media.offsetWidth * scaleX; x = rect2.top+4 + media.offsetHeight * scaleY; y = rect2.left + w/3;}
-  progress.style.top = x + "px";
-  progress.style.left = y + "px";
-  progress.style.height = z/4 + "px";
-  progress.style.width = w/4 + "px";
-  progress.style.animationName="fadeOut";}
-
-
 function show_seekbar() {
-  seek.style.top = window.innerHeight - 50 + "px";
+  seek.style.top = window.innerHeight - 3 + "px";
   seek.style.left = 0;
   seek.style.width = (window.innerWidth * media.currentTime / media.duration) + "px";}
 
@@ -166,21 +132,22 @@ function show_speed() {
   progress.style.animationName="";
   progress.style.top = rect.top + 2.4*window.innerHeight*(1-media.playbackRate) + "px";
   rect = media.getBoundingClientRect();
-  progress.style.left = rect.left + "px";
-  progress.style.width = scaleX * media.offsetWidth + "px";
+  progress.style.left = rect.left - 60 + "px";
+  progress.style.width = scaleX * media.offsetWidth * 1.4 + "px";
   progress.style.height = 0;
   progress.style.animationName="fadeOut";}
 
 
-function open_media(event, thumb, s, t, i) {				// on mouse leaving small page thumbnail
+function open_media(event, thumb, s, t, i) {				// click small thumbnail on webpage
+  if (RightClick == true) {RightClick = false; return;}
   start = s; type = t; index = i;
   container = document.getElementById("myModal");
   media = document.getElementById("modal-content");			// set global id's
   progress = document.getElementById("modal-progress-bar");
   seek = document.getElementById("modal-seek-bar");
   cap = document.getElementById("myCap");				// modal player caption
-//  media.style.top = offset_top + "px";
-//  media.style.left = offset_left + "px";
+  media.style.top = offset_top + "px";
+  media.style.left = offset_left + "px";
   if (type == "video" || type == "image") {
     var rect = thumb.getBoundingClientRect();				// of page thumbnail image
     var xp = (event.clientX - rect.left) / thumb.offsetWidth;
@@ -192,7 +159,6 @@ function open_media(event, thumb, s, t, i) {				// on mouse leaving small page t
     var caption = document.getElementById("cap" + index);
     cap.innerHTML = caption.innerHTML;					// from web page to modal player
     cap.style.animationName = "fadeIn";
-    media.style.animationName = "fadeIn";
     container.style.animationName = "fadeIn";
     container.style.display="flex";
     if (type == "image") {media.src = thumb.poster; media.poster = thumb.poster;}
@@ -204,13 +170,13 @@ function open_media(event, thumb, s, t, i) {				// on mouse leaving small page t
     media.play();
     timer = 1;
     setTimeout(function() {timer = 0; get_start(thumb.poster)},500);
-    media.addEventListener("animationend", fadein_end);
+    container.addEventListener("animationend", fadein_end);
     cap.addEventListener("animationend", cap_end);
     media.addEventListener('ended', video_loop, false);			// video looping
-    timedEvents = setInterval(interval_timer,250);}}
+    timedEvents = setInterval(interval_timer,100);}}
 
 
-function close_media() {						// on mouse leaving media
+function close_media() {						// on receiving "pause" trigger key from inca.exe
   var rect = media.getBoundingClientRect();
   if (timer) {return}
   timedVolDown = setInterval(vol_down_timer,9);
@@ -222,6 +188,8 @@ function close_media() {						// on mouse leaving media
   lastX = scaleX;
   lastY = scaleY;
   mouse_down = 0;
+  thumb_mode = 0;
+  media.pause();
   type="";}
 
 
@@ -241,40 +209,30 @@ function close_media() {						// on mouse leaving media
 
 
 function wheel_controls(event) {					// wheel over modal window
-  if (timer) {return}
-  wheel += Math.abs(event.deltaY);
-  if (wheel < 40) {return}
+  if (event.key != 'h' || type == "image") {				// inca.exe trigger thumbsheet mode
+    if (timer) {return}
+    wheel += Math.abs(event.deltaY);
+    if (wheel < 40) {return}
+    }
+  else {if (thumb_mode == 1) {thumb_mode = 2} else {thumb_mode = 1}}	// thumbsheet view mode
   var block_wheel = 300;						// block wheel input timer
   var rect = media.getBoundingClientRect();
-  if (type == "video" && xpos < 0.8 && xpos > 0.2) {
-    if (media.paused == true) {interval = 0.05}
-    else if (media.duration < 120) {interval = 1}			// video seek
-    else {interval = 5}
-    if (event.deltaY > 0) {media.currentTime += interval}
-    else  {media.currentTime -= interval}
-    show_seekbar();
-    block_wheel = 100;}
-  else if (type != "image" && xpos < 0.2) {				// video speed
-    if (event.deltaY > 0) {speed = -0.05;}
-    else  {speed = 0.05;}
-    media.playbackRate += speed;
-    show_speed();}
-  else if (xpos > 0.8 || type == "thumbsheet") {			// next media
+  if (thumb_mode || type != "video") {					// next media
     index *= 1;
-    if (ypos < 0.6 || (type == "thumbsheet" && xpos < 0.8)) {var thumb_mode = 1} 	// thumbsheet view mode
-    if (type == "image" || type != "thumbsheet" && !thumb_mode || type == "thumbsheet" && thumb_mode) {
-      if (event.deltaY < 0) {index -= 1;} else {index += 1;}}
+    if (type == "image" || thumb_mode > 1 || type != "thumbsheet" && !thumb_mode || type == "thumbsheet" && thumb_mode) {
+      if (event.deltaY > 0 || event.key == 'h') {index += 1;} 
+      else {index -= 1;}}
     var next = document.getElementById("media" + index);
     if (next == null) {index = 1; next = document.getElementById('media1');}
     if (next.src.endsWith("jpg") || next.src.endsWith("png") || next.src.endsWith("webp") || next.src.endsWith("jpeg")) {
       type = "image";}
-    else {if (thumb_mode) {type = "thumbsheet"} else {type = "video"}}
+    else {if (thumb_mode == 1) {type = "thumbsheet"} else {type = "video"}}
     start = null;
     media.src = next.src;
     if (type == "image") {						// image mode
       media.src = next.poster; 
       media.poster = next.poster;}
-    else if (thumb_mode) {						// thumbsheet mode
+    else if (thumb_mode == 1) {						// thumbsheet mode
       if (next.poster.match(/favorites/)) {
         end = next.poster.split('%20').pop();
         var x = end.split('.')[0];					// inca.exe internal format
@@ -312,9 +270,19 @@ function wheel_controls(event) {					// wheel over modal window
     media.style.maxWidth = window.innerWidth * 0.6 + "px";
     media.style.maxHeight = window.innerHeight * 0.7 + "px";
     media.style.transform = "scale(" + scaleX + "," + scaleY + ")";}
-
-//  media.style.animationName = "fadeIn";
-//  media.addEventListener("animationend", fadein_end);
+  else if (type == "video" && xpos < 0.9) {
+    if (media.paused == true) {interval = 0.05}
+    else if (media.duration < 120) {interval = 1}			// video seek
+    else {interval = 5}
+    if (event.deltaY > 0) {media.currentTime += interval}
+    else  {media.currentTime -= interval}
+    show_seekbar();
+    block_wheel = 100;}
+  else if (type != "image" && xpos > 0.9) {				// video speed
+    if (event.deltaY > 0) {speed = -0.05;}
+    else  {speed = 0.05;}
+    media.playbackRate += speed;
+    show_speed();}
   setTimeout(function() {timer = 0;},block_wheel);
   timer = 1; wheel = 0;}						// block wheel
 
@@ -334,26 +302,25 @@ function play_thumb() {							// click of thumbsheet in modal
   media.currentTime = offset - (thumb*offset) + media.duration*thumb;
   if (media.duration < 20) {media.currentTime = 0}
   type = "video";
+  thumb_mode = 0;
   media.play();}
 
 
 function fadeout_end() {
-  media.pause();
   container.style.display="none";
-  container.style.animationName="fadeIn";
-  progress.style.width = 0;
   container.removeEventListener("animationend", fadeout_end);}
 
 function fadein_end() {
-  media.style.animationName = "fadeIn" + index;				// trigger new animation
   document.querySelector("body").style.overflow="hidden";
-  media.removeEventListener("animationend", fadein_end);}
-
+  container.removeEventListener("animationend", fadein_end);}
 
 function cap_end() {
   cap.style.animationName = "fadeIn" + index;
   cap.removeEventListener("animationend", cap_end);}
 
+function progress_end() {
+  progress.style.animationName = "fadeOut" + index;
+  progress.removeEventListener("animationend", progress_end);}
 
 
 
@@ -446,7 +413,7 @@ function getCoords(event, id, sort, link, current) {	// return mouse over contro
 
 <style>
 
-body {font-family: 'ClearSans-Thin'; overflow-x:hidden; background:#15110a; color:#666666; font-size:0.8em; margin-top:100px;}
+body {font-family: 'ClearSans-Thin'; scrollbar-color: red yellow; overflow-x:hidden; background:#15110a; color:#666666; font-size:0.8em; margin-top:100px;}
 a:link {color:#15110a;}
 a:visited {color:#15110a;}
 a {text-decoration:none; color:#826858;}
@@ -467,24 +434,21 @@ table:hover {color:red; transition:color 0.36s;}
   margin-left:-50px;
   padding:10px;
   animation-name:fadeIn;
-  animation-duration:0.4s;
-  animation-delay:0.4s;
+  animation-duration:0.6s;
+  animation-delay:0.2s;
   animation-fill-mode:backwards;}
 
 .seek_bar {
   display:fixed;
-  padding:10px;
   position:absolute;
-  border-bottom:1px solid rgba(250, 128, 114, 0.2);}
+  border-bottom:2px solid rgba(250, 128, 114, 0.2);}
 
 .progress_bar {
   display:fixed;
   position:absolute;
-  border-left:2px solid rgba(250, 128, 114, 0.7);;
-  border-bottom:1px solid rgba(250, 128, 114, 0.8);;
-  animation-duration:0.7s;
-  animation-delay:0.3s;
-  animation-fill-mode:forwards;}
+  border-bottom:3px solid rgba(250, 128, 114, 0.4);
+  animation-duration:0.6s;
+  opacity:0;}
 
 .modal {
   display:none;
@@ -498,18 +462,14 @@ table:hover {color:red; transition:color 0.36s;}
   width:100vw;
   background-color:#15110a;
   animation-name:fadeIn;
-  animation-duration:0.3s;
-  transition-timing-function:ease;}
+  animation-duration:0.25s;}
 
 .modal-content {
   width:auto;
   height:auto;
   top:0;
   left:0;
-  border-radius:4%;
-  animation-duration:0.2s;
-  animation-fill-mode:forwards;
-  transition-timing-function:ease;}
+  border-radius:4%;}
 
 @keyframes fadeIn {
   from {opacity:0; transform: scale(0.8,0.8);} 

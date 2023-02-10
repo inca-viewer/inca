@@ -1,4 +1,12 @@
-; onkeydown
+
+; MButton is converted to LButton to get address bar. if no address, MButton sent
+; RButton is same, so both send LButton signals to java
+
+; so inca sends {pause} to close modalon backspace
+; and 
+
+
+
 ; File f = new File(filePathString);
 ; if(f.exists() && !f.isDirectory()) {do something}
 ; fav 0.0 time make 0.1
@@ -9,10 +17,12 @@
 ; screenshot func
 ; wmv files 
 
+; mbutt bookmarks fail
+; search again when return to inca tab - if list  new use file
+; date list of images?
 
-; MButton is converted to LButton to get address bar. if no address, MButton sent
-; RButton is same, 
-; so both send LButton signals to java
+
+
 ; back button is intercepted and converted to {Pause} for java to close media
 ; onclick has different operation to onmousedown
 ; thumb size
@@ -93,6 +103,7 @@
 	Global skinny			; media width
 	Global cue			; mp3/mp4 snip point
 
+	Global modal			; modal active
 
 
     SpoolList(i, input)							; spool sorted media files into web page
@@ -125,6 +136,8 @@
         if (skinny > 0)
             transform = transform:scaleY(%x%);
         cap := StrReplace(cap, "`r`n", "<br>")
+        if !view
+            cap =
         caption = <a id="cap%i%" href="#%cap_src%#%i%" style="width:100`%; color:#826858; font-size:0.85em;">%cap%</a>
         font := Setting("Font Color")
         if (type == "video")
@@ -161,7 +174,7 @@ if (type == "video")
 
         if !view							; list view 
             {
-            entry = <div style="padding-left:5em;"><a href="#Media#%i%"><table><tr><td id="hover_image"><video id="media%i%" style="width:100`%; %select%" onclick="open_media(event, this, '%start%', '%type%', '%i%')" %poster% src="file:///%src%" type="video/mp4" muted></video></tr></table><table style="table-layout:fixed; width:100`%"><tr><td style="color:#777777; width:4em; text-align:center">%sort_index%</td><td style="width:4em; font-size:0.7em; text-align:center">%dur%</td><td style="width:3em; font-size:0.7em; text-align:center">%size%</td><td style="width:4em; padding-right:3.2em;  font-size:0.7em; text-align:center">%ext%</td><td style="%select% %highlight% white-space:nowrap; text-overflow:ellipsis; font-size:1em"><span><div style="text-overflow:ellipsis; overflow:hidden; white-space:nowrap;  width:34em"> %media% %fav%</div></span></td></tr></table></a></div>`r`n`r`n
+            entry = <div style="padding-left:5em;"><a href="#Media#%i%"><table><tr><td id="hover_image"><video id="media%i%" style="width:100`%; %select%" onclick="open_media(event, this, '%start%', '%type%', %i%)" %poster% src="file:///%src%" type="video/mp4" muted></video></tr></table><table style="table-layout:fixed; width:100`%"><tr><td style="color:#777777; width:4em; text-align:center">%sort_index%</td><td style="width:4em; font-size:0.7em; text-align:center">%dur%</td><td style="width:3em; font-size:0.7em; text-align:center">%size%</td><td style="width:4em; padding-right:3.2em;  font-size:0.7em; text-align:center">%ext%</td><td style="%select% %highlight% white-space:nowrap; text-overflow:ellipsis; font-size:1em"><span><div style="text-overflow:ellipsis; overflow:hidden; white-space:nowrap;  width:34em"> %media% %fav%</div></span></td></tr></table></a>%caption%</div>`r`n`r`n
             }
         else
             {
@@ -241,7 +254,7 @@ if (type == "video")
                 filter_html = %filter_html%<a href="#%A_LoopField%#" %x%>%name%</a>`r`n
                 }
         sort_html = <ul class="menu" style="margin-top:1em; margin-bottom:1em; display:flex; justify-content:space-between">`r`n<a href="#View#%view%" id='slider4' class='slider' style="width:12`%;" onmousemove='getCoords(event, id, "View", "%title%","")' onmouseleave='getCoords(event, id, "View", "%title%", "%view%")'>View %view%</a>`r`n<a href="%title%.htm#%sort%" id='slider1' class='slider' onmousemove='getCoords(event, id, "%sort%", "%title%", "")'>%sort%</a>`r`n<a href="%title%.htm#Page" id='slider2' class='slider' onmousemove='getCoords(event, id, "%Pages%", "%title%", "")' onmouseleave='getCoords(event, id, "%Pages%", "%title%", "%page%")'>Page %page% of %pages%</a>`r`n<a href="#Page#%next%" class='slider' style="width:12`%;">Next</a></ul>
-        title_html = `r`n`r`n<div style="margin-left:5em; width:100`%; margin-top:2em; margin-bottom:1.2em;"><a href="#%playlist%#" style="font-size:1.8em; color:#555351;">%title% &nbsp;&nbsp;<span style="font-size:0.7em;">%list_size%</span></a></div>`r`n`r`n<div id="myModal" class="modal" onmousemove='gesture(event)' onmousedown='mouseDown(event)' onmouseup='mouseUp(event)' onwheel='wheel_controls(event)'>`r`n<div><video id="modal-content" class="modal-content" onmouseover='mouseOver(true)' onmouseout='mouseOver(false)' type="video/mp4"></video><span id="modal-progress-bar" class="progress_bar"></span><span id="modal-seek-bar" class="seek_bar"></span><span id="myCap" class="caption"></span></div></div>`r`n`r`n
+        title_html = `r`n`r`n<div style="margin-left:5em; width:100`%; margin-top:2.4em; margin-bottom:1.8em;"><a href="#%playlist%#" style="font-size:1.8em; color:#555351;">%title% &nbsp;&nbsp;<span style="font-size:0.7em;">%list_size%</span></a></div>`r`n`r`n<div id="myModal" class="modal" onmousemove='gesture(event)' onmousedown='mouseDown(event)' onmouseup='mouseUp(event)' onwheel='wheel_controls(event)'>`r`n<div><video id="modal-content" class="modal-content" onmouseover='mouseOver(true)' onmouseout='mouseOver(false)' type="video/mp4"></video><span id="modal-progress-bar" class="progress_bar"></span><span id="modal-seek-bar" class="seek_bar"></span><span id="myCap" class="caption"></span></div></div>`r`n`r`n
         html = `r`n%html%</div>`r`n<p style="height:240px;"></p>`r`n
         FileDelete, %inca%\cache\html\%tab_name%.htm
         x = %header_html%%panel_html%
@@ -422,14 +435,8 @@ if (type == "video")
         seek_overide =
         if (click == "LButton")
           {
-
-if (timer > 350)
-  timer = 350;
-          if (timer > 350 && !selected)					; mouse long click over text
-              {
-              if (A_Cursor == "IBeam")
+          if (timer > 350 && !selected && A_Cursor == "IBeam")		; mouse long click over text
                   SearchText()						; list search results
-              }
           else if video_player
               {
               GetSeekTime(video_player)
@@ -456,7 +463,7 @@ if (timer > 350)
                   else ControlSend,, 1, ahk_ID %video_player%
                   }
               }
-          else if (inside_browser && A_Cursor != "IBeam" && (link := ClickWebPage(0)))
+          else if (!modal && inside_browser && A_Cursor != "IBeam" && (link := ClickWebPage(0)))
               {
               thumbsheet =
               if (timer >= 350 && type == "m3u")
@@ -465,21 +472,32 @@ if (timer > 350)
                   orphan_media := src					; for edit captions - makes txt file an orphan
               if (timer < 350)
                   seek := 0						; thumb1 seek time 
-              else if (if timer >= 350 && link == "Media")
-                  seek_overide := 0.1					; force start at beginning
+;              else if (if timer > 350 && link == "Media")
+;                  seek_overide := 0.1					; force start at beginning
               else if (link == "Null")					; clicked web page 'white space'
                   {
                   seek_overide := seek					; last seek time
                   orphan_media := last_media				; select last media
+if !modal
+   PlayMedia(0)
                   }
-              if ((link == "Media" && timer < 350)) ; || (timer > 350 && !selected))	; or play last_media
-                  PlayMedia(0)
-              else if selected
+              if (link == "Media")
+                if (timer > 350)
+                  {
+sleep 20
+send, {Pause}{Pause}{Pause}{Pause}			; close modal
+                  PlayMedia(0)						; use external player
+                  }	
+else modal = 1
+              if (link != "Media" && selected && timer > 350)
                   FileTransfer(link)					; between folders or playlists
               }
             }
         else if (click == "RButton")
             {
+if inside_browser
+  send, k								; java intercept - stop modal opening
+
             if (timer > 350)
                 if (inca_tab && (video_player || ClickWebPage(0) == "Media"))
                     AddFavorites()
@@ -501,6 +519,12 @@ if (timer > 350)
             }
         else if (click == "MButton")
             {
+
+if modal
+{
+send, h
+return
+}
             seek := 0
             next := 0
             if thumbsheet
@@ -527,8 +551,13 @@ if (timer > 350)
                     page := 1
                     RenderPage()
                     }
- ;               else if (link == "Media")
- ;                   PlayMedia(0)
+               else if (link == "Media")
+{
+sleep 20
+modal = 1
+Send, h									; trigger thumbsheet mode in modal
+}
+;                    PlayMedia(0)
                 }
             else send, {MButton}
             click =
@@ -564,12 +593,17 @@ if (timer > 350)
             else if inca_tab
                 {
 ;                IfWinActive, ahk_class Chrome_WidgetWin_1 
-                  send, {Pause}					; close java modal (media)
-                if selected
+
+  send, {Pause}								; close java modal (media)
+
+                if !modal
+                 if selected
                   {
                   selected =
                   RenderPage()
                   }
+modal =
+
                 }
             else send, {Xbutton1}
             }
@@ -1609,7 +1643,9 @@ else
             y := A_ScreenHeight * 0.82
             Gui, Caption:Show, x%x%  y%y%, NA
             }
+WinActivate, ahk_group Browsers
         sleep 300
+   send, {Pause}{Pause}{Pause}{Pause}					; close modal
         WinActivate, ahk_ID %player%
         if video_player
             WinClose, ahk_ID %video_player%				; previous player instance
@@ -1617,6 +1653,8 @@ else
         if (aspect := Round(skinny / 100,2))
             Run %COMSPEC% /c echo add video-aspect %aspect% > \\.\pipe\mpv%random%,, hide && exit
         block_input := A_TickCount + 400
+
+
         WinSet, Transparent, 2, ahk_group Browsers			; because 0 stops web rendering
         WinSet, Transparent, 25, ahk_class Shell_TrayWnd
         history_timer := 1
