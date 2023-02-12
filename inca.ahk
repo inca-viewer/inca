@@ -17,15 +17,15 @@
 ; screenshot func
 ; wmv files 
 
-; mbutt bookmarks fail
-; search again when return to inca tab - if list  new use file
-; date list of images?
-
-
-
+; searches every time when return to inca tab - if list  new use file
 ; back button is intercepted and converted to {Pause} for java to close media
 ; onclick has different operation to onmousedown
-; thumb size
+; thumb size change easier?
+; easier width view editing
+
+; text files fail to load to notepad because no longer inca internal ref "#%cap%#%i%"
+
+
 
 
 	; Inca Media Viewer for Windows - Firefox & Chrome compatible
@@ -118,7 +118,9 @@
         if (type == "video")
             thumb =  %inca%\cache\posters\%media%.jpg
         cap_src = %inca%\cache\captions\%media%.txt
-        FileRead, cap, %cap_src%
+        IfExist, %cap_src%
+            FileRead, cap, %cap_src%
+        else cap_src = 
         if ((folder == "Favorites" || folder == "slides") && type == "image")
             IfExist, %inca%\cache\cuts\%media%.txt			; get inner src from .jpg link file
                 {
@@ -138,7 +140,7 @@
         cap := StrReplace(cap, "`r`n", "<br>")
         if !view
             cap =
-        caption = <a id="cap%i%" href="#%cap_src%#%i%" style="width:100`%; color:#826858; font-size:0.85em;">%cap%</a>
+        caption = <a id="cap%i%" href="%cap_src%" style="width:100`%; color:#826858; font-size:0.85em;">%cap%</a>
         font := Setting("Font Color")
         if (type == "video")
             FileGetSize, size, %src%, M
@@ -174,7 +176,7 @@ if (type == "video")
 
         if !view							; list view 
             {
-            entry = <div style="padding-left:5em;"><a href="#Media#%i%"><table><tr><td id="hover_image"><video id="media%i%" style="width:100`%; %select%" onclick="open_media(event, this, '%start%', '%type%', %i%)" %poster% src="file:///%src%" type="video/mp4" muted></video></tr></table><table style="table-layout:fixed; width:100`%"><tr><td style="color:#777777; width:4em; text-align:center">%sort_index%</td><td style="width:4em; font-size:0.7em; text-align:center">%dur%</td><td style="width:3em; font-size:0.7em; text-align:center">%size%</td><td style="width:4em; padding-right:3.2em;  font-size:0.7em; text-align:center">%ext%</td><td style="%select% %highlight% white-space:nowrap; text-overflow:ellipsis; font-size:1em"><span><div style="text-overflow:ellipsis; overflow:hidden; white-space:nowrap;  width:34em"> %media% %fav%</div></span></td></tr></table></a>%caption%</div>`r`n`r`n
+            entry = <div style="padding-left:5em;"><a href="#Media#%i%"><table><tr><td id="hover_image"><video id="media%i%" style="width:100`%; %select%" onclick="open_media(event, this, '%start%', '%type%', %i%)" %poster% src="file:///%src%" type="video/mp4" muted></video></tr></table><table style="table-layout:fixed; width:100`%"><tr><td style="color:#777777; width:4em; text-align:center">%sort_index%</td><td style="width:4em; font-size:0.7em; text-align:center">%dur%</td><td style="width:3em; font-size:0.7em; text-align:center">%size%</td><td style="width:4em; padding-right:3.2em; font-size:0.7em; text-align:center">%ext%</td><td style="%select% %highlight% white-space:nowrap; text-overflow:ellipsis; font-size:1em"><span><div id="title%i%" style="text-overflow:ellipsis; overflow:hidden; white-space:nowrap;  width:34em"> %media% %fav%</div></span></td></tr></table></a>%caption%</div>`r`n`r`n
             }
         else
             {
@@ -190,7 +192,7 @@ if (type == "video")
                     }
 	        entry = <a href="#Media#%i%"><div style="display:inline-block; width:88`%; color:#555351; transition:color 1.4s; margin-left:8`%; text-align:center; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; %highlight%;">%sort_index% &nbsp;&nbsp;%link% %media%</div></a><textarea rows=%rows% style="display:inline-block; overflow:hidden; margin-left:8`%; width:88`%; background-color:inherit; color:#826858; font-size:1.2em; font-family:inherit; border:none; outline:none;">%str2%</textarea>`r`n`r`n
                 }
-            else entry = <li style="display:inline-block; vertical-align:top; margin-left:%gap%`%; width:%width%`%; margin-bottom:%gap%`%; margin-color:%font%; transition:color 1.4s;"><div style="color:#555351; text-align:center; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; %highlight%;">%sort_index% &nbsp;&nbsp;%link% %fav% %media%</div><a href="#Media#%i%"><video id="media%i%" style="width:100`%; %transform% %select%" onclick="open_media(event, this, '%start%', '%type%', %i%)" src="file:///%src%" %poster% muted type="video/mp4"></video></a>%caption%</li>`r`n`r`n
+            else entry = <li style="display:inline-block; vertical-align:top; margin-left:%gap%`%; width:%width%`%; margin-bottom:%gap%`%; margin-color:%font%; transition:color 1.4s;"><div id="title%i%" style="color:#555351; text-align:center; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; %highlight%;">%sort_index% &nbsp;&nbsp;%link% %fav% %media%</div><a href="#Media#%i%"><video id="media%i%" style="width:100`%; %transform% %select%" onclick="open_media(event, this, '%start%', '%type%', %i%)" src="file:///%src%" %poster% muted type="video/mp4"></video></a>%caption%</li>`r`n`r`n
             }
         return entry
         }
@@ -254,7 +256,7 @@ if (type == "video")
                 filter_html = %filter_html%<a href="#%A_LoopField%#" %x%>%name%</a>`r`n
                 }
         sort_html = <ul class="menu" style="margin-top:1em; margin-bottom:1em; display:flex; justify-content:space-between">`r`n<a href="#View#%view%" id='slider4' class='slider' style="width:12`%;" onmousemove='getCoords(event, id, "View", "%title%","")' onmouseleave='getCoords(event, id, "View", "%title%", "%view%")'>View %view%</a>`r`n<a href="%title%.htm#%sort%" id='slider1' class='slider' onmousemove='getCoords(event, id, "%sort%", "%title%", "")'>%sort%</a>`r`n<a href="%title%.htm#Page" id='slider2' class='slider' onmousemove='getCoords(event, id, "%Pages%", "%title%", "")' onmouseleave='getCoords(event, id, "%Pages%", "%title%", "%page%")'>Page %page% of %pages%</a>`r`n<a href="#Page#%next%" class='slider' style="width:12`%;">Next</a></ul>
-        title_html = `r`n`r`n<div style="margin-left:5em; width:100`%; margin-top:2.4em; margin-bottom:1.8em;"><a href="#%playlist%#" style="font-size:1.8em; color:#555351;">%title% &nbsp;&nbsp;<span style="font-size:0.7em;">%list_size%</span></a></div>`r`n`r`n<div id="myModal" class="modal" onmousemove='gesture(event)' onmousedown='mouseDown(event)' onmouseup='mouseUp(event)' onwheel='wheel_controls(event)'>`r`n<div><video id="modal-content" class="modal-content" onmouseover='mouseOver(true)' onmouseout='mouseOver(false)' type="video/mp4"></video><span id="modal-progress-bar" class="progress_bar"></span><span id="modal-seek-bar" class="seek_bar"></span><span id="myCap" class="caption"></span></div></div>`r`n`r`n
+        title_html = `r`n`r`n<div style="margin-left:5em; width:100`%; margin-top:2.4em; margin-bottom:1.8em;"><a href="#%playlist%#" style="font-size:1.8em; color:#555351;">%title% &nbsp;&nbsp;<span style="font-size:0.7em;">%list_size%</span></a></div>`r`n`r`n<div id="myModal" class="modal_container" onmousemove='gesture(event)' onmousedown='mouseDown(event)' onmouseup='mouseUp(event)' onwheel='wheel_controls(event)'>`r`n<div><video id="myPlayer" class="media_player" onmouseover='mouseOver(true)' onmouseout='mouseOver(false)' type="video/mp4"></video><span id="mySpeedbar" class="speed_status"></span><span id="mySeekbar" class="seek_bar"></span><span id="myCap" class="caption"></span></div></div>`r`n`r`n
         html = `r`n%html%</div>`r`n<p style="height:240px;"></p>`r`n
         FileDelete, %inca%\cache\html\%tab_name%.htm
         x = %header_html%%panel_html%
@@ -474,21 +476,30 @@ if (type == "video")
                   seek := 0						; thumb1 seek time 
 ;              else if (if timer > 350 && link == "Media")
 ;                  seek_overide := 0.1					; force start at beginning
-              else if (link == "Null")					; clicked web page 'white space'
+              else if (link == "Null" && timer > 350)			; clicked web page 'white space'
                   {
                   seek_overide := seek					; last seek time
                   orphan_media := last_media				; select last media
 if !modal
-   PlayMedia(0)
+   PlayMedia(0)								; play last media
                   }
               if (link == "Media")
                 if (timer > 350)
                   {
 sleep 20
 send, {Pause}{Pause}{Pause}{Pause}			; close modal
-                  PlayMedia(0)						; use external player
-                  }	
-else modal = 1
+                  PlayMedia(0)						; use mpv universal player
+                  }
+else if GetMedia(0)
+{
+  if (type == "document") ; || type == "audio")
+    PlayMedia(0)
+
+  else {
+modal = 1
+
+}
+}
               if (link != "Media" && selected && timer > 350)
                   FileTransfer(link)					; between folders or playlists
               }
@@ -557,7 +568,7 @@ sleep 20
 modal = 1
 Send, h									; trigger thumbsheet mode in modal
 }
-;                    PlayMedia(0)
+
                 }
             else send, {MButton}
             click =
@@ -742,7 +753,7 @@ else
         Critical
         MouseGetPos, xpos, ypos
         WinGetPos, xb, yb, wb, hb, ahk_group Browsers
-        if (WinActive("ahk_group Browsers") && inca_tab && xpos > xb+10 && ypos > yb+200 && xpos < xb+wb-300 && ypos < yb+hb-50)
+        if (WinActive("ahk_group Browsers") && inca_tab && xpos > xb+10 && ypos > yb+224 && xpos < xb+wb-300 && ypos < yb+hb-50)
             inside_browser = 1
         else inside_browser =
         IfWinNotExist, ahk_ID %music_player%
@@ -1320,7 +1331,7 @@ else
                     break
                     }
         FileMove, %inca%\cache\durations\%media%.txt, %inca%\cache\durations\%new_name%.txt, 1
-        FileMove, %inca%\cache\sheets\%media%.mp4, %inca%\cache\sheets\%new_name%.mp4, 1
+        FileMove, %inca%\cache\sheets\%media%.jpg, %inca%\cache\sheets\%new_name%.jpg, 1
         FileMove, %inca%\cache\posters\%media%.jpg, %inca%\cache\posters\%new_name%.jpg, 1
         list := StrReplace(list, media, new_name)
         }
@@ -2059,7 +2070,7 @@ WinActivate, ahk_group Browsers
     Indexer:								; update thumb cache
         EnvGet, profile, UserProfile
         Loop, Files, %profile%\Downloads\*.*, R
- ;       Loop, Files, D:\media\gifs\snips\*.mp4, R
+;        Loop, Files, D:\media\gifs\youtube\*.*, R
             {
             source = %A_LoopFileFullPath%
             SplitPath, source,,fol,ex,filen
@@ -2081,7 +2092,7 @@ WinActivate, ahk_group Browsers
                 }
             if (med == "audio")
                 continue
-            IfNotExist, %inca%\cache\posters\%filen%.jpg
+IfNotExist, %inca%\cache\posters\%filen%.jpg
                 {
                 GuiControl, Indexer:, GuiInd, indexing - %j_folder% - %filen%
                 FileCreateDir, %inca%\cache\temp1
@@ -2095,13 +2106,13 @@ WinActivate, ahk_group Browsers
                     {
                     y := Round(A_Index / 5)
                     if !Mod(A_Index,5)
-                        runwait, %inca%\apps\ffmpeg.exe -ss %t% -i "%source%" -y -vf scale=480:-2 -vframes 1 "%inca%\cache\temp1\%y%.jpg",, Hide
+                        runwait, %inca%\apps\ffmpeg.exe -ss %t% -i "%source%" -y -vf scale=720:-2 -vframes 1 "%inca%\cache\temp1\%y%.jpg",, Hide
                     t += (dur / 200)
                     if (dur < 20 && y >= 5)
                         break
                     }
                 FileCopy, %inca%\cache\temp1\1.jpg, %inca%\cache\posters\%filen%.jpg, 1
-                if (dur >= 20)
+;                if (dur >= 20)
                     RunWait %inca%\apps\ffmpeg -i %inca%\cache\temp1\`%d.jpg -filter_complex "tile=6x6" -y "%inca%\cache\sheets\%filen%.jpg",, Hide
                 }
             }

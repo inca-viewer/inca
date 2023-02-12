@@ -4,327 +4,310 @@
 // sort out start times < 60 delete all sheets < 20 dur
 // position:fixed; 
 // scale crashes
-// next/back - thumb/next/back - select/unselect - play/pause - mute/unmute
+// select/unselect
 // play last - list/thumb - delete - rename - caption - cue/mp3/mp4
-// speed panel rename progress
 
+// long hover over smallthumb plays sections
+// make thumbsheets better resolution for viewing closer
+// audio fast seek?
+// idea speed 20x until time seek
 
-
-
-
-  var wheel = 0;		// mouse wheel count
-  var timer = 0;		// block wheel input
-  var start;			// video initial start time
-  var index;			// media id index (e.g. media14)
-  var type;
+  var wheel = 0			// mouse wheel count
+  var timer = 0			// block wheel input
+  var start			// video initial start time
+  var index			// media id index (e.g. media14)
+  var type
   var seek_active;
-  var mouse_over = false;
+  var mouse_over = false
 
-  var cursor = "";		// mouse movement globals
-  var mouse_down;
-  var scaleX = 1;
-  var scaleY = 1;
-  var lastX = 1;
-  var lastY = 1;
-  var speed = 0;
-  var gest = 0;
-  var cur_ref;			// show cursor when move
-  var xref;
-  var yref;
-  var xpos = 0.5;
-  var ypos = 0.5;
-  var RightClick;
-  var MiddleClick;
-  var thumb_mode = 0;
+  var cursor = ""		// mouse movement globals
+  var mouse_down
+  var scaleX = 1
+  var scaleY = 1
+  var lastX = 1
+  var lastY = 1
+  var rate = 0
+  var gest = 0
+  var cur_ref			// show cursor when move
+  var xref
+  var yref
+  var xpos = 0.5
+  var ypos = 0.5
+  var RightClick
+  var MiddleClick
+  var loopX = 1
 
 
-  var offset_top = window.innerHeight/4;
-  var offset_left = window.innerWidth/8;
+  var offset_top = window.innerHeight/4
+  var offset_left = window.innerWidth/8
 
   window.addEventListener('keydown', (event) => {		// inca.exe passing control keys
-    if (event.key == 'Pause') {close_media();}			// close modal from inca.exe mouseback button
-    if (event.key == 'k') {RightClick = true;}
-    if (event.key == 'h') {MiddleClick = true; wheel_controls(event);}})		
+    if (event.key == 'Pause') {close_media()}			// close modal from inca.exe mouseback button
+    if (event.key == 'k') {RightClick = true}
+    if (event.key == 'h') {MiddleClick = true; wheel_controls(event)}})		
 
   function mouseOver(x) {if (!mouse_down) {mouse_over = x}}	// is mouse over media window 
      
   function mouseDown(e) {					// toggle pause & mute
-    timout = 0; 
-    mouse_down = 1; 
-    xref = e.clientX; 
-    yref = e.clientY; 
-    setTimeout(function(){togglemute();},450);}
+    timout = 0
+    mouse_down = 1
+    xref = e.clientX
+    yref = e.clientY
+    if (seek_active) {seek_active = media.currentTime}
+    setTimeout(function(){togglemute();},450)}
 
   function mouseUp(e) {						// !!!! inca.exe forces 'up' immediately..
-    lastX = scaleX;						// ..so must use timout complexity
-    lastY = scaleY;
-    mouse_down = 0;
-    if (!gest && !timout) {
-      if (type == "thumbsheet") {play_thumb()}
+    lastX = scaleX						// ..so must use timout complexity
+    lastY = scaleY
+    loopX = lastX
+    if (media.style.animationName == "paused") {
+      media.style.setProperty('--scaleStart', `${scaleX}`)
+      media.style.setProperty('--scaleEnd', `${scaleX}`)
+      media.style.animationName = "loopFade"}
+    mouse_down = 0
+    if (!gest && !timout && !seek_active) {
+      if (type == "thumbsheet") {play_thumb(e)}
       else {
-        if (thumb_mode) {thumb_mode = 0}
-        else {
-          if (media.paused==true) {
-            if(media.volume > 0.5) {
-              media.volume = 0; 
-              timedVolUp = setInterval(vol_up_timer,50);}
-            media.play();} 
-          else {media.pause();}}}}
-    gest = 0; timout=1;}
+        if (media.paused==true) {
+          if(media.volume > 0.5) {
+            media.volume = 0
+            timedVolUp = setInterval(vol_up_timer,50)}
+          media.play()} 
+        else {media.pause()}}}
+    gest = 0; timout=1}
 
   function togglemute() {
     if (!gest && !timout) {
-      timout=1; 
+      timout=1
       if (media.volume > 0.1) {timedVolDown = setInterval(vol_down_timer,20)} 
       else {timedVolUp = setInterval(vol_up_timer,50)}}}
 
   function vol_up_timer() {
   if (media.volume < 0.00097 ) {media.volume = 0.00097}
-    media.volume += media.volume;
+    media.volume += media.volume
     if (media.volume >= 0.9) {clearInterval(timedVolUp)}}
   function vol_down_timer() {
-    media.volume -= 0.1;
+    media.volume -= 0.1
     if (media.volume <= 0.11) {media.volume = 0; clearInterval(timedVolDown)}}
 
 
-function gesture(e) {							// mouse move over modal
-  var rect = container.getBoundingClientRect();
-  xpos = (e.clientX - rect.left) / container.offsetWidth;		// global cursor position
-  ypos = (e.clientY - rect.top) / container.offsetHeight;
-  if (mouse_down) {
-    if (Math.abs(xref - e.clientX) > 5 && !gest) {gest = "skinny";}
-    if (Math.abs(yref - e.clientY) > 5 && !gest) {gest = "magnify";}
+  function gesture(e) {							// mouse move over modal
+    var rect = container.getBoundingClientRect()
+    xpos = (e.clientX - rect.left) / container.offsetWidth		// global cursor position
+    ypos = (e.clientY - rect.top) / container.offsetHeight
+    if (mouse_down) {
+      if (Math.abs(xref - e.clientX) > 5 && !gest) {gest = "skinny"}
+      if (Math.abs(yref - e.clientY) > 5 && !gest) {gest = "magnify"}
 //    if (mouse_over == true) {gest = "offset"}
-    if (gest == "skinny") {
-      scaleX = lastX + ((xref - e.clientX) / 374); 			// skinny or magnify
-      media.style.transform = "scale(" + scaleX + "," + scaleY + ")";}
-    if (gest == "magnify") {
-      scaleY = lastY - ((yref - e.clientY) / 142); 
-      scaleX = lastX - ((yref - e.clientY) / 142); 
-      media.style.transform = "scale(" + scaleX + "," + scaleY + ")";}
-    if (gest == "offset") {
-      offset_top += e.clientY - yref;
-      offset_left += e.clientX - xref;
-      xref = e.clientX;
-      yref = e.clientY;
-      media.style.top = offset_top + "px";
-      media.style.left = offset_left + "px";}}
-  xp = e.clientX/window.innerWidth; yp = e.clientY/window.innerHeight;
-  if (yp > 0.85 && xp < 0.72 && !mouse_down && type == "video") {
-    media.style.transform = "scale(" + 0.5 + "," + 0.5 + ")";
-    media.currentTime = media.duration * e.clientX * 1.4 / window.innerWidth; 	// fast seek video
-    media.playbackRate = 0.5; 
-    media.muted = true; 
-    show_seekbar(); 
-    seek_active = 1;}
-  else if (seek_active) {
-    seek_active = 0; media.playbackRate = 1; media.muted = false; 
-    media.style.transform = "scale(" + scaleX + "," + scaleY + ")";}}
-
-function show_seekbar() {
-  seek.style.top = window.innerHeight - 3 + "px";
-  seek.style.left = 0;
-  seek.style.width = (window.innerWidth * media.currentTime / media.duration) + "px";}
+      if (gest == "skinny") {
+        scaleX = lastX + ((xref - e.clientX) / 374)			// skinny or magnify
+        media.style.transform = "scale(" + scaleX + "," + scaleY + ")"}
+      if (gest == "magnify") {
+        scaleY = lastY - ((yref - e.clientY) / 142);
+        scaleX = lastX - ((yref - e.clientY) / 142)
+        if (media.style.animationName == "loopFade") {media.style.animationName = "paused"}
+        media.style.transform = "scale(" + scaleX + "," + scaleY + ")"}
+      if (gest == "offset") {
+        offset_top += e.clientY - yref
+        offset_left += e.clientX - xref
+        xref = e.clientX
+        yref = e.clientY
+        media.style.top = offset_top + "px"
+        media.style.left = offset_left + "px"}}
+    xp = e.clientX/window.innerWidth; yp = e.clientY/window.innerHeight
+    if (yp > 0.9 && xp < 0.72 && !mouse_down && (type == "video" || type == "audio")) {
+      if (!seek_active) {seek_active = media.currentTime}
+      media.style.transform = "scale(" + 0.5 + "," + 0.5 + ")"
+      media.currentTime = media.duration * e.clientX * 1.4 / window.innerWidth
+      media.muted = true
+      show_seekbar(80)}
+    else if (seek_active) {
+      media.currentTime = seek_active
+      seek_active = 0 							// fast seek video
+      media.muted = false
+      media.style.transform = "scale(" + scaleX + "," + scaleY + ")"}}
 
 
-function show_speed() {
-  rect = container.getBoundingClientRect();
-  progress.style.animationName="";
-  progress.style.top = rect.top + 2.4*window.innerHeight*(1-media.playbackRate) + "px";
-  rect = media.getBoundingClientRect();
-  progress.style.left = rect.left - 60 + "px";
-  progress.style.width = scaleX * media.offsetWidth * 1.4 + "px";
-  progress.style.height = 0;
-  progress.style.animationName="fadeOut";}
+  function open_media(event, thumb, s, t, i) {				// click small thumbnail on webpage
+    if (RightClick == true) {RightClick = false; return}
+    start = s; type = t; index = i
+    container = document.getElementById("myModal")
+    media = document.getElementById("myPlayer")				// set global id's
+    speed = document.getElementById("mySpeedbar")
+    seek = document.getElementById("mySeekbar")
+    cap = document.getElementById("myCap")				// modal player caption
+    media.style.top = offset_top + "px"
+    media.style.left = offset_left + "px"
+if (type == "audio" || type == "video" || type == "image") {
+      if (type == "image") {media.src = thumb.poster; media.poster = thumb.poster}
+      else {media.src = thumb.src; media.poster = ""}
+      media.volume = 0
+      play_media()
+      timer = 1
+      timedEvents = setInterval(interval_timer,100)}}
 
 
-function open_media(event, thumb, s, t, i) {				// click small thumbnail on webpage
-  if (RightClick == true) {RightClick = false; return;}
-  start = s; type = t; index = i;
-  container = document.getElementById("myModal");
-  media = document.getElementById("modal-content");			// set global id's
-  progress = document.getElementById("modal-progress-bar");
-  seek = document.getElementById("modal-seek-bar");
-  cap = document.getElementById("myCap");				// modal player caption
-  media.style.top = offset_top + "px";
-  media.style.left = offset_left + "px";
-  if (type == "video" || type == "image") {
-    var rect = thumb.getBoundingClientRect();				// of page thumbnail image
-    var xp = (event.clientX - rect.left) / thumb.offsetWidth;
-    var yp = (event.clientY - rect.top) / thumb.offsetHeight;
-    if (scaleY > 1.4) {scaleX = 1.4; scaleY = 1.4; lastX = 1.4; lastY = 1.4;}
-    media.style.maxWidth = window.innerWidth * 0.6 + "px";
-    media.style.maxHeight = window.innerHeight * 0.7 + "px";
-    media.style.transform = "scale(" + scaleX + "," + scaleY + ")";
-    var caption = document.getElementById("cap" + index);
-    cap.innerHTML = caption.innerHTML;					// from web page to modal player
-    cap.style.animationName = "fadeIn";
-    container.style.animationName = "fadeIn";
-    container.style.display="flex";
-    if (type == "image") {media.src = thumb.poster; media.poster = thumb.poster;}
-    else {media.src = thumb.src; media.poster = "";}
-    media.currentTime = start;
-    media.playbackRate = 1;
-    media.volume = 0;
-    media.muted = false;
-    media.play();
-    timer = 1;
-    setTimeout(function() {timer = 0; get_start(thumb.poster)},500);
-    container.addEventListener("animationend", fadein_end);
-    cap.addEventListener("animationend", cap_end);
-    media.addEventListener('ended', video_loop, false);			// video looping
-    timedEvents = setInterval(interval_timer,100);}}
+  function close_media() {						// or receiving "pause" key from inca.exe
+    if (!type) {scroll(0,0); return}
+    timedVolDown = setInterval(vol_down_timer,9)
+    document.querySelector("body").style.overflow = "auto"
+    document.getElementById("title" + index).style.color = "LightSalmon"
+    container.addEventListener("animationend", fadeout_end)
+    media.removeEventListener('ended', video_loop)
+    container.style.animationName="fadeOut"
+    clearInterval(timedEvents)
+    speed.innerHTML = ""
+    cap.innerHTML = ""
+    lastX = scaleX
+    lastY = scaleY
+    mouse_down = 0
+    type=""}
 
 
-function close_media() {						// on receiving "pause" trigger key from inca.exe
-  var rect = media.getBoundingClientRect();
-  if (timer) {return}
-  timedVolDown = setInterval(vol_down_timer,9);
-  document.querySelector("body").style.overflow = "auto";
-  container.removeEventListener('ended', video_loop);
-  container.style.animationName="fadeOut";
-  container.addEventListener("animationend", fadeout_end);
-  clearInterval(timedEvents);
-  lastX = scaleX;
-  lastY = scaleY;
-  mouse_down = 0;
-  thumb_mode = 0;
-  media.pause();
-  type="";}
+  function wheel_controls(event) {					// wheel over modal window
+    if (event.key != 'h' || type == "image") {				// inca.exe trigger thumbsheet mode
+      if (timer) {return}
+      wheel += Math.abs(event.deltaY)
+      if (wheel < 40) {return}
+      }
+    var block_wheel = 260						// block wheel input timer
+    var rect = media.getBoundingClientRect()
+    if (event.key == 'h' && type == "thumbsheet") {play_thumb(0)}
+    else if (event.key == 'h' || type == "image" || type == "thumbsheet") {	// next media
+      if (event.key != 'h') {if (event.deltaY > 0) {index += 1} else {index -= 1}}
+      speed.innerHTML = ""
+      cap.innerHTML = ""
+      var next = document.getElementById("media" + index)
+      if (next == null) {index = 1; next = document.getElementById('media1')}
+      if (next.src.endsWith("jpg") || next.src.endsWith("png") || next.src.endsWith("webp") || next.src.endsWith("jpeg")) {
+        type = "image"}
+      else {type = "thumbsheet"}
+      start = null
+      media.src = next.src
+      if (type == "image") {						// image mode
+        media.src = next.poster
+        media.poster = next.poster}
+      else {								// thumbsheet mode
+        if (next.poster.match(/favorites/)) {
+          end = next.poster.split('%20').pop()
+          var x = end.split('.')[0]					// inca.exe internal format
+          var y = end.split('.')[1]
+          start = x + '.' + y
+          var z = '%20' + start
+          x = next.poster.replace(z, "")
+          media.poster = x.replace("/favorites/", "/cache/sheets/")}
+        else {media.poster = next.poster.replace("/posters/", "/sheets/")}}}
+    else if ((type == "video" || type == "audio") && xpos < 0.9) {
+      if (media.paused == true) {interval = 0.05}
+      else if (media.duration < 60) {interval = 0.5}			// video seek
+      else {interval = 5}
+      if (event.deltaY > 0) {media.currentTime += interval}
+      else  {media.currentTime -= interval}
+      show_seekbar()
+      block_wheel = 100}
+    else if (type != "image" && xpos > 0.9) {				// video speed
+      if (event.deltaY > 0) {rate = -0.05}
+      else  {rate = 0.05}
+      media.playbackRate += rate
+      show_speed()}
+    setTimeout(function() {timer = 0;},block_wheel)
+    timer = 1; wheel = 0}						// block wheel
+
+
+  function play_media() {
+    if (scaleY > 1.4) {scaleX = 1.4; scaleY = 1.4; lastX = 1.4; lastY = 1.4}
+    media.style.maxWidth = window.innerWidth * 0.6 + "px"
+    media.style.maxHeight = window.innerHeight * 0.7 + "px"
+    media.style.transform = "scale(" + scaleX + "," + scaleY + ")"
+    var caption = document.getElementById("cap" + index)
+    if (type == "thumbsheet") {cap.innerHTML = ""}
+    else {cap.innerHTML = caption.innerHTML}				// from web page to modal player
+    cap.style.animationName = "fadeIn"
+    container.style.animationName = "fadeIn"
+    container.style.display="flex"
+    media.style.animationName = ""
+    if (type == "document") {window.open(media.src); return}
+    if (type == "audio") {
+      media.controls = true
+      media.volume = 1
+      start = 0}
+    media.currentTime = start
+    media.playbackRate = 1
+    media.muted = false
+    media.play()
+    setTimeout(function() {timer = 0; get_start(thumb.poster)},500)
+    container.addEventListener("animationend", fadein_end)
+    cap.addEventListener("animationend", cap_end)
+    media.addEventListener('ended', video_loop)
+}
+
+
+  function play_thumb(e) {						// click of thumbsheet in modal 
+    var rect = media.getBoundingClientRect()
+    var xp = (e.clientX - rect.left) / (media.offsetWidth * scaleX)
+    var yp = (e.clientY - rect.top) / (media.offsetHeight * scaleY)
+    if (media.volume > 0.1) {media.volume = 0; timedVolUp = setInterval(vol_up_timer,20)}
+    var row = Math.floor(yp * 6)
+    var col = Math.ceil(xp * 6)
+    var thumb = 5 * ((row * 6) + col)
+    if (!e || xp > 1 || yp < 0) {thumb = 5}
+    thumb = (thumb - 1) / 200
+    if (media.duration > 60) {offset = 20}
+    else {offset = 0}
+    if (!e && start) {media.currentTime = start}
+    else {media.currentTime = offset - (thumb*offset) + media.duration*thumb}
+    if (media.duration < 20) {media.currentTime = 0}
+    type = "video"
+    media.play()}
 
 
   function interval_timer() {
-    if (xpos != cur_ref) {container.style.cursor = "crosshair"; cur_ref = xpos;}	// hide cursor
-    else {container.style.cursor = "none";}
-    if (window.innerWidth > screen.width * 0.9) {media.style.marginLeft = 0;}		// position player window
-    else  {media.style.marginLeft = - window.innerWidth * 0.17 + "px";}
-    if (type == "video") {show_seekbar();}}
+    if (xpos != cur_ref) {container.style.cursor = "crosshair"; cur_ref = xpos}
+    else {container.style.cursor = "none"}
+    if (window.innerWidth > screen.width * 0.9) {			// hide cursor
+      media.style.marginLeft = 0; media.style.borderRadius = 0
+      container.style.backgroundColor = "Black"}
+    else  {
+      media.style.borderRadius = 4 + "%"
+      container.style.backgroundColor = "#15110a"
+      media.style.marginLeft = - window.innerWidth * 0.17 + "px"}	// position player window
+      if (type == "video" && !seek_active) {show_seekbar(3)}}
 
+  function video_loop(e) {						// video looping
+    media.style.animationName = ""
+    media.play()
+    if (media.playbackRate > 0.65) {media.playbackRate -= 0.05; show_speed()}
+    if (loopX < 3) {
+      media.style.animationName = "loopFade"
+      media.style.setProperty('--scaleStart', `${loopX}`)
+      loopX += 0.12
+      media.style.setProperty('--scaleEnd', `${loopX}`)}}
 
-  function video_loop(e) {
-    media.play();
-    scaleX+=0.1; scaleY+=0.1; lastX+=0.1; lastY+=0.1;
-    if (media.playbackRate > 0.65) {media.playbackRate -= 0.05; show_speed();}
-    media.style.transform = "scale(" + scaleX + "," + scaleY + ")";}
+  function show_seekbar(height) {
+    seek.style.top = window.innerHeight - height + "px"
+    seek.style.left = 0
+    seek.style.width = (window.innerWidth * media.currentTime / media.duration) + "px"}
 
+  function show_speed() {
+    speed.style.animationName=""
+    speed.offsetHeight							// trigger animation
+    speed.innerHTML = Math.round(media.playbackRate *100)
+    y = 2*window.innerHeight*(1-media.playbackRate)
+    speed.style.top = y + "px"
+    speed.style.right = 24 + "px"
+    speed.style.animationName="fadeOut"}
 
-function wheel_controls(event) {					// wheel over modal window
-  if (event.key != 'h' || type == "image") {				// inca.exe trigger thumbsheet mode
-    if (timer) {return}
-    wheel += Math.abs(event.deltaY);
-    if (wheel < 40) {return}
-    }
-  else {if (thumb_mode == 1) {thumb_mode = 2} else {thumb_mode = 1}}	// thumbsheet view mode
-  var block_wheel = 300;						// block wheel input timer
-  var rect = media.getBoundingClientRect();
-  if (thumb_mode || type != "video") {					// next media
-    index *= 1;
-    if (type == "image" || thumb_mode > 1 || type != "thumbsheet" && !thumb_mode || type == "thumbsheet" && thumb_mode) {
-      if (event.deltaY > 0 || event.key == 'h') {index += 1;} 
-      else {index -= 1;}}
-    var next = document.getElementById("media" + index);
-    if (next == null) {index = 1; next = document.getElementById('media1');}
-    if (next.src.endsWith("jpg") || next.src.endsWith("png") || next.src.endsWith("webp") || next.src.endsWith("jpeg")) {
-      type = "image";}
-    else {if (thumb_mode == 1) {type = "thumbsheet"} else {type = "video"}}
-    start = null;
-    media.src = next.src;
-    if (type == "image") {						// image mode
-      media.src = next.poster; 
-      media.poster = next.poster;}
-    else if (thumb_mode == 1) {						// thumbsheet mode
-      if (next.poster.match(/favorites/)) {
-        end = next.poster.split('%20').pop();
-        var x = end.split('.')[0];					// inca.exe internal format
-        var y = end.split('.')[1];
-        start = x + '.' + y;
-        var z = '%20' + start;
-        x = next.poster.replace(z, "");
-        media.poster = x.replace("/favorites/", "/cache/sheets/");}
-      else {media.poster = next.poster.replace("/posters/", "/sheets/");}}
-    else {								// video mode
-      media.poster = "";
-      if (next.poster.match(/favorites/)) {
-        end = next.poster.split('%20').pop();
-        var x = end.split('.')[0];
-        var y = end.split('.')[1];
-        start = x + '.' + y;
-        media.currentTime = start;}
-      media.play();
-      if (media.volume > 0.1) {media.volume = 0; timedVolUp = setInterval(vol_up_timer,20)}
-      setTimeout(function() {						// wait for media to load
-        if (next.poster.match(/favorites/)) {media.poster = x.replace("/favorites/", "/cache/sheets/");}
-        else {media.poster = next.poster.replace("/posters/", "/sheets/");}
-        if (start == null) {
-          var thmb = 4 / 200;						// calculate 1st thumbsheet image
-          if (media.duration > 60) {offset = 20}
-          else {offset = 0;}
-          start = offset - (thmb * offset) + media.duration * thmb;}
-        media.currentTime = start+0.1;},200);}
-    var caption = document.getElementById("cap" + index);
-    cap.innerHTML = caption.innerHTML;					// from web page to modal player
-    if (thumb_mode) {cap.innerHTML = ""}				// from web page to modal player
-    cap.style.animationName = "fadeIn";					// trigger animation
-    cap.addEventListener("animationend", cap_end);
-    if (scaleY > 1.4) {scaleX = 1.4; scaleY = 1.4; lastX = 1.4; lastY = 1.4;}
-    media.style.maxWidth = window.innerWidth * 0.6 + "px";
-    media.style.maxHeight = window.innerHeight * 0.7 + "px";
-    media.style.transform = "scale(" + scaleX + "," + scaleY + ")";}
-  else if (type == "video" && xpos < 0.9) {
-    if (media.paused == true) {interval = 0.05}
-    else if (media.duration < 120) {interval = 1}			// video seek
-    else {interval = 5}
-    if (event.deltaY > 0) {media.currentTime += interval}
-    else  {media.currentTime -= interval}
-    show_seekbar();
-    block_wheel = 100;}
-  else if (type != "image" && xpos > 0.9) {				// video speed
-    if (event.deltaY > 0) {speed = -0.05;}
-    else  {speed = 0.05;}
-    media.playbackRate += speed;
-    show_speed();}
-  setTimeout(function() {timer = 0;},block_wheel);
-  timer = 1; wheel = 0;}						// block wheel
+  function fadeout_end() {
+    container.style.display="none"
+    container.removeEventListener("animationend", fadeout_end)}
 
+  function fadein_end() {
+    document.querySelector("body").style.overflow="hidden"
+    container.removeEventListener("animationend", fadein_end)}
 
-function play_thumb() {							// click of thumbsheet in modal 
-  var rect = media.getBoundingClientRect();
-  var xp = (event.clientX - rect.left) / (media.offsetWidth * scaleX);
-  var yp = (event.clientY - rect.top) / (media.offsetHeight * scaleY);
-  if (media.volume > 0.1) {media.volume = 0; timedVolUp = setInterval(vol_up_timer,20)}
-  var row = Math.floor(yp * 6);
-  var col = Math.ceil(xp * 6);
-  var thumb = 5 * ((row * 6) + col);
-  if (xp > 1 || yp < 0) {thumb = 5}
-  thumb = (thumb - 1) / 200
-  if (media.duration > 60) {offset = 20}
-  else {offset = 0;}
-  media.currentTime = offset - (thumb*offset) + media.duration*thumb;
-  if (media.duration < 20) {media.currentTime = 0}
-  type = "video";
-  thumb_mode = 0;
-  media.play();}
-
-
-function fadeout_end() {
-  container.style.display="none";
-  container.removeEventListener("animationend", fadeout_end);}
-
-function fadein_end() {
-  document.querySelector("body").style.overflow="hidden";
-  container.removeEventListener("animationend", fadein_end);}
-
-function cap_end() {
-  cap.style.animationName = "fadeIn" + index;
-  cap.removeEventListener("animationend", cap_end);}
-
-function progress_end() {
-  progress.style.animationName = "fadeOut" + index;
-  progress.removeEventListener("animationend", progress_end);}
-
-
-
-
+  function cap_end() {
+    cap.style.animationName = "media" + index
+    cap.removeEventListener("animationend", cap_end)}
 
 
 
@@ -342,71 +325,71 @@ function progress_end() {
 
 
 function spool(event, id, input, output) {	// spool folders, playlists, searches etc. into top html panel
-  var link = " ";
-  const z = input.split("|");
-  var el2 = document.getElementById(output);
-  var el = document.getElementById(id);
+  var link = " "
+  const z = input.split("|")
+  var el2 = document.getElementById(output)
+  var el = document.getElementById(id)
   if (id == "all") {				// all search terms
-    z.sort();
+    z.sort()
     for (const x of z) {
-      p = x; 
-      y = p.substring(0, 14); 
-      p=p.replace(/ /g, "%20"); 
-      link = link + "<a href=#" + p + "><li>" + y + "</li>" + "</a>";}
-    el2.innerHTML = link;}
+      p = x
+      y = p.substring(0, 14)
+      p=p.replace(/ /g, "%20")
+      link = link + "<a href=#" + p + "><li>" + y + "</li>" + "</a>"}
+    el2.innerHTML = link}
   if (id == "folders" || id == "sub" || id == "fav") {
     for (x of z) {
-      y = x.split("/"); 
-      var x1 = y.pop(); x1 = y.pop();
-      x1 = x1.substring(0, 14);
-      p=x.replace(/ /g, "%20");
-      link = link + "<a href=#" + p + "><li>" + x1 + "</li>" + "</a>";}
+      y = x.split("/")
+      var x1 = y.pop(); x1 = y.pop()
+      x1 = x1.substring(0, 14)
+      p=x.replace(/ /g, "%20")
+      link = link + "<a href=#" + p + "><li>" + x1 + "</li>" + "</a>"}
     el2.innerHTML = link;}
   if (id == "music" || id == "slides") {		// media pointer playlists
     for (const x of z) {
-      const y = x.split("/"); 
-      var p = y.pop(); 
-      var q = x.replace(p, "");
-      q = p + "#" + q;
-      p=p.replace(/.m3u/g, "");
-      p = p.substring(0, 14);
-      q=q.replace(/ /g, "%20");
-      link = link + "<a href=#" + q + "><li>" + p + "</li>" + "</a>";}
-    el2.innerHTML = link;}
+      const y = x.split("/")
+      var p = y.pop()
+      var q = x.replace(p, "")
+      q = p + "#" + q
+      p=p.replace(/.m3u/g, "")
+      p = p.substring(0, 14)
+      q=q.replace(/ /g, "%20")
+      link = link + "<a href=#" + q + "><li>" + p + "</li>" + "</a>"}
+    el2.innerHTML = link}
   if (id == "search") {				// alpha selected search terms
-    z.sort();
-    var w = el.offsetWidth;
-    var x = ((event.clientX - el.offsetLeft - el.scrollLeft)/w) + 0.02;
-    var upper = String.fromCharCode(Math.floor(25 * x) + 65);
-    var lower = upper.toLowerCase();
-    const f_lower = z.filter(z => z.startsWith(lower));
-    const f_higher = z.filter(z => z.startsWith(upper));
-    y = f_higher.concat(f_lower);
+    z.sort()
+    var w = el.offsetWidth
+    var x = ((event.clientX - el.offsetLeft - el.scrollLeft)/w) + 0.02
+    var upper = String.fromCharCode(Math.floor(25 * x) + 65)
+    var lower = upper.toLowerCase()
+    const f_lower = z.filter(z => z.startsWith(lower))
+    const f_higher = z.filter(z => z.startsWith(upper))
+    y = f_higher.concat(f_lower)
     for (const x of y) {
-      p = x; 
-      p=p.replace(/ /g, "%20"); 
-      link = link + "<a href=#" + p + "><li>" + x + "</li>" + "</a>";}
-    el2.innerHTML = link; el.innerHTML = upper;}}
+      p = x
+      p=p.replace(/ /g, "%20")
+      link = link + "<a href=#" + p + "><li>" + x + "</li>" + "</a>"}
+    el2.innerHTML = link; el.innerHTML = upper}}
 
 
 function getCoords(event, id, sort, link, current) {	// return mouse over controls from html selection strip
-  var y = " ";
-  var of = " ";
-  var units = " ";
-  var el = document.getElementById(id);
-  var w = el.offsetWidth;
-  var x = (event.clientX - el.offsetLeft - el.scrollLeft)/w;
-  if (sort == 'Alpha') {y = Math.floor(26.9 * x) + 64;}
+  var y = " "
+  var of = " "
+  var units = " "
+  var el = document.getElementById(id)
+  var w = el.offsetWidth
+  var x = (event.clientX - el.offsetLeft - el.scrollLeft)/w
+  if (sort == 'Alpha') {y = Math.floor(26.9 * x) + 64}
   if (sort == 'Size') {y = Math.floor(100 * x) * 10;units = "Mb +"}
   if (sort == 'Date') {y = Math.floor(37 * x);units = "months +"}
   if (sort == 'Duration') {y = Math.floor(60 * x);units = "minutes +"}
   if (id =='slider2' || id =='slider3') {y = Math.floor(sort*x)+1; units = sort; sort = "Page"; of = " of "}
-  if (id =='slider4') {sort = "View";}
-  if (current != "") {y = current;}
-  el.href= link + ".htm#" + sort + "#" + y;
-  if (sort =='Random' || sort =='ext' || sort =='Shuffle') {return;}
-  if (sort == 'Alpha') {y = String.fromCharCode(y);}
-  el.innerHTML = y + of + units;}
+  if (id =='slider4') {sort = "View"}
+  if (current != "") {y = current}
+  el.href= link + ".htm#" + sort + "#" + y
+  if (sort =='Random' || sort =='ext' || sort =='Shuffle') {return}
+  if (sort == 'Alpha') {y = String.fromCharCode(y)}
+  el.innerHTML = y + of + units}
 
 
 </script>
@@ -430,30 +413,30 @@ table:hover {color:red; transition:color 0.36s;}
 
 .caption {
   display:flex;
-  font-size:1.4em;
+  font-size:1.2em;
   margin-left:-50px;
   padding:10px;
   animation-name:fadeIn;
-  animation-duration:0.6s;
+  animation-duration:0.17s;
   animation-delay:0.2s;
   animation-fill-mode:backwards;}
 
 .seek_bar {
-  display:fixed;
   position:absolute;
   border-bottom:2px solid rgba(250, 128, 114, 0.2);}
 
-.progress_bar {
-  display:fixed;
-  position:absolute;
-  border-bottom:3px solid rgba(250, 128, 114, 0.4);
-  animation-duration:0.6s;
-  opacity:0;}
+.speed_status {
+  position:fixed;
+  font-size:1.5em;
+  color:Salmon;
+  animation-delay:1s;
+  animation-fill-mode:forwards;
+  animation-duration:1s;}
 
-.modal {
+.modal_container {
   display:none;
   position:fixed;
-  z-index:1;
+  z-index:3;
   top:0;
   left:0;
   justify-content:center;
@@ -464,20 +447,29 @@ table:hover {color:red; transition:color 0.36s;}
   animation-name:fadeIn;
   animation-duration:0.25s;}
 
-.modal-content {
+.media_player {
   width:auto;
   height:auto;
   top:0;
   left:0;
-  border-radius:4%;}
+  animation-duration:0.3s;
+  animation-fill-mode:forwards;
+  --scaleStart:1;
+  --scaleEnd:1;
+  border-radius:4%}
 
-@keyframes fadeIn {
-  from {opacity:0; transform: scale(0.8,0.8);} 
-  to {opacity:1; transform: scale(1,1);}}
+  @keyframes fadeIn {
+    from {opacity:0; transform: scale(0.8)} 
+    to {opacity:1; transform: scale(1)}}
 
-@keyframes fadeOut {
-  from {opacity:1; transform: scale(1,1);} 
-  to {opacity:0; transform: scale(0.8,0.8);}}
+  @keyframes fadeOut {
+    from {opacity:1; transform: scale(1)} 
+    to {opacity:0; transform: scale(0.8)}}
+
+  @keyframes loopFade {
+    from {transform: scale(var(--scaleStart))} 
+    to {transform: scale(var(--scaleEnd))}}
+
 
 
 </style>
