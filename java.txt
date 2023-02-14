@@ -6,11 +6,12 @@
 // scale crashes
 // select/unselect
 // play last - list/thumb - delete - rename - caption - cue/mp3/mp4
-
 // long hover over smallthumb plays sections
 // make thumbsheets better resolution for viewing closer
-// audio fast seek?
-// idea speed 20x until time seek
+// address bar reset
+// fadeout fails
+// 5:50 wake up
+
 
   var wheel = 0			// mouse wheel count
   var timer = 0			// block wheel input
@@ -35,8 +36,7 @@
   var ypos = 0.5
   var RightClick
   var MiddleClick
-  var loopX = 1
-
+  var NewMedia
 
   var offset_top = window.innerHeight/4
   var offset_left = window.innerWidth/8
@@ -44,10 +44,10 @@
   window.addEventListener('keydown', (event) => {		// inca.exe passing control keys
     if (event.key == 'Pause') {close_media()}			// close modal from inca.exe mouseback button
     if (event.key == 'k') {RightClick = true}
-    if (event.key == 'h') {MiddleClick = true; wheel_controls(event)}})		
+    if (event.key == 'h') {MiddleClick = true; media_control(event)}})		
 
   function mouseOver(x) {if (!mouse_down) {mouse_over = x}}	// is mouse over media window 
-     
+
   function mouseDown(e) {					// toggle pause & mute
     timout = 0
     mouse_down = 1
@@ -59,10 +59,11 @@
   function mouseUp(e) {						// !!!! inca.exe forces 'up' immediately..
     lastX = scaleX						// ..so must use timout complexity
     lastY = scaleY
-    loopX = lastX
     if (media.style.animationName == "paused") {
-      media.style.setProperty('--scaleStart', `${scaleX}`)
-      media.style.setProperty('--scaleEnd', `${scaleX}`)
+      media.style.setProperty('--scaleStartX', `${scaleX}`)
+      media.style.setProperty('--scaleEndX', `${scaleX}`)
+      media.style.setProperty('--scaleStartY', `${scaleY}`)
+      media.style.setProperty('--scaleEndY', `${scaleY}`)
       media.style.animationName = "loopFade"}
     mouse_down = 0
     if (!gest && !timout && !seek_active) {
@@ -100,10 +101,12 @@
       if (Math.abs(yref - e.clientY) > 5 && !gest) {gest = "magnify"}
 //    if (mouse_over == true) {gest = "offset"}
       if (gest == "skinny") {
+        scaleY = lastY
         scaleX = lastX + ((xref - e.clientX) / 374)			// skinny or magnify
+        if (media.style.animationName == "loopFade") {media.style.animationName = "paused"}
         media.style.transform = "scale(" + scaleX + "," + scaleY + ")"}
       if (gest == "magnify") {
-        scaleY = lastY - ((yref - e.clientY) / 142);
+        scaleY = lastY - ((yref - e.clientY) / 142)
         scaleX = lastX - ((yref - e.clientY) / 142)
         if (media.style.animationName == "loopFade") {media.style.animationName = "paused"}
         media.style.transform = "scale(" + scaleX + "," + scaleY + ")"}
@@ -138,22 +141,34 @@
     cap = document.getElementById("myCap")				// modal player caption
     media.style.top = offset_top + "px"
     media.style.left = offset_left + "px"
-if (type == "audio" || type == "video" || type == "image") {
-      if (type == "image") {media.src = thumb.poster; media.poster = thumb.poster}
-      else {media.src = thumb.src; media.poster = ""}
-      media.volume = 0
-      play_media()
-      timer = 1
-      timedEvents = setInterval(interval_timer,100)}}
+if (type == "document") {return}
+if (type == "document") {window.open(media.src); return}
+    if (type == "image") {media.src = thumb.poster; media.poster = thumb.poster}
+    if (type == "video") {media.poster = ""; media.src = thumb.src}
+    ResetPlayer()
+    container.style.animationName = "fadeIn"
+    media.style.animationName = ""
+    media.volume = 0
+    media.currentTime = start
+    media.muted = false
+    media.play()
+    timer = 1
+    if (type == "image") {
+    NewMedia = true;
+    setTimeout(function() {NewMedia = false;},200)}			// block false Mclick signal
+    setTimeout(function() {timer = 0; container.style.display="flex"},100)
+    container.addEventListener("animationend", fadein_end)		// fade in media
+    media.addEventListener('ended', media_loop)				// what to do after played
+    timedEvents = setInterval(interval_timer,100)}			// check every 100mS
 
 
   function close_media() {						// or receiving "pause" key from inca.exe
-    if (!type) {scroll(0,0); return}
+    if (!type) {scroll(0,0); location.reload(); return}
     timedVolDown = setInterval(vol_down_timer,9)
     document.querySelector("body").style.overflow = "auto"
     document.getElementById("title" + index).style.color = "LightSalmon"
     container.addEventListener("animationend", fadeout_end)
-    media.removeEventListener('ended', video_loop)
+    media.removeEventListener('ended', media_loop)
     container.style.animationName="fadeOut"
     clearInterval(timedEvents)
     speed.innerHTML = ""
@@ -161,85 +176,63 @@ if (type == "audio" || type == "video" || type == "image") {
     lastX = scaleX
     lastY = scaleY
     mouse_down = 0
+    media.src = ""
+    media.load();
     type=""}
 
 
-  function wheel_controls(event) {					// wheel over modal window
-    if (event.key != 'h' || type == "image") {				// inca.exe trigger thumbsheet mode
-      if (timer) {return}
-      wheel += Math.abs(event.deltaY)
-      if (wheel < 40) {return}
-      }
+  function media_control(event) {					// wheel over modal window
+    if (timer || NewMedia) {return}
+    wheel += Math.abs(event.deltaY)
+    if (wheel < 40) {return}
+    if (event.deltaY > 0) {var WheelDown = true}
     var block_wheel = 260						// block wheel input timer
     var rect = media.getBoundingClientRect()
-    if (event.key == 'h' && type == "thumbsheet") {play_thumb(0)}
-    else if (event.key == 'h' || type == "image" || type == "thumbsheet") {	// next media
-      if (event.key != 'h') {if (event.deltaY > 0) {index += 1} else {index -= 1}}
+    if (MiddleClick || type == "image" || type == "thumbsheet") {	// next media
+      if (MiddleClick) {if (type != "video") {index += 1}}
+      else {if (WheelDown) {index += 1} else {index -= 1}}
       speed.innerHTML = ""
       cap.innerHTML = ""
-      var next = document.getElementById("media" + index)
+      var last_type = type
+      type = ""
+      next = document.getElementById("media" + index)
       if (next == null) {index = 1; next = document.getElementById('media1')}
       if (next.src.endsWith("jpg") || next.src.endsWith("png") || next.src.endsWith("webp") || next.src.endsWith("jpeg")) {
         type = "image"}
-      else {type = "thumbsheet"}
-      start = null
       media.src = next.src
-      if (type == "image") {						// image mode
+      if (type == "image") {						// image
         media.src = next.poster
         media.poster = next.poster}
-      else {								// thumbsheet mode
+      else {
+        start = null
         if (next.poster.match(/favorites/)) {
-          end = next.poster.split('%20').pop()
-          var x = end.split('.')[0]					// inca.exe internal format
+          end = next.poster.split('%20').pop()				// inca.exe internal format
+          x = end.split('.')[0]
           var y = end.split('.')[1]
           start = x + '.' + y
           var z = '%20' + start
-          x = next.poster.replace(z, "")
-          media.poster = x.replace("/favorites/", "/cache/sheets/")}
-        else {media.poster = next.poster.replace("/posters/", "/sheets/")}}}
-    else if ((type == "video" || type == "audio") && xpos < 0.9) {
+          x = next.poster.replace(z, "")}
+        if (next.poster.match(/favorites/)) {x = x.replace("/favorites/", "/cache/sheets/")}
+        else {x = next.poster.replace("/posters/", "/sheets/")}
+        if (MiddleClick && last_type == "thumbsheet") {
+          setTimeout(function() {media.poster = x},300) 
+          setTimeout(function() {play_thumb(0)},100)}
+        else {media.poster = x; type = "thumbsheet"}}}
+    else if ((type == "video" || type == "audio") && xpos < 0.9) {	// video seek
       if (media.paused == true) {interval = 0.05}
-      else if (media.duration < 60) {interval = 0.5}			// video seek
+      else if (media.duration < 60) {interval = 0.5}
       else {interval = 5}
-      if (event.deltaY > 0) {media.currentTime += interval}
+      if (WheelDown) {media.currentTime += interval}
       else  {media.currentTime -= interval}
       show_seekbar()
       block_wheel = 100}
     else if (type != "image" && xpos > 0.9) {				// video speed
-      if (event.deltaY > 0) {rate = -0.05}
+      if (WheelDown) {rate = -0.05}
       else  {rate = 0.05}
       media.playbackRate += rate
       show_speed()}
-    setTimeout(function() {timer = 0;},block_wheel)
-    timer = 1; wheel = 0}						// block wheel
-
-
-  function play_media() {
-    if (scaleY > 1.4) {scaleX = 1.4; scaleY = 1.4; lastX = 1.4; lastY = 1.4}
-    media.style.maxWidth = window.innerWidth * 0.6 + "px"
-    media.style.maxHeight = window.innerHeight * 0.7 + "px"
-    media.style.transform = "scale(" + scaleX + "," + scaleY + ")"
-    var caption = document.getElementById("cap" + index)
-    if (type == "thumbsheet") {cap.innerHTML = ""}
-    else {cap.innerHTML = caption.innerHTML}				// from web page to modal player
-    cap.style.animationName = "fadeIn"
-    container.style.animationName = "fadeIn"
-    container.style.display="flex"
-    media.style.animationName = ""
-    if (type == "document") {window.open(media.src); return}
-    if (type == "audio") {
-      media.controls = true
-      media.volume = 1
-      start = 0}
-    media.currentTime = start
-    media.playbackRate = 1
-    media.muted = false
-    media.play()
-    setTimeout(function() {timer = 0; get_start(thumb.poster)},500)
-    container.addEventListener("animationend", fadein_end)
-    cap.addEventListener("animationend", cap_end)
-    media.addEventListener('ended', video_loop)
-}
+    setTimeout(function() {timer = 0},block_wheel)			// block wheel
+    timer = 1; wheel = 0; MiddleClick = false}
 
 
   function play_thumb(e) {						// click of thumbsheet in modal 
@@ -252,13 +245,30 @@ if (type == "audio" || type == "video" || type == "image") {
     var thumb = 5 * ((row * 6) + col)
     if (!e || xp > 1 || yp < 0) {thumb = 5}
     thumb = (thumb - 1) / 200
-    if (media.duration > 60) {offset = 20}
-    else {offset = 0}
+    var offset = 0
     if (!e && start) {media.currentTime = start}
-    else {media.currentTime = offset - (thumb*offset) + media.duration*thumb}
-    if (media.duration < 20) {media.currentTime = 0}
+    else if (media.duration) {
+      if (media.duration > 60) {offset = 20}
+      media.currentTime = offset - (thumb*offset) + media.duration*thumb}
     type = "video"
+    ResetPlayer()
     media.play()}
+
+
+  function ResetPlayer() {
+    if (scaleY > 1.4) {scaleX = 1.4; scaleY = 1.4; lastX = 1.4; lastY = 1.4}
+    media.style.maxWidth = window.innerWidth * 0.6 + "px"
+    media.style.maxHeight = window.innerHeight * 0.7 + "px"
+    media.style.transform = "scale(" + scaleX + "," + scaleY + ")"
+    var caption = document.getElementById("cap" + index)
+    cap.style.animationName = "fadeIn"
+    if (type == "audio") {media.controls = true; media.volume = 1; start = 0}
+    media.playbackRate = 1
+    cap.addEventListener("animationend", cap_end)
+    setTimeout(function() {
+      if (type == "thumbsheet") {cap.innerHTML = ""} 
+      else {cap.innerHTML = caption.innerHTML}},100)}
+
 
 
   function interval_timer() {
@@ -271,22 +281,29 @@ if (type == "audio" || type == "video" || type == "image") {
       media.style.borderRadius = 4 + "%"
       container.style.backgroundColor = "#15110a"
       media.style.marginLeft = - window.innerWidth * 0.17 + "px"}	// position player window
-      if (type == "video" && !seek_active) {show_seekbar(3)}}
+      if ((type == "video" || type == "audio") && !seek_active) {show_seekbar(3)}}
 
-  function video_loop(e) {						// video looping
+  function media_loop(e) {						// media looping
     media.style.animationName = ""
-    media.play()
-    if (media.playbackRate > 0.65) {media.playbackRate -= 0.05; show_speed()}
-    if (loopX < 3) {
-      media.style.animationName = "loopFade"
-      media.style.setProperty('--scaleStart', `${loopX}`)
-      loopX += 0.12
-      media.style.setProperty('--scaleEnd', `${loopX}`)}}
+    if (type == "audio") {
+      index += 1
+      media.src = document.getElementById("media" + index).src
+      media.play()}
+    else if (type == "video") {
+      media.play()
+      if (media.playbackRate > 0.65) {media.playbackRate -= 0.05; show_speed()}
+      if (lastX < 3 && !mouse_down) {
+        media.style.animationName = "loopFade"
+        media.style.setProperty('--scaleStartX', `${lastX}`)
+        media.style.setProperty('--scaleStartY', `${lastY}`)
+        lastX += 0.12; lastY += 0.12
+        media.style.setProperty('--scaleEndX', `${lastX}`)
+        media.style.setProperty('--scaleEndY', `${lastY}`)}}}
 
   function show_seekbar(height) {
-    seek.style.top = window.innerHeight - height + "px"
-    seek.style.left = 0
-    seek.style.width = (window.innerWidth * media.currentTime / media.duration) + "px"}
+      seek.style.top = window.innerHeight - height + "px"
+      seek.style.left = 0
+      seek.style.width = (window.innerWidth * media.currentTime / media.duration) + "px"}
 
   function show_speed() {
     speed.style.animationName=""
@@ -412,10 +429,11 @@ table:hover {color:red; transition:color 0.36s;}
 
 
 .caption {
-  display:flex;
-  font-size:1.2em;
-  margin-left:-50px;
-  padding:10px;
+  position:fixed;
+  top:600px;
+  left:300px;
+  z-index:9;
+  font-size:1.4em;
   animation-name:fadeIn;
   animation-duration:0.17s;
   animation-delay:0.2s;
@@ -429,7 +447,7 @@ table:hover {color:red; transition:color 0.36s;}
   position:fixed;
   font-size:1.5em;
   color:Salmon;
-  animation-delay:1s;
+  animation-delay:1.4s;
   animation-fill-mode:forwards;
   animation-duration:1s;}
 
@@ -452,10 +470,12 @@ table:hover {color:red; transition:color 0.36s;}
   height:auto;
   top:0;
   left:0;
-  animation-duration:0.3s;
+  animation-duration:0.6s;
   animation-fill-mode:forwards;
-  --scaleStart:1;
-  --scaleEnd:1;
+  --scaleStartX:1;
+  --scaleEndX:1;
+  --scaleStartY:1;
+  --scaleEndY:1;
   border-radius:4%}
 
   @keyframes fadeIn {
@@ -467,8 +487,8 @@ table:hover {color:red; transition:color 0.36s;}
     to {opacity:0; transform: scale(0.8)}}
 
   @keyframes loopFade {
-    from {transform: scale(var(--scaleStart))} 
-    to {transform: scale(var(--scaleEnd))}}
+    from {transform: scale(var(--scaleStartX),var(--scaleStartY))} 
+    to {transform: scale(var(--scaleEndX),var(--scaleEndY))}}
 
 
 
