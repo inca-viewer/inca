@@ -1,11 +1,7 @@
 
 ; MButton is converted to LButton to get address bar. if no address, MButton sent
-; RButton is same, so both send LButton signals to java
+; RButton is same, so both send LButton signals to java first, then key codes
 ; back button is intercepted and converted to {Pause} for java to close media
-
-; so inca sends {pause} to close modalon backspace
-; and 
-
 
 
 ; File f = new File(filePathString);
@@ -73,7 +69,7 @@
         Global page := 1		; current page within list
         Global sort			; eg. Alpha
 	Global filter			; secondary search filter eg. date, duration, Alpha letter
-        Global inca_tab			; media webpage exists = 1, is active = 2
+        Global inca_tab			; inca tab exists
         Global click			; mouse click type
         Global timer			; click or back timer
         Global view := 1		; thumb or list view
@@ -205,6 +201,7 @@ if (type == "video")
         else title := tab_name
         tab_name := title
         FileRead, font, %inca%\apps\ClearSans-Thin.txt			; firefox bug - requires base64 font
+        FileRead, style, %inca%\apps\style.txt
         FileRead, java, %inca%\java.txt
         Loop, Files, %inca%\music\*.m3u					; for top panel
             music = %music%|%A_LoopFileFullPath%
@@ -228,7 +225,6 @@ if (type == "video")
         Loop, Parse, list, `n, `r 					; split list into smaller web pages
             {
             item := StrSplit(A_LoopField, "/")				;  sort filter \ src \ media type \ ext
-            list_id := item.1
             source := item.2
             type := item.3
             sort_name := item.4
@@ -243,7 +239,7 @@ if (type == "video")
         pages := ceil(list_size/size)
         header_html = <!--`r`n%view%>%page%>%sort%>%toggles%>%this_search%>%search_term%>%path%>%folder%>%playlist%>%last_media%`r`n%page_media%`r`n-->`r`n<!doctype html>`r`n<html>`r`n<head>`r`n<meta charset="UTF-8">`r`n<title>Inca - %title%</title>`r`n<meta name="viewport" content="width=device-width, initial-scale=1">`r`n<link rel="icon" type="image/x-icon" href="file:///%inca%\apps\icons\inca.ico">`r`n</head>`r`n%font%
             panel2_html = <body>`r`n`r`n<div style="margin-left:%offset%`%; width:80`%">`r`n<ul class="menu" id='all' style="max-height:34em; background-color:inherit; column-count:8; border-radius:9px; padding-left:1em; font-size:0.9em"></ul>`r`n`r`n
-        panel_html = %panel2_html%<ul class="menu" id='panel' style="height:4.5em; width:80`%; margin-left:4em; margin-top:1em; margin-bottom:1em; column-count:8; border-radius:9px; padding-left:1em; font-size:0.95em"></ul>`r`n`r`n<ul class="menu" style="display:flex; justify-content:space-between"><a class='slider' id='sub' onmouseover='spool(event, id, "%subfolders%", "panel")' style="width:7`%;">Sub</a>`r`n<a href="file:///%inca%/cache/html/downloads.htm" class='slider' id='folders' onmouseover='spool(event, id, "%folder_list%", "panel")' style="width:7`%;">Fol</a>`r`n<a  href="file:///%inca%/cache/html/favorites.htm" class='slider' id='fav' onmouseover='spool(event, id, "%fav_folders%", "panel")' style="width:7`%;">Fav</a>`r`n<a href="file:///%inca%/cache/html/new.htm" class='slider' id='slides' onmouseover='spool(event, id, "%slides%", "panel")' style="width:7`%;">Slides</a>`r`n<a href="file:///%inca%/cache/html/new.htm" class='slider' id='music' onmouseover='spool(event, id, "%music%", "panel")' style="width:7`%;">Music</a>`r`n<a id='search' class='slider' onmousemove='spool(event, id, "%search_list%", "panel")' onmousedown='spool(event,"all","%search_list%", "all")'>Search</a></ul>`r`n`r`n
+        panel_html = %panel2_html%<ul class="menu" id='panel' style="height:4.5em; width:80`%; margin-left:4em; margin-top:1em; margin-bottom:1em; column-count:8; border-radius:9px; padding-left:1em; font-size:0.9em"></ul>`r`n`r`n<ul class="menu" style="display:flex; justify-content:space-between"><a class='slider' id='sub' onmouseover='spool(event, id, "%subfolders%", "panel")' style="width:7`%;">Sub</a>`r`n<a href="file:///%inca%/cache/html/downloads.htm" class='slider' id='folders' onmouseover='spool(event, id, "%folder_list%", "panel")' style="width:7`%;">Fol</a>`r`n<a  href="file:///%inca%/cache/html/favorites.htm" class='slider' id='fav' onmouseover='spool(event, id, "%fav_folders%", "panel")' style="width:7`%;">Fav</a>`r`n<a href="file:///%inca%/cache/html/new.htm" class='slider' id='slides' onmouseover='spool(event, id, "%slides%", "panel")' style="width:7`%;">Slides</a>`r`n<a href="file:///%inca%/cache/html/new.htm" class='slider' id='music' onmouseover='spool(event, id, "%music%", "panel")' style="width:7`%;">Music</a>`r`n<a id='search' class='slider' onmousemove='spool(event, id, "%search_list%", "panel")' onmousedown='spool(event,"all","%search_list%", "all")'>Search</a></ul>`r`n`r`n
         filter_html =`r`n`r`n<ul class="menu" style="display:flex; justify-content:space-between;">`r`n<input type="search" class="searchbox" value="%search_term%" style="width:14`%; border-radius:8px; height:16px; border:none; color:#666666; background-color:#1b1814;"><a href="#Searchbox" style="color:LightSalmon;"><c>+</c></a>`r`n`r`n
         Loop, Parse, sort_list, `|
             if A_LoopField
@@ -263,7 +259,7 @@ if (type == "video")
         StringReplace, x, x, \, /, All
         y = %sort_html%%filter_html%</ul>%title_html%%html%
         StringReplace, y, y, \, /, All
-        FileAppend, %x%%java%%y%</body>`r`n</html>`r`n, %inca%\cache\html\%tab_name%.htm, UTF-8
+        FileAppend, %x%%java%%style%%y%</body>`r`n</html>`r`n, %inca%\cache\html\%tab_name%.htm, UTF-8
         LoadHtml()
         PopUp("",0,0,0)
         DetectMedia(last)						; restore media parameters
