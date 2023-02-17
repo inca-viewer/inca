@@ -4,28 +4,31 @@
 // sort out start times < 60 delete all sheets < 20 dur
 // position:fixed; 
 // scale crashes
-// select/unselect
 // play last - list/thumb - delete - rename - caption - cue/mp3/mp4
 // address bar reset
 // 5:50 wake up
 // convert mid wma wmv files
-// dead links
+// dead links are wmv etc
 // sound
-// modals betwwen open tabs
-// srt files
-// wherever cursor is drifts to centralise to it
+// modals between open tabs
+// .srt files
+// wherever cursor is, focus drifts to centralise content to it
 // highlight folder or playlist same as toggles on main inca tab
+// not pass lists to panel load as const strings in java
+// show selected qty next to cursor as reminder
+// move playlist items 
 
 
 
   var wheel = 0			// mouse wheel count
   var timer = 0			// block wheel input
   var start			// video initial start time
-  var index			// media id index (e.g. media14)
-  var type
-  var seek_active;
-  var mouse_over = false
-  var selected = "#,"
+  var link			// mouseover media element
+  var index			// media index (e.g. media14)
+  var type			// audio, video, image, thumb, document
+  var seek_active;		// currently seeking video
+  var selected = "#,"		// list of selected media in page
+  var playing = false
 
   var cursor = ""		// mouse movement globals
   var mouse_down
@@ -35,24 +38,26 @@
   var lastY = 1
   var rate = 0
   var gest = 0
-  var cur_ref			// show cursor when move
+  var cur_ref			// show cursor when moves over media
   var xref
   var yref
   var xpos = 0.5
   var ypos = 0.5
-  var RightClick
-  var MiddleClick
-  var NewMedia
+  var MiddleClick = false
+
 
   var offset_top = window.innerHeight/4
   var offset_left = window.innerWidth/8
 
   window.addEventListener('keydown', (event) => {		// inca.exe passing control keys
-    if (event.key == 'Pause') {close_media()}			// close modal from inca.exe mouseback button
-    if (event.key == 'k') {RightClick = true}
-    if (event.key == 'h') {MiddleClick = true; media_control(event)}})		
+    if (event.key == 'Pause') {close_media()}			// from inca.exe mouseback button
+    if (event.key == 'h') {
+      MiddleClick = true; 
+      if (playing) {media_control(event)}
+      else {open_media(event, link, start, type, index)}}})		
 
-  function mouseOver(x) {if (!mouse_down) {mouse_over = x}}	// is mouse over media window 
+  function getLink(event, el, s, t, i) {			// mouse over small thumbnails on webpage
+    link = el; start = s; type = t; index = i} 			// get media info under cursor
 
   function mouseDown(e) {					// toggle pause & mute
     timout = 0
@@ -92,6 +97,7 @@
     if (media.volume <= 0.11) {media.volume = 0; clearInterval(timedVolDown)}}
 
   function select(i) {
+    document.getElementById("panel").innerHTML = ""			// highlight selections on page
     el = document.getElementById("media" + i)
     if (el.style.border == "0.1px solid lightsalmon") {
       el.style.border = "none"
@@ -108,7 +114,6 @@
     if (mouse_down) {
       if (Math.abs(xref - e.clientX) > 5 && !gest) {gest = "skinny"}
       if (Math.abs(yref - e.clientY) > 5 && !gest) {gest = "magnify"}
-//    if (mouse_over == true) {gest = "offset"}
       if (gest == "skinny") {
         scaleY = lastY
         scaleX = lastX + ((xref - e.clientX) / 374)			// skinny or magnify
@@ -121,7 +126,7 @@
         yref = e.clientY
         if (media.style.animationName == "loopFade") {media.style.animationName = "paused"}
         media.style.transform = "scale(" + scaleX + "," + scaleY + ")"}
-      if (gest == "offset") {
+if (gest == "offset") {
         offset_top += e.clientY - yref
         offset_left += e.clientX - xref
         xref = e.clientX
@@ -143,9 +148,8 @@
 
 
   function open_media(event, thumb, s, t, i) {				// click small thumbnail on webpage
-    if (RightClick == true) {RightClick = false; return}
-    select(i)								// toggle selecion back
     start = s; type = t; index = i
+    if (!MiddleClick) {select(i)}
     container = document.getElementById("myModal")
     media = document.getElementById("myPlayer")				// set global id's
     speed = document.getElementById("mySpeedbar")
@@ -153,8 +157,7 @@
     cap = document.getElementById("myCap")				// modal player caption
     media.style.top = offset_top + "px"
     media.style.left = offset_left + "px"
-if (type == "document") {return}
-if (type == "document") {window.open(media.src); return}
+    if (type == "document") {return}
     if (type == "image") {media.src = thumb.poster; media.poster = thumb.poster}
     else {media.poster = ""; media.src = thumb.src}
     media.volume = 0
@@ -164,18 +167,19 @@ if (type == "document") {window.open(media.src); return}
     media.currentTime = start
     media.muted = false
     media.play()
+    playing = true
     timer = 1
-    if (type == "image") {
-    NewMedia = true;
-    setTimeout(function() {NewMedia = false;},200)}			// block false Mclick signal
     setTimeout(function() {timer = 0; container.style.display="flex"},100)
     container.addEventListener("animationend", fadein_end)		// fade in media
     media.addEventListener('ended', media_loop)				// what to do after played
     timedEvents = setInterval(interval_timer,100)}			// check every 100mS
 
 
-  function close_media() {						// or receiving "pause" key from inca.exe
-    if (!type) {scroll(0,0); location.reload(); return}
+  function close_media() {						// or receiving mouse back key from inca.exe
+    if (!playing) {
+      if (document.body.getBoundingClientRect().top < 0) {scroll(0,0)}
+      else {scroll(0,0); location.reload()}
+      return}
     timedVolDown = setInterval(vol_down_timer,9)
     document.querySelector("body").style.overflow = "auto"
     document.getElementById("title" + index).style.color = "lightsalmon"
@@ -185,19 +189,19 @@ if (type == "document") {window.open(media.src); return}
     clearInterval(timedEvents)
     speed.innerHTML = ""
     cap.innerHTML = ""
+    playing = false
     lastX = scaleX
     lastY = scaleY
-    mouse_down = 0
-    type=""}
+    mouse_down = 0}
 
 
-  function media_control(event) {					// wheel over modal window
-    if (timer || NewMedia) {return}
+  function media_control(event) {					// wheel over modal
+    if (timer) {return}
     wheel += Math.abs(event.deltaY)
     if (wheel < 40) {return}
+    var block_wheel = 260
     var WheelDown = false
     if (event.deltaY > 0) {WheelDown = true}
-    var block_wheel = 260
     if (MiddleClick || type == "image" || (xpos < 0.95 && type == "thumbsheet")) {
       if (MiddleClick) {if (type != "video" || xpos > 0.95) {index += 1}}
       else {if (WheelDown) {index += 1} else {index -= 1}}		// next media
@@ -284,7 +288,7 @@ if (type == "document") {window.open(media.src); return}
     cap.innerHTML = ""
     setTimeout(function() {						// wait until video loaded
       if (innerCap.innerHTML && type != "thumbsheet") {
-    var rect = media.getBoundingClientRect()
+        var rect = media.getBoundingClientRect()
         cap.style.top = rect.bottom + 10 + "px"
         cap.style.left = rect.left + 200 + "px"
         cap.style.animationName = "fadeCap"
@@ -304,7 +308,7 @@ if (type == "document") {window.open(media.src); return}
       media.style.marginLeft = - window.innerWidth * 0.17 + "px"}	// position player window
       if ((type == "video" || type == "audio") && !seek_active) {show_seekbar(4)}}
 
-  function media_loop(e) {						// media looping
+  function media_loop(e) {						// media looping or next
     media.style.animationName = ""
     if (type == "audio") {
       index += 1
@@ -368,7 +372,7 @@ function spool(event, id, input, output) {	// spool folders, playlists, searches
       var x1 = y.pop(); x1 = y.pop()
       x1 = x1.substring(0, 14)
       p=x.replace(/ /g, "%20")
-      link = link + "<a href=#" + p + "><li>" + x1 + "</li>" + "</a>"}
+      link = link + "<a href=#" + p + selected + "#select" + "><li>" + x1 + "</li>" + "</a>"}
     el2.innerHTML = link;}
   if (id == "music" || id == "playlists") {		// media pointer playlists
     for (const x of z) {
@@ -394,8 +398,9 @@ function spool(event, id, input, output) {	// spool folders, playlists, searches
       p = x
       p=p.replace(/ /g, "%20")
       link = link + "<a href=#" + p + "><li>" + x + "</li>" + "</a>"}
-    el2.innerHTML = link; el.innerHTML = upper}}
-//selected + "#select" + 
+    el2.innerHTML = link; el.innerHTML = upper}
+    selected = "#,"}
+
 
 function getCoords(event, id, sort, link, current) {	// return mouse over controls from html selection strip
   var y = " "
