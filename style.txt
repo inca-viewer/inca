@@ -3,11 +3,9 @@
 
 .caption {
   position:fixed;
-  top:600px;
-  left:300px;
   z-index:9;
-  color:LightSalmon;
-  font-size:1.4em; 
+  color:lightsalmon;
+  font-size:1.4em;
   animation-name:fadeIn;
   animation-duration:0.7s;
   animation-fill-mode:forwards;}
@@ -18,20 +16,20 @@
 
 .speed_status {
   position:fixed;
-  font-size:1.5em;
-  color:Salmon;
-  animation-delay:1.2s;
-  animation-duration:1.4s;
+  font-size:2.1em;
+  color:salmon;
+  animation-duration:3.2s;
+  animation-timing-function: ease-in;
   animation-fill-mode:forwards;}
 
 .modal_container {
   display:none;
   position:fixed;
+  justify-content:center;
+  align-items:center;
   z-index:3;
   top:0;
   left:0;
-  justify-content:center;
-  align-items:center;
   height:100vh;
   width:100vw;
   background-color:#15110a;
@@ -39,10 +37,11 @@
   animation-duration:0.25s;}
 
 .media_player {
-  width:auto;
-  height:auto;
-  top:0;
-  left:0;
+  position: absolute;
+  margin: 0;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
   animation-duration:0.9s;
   animation-fill-mode:forwards;
   --scaleStartX:1;
@@ -69,10 +68,10 @@
     to {transform: scale(var(--scaleEndX),var(--scaleEndY))}}
 
 
-body {font-family: 'ClearSans-Thin'; scrollbar-color: red yellow; overflow-x:hidden; background:#15110a; color:#666666; font-size:0.8em; margin-top:120px;}
+body {font-family: 'Open Sans',sans-serif; font-family: 'ClearSans-Thin'; cursor:default; overflow-x:hidden; background:#15110a; color:#666666; font-size:0.8em; margin-top:140px;}
 a:link {color:#15110a;}
 a:visited {color:#15110a;}
-a {text-decoration:none; color:#826858;}
+a {text-decoration:none; color:#826858; cursor:default;}
 a.slider {display:inline-block; width:35%; height:1.2em; border-radius:9px; color:#826858; transition:color 1.4s; font-size:1em; background-color:#1b1814; text-align:center}
 a.slider:hover {color:red; transition:color 0.36s;}
 ul.menu {column-gap:12px; margin:auto; list-style-type:none; padding:0; white-space:nowrap;}

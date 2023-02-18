@@ -11,8 +11,7 @@
 ; show status panel
 ; right click select and while playing in modal
 ; screenshot func
-; wmv files 
-; thumb size change easier?
+; wmv files
 ; text files fail to load to notepad because no longer inca internal ref "#%cap%#%i%"
 
 
@@ -90,7 +89,6 @@
 	Global skinny			; media width
 	Global cue			; mp3/mp4 snip point
 
-	Global modal			; modal active
 
 
 
@@ -103,6 +101,13 @@
         caption =
         start := 0
         width := Setting("Thumb Width")
+
+if (view == 2)
+  width *=1.3
+if (view == 3)
+  width *=6
+
+
 gap := Setting("Thumb Gap")
         if DetectMedia(input)
             thumb := src
@@ -112,7 +117,7 @@ gap := Setting("Thumb Gap")
         FileRead, cap, %inca%\cache\captions\%media%.txt
         cap := StrReplace(cap, "`r`n", "<br>")
         if cap
-            cap = <div style="width:70`%; margin-left:28`%; color:#826858; font-size:0.85em;"><span id="cap%i%">%cap%</span></div>
+            cap = <div style="width:70`%; margin-left:8em; color:#826858; font-size:0.85em;"><span id="cap%i%">%cap%</span></div>
         if ((folder == "Favorites" || folder == "playlists") && type == "image")
             IfExist, %inca%\cache\cuts\%media%.txt			; get inner src from .jpg link file
                 {
@@ -157,7 +162,7 @@ if (type == "video")
      poster = 
         if !view							; list view 
             {
-            entry = <div onclick="select(%i%)" style="padding-left:5em;"><a href="#Media#%i%"><table><tr><td id="hover_image"><video id="media%i%" style="width:100`%; %select%" onmouseover="getLink(event, this, '%start%', '%type%', %i%)" onclick="open_media(event, this, '%start%', '%type%', %i%)" %poster% src="file:///%src%" type="video/mp4" muted></video></tr></table><table style="table-layout:fixed; width:100`%"><tr><td style="color:#777777; width:4em; text-align:center">%sort_name%</td><td style="width:4em; font-size:0.7em; text-align:center">%dur%</td><td style="width:3em; font-size:0.7em; text-align:center">%size%</td><td style="width:4em; padding-right:3.2em; font-size:0.7em; text-align:center">%ext%</td><td style="%select% %highlight% white-space:nowrap; text-overflow:ellipsis; font-size:1em"><div id="title%i%" style="text-overflow:ellipsis; overflow:hidden; white-space:nowrap; width:34em">%media% %fav%</div></td></tr></table></a></div>`r`n`r`n
+            entry = <div onclick="select(%i%)" style="padding-left:5em;"><a href="#Media#%i%"><table><tr><td id="hover_image"><video id="media%i%" style="width:100`%; %select%" onmouseout="getLink(event, this, '%start%', '%type%', %i%, 0)" onmouseover="getLink(event, this, '%start%', '%type%', %i%, 1)" onclick="open_media(event, this, '%start%', '%type%', %i%)" %poster% src="file:///%src%" type="video/mp4" muted></video></tr></table><table style="table-layout:fixed; width:100`%"><tr><td style="color:#777777; width:4em; text-align:center">%sort_name%</td><td style="width:4em; font-size:0.7em; text-align:center">%dur%</td><td style="width:3em; font-size:0.7em; text-align:center">%size%</td><td style="width:4em; padding-right:3.2em; font-size:0.7em; text-align:center">%ext%</td><td style="%select% %highlight% white-space:nowrap; text-overflow:ellipsis; font-size:1em"><div id="title%i%" style="text-overflow:ellipsis; overflow:hidden; white-space:nowrap; width:34em">%media% %fav%</div></td></tr></table></a></div>`r`n`r`n
             }
         else
             {
@@ -173,7 +178,7 @@ if (type == "video")
                     }
 	        entry = <a href="#Media#%i%"><div style="display:inline-block; width:88`%; color:#555351; transition:color 1.4s; margin-left:8`%; text-align:center; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; %highlight%;">%sort_name% &nbsp;&nbsp;%link% %media%</div></a><textarea rows=%rows% style="display:inline-block; overflow:hidden; margin-left:8`%; width:88`%; background-color:inherit; color:#826858; font-size:1.2em; font-family:inherit; border:none; outline:none;">%str2%</textarea>`r`n`r`n
                 }
-            else entry = <li onclick="select(%i%)" style="display:inline-block; vertical-align:top; width:%width%`%; margin-bottom:8em; color:%font%; transition:color 1.4s;"><div id="title%i%" style="width:70`%; margin-left:28`%; color:#555351; text-align:center; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; font-size:0.85em; %highlight%;">%sort_name% &nbsp;&nbsp; %link% %media%</div><a href="#Media#%i%"><video id="media%i%" style="width:75`%; display:block; padding:2px; margin-left:6em; %transform% %select%" onmouseover="getLink(event, this, '%start%', '%type%', %i%)" onclick="open_media(event, this, '%start%', '%type%', %i%)" src="file:///%src%" %poster% muted type="video/mp4"></video></a>%cap%</li>`r`n`r`n
+            else entry = <li onclick="select(%i%)" style="display:inline-block; vertical-align:top; width:%width%`%; margin-bottom:5em; color:%font%; transition:color 1.4s;"><div id="title%i%" style="width:70`%; margin-left:8em; color:#555351; text-align:center; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; font-size:0.85em; %highlight%;">%sort_name% &nbsp;&nbsp; %link% %media%</div><a href="#Media#%i%"><video id="media%i%" style="width:75`%; display:block; padding:2px; margin-left:6em; %transform% %select%" onmouseout="getLink(event, this, '%start%', '%type%', %i%, 0)" onmouseover="getLink(event, this, '%start%', '%type%', %i%, 1)" onclick="open_media(event, this, '%start%', '%type%', %i%)" src="file:///%src%" %poster% muted type="video/mp4"></video></a>%cap%</li>`r`n`r`n
             }
         return entry
         }
@@ -224,9 +229,14 @@ if (type == "video")
                     page_media = %page_media%%A_Index%>			; create array of media pointers with > seperator
                     }
             }
+
+
 ; href="https://fonts.googleapis.com/css2?family=Crimson+Pro">
 ; D:/inca/apps/ClearSans-Thin.woff
 ; <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Open+Sans:300">`r`n
+;  onclick'function(){selected="#/"}'
+
+
 
         pages := ceil(list_size/size)
         header_html = <!--`r`n%view%>%page%>%sort%>%toggles%>%this_search%>%search_term%>%path%>%folder%>%playlist%>%last_media%`r`n%page_media%`r`n-->`r`n<!doctype html>`r`n<html>`r`n<head>`r`n<meta charset="UTF-8">`r`n<title>Inca - %title%</title>`r`n<meta name="viewport" content="width=device-width, initial-scale=1">`r`n<link rel="icon" type="image/x-icon" href="file:///%inca%\apps\icons\inca.ico">`r`n<style>@font-face {font-family: ClearSans-Thin; src: url("D:/inca/apps/ClearSans-Thin.woff");}</style>`r`n</head>`r`n
@@ -243,8 +253,8 @@ if (type == "video")
                     name = <span style="color:lightsalmon;">%name%</span>
                 filter_html = %filter_html%<a href="#%A_LoopField%#" %x%>%name%</a>`r`n
                 }
-        sort_html = <ul class="menu" style="margin-top:1em; margin-bottom:1em; display:flex; justify-content:space-between">`r`n<a href="#View#%view%" id='slider4' class='slider' style="width:12`%;" onmousemove='getCoords(event, id, "View", "%title%","")' onmouseleave='getCoords(event, id, "View", "%title%", "%view%")'>View %view%</a>`r`n<a href="%title%.htm#%sort%" id='slider1' class='slider' onmousemove='getCoords(event, id, "%sort%", "%title%", "")'>%sort%</a>`r`n<a href="%title%.htm#Page" id='slider2' class='slider' onmousemove='getCoords(event, id, "%Pages%", "%title%", "")' onmouseleave='getCoords(event, id, "%Pages%", "%title%", "%page%")'>Page %page% of %pages%</a>`r`n<a href="#Page#%next%" class='slider' style="width:12`%;">Next</a></ul>
-        title_html = `r`n`r`n<div style="margin-left:5em; width:100`%; margin-top:2.4em; margin-bottom:1.8em;"><a href="file:///%playlist%" style="font-size:1.8em; color:#555351;">%title% &nbsp;&nbsp;<span style="font-size:0.7em;">%list_size%</span></a></div>`r`n`r`n<div id="myModal" class="modal_container" onmousemove='gesture(event)' onmousedown='mouseDown(event)' onmouseup='mouseUp(event)' onwheel='media_control(event)'>`r`n<span id="myCap" class="caption"></span><div><video id="myPlayer" class="media_player" type="video/mp4"></video><span id="mySpeedbar" class="speed_status"></span><span id="mySeekbar" class="seek_bar"></span></div></div>`r`n`r`n
+        sort_html = <ul class="menu" style="margin-top:1em; margin-bottom:1em; display:flex; justify-content:space-between">`r`n<a href="#Settings#" id='setings' class='slider' style="width:9`%;">Settings</a>`r`n<a href="#View#%view%" id='slider4' class='slider' style="width:9`%;" onmousemove='getCoords(event, id, "View", "%title%","")' onmouseleave='getCoords(event, id, "View", "%title%", "%view%")'>View %view%</a>`r`n<a href="%title%.htm#%sort%" id='slider1' class='slider' onmousemove='getCoords(event, id, "%sort%", "%title%", "")'>%sort%</a>`r`n<a href="%title%.htm#Page" id='slider2' class='slider' onmousemove='getCoords(event, id, "%Pages%", "%title%", "")' onmouseleave='getCoords(event, id, "%Pages%", "%title%", "%page%")'>Page %page% of %pages%</a>`r`n<a href="#Page#%next%" class='slider' style="width:12`%;">Next</a></ul>
+        title_html = `r`n`r`n<div style="margin-left:5em; width:100`%; margin-top:2.4em; margin-bottom:1.8em;"><a href="file:///%playlist%" style="font-size:1.8em; color:#555351;">%title% &nbsp;&nbsp;<span style="font-size:0.7em;">%list_size%</span></a></div>`r`n`r`n<div id="myModal" class="modal_container" onmousemove='gesture(event)' onmousedown='mouseDown(event)' onmouseup='mouseUp(event)' onwheel='media_control(event)'>`r`n<span id="myCap" class="caption"></span><div><video id="myPlayer" class="media_player" onmouseover='mouseOver(true)' onmouseout='mouseOver(false)' type="video/mp4"></video><span id="mySpeedbar" class="speed_status"></span><span id="mySeekbar" class="seek_bar"></span></div></div>`r`n`r`n
         html = `r`n%html%</div>`r`n<p style="height:240px;"></p>`r`n
         FileDelete, %inca%\cache\html\%tab_name%.htm
         x = %header_html%%panel_html%
@@ -408,7 +418,7 @@ if (type == "video")
             if (GetKeyState("LButton", "P"))
                 AdjustMedia(x, y)
             }
-        if (!gesture && timer > 400)
+        if (!gesture && timer > 450)
             {
             gesture = 1					; once only
             ClickEvent()
@@ -466,7 +476,7 @@ if (type == "video")
                   {
                   seek_overide := seek					; last seek time
                   orphan_media := last_media				; select last media
-                  PlayMedia(0)						; play last media
+;                  PlayMedia(0)						; play last media
                   }
               else if (link == "Media" && timer > 350)
                   {
@@ -479,16 +489,9 @@ if (type == "video")
                   if (type == "document")
                   PlayMedia(0)
                   }
-              if (link != "Media" && selected)
+              else if (link != "Media" && selected)
                   FileTransfer(link)					; between folders or playlists
-              else if (link == "Nulllllllllll")
-                    {
-                    click =
-                    view ^= 1
-                    page := 1
-                    RenderPage()
-                    }
-                }
+              }
             }
         else if (click == "RButton")
             {
@@ -519,8 +522,7 @@ return
             }
         else if (click == "MButton")
             {
-
-if inca_tab
+if inside_browser
   send, h
 else send, {MButton}
 return
@@ -551,13 +553,6 @@ return
                     page := 1
                     RenderPage()
                     }
-               else if (link == "Media")
-{
-sleep 20
-modal = 1
-Send, h									; trigger thumbsheet mode in modal
-}
-
                 }
             else send, {MButton}
             click =
@@ -596,13 +591,11 @@ Send, h									; trigger thumbsheet mode in modal
 
   send, {Pause}								; close java modal (media)
 
-;                if !modal
                  if selected
                   {
                   selected =
                   RenderPage()
                   }
-modal =
 
                 }
             else send, {Xbutton1}
@@ -742,7 +735,7 @@ else
         Critical
         MouseGetPos, xpos, ypos
         WinGetPos, xb, yb, wb, hb, ahk_group Browsers
-        if (WinActive("ahk_group Browsers") && inca_tab && xpos > xb+10 && ypos > yb+224 && xpos < xb+wb-300 && ypos < yb+hb-50)
+        if (WinActive("ahk_group Browsers") && inca_tab && xpos > xb+10 && ypos > yb+224 && ypos < yb+hb-50)
             inside_browser = 1
         else inside_browser =
         IfWinNotExist, ahk_ID %music_player%
@@ -793,11 +786,15 @@ else
                 {
                 previous_tab := tab_name
                 GetTabSettings(1)					; get last tab settings
-;                IfExist, %inca%\cache\lists\%tab_name%.txt
-;                    FileRead, list, %inca%\cache\lists\%tab_name%.txt
-;                else CreateList(0)					; media list to match html page
-
-CreateList(0)
+                if (tab_name != "Playlists" && tab_name != "Music")
+                  {
+                  if (tab_name != "Downloads")
+                    {
+                    IfExist, %inca%\cache\lists\%tab_name%.txt		; from cache
+                      FileRead, list, %inca%\cache\lists\%tab_name%.txt
+                    }
+                  else CreateList(0)					; media list to match html page
+                  }
                 }
             }
         ShowStatus()							; show time & vol
@@ -830,7 +827,7 @@ CreateList(0)
           array := StrSplit(input,"#")
           pos := array.MaxIndex()
           if (pos < 2)
-            return "Null"
+            return 1
           arg1 := array[pos]
           if (pos > 2)
             arg2 := array[pos-1]
@@ -856,7 +853,7 @@ arg2 := arg3
 
 StringReplace, selected, selected, `,, /, All
 if (selected == "/") 
-selected =
+  selected =
 }
 
 
@@ -891,9 +888,14 @@ selected =
             if (arg2 == "Page")
                 page := arg1
             if (arg2 == "View")
-                view ^= 1
+                view := arg1
             Popup(arg1,0,0,0)
             RenderPage()
+            return 1
+            }
+        else if (arg2 == "Settings")
+            { 
+            ShowSettings()
             return 1
             }
         else
@@ -2254,6 +2256,5 @@ IfNotExist, %inca%\cache\thumbs\%filen%.jpg
         WinGet, music_player, ID, ahk_class mpv
         WinActivate, ahk_group Browsers
         }
-
 
 

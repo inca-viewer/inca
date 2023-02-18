@@ -3,20 +3,26 @@
 // status panel
 // sort out start times < 60 delete all sheets < 20 dur
 // position:fixed; 
-// scale crashes
 // play last - list/thumb - delete - rename - caption - cue/mp3/mp4
 // address bar reset
 // 5:50 wake up
 // convert mid wma wmv files
 // dead links are wmv etc
 // sound
-// modals between open tabs
-// .srt files
+// edit .srt files
 // wherever cursor is, focus drifts to centralise content to it
 // highlight folder or playlist same as toggles on main inca tab
-// not pass lists to panel load as const strings in java
+// not pass lists to panel load but as const strings in java
 // show selected qty next to cursor as reminder
-// move playlist items 
+// speed to slide down animation
+// intermittant mute timing
+// Mclick view
+// test transfers
+// media.style.marginLeft = (100 * media.offsetWidth / media.offsetHeight) + "px"
+// media offset issue
+// long click = copy not move file
+// move slide position within playlist
+
 
 
 
@@ -29,6 +35,8 @@
   var seek_active;		// currently seeking video
   var selected = "#,"		// list of selected media in page
   var playing = false
+  var over_link = 0
+  var over_media = false
 
   var cursor = ""		// mouse movement globals
   var mouse_down
@@ -38,7 +46,6 @@
   var lastY = 1
   var rate = 0
   var gest = 0
-  var cur_ref			// show cursor when moves over media
   var xref
   var yref
   var xpos = 0.5
@@ -54,18 +61,24 @@
     if (event.key == 'h') {
       MiddleClick = true; 
       if (playing) {media_control(event)}
-      else {open_media(event, link, start, type, index)}}})		
+      else if (over_link) {open_media(event, link, start, type, index)}
+      else {MiddleClick = false}}})		
 
-  function getLink(event, el, s, t, i) {			// mouse over small thumbnails on webpage
-    link = el; start = s; type = t; index = i} 			// get media info under cursor
+  function getLink(event, el, s, t, i, over) {			// mouse over small thumbnails on webpage
+    if (over) {link=el; start=s; type=t; index=i} 		// get media info under cursor
+    over_link=over}
+
+  function mouseOver(x) {if (!mouse_down) {over_media = x}}
 
   function mouseDown(e) {					// toggle pause & mute
     timout = 0
     mouse_down = 1
     xref = e.clientX
     yref = e.clientY
+    scaleY = lastY
+    scaleX = lastX
     if (seek_active) {seek_active = media.currentTime; media.play()}
-    setTimeout(function(){togglemute();},450)}
+    setTimeout(function(){togglemute();},400)}
 
   function mouseUp(e) {						// !!!! inca.exe forces 'up' immediately..
     lastX = scaleX						// ..so must use timout complexity
@@ -80,10 +93,10 @@
             timedVolUp = setInterval(vol_up_timer,50)}
           media.play()} 
         else {media.pause()}}}
-    gest = 0; timout=1}
+    gest=0; timout=1}
 
   function togglemute() {
-    if (!gest && !timout) {
+    if (!gest && !timout && lastY == scaleY) {
       timout=1
       if (media.volume > 0.1) {timedVolDown = setInterval(vol_down_timer,20)} 
       else {timedVolUp = setInterval(vol_up_timer,50)}}}
@@ -92,6 +105,7 @@
   if (media.volume < 0.00097 ) {media.volume = 0.00097}
     media.volume += media.volume
     if (media.volume >= 0.9) {clearInterval(timedVolUp)}}
+
   function vol_down_timer() {
     media.volume -= 0.1
     if (media.volume <= 0.11) {media.volume = 0; clearInterval(timedVolDown)}}
@@ -114,25 +128,29 @@
     if (mouse_down) {
       if (Math.abs(xref - e.clientX) > 5 && !gest) {gest = "skinny"}
       if (Math.abs(yref - e.clientY) > 5 && !gest) {gest = "magnify"}
+      if (over_media) {gest = "offset"}
       if (gest == "skinny") {
+        media.style.animationName = "paused"
         scaleY = lastY
         scaleX = lastX + ((xref - e.clientX) / 374)			// skinny or magnify
-        if (media.style.animationName == "loopFade") {media.style.animationName = "paused"}
         media.style.transform = "scale(" + scaleX + "," + scaleY + ")"}
       if (gest == "magnify") {
+        media.style.animationName = "paused"
         var y = Math.abs((3*(e.clientY-yref)/window.innerHeight)+1)
         scaleY = lastY *= y
         scaleX = lastX *= y
         yref = e.clientY
-        if (media.style.animationName == "loopFade") {media.style.animationName = "paused"}
         media.style.transform = "scale(" + scaleX + "," + scaleY + ")"}
-if (gest == "offset") {
+      if (gest == "offset") {
         offset_top += e.clientY - yref
         offset_left += e.clientX - xref
         xref = e.clientX
         yref = e.clientY
         media.style.top = offset_top + "px"
         media.style.left = offset_left + "px"}}
+    if (container.style.cursor != "crosshair") {
+        container.style.cursor = "crosshair"
+        setTimeout(function() {container.style.cursor="none"},244)}
     rect = media.getBoundingClientRect()
     var xp = (e.clientX - rect.left) / (media.offsetWidth * scaleX)
     if (ypos > 0.9 && xp > 0 && xp < 1 && !mouse_down && (type == "video" || type == "audio")) {
@@ -145,6 +163,7 @@ if (gest == "offset") {
       if (media.paused == true) {media.currentTime = seek_active}
       seek_active = 0 							// fast seek video
       media.play()}}
+
 
 
   function open_media(event, thumb, s, t, i) {				// click small thumbnail on webpage
@@ -169,10 +188,14 @@ if (gest == "offset") {
     media.play()
     playing = true
     timer = 1
-    setTimeout(function() {timer = 0; container.style.display="flex"},100)
+    setTimeout(function() {
+      timer = 0
+      container.style.display="flex"
+      if (MiddleClick && type == "video") {media_control(event)}},100)
     container.addEventListener("animationend", fadein_end)		// fade in media
     media.addEventListener('ended', media_loop)				// what to do after played
-    timedEvents = setInterval(interval_timer,100)}			// check every 100mS
+    timedEvents = setInterval(interval_timer,100)			// check every 100mS
+    }
 
 
   function close_media() {						// or receiving mouse back key from inca.exe
@@ -252,6 +275,8 @@ if (gest == "offset") {
 
   function play_thumb(e) {						// clicked media in modal
     var rect = media.getBoundingClientRect()
+    lastX = scaleX
+    lastY = scaleY
     var xp = (e.clientX - rect.left) / (media.offsetWidth * scaleX)
     var yp = (e.clientY - rect.top) / (media.offsetHeight * scaleY)
     if (media.volume > 0.1) {media.volume = 0; timedVolUp = setInterval(vol_up_timer,20)}
@@ -295,18 +320,9 @@ if (gest == "offset") {
         cap.innerHTML = innerCap.innerHTML}},300)}
 
 
-
   function interval_timer() {
-    if (xpos != cur_ref) {container.style.cursor = "crosshair"; cur_ref = xpos}
-    else {container.style.cursor = "none"}
-    if (window.innerWidth > screen.width * 0.9) {			// hide cursor
-      media.style.marginLeft = 0; media.style.borderRadius = 1.4 + "%"
-      container.style.backgroundColor = "Black"}
-    else  {
-      media.style.borderRadius = 4 + "%"
-      container.style.backgroundColor = "#15110a"
-      media.style.marginLeft = - window.innerWidth * 0.17 + "px"}	// position player window
-      if ((type == "video" || type == "audio") && !seek_active) {show_seekbar(4)}}
+    if (mouse_down) {return}
+    if ((type == "video" || type == "audio") && !seek_active) {show_seekbar(4)}}
 
   function media_loop(e) {						// media looping or next
     media.style.animationName = ""
@@ -398,8 +414,7 @@ function spool(event, id, input, output) {	// spool folders, playlists, searches
       p = x
       p=p.replace(/ /g, "%20")
       link = link + "<a href=#" + p + "><li>" + x + "</li>" + "</a>"}
-    el2.innerHTML = link; el.innerHTML = upper}
-    selected = "#,"}
+    el2.innerHTML = link; el.innerHTML = upper}}
 
 
 function getCoords(event, id, sort, link, current) {	// return mouse over controls from html selection strip
@@ -414,7 +429,7 @@ function getCoords(event, id, sort, link, current) {	// return mouse over contro
   if (sort == 'Date') {y = Math.floor(37 * x);units = "months +"}
   if (sort == 'Duration') {y = Math.floor(60 * x);units = "minutes +"}
   if (id =='slider2' || id =='slider3') {y = Math.floor(sort*x)+1; units = sort; sort = "Page"; of = " of "}
-  if (id =='slider4') {sort = "View"}
+  if (id =='slider4') {y = Math.floor(4 * x); sort = "View";}
   if (current != "") {y = current}
   el.href= link + ".htm#" + sort + "#" + y
   if (sort =='Random' || sort =='ext' || sort =='Shuffle') {return}
