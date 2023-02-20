@@ -127,7 +127,7 @@ gap := Setting("Thumb Gap")
             IfExist, %inca%\cache\cuts\%media%.txt			; get inner src from .jpg link file
                 {
                 FileRead, str, %inca%\cache\cuts\%media%.txt
-                start := Round(StrSplit(str, "|").2,1)
+                start := Round(StrSplit(str, "|").2,1) + 0.1
                 DetectMedia(StrSplit(str, "|").1)
                 }
         x := 1
@@ -156,7 +156,7 @@ gap := Setting("Thumb Gap")
         StringReplace, src, src, #, `%23, All				; html cannot have # in filename
         FileRead, dur, %inca%\cache\durations\%media%.txt
         if (!start && dur > 60)
-            start := 19 + (4 * dur/197)					; match thumb img to video start time
+            start := 19.8 + (4 * dur/200)					; match thumb img to video start time
         if (dur && type == "video")
             dur := Time(dur)
         else dur =
@@ -183,7 +183,7 @@ if (type == "video")
                     }
 	        entry = <a href="#Media#%i%"><div style="display:inline-block; width:88`%; color:#555351; transition:color 1.4s; margin-left:8`%; text-align:center; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; %highlight%;">%sort_name% &nbsp;&nbsp;%link% %media%</div></a><textarea rows=%rows% style="display:inline-block; overflow:hidden; margin-left:8`%; width:88`%; background-color:inherit; color:#826858; font-size:1.2em; font-family:inherit; border:none; outline:none;">%str2%</textarea>`r`n`r`n
                 }
-            else entry = <li onclick="select(%i%)" style="display:inline-block; vertical-align:top; width:%width%`%; margin-bottom:8em; color:%font%; transition:color 1.4s;"><div id="title%i%" style="width:70`%; margin-left:8em; color:#555351; text-align:center; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; font-size:0.85em; %highlight%;">%sort_name% &nbsp;&nbsp; %link% %media%</div><a href="#Media#%i%"><video id="media%i%" style="width:75`%; display:block; padding:2px; margin-left:6em; %transform% %select%" onmouseout="getLink(event, this, '%start%', '%type%', %i%, 0)" onmouseout="this.pause()"  onmouseover="getLink(event, this, '%start%', '%type%', %i%, 1)" onclick="open_media(event, this, '%start%', '%type%', %i%)" src="file:///%src%" %poster% muted type="video/mp4"></video></a>%cap%</li>`r`n`r`n
+            else entry = <li onclick="select(%i%)" style="display:inline-block; vertical-align:top; width:%width%`%; margin-bottom:8em; color:%font%; transition:color 1.4s;"><div id="title%i%" style="width:70`%; margin-left:8em; color:#555351; text-align:center; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; font-size:0.85em; %highlight%;">%sort_name% &nbsp;&nbsp; %link% %media%</div><a href="#Media#%i%"><video id="media%i%" style="width:75`%; display:block; padding:2px; margin-left:6em; %transform% %select%" onmouseout="getLink(event, this, '%start%', '%type%', %i%, 0)" onmouseover="getLink(event, this, '%start%', '%type%', %i%, 1)" onclick="open_media(event, this, '%start%', '%type%', %i%)" src="file:///%src%" %poster% muted type="video/mp4"></video></a>%cap%</li>`r`n`r`n
             }
         return entry
         }
@@ -258,7 +258,7 @@ if (type == "video")
                     name = <span style="color:lightsalmon;">%name%</span>
                 filter_html = %filter_html%<a href="#%A_LoopField%#" %x%>%name%</a>`r`n
                 }
-        sort_html = <ul class="menu" style="margin-top:1em; margin-bottom:1em; display:flex; justify-content:space-between">`r`n<a href="#Settings#" id='settings' class='slider' style="width:9`%;">Settings</a>`r`n<a href="#View#%view%" id='slider4' class='slider' style="width:9`%;" onmousemove='getCoords(event, id, "View", "%title%","")' onmouseleave='getCoords(event, id, "View", "%title%", "%view%")'>View %view%</a>`r`n<a href="%title%.htm#%sort%" id='slider1' class='slider' onmousemove='getCoords(event, id, "%sort%", "%title%", "")'>%sort%</a>`r`n<a href="%title%.htm#Page" id='slider2' class='slider' onmousemove='getCoords(event, id, "%Pages%", "%title%", "")' onmouseleave='getCoords(event, id, "%Pages%", "%title%", "%page%")'>Page %page% of %pages%</a>`r`n<a href="#Page#%next%" class='slider' style="width:12`%;">Next</a></ul>
+        sort_html = <ul class="menu" style="margin-top:1em; margin-bottom:1em; display:flex; justify-content:space-between">`r`n<a href="#Settings#" id='settings' class='slider' style="width:9`%;">Settings</a>`r`n<a id='all' class='slider' style="width:4`%" onclick="selectAll()">All</a>`r`n<a href="#View#%view%" id='slider4' class='slider' style="width:9`%;" onmousemove='getCoords(event, id, "View", "%title%","")' onmouseleave='getCoords(event, id, "View", "%title%", "%view%")'>View %view%</a>`r`n<a href="%title%.htm#%sort%" id='slider1' class='slider' onmousemove='getCoords(event, id, "%sort%", "%title%", "")'>%sort%</a>`r`n<a href="%title%.htm#Page" id='slider2' class='slider' onmousemove='getCoords(event, id, "%Pages%", "%title%", "")' onmouseleave='getCoords(event, id, "%Pages%", "%title%", "%page%")'>Page %page% of %pages%</a>`r`n<a href="#Page#%next%" class='slider' style="width:12`%;">Next</a></ul>
         title_html = `r`n`r`n<div style="margin-left:5em; width:100`%; margin-top:2.4em; margin-bottom:1.8em;"><a href="file:///%playlist%" style="font-size:1.8em; color:#555351;">%title% &nbsp;&nbsp;<span style="font-size:0.7em;">%list_size%</span></a></div>`r`n`r`n<div id="myModal" class="modal_container" onmousemove='mouseGesture(event)' onwheel='media_control(event)'>`r`n<span id="myCap" class="caption"></span><div><video id="myPlayer" class="media_player" type="video/mp4"></video><span id="mySpeedbar" class="speed_status"></span><span id="mySeekbar" class="seek_bar"></span></div></div>`r`n`r`n
         html = `r`n%html%</div>`r`n<p style="height:240px;"></p>`r`n
         FileDelete, %inca%\cache\html\%tab_name%.htm
@@ -791,8 +791,8 @@ else
                 {
                 previous_tab := tab_name
                 GetTabSettings(1)					; get last tab settings
-CreateList(0)
-return
+;CreateList(0)
+;return
                 if (tab_name != "Playlists" && tab_name != "Music")
                   {
                   if (tab_name != "Downloads")
@@ -844,11 +844,18 @@ return
 if (pos == 4)
 {
 
-if (arg1 == "select") 
+if (!InStr(arg1, "\") && InStr(arg2, ","))
 {
+seek_overide := arg1
 selected := arg2
 arg1 := arg3
 arg2 =
+if (StrLen(selected) > 2)
+  if InStr(arg1, "\Favorites\")
+    {
+    AddFavorites()
+    return 1
+    }
 }
 else
 {
@@ -2044,8 +2051,8 @@ WinActivate, ahk_group Browsers
             return
         if thumbsheet
             GetSeek(0)
-        if !video_player
-            seek_overide := GetSeek(5)
+ ;       if !video_player
+ ;           seek_overide := GetSeek(5)
         if seek_overide
             cut := Round(seek_overide,1)
         else cut := Round(position,1)

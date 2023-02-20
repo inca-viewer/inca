@@ -4,6 +4,7 @@
 .caption {
   position:fixed;
   z-index:9;
+  user-select:none;
   color:lightsalmon;
   font-size:1.4em;
   animation-name:fadeIn;
@@ -12,10 +13,11 @@
 
 .seek_bar {
   position:absolute;
-  border-bottom:2px solid rgba(250, 128, 114, 0.2);}
+  border-bottom:1px solid rgba(250, 128, 114, 0.3);}
 
 .speed_status {
   position:fixed;
+  user-select:none;
   font-size:2.1em;
   color:salmon;
   animation-duration:3.2s;
@@ -24,6 +26,7 @@
 
 .modal_container {
   display:none;
+  user-select:none;
   position:fixed;
   justify-content:center;
   align-items:center;
@@ -38,6 +41,7 @@
 
 .media_player {
   position: absolute;
+  user-select:none;
   margin: 0;
   top: 50%;
   left: 50%;
@@ -67,8 +71,10 @@
     from {transform: scale(var(--scaleStartX),var(--scaleStartY))} 
     to {transform: scale(var(--scaleEndX),var(--scaleEndY))}}
 
+  @keyframes fadePage {from {opacity:0} to {opacity:1}}
 
-body {font-family: 'Open Sans',sans-serif; font-family: 'ClearSans-Thin'; cursor:default; overflow-x:hidden; background:#15110a; color:#666666; font-size:0.8em; margin-top:140px;}
+
+body {font-family: 'Open Sans',sans-serif; font-family: 'ClearSans-Thin'; user-select:none; cursor:default; overflow-x:hidden; background:#15110a; color:#666666; font-size:0.8em; margin-top:140px; animation-name:fadePage; animation-duration:0.6s}
 a:link {color:#15110a;}
 a:visited {color:#15110a;}
 a {text-decoration:none; color:#826858; cursor:default;}
