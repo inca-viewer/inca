@@ -15,30 +15,35 @@
 // not pass lists to panel load but as const strings in java
 // show selected qty next to cursor as reminder
 // speed to slide down animation
-// intermittant mute timing
 // Mclick view
 // test transfers
-
-// long click = copy not move file
+// panael formatting
+// long click = copy not move file (or follow to new folder/stay in this?)
 // move slide position within playlist
 // magnify from centre ref not from offset
-// sound on/off page thumbs
+// sound on/off thumbs page ?
 
-// select all fail index too high >100
-// new.m3u in downloads
-// crash in scenes list - text media
+// select all fail index too high >100 - need new page pure indexes
+// new.m3u in downloads folder 
+// crash in scenes list - text media 
+// page_id, list_id, cue list, posters folder can have start suffix on .jpg
+// remove favorites folder save fav direct to playlists
+// view 0 not to load video on page load
+// cut away favorites .jpg system
+
+
 
 
 
   var wheel = 0			// mouse wheel count
   var timer = 0			// block wheel input
-  var start			// video initial start time
+  var start = 0			// video initial start time
   var last_start
   var link			// mouseover media element
   var index			// media index (e.g. media14)
   var type			// audio, video, image, thumb, document
   var seek_active;		// currently seeking video
-  var selected = "#,"		// list of selected media in page
+  var selected = ","		// list of selected media in page
   var playing = false
   var over_link = 0
   var offset = true
@@ -442,25 +447,17 @@ function spool(event, id, input, output) {	// spool folders, playlists, searches
       p=p.replace(/ /g, "%20")
       link = link + "<a href=#" + p + "><li>" + y + "</li>" + "</a>"}
     el2.innerHTML = link}
-  if (id == "folders" || id == "sub" || id == "fav") {
+  if (id == "folders" || id == "sub" || id == "fav" || id == "music" || id == "playlists") {
     for (x of z) {
       y = x.split("/")
-      var x1 = y.pop(); x1 = y.pop()
-      x1 = x1.substring(0, 14)
-      p=x.replace(/ /g, "%20")
-      link = link + "<a href=#" + p + selected + "#" + last_start + "><li>" + x1 + "</li>" + "</a>"}
-    el2.innerHTML = link;}
-  if (id == "music" || id == "playlists") {		// media pointer playlists
-    for (const x of z) {
-      const y = x.split("/")
-      var p = y.pop()
-      var q = x.replace(p, "")
-      q = p + "#" + q
-      p=p.replace(/.m3u/g, "")
+      p = y.pop()
+      if (id == "music" || id == "playlists") {q = x.replace(p, "")}	// substract playlist from input
+      else {p = y.pop()}						// folder name
+      p = p.replace(/.m3u/g, "")					// remove .m3u - (leave just name)
       p = p.substring(0, 14)
-      q=q.replace(/ /g, "%20")
-      link = link + "<a href=#" + q + selected + "><li>" + p  + "</li>" + "</a>"}
-    el2.innerHTML = link}
+      q=x.replace(/ /g, "%20")
+      link = link + "<a href=#" + "Target#" + start + "#" + q + "#" + selected + "><li>" + p + "</li>" + "</a>"}
+    el2.innerHTML = link;}
   if (id == "search") {				// alpha selected search terms
     z.sort()
     var w = el.offsetWidth
@@ -473,7 +470,7 @@ function spool(event, id, input, output) {	// spool folders, playlists, searches
     for (const x of y) {
       p = x
       p=p.replace(/ /g, "%20")
-      link = link + "<a href=#" + p + "><li>" + x + "</li>" + "</a>"}
+      link = link + "<a href=#" + "Search#" + p + "><li>" + x + "</li>" + "</a>"}
     el2.innerHTML = link; el.innerHTML = upper}}
 
 
