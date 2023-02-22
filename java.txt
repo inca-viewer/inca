@@ -27,12 +27,10 @@
 // new.m3u in downloads folder 
 // crash in scenes list - text media 
 // page_id, list_id, cue list, posters folder can have start suffix on .jpg
-// remove favorites folder save fav direct to playlists
 // view 0 not to load video on page load
-// cut away favorites .jpg system
-
-
-
+// increasing border and fade for speed changes
+// searchbox??
+// view loses selection
 
 
   var wheel = 0			// mouse wheel count
@@ -63,7 +61,6 @@
   var xpos = 0.5
   var ypos = 0.5
   var MiddleClick = false
-
 
 
 
@@ -143,20 +140,15 @@
       else if (type == "image") {media.src = next.poster; media.poster = next.poster}
       else {
         if (last_type == "video") {
-          if (xpos> 0.95) {start = null}
+          if (xpos > 0.95) {start = null}
           else {start = media.currentTime}}
         media.poster = ""
         media.src = next.src;
-        if (next.poster.match(/favorites/)) {
-          end = next.poster.split('%20').pop()				// inca.exe link format
-          x = end.split('.')[0]
-          var y = end.split('.')[1]
-          start = x + '.' + y
-          var z = '%20' + start
-          x = next.poster.replace(z, "")}
-        if (next.poster.match(/favorites/)) {
-          x = x.replace("/favorites/", "/cache/thumbs/")}
-        else {x = next.poster.replace("/posters/", "/thumbs/")}
+        x = next.poster.replace("/posters/", "/thumbs/")
+        p = x.split("%20")
+        p = p.pop()
+        p = p.replace(".jpg", "")
+        if (!isNaN(p) && p.length > 2 && p.match(".")) {start = p; x = x.replace("%20" + start, "")}
         if (MiddleClick && last_type == "thumbsheet" || xpos > 0.95) {
           setTimeout(function() {play_thumb(0)},100)
           setTimeout(function() {media.poster = x},300)}
@@ -291,8 +283,8 @@
     scaleY = lastY
     scaleX = lastX
     if (seek_active) {seek_active = media.currentTime; media.play()}
-    toggle = setTimeout(function(){toggleoffset();},60)
-    if (xpos > 0.95 && ypos < 0.9) {togglemute()}
+    toggle = setTimeout(function(){toggleoffset()},80)
+    setTimeout(function(){if (mouse_down) {favorite()}},500)
     mouse_down = 1}
 
 
@@ -303,6 +295,9 @@
     clearTimeout(toggle)
     togglePause(e)
     gesture=""; timout=1}
+
+
+  function favorite() {}
 
 
   function togglePause(e) {
@@ -323,10 +318,9 @@
 
 
   function togglemute() {
-    if (!gesture && !timout && lastY == scaleY) {
-      timout=1
       if (media.volume > 0.1) {timedVolDown = setInterval(vol_down_timer,20)} 
-      else {timedVolUp = setInterval(vol_up_timer,50)}}}
+      else {timedVolUp = setInterval(vol_up_timer,50)}
+      media.play()}
 
 
   function vol_up_timer() {
@@ -354,22 +348,25 @@
     if (over) {
       link=el; start=s; type=t; index=i					// get media info under cursor
       med = document.getElementById("media" + i)
-      med.currentTime = s
-      med.playbackRate = 0.64
+      if (med.currentTime <= s) {med.currentTime = s}
+      med.playbackRate = 0.74
       med.play()}
     else {med.pause()}}
 
 
   function select(i) {
-    document.getElementById("panel").innerHTML = ""			// highlight selections on page
+    el2 = document.getElementById("panel")				// highlight selections on page
     el = document.getElementById("media" + i)
-if (el == null) {return}
+    if (el == null) {return}
     if (el.style.border == "0.1px solid lightsalmon") {
       el.style.border = "none"
       selected = selected.replace("," + i + ",", ",")}
     else {
       el.style.border = "0.1px solid lightsalmon"
-      if (!selected.match("," + i + ",")) {selected = selected + i + ","}}}
+      if (!selected.match("," + i + ",")) {selected = selected + i + ","}}
+    el2.innerHTML = ""
+    if (selected.length > 1) {el2.style.border = "0.1px solid lightsalmon"}
+    else  {el2.style.border = ""}}
 
 
   function selectAll() {for (i=1; i <= 100; i++) {select(i)}}
@@ -492,6 +489,27 @@ function getCoords(event, id, sort, link, current) {	// return mouse over contro
   if (sort =='Random' || sort =='ext' || sort =='Shuffle') {return}
   if (sort == 'Alpha') {y = String.fromCharCode(y)}
   el.innerHTML = y + of + units}
+
+
+function openNav() {
+document.getElementById("mySidenav").style.opacity = 1 
+document.getElementById("mySidenav").style.left = 0}
+
+function closeNav() {
+document.getElementById("mySidenav").style.opacity = 0 
+document.getElementById("mySidenav").style.left = "-10px"}
+
+function openNav2() {
+  el = document.getElementById("mySidenav2")
+  el.style.opacity = 1
+//  el2 = document.getElementById("Myfav")
+//  el2.setAttribute("href", "world");
+//  x = media.currentTime
+//  y = el2.getAttribute('href')
+//  alert("gggg")
+//   el2.href = "#Favorite#"
+}
+function closeNav2() {document.getElementById("mySidenav2").style.opacity = 0;}
 
 
 </script>

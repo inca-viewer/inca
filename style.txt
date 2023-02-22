@@ -1,6 +1,22 @@
 
 <style>
 
+body {font-family: 'Open Sans',sans-serif; font-family: 'ClearSans-Thin'; user-select:none; cursor:default; overflow-x:hidden; background:#15110a; color:#666666; font-size:0.8em; margin-top:140px; animation-name:fadePage; animation-duration:0.6s}
+a:link {color:#15110a;}
+a:visited {color:#15110a;}
+a {text-decoration:none; color:#826858; cursor:default;}
+a.slider {display:inline-block; width:35%; height:1.2em; border-radius:9px; color:#826858; transition:color 1.4s; font-size:1em; background-color:#1b1814; text-align:center}
+a.slider:hover {color:red; transition:color 0.36s;}
+ul.menu {column-gap:12px; margin:auto; list-style-type:none; padding:0; white-space:nowrap;}
+ul.menu li {color:#826858; transition:color 1.4s;}
+ul.menu li:hover {color:red; transition:color 0.36s;}
+table {color:#826858; transition:color 1.4s; table-layout:fixed; border-collapse: collapse;}
+table:hover {color:red; transition:color 0.36s;}
+#hover_image {position:absolute; margin-left:3.8em; opacity:0; transition: opacity 0.4s; width:125px; height:auto;}
+#hover_image:hover {opacity:1;}
+
+
+
 .caption {
   position:fixed;
   z-index:9;
@@ -54,6 +70,24 @@
   --scaleEndY:1;
   border-radius:4%}
 
+.sidenav {
+  height:50%;
+  width:84px;
+  position:fixed;
+  opacity:0;
+  bottom:0;
+  left:-14px;
+  transition:0.25s;}
+
+.sidenav a {
+  padding: 10px 10px 10px 20px;
+  font-size:1.4em;
+  color:#826858;
+  display:block;
+  transition:0.25s;}
+
+.sidenav a:hover {color:salmon}
+
 
   @keyframes fadeCap {
     from {opacity:0; transform: scale(0.8)} 
@@ -72,21 +106,6 @@
     to {transform: scale(var(--scaleEndX),var(--scaleEndY))}}
 
   @keyframes fadePage {from {opacity:0} to {opacity:1}}
-
-
-body {font-family: 'Open Sans',sans-serif; font-family: 'ClearSans-Thin'; user-select:none; cursor:default; overflow-x:hidden; background:#15110a; color:#666666; font-size:0.8em; margin-top:140px; animation-name:fadePage; animation-duration:0.6s}
-a:link {color:#15110a;}
-a:visited {color:#15110a;}
-a {text-decoration:none; color:#826858; cursor:default;}
-a.slider {display:inline-block; width:35%; height:1.2em; border-radius:9px; color:#826858; transition:color 1.4s; font-size:1em; background-color:#1b1814; text-align:center}
-a.slider:hover {color:red; transition:color 0.36s;}
-ul.menu {column-gap:12px; margin:auto; list-style-type:none; padding:0; white-space:nowrap;}
-ul.menu li {color:#826858; transition:color 1.4s;}
-ul.menu li:hover {color:red; transition:color 0.36s;}
-table {color:#826858; transition:color 1.4s; table-layout:fixed; border-collapse: collapse;}
-table:hover {color:red; transition:color 0.36s;}
-#hover_image {position:absolute; margin-left:3.8em; opacity:0; transition: opacity 0.4s; width:125px; height:auto;}
-#hover_image:hover {opacity:1;}
 
 
 </style>
