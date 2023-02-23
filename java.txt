@@ -11,26 +11,28 @@
 // edit .srt files
 // media.style.marginLeft = (150 * media.offsetHeight / media.offsetWidth) + "px"
 // wherever cursor is, focus drifts to centralise content to it
-// highlight folder or playlist same as toggles on main inca tab
 // not pass lists to panel load but as const strings in java
-// show selected qty next to cursor as reminder
-// speed to slide down animation
+// show selected qty next to cursor as reminder?
+// make speed position a slide down animation
 // Mclick view
-// test transfers
-// panael formatting
+// panel formatting
 // long click = copy not move file (or follow to new folder/stay in this?)
 // move slide position within playlist
 // magnify from centre ref not from offset
 // sound on/off thumbs page ?
 
 // select all fail index too high >100 - need new page pure indexes
-// new.m3u in downloads folder 
-// crash in scenes list - text media 
+// add hash to favorite posters instead of space, same with playlists
 // page_id, list_id, cue list, posters folder can have start suffix on .jpg
+// list cannot see or make selections
+// view etc. loses selection
+
+// crash in scenes list - text media 
 // view 0 not to load video on page load
-// increasing border and fade for speed changes
-// searchbox??
-// view loses selection
+// put panel styles in style sheet
+
+
+
 
 
   var wheel = 0			// mouse wheel count
@@ -297,10 +299,8 @@
     gesture=""; timout=1}
 
 
-  function favorite() {}
-
-
   function togglePause(e) {
+    if (document.getElementById("mySidenav2").style.opacity > 0) {return} 
     if (!gesture && !timout && !seek_active) {
       if (type == "thumbsheet") {play_thumb(e)}
       else {
@@ -391,7 +391,7 @@
     else if (type == "video") {
       media.play()
       if (media.playbackRate > 0.65) {media.playbackRate -= 0.05; show_speed()}
-      if (lastX < 10 && !mouse_down) { 
+      if (lastX < 10 && !mouse_down) {
         media.offsetHeight
         media.style.animationName = "loopFade"
         media.style.setProperty('--scaleStartX', `${lastX}`)
@@ -419,7 +419,6 @@
     speed.style.display="none"
     speed.removeEventListener("animationend", speed_end)}
 
-
   function fadeout_end() {
     container.style.display="none"
     media.src = ""; media.load();
@@ -436,14 +435,7 @@ function spool(event, id, input, output) {	// spool folders, playlists, searches
   const z = input.split("|")
   var el2 = document.getElementById(output)
   var el = document.getElementById(id)
-  if (id == "all") {				// all search terms
-    z.sort()
-    for (const x of z) {
-      p = x
-      y = p.substring(0, 14)
-      p=p.replace(/ /g, "%20")
-      link = link + "<a href=#" + p + "><li>" + y + "</li>" + "</a>"}
-    el2.innerHTML = link}
+  document.getElementById('panel').style.direction = ""
   if (id == "folders" || id == "sub" || id == "fav" || id == "music" || id == "playlists") {
     for (x of z) {
       y = x.split("/")
@@ -451,11 +443,15 @@ function spool(event, id, input, output) {	// spool folders, playlists, searches
       if (id == "music" || id == "playlists") {q = x.replace(p, "")}	// substract playlist from input
       else {p = y.pop()}						// folder name
       p = p.replace(/.m3u/g, "")					// remove .m3u - (leave just name)
-      p = p.substring(0, 14)
-      q=x.replace(/ /g, "%20")
-      link = link + "<a href=#" + "Target#" + start + "#" + q + "#" + selected + "><li>" + p + "</li>" + "</a>"}
+      p = p.substring(0, 12)
+      title = document.title.replace(/Inca - /g, "")
+      if (p == title) {p = "<span style=\"color:lightsalmon\"</span>" + p}
+      if (p == "New") {p = "<span style=\"color:red\"</span>" + p}
+      q = x.replace(/ /g, "%20")
+      link = link + "<a href=#" + "Path#" + start + "#" + q + "#" + selected + "><li>" + p + "</li>" + "</a>"}
     el2.innerHTML = link;}
   if (id == "search") {				// alpha selected search terms
+    document.getElementById('panel').style.direction = "rtl"
     z.sort()
     var w = el.offsetWidth
     var x = ((event.clientX - el.offsetLeft - el.scrollLeft)/w) + 0.02
@@ -465,10 +461,17 @@ function spool(event, id, input, output) {	// spool folders, playlists, searches
     const f_higher = z.filter(z => z.startsWith(upper))
     y = f_higher.concat(f_lower)
     for (const x of y) {
-      p = x
-      p=p.replace(/ /g, "%20")
-      link = link + "<a href=#" + "Search#" + p + "><li>" + x + "</li>" + "</a>"}
-    el2.innerHTML = link; el.innerHTML = upper}}
+      p = x.substring(0, 10)
+      q = x.replace(/ /g, "%20")
+      link = link + "<a href=#" + "Search#" + q + "><li>" + p + "</li>" + "</a>"}
+    el2.innerHTML = link; el.innerHTML = upper}
+  if (id == "search_all") {				// all search terms
+    z.sort()
+    for (const x of z) {
+      p = x.substring(0, 14)
+      q = x.replace(/ /g, "%20")
+      link = link + "<a href=#" + "Search#" + q + "><li>" + p + "</li>" + "</a>"}
+    el2.innerHTML = link}}
 
 
 function getCoords(event, id, sort, link, current) {	// return mouse over controls from html selection strip
@@ -492,24 +495,24 @@ function getCoords(event, id, sort, link, current) {	// return mouse over contro
 
 
 function openNav() {
-document.getElementById("mySidenav").style.opacity = 1 
-document.getElementById("mySidenav").style.left = 0}
+  document.getElementById("mySidenav").style.opacity = 1 
+  document.getElementById("mySidenav").style.left = 0}
 
 function closeNav() {
-document.getElementById("mySidenav").style.opacity = 0 
-document.getElementById("mySidenav").style.left = "-10px"}
+  document.getElementById("mySidenav").style.opacity = 0 
+  document.getElementById("mySidenav").style.left = "-10px"}
 
 function openNav2() {
-  el = document.getElementById("mySidenav2")
-  el.style.opacity = 1
-//  el2 = document.getElementById("Myfav")
-//  el2.setAttribute("href", "world");
-//  x = media.currentTime
-//  y = el2.getAttribute('href')
-//  alert("gggg")
-//   el2.href = "#Favorite#"
-}
-function closeNav2() {document.getElementById("mySidenav2").style.opacity = 0;}
+  document.getElementById("mySidenav2").style.opacity = 1 
+  document.getElementById("mySidenav2").style.left = 0}
+
+function closeNav2() {
+  document.getElementById("mySidenav2").style.opacity = 0 
+  document.getElementById("mySidenav2").style.left = "-10px"}
+
+function favorite(id) {
+  el = document.getElementById("myFav2")
+  el.setAttribute("href", "#Favorite#" + Math.round(media.currentTime*100)/100 + "##," + index + ",")}
 
 
 </script>

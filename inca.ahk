@@ -79,9 +79,12 @@
 	Global block_input		; pause key interrupts
 	Global xpos			; current mouse position - 100mS updated 
 	Global ypos
-	Global orphan_media		; eg. caption txt file, snip source file (i.e no web page id)
         Global command
-        Global target
+        Global address
+
+
+
+
 
 
 
@@ -112,6 +115,13 @@ gap := Setting("Thumb Gap")
             thumb =  %inca%\cache\posters\%media%.jpg
             IfExist, %inca%\cache\posters\%media%%A_Space%%start%.jpg
               thumb = %inca%\cache\posters\%media%%A_Space%%start%.jpg
+else 
+{
+;tooltip %inca%\cache\posters\%media%%A_Space%%start%.jpg
+;sleep 22
+}
+
+
           }
         if (dur && type == "video")
             dur := Time(dur)
@@ -216,8 +226,8 @@ if (type == "video")
 
         pages := ceil(list_size/size)
         header_html = <!--`r`n%view%>%page%>%sort%>%toggles%>%this_search%>%search_term%>%path%>%folder%>%playlist%>%last_media%`r`n%page_media%`r`n-->`r`n<!doctype html>`r`n<html>`r`n<head>`r`n<meta charset="UTF-8">`r`n<title>Inca - %title%</title>`r`n<meta name="viewport" content="width=device-width, initial-scale=1">`r`n<link rel="icon" type="image/x-icon" href="file:///%inca%\apps\icons\inca.ico">`r`n<style>@font-face {font-family: ClearSans-Thin; src: url("D:/inca/apps/ClearSans-Thin.woff");}</style>`r`n</head>`r`n
-            panel2_html = <body>`r`n`r`n<div style="margin-left:%offset%`%; width:80`%">`r`n<span id="mySidenav" onmouseover="openNav()" onmouseleave="closeNav()" class="sidenav"><a href="#" " id='all' onclick="selectAll()">All</a><a href="#" id="myFav">Fav</a><a href="#">Sel</a><a href="#">Del</a><a href="#Settings#">Set</a><a href="#">Ren</a><a href="#">Join</a></span>`r`n<ul class="menu" id='all' style="max-height:34em; background-color:inherit; column-count:8; border-radius:9px; padding-left:1em; font-size:0.9em"></ul>`r`n`r`n
-        panel_html = %panel2_html%<ul class="menu" id='panel' style="height:4.5em; width:80`%; margin-left:4em; margin-top:1em; margin-bottom:2em; column-count:8; border-radius:9px; padding-left:1em; font-size:0.9em"></ul>`r`n`r`n<ul class="menu" style="display:flex; justify-content:space-between"><a class='slider' id='sub' onmouseover='spool(event, id, "%subfolders%", "panel")' style="width:7`%;">Sub</a>`r`n<a href="file:///%inca%/cache/html/downloads.htm" class='slider' id='folders' onmouseover='spool(event, id, "%folder_list%", "panel")' style="width:7`%;">Fol</a>`r`n<a  href="file:///%inca%/cache/html/downloads.htm" class='slider' id='fav' onmouseover='spool(event, id, "%fav_folders%", "panel")' style="width:7`%;">Fav</a>`r`n<a href="file:///%inca%/cache/html/new.htm" class='slider' id='playlists' onmouseover='spool(event, id, "%playlists%", "panel")' style="width:7`%;">Playlists</a>`r`n<a href="file:///%inca%/cache/html/new.htm" class='slider' id='music' onmouseover='spool(event, id, "%music%", "panel")' style="width:7`%;">Music</a>`r`n<a id='search' class='slider' onmousemove='spool(event, id, "%search_list%", "panel")' onmousedown='spool(event,"all","%search_list%", "all")'>Search</a></ul>`r`n`r`n
+            panel2_html = <body>`r`n`r`n<div style="margin-left:%offset%`%; width:80`%">`r`n<span id="mySidenav" onmouseover="openNav()" onmouseleave="closeNav()" class="sidenav"><a href="#" " id='all' onclick="selectAll()">All</a><a href="#" id="myFav">Fav</a><a href="#">Sel</a><a href="#">Del</a><a href="#Settings#">Set</a><a href="#">Ren</a><a href="#">Join</a></span>`r`n<ul class="menu" id='search_all' style="max-height:34em; background-color:inherit; column-count:8; border-radius:9px; padding-left:1em; font-size:0.9em; overflow:hidden; white-space:nowrap;"></ul>`r`n`r`n
+        panel_html = %panel2_html%<ul class="menu" id='panel' style="column-width: 50px; text-align:left; margin-bottom:20px; height:70px; width:70`%; column-count:8; border-radius:9px; font-size:0.9em"; ></ul>`r`n`r`n<ul class="menu" style="display:flex; justify-content:space-between"><a class='slider' id='sub' onmouseover='spool(event, id, "%subfolders%", "panel")' style="width:7`%;">Sub</a>`r`n<a href="file:///%inca%/cache/html/downloads.htm" class='slider' id='folders' onmouseover='spool(event, id, "%folder_list%", "panel")' style="width:7`%;">Fol</a>`r`n<a  href="file:///%inca%/cache/html/downloads.htm" class='slider' id='fav' onmouseover='spool(event, id, "%fav_folders%", "panel")' style="width:7`%;">Fav</a>`r`n<a href="file:///%inca%/cache/html/new.htm" class='slider' id='playlists' onmouseover='spool(event, id, "%playlists%", "panel")' style="width:7`%;">Playlists</a>`r`n<a href="file:///%inca%/cache/html/new.htm" class='slider' id='music' onmouseover='spool(event, id, "%music%", "panel")' style="width:7`%;">Music</a>`r`n<a id='search' class='slider' onmousemove='spool(event, id, "%search_list%", "panel")' onmousedown='spool(event,"search_all","%search_list%", "search_all")'>Search</a></ul>`r`n`r`n
         filter_html =`r`n`r`n<ul class="menu" style="display:flex; justify-content:space-between;">`r`n<input type="search" class="searchbox" value="%search_term%" style="width:14`%; border-radius:8px; height:16px; border:none; color:#666666; background-color:#1b1814;"><a href="#Searchbox" style="color:lightsalmon;"><c>+</c></a>`r`n`r`n
         Loop, Parse, sort_list, `|
             if A_LoopField
@@ -230,14 +240,14 @@ if (type == "video")
                 filter_html = %filter_html%<a href="#%A_LoopField%#" %x%>%name%</a>`r`n
                 }
         sort_html = <ul class="menu" style="margin-top:1em; margin-bottom:1em; display:flex; justify-content:space-between">`r`n<a href="#View#%view%" id='slider4' class='slider' style="width:9`%;" onmousemove='getCoords(event, id, "View", "%title%","")' onmouseleave='getCoords(event, id, "View", "%title%", "%view%")'>View %view%</a>`r`n<a href="%title%.htm#%sort%" id='slider1' class='slider' onmousemove='getCoords(event, id, "%sort%", "%title%", "")'>%sort%</a>`r`n<a href="%title%.htm#Page" id='slider2' class='slider' onmousemove='getCoords(event, id, "%Pages%", "%title%", "")' onmouseleave='getCoords(event, id, "%Pages%", "%title%", "%page%")'>Page %page% of %pages%</a>`r`n<a href="#Page#%next%" class='slider' style="width:12`%;">Next</a></ul>
-        title_html = `r`n`r`n<div style="margin-left:5em; width:100`%; margin-top:2.4em; margin-bottom:1.8em;"><a href="file:///%playlist%" style="font-size:1.8em; color:#555351;">%title% &nbsp;&nbsp;<span style="font-size:0.7em;">%list_size%</span></a></div>`r`n`r`n<div id="myModal" class="modal_container" onmousemove='mouseGesture(event)' onwheel='media_control(event)'>`r`n<span id="myCap" class="caption"></span><div><video id="myPlayer" class="media_player" type="video/mp4"></video><span id="mySpeedbar" class="speed_status"></span><span id="mySeekbar" class="seek_bar"></span><span id="mySidenav2" onmouseover="openNav2()" onmouseleave="closeNav2()" class="sidenav"><a href="#" onclick="togglemute()">Mute</a><a href="#Hello#" id="myFav2">Fav</a><a href="#">Cue</a><a href="#">Sel</a><a href="#">Loop</a><a href="#">Del</a><a href="#">mp3</a><a href="#">mp4</a></span></div></div>`r`n`r`n
+        title_html = `r`n`r`n<div style="margin-left:5em; width:100`%; margin-top:2.4em; margin-bottom:1.8em;"><a href="file:///%playlist%" style="font-size:1.8em; color:#555351;">%title% &nbsp;&nbsp;<span style="font-size:0.7em;">%list_size%</span></a></div>`r`n`r`n<div id="myModal" class="modal_container" onmousemove='mouseGesture(event)' onwheel='media_control(event)'>`r`n<span id="myCap" class="caption"></span><div><video id="myPlayer" class="media_player" type="video/mp4"></video><span id="mySpeedbar" class="speed_status"></span><span id="mySeekbar" class="seek_bar"></span><span id="mySidenav2" onmouseover="openNav2()" onmouseleave="closeNav2()" class="sidenav"><a href="#" onclick="togglemute()">Mute</a><a href="#Favorite#" id="myFav2" onmouseover="favorite(id)">Fav</a><a href="#">Cue</a><a href="#">Sel</a><a href="#">Loop</a><a href="#">Del</a><a href="#">mp3</a><a href="#">mp4</a></span></div></div>`r`n`r`n
         html = `r`n%html%</div>`r`n<p style="height:240px;"></p>`r`n
         FileDelete, %inca%\cache\html\%tab_name%.htm
         StringReplace, header_html, header_html, \, /, All
         StringReplace, panel_html, panel_html, \, /, All
         y = %sort_html%%filter_html%</ul>%title_html%%html%
         StringReplace, y, y, \, /, All
-        FileAppend, %header_html%%java%%style%%panel_html%%y%</body>`r`n</html>`r`n, %inca%\cache\html\%tab_name%.htm, UTF-8
+        FileAppend, %header_html%%style%%panel_html%%y%%java%</body>`r`n</html>`r`n, %inca%\cache\html\%tab_name%.htm, UTF-8
         LoadHtml()
         PopUp("",0,0,0)
         DetectMedia(last)						; restore media parameters
@@ -395,39 +405,28 @@ if (type == "video")
     ClickEvent()
         {
         Critical
-        orphan_media =
-
         if (click == "LButton")
           {
           if (timer > 350 && !selected && A_Cursor == "IBeam")		; mouse long click over text
-                  SearchText()						; list search results
+              SearchText()						; list search results
           else if (inside_browser && A_Cursor != "IBeam" && ClickWebPage(0))
               {
               if (command == "Media" && timer <= 350 && GetMedia(0) && type == "document")
                   {
-                  orphan_media := src					; for edit captions - makes txt file an orphan
-            RenderPage()					; highlight last media
-            run, %src%
-            sleep 600
-            if (ext == "pdf")
-                WinActivate, ahk_group Browsers
+                  RenderPage()					; highlight last media
+                  run, %src%
+                  sleep 600
+                  if (ext == "pdf")
+                      WinActivate, ahk_group Browsers
                   }
- }
+               }
             }
         else if (click == "RButton")
-            {
-send, {RButton}
-return
-
-
-            }
+            send, {RButton}
         else if (click == "MButton")
-            {
-if inside_browser
-  send, h
-else send, {MButton}
-return
-            }
+            if inside_browser
+                send, h
+            else send, {MButton}
         else if (click == "Back")
             {
             if timer							; long back key press
@@ -448,36 +447,23 @@ return
             else if inside_browser
                 {
 ;                IfWinActive, ahk_class Chrome_WidgetWin_1 
-
-  send, {Pause}								; close java modal (media)
-
+                 send, {Pause}						; close java modal (media)
                  if selected
                   {
                   selected =
                   RenderPage()
                   }
-
                 }
             else send, {Xbutton1}
             }
         }
 
 
-
-
-
-
-
-
-
-
     ClickWebPage(search)
         {
-        selected =
         command =
         value =
-        target = 
-        orphan_media =
+        address = 
         type =
         WinActivate, ahk_group Browsers
         if !search
@@ -487,7 +473,6 @@ return
           send, {Alt up}{Ctrl up}{Shift up}
           if (click == "LButton")
               send, {LButton up}
-          else send, {LButton}						; so M or R Button fill location bar
           input := GetLocationBar(1)
           sleep 20							; to release location bar
           StringReplace, input, input, /, \, All
@@ -497,37 +482,39 @@ return
           href := array[1]
           command := array[2]
           value := array[3]
-          target := array[4]
+          address := array[4]
           select := array[5]
           StringReplace, select, select, `,, /, All
           if (StrLen(select) > 2)
               selected = %select%
           if !command
               return
-          if selected
-            {
-            FileTransfer()						; between folders or playlists
-            return
-            }
-        if (command == "Favorite")
-{
-tooltip Favorite - %value%
-            return
-}
-
-          IfExist, %target%
-            if InStr(target, ".m3u")
+          if (command == "Path" && selected)
               {
-              playlist := target
-              SplitPath, target,,path,,folder
+              FileTransfer()						; between folders or playlists
+              return
+              }
+          if (command == "Favorite")
+              {
+              list_id := StrSplit(selected, "/").2
+              GetMedia(0)
+              FileAppend, %src%|%value%`r`n, %inca%\playlists\new.m3u, UTF-8
+              Runwait, %inca%\apps\ffmpeg.exe -ss %value% -i "%src%" -y -vf scale=480:-2 -vframes 1 "%inca%\cache\posters\%media%%A_Space%%value%.jpg",, Hide
+              return
+              }
+          if (command == "Path")
+            if InStr(address, ".m3u")
+              {
+              playlist := address
+              SplitPath, address,,path,,folder
               path = %path%\
               }
             else
               {
               playlist =
-              path := target
-              StringTrimRight, target, target, 1
-              SplitPath, target,,,,folder
+              path := address
+              StringTrimRight, address, address, 1
+              SplitPath, address,,,,folder
               }
           list_id := value
           }
@@ -571,7 +558,7 @@ tooltip Favorite - %value%
               search_term = %value%					; clears white space
             else if search_box
               search_term = %search_box%
-            if target
+            if address
                 {
                 search_term =
                 tab_name := folder
@@ -594,6 +581,21 @@ tooltip Favorite - %value%
                         subfolders = %subfolders%|%A_LoopFileFullPath%\
                       else subfolders = %A_LoopFileFullPath%\
                 }
+            if search_term						; search text from link or search box
+                {
+                tab_name := search_term
+                folder := search_term
+                GetTabSettings(0)					; load cached tab settings
+                this_search := search_folders
+                if (search_box && !InStr(this_search, path))		; search this folder, then search paths
+                    this_search = %path%|%this_search%			; search this folder only
+                if search_box
+                    {
+                    view := 0
+                    toggles =
+                    sort = Duration
+                   }
+                }
             if (InStr(sort_list, command))		; sort filter
                 {
                page := 1
@@ -612,21 +614,6 @@ tooltip Favorite - %value%
                 else sort := command
                 if (StrLen(toggles) < 4)
                     toggles =
-                }
-            if search_term						; search text from link or search box
-                {
-                tab_name := search_term
-                folder := search_term
-;                GetTabSettings(0)					; load cached tab settings
-                this_search := search_folders
-                if (search_box && !InStr(this_search, path))		; search this folder, then search paths
-                    this_search = %path%|%this_search%			; search this folder only
-                if search_box
-                    {
-                    view := 0
-                    toggles =
-                    sort = Duration
-                   }
                 }
             }
         CreateList(1)
@@ -824,7 +811,7 @@ return
               sort_name := Time(list_id)
               }
             list_size += 1
-            list = %list%%list_id%/%input%/%med%/%sort_name%/%start%`n
+            list = %list%%list_id%/%input%/%med%/%sort_name%/%start%`r`n
             }
         }
 
@@ -972,24 +959,45 @@ return
 
 
 
+    FileTransfer()
+        {
+        if InStr(address, ".m3u")
+          PopUp("Link Move",400,0,0)
+        else PopUp("File Move",400,0,0)
+        Loop, Parse, selected, `/
+            {
+            list_id := A_LoopField
+            if GetMedia(0)
+              if InStr(address, ".m3u")
+                {
+                FileAppend, %src%`n, %address%, UTF-8			; add media entry to playlist
+                DeleteEntry()
+                }
+              else FileMove, %src%, %address%, 1			; move file to new folder
+            }
+        selected =
+        CreateList(0)
+        }  
+
+
+
+
+
 
 
 
     DeleteEntry()
         {
-            if (toggles == "Reverse")					; playlist not aligned to media list
+        if (toggles == "Reverse")					; playlist not aligned to media list
+            {
+            Loop, Parse, selected, `/
                 {
-                Loop, Parse, selected, `/
-                    {
-                    offset := list_size - A_LoopField + 1		; selected pointers re-aligned to playlist
-                    sel = %sel%/%offset%
-                    }
-                selected := sel
-                list_id := list_size - list_id + 1			; target pointer re-aligned
+                offset := list_size - A_LoopField + 1			; selected pointers re-aligned to playlist
+                sel = %sel%/%offset%
                 }
-
-        select = `/%selected%
-        selected =
+            selected := sel
+            list_id := list_size - list_id + 1				; target pointer re-aligned
+            }
         FileRead, str, %playlist%
         FileDelete, %playlist%
         Loop, Parse, str, `n, `r
@@ -997,71 +1005,33 @@ return
             {
             id := A_Index
             id = `/%id%`/
-            if !Instr(select, id)
+            if !Instr(selected, id)
                 FileAppend, %A_LoopField%`r`n, %playlist%, UTF-8
-            else selected = %selected%%A_LoopField%`r`n
             }
         }
 
 
+
     AddEntry()
         {
-        FileRead, str, %playlist%
-        FileDelete, %playlist%
+return
+        FileRead, str, %address%
+        FileDelete, %address%
         Loop, Parse, str, `n, `r
           if A_LoopField
             {
             if (list_id == A_Index)
                 {
-                FileAppend, %selected%, %playlist%, UTF-8
+                FileAppend, %selected%, %address%, UTF-8
                 selected =
                 }   
-            FileAppend, %A_LoopField%`r`n, %playlist%, UTF-8
+            FileAppend, %A_LoopField%`r`n, %address%, UTF-8
             }
         if selected
-            FileAppend, %selected%, %playlist%, UTF-8
+            FileAppend, %selected%, %address%, UTF-8
         selected =
         }
 
-
-
-
-    FileTransfer()
-        {
-         If (playlist && InStr(target, ".m3u"))				; this page and target are playlists
-            {
-            PopUp("Added",400,0,0)
-            DeleteEntry()						; remove entries from playlist
-            if (command == "Media")
-                AddEntry()						; add to new position in playlist
-            if (command == "Target")
-                FileAppend, %selected%, %src%, UTF-8			; move entry to new playlist
-            }
-        else if !playlist						; current page
-            {
-            PopUp("Move",400,0,0)
-            tab_name := previous_tab					; stay in this folder
-            GetTabSettings(1)
-            Loop, Parse, selected, `/
-                {
-                SplitPath, target,,,ext
-                if (ext == "m3u")
-                  playlist := target
-                list_id := A_LoopField
-                GetMedia(0)						; src becomes selected media
-                IfExist, %path%%media%.lnk
-                  src = %path%%media%.lnk
-                if src
-                  if playlist
-                    FileAppend, %src%`n, %playlist%, UTF-8		; add media entry to playlist
-                  else FileMove, %src%, %target%, 1			; move file to new folder
-                }
-            playlist =
-            }
-        else GetTabSettings(1)
-        selected =
-        CreateList(0)
-        }  
 
 
 
