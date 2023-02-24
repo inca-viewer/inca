@@ -30,7 +30,10 @@
 // crash in scenes list - text media 
 // view 0 not to load video on page load
 // put panel styles in style sheet
+// transfer between playlists
 
+// bring back widths
+// make selections underneath thumbs not left side
 
 
 
@@ -45,10 +48,20 @@
   var seek_active;		// currently seeking video
   var selected = ","		// list of selected media in page
   var playing = false
+  var cue = 0
+  var looping = true
   var over_link = 0
   var offset = true
-  var offset_top = window.innerHeight/4
+  var offset_top = window.innerHeight/4				// set global id's
   var offset_left = window.innerWidth/8
+  var container = document.getElementById("myModal")
+  var media = document.getElementById("myPlayer")
+  var speed = document.getElementById("mySpeedbar")
+  var seek = document.getElementById("mySeekbar")
+  var cap = document.getElementById("myCap")			// modal player caption
+  var nav = document.getElementById("mySidenav")
+  var nav2 = document.getElementById("mySidenav2")
+  var inputbox = document.getElementById("myInput")
 
   var cursor = ""		// mouse movement globals
   var mouse_down
@@ -66,15 +79,46 @@
 
 
 
+
+  function rename() {
+    el = document.getElementById("myRename")
+    el.setAttribute("href", "#Rename#" + inputbox.value + "##," + index + ",")}
+
+  function favorite(id) {
+    el = document.getElementById("myFav2")
+    el.setAttribute("href", "#Favorite#" + Math.round(media.currentTime*100)/100 + "##," + index + ",")}
+
+  function cue() {
+    el = document.getElementById("myCue")
+    cue = Math.round(media.currentTime*100)/100}
+
+  function loop() {if (looping) {looping = false} else {looping = true}}
+
+  function inbox(e) {}
+//  if (e.key == "Enter") {alert(inputbox.value)}}
+
+
+
+
+
+
+  function rename222() {
+  x = selected.split(',')
+  x = document.getElementById("media" + x[1]).src
+  x = x.split('/').pop().split('.')
+  inputbox.value = x[0]
+  inputbox.focus()}
+
+
+
   function open_media(event, thumb, s, t, i) {				// click small thumbnail on webpage
     start = s; type = t; index = i
     scaleX = scaleY
     if (!MiddleClick) {select(i)}
-    container = document.getElementById("myModal")
-    media = document.getElementById("myPlayer")				// set global id's
-    speed = document.getElementById("mySpeedbar")
-    seek = document.getElementById("mySeekbar")
-    cap = document.getElementById("myCap")				// modal player caption
+    filename = thumb.src.split('/').pop()
+    ext = filename.split('.').pop()
+    filename = filename.replace(ext, "").slice(0,-1)
+    inputbox.value = filename
     if (type == "document") {return}
     if (type == "image") {media.src = thumb.poster; media.poster = thumb.poster}
     else {media.poster = ""; media.src = thumb.src}
@@ -127,8 +171,8 @@
     var block_wheel = 260
     var WheelDown = false
     if (event.deltaY > 0) {WheelDown = true}
-    if (MiddleClick || type == "image" || (xpos < 0.95 && type == "thumbsheet")) {
-      if (MiddleClick) {if (xpos > 0.95) {index += 1}}
+    if (MiddleClick || type == "image" || (xpos > 0.07 && type == "thumbsheet")) {
+      if (MiddleClick) {if (xpos < 0.07) {index += 1}}
       else {if (WheelDown) {index += 1} else {index -= 1} start = null}		// next/previous media
       var last_type = type
       type = ""
@@ -142,7 +186,7 @@
       else if (type == "image") {media.src = next.poster; media.poster = next.poster}
       else {
         if (last_type == "video") {
-          if (xpos > 0.95) {start = null}
+          if (xpos < 0.07) {start = null}
           else {start = media.currentTime}}
         media.poster = ""
         media.src = next.src;
@@ -151,22 +195,24 @@
         p = p.pop()
         p = p.replace(".jpg", "")
         if (!isNaN(p) && p.length > 2 && p.match(".")) {start = p; x = x.replace("%20" + start, "")}
-        if (MiddleClick && last_type == "thumbsheet" || xpos > 0.95) {
+        if (MiddleClick && last_type == "thumbsheet" || xpos < 0.07) {
           setTimeout(function() {play_thumb(0)},100)
           setTimeout(function() {media.poster = x},300)}
         else {media.poster = x; type = "thumbsheet"}}}
-    else if ((type == "video" || type == "audio") && xpos < 0.95) {	// video seek
+    else if ((type == "video" || type == "audio") && xpos > 0.07) {	// video seek
       if (media.paused == true) {interval = 0.05}
       else if (media.duration < 60) {interval = 0.5}
       else {interval = 5}
       if (WheelDown) {media.currentTime += interval}
       else  {media.currentTime -= interval}
       block_wheel = 100}
-    else if (type != "image" && xpos > 0.95) {				// video speed
+    else if (type != "image" && xpos < 0.07) {				// video speed
       if (WheelDown) {rate = -0.05}
-      else  {rate = 0.05}
-      media.playbackRate += rate
-      show_speed()}
+      else {rate = 0.05}
+      if (media.playbackRate < 1 || rate < 0) {
+        media.playbackRate += rate
+        speed.innerHTML = Math.round(media.playbackRate *100)}
+      else {speed.innerHTML = ""}}
     setTimeout(function() {timer = 0},block_wheel)
     timer = 1; wheel = 0; MiddleClick = false}
 
@@ -390,9 +436,10 @@
       media.play()}
     else if (type == "video") {
       media.play()
-      if (media.playbackRate > 0.65) {media.playbackRate -= 0.05; show_speed()}
+      if (media.playbackRate > 0.65) {media.playbackRate -= 0.05}
       if (lastX < 10 && !mouse_down) {
         media.offsetHeight
+        speed.innerHTML = Math.round(media.playbackRate *100)
         media.style.animationName = "loopFade"
         media.style.setProperty('--scaleStartX', `${lastX}`)
         media.style.setProperty('--scaleStartY', `${lastY}`)
@@ -400,24 +447,6 @@
         media.style.setProperty('--scaleEndX', `${lastX}`)
         media.style.setProperty('--scaleEndY', `${lastY}`)}}}
 
-
-  function show_speed() {
-    speed.style.display="block"
-    speed.style.animationName=""
-    speed.offsetHeight							// trigger animation
-    speed.innerHTML = Math.round(media.playbackRate *100)
-    y = 2*window.innerHeight*(1-media.playbackRate)
-    if (y > window.innerHeight) {y = window.innerHeight * 0.95}
-    if (y < 0) {y = 0}
-    speed.style.top = y + "px"
-    speed.style.right = 24 + "px"
-    speed.style.animationName="fadeOut"
-    speed.addEventListener("animationend", speed_end)}
-
-
-  function speed_end() {
-    speed.style.display="none"
-    speed.removeEventListener("animationend", speed_end)}
 
   function fadeout_end() {
     container.style.display="none"
@@ -494,21 +523,11 @@ function getCoords(event, id, sort, link, current) {	// return mouse over contro
   el.innerHTML = y + of + units}
 
 
-function openNav() {
-  document.getElementById("mySidenav").style.opacity = 1 
-  document.getElementById("mySidenav").style.left = 0}
+function openNav() {nav.style.opacity = 1; nav.style.left = 0}
+function closeNav() {nav.style.opacity = 0; nav.style.left = "-10px"}
+function openNav2() {nav2.style.opacity = 1; nav2.style.left = 0; speed.style.opacity = 0.8}
+function closeNav2() {nav2.style.opacity = 0; nav2.style.left = "-10px"; speed.style.opacity = 0}
 
-function closeNav() {
-  document.getElementById("mySidenav").style.opacity = 0 
-  document.getElementById("mySidenav").style.left = "-10px"}
-
-function openNav2() {
-  document.getElementById("mySidenav2").style.opacity = 1 
-  document.getElementById("mySidenav2").style.left = 0}
-
-function closeNav2() {
-  document.getElementById("mySidenav2").style.opacity = 0 
-  document.getElementById("mySidenav2").style.left = "-10px"}
 
 function favorite(id) {
   el = document.getElementById("myFav2")

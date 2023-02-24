@@ -17,8 +17,7 @@
 ; removed long click in inca gestures
 ; remove mouseup, down in inca
 ; removed cache
-;  `n, `r issues
-; put start time on every poster.jpg
+
 
 
 	; Inca Media Viewer for Windows - Firefox & Chrome compatible
@@ -90,13 +89,12 @@
 
     SpoolList(i, input, sort_name, start)					; spool sorted media files into web page
         {
-        caption =
         width := Setting("Thumb Width")
 
 if (view == 2)
   width *=1.3
 if (view == 3)
-  width *=3
+  width *=4
 
 
 gap := Setting("Thumb Gap")
@@ -106,30 +104,24 @@ gap := Setting("Thumb Gap")
         FileRead, dur, %inca%\cache\durations\%media%.txt
         if (type == "video")
             {
-            if !start
-              {
-              if (dur > 60)
-                start := 19.8 + (4 * dur/200)
-              else start := (4 * dur/196)
-              }
             thumb =  %inca%\cache\posters\%media%.jpg
-            IfExist, %inca%\cache\posters\%media%%A_Space%%start%.jpg
-              thumb = %inca%\cache\posters\%media%%A_Space%%start%.jpg
-else 
-{
-;tooltip %inca%\cache\posters\%media%%A_Space%%start%.jpg
-;sleep 22
-}
-
-
-          }
+            if start
+              IfExist, %inca%\cache\posters\%media% %start%.jpg
+                thumb = %inca%\cache\posters\%media% %start%.jpg
+            if !start 
+              if (dur > 60)
+                start := 20 + (4 * (dur - 20)/200)
+              else start := 4 * dur / 200
+            }
+        if (start > 1.3)						; because thumb 1 residual time legacy
+            FileRead, caption, %inca%\cache\captions\%media% %start%.txt
+        else FileRead, caption, %inca%\cache\captions\%media%.txt
+        caption := StrReplace(caption, "`r`n", "<br>")
+        if caption
+            caption = <div style="width:70`%; margin-left:8em; color:#826858; font-size:0.85em;"><span id="caption%i%">%caption%</span></div>
         if (dur && type == "video")
             dur := Time(dur)
         else dur =
-        FileRead, cap, %inca%\cache\captions\%media%.txt
-        cap := StrReplace(cap, "`r`n", "<br>")
-        if cap
-            cap = <div style="width:70`%; margin-left:8em; color:#826858; font-size:0.85em;"><span id="cap%i%">%cap%</span></div>
         font := Setting("Font Color")
         if (type == "video")
             FileGetSize, size, %src%, M
@@ -165,7 +157,7 @@ if (type == "video")
                     }
 	        entry = <a href="#Media#%i%"><div style="display:inline-block; width:88`%; color:#555351; transition:color 1.4s; margin-left:8`%; text-align:center; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; %highlight%;">%sort_name% &nbsp;&nbsp;%link% %media%</div></a><textarea rows=%rows% style="display:inline-block; overflow:hidden; margin-left:8`%; width:88`%; background-color:inherit; color:#826858; font-size:1.2em; font-family:inherit; border:none; outline:none;">%str2%</textarea>`r`n`r`n
                 }
-            else entry = <li onclick="select(%i%)" style="display:inline-block; vertical-align:top; width:%width%em; margin-bottom:8em; color:%font%; transition:color 1.4s;"><div id="title%i%" style="width:70`%; margin-left:8em; color:#555351; text-align:center; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; font-size:0.85em; %highlight%;">%sort_name% &nbsp;&nbsp; %link% %media%</div><a href="#Media#%i%"><video id="media%i%" style="width:75`%; display:block; padding:2px; margin-left:6em; %select%" onmouseout="getLink(event, this, '%start%', '%type%', %i%, 0)" onmouseover="getLink(event, this, '%start%', '%type%', %i%, 1)" onclick="open_media(event, this, '%start%', '%type%', %i%)" src="file:///%src%" %poster% muted type="video/mp4"></video></a>%cap%</li>`r`n`r`n
+            else entry = <li onclick="select(%i%)" style="display:inline-block; vertical-align:top; width:%width%em; margin-bottom:8em; color:%font%; transition:color 1.4s;"><div id="title%i%" style="width:70`%; margin-left:8em; color:#555351; text-align:center; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; font-size:0.85em; %highlight%;">%sort_name% &nbsp;&nbsp; %link% %media%</div><a href="#Media#%i%"><video id="media%i%" style="width:75`%; display:block; padding:2px; margin-left:6em; %select%" onmouseout="getLink(event, this, '%start%', '%type%', %i%, 0)" onmouseover="getLink(event, this, '%start%', '%type%', %i%, 1)" onclick="open_media(event, this, '%start%', '%type%', %i%)" src="file:///%src%" %poster% muted type="video/mp4"></video></a>%caption%</li>`r`n`r`n
             }
         return entry
         }
@@ -226,9 +218,9 @@ if (type == "video")
 
         pages := ceil(list_size/size)
         header_html = <!--`r`n%view%>%page%>%sort%>%toggles%>%this_search%>%search_term%>%path%>%folder%>%playlist%>%last_media%`r`n%page_media%`r`n-->`r`n<!doctype html>`r`n<html>`r`n<head>`r`n<meta charset="UTF-8">`r`n<title>Inca - %title%</title>`r`n<meta name="viewport" content="width=device-width, initial-scale=1">`r`n<link rel="icon" type="image/x-icon" href="file:///%inca%\apps\icons\inca.ico">`r`n<style>@font-face {font-family: ClearSans-Thin; src: url("D:/inca/apps/ClearSans-Thin.woff");}</style>`r`n</head>`r`n
-            panel2_html = <body>`r`n`r`n<div style="margin-left:%offset%`%; width:80`%">`r`n<span id="mySidenav" onmouseover="openNav()" onmouseleave="closeNav()" class="sidenav"><a href="#" " id='all' onclick="selectAll()">All</a><a href="#" id="myFav">Fav</a><a href="#">Sel</a><a href="#">Del</a><a href="#Settings#">Set</a><a href="#">Ren</a><a href="#">Join</a></span>`r`n<ul class="menu" id='search_all' style="max-height:34em; background-color:inherit; column-count:8; border-radius:9px; padding-left:1em; font-size:0.9em; overflow:hidden; white-space:nowrap;"></ul>`r`n`r`n
-        panel_html = %panel2_html%<ul class="menu" id='panel' style="column-width: 50px; text-align:left; margin-bottom:20px; height:70px; width:70`%; column-count:8; border-radius:9px; font-size:0.9em"; ></ul>`r`n`r`n<ul class="menu" style="display:flex; justify-content:space-between"><a class='slider' id='sub' onmouseover='spool(event, id, "%subfolders%", "panel")' style="width:7`%;">Sub</a>`r`n<a href="file:///%inca%/cache/html/downloads.htm" class='slider' id='folders' onmouseover='spool(event, id, "%folder_list%", "panel")' style="width:7`%;">Fol</a>`r`n<a  href="file:///%inca%/cache/html/downloads.htm" class='slider' id='fav' onmouseover='spool(event, id, "%fav_folders%", "panel")' style="width:7`%;">Fav</a>`r`n<a href="file:///%inca%/cache/html/new.htm" class='slider' id='playlists' onmouseover='spool(event, id, "%playlists%", "panel")' style="width:7`%;">Playlists</a>`r`n<a href="file:///%inca%/cache/html/new.htm" class='slider' id='music' onmouseover='spool(event, id, "%music%", "panel")' style="width:7`%;">Music</a>`r`n<a id='search' class='slider' onmousemove='spool(event, id, "%search_list%", "panel")' onmousedown='spool(event,"search_all","%search_list%", "search_all")'>Search</a></ul>`r`n`r`n
-        filter_html =`r`n`r`n<ul class="menu" style="display:flex; justify-content:space-between;">`r`n<input type="search" class="searchbox" value="%search_term%" style="width:14`%; border-radius:8px; height:16px; border:none; color:#666666; background-color:#1b1814;"><a href="#Searchbox" style="color:lightsalmon;"><c>+</c></a>`r`n`r`n
+            panel2_html = <body>`r`n`r`n<div style="margin-left:%offset%`%; width:80`%">`r`n<span id="mySidenav" onmouseover="openNav()" onmouseleave="closeNav()" class="sidenav"><a href="#" onclick="selectAll()">Select</a><a href="#" id="myFav" onmouseover="favorite(id)">Favorite</a><a href="#Delete#">Delete</a><a href="#" id="myRename" onmouseover="rename()">Rename</a><a href="#Settings#">Menu</a><a href="#Join#">Join</a></span>`r`n<ul class="menu" id='search_all' style="max-height:34em; background-color:inherit; column-count:8; border-radius:9px; padding-left:1em; font-size:0.9em; overflow:hidden; white-space:nowrap;"></ul>`r`n`r`n
+        panel_html = %panel2_html%<ul class="menu" id='panel' style="column-width: 64px; text-align:left; margin-bottom:20px; height:70px; width:70`%; column-count:8; border-radius:9px; font-size:0.95em"></ul>`r`n`r`n<ul class="menu" style="display:flex; justify-content:space-between"><a class='slider' id='sub' onmouseover='spool(event, id, "%subfolders%", "panel")' style="width:7`%;">Sub</a>`r`n<a href="file:///%inca%/cache/html/downloads.htm" class='slider' id='folders' onmouseover='spool(event, id, "%folder_list%", "panel")' style="width:7`%;">Fol</a>`r`n<a  href="file:///%inca%/cache/html/downloads.htm" class='slider' id='fav' onmouseover='spool(event, id, "%fav_folders%", "panel")' style="width:7`%;">Fav</a>`r`n<a href="file:///%inca%/cache/html/new.htm" class='slider' id='playlists' onmouseover='spool(event, id, "%playlists%", "panel")' style="width:7`%;">Playlists</a>`r`n<a href="file:///%inca%/cache/html/new.htm" class='slider' id='music' onmouseover='spool(event, id, "%music%", "panel")' style="width:7`%;">Music</a>`r`n<a id='search' class='slider' onmousemove='spool(event, id, "%search_list%", "panel")' onmousedown='spool(event,"search_all","%search_list%", "search_all")'>Search</a></ul>`r`n`r`n
+        filter_html =`r`n`r`n<ul class="menu" style="display:flex; justify-content:space-between;">`r`n<input onkeydown="inbox(event)" id="myInput" type="search" class="searchbox" value="%search_term%" style="width:14`%; border-radius:8px; height:16px; border:none; color:#666666; background-color:#1b1814;"><a href="#Searchbox" style="color:lightsalmon;"><c>+</c></a>`r`n`r`n
         Loop, Parse, sort_list, `|
             if A_LoopField
                 {
@@ -240,7 +232,7 @@ if (type == "video")
                 filter_html = %filter_html%<a href="#%A_LoopField%#" %x%>%name%</a>`r`n
                 }
         sort_html = <ul class="menu" style="margin-top:1em; margin-bottom:1em; display:flex; justify-content:space-between">`r`n<a href="#View#%view%" id='slider4' class='slider' style="width:9`%;" onmousemove='getCoords(event, id, "View", "%title%","")' onmouseleave='getCoords(event, id, "View", "%title%", "%view%")'>View %view%</a>`r`n<a href="%title%.htm#%sort%" id='slider1' class='slider' onmousemove='getCoords(event, id, "%sort%", "%title%", "")'>%sort%</a>`r`n<a href="%title%.htm#Page" id='slider2' class='slider' onmousemove='getCoords(event, id, "%Pages%", "%title%", "")' onmouseleave='getCoords(event, id, "%Pages%", "%title%", "%page%")'>Page %page% of %pages%</a>`r`n<a href="#Page#%next%" class='slider' style="width:12`%;">Next</a></ul>
-        title_html = `r`n`r`n<div style="margin-left:5em; width:100`%; margin-top:2.4em; margin-bottom:1.8em;"><a href="file:///%playlist%" style="font-size:1.8em; color:#555351;">%title% &nbsp;&nbsp;<span style="font-size:0.7em;">%list_size%</span></a></div>`r`n`r`n<div id="myModal" class="modal_container" onmousemove='mouseGesture(event)' onwheel='media_control(event)'>`r`n<span id="myCap" class="caption"></span><div><video id="myPlayer" class="media_player" type="video/mp4"></video><span id="mySpeedbar" class="speed_status"></span><span id="mySeekbar" class="seek_bar"></span><span id="mySidenav2" onmouseover="openNav2()" onmouseleave="closeNav2()" class="sidenav"><a href="#" onclick="togglemute()">Mute</a><a href="#Favorite#" id="myFav2" onmouseover="favorite(id)">Fav</a><a href="#">Cue</a><a href="#">Sel</a><a href="#">Loop</a><a href="#">Del</a><a href="#">mp3</a><a href="#">mp4</a></span></div></div>`r`n`r`n
+        title_html = `r`n`r`n<div style="margin-left:5em; width:100`%; margin-top:2.4em; margin-bottom:1.8em;"><a href="file:///%playlist%" style="font-size:1.8em; color:#555351;">%title% &nbsp;&nbsp;<span style="font-size:0.7em;">%list_size%</span></a></div>`r`n`r`n<div id="myModal" class="modal_container" onmousemove='mouseGesture(event)' onwheel='media_control(event)'>`r`n<span id="myCap" class="caption"></span><div><video id="myPlayer" class="media_player" type="video/mp4"></video><span id="mySpeedbar" class="speed_status"></span><span id="mySeekbar" class="seek_bar"></span><span id="mySidenav2" onmouseover="openNav2()" onmouseleave="closeNav2()" class="sidenav"><a href="#" onclick="togglemute()">Mute</a><a href="#Favorite#" id="myFav2" onmouseover="favorite(id)">Fav</a><a href="#Cue#">Cue</a><a href="#" onclick="select()">Select</a><a href="#" onclick="loop()">Loop</a><a href="#Delete#">Delete</a><a href="#Mp4#">mp4</a><a href="#Mp3#">mp3</a></span></div></div>`r`n`r`n
         html = `r`n%html%</div>`r`n<p style="height:240px;"></p>`r`n
         FileDelete, %inca%\cache\html\%tab_name%.htm
         StringReplace, header_html, header_html, \, /, All
@@ -392,7 +384,7 @@ if (type == "video")
             if (GetKeyState("LButton", "P"))
                 AdjustMedia(x, y)
             }
-        if (!gesture && timer > 500)
+        if (!gesture && timer > 800)
             {
             gesture = 1					; once only
             ClickEvent()
@@ -461,6 +453,7 @@ if (type == "video")
 
     ClickWebPage(search)
         {
+        select =
         command =
         value =
         address = 
@@ -489,6 +482,19 @@ if (type == "video")
               selected = %select%
           if !command
               return
+
+if (command == "Delete")
+{
+ tooltip Delete
+return
+}
+if (command == "Rename")
+{
+ tooltip %command% - %value% - %selected%
+return
+}
+
+
           if (command == "Path" && selected)
               {
               FileTransfer()						; between folders or playlists
@@ -673,7 +679,7 @@ if (type == "video")
             if (inca_tab && tab_name != previous_tab)			; is switched inca tab
                 {
                 previous_tab := tab_name
-                GetTabSettings(1)					; get last tab settings
+                GetTabSettings(1)					; get last tab ;settings
 CreateList(0)
 return
                 if (tab_name != "Playlists" && tab_name != "Music")
@@ -970,10 +976,10 @@ return
             if GetMedia(0)
               if InStr(address, ".m3u")
                 {
-                FileAppend, %src%`n, %address%, UTF-8			; add media entry to playlist
+                FileAppend, %src%`r`n, %address%, UTF-8			; add media entry to playlist
                 DeleteEntry()
                 }
-              else FileMove, %src%, %address%, 1			; move file to new folder
+              else FileMove, %src%, %address%				; move file to new folder
             }
         selected =
         CreateList(0)
