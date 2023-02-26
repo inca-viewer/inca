@@ -72,20 +72,28 @@ table:hover {color:red; transition:color 0.36s;}
 
 .sidenav {
   height:100%;
-  width:84px;
+  width:90px;
   padding-top:30%;
   position:fixed;
   opacity:0;
   top:0;
-  left:-10px;
-  transition:0.25s;}
+  left:0;
+  transition:0.3s;}
 
 .sidenav a {
   padding: 10px 10px 10px 20px;
   font-size:1.2em;
   color:#826858;
   display:block;
-  transition:0.25s;}
+  transition:0.3s;}
+
+.thumbs {
+  display:inline-block;
+  vertical-align:top;
+  margin-bottom:8em;
+  color:#826858;
+  transition:color 1.4s;}
+
 
 .sidenav a:hover {color:salmon}
 
