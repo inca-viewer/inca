@@ -19,8 +19,6 @@
 // Mclick view
 // panel formatting
 // long click = copy not move file (or follow to new folder/stay in this?)
-// move slide position within playlist
-// magnify from centre ref not from offset
 // sound on/off in thumbs page ?
 // create alternative player (mpv) option for non mp4 media
 // select all fail index too high >100 - need new page pure indexes
@@ -37,12 +35,10 @@
 // put panel styles in style sheet
 // transfer within playlist
 // edit captions
-
-
-// wheel on image xpos<0.1 magnify
-// mclick firefox
-
-
+// utf into search box
+// failed to delete playlist entry when in reverse and item moved away
+// move slide position within playlist
+// delete entry in playlist 
 
 
   var container = document.getElementById("myModal")		// media player window
@@ -51,7 +47,7 @@
   var media = document.getElementById("myPlayer")
   var speed = document.getElementById("mySpeedbar")
   var thin = document.getElementById('mySkinny')
-  var thumbs = document.getElementById('myThumbs')
+  var view = document.getElementById('myView')
   var seek = document.getElementById("mySeekbar")
   var cap = document.getElementById("myCap")			// media captions
   var nav = document.getElementById("mySidenav")
@@ -77,36 +73,32 @@
   var cue = 0
   var looping = true
   var over_link = 0
-  var offset = true
   var block_wheel = 20
-
-
   var cursor = ""		// mouse movement globals
   var mouse_down
-  var gesture = ""
+  var gesture = false
   var scaleX = 1
   var scaleY = 1
-  var lastX = 1
-  var lastY = 1
   var rate = 0
-  var xref
-  var yref
+  var Xref
+  var Yref
   var xpos = 0.5
   var ypos = 0.5
   var MiddleClick = false
-  var offset_top = window.innerHeight/2
-  var offset_left = window.innerWidth/2.6
-  var thumb_size = document.getElementById("thumbs1").style.width
+  var mediaY = window.innerHeight/2
+  var mediaX = window.innerWidth/2.6
+  var thumb_size = document.getElementById("thumb1").style.width
   thumb_size = 1*thumb_size.replace("em", "")
+
 
   window.addEventListener('keydown', (event) => {			// inca.exe passing control keys
     if (event.key == 'Pause') {close_media()}				// from inca.exe mouseback button
     if (event.key == 'h') {
       MiddleClick = true; 
+      wheel = 0
       if (playing) {media_control(event)}
       else if (over_link) {open_media(event, link, start, type, index)}
       else {MiddleClick = false}}})		
-
 
 
   function open_media(event, thumb, s, t, i, sk) {			// click small thumbnail on webpage
@@ -158,17 +150,16 @@
     speed.innerHTML = ""
     cap.innerHTML = ""
     playing = false
-    lastX = scaleX
-    lastY = scaleY
-    mouse_down = 0}
+    mouse_down = false}
 
 
-  function media_control(e) {							// wheel over modal
+  function media_control(e) {						// wheel over modal
     wheel += Math.abs(e.deltaY)
     if (wheel < block_wheel) {return}
     var WheelDown = false
+    block_wheel = 20
     if (e.deltaY > 0) {WheelDown = true}
-    if (MiddleClick || type == "thumbsheet") {					// next/previous media
+    if (MiddleClick) {							// next/previous media
       if (MiddleClick) {if (xpos < 0.1 || type != "video") {index += 1; start = null}}
       var last_type = type
       type = ""
@@ -179,7 +170,9 @@
         || next.src.endsWith("webp") || next.src.endsWith("jpeg")) {type = "image"}
       if (next.src.endsWith("mp3")) {type = "audio"}
       if (type == "audio") {media.src = next.src; media.play()}
-      else if (MiddleClick && type == "image") {media.src = next.poster; media.poster = next.poster}
+      else if (MiddleClick && type == "image") {
+        media.src = next.poster; 
+        media.poster = next.poster}
       else {
         if (last_type == "video") {
           if (xpos < 0.1) {start = null}
@@ -194,28 +187,20 @@
         if (xpos < 0.1 && MiddleClick) {
           setTimeout(function() {play_thumb(0)},100)
           setTimeout(function() {media.poster = x},300)}
-        else {media.poster = x; type = "thumbsheet"}}
-
-    media.style.top = offset_top - (media.offsetHeight / 2) + "px"
-    media.style.left = offset_left - (media.offsetWidth / 2) + "px"
-
-}
-    else if (xpos > 0.1 && (type == "video" || type == "audio")) {	// seek
-      if (media.paused == true) {interval = 0.005}
-      else if (media.duration < 60) {interval = 0.1}
-      else {interval = 1}
-      if (WheelDown) {media.currentTime += interval}
-      else  {media.currentTime -= interval}
-      block_wheel = 100}
+        else {media.poster = x; type = "thumbsheet"}}}
+    else if (xpos > 0.1) {						// magnify
+      media.style.animationName = "paused"
+      if (WheelDown) {
+        scaleX *= 1.016; scaleY *= 1.016 
+        mediaY += (mediaY - window.innerHeight/2)/80}
+      else {
+        scaleX *= 0.984; scaleY *= 0.984
+        mediaY -= (mediaY - window.innerHeight/2)/80}
+      media.style.transform = "scale(" + scaleX + "," + scaleY + ")"}
     else if (xpos < 0.1 && ypos < 0.2) {				// skinny
       media.style.animationName = "paused"
-      if (WheelDown) {scaleX = lastX -= 0.003}
-      else {scaleX = lastX += 0.003}
-      media.style.transform = "scale(" + scaleX + "," + scaleY + ")"}
-    else if ((xpos < 0.1 || type == "image") && ypos < 0.8) {		// magnify
-      media.style.animationName = "paused"
-      if (WheelDown) {scaleX = lastX *=1.015; scaleY = lastY *=1.015}
-      else {scaleX = lastX *=0.985; scaleY = lastY *=0.985}
+      if (WheelDown) {scaleX -= 0.003}
+      else {scaleX += 0.003}
       media.style.transform = "scale(" + scaleX + "," + scaleY + ")"}
     else if (xpos < 0.1 && ypos > 0.8 && type != "image") {		// speed
       if (WheelDown) {rate = -0.05}
@@ -225,13 +210,20 @@
         speed.innerHTML = Math.round(media.playbackRate *100)}
       else {speed.innerHTML = ""}
       block_wheel = 360}
+    else if (xpos < 0.1 && ypos > 0.2 && (type == "video" || type == "audio")) {
+      if (media.paused == true) {interval = 0.01}
+      else if (media.duration < 60) {interval = 0.1}			// seek
+      else {interval = 1}
+      if (WheelDown) {media.currentTime += interval}
+      else  {media.currentTime -= interval}
+      block_wheel = 100}
+    media.style.top = mediaY - (media.offsetHeight / 2) + "px"		// center media player
+    media.style.left = mediaX - (media.offsetWidth / 2) + "px"
     MiddleClick = false
     wheel = 0}
 
 
   function play_thumb(e) {						// clicked media in modal
-    lastX = scaleX
-    lastY = scaleY
     var rect = media.getBoundingClientRect()
     var xp = (e.clientX - rect.left) / (media.offsetWidth * scaleX)
     var yp = (e.clientY - rect.top) / (media.offsetHeight * scaleY)
@@ -242,7 +234,7 @@
     if (!e || xp > 1 || yp < 0) {thumb = 5}
     thumb = (thumb - 1) / 200
     var offset = 0
-    if ((xp < 0 || xp > 1 || yp < 0 || yp > 1)) {thumb = 4/200}
+    if ((xp < 0 || xp > 1 || yp < 0 || yp > 1)) {thumb = 4/200}		// not over thumbsheet
     if (!e && start) {media.currentTime = start}
     else if (type == "audio") {media.currentTime = 0}
     else {
@@ -258,13 +250,16 @@
     xpos = (e.clientX - rect.left) / container.offsetWidth		// global cursor position
     ypos = (e.clientY - rect.top) / container.offsetHeight
     if (mouse_down) {
-      gesture = "offset"
-      offset_top += e.clientY - yref
-      offset_left += e.clientX - xref
-      xref = e.clientX
-      yref = e.clientY
-      media.style.top = offset_top - (media.offsetHeight / 2) + "px"
-      media.style.left = offset_left - (media.offsetWidth / 2) + "px"}
+      var x = Math.abs(Xref - e.clientX)
+      var y =  Math.abs(Yref - e.clientY)
+      if (x + y > 5) {gesture = true}
+      if (gesture) {
+        mediaY += e.clientY - Yref
+        mediaX += e.clientX - Xref
+        Xref = e.clientX
+        Yref = e.clientY
+        media.style.top = mediaY - (media.offsetHeight / 2) + "px"
+        media.style.left = mediaX - (media.offsetWidth / 2) + "px"}}
     if (container.style.cursor != "crosshair") {
       container.style.cursor = "crosshair"
       setTimeout(function() {container.style.cursor="none"},244)}
@@ -292,9 +287,8 @@
     scaleX = scaleY
     if (scaleY > 1.4) {
       scaleX = 1.4; scaleY = 1.4
-      offset_top = window.innerHeight/2}
+      mediaY = window.innerHeight/2}
     if (skinny) {scaleX *= skinny}
-    lastX = scaleX; lastY = scaleY
     media.style.setProperty('--scaleStartX', `${scaleX}`)
     media.style.setProperty('--scaleEndX', `${scaleX}`)
     media.style.setProperty('--scaleStartY', `${scaleY}`)
@@ -310,6 +304,9 @@
     cap.innerHTML = ""
     container.addEventListener('mouseup', mouseUp)
     container.addEventListener('mousedown', mouseDown)
+    media.addEventListener("canplay", function() {
+      media.style.top = mediaY - (media.offsetHeight / 2) + "px"
+      media.style.left = mediaX - (media.offsetWidth / 2) + "px"})
     setTimeout(function() {						// wait until media loaded
       if (innerCap.innerHTML && type != "thumbsheet") {
         var rect = media.getBoundingClientRect()
@@ -319,30 +316,18 @@
         cap.innerHTML = innerCap.innerHTML}},400)}
 
 
-  function mouseDown(e) {
-    timout = 0
-    xref = e.clientX
-    yref = e.clientY
-    offset = true
-    scaleY = lastY
-    scaleX = lastX
-    if (seek_active) {seek_active = media.currentTime; media.play()}
-    toggle = setTimeout(function(){toggleoffset()},80)
-    mouse_down = 1}
+  function mouseDown(e) {						// over modal window
+    mouse_down = true
+    Xref = e.clientX
+    Yref = e.clientY
+    if (seek_active) {seek_active = media.currentTime; media.play()}}
 
-
-  function mouseUp (e) {
-    mouse_down = 0
-    lastX = scaleX
-    lastY = scaleY
-    clearTimeout(toggle)
-    togglePause(e)
-    gesture=""; timout=1}
+  function mouseUp (e) {togglePause(e); mouse_down=false; gesture=false}
 
 
   function togglePause(e) {
     if (document.getElementById("mySidenav2").style.opacity > 0 && ypos > 0.5) {return} 
-    if (!gesture && !timout && !seek_active) {
+    if (!gesture && mouse_down && !seek_active) {		// mouse_down skips over inca.exe echo click
       if (type == "thumbsheet") {play_thumb(e)}
       else {
         if (media.paused==true) {
@@ -353,12 +338,7 @@
         else {media.pause()}}}}
 
 
-  function toggleoffset() {
-      if (!gesture)  {offset = false} 
-      else {gesture = "offset"}}
-
-
-  function togglemute() {
+  function toggleMute() {
       if (media.volume > 0.1) {timedVolDown = setInterval(vol_down_timer,20)} 
       else {timedVolUp = setInterval(vol_up_timer,50)}
       media.play()}
@@ -380,6 +360,9 @@
     if (over) {
       link=el; start=s; type=t; index=i					// get media info under cursor
       med = document.getElementById("media" + i)
+      var sel = document.getElementById("sel" + i)
+      if (selected.length > 1)
+        sel.setAttribute("href", "#Move#" + i + "#" + selected)
       var rect = med.getBoundingClientRect()	
       var yp = (e.clientY - rect.top) / (med.offsetHeight)
       if (med.currentTime <= s || yp > 0.9) {med.currentTime = s}
@@ -405,8 +388,8 @@
 
 
   function seekbar_timer() {
-    media.style.top = offset_top - (media.offsetHeight / 2) + "px"
-    media.style.left = offset_left - (media.offsetWidth / 2) + "px"
+    media.style.top = mediaY - (media.offsetHeight / 2) + "px"
+    media.style.left = mediaX - (media.offsetWidth / 2) + "px"
     if (seek_active) {height = 80} else {height = 4}
     if (!mouse_down) {
       if (type != "video" && type != "audio") {height = -400}
@@ -425,15 +408,15 @@
       else {media.src = next.src}}
     if (type == "video") {
       if (media.playbackRate > 0.65) {media.playbackRate -= 0.05}
-      if (lastX < 10 && !mouse_down) {
+      if (scaleX < 10 && !mouse_down) {
         media.offsetHeight
         speed.innerHTML = Math.round(media.playbackRate *100)
         media.style.animationName = "loopFade"
-        media.style.setProperty('--scaleStartX', `${lastX}`)
-        media.style.setProperty('--scaleStartY', `${lastY}`)
-        lastX *= 1.1; lastY *= 1.1
-        media.style.setProperty('--scaleEndX', `${lastX}`)
-        media.style.setProperty('--scaleEndY', `${lastY}`)}}
+        media.style.setProperty('--scaleStartX', `${scaleX}`)
+        media.style.setProperty('--scaleStartY', `${scaleY}`)
+        scaleX *= 1.1; scaleY *= 1.1
+        media.style.setProperty('--scaleEndX', `${scaleX}`)
+        media.style.setProperty('--scaleEndY', `${scaleY}`)}}
     media.play()}
 
 
@@ -537,16 +520,14 @@
     wheel += Math.abs(e.deltaY)
     if (wheel < 100) {return}
     wheel = 0
-//    scroll(0,0)
     if (e.deltaY > 0) {thumb_size += (thumb_size/20)}
     else if (thumb_size > 5) {thumb_size -= (thumb_size/20)}
     thumb_size = Math.round(10*thumb_size)/10
     if (thumb_size < 6) {thumb_size = 6}
-    thumbs.setAttribute("href", "#Thumbs#" + thumb_size)
+    view.setAttribute("href", "#Thumbs#" + thumb_size)
     for (i=1; i<101 ;i++) {
-      document.getElementById("thumbs" + i).style.width = thumb_size + "em"}}
-
-
+      document.getElementById("thumb" + i).style.width = thumb_size + "em"}}
 
 
 </script>
+
