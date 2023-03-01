@@ -26,7 +26,6 @@
 // page_id, list_id, cue list, posters folder can have start suffix on .jpg
 // list cannot see or make selections
 // view etc. loses selected media
-// filename with hash in messages to inca
 // issues with view and list size and thumbs1 id use
 // issues with skinny not save during next media
 
@@ -39,9 +38,15 @@
 // failed to delete playlist entry when in reverse and item moved away
 // move slide position within playlist
 // delete entry in playlist 
+// transition between next
+// show skinny 
+// cannot have hash in filename in messages to inca
 
 
-  var container = document.getElementById("myModal")		// media player window
+
+
+
+  var container = document.getElementById("myModal")			// media player window
   var panel = document.getElementById("myPanel")
   var panel2 = document.getElementById("myPanel2")
   var media = document.getElementById("myPlayer")
@@ -49,7 +54,7 @@
   var thin = document.getElementById('mySkinny')
   var view = document.getElementById('myView')
   var seek = document.getElementById("mySeekbar")
-  var cap = document.getElementById("myCap")			// media captions
+  var cap = document.getElementById("myCap")				// media captions
   var nav = document.getElementById("mySidenav")
   var nav2 = document.getElementById("mySidenav2")
   var fav = document.getElementById("myFav")
@@ -58,23 +63,21 @@
   var d2 = document.getElementById("myDelete2")
   var ren = document.getElementById("myRename")
   var inputbox = document.getElementById("myInput")
-
-  var wheel = 0			// mouse wheel count
-  var timer = 0			// block wheel input
-  var start = 0			// video initial start time
+  var wheel = 0								// mouse wheel count
+  var timer = 0								// block wheel input
+  var start = 0								// video initial start time
   var last_start
-  var link			// mouseover media element
-  var index			// media index (e.g. media14)
-  var type			// audio, video, image, thumb, document
-  var skinny = 1		// user media width preference
-  var seek_active;		// currently seeking video
-  var selected = ","		// list of selected media in page
+  var index								// media index (e.g. media14)
+  var type								// audio, video, image, thumb, document
+  var skinny = 1							// user media width preference
+  var seek_active;							// currently seeking video
+  var selected = ','							// list of selected media in page
   var playing = false
   var cue = 0
   var looping = true
-  var over_link = 0
+  var over_thumb = false
   var block_wheel = 20
-  var cursor = ""		// mouse movement globals
+  var cursor = ""							// mouse movement globals
   var mouse_down
   var gesture = false
   var scaleX = 1
@@ -97,7 +100,7 @@
       MiddleClick = true; 
       wheel = 0
       if (playing) {media_control(event)}
-      else if (over_link) {open_media(event, link, start, type, index)}
+      else if (over_thumb) {open_media(event, over_thumb, start, type, index)}
       else {MiddleClick = false}}})		
 
 
@@ -157,7 +160,7 @@
     wheel += Math.abs(e.deltaY)
     if (wheel < block_wheel) {return}
     var WheelDown = false
-    block_wheel = 20
+    block_wheel = 28
     if (e.deltaY > 0) {WheelDown = true}
     if (MiddleClick) {							// next/previous media
       if (MiddleClick) {if (xpos < 0.1 || type != "video") {index += 1; start = null}}
@@ -192,28 +195,32 @@
       media.style.animationName = "paused"
       if (WheelDown) {
         scaleX *= 1.016; scaleY *= 1.016 
-        mediaY += (mediaY - window.innerHeight/2)/80}
+        mediaY += (mediaY - window.innerHeight/2)/70}
       else {
         scaleX *= 0.984; scaleY *= 0.984
         mediaY -= (mediaY - window.innerHeight/2)/80}
       media.style.transform = "scale(" + scaleX + "," + scaleY + ")"}
-    else if (xpos < 0.1 && ypos < 0.2) {				// skinny
+    else if (xpos < 0.1 && ypos < 0.1) {				// skinny
       media.style.animationName = "paused"
       if (WheelDown) {scaleX -= 0.003}
       else {scaleX += 0.003}
+      sky = Math.round((scaleX / scaleY)*100)/100
+      if (sky != 1) {speed.style.color = 'red'; speed.innerHTML = sky}
+      else {speed.innerHTML = ""}
       media.style.transform = "scale(" + scaleX + "," + scaleY + ")"}
-    else if (xpos < 0.1 && ypos > 0.8 && type != "image") {		// speed
-      if (WheelDown) {rate = -0.05}
-      else {rate = 0.05}
+    else if (xpos < 0.1 && ypos < 0.4 && type != "image") {		// speed
+      if (WheelDown) {rate = -0.01}
+      else {rate = 0.01}
       if (media.playbackRate < 1 || rate < 0) {
         media.playbackRate += rate
+        speed.style.color = 'salmon'
         speed.innerHTML = Math.round(media.playbackRate *100)}
       else {speed.innerHTML = ""}
-      block_wheel = 360}
-    else if (xpos < 0.1 && ypos > 0.2 && (type == "video" || type == "audio")) {
+      block_wheel = 64}
+    else if (xpos < 0.1 && ypos > 0.4 && (type == "video" || type == "audio")) {
       if (media.paused == true) {interval = 0.01}
-      else if (media.duration < 60) {interval = 0.1}			// seek
-      else {interval = 1}
+      else if (media.duration < 60) {interval = 0.2}			// seek
+      else {interval = 2}
       if (WheelDown) {media.currentTime += interval}
       else  {media.currentTime -= interval}
       block_wheel = 100}
@@ -356,13 +363,14 @@
 
 
   function getLink(e, el, s, t, i, over) {				// mouse over small thumbnail of webpage
-    over_link = over    
+    over_thumb = false   
     if (over) {
-      link=el; start=s; type=t; index=i					// get media info under cursor
+      over_thumb=el; start=s; type=t; index=i				// get media info under cursor
       med = document.getElementById("media" + i)
       var sel = document.getElementById("sel" + i)
-      if (selected.length > 1)
-        sel.setAttribute("href", "#Move#" + i + "#" + selected)
+      var playlist = document.getElementById("origin").href.match("/inca/playlists/")
+      if (playlist && selected.split(',').length == 3) {
+        sel.setAttribute("href", "#Move#" + i + "#" + selected)}
       var rect = med.getBoundingClientRect()	
       var yp = (e.clientY - rect.top) / (med.offsetHeight)
       if (med.currentTime <= s || yp > 0.9) {med.currentTime = s}
@@ -508,7 +516,7 @@
   function openNav2() {nav2.style.opacity = 1; nav2.style.left = 0; speed.style.opacity = 0.7}
   function closeNav2() {nav2.style.opacity = 0; nav2.style.left = 0; speed.style.opacity = 0}
   function rename() {ren.setAttribute("href", "#Rename#" + inputbox.value + "#" + selected)}
-  function del() {d1.setAttribute("href", "#Delete#" + inputbox.value + "#" + selected)}
+  function del() {d1.setAttribute("href", "#Delete##" + selected)}
   function del2() {d2.setAttribute("href", "#Delete#" + "#," + index + ",")}
   function loop() {if (looping) {looping = false} else {looping = true}}
   function cue() {cue = Math.round(media.currentTime*100)/100}

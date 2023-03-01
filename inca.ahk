@@ -87,37 +87,6 @@
 
 
 
-    AddEntry()
-        {
-        list_id := value
-        GetMedia(0)
-        address = %path%%folder%.m3u
-        list_id := StrSplit(selected, "/").2
-        GetMedia(0)
-        FileRead, str, %address%
-        StringReplace, str, str, %src%|%seek%`r`n, ,
-        FileDelete, %address%
-        Loop, Parse, str, `n, `r
-          if A_LoopField
-            {
-            if (value == A_Index)
-                FileAppend, %src%|%seek%`r`n, %address%, UTF-8  
-            FileAppend, %A_LoopField%`r`n, %address%, UTF-8
-            }
-        }
-
-
-
-    EditFilename()							; + durations, favorites, history and playlists
-        {
-        list_id := StrSplit(selected, "/").2
-        if !GetMedia(0)
-            return
-        FileMove, %src%, %media_path%\%new_name%.%ext%			; FileMove = FileRename
-        RenderPage()
-        }
-
-
 
 
 
@@ -173,7 +142,7 @@ if (type == "video")
      poster = 
         if !view							; list view 
             {
-            entry = <div style="padding-left:5em;"><a href="#Media#%i%" onclick="select(%i%)"><table><tr><td id="hover_image"><video id="media%i%" style="width:100`%; %select%" onmouseout="getLink(event, this, '%start%', '%type%', %i%, 0)" onmouseover="getLink(event, this, '%start%', '%type%', %i%, 1)" onclick="open_media(event, this, '%start%', '%type%', %i%)" %poster% src="file:///%src%" type="video/mp4" muted></video></tr></table><table style="table-layout:fixed; width:100`%"><tr><td style="color:#777777; width:4em; text-align:center">%sort_name%</td><td style="width:4em; font-size:0.7em; text-align:center">%dur%</td><td style="width:3em; font-size:0.7em; text-align:center">%size%</td><td style="width:4em; padding-right:3.2em; font-size:0.7em; text-align:center">%ext%</td><td style="%select% white-space:nowrap; text-overflow:ellipsis; font-size:1em"><div id="title%i%" style="text-overflow:ellipsis; overflow:hidden; white-space:nowrap; width:34em">%media%</div></td></tr></table></a><span id="thumb1" style="width:%view%em"></span></div>`r`n`r`n
+            entry = <div style="padding-left:5em;"><a href="#Media#%i%" id="thumb%i%" onclick="select(%i%)"><table><tr><td id="hover_image"><video id="media%i%" style="width:100`%; %select%" onmouseout="getLink(event, this, '%start%', '%type%', %i%, 0)" onmouseover="getLink(event, this, '%start%', '%type%', %i%, 1)" onclick="open_media(event, this, '%start%', '%type%', %i%)" %poster% src="file:///%src%" type="video/mp4" muted></video></tr></table><table style="table-layout:fixed; width:100`%"><tr><td style="color:#777777; width:4em; text-align:center">%sort_name%</td><td style="width:4em; font-size:0.7em; text-align:center">%dur%</td><td style="width:3em; font-size:0.7em; text-align:center">%size%</td><td style="width:4em; padding-right:3.2em; font-size:0.7em; text-align:center">%ext%</td><td style="%select% white-space:nowrap; text-overflow:ellipsis; font-size:1em"><div id="title%i%" style="text-overflow:ellipsis; overflow:hidden; white-space:nowrap; width:34em">%media%</div></td></tr></table></a><span id="thumb1" style="width:%view%em"></span></div>`r`n`r`n
             }
         else
             {
@@ -200,11 +169,11 @@ if (type == "video")
         {
         if !(folder && path)
             return
-        last := src
         if playlist
-            SplitPath, playlist,,,,title
-        else title := tab_name
-        tab_name := title
+            origin = href="file:///%playlist%"
+        else origin = href="file:///%path%"
+        last := src
+        title := tab_name
         FileRead, style, %inca%\apps\style.css
         FileRead, java, %inca%\java.js
         Loop, Files, %inca%\music\*.m3u					; for top panel
@@ -223,7 +192,7 @@ if (type == "video")
         size := Setting("Thumbs Qty")
         if (!view || playlist)
             size := Setting("List Size")
-        page_media = >							; cannot use | as seperator because this_search uses |
+        page_media = /							; cannot use | as seperator because this_search uses |
         Loop, Parse, list, `n, `r 					; split list into smaller web pages
             {
             item := StrSplit(A_LoopField, "/")				;  sort filter \ src \ media type \ ext
@@ -236,7 +205,7 @@ if (type == "video")
                 if (x := SpoolList(A_Index, source, sort_name, start))
                     {
                     html = %html%%x%					; spool html media entries
-                    page_media = %page_media%%A_Index%>			; create array of media pointers with > seperator
+                    page_media = %page_media%%A_Index%/			; create array of media pointers with > seperator
                     }
             }
 
@@ -264,7 +233,7 @@ if (type == "video")
                 filter_html = %filter_html%<a href="#%A_LoopField%#" %x%>%name%</a>`r`n
                 }
         sort_html = <ul class="menu" style="margin-top:1em; margin-bottom:1em; display:flex; justify-content:space-between; margin-left:20px">`r`n<input id="myInput" type="search" class="searchbox" value="%search_term%" style="width:32`%; border-radius:8px; height:16px; border:none; color:#666666; background-color:#1b1814;"><a href="#Searchbox" style="color:lightsalmon;"><c>+</c></a>`r`n<a href="%title%.htm#%sort%" id='slider1' class='slider' onmousemove='getCoords(event, id, "%sort%", "%title%", "")'>%sort%</a>`r`n<a href="%title%.htm#Page" id='slider2' class='slider' onmousemove='getCoords(event, id, "%Pages%", "%title%", "")' onmouseleave='getCoords(event, id, "%Pages%", "%title%", "%page%")'>Page %page% of %pages%</a>`r`n<a href="#Page#%next%" class='slider' style="width:6`%;">Next</a></ul>
-        title_html = `r`n`r`n<div style="margin-left:5em; width:100`%; margin-top:2.4em; margin-bottom:1.8em;"><a href="file:///%playlist%" style="font-size:1.8em; color:#555351;">%title% &nbsp;&nbsp;<span style="font-size:0.7em;">%list_size%</span></a></div>`r`n`r`n<div id="myModal" class="modal_container" onmousemove='Gesture(event)' onwheel='media_control(event)'>`r`n<span id="myCap" class="caption"></span><div><video id="myPlayer" class="media_player" type="video/mp4"></video><span id="mySpeedbar" class="speed_status"></span><span id="mySeekbar" class="seek_bar"></span><span id="mySidenav2" onmouseover="openNav2()" onmouseleave="closeNav2()" class="sidenav"><a href="#" onclick="toggleMute()">Mute</a><a href="#" id="myFav2" onmouseover="favorite2(id)">Fav</a><a href="#Cue#">Cue</a><a href="#" onclick="select()">Select</a><a href="#" onclick="loop()">Loop</a><a href="#" id="myDelete2" onmouseover="del2()">Delete</a><a href="#Mp4#">mp4</a><a href="#Mp3#">mp3</a><a href="#" id="mySkinny"></a></span></div></div>`r`n`r`n
+        title_html = `r`n`r`n<div style="margin-left:5em; width:100`%; margin-top:2.4em; margin-bottom:1.8em;"><a %origin% id="origin" style="font-size:1.8em; color:#555351;">%title% &nbsp;&nbsp;<span style="font-size:0.7em;">%list_size%</span></a></div>`r`n`r`n<div id="myModal" class="modal_container" onmousemove='Gesture(event)' onwheel='media_control(event)'>`r`n<span id="myCap" class="caption"></span><div><video id="myPlayer" class="media_player" type="video/mp4"></video><span id="mySpeedbar" class="speed_status"></span><span id="mySeekbar" class="seek_bar"></span><span id="mySidenav2" onmouseover="openNav2()" onmouseleave="closeNav2()" class="sidenav"><a href="#" onclick="toggleMute()">Mute</a><a href="#" id="myFav2" onmouseover="favorite2(id)">Fav</a><a href="#Cue#">Cue</a><a href="#" onclick="select()">Select</a><a href="#" onclick="loop()">Loop</a><a href="#" id="myDelete2" onmouseover="del2()">Delete</a><a href="#Mp4#">mp4</a><a href="#Mp3#">mp3</a><a href="#" id="mySkinny"></a></span></div></div>`r`n`r`n
         html = `r`n%html%</div>`r`n<p style="height:240px;"></p>`r`n
         FileDelete, %inca%\cache\html\%tab_name%.htm
         StringReplace, header_html, header_html, \, /, All
@@ -279,224 +248,6 @@ if (type == "video")
 
 
 
-
-
-
-
-    ClickWebPage(search)
-        {
-        select =
-        command =
-        value =
-        address = 
-        type =
-        WinActivate, ahk_group Browsers
-        if !search
-          {
-          if !inside_browser
-            return
-          send, {Alt up}{Ctrl up}{Shift up}
-          if (click == "LButton")
-              send, {LButton up}
-          input := GetLocationBar(1)
-          sleep 20							; to release location bar
-          StringReplace, input, input, /, \, All
-          if !InStr(input, "file:\\\")
-            return
-          array := StrSplit(input,"#")
-          href := array[1]
-          command := array[2]
-          value := array[3]
-          select := array[4]
-          address := array[5]
-          StringReplace, select, select, `,, /, All
-          if (StrLen(select) > 2)
-              selected = %select%
-          if !command
-              return
-          if (command == "Move")
-              if (selected && InStr(path, "playlists"))
-                  AddEntry()						; move entry within playlist
-              else return
-          if (command == "Favorite")
-              {
-              list_id := StrSplit(selected, "/").2
-              GetMedia(0)
-              if !value
-                  value := 0.01
-              FileAppend, %src%|%value%`r`n, %inca%\playlists\new.m3u, UTF-8
-              Runwait, %inca%\apps\ffmpeg.exe -ss %value% -i "%src%" -y -vf scale=480:-2 -vframes 1 "%inca%\cache\posters\%media%%A_Space%%value%.jpg",, Hide
-              return
-              }
-          if (command == "Skinny")
-              {
-              list_id := StrSplit(selected, "/").2
-              if GetMedia(0)
-                {
-                FileDelete, %inca%\cache\widths\%media%.txt
-                if value
-                  FileAppend, %value%, %inca%\cache\widths\%media%.txt
-                }
-              return 1
-              }
-          if (command == "Thumbs")
-              {
-              if (view == value)
-                {
-                if !view
-                   view := last_view
-                else view := 0
-                }
-              else 
-                view := value
-              last_view := value
-              }
-          if (command == "Delete")
-              {
-              Loop, Parse, selected, `/
-                  {
-                  list_id := A_LoopField
-                  if GetMedia(0)
-                      FileRecycle, %src%
-                  }
-              }
-
-          if (command == "Rename")
-            {
-            if (StrLen(value) < 4)
-                popup = too small
-            list_id := StrSplit(selected, "/").2
-            if !GetMedia(0)
-                popup = no media
-            if !popup
-               {
-               FileMove, %src%, %media_path%\%value%.%ext%		; FileMove = FileRename
-               popup = Renamed
-               }
-            }
-          if (command == "Path" && selected)
-              {
-              FileTransfer()						; between folders or playlists
-              return
-              }
-          if (command == "Path")
-            if InStr(address, ".m3u")
-              {
-              playlist := address
-              SplitPath, address,,path,,folder
-              path = %path%\
-              }
-            else
-              {
-              playlist =
-              path := address
-              StringTrimRight, address, address, 1
-              SplitPath, address,,,,folder
-              }
-          list_id := value
-          }
-        if (command == "Orphan")
-            return
-        else if (command == "Media")
-            return value
-        else if (command == "Searchbox")					; add search to search list
-            {
-            search_list = %search_list%|%search_term%
-            IniWrite,%search_list%,%inca%\settings.ini,Settings,search_list
-            LoadSettings()
-            PopUp("Added",600,0,0)
-            return
-            }
-        else if (value && InStr(sort_list, command))
-            {
-            page := 1
-            filter := value
-            }
-        else if (command == "Page" || command == "View")
-            {
-            if (command == "Page")
-                page := value
-            if (command == "View")
-                view := value
-            Popup(value,0,0,0)
-            RenderPage()
-            return 1
-            }
-        else if (command == "Settings")
-            { 
-            ShowSettings()
-            return 1
-            }
-        else
-            {
-            filter =
-            page := 1
-            if (command == "Search")
-              search_term = %value%					; clears white space
-            else if search_box
-              search_term = %search_box%
-            if address
-                {
-                search_term =
-                tab_name := folder
-                this_search := path
-                x := playlist
-                GetTabSettings(0)						; from html cache
-                playlist := x
-                if !InStr(subfolders, folder)
-                    subfolders =
-                if playlist
-                   Loop, Files, %inca%\%folder%\*.m3u, FR
-                     {
-                     SplitPath, A_LoopFileName,,,ex,name
-                     subfolders = %subfolders%|%name%
-                     }
-                else Loop, Files,%path%*.*, D
-                  if A_LoopFileAttrib not contains H,S
-                    if !InStr(subfolders, A_LoopFileFullPath)
-                      if subfolders
-                        subfolders = %subfolders%|%A_LoopFileFullPath%\
-                      else subfolders = %A_LoopFileFullPath%\
-                }
-            if search_term						; search text from link or search box
-                {
-                tab_name := search_term
-                folder := search_term
-                GetTabSettings(0)					; load cached tab settings
-                this_search := search_folders
-                if (search_box && !InStr(this_search, path))		; search this folder, then search paths
-                    this_search = %path%|%this_search%			; search this folder only
-                if search_box
-                    {
-                    view := 0
-                    toggles =
-                    sort = Duration
-                   }
-                }
-            if (InStr(sort_list, command))		; sort filter
-                {
-               page := 1
-                toggle_list = Reverse Recurse Videos Images
-                if (sort != command)					; new sort
-                    {
-                    if (command != "Reverse" && !InStr(toggle_list, command))
-                        StringReplace, toggles, toggles, Reverse	; remove reverse
-                    }
-                else if (sort != "Shuffle")
-                    command = Reverse
-                if InStr(toggle_list, command)
-                    if !InStr(toggles, command)				; toggle the sort switches
-                        toggles = %toggles%%command%			; add switch
-                    else StringReplace, toggles, toggles, %command%	; remove switch
-                else sort := command
-                if (StrLen(toggles) < 4)
-                    toggles =
-                }
-            }
-        CreateList(1)
-        search_box =
-        return 1
-        }
 
 
 
@@ -780,6 +531,226 @@ return
         return
 
 
+
+
+
+    ClickWebPage(search)
+        {
+        select =
+        command =
+        value =
+        address = 
+        type =
+        WinActivate, ahk_group Browsers
+        if !search
+          {
+          if !inside_browser
+            return
+          send, {Alt up}{Ctrl up}{Shift up}
+          if (click == "LButton")
+              send, {LButton up}
+          input := GetLocationBar(1)
+          sleep 20							; to release location bar
+          input := StrReplace(input, "/", "\")
+          if !InStr(input, "file:\\\")
+            return
+          array := StrSplit(input,"#")
+          href := array[1]
+          command := array[2]
+          value := array[3]
+          select := array[4]
+          address := array[5]
+          select := StrReplace(select, ",", "/")
+          if (StrLen(select) > 2)
+              selected = %select%
+          if !command
+              return
+          if (command == "Move")
+              if (selected && InStr(path, "playlists"))
+                  MoveEntry()						; move entry within playlist
+              else return
+          if (command == "Favorite")
+              {
+              list_id := StrSplit(selected, "/").2
+              GetMedia(0)
+              if !value
+                  value := 0.01
+              FileAppend, %src%|%value%`r`n, %inca%\playlists\new.m3u, UTF-8
+              Runwait, %inca%\apps\ffmpeg.exe -ss %value% -i "%src%" -y -vf scale=480:-2 -vframes 1 "%inca%\cache\posters\%media%%A_Space%%value%.jpg",, Hide
+              return
+              }
+          if (command == "Skinny")
+              {
+              list_id := StrSplit(selected, "/").2
+              if GetMedia(0)
+                {
+                FileDelete, %inca%\cache\widths\%media%.txt
+                if value
+                  FileAppend, %value%, %inca%\cache\widths\%media%.txt
+                }
+              return 1
+              }
+          if (command == "Thumbs")
+              {
+              if (view == value)
+                {
+                if !view
+                   view := last_view
+                else view := 0
+                }
+              else 
+                view := value
+              last_view := value
+              }
+          if (command == "Delete")
+              {
+              Loop, Parse, selected, `/
+                  {
+                  list_id := A_LoopField
+                  GetMedia(0)
+                  if InStr(path, "playlists")
+                      DeleteEntry()
+                  else FileRecycle, %src%
+                  }
+              selected =
+              }
+
+          if (command == "Rename")
+            {
+            if (StrLen(value) < 4)
+                popup = too small
+            list_id := StrSplit(selected, "/").2
+            if !GetMedia(0)
+                popup = no media
+            if !popup
+               {
+               FileMove, %src%, %media_path%\%value%.%ext%		; FileMove = FileRename
+               popup = Renamed
+               }
+            }
+          if (command == "Path" && selected)
+              FileTransfer()						; between folders or playlists
+          if (command == "Path")
+            if InStr(address, ".m3u")
+              {
+              playlist := address
+              SplitPath, address,,path,,folder
+              path = %path%\
+              }
+            else
+              {
+              playlist =
+              path := address
+              StringTrimRight, address, address, 1
+              SplitPath, address,,,,folder
+              }
+          list_id := value
+          }
+        if (command == "Orphan")
+            return
+        else if (command == "Media")
+            return value
+        else if (command == "Searchbox")					; add search to search list
+            {
+            search_list = %search_list%|%search_term%
+            IniWrite,%search_list%,%inca%\settings.ini,Settings,search_list
+            LoadSettings()
+            PopUp("Added",600,0,0)
+            return
+            }
+        else if (value && InStr(sort_list, command))
+            {
+            page := 1
+            filter := value
+            }
+        else if (command == "Page" || command == "View")
+            {
+            if (command == "Page")
+                page := value
+            if (command == "View")
+                view := value
+            Popup(value,0,0,0)
+            RenderPage()
+            return 1
+            }
+        else if (command == "Settings")
+            { 
+            ShowSettings()
+            return 1
+            }
+        else
+            {
+            filter =
+            page := 1
+            if (command == "Search")
+              search_term = %value%					; clears white space
+            else if search_box
+              search_term = %search_box%
+            if address
+                {
+                search_term =
+                tab_name := folder
+                this_search := path
+                x := playlist
+                GetTabSettings(0)						; from html cache
+                playlist := x
+                if !InStr(subfolders, folder)
+                    subfolders =
+                if playlist
+                   Loop, Files, %inca%\%folder%\*.m3u, FR
+                     {
+                     SplitPath, A_LoopFileName,,,ex,name
+                     subfolders = %subfolders%|%name%
+                     }
+                else Loop, Files,%path%*.*, D
+                  if A_LoopFileAttrib not contains H,S
+                    if !InStr(subfolders, A_LoopFileFullPath)
+                      if subfolders
+                        subfolders = %subfolders%|%A_LoopFileFullPath%\
+                      else subfolders = %A_LoopFileFullPath%\
+                }
+            if search_term						; search text from link or search box
+                {
+                tab_name := search_term
+                folder := search_term
+                GetTabSettings(0)					; load cached tab settings
+                this_search := search_folders
+                if (search_box && !InStr(this_search, path))		; search this folder, then search paths
+                    this_search = %path%|%this_search%			; search this folder only
+                if search_box
+                    {
+                    view := 0
+                    toggles =
+                    sort = Duration
+                   }
+                }
+            if (InStr(sort_list, command))		; sort filter
+                {
+               page := 1
+                toggle_list = Reverse Recurse Videos Images
+                if (sort != command)					; new sort
+                    {
+                    if (command != "Reverse" && !InStr(toggle_list, command))
+                        StringReplace, toggles, toggles, Reverse	; remove reverse
+                    }
+                else if (sort != "Shuffle")
+                    command = Reverse
+                if InStr(toggle_list, command)
+                    if !InStr(toggles, command)				; toggle the sort switches
+                        toggles = %toggles%%command%			; add switch
+                    else StringReplace, toggles, toggles, %command%	; remove switch
+                else sort := command
+                if (StrLen(toggles) < 4)
+                    toggles =
+                }
+            }
+        CreateList(1)
+        search_box =
+        return 1
+        }
+
+
+
     CreateList(show)							; list of files in path
         {
         if !(folder || this_search)
@@ -1006,6 +977,70 @@ return
 
 
 
+    DeleteEntry()
+        {
+        target = %src%%seek%
+        plist = %path%%folder%.m3u
+        FileRead, str, %plist%
+        FileDelete, %plist%
+        Loop, Parse, str, `n, `r
+          if A_LoopField
+            if (A_LoopField != target)
+                FileAppend, %A_LoopField%`r`n, %plist%, UTF-8
+        }
+
+
+
+    MoveEntry()
+        {
+        list_id := value
+        GetMedia(0)
+        target = %src%|%seek%
+        list_id := StrSplit(selected, "/").2
+        GetMedia(0)
+        source = %src%|%seek%
+        plist = %path%%folder%.m3u
+        FileRead, str, %plist%
+        FileDelete, %plist%
+        Loop, Parse, str, `n, `r
+          if A_LoopField
+            {
+            if (A_LoopField == source)
+                continue
+            if (value < list_id)
+                FileAppend, %A_LoopField%`r`n, %plist%, UTF-8
+            if (A_LoopField == target)
+                FileAppend, %source%`r`n, %plist%, UTF-8
+            if (value >= list_id)
+                FileAppend, %A_LoopField%`r`n, %plist%, UTF-8
+            }
+        selected =
+        }
+
+
+
+    FileTransfer()
+        {
+        if InStr(address, ".m3u")
+          PopUp("Link Move",400,0,0)
+        else PopUp("File Move",400,0,0)
+        Loop, Parse, selected, `/
+            {
+            list_id := A_LoopField
+            if GetMedia(0)
+              if InStr(address, ".m3u")
+                {
+                if seek
+                  seek = |%seek%
+                else seek =
+                FileAppend, %src%%seek%`r`n, %address%, UTF-8		; add media entry to playlist
+                DeleteEntry()
+                }
+              else FileMove, %src%, %address%				; move file to new folder
+            }
+        selected =
+        }  
+
 
     Time(in)
         {
@@ -1049,59 +1084,25 @@ return
 
 
 
-    FileTransfer()
+
+
+
+
+    EditFilename()							; + durations, favorites, history and playlists
         {
-        if InStr(address, ".m3u")
-          PopUp("Link Move",400,0,0)
-        else PopUp("File Move",400,0,0)
-        Loop, Parse, selected, `/
-            {
-            list_id := A_LoopField
-            if GetMedia(0)
-              if InStr(address, ".m3u")
-                {
-                if seek
-                  seek = |%seek%
-                else seek =
-                FileAppend, %src%%seek%`r`n, %address%, UTF-8		; add media entry to playlist
-                DeleteEntry()
-                }
-              else FileMove, %src%, %address%				; move file to new folder
-            }
-        selected =
-        CreateList(0)
-        }  
-
-
-
-
-
-
-
-
-    DeleteEntry()
-        {
-        if (toggles == "Reverse")					; playlist not aligned to media list
-            {
-            Loop, Parse, selected, `/
-                {
-                offset := list_size - A_LoopField + 1			; selected pointers re-aligned to playlist
-                sel = %sel%/%offset%
-                }
-            selected := sel
-            list_id := list_size - list_id + 1				; target pointer re-aligned
-            }
-        FileRead, str, %playlist%
-        FileDelete, %playlist%
-        Loop, Parse, str, `n, `r
-          if A_LoopField
-            {
-            id := A_Index
-            id = `/%id%`/
-            if !Instr(selected, id)
-                FileAppend, %A_LoopField%`r`n, %playlist%, UTF-8
-            }
+        list_id := StrSplit(selected, "/").2
+        if !GetMedia(0)
+            return
+        FileMove, %src%, %media_path%\%new_name%.%ext%			; FileMove = FileRename
+        RenderPage()
         }
+
+
+
+
+
+
+
 
 
 
@@ -1143,10 +1144,10 @@ return
         {
         src =
         FileReadLine, str, %inca%\cache\html\%tab_name%.htm, 3
-            Loop, Parse, str, `>
+            Loop, Parse, str, `/
               if (A_LoopField == list_id)
                 ptr := A_Index + next				; next media 
-        array := StrSplit(str, ">")				; convert html pointer to internal list ptr
+        array := StrSplit(str, "/")				; convert html pointer to internal list ptr
         list_id := array[ptr]
         Loop, Parse, list, `n, `r
             if (A_Index == list_id)
