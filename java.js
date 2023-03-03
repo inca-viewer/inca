@@ -41,10 +41,19 @@
 // transition between next
 // show skinny 
 // cannot have hash in filename in messages to inca
+// mp3/4/join
+// rename finish
+// thumb view after search + skinny fail save
+// caption.srt with times
+// caption inputbox
 
+// have buttons on modal for all caption/favorite cut points
 
-
-
+// flash thumbscreen between loop next
+// looping?
+// favorite from playlist 
+// reset start time ?
+// rem volume
 
   var container = document.getElementById("myModal")			// media player window
   var panel = document.getElementById("myPanel")
@@ -54,7 +63,8 @@
   var thin = document.getElementById('mySkinny')
   var view = document.getElementById('myView')
   var seek = document.getElementById("mySeekbar")
-  var cap = document.getElementById("myCap")				// media captions
+  var cap = document.getElementById("myCap")				// caption element
+  var capn = document.getElementById("myCapNav")			// sidenav
   var nav = document.getElementById("mySidenav")
   var nav2 = document.getElementById("mySidenav2")
   var fav = document.getElementById("myFav")
@@ -139,6 +149,7 @@
       x = Math.round(100*scaleX/scaleY)/100
       thin.setAttribute("href", "#Skinny#" + x + "#," + index +",")
       thin.click()}
+    if (cap.value != cap.innerHTML) {capnav(); capn.click()}
     timedVolDown = setInterval(vol_down_timer,9)
     document.querySelector("body").style.overflow = "auto"
     last_start = Math.round(media.currentTime*100)/100
@@ -191,16 +202,7 @@
           setTimeout(function() {play_thumb(0)},100)
           setTimeout(function() {media.poster = x},300)}
         else {media.poster = x; type = "thumbsheet"}}}
-    else if (xpos > 0.1) {						// magnify
-      media.style.animationName = "paused"
-      if (WheelDown) {
-        scaleX *= 1.016; scaleY *= 1.016 
-        mediaY += (mediaY - window.innerHeight/2)/70}
-      else {
-        scaleX *= 0.984; scaleY *= 0.984
-        mediaY -= (mediaY - window.innerHeight/2)/80}
-      media.style.transform = "scale(" + scaleX + "," + scaleY + ")"}
-    else if (xpos < 0.1 && ypos < 0.1) {				// skinny
+    else if (xpos < 0.2 && ypos < 0.2) {				// skinny
       media.style.animationName = "paused"
       if (WheelDown) {scaleX -= 0.003}
       else {scaleX += 0.003}
@@ -208,7 +210,7 @@
       if (sky != 1) {speed.style.color = 'red'; speed.innerHTML = sky}
       else {speed.innerHTML = ""}
       media.style.transform = "scale(" + scaleX + "," + scaleY + ")"}
-    else if (xpos < 0.1 && ypos < 0.4 && type != "image") {		// speed
+    else if (ypos < 0.4 && type != "image") {		// speed
       if (WheelDown) {rate = -0.01}
       else {rate = 0.01}
       if (media.playbackRate < 1 || rate < 0) {
@@ -217,7 +219,19 @@
         speed.innerHTML = Math.round(media.playbackRate *100)}
       else {speed.innerHTML = ""}
       block_wheel = 64}
-    else if (xpos < 0.1 && ypos > 0.4 && (type == "video" || type == "audio")) {
+    else if (ypos > 0.4 && ypos < 0.64) {				// magnify
+      media.style.animationName = "paused"
+      if (WheelDown) {
+        scaleX *= 1.016; scaleY *= 1.016 
+        mediaY += (mediaY - window.innerHeight/2)/70}
+      else {
+        scaleX *= 0.984; scaleY *= 0.984
+        mediaY -= (mediaY - window.innerHeight/2)/80}
+      media.style.transform = "scale(" + scaleX + "," + scaleY + ")"
+      var rect = media.getBoundingClientRect()
+      cap.style.top = rect.bottom + 10 + "px"
+      cap.style.left = rect.left + 20 + "px"}
+    else if (ypos > 0.64 && (type == "video" || type == "audio")) {
       if (media.paused == true) {interval = 0.01}
       else if (media.duration < 60) {interval = 0.2}			// seek
       else {interval = 2}
@@ -307,6 +321,7 @@
     if (type == "audio") {media.controls = true; media.volume = 1; start = 0}
     var innerCap = document.getElementById("caption" + index)
     cap.style.animationName = ""
+looping = true
     speed.innerHTML = ""
     cap.innerHTML = ""
     container.addEventListener('mouseup', mouseUp)
@@ -318,7 +333,7 @@
       if (innerCap.innerHTML && type != "thumbsheet") {
         var rect = media.getBoundingClientRect()
         cap.style.top = rect.bottom + 10 + "px"
-        cap.style.left = rect.left + 200 + "px"
+        cap.style.left = rect.left + 20 + "px"
         cap.style.animationName = "fadeCap"
         cap.innerHTML = innerCap.innerHTML}},400)}
 
@@ -413,7 +428,7 @@
       index += 1
       var next = document.getElementById("media" + index)
       if (next == null) {index = 1; close_media(); return}
-      else {media.src = next.src}}
+      else {media.src = next.src; PreparePlayer()}}
     if (type == "video") {
       if (media.playbackRate > 0.65) {media.playbackRate -= 0.05}
       if (scaleX < 10 && !mouse_down) {
@@ -511,11 +526,12 @@
     el.innerHTML = y + of + units}
 
 
+  function stopScroll() {nav.addEventListener('wheel', preventScroll)}
   function openNav() {nav.style.opacity = 1; nav.style.left = 0}
   function closeNav() {nav.style.opacity = 0; nav.style.left = 0; nav.removeEventListener('wheel', preventScroll);}
   function openNav2() {nav2.style.opacity = 1; nav2.style.left = 0; speed.style.opacity = 0.7}
-  function closeNav2() {nav2.style.opacity = 0; nav2.style.left = 0; speed.style.opacity = 0}
-  function rename() {ren.setAttribute("href", "#Rename#" + inputbox.value + "#" + selected)}
+  function closeNav2() {nav2.style.opacity = 0; nav2.style.left = 0; speed.style.opacity = 0.3}
+  function capnav() {capn.setAttribute("href", "#Caption#" + cap.value + "#," + index + ",")}
   function del() {d1.setAttribute("href", "#Delete##" + selected)}
   function del2() {d2.setAttribute("href", "#Delete#" + "#," + index + ",")}
   function loop() {if (looping) {looping = false} else {looping = true}}
@@ -523,7 +539,10 @@
   function selectAll() {for (i=1; i <= 100; i++) {select(i)}}
   function favorite(id) {fav.setAttribute("href", "#Favorite#" + start + "#," + index + ",")}
   function favorite2(id) {fav2.setAttribute("href", "#Favorite#" + Math.round(media.currentTime*100)/100 + "#," + index + ",")}
-  function stopScroll() {nav.addEventListener('wheel', preventScroll)}
+  function rename() {
+    i = selected.split(','); i.pop(); i = i.pop()
+    el = document.getElementById("title" + i)
+    ren.setAttribute("href", "#Rename#" + el.value + "#," + i + ",")}
   function adjust_thumbs(e) {
     wheel += Math.abs(e.deltaY)
     if (wheel < 100) {return}
