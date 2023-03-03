@@ -96,8 +96,10 @@
         FileDelete, %plist%
         Loop, Parse, str, `n, `r
           if A_LoopField
-            if (A_LoopField != target)
+            if (A_LoopField != target || flag)
                 FileAppend, %A_LoopField%`r`n, %plist%, UTF-8
+            else flag = true
+
         }
 
 
@@ -132,8 +134,10 @@
     FileTransfer()
         {
         if InStr(address, "playlists")
-          PopUp("Link Move",400,0,0)
-        else PopUp("File Move",400,0,0)
+          PopUp("Link",400,0,0)
+        else if (timer < 500) 
+          PopUp("Move",400,0,0)
+        else PopUp("Copy",400,0,0)
         Loop, Parse, selected, `/
             {
             list_id := A_LoopField
@@ -143,7 +147,9 @@
                 FileAppend, %target%`r`n, %address%, UTF-8		; add media entry to playlist
                 DeleteEntry()
                 }
-              else FileMove, %src%, %address%				; move file to new folder
+              else if (timer < 500)
+                FileMove, %src%, %address%				; move file to new folder
+              else FileCopy, %src%, %address%
             }
         selected =
         }  
@@ -328,7 +334,7 @@ if (type == "video")
                 filter_html = %filter_html%<a href="#%A_LoopField%#" %x%>%name%</a>`r`n
                 }
         sort_html = <ul class="menu" style="margin-top:1em; margin-bottom:1em; display:flex; justify-content:space-between; margin-left:20px">`r`n<input id="myInput" type="search" class="searchbox" value="%search_term%" style="width:32`%; border-radius:8px; height:16px; border:none; color:#666666; background-color:#1b1814;"><a href="#Searchbox" style="color:lightsalmon;"><c>+</c></a>`r`n<a href="%title%.htm#%sort%" id='slider1' class='slider' onmousemove='getCoords(event, id, "%sort%", "%title%", "")'>%sort%</a>`r`n<a href="%title%.htm#Page" id='slider2' class='slider' onmousemove='getCoords(event, id, "%Pages%", "%title%", "")' onmouseleave='getCoords(event, id, "%Pages%", "%title%", "%page%")'>Page %page% of %pages%</a>`r`n<a href="#Page#%next%" class='slider' style="width:6`%;">Next</a></ul>
-        title_html = `r`n`r`n<div style="margin-left:5em; width:100`%; margin-top:2.4em; margin-bottom:1.8em;"><a %origin% id="origin" style="font-size:1.8em; color:#555351;">%title% &nbsp;&nbsp;<span style="font-size:0.7em;">%list_size%</span></a></div>`r`n`r`n<div id="myModal" class="modal_container" onmousemove='Gesture(event)' onwheel='media_control(event)'>`r`n<div><video id="myPlayer" class="media_player" type="video/mp4"></video><textarea rows=2 id="myCap" class="caption"></textarea><span id="mySpeedbar" class="speed_status"></span><span id="mySeekbar" class="seek_bar"></span><span id="mySidenav2" onmouseover="openNav2()" onmouseleave="closeNav2()" class="sidenav"><a href="#" onclick="toggleMute()">Mute</a><a href="#" id="myFav2" onmouseover="favorite2(id)">Fav</a><a href="#Cue#">Cue</a><a href="#" onclick="select()">Select</a><a href="#" onclick="loop()">Loop</a><a href="#" id="myDelete2" onmouseover="del2()">Delete</a><a href="#Mp4#">mp4</a><a href="#Mp3#">mp3</a><a href="#" id="mySkinny"></a><a href="#" id="myCapNav"></a></span></div></div>`r`n`r`n
+        title_html = `r`n`r`n<div style="margin-left:5em; width:100`%; margin-top:2.4em; margin-bottom:1.8em;"><a %origin% id="origin" style="font-size:1.8em; color:#555351;">%title% &nbsp;&nbsp;<span style="font-size:0.7em;">%list_size%</span></a></div>`r`n`r`n<div id="myModal" class="modal_container" onmousemove='Gesture(event)' onwheel='media_control(event)'>`r`n<div><video id="myPlayer" class="media_player" onmouseenter="over_player=true" onmouseleave="over_player=false" type="video/mp4"></video><textarea rows=2 id="myCap" class="caption"></textarea><span id="mySpeedbar" class="speed_status"></span><span id="mySeekbar" class="seek_bar"></span><span id="mySidenav2" onmouseover="openNav2()" onmouseleave="closeNav2()" class="sidenav"><a href="#" onclick="toggleMute()">Mute</a><a href="#" id="myFav2" onmouseover="favorite2(id)">Fav</a><a href="#Cue#">Cue</a><a href="#" onclick="select()">Select</a><a href="#" onclick="loop()">Loop</a><a href="#" id="myDelete2" onmouseover="del2()">Delete</a><a href="#Mp4#">mp4</a><a href="#Mp3#">mp3</a><a href="#" id="mySkinny"></a><a href="#" id="myCapNav"></a></span></div></div>`r`n`r`n
         html = `r`n%html%</div>`r`n<p style="height:240px;"></p>`r`n
         FileDelete, %inca%\cache\html\%tab_name%.htm
         StringReplace, header_html, header_html, \, /, All
@@ -686,11 +692,13 @@ return
               list_id := StrSplit(selected, "/").2
               GetMedia(0)
               if !value
-                  value := 0.01
-              FileAppend, %src%|%value%`r`n, %inca%\playlists\new.m3u, UTF-8
+                  value := seek
+              if InStr(path, "playlists")
+                  FileAppend, %src%|%value%`r`n, %path%%folder%.m3u, UTF-8
+              else FileAppend, %src%|%value%`r`n, %inca%\playlists\new.m3u, UTF-8
               Runwait, %inca%\apps\ffmpeg.exe -ss %value% -i "%src%" -y -vf scale=480:-2 -vframes 1 "%inca%\cache\posters\%media%%A_Space%%value%.jpg",, Hide
               selected =
-              return
+;              return
               }
           if (command == "Skinny")
               {
