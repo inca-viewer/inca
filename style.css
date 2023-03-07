@@ -1,7 +1,7 @@
 
 <style>
 
-body {font-family: 'Open Sans',sans-serif; font-family: 'ClearSans-Thin'; user-select:none; cursor:default; overflow-x:hidden; background:#15110a; color:#666666; font-size:0.8em; margin-top:140px; animation-name:fadePage; animation-duration:0.6s}
+body {font-family: 'ClearSans-Thin'; user-select:none; cursor:default; overflow-x:hidden; background:#15110a; color:#666666; font-size:0.8em; margin-top:140px; animation-name:fadePage; animation-duration:0.6s}
 a:link {color:#15110a;}
 a:visited {color:#15110a;}
 a {text-decoration:none; color:#826858; cursor:default;}
@@ -18,14 +18,20 @@ table:hover {color:red; transition:color 0.36s;}
 
 
 .caption {
+  display:inline-block;
+  overflow:hidden;
+  width:40%;
+  background-color:inherit;
+  font-family:inherit;
+  border:none;
+  opacity:0;
+  outline:none;
   position:fixed;
   z-index:9;
   user-select:none;
   color:lightsalmon;
-  font-size:1.4em;
-  animation-name:fadeIn;
-  animation-duration:0.7s;
-  animation-fill-mode:forwards;}
+  font-size:1.6em;
+  transition:1.6s;}
 
 .seek_bar {
   position:absolute;
@@ -33,10 +39,10 @@ table:hover {color:red; transition:color 0.36s;}
 
 .speed_status {
   position:fixed;
-  bottom:25px;
+  top:20px;
   left:15px;
   user-select:none;
-  font-size:5em;
+  font-size:4.3em;
   color:salmon;
   transition:0.25s;}
 
@@ -58,21 +64,13 @@ table:hover {color:red; transition:color 0.36s;}
 .media_player {
   position: absolute;
   user-select:none;
+  transition-timing-function:ease;
   margin: 0;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  animation-duration:0.9s;
-  animation-fill-mode:forwards;
-  --scaleStartX:1;
-  --scaleEndX:1;
-  --scaleStartY:1;
-  --scaleEndY:1;
   border-radius:4%}
 
 .sidenav {
   height:100%;
-  width:90px;
+  width:95px;
   padding-top:30%;
   position:fixed;
   opacity:0;
@@ -98,10 +96,6 @@ table:hover {color:red; transition:color 0.36s;}
 .sidenav a:hover {color:salmon}
 
 
-  @keyframes fadeCap {
-    from {opacity:0; transform: scale(0.8)} 
-    to {opacity:0.7; transform: scale(1)}}
-
   @keyframes fadeIn {
     from {opacity:0; transform: scale(0.8)} 
     to {opacity:1; transform: scale(1)}}
@@ -109,10 +103,6 @@ table:hover {color:red; transition:color 0.36s;}
   @keyframes fadeOut {
     from {opacity:1; transform: scale(1)} 
     to {opacity:0; transform: scale(0.8)}}
-
-  @keyframes loopFade {
-    from {transform: scale(var(--scaleStartX),var(--scaleStartY))} 
-    to {transform: scale(var(--scaleEndX),var(--scaleEndY))}}
 
   @keyframes fadePage {from {opacity:0} to {opacity:1}}
 
