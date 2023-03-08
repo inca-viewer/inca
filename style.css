@@ -24,20 +24,19 @@ table:hover {color:red; transition:color 0.36s;}
   background-color:inherit;
   font-family:inherit;
   border:none;
-  opacity:0;
+  opacity:0.7;
   outline:none;
   position:fixed;
-  z-index:9;
+  z-index:4;
   user-select:none;
   color:lightsalmon;
-  font-size:1.6em;
-  transition:1.6s;}
+  font-size:1.6em;}
 
-.seek_bar {
+.seekbar {
   position:absolute;
   border-bottom:1px solid rgba(250, 128, 114, 0.3);}
 
-.speed_status {
+.speed {
   position:fixed;
   top:20px;
   left:15px;
@@ -46,22 +45,22 @@ table:hover {color:red; transition:color 0.36s;}
   color:salmon;
   transition:0.25s;}
 
-.modal_container {
-  display:none;
+.container {
+  display:flex;
+  opacity:0;
+  transition:0.5s;
   user-select:none;
   position:fixed;
   justify-content:center;
   align-items:center;
-  z-index:3;
+  z-index:-1;
   top:0;
   left:0;
   height:100vh;
   width:100vw;
-  background-color:#15110a;
-  animation-name:fadeIn;
-  animation-duration:0.25s;}
+  background-color:#15110a;}
 
-.media_player {
+.player {
   position: absolute;
   user-select:none;
   transition-timing-function:ease;
@@ -92,17 +91,7 @@ table:hover {color:red; transition:color 0.36s;}
   color:#826858;
   transition:color 1.4s;}
 
-
 .sidenav a:hover {color:salmon}
-
-
-  @keyframes fadeIn {
-    from {opacity:0; transform: scale(0.8)} 
-    to {opacity:1; transform: scale(1)}}
-
-  @keyframes fadeOut {
-    from {opacity:1; transform: scale(1)} 
-    to {opacity:0; transform: scale(0.8)}}
 
   @keyframes fadePage {from {opacity:0} to {opacity:1}}
 
