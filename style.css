@@ -1,9 +1,9 @@
 
 <style>
 
+  @keyframes fadePage {from {opacity:0} to {opacity:1}}
+
 body {font-family: 'ClearSans-Thin'; user-select:none; cursor:default; overflow-x:hidden; background:#15110a; color:#666666; font-size:0.8em; margin-top:140px; animation-name:fadePage; animation-duration:0.6s}
-a:link {color:#15110a;}
-a:visited {color:#15110a;}
 a {text-decoration:none; color:#826858; cursor:default;}
 a.slider {display:inline-block; width:35%; height:1.2em; border-radius:9px; color:#826858; transition:color 1.4s; font-size:1em; background-color:#1b1814; text-align:center}
 a.slider:hover {color:red; transition:color 0.36s;}
@@ -14,7 +14,6 @@ table {color:#826858; transition:color 1.4s; table-layout:fixed; border-collapse
 table:hover {color:red; transition:color 0.36s;}
 #hover_image {position:absolute; margin-left:3.8em; opacity:0; transition: opacity 0.4s; width:125px; height:auto;}
 #hover_image:hover {opacity:1;}
-
 
 
 .caption {
@@ -36,15 +35,6 @@ table:hover {color:red; transition:color 0.36s;}
   position:absolute;
   border-bottom:1px solid rgba(250, 128, 114, 0.3);}
 
-.speed {
-  position:fixed;
-  top:20px;
-  left:15px;
-  user-select:none;
-  font-size:4.3em;
-  color:salmon;
-  transition:0.25s;}
-
 .container {
   display:flex;
   opacity:0;
@@ -63,17 +53,23 @@ table:hover {color:red; transition:color 0.36s;}
 .player {
   position: absolute;
   user-select:none;
-  transition-timing-function:ease;
+  transition-timing-function:linear;
   margin: 0;
   border-radius:4%}
 
+.thumbs {
+  display:inline-block;
+  vertical-align:top;
+  width:14.5em;
+  color:#826858;
+  transition:color 1.4s;}
+
 .sidenav {
-  height:100%;
+  height:50%;
   width:95px;
-  padding-top:30%;
   position:fixed;
   opacity:0;
-  top:0;
+  bottom:10px;
   left:0;
   transition:0.3s;}
 
@@ -84,16 +80,26 @@ table:hover {color:red; transition:color 0.36s;}
   display:block;
   transition:0.3s;}
 
-.thumbs {
-  display:inline-block;
-  vertical-align:top;
-  width:14.5em;
-  color:#826858;
-  transition:color 1.4s;}
-
 .sidenav a:hover {color:salmon}
 
-  @keyframes fadePage {from {opacity:0} to {opacity:1}}
+.controls {
+  height:30%;
+  width:140px;
+  position:fixed;
+  opacity:0;
+  top:10px;
+  left:0;
+  transition:0.3s;}
+
+.controls a {
+  height:25%;
+  font-size:3em;
+  color:#826858;
+  display:block;
+  transition:0.3s;}
+
+.controls a:hover {color:salmon}
+
 
 
 </style>
