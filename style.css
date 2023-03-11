@@ -16,6 +16,8 @@ table:hover {color:red; transition:color 0.36s;}
 #hover_image:hover {opacity:1;}
 
 
+textarea::-webkit-resizer {border-color: transparent}
+
 .caption {
   display:inline-block;
   overflow:hidden;
@@ -53,7 +55,6 @@ table:hover {color:red; transition:color 0.36s;}
 .player {
   position: absolute;
   user-select:none;
-  transition-timing-function:linear;
   margin: 0;
   border-radius:4%}
 
@@ -65,7 +66,7 @@ table:hover {color:red; transition:color 0.36s;}
   transition:color 1.4s;}
 
 .sidenav {
-  height:50%;
+  height:61%;
   width:95px;
   position:fixed;
   opacity:0;
@@ -86,13 +87,14 @@ table:hover {color:red; transition:color 0.36s;}
   height:30%;
   width:140px;
   position:fixed;
-  opacity:0;
+  opacity:0.3;
   top:10px;
   left:0;
   transition:0.3s;}
 
 .controls a {
-  height:25%;
+  padding: 10px 10px 10px 10px;
+  height:20%;
   font-size:3em;
   color:#826858;
   display:block;
