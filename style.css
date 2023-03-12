@@ -16,22 +16,25 @@ table:hover {color:red; transition:color 0.36s;}
 #hover_image:hover {opacity:1;}
 
 
-textarea::-webkit-resizer {border-color: transparent}
 
 .caption {
-  display:inline-block;
-  overflow:hidden;
+  display:block;
+  position:fixed;
+  z-index:4;
+  resize: none;
   width:40%;
+  height:5em;
   background-color:inherit;
   font-family:inherit;
   border:none;
-  opacity:0.7;
   outline:none;
-  position:fixed;
-  z-index:4;
+  opacity:0;
+  overflow:hidden;
   user-select:none;
   color:lightsalmon;
-  font-size:1.6em;}
+  transition:1s;
+  border-radius:5%;
+  font-size:1.5em;}
 
 .seekbar {
   position:absolute;

@@ -92,7 +92,7 @@
 if (sort != "Alpha")
   return
 
-        list_id := StrSplit(selected, "/").2
+        list_id := StrSplit(selected, "/").1
         GetMedia(0)
         select := list_id
         source = %target%
@@ -125,7 +125,7 @@ if (sort != "Alpha")
 
     MoveEntry2222()						; within playlist 
         {
-        list_id := StrSplit(selected, "/").2
+        list_id := StrSplit(selected, "/").1
         GetMedia(0)
         select := list_id
         source = %target%
@@ -270,7 +270,7 @@ if ((cap_size := view / 12) > 1.6)
                 caption := StrSplit(cap, "|").1
                 }
             }
-        caption = <div style="margin:auto; width:80`%; height:%gap%em; color:#826858; font-size:%cap_size%em"><span>%caption%</span></div>
+        caption = <div style="margin:auto; width:80`%; height:%gap%em; color:#826858; font-size:%cap_size%em">%caption%</div>
 
 
 
@@ -329,7 +329,7 @@ if (type == "video")
                     }
 	        entry = <a href="#Media#%j%"><div style="display:inline-block; width:88`%; color:#555351; transition:color 1.4s; margin-left:8`%; text-align:center; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; %highlight%;">%sort_name% &nbsp;&nbsp;%link% %media%</div></a><textarea rows=%rows% style="display:inline-block; overflow:hidden; margin-left:8`%; width:88`%; background-color:inherit; color:#826858; font-size:1.2em; font-family:inherit; border:none; outline:none;">%str2%</textarea>`r`n`r`n
                 }
-            else entry = <li id="thumb%j%" class="thumbs" onclick="select(%j%)" style="width:%view%em"><div id="title%j%" style="color:#555351; text-align:center; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; font-size:0.85em; margin:auto; width:80`%">%sort_name% &nbsp;&nbsp; %link% %media%</div><a href="#Media#%j%" id="sel%j%"><video id="media%j%" style="%transform% margin-left:auto; margin-right:auto; width:80`%; display:block; padding:2px; %select%" onmouseenter="overThumb(event, %j%, %start%)" onmouseleave="med.pause()" onclick="play_media('Click', '%type%', %start%, %skinny%, '%cap%', %j%, event)" src="file:///%src%" %poster% muted type="video/mp4"></video></a>%caption%</li>`r`n`r`n
+            else entry = <li id="thumb%j%" class="thumbs" onclick="select(%j%)" style="width:%view%em"><div id="title%j%" style="color:#555351; text-align:center; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; font-size:0.85em; margin:auto; width:80`%">%sort_name% &nbsp;&nbsp; %link% %media%</div><a href="#Media#%j%" id="sel%j%"><video id="media%j%" style="%transform% margin-left:auto; margin-right:auto; width:80`%; display:block; padding:2px; %select%" onmouseenter="overThumb(event, %j%, %start%)" onmouseleave="med.load(); over_thumb=false" onclick="play_media('Click', '%type%', %start%, %skinny%, '%cap%', %j%, event)" src="file:///%src%" %poster% muted type="video/mp4"></video></a>%caption%</li>`r`n`r`n
             }
         return entry
         }
@@ -393,7 +393,7 @@ if (type == "video")
 
         pages := ceil(list_size/size)
         header_html = <!--`r`n%view%>%page%>%sort%>%toggles%>%this_search%>%search_term%>%path%>%folder%>%playlist%>%last_media%>%last_view%`r`n%page_media%`r`n-->`r`n<!doctype html>`r`n<html>`r`n<head>`r`n<meta charset="UTF-8">`r`n<title>Inca - %title%</title>`r`n<meta name="viewport" content="width=device-width, initial-scale=1">`r`n<link rel="icon" type="image/x-icon" href="file:///%inca%\apps\icons\inca.ico">`r`n<style>@font-face {font-family: ClearSans-Thin; src: url("D:/inca/apps/ClearSans-Thin.woff");}</style>`r`n</head>`r`n
-            panel2_html = <body>`r`n`r`n<div style="margin-left:%offset%`%; width:80`%">`r`n<span id="mySidenav" onmouseover="openNav()" onmouseleave="closeNav()" class="sidenav"><a href="#" onclick="selectAll()">Select All</a><a href="#" id="myFav" onmouseover="favorite(id)">Favorite</a><a href="#" id="myDelete" onmouseover="del()">Delete</a><a href="#" id="myRename" onmouseover="rename()">Rename</a><a href="#Settings#">Menu</a><a href="#Join#">Join</a><a href="#Thumbs#%view%" id="myView" onwheel="adjust_thumbs(event)">Thumbs</a></span>`r`n<ul class="menu" id='myPanel2' style="max-height:34em; background-color:inherit; column-count:8; border-radius:9px; padding-left:1em; font-size:0.9em; overflow:hidden; white-space:nowrap;"></ul>`r`n`r`n
+            panel2_html = <body id="myBody">`r`n`r`n<div style="margin-left:%offset%`%; width:80`%">`r`n<span id="mySidenav" onmouseover="openNav()" onmouseleave="closeNav()" class="sidenav"><a href="#" onclick="selectAll()">Select All</a><a href="#" id="myFav" onmouseover="favorite(id)">Favorite</a><a href="#" id="myDelete" onmouseover="del()">Delete</a><a href="#" id="myRename" onmouseover="rename()">Rename</a><a href="#Settings#">Menu</a><a href="#Join#">Join</a><a href="#Thumbs#%view%" id="myView" onwheel="adjust_thumbs(event)">Thumbs</a></span>`r`n<ul class="menu" id='myPanel2' style="max-height:34em; background-color:inherit; column-count:8; border-radius:9px; padding-left:1em; font-size:0.9em; overflow:hidden; white-space:nowrap;"></ul>`r`n`r`n
         panel_html = %panel2_html%<ul class="menu" id='myPanel' style="column-width: 80px; text-align:left; margin-bottom:20px; height:70px; width:70`%; column-count:8; border-radius:9px; font-size:0.95em"></ul>`r`n`r`n<ul class="menu" style="display:flex; justify-content:space-between; margin-left:20px"><a class='slider' id='sub' onmouseover='spool(event, id, "%subfolders%")' style="width:7`%;">Sub</a>`r`n<a href="file:///%inca%/cache/html/downloads.htm" class='slider' id='folders' onmouseover='spool(event, id, "%folder_list%")' style="width:7`%;">Fol</a>`r`n<a  href="file:///%inca%/cache/html/downloads.htm" class='slider' id='fav' onmouseover='spool(event, id, "%fav_folders%")' style="width:7`%;">Fav</a>`r`n<a href="file:///%inca%/cache/html/new.htm" class='slider' id='playlists' onmouseover='spool(event, id, "%playlists%")' style="width:7`%;">Playlists</a>`r`n<a href="file:///%inca%/cache/html/new.htm" class='slider' id='music' onmouseover='spool(event, id, "%music%")' style="width:7`%;">Music</a>`r`n<a id='search' class='slider' onmousemove='spool(event, id, "%search_list%")' onmousedown='spool(event,"search_all","%search_list%")'>Search</a></ul>`r`n`r`n
         filter_html =`r`n`r`n<ul class="menu" style="display:flex; justify-content:space-between;; margin-left:20px">`r`n`r`n
         Loop, Parse, sort_list, `|
@@ -407,7 +407,7 @@ if (type == "video")
                 filter_html = %filter_html%<a href="#%A_LoopField%#" %x%>%name%</a>`r`n
                 }
         sort_html = <ul class="menu" style="margin-top:1em; margin-bottom:1em; display:flex; justify-content:space-between; margin-left:20px">`r`n<input id="myInput" type="search" class="searchbox" value="%search_term%" style="width:32`%; border-radius:8px; height:16px; border:none; color:#666666; background-color:#1b1814;"><a href="#Searchbox" style="color:lightsalmon;"><c>+</c></a>`r`n<a href="%title%.htm#%sort%" id='slider1' class='slider' onmousemove='getCoords(event, id, "%sort%", "%title%", "")'>%sort%</a>`r`n<a href="%title%.htm#Page" id='slider2' class='slider' onmousemove='getCoords(event, id, "%Pages%", "%title%", "")' onmouseleave='getCoords(event, id, "%Pages%", "%title%", "%page%")'>Page %page% of %pages%</a>`r`n<a href="#Page#%next%" class='slider' style="width:6`%;">Next</a></ul>
-        title_html = `r`n`r`n<div style="margin-left:5em; width:100`%; margin-top:2.4em; margin-bottom:1.8em;"><a %origin% id="origin" style="font-size:1.8em; color:#555351;">%title% &nbsp;&nbsp;<span style="font-size:0.7em;">%list_size%</span></a></div>`r`n`r`n<div id="myModal" class="container" onmousemove='Gesture(event)' onwheel="media_control(event, 'Magnify')">`r`n<div><video id="myPlayer" class="player" onmouseenter="over_player=true" onmouseleave="over_player=false" type="video/mp4"></video><textarea id="myCap" class="caption"></textarea><span id="mySeekbar" class="seekbar"></span><span id="mySidenav2" onmouseover="openNav2()" onmouseleave="closeNav2()" class="sidenav"><a href="#" onclick="toggleMute()">Mute</a><a href="#" id="myFav2" onmouseover="favorite2(id)">Fav</a><a href="#" onclick="cue = Math.round(media.currentTime*100)/100">Cue</a><a href="#" onclick="select()">Select</a><a href="#" onclick="loop()">Loop</a><a href="#" id="myDelete2" onmouseover="del2()">Delete</a><a href="#" id="myMp4" onclick="makeMp4()">mp4</a><a href="#" id="myMp3" onclick="makeMp3()">mp3</a><a href="#" id="myLink"></a></span><span id="myControls" class="controls" onmouseover="openControls()" onmouseleave="closeControls()"><a href="#" id="myNext" onwheel="media_control(event, 'Next')">%j%</a><a href="#" id="mySeek" onwheel="media_control(event, 'Seek')"></a><a href="#" id="mySkinny" onwheel="media_control(event, 'Skinny')"></a><a href="#" id="mySpeed" onwheel="media_control(event, 'Speed')"></a></div></div>`r`n`r`n
+        title_html = `r`n`r`n<div style="margin-left:5em; width:100`%; margin-top:2.4em; margin-bottom:1.8em;"><a %origin% id="origin" style="font-size:1.8em; color:#555351;">%title% &nbsp;&nbsp;<span style="font-size:0.7em;">%list_size%</span></a></div>`r`n`r`n<div id="myModal" class="container" onmousemove='Gesture(event)' onwheel="media_control(event, 'Magnify')">`r`n<div><video id="myPlayer" class="player" onmouseenter="over_player=true" onmouseleave="over_player=false" type="video/mp4"></video><textarea id="myCap" class="caption" onmouseenter="over_cap=true" onmouseleave="over_cap=false"></textarea><span id="mySeekbar" class="seekbar"></span><span id="mySidenav2" onmouseover="openNav2()" onmouseleave="closeNav2()" class="sidenav"><a href="#" onclick="toggleMute()">Mute</a><a href="#" id="myFav2" onmouseover="favorite2(id)">Fav</a><a href="#" id="navCap" onmouseover="saveCap(0)">Caption</a><a href="#" onclick="cue = Math.round(media.currentTime*100)/100">Cue</a><a href="#" onclick="select()">Select</a><a href="#" onclick="loop()">Loop</a><a href="#" id="myMp4" onclick="makeMp4()">mp4</a><a href="#" id="myMp3" onclick="makeMp3()">mp3</a><a href="#" id="myLink"></a></span><span id="myControls" class="controls" onmouseover="openControls()" onmouseleave="closeControls()"><a id="myNext" onwheel="media_control(event, 'Next')">%j%</a><a id="mySeek" onwheel="media_control(event, 'Seek')"></a><a id="myThin" onwheel="media_control(event, 'Skinny')"></a><a id="mySpeed" onwheel="media_control(event, 'Speed')"></a></div></div>`r`n`r`n
         html = `r`n%html%</div>`r`n<p style="height:240px;"></p><span id="thumb1" style="width:%view%em"></span>`r`n
         FileDelete, %inca%\cache\html\%tab_name%.htm
         StringReplace, header_html, header_html, \, /, All
@@ -580,7 +580,7 @@ if (type == "video")
         Critical
         if (click == "LButton")
           {
-          if (timer > 350 && !selected && A_Cursor == "IBeam")		; mouse long click over text
+          if (timer > 350 && !selected && A_Cursor == "IBeam")	; mouse long click over text
               SearchText()						; list search results
           else if (inside_browser && A_Cursor != "IBeam" && ClickWebPage(0))
               {
@@ -726,6 +726,7 @@ return
           input := GetLocationBar(1)
           sleep 20							; to release location bar
           input := StrReplace(input, "/", "\")
+; tooltip %input%
           if !InStr(input, "file:\\\")
             return
           array := StrSplit(input,"#")
@@ -735,10 +736,10 @@ return
           select := array[4]
           address := array[5]
           select := StrReplace(select, ",", "/")
-          if (StrLen(select) > 2)
+          if (StrLen(select) > 1)
               {
               selected = %select%
-              list_id := StrSplit(selected, "/").2
+              list_id := StrSplit(selected, "/").1
               GetMedia(0)
               }
           if !command
@@ -764,18 +765,19 @@ return
               else return
           if (command == "Caption")
             {
-            list_id := StrSplit(selected, "/").2
+            list_id := StrSplit(selected, "/").1
             if GetMedia(0)
             FileRead, str, %inca%\cache\captions\%media%.srt
             FileDelete, %inca%\cache\captions\%media%.srt
-            str := StrReplace(str, address, value)
-; tooltip %str% - %value% - %address%
+            if InStr(str, address)
+              str := StrReplace(str, address, value)
+            else str = %str%%value%
             FileAppend, %str%, %inca%\cache\captions\%media%.srt, UTF-8
             selected =
             }
           if (command == "Favorite")
               {
-              list_id := StrSplit(selected, "/").2
+              list_id := StrSplit(selected, "/").1
               GetMedia(0)
               if !value
                   value := seek
@@ -788,7 +790,7 @@ return
               }
           if (command == "Skinny")
               {
-              list_id := StrSplit(selected, "/").2
+              list_id := StrSplit(selected, "/").1
               if GetMedia(0)
                 {
                 FileDelete, %inca%\cache\widths\%media%.txt
@@ -812,18 +814,14 @@ return
               }
           if (command == "Delete")
               {
-;sleep 444
               Loop, Parse, selected, `/
                   {
                   list_id := A_LoopField
                   if GetMedia(0)
                     if InStr(path, "playlists")
                       DeleteEntry()
-                    else 
-{
-FileRecycle, %src%
-;tooltip %src%
-}
+                    else IfExist, %src%
+                           FileRecycle, %src%
                   }
               selected =
               }
@@ -832,7 +830,7 @@ FileRecycle, %src%
             {
             if (StrLen(value) < 4)
                 popup = too small
-            list_id := StrSplit(selected, "/").2
+            list_id := StrSplit(selected, "/").1
             if !GetMedia(0)
                 popup = no media
             if !popup
@@ -892,6 +890,7 @@ FileRecycle, %src%
             }
         else if (command == "Path" || command == "Search" || search_box || InStr(sort_list, command))
             {
+            show = 1
             filter =
             page := 1
             if (command == "Search")
@@ -938,7 +937,7 @@ FileRecycle, %src%
                 }
             if (InStr(sort_list, command))		; sort filter
                 {
-               page := 1
+                page := 1
                 toggle_list = Reverse Recurse Videos Images
                 if (sort != command)					; new sort
                     {
@@ -956,7 +955,7 @@ FileRecycle, %src%
                     toggles =
                 }
             }
-        CreateList(1)
+        CreateList(show)
         search_box =
         return 1
         }
@@ -974,7 +973,8 @@ FileRecycle, %src%
         popup := tab_name
         if search_term
             popup := search_term
-        Popup(popup,0,0,0)
+        if show
+            Popup(popup,0,0,0)
         if (InStr(toggles, "Recurse") || search_term)
             recurse = R
         FileRead, str, %playlist%
