@@ -38,7 +38,7 @@ table:hover {color:red; transition:color 0.36s;}
 
 .seekbar {
   position:absolute;
-  border-bottom:1px solid rgba(250, 128, 114, 0.3);}
+  border-bottom:2px solid rgba(250, 128, 114, 0.3);}
 
 .container {
   display:flex;
@@ -53,13 +53,13 @@ table:hover {color:red; transition:color 0.36s;}
   left:0;
   height:100vh;
   width:100vw;
-  background-color:#15110a;}
+  background-color:black;}
 
 .player {
   position: absolute;
   user-select:none;
   margin: 0;
-  border-radius:4%}
+  border-radius:2%}
 
 .thumbs {
   display:inline-block;
