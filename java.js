@@ -16,7 +16,8 @@
 // fast seek use new player same as list
 // list view cannot see selections - remove first , prefix and use session memory
 // view etc. loses selected media
-// thumbsheet fail if mouse not move
+// time to load media = innocent fee
+// format caption files
 
 
 
@@ -47,17 +48,15 @@
   var type = ''								// audio, video, image, thumb, document
   var captions = ''							// full caption text file
   var cap_time = 0
+  var mouse_down
   var over_cap								// cursor over caption
   var over_thumb
-  var over_player							// set, cleared in htm tab
   var skinny = 1							// media width setting
   var newSkinny = 1
   var seek_active							// currently seeking video
   var selected = ''							// list of selected media in page
   var cue = 0
   var looping = true
-  var cursor = ''							// mouse movement globals
-  var mouse_down
   var gesture = false
   var scaleX = 1
   var scaleY = 1
@@ -90,12 +89,13 @@
       t = Math.round(10*media.currentTime)/10
       var ptr = captions.indexOf('|'+ t + '|')
       if (ptr > 0 && t != cap_time) {
+        cap.style.display = 'block'
         cap.style.opacity = 0.7
         cap.innerHTML = captions.slice(0,ptr).split('|').pop()
         cap_time = t
         media.pause()}
-      if (over_cap) {cap.style.border = "0.1px dotted #826858"; cap.style.opacity=0.7; if(ptr<=0) {cap.innerHTML=""}}
-      else {cap.style.border = "none"; if (!cap.value) {cap.style.opacity=0}}
+ else if (t != cap_time) {cap.style.opacity=0}
+//      if (over_cap) {cap.style.opacity=0.7; if(ptr<=0) {cap.style.opacity=0}} // cap.innerHTML=""}}
       if (type != "video" && type != "audio") {seekbar.style.top = -10 + "px"}
       else {seek.innerHTML = Math.round(media.currentTime)}
       cap.style.top = mediaY + (scaleY*media.offsetHeight/2) + 10 + "px"
@@ -120,12 +120,12 @@
 
   function play_media(event) {
     last_type = type
-    if (type == 'video') {last_start = media.currentTime}
     if (type) {close_media()}
     if (event == 'Click') {select(index)}				// reverse inca.exe echo click
-    if (event == 'Mclick' && last_type && (last_type != 'video' || !over_player)) {index+=1}
-    if (event == 'WheelUp') {index-=1}
     if (event == 'WheelDown') {index+=1}
+    if (event == 'Mclick' && last_type && last_type != 'video' && ctrl.style.opacity < 0.5) {index+=1}
+    if (event == 'Mclick' && ctrl.style.opacity > 0.5 && last_type != 'thumb') {index+=1}
+    if (event == 'WheelUp') {index-=1}
     if (!over_thumb && !last_type) {index = last_id; event = 'Thumb'}	// play last media
     var Next = document.getElementById("media" + index)
     if (!Next) {index = 1; Next = document.getElementById('media1')}
@@ -134,7 +134,6 @@
     skinny = 1*x.pop()
     newSkinny = skinny
     if (event != 'Thumb') {start = x.pop().trim()} else {x.pop()}
-    if (event == 'Thumb' && !over_player) {start = last_start}
     type = x.pop().replaceAll('\'', '').trim()
     media.style.transition = 0 + "s"
     media.style.opacity = 0
@@ -143,7 +142,7 @@
     if (type == "audio") {media.currentTime = 0; media.controls = true; media.volume = 1; media.play()}
     if (type == "image") {media.src = Next.poster; media.poster = Next.poster}
     else if ((event == 'WheelUp' || event == 'WheelDown') && last_type == 'thumb') {type = 'thumb'}
-    if (event == 'Mclick' && (!last_type || over_player)) {type = 'thumb'}
+    if (event == 'Mclick' && ctrl.style.opacity < 0.5) {type = 'thumb'}
     if (type == 'video' || type == 'thumb') {
       x = Next.poster.replace("/posters/", "/thumbs/")
       p = x.split('%20')
@@ -171,31 +170,33 @@
     container.addEventListener('mouseup', mouseUp)
     container.addEventListener('mousedown', mouseDown)
     container.addEventListener('wheel', preventScroll)
-    media.addEventListener('ended', media_loop)				// what to do after played
+    media.addEventListener('ended', media_ended)				// what to do after played
+    setTimeout(function(){block=0;wheel=0},300)
     mediaTimer = setInterval(timedEvents,94)				// every 100mS
     container.style.zIndex = 3
     container.style.opacity = 1
     media.muted = false
     media.volume = 0
     looping = true
-    wheel = 0}
+    block = 1}
 
 
   function close_media() {
     last_id = index
-    last_start = media.currentTime
+    if (type == 'video') {last_start = media.currentTime}
     if (skinny && skinny != newSkinny) {thin.click()}
-    if (cap.value && cap.value != cap.innerHTML) {capnav.click()}
+    if (cap.value || cap.value != cap.innerHTML) {capnav.click()}
     timedVolDown = setInterval(vol_down_timer,9)
     document.getElementById('title' + index).style.color = "lightsalmon"
     document.querySelector("body").style.overflow = "auto"
-    media.removeEventListener('ended', media_loop)
+    media.removeEventListener('ended', media_ended)
     container.removeEventListener('mouseup', mouseUp)
     container.removeEventListener('mousedown', mouseDown)
     container.removeEventListener('wheel', preventScroll)
     clearInterval(mediaTimer)
     container.style.zIndex = -1
     container.style.opacity = 0
+    cap.style.display= 'none'
     nav2.style.opacity = 0
     cap.style.opacity = 0
     cap.innerHTML = ""
@@ -226,9 +227,9 @@
       else {play_media('WheelUp')}
       next.innerHTML = index
       block_wheel = 440}
-    else if ((ypos > 0.7 || ctr == 'Seek' || media.paused) && type != 'image') {	// seek
+    else if ((ypos > 0.7 || ctr == 'Seek' || media.paused) && !over_cap && type != 'image' && type != 'thumb') {
       if (media.paused == true) {interval = 0.04}
-      else if (media.duration < 60) {interval = 2}
+      else if (media.duration < 60) {interval = 2}			 // seek
       else {interval = 10}
       if (WheelDown) {media.currentTime += interval}
       else  {media.currentTime -= interval}
@@ -251,7 +252,7 @@
     wheel = 0; block = 1}
 
 
-  function get_thumb(e) {						// thumbsheet coordinate start
+  function getThumb(e) {						// thumbsheet coordinate start
     var rect = media.getBoundingClientRect()
     var xp = (e.clientX - rect.left) / (media.offsetWidth * scaleX)
     var yp = (e.clientY - rect.top) / (media.offsetHeight * scaleY)
@@ -259,10 +260,10 @@
     var col = Math.ceil(xp * 6)
     var thumb = 5 * ((row * 6) + col)
     var offset = 0
-    if (!over_player) {thumb = 4/200}
-    else thumb = (thumb - 1) / 200
+    thumb = (thumb - 1) / 200
     if (media.duration > 60) {offset = 20}
-    start = offset - (thumb * offset) + media.duration * thumb}
+    start = offset - (thumb * offset) + media.duration * thumb
+    if (xp > 1 || yp < 0 || xp < 0 || yp > 1) {start = last_start}}
 
 
   function Gesture(e) {							// mouse move over modal
@@ -308,7 +309,7 @@
 
   function togglePause(e) {
     if (!gesture && mouse_down && !seek_active && nav2.style.opacity < 0.5 && !over_cap) {
-      if (type == "thumb") {get_thumb(e); play_media('Thumb')}
+      if (type == "thumb") {getThumb(e); play_media('Thumb')}
       else if (media.paused) {
         media.play()} 
       else {media.pause()}}}
@@ -348,12 +349,12 @@
     else  {panel.style.border = ""}}
 
 
-  function media_loop(e) {						// media looping or next
+  function media_ended(e) {						// loop or next
     media.style.animationName = ""
     if (!looping || type == "audio") {index +=1; play_media('Loop')}
     if (type == "video") {
       if (media.playbackRate > 0.65) {media.playbackRate -= 0.05}
-      if (!mouse_down) {
+      if (!mouse_down) {						// magnify and slow
         cap.innerHTML = ""
         media.style.transition = 1.46 + "s"
         speed.innerHTML = Math.round(media.playbackRate *100)
@@ -426,7 +427,7 @@
     el.innerHTML = y + of + units}
 
 
-
+  function editCap() {cap.style.display='block'; cap.style.opacity=0.7; cap.focus()}
   function preventScroll(e) {e.preventDefault(); e.stopPropagation(); return false}
   function openControls() {ctrl.addEventListener('wheel', preventScroll); ctrl.style.opacity = 0.7}
   function closeControls() {ctrl.removeEventListener('wheel', preventScroll); ctrl.style.opacity = 0.3}
@@ -436,7 +437,9 @@
     document.getElementById("myMp4").href = "#Mp4#" + Math.round(media.currentTime*100)/100 + "#" + index + ",#" + cue
     document.getElementById("myFav2").href = "#Favorite#" + Math.round(media.currentTime*10)/10 + "#" + index + ","
     cap_time = Math.round(10*media.currentTime)/10
-    capnav.href = "#Caption#" + cap.value + "|" + cap_time + "|" + "#" + index + ",#" + cap.innerHTML + "|" + cap_time + "|"}
+    if (cap.value || cap.innerHTML) {
+      if (cap.value) {newcap = cap.value + "|" + cap_time + "|"} else {newcap = ''}
+      capnav.href = "#Caption#" + newcap + "#" + index + ",#" + cap.innerHTML + "|" + cap_time + "|"}}
   function closeNav2() {nav2.style.opacity = 0}
   function loop() {if (looping) {looping = false} else {looping = true}}
 
