@@ -1,29 +1,94 @@
 
 <style>
 
+body {
+  font-family: 'ClearSans-Thin';
+  user-select:none;
+  cursor:default;
+  overflow-x:hidden;
+  background:#15110a;
+  color:#666666;
+  font-size:0.8em;
+  margin-top:140px;
+  animation-name:fadePage;
+  animation-duration:0.6s}
+
   @keyframes fadePage {from {opacity:0} to {opacity:1}}
 
-body {font-family: 'ClearSans-Thin'; user-select:none; cursor:default; overflow-x:hidden; background:#15110a; color:#666666; font-size:0.8em; margin-top:140px; animation-name:fadePage; animation-duration:0.6s}
-a {text-decoration:none; color:#826858; cursor:default;}
-a.slider {display:inline-block; width:35%; height:1.2em; border-radius:9px; color:#826858; transition:color 1.4s; font-size:1em; background-color:#1b1814; text-align:center}
-a.slider:hover {color:red; transition:color 0.36s;}
-ul.menu {column-gap:12px; margin:auto; list-style-type:none; padding:0; white-space:nowrap;}
-ul.menu li {color:#826858; transition:color 1.4s;}
-ul.menu li:hover {color:red; transition:color 0.36s;}
-table {color:#826858; transition:color 1.4s; table-layout:fixed; border-collapse: collapse;}
-table:hover {color:red; transition:color 0.36s;}
-#hover_image {position:absolute; margin-left:3.8em; opacity:0; transition: opacity 0.4s; width:125px; height:auto;}
-#hover_image:hover {opacity:1;}
+a {
+  text-decoration:none;
+  color:#826858;
+  cursor:default}
 
+a.slider {
+  display:inline-block;
+  width:35%;
+  height:1.2em;
+  border-radius:9px;
+  color:#826858;
+  transition:color 1.4s;
+  font-size:1em;
+  background-color:#1b1814;
+  text-align:center}
 
+a.slider:hover {
+  color:red;
+  transition:color 0.36s}
+
+ul.menu {
+  column-gap:12px;
+  margin:auto;
+  list-style-type:none;
+  padding:0;
+  white-space:nowrap}
+
+ul.menu li {
+  color:#826858;
+  transition:color 1.4s}
+
+ul.menu li:hover {
+  color:red;
+  transition:color 0.36s}
+
+table {
+  color:#826858;
+  transition:color 1.4s;
+  table-layout:fixed;
+  border-collapse: collapse}
+
+table:hover {
+  color:red;
+  transition:color 0.36s}
+
+#hover_image {
+  position:absolute;
+  margin-left:3.8em;
+  opacity:0;
+  width:100px;
+  transition:opacity 0.4s;
+  height:auto}
+
+#hover_image:hover {
+  opacity:1}
+
+.searchbox {
+  text-overflow:ellipsis;
+  overflow:hidden;
+  border-radius:9px; 
+  background-color:inherit;
+  color:inherit;
+  font-family:inherit;
+  border:none;
+  outline:none;
+  white-space:nowrap;
+  width:38em}
 
 .caption {
-  display:block;
+  display:none;
   position:fixed;
   z-index:4;
   resize: none;
-  width:40%;
-  height:5em;
+  height:24em;
   background-color:inherit;
   font-family:inherit;
   border:none;
@@ -34,16 +99,16 @@ table:hover {color:red; transition:color 0.36s;}
   color:lightsalmon;
   transition:1s;
   border-radius:5%;
-  font-size:1.5em;}
+  font-size:1.2em}
 
 .seekbar {
   position:absolute;
-  border-bottom:2px solid rgba(250, 128, 114, 0.3);}
+  border-bottom:2px solid rgba(250, 128, 114, 0.3)}
 
 .container {
   display:flex;
   opacity:0;
-  transition:0.5s;
+  transition:0.4s;
   user-select:none;
   position:fixed;
   justify-content:center;
@@ -53,7 +118,7 @@ table:hover {color:red; transition:color 0.36s;}
   left:0;
   height:100vh;
   width:100vw;
-  background-color:black;}
+  background-color:black}
 
 .player {
   position: absolute;
@@ -65,24 +130,25 @@ table:hover {color:red; transition:color 0.36s;}
   display:inline-block;
   vertical-align:top;
   width:14.5em;
+  margin-left:2em;
   color:#826858;
-  transition:color 1.4s;}
+  transition:color 1.4s}
 
 .sidenav {
-  height:61%;
+  height:40%;
   width:95px;
   position:fixed;
   opacity:0;
-  bottom:10px;
+  top:10px;
   left:0;
-  transition:0.3s;}
+  transition:0.3s}
 
 .sidenav a {
   padding: 10px 10px 10px 20px;
   font-size:1.2em;
   color:#826858;
   display:block;
-  transition:0.3s;}
+  transition:0.3s}
 
 .sidenav a:hover {color:salmon}
 
@@ -91,9 +157,9 @@ table:hover {color:red; transition:color 0.36s;}
   width:140px;
   position:fixed;
   opacity:0.3;
-  top:10px;
+  bottom:60px;
   left:0;
-  transition:0.3s;}
+  transition:0.3s}
 
 .controls a {
   padding: 10px 10px 10px 10px;
@@ -101,7 +167,7 @@ table:hover {color:red; transition:color 0.36s;}
   font-size:3em;
   color:#826858;
   display:block;
-  transition:0.3s;}
+  transition:0.3s}
 
 .controls a:hover {color:salmon}
 
