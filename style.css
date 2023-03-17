@@ -9,7 +9,7 @@ body {
   background:#15110a;
   color:#666666;
   font-size:0.8em;
-  margin-top:140px;
+  margin-top:5em;
   animation-name:fadePage;
   animation-duration:0.6s}
 
@@ -20,20 +20,48 @@ a {
   color:#826858;
   cursor:default}
 
+.grid {
+  display:grid;
+  grid-template-columns: auto auto auto auto auto auto auto;
+  grid-template-rows: auto auto auto auto;
+  grid-auto-flow: column;
+  color:#826858;
+  border-radius:3%;
+  font-size:0.9em;
+  transition:color 1.4s;
+  padding:1em;
+  margin:auto;
+  height:6em;
+  width:65%;
+  background-color:inherit}
+
 a.slider {
   display:inline-block;
-  width:35%;
+  width:15%;
   height:1.2em;
   border-radius:9px;
   color:#826858;
   transition:color 1.4s;
-  font-size:1em;
+  font-size:0.95em;
   background-color:#1b1814;
   text-align:center}
 
 a.slider:hover {
   color:red;
   transition:color 0.36s}
+
+.searchbox {
+  text-overflow:ellipsis;
+  overflow:hidden;
+  border-radius:9px; 
+  background-color:#1b1814;
+  color:#826858;
+  font-family:inherit;
+  border:none;
+  height:1.2em;
+  outline:none;
+  white-space:nowrap;
+  width:30%}
 
 ul.menu {
   column-gap:12px;
@@ -64,31 +92,20 @@ table:hover {
   position:absolute;
   margin-left:3.8em;
   opacity:0;
-  width:100px;
+  width:124px;
   transition:opacity 0.4s;
   height:auto}
 
 #hover_image:hover {
   opacity:1}
 
-.searchbox {
-  text-overflow:ellipsis;
-  overflow:hidden;
-  border-radius:9px; 
-  background-color:inherit;
-  color:inherit;
-  font-family:inherit;
-  border:none;
-  outline:none;
-  white-space:nowrap;
-  width:38em}
-
 .caption {
-  display:none;
+  display:block;
   position:fixed;
   z-index:4;
   resize: none;
-  height:24em;
+  height:3em;
+  width:1em;
   background-color:inherit;
   font-family:inherit;
   border:none;
@@ -103,7 +120,7 @@ table:hover {
 
 .seekbar {
   position:absolute;
-  border-bottom:2px solid rgba(250, 128, 114, 0.3)}
+  border-bottom:4px solid rgba(250, 128, 114, 0.3)}
 
 .container {
   display:flex;
@@ -135,42 +152,22 @@ table:hover {
   transition:color 1.4s}
 
 .sidenav {
-  height:40%;
-  width:95px;
+  height:100%;
+  width:10%;
   position:fixed;
-  opacity:0;
-  top:10px;
+  opacity:0.3;
+  top:2em;
   left:0;
   transition:0.3s}
 
 .sidenav a {
-  padding: 10px 10px 10px 20px;
-  font-size:1.2em;
-  color:#826858;
   display:block;
-  transition:0.3s}
-
-.sidenav a:hover {color:salmon}
-
-.controls {
-  height:30%;
-  width:140px;
-  position:fixed;
-  opacity:0.3;
-  bottom:60px;
-  left:0;
-  transition:0.3s}
-
-.controls a {
-  padding: 10px 10px 10px 10px;
-  height:20%;
-  font-size:3em;
+  padding: 0.3em;
+  font-size:1.5em;
   color:#826858;
-  display:block;
   transition:0.3s}
 
-.controls a:hover {color:salmon}
-
+.sidenav a:hover {color:lightsalmon}
 
 
 </style>
