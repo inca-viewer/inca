@@ -1,18 +1,16 @@
 
-# A browser based file explorer & media viewer<br>
+# A browser based media file explorer<br>
 
-Windows - Firefox and Chrome compatible<br>
-YouTube style view of your local media files<br> 
-Foreground and background media playlists and players<br>
-Playlists are plain text .m3u files of start-time pointers to your media<br>
+Windows - Chrome and Firefox compatible<br>
+YouTube style interface of your local media files<br><br>
 
-Only 79kB of easy to read AutoHotkey script<br>
+Around 500 lines of Java script and 50kB of AutoHotkey script<br>
 Is lightweight, portable (no installation)<br>
-and does not mess with any media or settings<br>
+and does not mess with any settings<br>
 
 # Features:
 
-All common media formats<br>
+mp4 and hvec video<br>
 6 x 6 Video thumbsheets. (middle click)<br>
 Randomize / shuffle folders, media, playlists<br>
 Speed, width, magnify & volume with mouse gestures<br><br>
@@ -21,78 +19,41 @@ Speed, width, magnify & volume with mouse gestures<br><br>
 
 <p><img src="screens/Screen 2.jpg" width="640"/></p><br><br>
 
-No keyboard is needed. (although long click on text invokes osk)<br>
-Uses mouse clicks, gestures & back button<br>
 Just run Ince.exe - browser will open in pictures folder<br>
 To 'uninstall', just close from taskbar tray and delete the inca folder<br><br>
 
-Smooth Gif playback with magnify, width, step forward & backward & play/pause<br>
-TikTok video cycling, speed decending, playlists etc.<br>
 Search, organize, edit & view media files in browser<br>
-Associate captions and text files to images & video<br>
+Create captions for images & video<br>
 Create Favorites, history, slideshows, storylines<br><br>
 Background music playlists from browser tab<br>
-Fade sound between background music and forground video<br>
 Sleep timer gradually lowers master volume when mouse quiet<br><br>
 
 To see if you already have a video from an outside website,<br>
 Select part of the title text then 'long click' on it<br>
 A tab will immediately open with all matching files from your computer<br>
 
-Downloads folder is indexed at about 1000 videos per hour<br>
-into the cache once only. Then everything is very fast.<br>
+Downloads folder is indexed at about 50 videos per minute<br>
 
-Written in a simple scripting language - AutoHotkey<br>
+Written in a simple scripting languages - Java & AutoHotkey<br>
 If it's not exactly what you want, change it. It re-compiles in under a second<br>
 You don't need to be a programmer and it's really easy to customize.<br>
 Just snip out the bits you don't like and write any features you want.<br>
-Edit and Compile your script all within browser<br>
+Edit and Compile your script all within the browser<br>
 
 # Usage
 
-Click
-- on image - next image
-- on video - play/pause
-- on thumbnail - play from frame
-- on folder - show media inside
-- on search term - find matching videos
-
 Long click
-- on background - return to last media
-- on video link - play from start
-- on highlighted text - search media files for match
-
-Long right click
-- on media - adds timestamp to favorites & slides playlist
-
-Slide gestures
-- in media - magnify, width
-- screen far left - browser magnify or media speed
+- on selected text - searches your media for matches
 
 Right click slide gesture
 - volume control
 
 Middle click
-- on video - show 6 x 6 thumb sheet
-- on background - toogle thumbnails / list view
-- on folder - open in new tab
-- on screen far left - next song in music playlist
+- show 6 x 6 thumb sheet
 
 Back click
 - in media - exit
-- on background - clear selection, top of page
-- on screen far left - previous song in music playlist
-
-Long back click
-- on image - previous image
-- in browser - close current tab
-- in other app - close app
-
-Win + \ (optional)
-- toggle browser & desktop - Long press - Toggle FullScreen
-
-Win + / (optional)
-- pause/play YouTube - Long press - back 10 seconds YouTube<br>
+- in tab - clear selection, top of page
 
 <br><br>Supports rotated screen & osk onscreen keyboard<br>
 long press on any text for osk, back click or enter to close<br>
