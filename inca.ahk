@@ -25,7 +25,7 @@
 	#MaxHotkeysPerInterval 999	; allow fast spinning wheel
 	SetWorkingDir, %A_ScriptDir%	; consistent start directory
 
-        Global sort_list		:= "Shuffle|Date|Duration|Alpha|Size|ext|Reverse|Recurse|Videos|Images|"
+        Global sort_list		:= "Alpha|Date|Duration|Shuffle|Size|ext|Reverse|Recurse|Videos|Images|"
         Global toggles			; eg. reverse
         Global features			; program settings
         Global folder_list		; main root folders
@@ -76,7 +76,6 @@
         Global skinny
         Global seek
         Global target
-        Global update
 
 
 
@@ -85,6 +84,10 @@
         {
         if ((cap_size := view / 12) > 1.6)
           cap_size := 1.6
+thb:=Abs(view)
+
+        if (view > 24)
+          controls = controls
 
         if DetectMedia(input)
             thumb := src
@@ -136,6 +139,7 @@
 
 FileRead, cap, %inca%\cache\captions\%media%.srt
 cap := StrReplace(cap, "`r`n", "|")
+cap := RegExReplace(cap, "[^a-zA-Z0-9 |.,]")
 
 needle = |%start%|
 pos := InStr(cap, needle)
@@ -170,9 +174,9 @@ if (type == "video")
   IfNotExist, %inca%\cache\thumbs\%media%.jpg
      poster = 
      start := Round(start,2)
-        if !view							; list view 
+        if (view < 1)							; list view 
             {
-            entry = <div style="padding-left:5em;"><table><tr><td id="hover_image"><a href="#Media#%j%"><video id="media%j%" style="width:100`%" onmouseenter="overThumb(event, %j%, %start%)" onmouseleave="med.load(); over_thumb=false" onclick="play_media('Click', '%type%', %start%, %skinny%, '%cap%', %j%, event)" %poster% src="file:///%src%" type="video/mp4" muted></video></a></tr></table><table style="table-layout:fixed; width:100`%; font-size:0.9em"><tr><td style="width:4em; text-align:center"><span id="title%j%" onclick="select(%j%)" style="border-radius:9px; color:#777777">%sort_name%</span></td><td style="width:4em; text-align:center">%dur%</td><td style="width:3em; text-align:center">%size%</td><td style="width:4em; text-align:center">%ext%</td>%fol%<td><input id="mytitle%j%" type="search" class="searchbox" style="width:80`%; font-size:1em; background-color:inherit" value="%media%"></td></tr></table></div>`r`n`r`n
+            entry = <div style="padding-left:5em;"><table><tr><td id="thumb%j%" class='ttt' style="width:%thb%em" onwheel="wheelEvents(event, 'Thumbs')" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0"><a href="#Media#%j%"><video id="media%j%"style="width:100`%; border-radius:3`%" onmouseenter="overThumb(event, %j%, %start%)" onmouseleave="med.load(); over_thumb=false" onclick="play_media('Click', '%type%', %start%, %skinny%, '%cap%', %j%, event)" %poster% src="file:///%src%" type="video/mp4" muted></video></a></tr></table><table style="table-layout:fixed; width:100`%; font-size:0.9em"><tr><td style="width:4em; text-align:center"><span id="title%j%" onclick="select(%j%)" style="border-radius:9px; color:#777777">%sort_name%</span></td><td style="width:4em; text-align:center">%dur%</td><td style="width:3em; text-align:center">%size%</td><td style="width:4em; text-align:center">%ext%</td>%fol%<td><input id="mytitle%j%" type="search" class="searchbox" style="width:80`%; font-size:1em; background-color:inherit" value="%media%"></td></tr></table></div>`r`n`r`n
             }
         else
             {
@@ -188,7 +192,7 @@ if (type == "video")
                     }
 	        entry = <a href="#Media#%j%"><div style="display:inline-block; width:88`%; color:#555351; transition:color 1.4s; margin-left:8`%; text-align:center; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; %highlight%;">%sort_name% &nbsp;&nbsp;%link% %media%</div></a><textarea rows=%rows% style="display:inline-block; overflow:hidden; margin-left:8`%; width:88`%; background-color:inherit; color:#826858; font-size:1.2em; font-family:inherit; border:none; outline:none;">%str2%</textarea>`r`n`r`n
                 }
-            else entry = <li id="thumb%j%" onclick="select(%j%)" class="thumbs" style="width:%view%em"><div id="title%j%" style="color:#555351; border-radius:9px; text-align:center; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; font-size:0.85em; margin:auto; width:90`%">%sort_name% &nbsp;&nbsp; %link% %media%</div><a href="#Media#%j%" id="sel%j%"><video id="media%j%" style="%transform% margin-left:auto; margin-right:auto; width:90`%; display:block; padding:2px; %select%" onmouseenter="overThumb(event, %j%, %start%)" onmouseleave="med.load(); over_thumb=false" onclick="play_media('Click', '%type%', %start%, %skinny%, '%cap%', %j%, event)" src="file:///%src%" %poster% muted type="video/mp4"></video></a>%caption%</li>`r`n`r`n
+            else entry = <li id="thumb%j%" onclick="select(%j%)" class="thumbs" style="width:%view%em" onwheel="wheelEvents(event, 'Thumbs')" ><div id="title%j%" style="color:#555351; border-radius:9px; text-align:center; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; font-size:0.85em; margin:auto; width:90`%">%sort_name% &nbsp;&nbsp; %link% %media%</div><a href="#Media#%j%" id="sel%j%"><video %controls% class="thumbs" id="media%j%" style="%transform% margin-left:auto; margin-right:auto; width:90`%; display:block; padding:2px; %select%" onmouseenter="overThumb(event, %j%, %start%)" onmouseleave="med.load(); over_thumb=false" onclick="play_media('Click', '%type%', %start%, %skinny%, '%cap%', %j%, event)" src="file:///%src%" %poster% muted type="video/mp4"></video></a>%caption%</li>`r`n`r`n
             }
         return entry
         }
@@ -199,6 +203,7 @@ if (type == "video")
         {
         if !(folder && path)
             return
+thb:=Abs(view)
         last := src
         title := tab_name
         FileRead, style, %inca%\apps\style.css
@@ -251,7 +256,7 @@ if (type == "video")
 
 
 
-        filter_html =`r`n`r`n<ul onmouseover="setLinks()" class="menu" style="height:2em; display:flex; justify-content:space-between; margin-left:20px">`r`n`r`n<a href="#Settings#" class='slider' style='width:6`%; background-color:inherit;'>Menu</a>`r`n<a href='#' onclick='selectAll()' class='slider' style='width:6`%; background-color:inherit;'>Select</a>`r`n<a href='#' id='myDelete' class='slider' style='width:6`%; background-color:inherit;'>Delete</a>`r`n<a href="#Join#" class='slider' style='width:6`%; background-color:inherit;'>Join</a>`r`n<a href="#Thumbs#%view%" id='myThumbs' onwheel="wheelEvents(event, 'Thumbs')" class='slider' style='height:2em; width:6`%; background-color:inherit'>Thumbs</a>`r`n
+        filter_html =`r`n`r`n<ul onmouseover="setLinks()" class="menu" style="height:2em; display:flex; justify-content:space-between; margin-left:20px">`r`n`r`n<a href="#Settings#" class='slider' style='width:6`%; background-color:inherit;'>Menu</a>`r`n<a href='#' onclick='selectAll()' class='slider' style='width:6`%; background-color:inherit;'>Select</a>`r`n<a href='#' id='myDelete' class='slider' style='width:6`%; background-color:inherit;'>Delete</a>`r`n<a href="#Join#" class='slider' style='width:6`%; background-color:inherit;'>Join</a>`r`n<a href="#Thumbs#%thb%" id='myThumbs' onwheel="wheelEvents(event, 'Thumbs')" class='slider' style='height:2em; width:6`%; background-color:inherit'>Thumbs</a>`r`n
 
         Loop, Parse, sort_list, `|
             if A_LoopField
@@ -551,9 +556,6 @@ return
                 {
                 send, {Pause}						; close java modal (media)
                 ClickWebPage(0)						; read location bar message
-                if update
-                  CreateList(0)
-                update =
                 }
             else send, {Xbutton1}
             }
@@ -609,6 +611,7 @@ return
               run, %inca%\apps\ffmpeg.exe -i "%src%" "%media_path%\%media% 0.0.mp3",,Hide
             else run, %inca%\apps\ffmpeg.exe -ss %address% -to %value% -i "%src%" "%media_path%\%media% %address%.mp3",,Hide
             sleep 1000
+            show = 1
             }
           if (command == "Mp4")
             {
@@ -616,11 +619,13 @@ return
               run, %inca%\apps\ffmpeg.exe -i "%src%" "%media_path%\%media% 0.0.mp4",,Hide
             else run, %inca%\apps\ffmpeg.exe -ss %address% -to %value% -i "%src%" "%media_path%\%media% %address%.mp4",,Hide
             sleep 1000
+            show = 1
             }
-          if (command == "Move")
-              if (selected && InStr(path, "playlists"))
-                  MoveEntry()						; move entry within playlist
-              else return
+          if (command == "MovePos")
+              {
+              MoveEntry()						; move entry within playlist
+              show = 1
+              }
           if (command == "Caption")
             {
             FileRead, str, %inca%\cache\captions\%media%.srt
@@ -629,8 +634,6 @@ return
               str := StrReplace(str, address, value)
             else str = %str%%value%
             FileAppend, %str%, %inca%\cache\captions\%media%.srt, UTF-8
-            update := 1
-            return
             }
           if (command == "Favorite")
               {
@@ -640,28 +643,28 @@ return
                   FileAppend, %src%|%value%`r`n, %path%%folder%.m3u, UTF-8
               else FileAppend, %src%|%value%`r`n, %inca%\playlists\new.m3u, UTF-8
               Runwait, %inca%\apps\ffmpeg.exe -ss %value% -i "%src%" -y -vf scale=480:-2 -vframes 1 "%inca%\cache\posters\%media%%A_Space%%value%.jpg",, Hide
-;              update := 1
-              return
               }
           if (command == "Skinny")
               {
               FileDelete, %inca%\cache\widths\%media%.txt
               if (value > 0.5 && value < 0.995 || value > 1.005 && value < 1.5)
                 FileAppend, %value%, %inca%\cache\widths\%media%.txt
-;              update := 1
-              return
               }
           if (command == "Thumbs")
               {
               page := 1
-              if (view == value)
+              if (view == last_view)
+                last_view := 6
+              if (Abs(view) == value)
                 {
-                if !view
+                if (view < 1)
                    view := last_view
-                else view := 0
+                else view := -1 * view
                 }
-              else 
-                view := value
+              else if (view < 1)
+                  view := value
+                else view := -value
+
               last_view := value
               }
           if (command == "Delete")
@@ -673,6 +676,7 @@ return
                       DeleteEntry()
                     else IfExist, %src%
                            FileRecycle, %src%
+                   show=1
                   }
           if (command == "Rename")
             {
@@ -800,8 +804,11 @@ return
                     toggles =
                 }
             }
-        CreateList(show)
+        if show
+          CreateList(show)
+        else RenderPage()
         search_box =
+        command =
         return 1
         }
 
@@ -852,9 +859,6 @@ return
         FileDelete, %inca%\cache\lists\%tab_name%.txt
         FileAppend, %list%, %inca%\cache\lists\%tab_name%.txt, UTF-8
         RenderPage()
-;        popup = %popup% %list_size%
-;        if show
-;          Popup(popup,400,0,0)
         }
 
 
@@ -1081,12 +1085,12 @@ return
 
     MoveEntry()						; within playlist 
         {
-        if !playlist
+        if (!playlist || !selected)
           return
         if (sort != "Alpha")
           {
           sort = Alpha
-          CreateList(1)
+          CreateList(0)
           return
           }
         select := list_id
@@ -1119,9 +1123,7 @@ return
 
     FileTransfer()
         {
-        if InStr(address, "playlists")
-          PopUp("Link",400,0,0)
-        else if (timer < 500) 
+        if (timer < 500) 
           PopUp("Move",400,0,0)
         else PopUp("Copy",400,0,0)
         Loop, Parse, selected, `/
@@ -1131,7 +1133,8 @@ return
               if InStr(address, "playlists")
                 {
                 FileAppend, %target%`r`n, %address%, UTF-8		; add media entry to playlist
-                DeleteEntry()
+                if (timer < 500)
+                  DeleteEntry()
                 }
               else if (timer < 500)
                 FileMove, %src%, %address%				; move file to new folder
@@ -1339,6 +1342,7 @@ return
         settingsButtonSource:
         WinClose
         run, notepad %inca%\inca.ahk
+        run, notepad %inca%\java.js
         return
 
         settingsButtonHelp:
