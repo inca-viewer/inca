@@ -3,8 +3,6 @@
 // clean up old style data - list tables etc use small modal instead
 // 5:50 wake up
 // convert mid wma wmv files
-// when mouse over list thumb wheel magnifies
-// drag and drop media to side?
 // create alternative player (mpv) option for non mp4 media
 // crash in scenes list - text media 
 // list view not to load video on page load - to speed up loading lists
@@ -13,15 +11,15 @@
 // have buttons on modal for all caption/favorite cut points
 // button for random speed / magnify effects
 // list of last 10 media or 10 searches
-// fast seek use new modal same as list
-
+// fast seek use new modal and same for list
+// ypos axis determines size of seek jumps
+// proper grab move handle without jumping
 
 
   var container = document.getElementById("myModal")			// media player window
+  var player = document.getElementById("myPlayer")
   var panel = document.getElementById("myPanel")			// list of folders, playlists etc
-  var panel2 = document.getElementById("myPanel2")			// list of all search terms
   var nav = document.getElementById("mySidenav")			// nav buttons over htm tab
-  var media = document.getElementById("myPlayer")
   var speed = document.getElementById("mySpeed")
   var thin = document.getElementById('myThin')
   var next = document.getElementById("myNext")
@@ -35,11 +33,13 @@
   var last_id
   var start = 0								// video initial start time
   var last_start
-  var index = 1								// media index (e.g. media14)
+  var media								// current media element (thumb or modal)
+  var index = 1								// current media index (e.g. media14)
   var type = ''								// audio, video, image, thumb, document
   var cap_list = ''							// full caption text file
   var cap_time = 0
   var mouse_down
+  var thumb = false
   var gesture
   var over_cap								// cursor over caption
   var over_thumb
@@ -53,12 +53,16 @@
   var scaleY = 1
   var Xref
   var Yref
+  var Zindex = 1
   var xpos = 0.5
   var ypos = 0.5
   var mediaY = window.innerHeight/2					// centre of media player
   var mediaX = window.innerWidth/2.6
 
 
+
+  document.addEventListener('mousedown', mouseDown)
+  document.addEventListener('mouseup', mouseUp)
 
   window.addEventListener('keydown', (event) => {			// inca.exe passing control keys
     if (event.key == 'm') {play_media('Mclick')}			// middle click
@@ -83,18 +87,24 @@
     positionMedia()}
 
 
-  function overThumb(e, id, seek) {					// mouse over small thumbnail in htm tab
+  function overThumb(e, id, seek, sk) {					// mouse over thumbnail in htm tab
     index = id
     over_thumb = true
-    med = document.getElementById("media" + id)
+    media = document.getElementById("media" + id)
     var sel = document.getElementById("sel" + id)
     if (selected.split(',').length == 2) {sel.href = "#MovePos#" + id + "#" + selected}
-    med.currentTime = seek +0.1
-    med.playbackRate = 0.74
-    med.play()}
+    var rect = media.getBoundingClientRect()				// play thumbnail video
+    var yp = (e.clientY - rect.top) / (media.offsetHeight)
+    if (media.currentTime <= seek || yp > 0.9) {media.currentTime = seek+0.1}
+    media.playbackRate = 0.74
+    media.style.opacity = 1
+    scaleX = sk; scaleY=1
+    media.play()}
 
 
   function play_media(event) {
+    if (gesture) {return}						// false event from thumb moved
+    media = player							// media assigned to modal
     last_type = type
     if (type) {close_media()}
     if (event == 'WheelDown') {index+=1}
@@ -138,18 +148,15 @@
     next.innerHTML = index
     if (cap_list) {start -= 0.5}
     if (type != 'image') {speed.innerHTML = Math.round(media.playbackRate*100)}
-    if (type == 'audio') {container.style.height='0px'; mediaY=-20}
-    else {setTimeout(function() {document.querySelector("body").style.overflow="hidden"},300)}
+    setTimeout(function() {document.querySelector("body").style.overflow="hidden"},300)
     media.style.maxWidth = window.innerWidth * 0.6 + "px"
     media.style.maxHeight = window.innerHeight * 0.7 + "px"
-    container.addEventListener('mouseup', mouseUp)
-    container.addEventListener('mousedown', mouseDown)
     media.addEventListener('ended', media_ended)
     setTimeout(function(){block=0;wheel=0},300)
     mediaTimer = setInterval(timedEvents,84)
     thin.innerHTML = Math.round(skinny*100)
     container.style.opacity = 1
-    container.style.zIndex = 3
+    container.style.zIndex = 20
     media.muted = false
     media.volume = 0
     looping = true
@@ -164,8 +171,6 @@
     document.getElementById('title' + index).style.color = "lightsalmon"
     document.querySelector("body").style.overflow = "auto"
     media.removeEventListener('ended', media_ended)
-    container.removeEventListener('mouseup', mouseUp)
-    container.removeEventListener('mousedown', mouseDown)
     clearInterval(mediaTimer)
     container.style.zIndex = -1
     container.style.opacity = 0
@@ -185,21 +190,25 @@
     e.stopPropagation()
     wheel += Math.abs(e.deltaY)
     if (block || wheel < 40) {return}
-    var rect = media.getBoundingClientRect()
     var WheelDown = false
     var timer = 10
     if (e.deltaY > 0) {WheelDown = true}
-    if (ctr == 'Thumbs') {						// thumb width
-      el = document.getElementById("thumb" + index)
-      thumb_size = 1*el.style.width.slice(0,-2)
-//      thumb_size = 1*thumbs.href.split('#').pop()
-      if (WheelDown) {thumb_size += (thumb_size/50)}
-      else if (thumb_size > 5) {thumb_size -= (thumb_size/50)}
+    if (ctr == 'Thumb' || ctr == 'Thumbs') {				// thumb width 
+      thumb = document.getElementById("thumb" + index)
+      media = document.getElementById("media" + index)
+      thumb_size = 1*thumb.style.width.slice(0,-2)
+      if (WheelDown) {thumb_size += (thumb_size/40)}
+      else if (thumb_size > 5) {thumb_size -= (thumb_size/40)}
       thumb_size = Math.round(10*thumb_size)/10
       if (thumb_size < 6) {thumb_size = 6}
-      thumbs.href = "#Thumbs#" + thumb_size
-      el = document.getElementById("thumb" + index)
-      el.style.width = thumb_size + "em"}
+      thumb.style.width = thumb_size + "em"
+      media.style.width = thumb_size + "em"
+      if (ctr == 'Thumbs') {
+        thumbs.href = "#Thumbs#" + thumb_size
+        for (i=1; i<41 ;i++) {
+          if (el = document.getElementById("thumb" + i)) {
+            el.style.width = thumb_size + 'em'
+            document.getElementById("media" + i).style.width = thumb_size + 'em'}}}}
     if (ctr == 'Skinny') {						// media width
       if (WheelDown) {scaleX -= 0.002}
       else {scaleX += 0.002}
@@ -220,7 +229,7 @@
         media.playbackRate += rate
         speed.innerHTML = Math.round(media.playbackRate *100)}
       timer = 40}
-    if (xpos<0.1 && ypos>0.5 && type != 'image' && type != 'thumb') {	// seek
+    if (xpos<0.1 && ypos>0.48 && type != 'image' && type != 'thumb') {	// seek
       if (media.paused == true) {interval = 0.04}
       else if (media.duration < 60) {interval = 2}
       else {interval = 10}
@@ -249,14 +258,18 @@
     if (xp > 1 || yp < 0 || xp < 0 || yp > 1) {start = last_start}}
 
 
-  function Gesture(e) {							// mouse move over modal
+  function Gesture(e) {							// mouse move over media
     var rect = container.getBoundingClientRect()
     xpos = (e.clientX - rect.left) / container.offsetWidth
     ypos = (e.clientY - rect.top) / container.offsetHeight
     if (mouse_down) {
       var x = Math.abs(Xref - e.clientX)
       var y =  Math.abs(Yref - e.clientY)
+      if (!type) {mediaX = e.clientX; mediaY = e.clientY}
       if (x + y > 5) {
+        if (!gesture && !type) {					// thumb moved in htm tab
+          media.style.position = 'fixed'
+          media.style.zIndex = Zindex += 1}
         gesture = true
         mediaY += e.clientY - Yref
         mediaX += e.clientX - Xref
@@ -266,6 +279,9 @@
     if (container.style.cursor != "crosshair") {
       container.style.cursor = "crosshair"
       setTimeout(function() {container.style.cursor="none"},244)}
+    if (window.innerWidth > screen.width * 0.9) {
+      media.style.marginLeft = '355px'}					// full screen mode
+    else {media.style.marginLeft = 0}
     rect = media.getBoundingClientRect()
     var xp = (e.clientX - rect.left) / (media.offsetWidth * scaleX)
     if (ypos > 0.95 && xp > 0 && xp < 1 && !mouse_down && type == "video") {
@@ -284,7 +300,10 @@
     Yref = e.clientY
     if (seek_active) {seek_active = media.currentTime; media.play()}}
 
-  function mouseUp(e) {togglePause(e); mouse_down=false; gesture=false}
+  function mouseUp(e) {
+    togglePause(e)
+    setTimeout(function() {gesture=false},50)
+    mouse_down=false}
 
 
   function togglePause(e) {
@@ -422,10 +441,12 @@
     document.getElementById("myFav").href = "#Favorite##" + selected	// add link to 'new' playlist
     el = document.getElementById("title" + index)
     document.getElementById("myRename").href = "#Rename#" + el.value + "#" + index + ","
-    med.load()}
+    thumb.load()}
   function selectAll() {for (i=1; i <= 300; i++) {select(i)}}
   function editCap() {cap.style.display='block'; cap.style.opacity=0.6; cap.innerHTML="New"; cap.focus()}
+  function exitThumb(el) {over_thumb = false; if (media != player){el.pause(); if (!media.style.position) {el.style.opacity = 0}}}
 
 
 
 </script>
+                                        
