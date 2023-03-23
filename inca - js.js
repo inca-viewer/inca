@@ -10,13 +10,10 @@
 // not pass lists to panel load but as const strings in java
 // have buttons on modal for all caption/favorite cut points
 // button for random speed / magnify effects
-// list of last 10 media or 10 searches
 // thumbs random fail to close opacity
 // fast seek use new modal and same for list
-// ypos axis determines size of seek jumps
-// horizontal scroll options
-
-
+// enter inputbox triggers playmedia
+// panel pos
 
   var container = document.getElementById("myModal")			// media player window
   var player = document.getElementById("myPlayer")
@@ -67,9 +64,9 @@
   document.addEventListener('mouseup', mouseUp)
   document.addEventListener('mousemove', Gesture)
 
-  document.addEventListener('keydown', (event) => {			// inca.exe passing control keys
-    if (event.key == 'm') {play_media('Mclick')}			// middle click
-    if (event.key == 'Pause') {						// mouse 'back' button
+  document.addEventListener('keydown', (event) => {			// inca.exe passing mouse buttons
+    if (event.key == 'ScrollLock') {play_media('Mclick')}			// middle button
+    if (event.key == 'Pause') {						// back button
       if (!type) {
         if (document.body.getBoundingClientRect().top < 0) {scroll(0,0)}
         else {scroll(0,0); location.reload()}return}
@@ -111,14 +108,15 @@
 
 
   function play_media(event) {
-    if (over_cap || gesture) {return}
+    if (gesture) {return}
+    media.pause()							// pause htm tab thumb
     media = player							// media assigned to modal
     last_type = type
     if (type) {close_media()}
+    if (event == 'WheelUp') {index-=1}
     if (event == 'WheelDown') {index+=1}
     if (event == 'Mclick' && last_type && last_type != 'video' && xpos > 0.1) {index+=1}
     if (event == 'Mclick' && xpos < 0.1 && last_type != 'thumb') {index+=1}
-    if (event == 'WheelUp') {index-=1}
     if (!over_thumb && !last_type) {index = last_id; event = 'Thumb'}	// play last media
     var Next = document.getElementById("media" + index)
     if (!Next) {index = 1; Next = document.getElementById('media1')}
@@ -218,7 +216,7 @@
           if (el = document.getElementById("thumb" + i)) {
             el.style.width = thumb_size + 'em'
             document.getElementById("media" + i).style.width = thumb_size + 'em'}}}}
-    if (ctr == 'Skinny') {						// media width
+    else if (ctr == 'Skinny') {						// media width
       if (WheelDown) {scaleX -= 0.002}
       else {scaleX += 0.002}
       newSkinny = Math.round(1000*scaleX / scaleY)/1000
@@ -226,22 +224,23 @@
       thin.href = "#Skinny#" + newSkinny + "#" + index +","
       if (newSkinny == 1) {timer = 146}
       media.style.transform = "scale(" + scaleX + "," + scaleY + ")"}
-    if (ctr == 'Next') {						// media next
+    else if (ctr == 'Next') {						// media next
       if (WheelDown) {play_media('WheelDown')}
       else {play_media('WheelUp')}
       next.innerHTML = index
       timer = 440}
-    if (ctr == 'Speed') {						// speed
+    else if (ctr == 'Speed' || xpos < 0.1) {				// speed
       if (WheelDown) {rate = -0.01}
       else {rate = 0.01}
       if (type != 'image' && (media.playbackRate < 1 || rate < 0)) {
         media.playbackRate += rate
         speed.innerHTML = Math.round(media.playbackRate *100)}
       timer = 40}
-    else if (xpos<0.1 && ypos<0.33 && type != 'image' && type != 'thumb') {	// seek
-      if (media.paused == true) {interval = 0.04}
-      else if (media.duration < 60) {interval = 2}
-      else {interval = 10}
+    else if (ypos < 0.33 && type != 'image' && type != 'thumb') {	// seek
+      if (media.paused == true) {interval = 0.1}
+      else if (media.duration < 91) {interval = 5}
+      else {interval = 200}
+      interval *= ypos 
       if (WheelDown) {media.currentTime += interval}
       else  {media.currentTime -= interval}
       timer = 200}
@@ -391,7 +390,7 @@
     const z = input.split("|")
     var el = document.getElementById(id)
     panel.style.direction = ""
-    if (id == "fol1" || id == "fol2" || id == "sub" || id == "music" || id == "fav") {
+    if (id == "A" || id == "B" || id == "sub" || id == "music" || id == "fav") {
       for (x of z) {
         y = x.split("/")
         p = y.pop()
@@ -404,7 +403,7 @@
         if (p == "New") {p = "<span style=\"color:red\"</span>" + p}
         q = x.replace(/ /g, "%20")
         content = content + "<a href=#" + "Path#" + start + "#" + selected + "#" + q + "><div>" + p + "</div>" + "</a>"}
-      panel.innerHTML = content;}						// command # value # selected # address
+      panel.innerHTML = content}						// command # value # selected # address
     if (id == "myInput" && !selected) {					// alpha selected search terms
       z.sort()
       var w = el.offsetWidth
@@ -419,7 +418,8 @@
         q = x.replace(/ /g, "%20")
         content = content + "<a href=#" + "Search#" + q + "><div>" + p + "</div>" + "</a>"}
       id = upper}
-    panel.innerHTML = "<span style=\'grid-row-start:1; grid-row-end:3; color:red; font-size:2.2em\'>" + id + "</span>" + content}
+    if (!selected)
+      {panel.innerHTML = "<span style=\'grid-row-start:1; grid-row-end:3; color:red; font-size:2.2em\'>" + id + "</span>" + content}}
 
 
   function getCoords(event, id, sort, link, current) {			// selection sliders

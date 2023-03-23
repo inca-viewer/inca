@@ -28,8 +28,8 @@
         Global sort_list		:= "Shuffle|Alpha|Duration|Date|Size|ext|Reverse|Recurse|Videos|Images|"
         Global toggles			; eg. reverse
         Global features			; program settings
-        Global fol_1			; folder list 1
-        Global fol_2			; folder list 2
+        Global fol1			; folder list 1
+        Global fol2			; folder list 2
         Global search_list		; models, studios, genre, key words etc.
         Global search_folders		; default search locations
         Global this_search		; current search folders
@@ -50,7 +50,6 @@
         Global ext			; file extension
         Global tab_name			; browser tab title
 	Global previous_tab
-        Global history_timer		; timer to add files to history 
         Global vol_popup		; volume bar popup 
         Global volume
         Global page := 1		; current page within list
@@ -199,7 +198,6 @@ if (type == "video")
         return entry
         }
 
-
     RenderPage()							; construct web page from media list
         {
         if !(folder && path)
@@ -250,7 +248,7 @@ if (type == "video")
         header_html = <!--`r`n%view%>%last_view%>%page%>%sort%>%toggles%>%this_search%>%search_term%>%path%>%folder%>%playlist%>%last_media%>`r`n%page_media%`r`n-->`r`n<!doctype html>`r`n<html>`r`n<head>`r`n<meta charset="UTF-8">`r`n<title>Inca - %title%</title>`r`n<meta name="viewport" content="width=device-width, initial-scale=1">`r`n<link rel="icon" type="image/x-icon" href="file:///%inca%\apps\icons\inca.ico">`r`n<style>@font-face {font-family: ClearSans-Thin; src: url("D:/inca/apps/ClearSans-Thin.woff");}</style>`r`n</head>`r`n
 
 
-        panel_html = <body>`r`n<div style="margin-left:%offset%`%; width:80`%">`r`n<div class="grid" id='myPanel'></div>`r`n`r`n<ul class="menu" style="display:flex; justify-content:space-between; margin-left:1em; margin:1.2em">`r`n<a class='slider' id='sub' onmouseover='spool(event, id, "%subfolders%")' style="width:7`%;">Sub</a>`r`n<a class='slider' id='fol1' onmouseover='spool(event, id, "%fol_1%")' style="width:7`%;">Fol 1</a>`r`n<a class='slider' id='fol2' onmouseover='spool(event, id, "%fol_2%")' style="width:7`%;">Fol 2</a>`r`n<input class="searchbox" id="myInput" onmousemove='spool(event, id, "%search_list%")' type="search" value="%search_term%">`r`n<a href="#Searchbox" style="color:lightsalmon;"><c>+</c></a>`r`n<a href="file:///%inca%/cache/html/new.htm" class='slider' id='fav' onmouseover='spool(event, id, "%playlists%")' style="width:7`%;">Fav</a>`r`n<a class='slider' id='music' onmouseover='spool(event, id, "%music%")' style="width:7`%;">Music</a>`r`n<a href="%title%.htm#%sort%" id='slider1' class='slider' onmousemove='getCoords(event, id, "%sort%", "%title%", "")'>%sort%</a>`r`n<a href="%title%.htm#Page" id='slider2' class='slider' onmousemove='getCoords(event, id, "%Pages%", "%title%", "")' onmouseleave='getCoords(event, id, "%Pages%", "%title%", "%page%")'>Page %page% of %pages%</a>`r`n</ul>`r`n`r`n
+        panel_html = <body>`r`n<div style="margin-left:%offset%`%; width:80`%">`r`n<div class="grid" id='myPanel'></div>`r`n`r`n<ul class="menu" style="display:flex; justify-content:space-between; margin-left:1em; margin:1.2em">`r`n<a class='slider' id='sub' onmouseover='spool(event, id, "%subfolders%")' style="width:7`%;">Sub</a>`r`n<a class='slider' id='A' onmouseover='spool(event, id, "%fol1%")' style="width:7`%;">A</a>`r`n<a class='slider' id='B' onmouseover='spool(event, id, "%fol2%")' style="width:7`%">B</a>`r`n<input class="searchbox" id="myInput" onmousemove='spool(event, id, "%search_list%")' type="search" value="%search_term%">`r`n<a href="#Searchbox" style="color:lightsalmon;"><c>+</c></a>`r`n<a href="file:///%inca%/cache/html/new.htm" class='slider' id='fav' onmouseover='spool(event, id, "%playlists%")' style="width:7`%;">Fav</a>`r`n<a class='slider' id='music' onmouseover='spool(event, id, "%music%")' style="width:7`%;">Music</a>`r`n<a href="%title%.htm#%sort%" id='slider1' class='slider' onmousemove='getCoords(event, id, "%sort%", "%title%", "")'>%sort%</a>`r`n<a href="%title%.htm#Page" id='slider2' class='slider' onmousemove='getCoords(event, id, "%Pages%", "%title%", "")' onmouseleave='getCoords(event, id, "%Pages%", "%title%", "%page%")'>Page %page% of %pages%</a>`r`n</ul>`r`n`r`n
 
 
 
@@ -270,7 +268,7 @@ if (type == "video")
                 }
 
 
-        title_html = `r`n`r`n<div style="margin-left:5em; width:100`%; margin-top:2.4em; margin-bottom:1.8em;"><a href="#Origin#%tab_name%" style="font-size:1.8em; color:#555351;">%title% &nbsp;&nbsp;<span style="font-size:0.7em;">%list_size%</span></a></div>`r`n`r`n<div id="myModal" class="container" onwheel="wheelEvents(event, 'Magnify')">`r`n<div><video id="myPlayer" class="player" type="video/mp4"></video><textarea id="myCap" class="caption" onmouseenter="over_cap=true" onmouseleave="over_cap=false"></textarea><span id="mySeek" class="seekbar"></span><span id="mySidenav" onmouseover="openNav()" onmouseleave="closeNav()" class="sidenav"><a id="mySpeed" onwheel="wheelEvents(event, 'Speed')"></a><a href='#' id="myNext" onwheel="wheelEvents(event, 'Next')">%j%</a><a href='#' id="myThin" onwheel="wheelEvents(event, 'Skinny')"></a><a href="#" onclick="toggleMute()">Mute</a><a href="#" id="myFav2">Fav</a><a href="#" id="myCapnav" onclick="editCap()">Cap</a><a href="#" id="myMp4">mp4</a><a href="#" id="myMp3">mp3</a><a href="#" onclick="cue = Math.round(media.currentTime*100)/100">Cue</a><a href="#" onclick="loop()">Loop</a></span></div></div>`r`n`r`n
+        title_html = `r`n`r`n<div style="margin-left:5em; width:100`%; margin-top:2.4em; margin-bottom:1.8em;"><a href="#Origin#%tab_name%" style="font-size:1.8em; color:#555351;">%title% &nbsp;&nbsp;<span style="font-size:0.7em;">%list_size%</span></a></div>`r`n`r`n<div id="myModal" class="container" onwheel="wheelEvents(event, 'Magnify')">`r`n<div><video id="myPlayer" class="player" type="video/mp4"></video><textarea id="myCap" class="caption" onmouseenter="over_cap=true" onmouseleave="over_cap=false"></textarea><span id="mySeek" class="seekbar"></span><span id="mySidenav" onmouseover="openNav()" onmouseleave="closeNav()" class="sidenav"><a id="mySpeed" onwheel="wheelEvents(event, 'Speed')"></a><a id="myNext" onwheel="wheelEvents(event, 'Next')">%j%</a><a href='#' id="myThin" onwheel="wheelEvents(event, 'Skinny')"></a><a href="#" onclick="toggleMute()">Mute</a><a href="#" id="myFav2">Fav</a><a href="#" id="myCapnav" onclick="editCap()">Cap</a><a href="#" id="myMp4">mp4</a><a href="#" id="myMp3">mp3</a><a href="#" onclick="cue = Math.round(media.currentTime*100)/100">Cue</a><a href="#" onclick="loop()">Loop</a></span></div></div>`r`n`r`n
 
         html = `r`n%html%</div>`r`n<p style="height:240px;"></p>`r`n
         FileDelete, %inca%\cache\html\%tab_name%.htm
@@ -446,8 +444,6 @@ if (type == "video")
         if (WinActive("ahk_group Browsers") && title && inca_tab && xpos > xb+10 && ypos > yb+224 && ypos < yb+hb-50)
             inside_browser = 1
         else inside_browser =
-        if history_timer
-            history_timer += 1
         if vol_popup							; show volume popup bar
             vol_popup -= 1
         if (volume > 0.1 && !vol_popup && Setting("Sleep Timer(mins)") > 10 && A_TimeIdlePhysical > 600000)
@@ -533,7 +529,7 @@ return
             send, {RButton}
         else if (click == "MButton")
             if inside_browser
-                send, m
+                send, {ScrollLock}
             else send, {MButton}
         else if (click == "Back")
             {
@@ -615,13 +611,12 @@ return
             if GetMedia(0)
               {
               str = file '%media_path%\%media2%.%ext%'`r`nfile '%media_path%\%media%.%ext%'`r`n
-              FileAppend,  %str%, %media_path%\temp.txt , UTF-8
-;              runwait, %inca%\apps\ffmpeg.exe -i "%src2%" -qscale:v 1 "%media_path%\1.mpg",,Hide
-;              runwait, %inca%\apps\ffmpeg.exe -i "%src%" -qscale:v 1 "%media_path%\2.mpg",,Hide
-;              runwait, %inca%\apps\ffmpeg.exe -i concat:"%media_path%\1.mpg|%media_path%\2.mpg" - c copy "%media_path%\3.mpg",,Hide
-;              runwait, %COMSPEC% /c cat "%media_path%\1.mpg" "%media_path%\2.mpg" > "%media_path%\3.mpg",,Hide
-              run, %inca%\apps\ffmpeg.exe -f concat -i temp.txt -c copy "%media_path%\%media% - join.mp4",,Hide
-             }
+              FileAppend,  %str%, %inca%\apps\temp1.txt, utf-8
+              runwait, %inca%\apps\Utf-WithoutBOM.bat %inca%\apps\temp1.txt > %inca%\apps\temp.txt,,Hide
+              runwait, %inca%\apps\ffmpeg.exe -f concat -safe 0 -i "%inca%\apps\temp.txt" -c copy "%media_path%\%media%- join.mp4",,Hide
+              FileDelete, %inca%\apps\temp.txt
+              FileDelete, %inca%\apps\temp1.txt
+              }
             sleep 1000
             refresh = 1
             }
@@ -670,10 +665,6 @@ return
               if (value > 0.5 && value < 0.995 || value > 1.005 && value < 1.5)
                 FileAppend, %value%, %inca%\cache\widths\%media%.txt
               }
-
-
-
-
           if (command == "Thumbs")
               {
               page := 1
@@ -755,9 +746,7 @@ return
             }
         else if (command == "Path" || command == "Search" || search_box || InStr(sort_list, command))
             {
-            if (value)							; alpha letter
-              filter := value
-            else filter =
+            filter =
             refresh = 1
             page := 1
             if (command == "Search")
@@ -802,7 +791,9 @@ return
                     sort = Duration
                    }
                 }
-            if (InStr(sort_list, command))		; sort filter
+            if (value && InStr(sort_list, command))			; alpha letter
+              filter := value
+            else if (InStr(sort_list, command))				; sort filter
                 {
                 page := 1
                 toggle_list = Reverse Recurse Videos Images
@@ -1028,7 +1019,7 @@ return
         toggles =
         playlist =
         last_media =
-        sort = Alpha
+        sort = Shuffle
         FileReadLine, array, %inca%\cache\html\%tab_name%.htm, 2	; embedded page data
         if array
             {
@@ -1336,9 +1327,9 @@ return
             else gui, settings:add, checkbox, x25 yp+16 %x% vfeature%A_Index%, %A_Space%%A_Space%%A_Space%%A_Space%%A_Space%%key%
             }
         gui, settings:add, text, x180 y10, fol 1
-        gui, settings:add, edit, x180 yp+13 h80 w500 vfol_1, %fol_1%
+        gui, settings:add, edit, x180 yp+13 h80 w500 vfol1, %fol1%
         gui, settings:add, text, x180 yp+85, fol 2
-        gui, settings:add, edit, x180 yp+13 h80 w500 vfol_2, %fol_2%
+        gui, settings:add, edit, x180 yp+13 h80 w500 vfol2, %fol2%
         gui, settings:add, text, x180 yp+84, search terms
         gui, settings:add, edit, x180 yp+13 h120 w500 vsearch_list, %search_list%
         gui, settings:add, text, x180 yp+125, folders to search
@@ -1386,8 +1377,8 @@ return
         IniWrite,%new%,%inca%\inca - ini.ini,Settings,features
         IniWrite,%search_folders%,%inca%\inca - ini.ini,Settings,search_folders
         IniWrite,%search_list%,%inca%\inca - ini.ini,Settings,search_list
-        IniWrite,%fol_1%,%inca%\inca - ini.ini,Settings,fol_1
-        IniWrite,%fol_2%,%inca%\inca - ini.ini,Settings,fol_2
+        IniWrite,%fol1%,%inca%\inca - ini.ini,Settings,fol1
+        IniWrite,%fol2%,%inca%\inca - ini.ini,Settings,fol2
         settingsFinished:
         WinClose
         LoadSettings()
@@ -1403,15 +1394,6 @@ return
                 return StrSplit(A_LoopField, "/").2
             }
         }
-
-
-    AddHistory()
-        {
-        if (folder != "playlists" && !InStr(path, "\history\") && ext != "lnk")
-          if (history_timer / 10 > Setting("History Timer") && type != "audio")
-            FileCreateShortcut, %src%, %inca%\history\%media%.lnk
-        }
-
 
 
 
@@ -1556,8 +1538,8 @@ IfNotExist, %inca%\cache\thumbs\%filen%.jpg
         inca := A_ScriptDir
         IniRead,features,%inca%\inca - ini.ini,Settings,features
         IniRead,search_folders,%inca%\inca - ini.ini,Settings,search_folders
-        IniRead,fol_1,%inca%\inca - ini.ini,Settings,fol_1
-        IniRead,fol_2,%inca%\inca - ini.ini,Settings,fol_2
+        IniRead,fol1,%inca%\inca - ini.ini,Settings,fol1
+        IniRead,fol2,%inca%\inca - ini.ini,Settings,fol2
         IniRead,search_list,%inca%\inca - ini.ini,Settings,search_list
         }
 
