@@ -38,7 +38,7 @@
   position:absolute;
   border-bottom:14px solid rgba(250, 128, 114, 0.3)}
 
-.container {
+.modal {
   display:flex;
   opacity:0;
   transition:0.4s;
@@ -71,18 +71,16 @@
 
 .sidenav a:hover {color:lightsalmon}
 
-
-
-
-body {
+.container {
   font-family: 'ClearSans-Thin';
   user-select:none;
   cursor:default;
   overflow-x:hidden;
   background:#15110a;
+  margin:auto;
+  padding-top:5em; 
   color:#666666;
   font-size:0.8em;
-  margin-top:5em;
   animation-name:fadePage;
   animation-duration:0.6s}
 
@@ -93,7 +91,7 @@ a {
   color:#826858;
   cursor:default}
 
-.grid {
+.panel {
   display:grid;
   grid-template-columns: auto auto auto auto auto auto auto;
   grid-template-rows: auto auto auto auto;
@@ -102,7 +100,7 @@ a {
   overflow:hidden;
   font-size:0.9em;
   transition:color 1.4s;
-  padding:1em;
+  padding:2em;
   margin:auto;
   height:6em;
   width:65%;

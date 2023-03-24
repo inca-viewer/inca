@@ -3,17 +3,19 @@
 // clean up old style data - list tables etc use small modal instead
 // 5:50 wake up
 // convert mid wma wmv files
-// create alternative player (mpv) option for non mp4 media
 // crash in scenes list - text media 
 // list view not to load video on page load - to speed up loading lists
 // put panel styles in style sheet
 // not pass lists to panel load but as const strings in java
 // have buttons on modal for all caption/favorite cut points
 // button for random speed / magnify effects
-// thumbs random fail to close opacity
 // fast seek use new modal and same for list
-// enter inputbox triggers playmedia
-// panel pos
+// drop emojis into filenames ?
+// reformat list html maybe grid
+// history may require multi message format to allow caps and skinny etc
+// create alternative player (mpv) option for non mp4 media
+// use href if ext non mp4/mkv
+
 
   var container = document.getElementById("myModal")			// media player window
   var player = document.getElementById("myPlayer")
@@ -109,6 +111,7 @@
 
   function play_media(event) {
     if (gesture) {return}
+    media.style.opacity = 0
     media.pause()							// pause htm tab thumb
     media = player							// media assigned to modal
     last_type = type
@@ -315,7 +318,7 @@
 
 
   function togglePause(e) {
-    if (!mouse_down || gesture || seek_active || over_cap) {return}
+    if (!mouse_down || gesture || seek_active || over_cap || !type) {return}
     if (xpos < 0.1 && ypos > 0.5) {return}
     if (type == "thumb") {getThumb(e); play_media('Thumb')}
     else if (media.paused) {
@@ -394,8 +397,10 @@
       for (x of z) {
         y = x.split("/")
         p = y.pop()
-        if (id == "music" || id == "fav") {q = x.replace(p, "")}	// substract playlist from input
-        else {p = y.pop()}						// folder name
+        if (id == "music" || id == "fav") {
+          q = x.replace(p, "")						// substract playlist from input
+          panel.style.marginLeft = '240px'}
+        else {p = y.pop(); panel.style.margin = '0'}			// folder name
         p = p.replace(/.m3u/g, "")					// remove .m3u - (leave just name)
         p = p.substring(0, 12)
         title = document.title.replace(/Inca - /g, "")
@@ -404,7 +409,8 @@
         q = x.replace(/ /g, "%20")
         content = content + "<a href=#" + "Path#" + start + "#" + selected + "#" + q + "><div>" + p + "</div>" + "</a>"}
       panel.innerHTML = content}						// command # value # selected # address
-    if (id == "myInput" && !selected) {					// alpha selected search terms
+    else if (id == "myInput" && !selected) {					// alpha selected search terms
+      panel.style.margin = 'auto'
       z.sort()
       var w = el.offsetWidth
       var x = ((event.clientX - el.offsetLeft - el.scrollLeft)/w) + 0.02
@@ -418,8 +424,8 @@
         q = x.replace(/ /g, "%20")
         content = content + "<a href=#" + "Search#" + q + "><div>" + p + "</div>" + "</a>"}
       id = upper}
-    if (!selected)
-      {panel.innerHTML = "<span style=\'grid-row-start:1; grid-row-end:3; color:red; font-size:2.2em\'>" + id + "</span>" + content}}
+    else {id = ''}
+    panel.innerHTML = "<span style=\'grid-row-start:1; grid-row-end:3; color:red; font-size:2.2em\'>" + id + "</span>" + content}
 
 
   function getCoords(event, id, sort, link, current) {			// selection sliders
