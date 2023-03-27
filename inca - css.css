@@ -1,6 +1,12 @@
 
 <style>
 
+.thumblist {
+  opacity:0; 
+  width:10em;
+  border-radius:3`%}
+
+.thumblist:hover {opacity:1}
 
 .player {
   position:absolute;

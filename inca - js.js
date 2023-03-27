@@ -1,36 +1,30 @@
 <script>
 
-// clean up old style data - list tables etc use small modal instead
+
 // 5:50 wake up
-// convert mid wma wmv files
-// crash in scenes list - text media 
-// list view not to load video on page load - to speed up loading lists
-// put panel styles in style sheet
-// not pass lists to panel load but as const strings in java
 // have buttons on modal for all caption/favorite cut points
 // button for random speed / magnify effects
 // fast seek use new modal and same for list
-// drop emojis into filenames ?
 // reformat list html maybe grid
-// history may require multi message format to allow caps and skinny etc
-// create alternative player (mpv) option for non mp4 media
-// use href if ext non mp4/mkv
+// subfolders with non ascii chars
+// list view not to load video on page load - to speed up loading lists
+// stop move on non plists
 
-
-  var container = document.getElementById("myModal")			// media player window
-  var player = document.getElementById("myPlayer")
-  var inputbox = document.getElementById("myInput")
-  var panel = document.getElementById("myPanel")			// list of folders, playlists etc
-  var nav = document.getElementById("mySidenav")			// nav buttons over htm tab
-  var speed = document.getElementById("mySpeed")
+  var container = document.getElementById('myModal')			// media player window
+  var player = document.getElementById('myPlayer')
+  var inputbox = document.getElementById('myInput')
+  var panel = document.getElementById('myPanel')			// list of folders, playlists etc
+  var nav = document.getElementById('mySidenav')			// nav buttons over htm tab
+  var speed = document.getElementById('mySpeed')
   var thin = document.getElementById('myThin')
-  var next = document.getElementById("myNext")
+  var next = document.getElementById('myNext')
   var thumbs = document.getElementById('myThumbs')			// thumbnail size
-  var cap = document.getElementById("myCap")				// caption textarea element
-  var capnav = document.getElementById("myCapnav")			// caption save button
-  var seek = document.getElementById("mySeek")
-  var sound = sessionStorage.getItem("sound")				// remember sound setting
+  var cap = document.getElementById('myCap')				// caption textarea element
+  var capnav = document.getElementById('myCapnav')			// caption save button
+  var seek = document.getElementById('mySeek')
+  var sound = sessionStorage.getItem('sound')				// remember sound setting
   var wheel = 0								// mouse wheel count
+  var long_click = false
   var block = 0								// block wheel input
   var last_id
   var start = 0								// video initial start time
@@ -49,6 +43,7 @@
   var newSkinny = 1
   var seek_active							// currently seeking video
   var selected = ''							// list of selected media in page
+  var messages = ''							// from address bar to inca.exe
   var cue = 0
   var looping = true
   var scaleX = 1
@@ -60,6 +55,8 @@
   var ypos = 0.5
   var mediaY = window.innerHeight/2					// centre of media player
   var mediaX = window.innerWidth/2.6
+  var lastX = mediaX
+  var lastY = mediaY
 
 
   document.addEventListener('mousedown', mouseDown)
@@ -67,12 +64,16 @@
   document.addEventListener('mousemove', Gesture)
 
   document.addEventListener('keydown', (event) => {			// inca.exe passing mouse buttons
-    if (event.key == 'ScrollLock') {play_media('Mclick')}			// middle button
-    if (event.key == 'Pause') {						// back button
-      if (!type) {
+    if (event.key == 'Pause') {play_media('Mclick')}			// middle button
+    if (event.key == 'Cancel') {					// back button
+      if (!type) {							// no media playing
         if (document.body.getBoundingClientRect().top < 0) {scroll(0,0)}
         else {scroll(0,0); location.reload()}return}
-      else {openNav(); close_media()}}})				// get links
+      else {
+        close_media()
+        if (messages) {
+          thin.href = messages; thin.click()
+          messages = ''}}}})						// send width changes to inca.exe
 
 
   function timedEvents() {						// every 100mS if media
@@ -96,22 +97,20 @@
     if (mouse_down) {return}
     index = id
     over_thumb = true
-    media = document.getElementById("media" + id)
-    var sel = document.getElementById("sel" + id)
-    if (selected.split(',').length == 2) {sel.href = "#MovePos#" + id + "#" + selected}
+    media = document.getElementById('media' + id)
+    var sel = document.getElementById('sel' + id)
+    if (selected.split(',').length == 2) {sel.href = '#MovePos#' + id + '#' + selected + '#'}
     var rect = media.getBoundingClientRect()				// play thumbnail video
     var yp = (e.clientY - rect.top) / (media.offsetHeight)
     if (media.currentTime <= seek || yp > 0.9) {media.currentTime = seek+0.1}
     media.style.transition = '0.1s'
     media.playbackRate = 0.74
-    media.style.opacity = 1
     scaleX = sk; scaleY=1
     media.play()}
 
 
   function play_media(event) {
     if (gesture) {return}
-    media.style.opacity = 0
     media.pause()							// pause htm tab thumb
     media = player							// media assigned to modal
     last_type = type
@@ -146,8 +145,10 @@
         x = x.replace('%20' + p, '')}
       if (type == "thumb") {media.poster = x}
       else {media.poster = ""; setTimeout(function() {media.poster = x},600)}}
+    if (long_click) {start = 0}
     if (type == "video") {setTimeout(function() {media.currentTime = start},20)}
     setTimeout(function() {media.style.opacity=1; if (type=='video') {media.play()}},120)
+    mediaX = lastX; mediaY = lastY
     scaleX = scaleY
     if (scaleY > 1.4) {
       scaleX = 1.4; scaleY = 1.4
@@ -175,7 +176,8 @@
   function close_media() {
     last_id = index
     last_start = media.currentTime
-    if (skinny && skinny != newSkinny) {thin.click()}
+    if (skinny && skinny != newSkinny) {
+      messages = messages + '#Skinny#' + newSkinny + '#' + index + ',#'}
     if (cap.value != cap.innerHTML) {capnav.click()}
     document.getElementById('title' + index).style.color = "lightsalmon"
     document.querySelector("body").style.overflow = "auto"
@@ -188,6 +190,8 @@
     cap.innerHTML = ''
     cap.value = ''
     cap_time = 0
+    lastX = mediaX
+    lastY = mediaY
     media.poster = ''
     media.src =''
     closeNav()
@@ -213,8 +217,7 @@
       thumb.style.width = thumb_size + "em"
       media.style.width = thumb_size + "em"
       if (ctr == 'Thumbs') {
-        thumbs.href = "#Thumbs#" + thumb_size
-        media.style.opacity = 1
+        thumbs.href = "#Thumbs#" + thumb_size +'##'
         for (i=1; i<41 ;i++) {
           if (el = document.getElementById("thumb" + i)) {
             el.style.width = thumb_size + 'em'
@@ -224,7 +227,6 @@
       else {scaleX += 0.002}
       newSkinny = Math.round(1000*scaleX / scaleY)/1000
       thin.innerHTML = Math.round(newSkinny*100)
-      thin.href = "#Skinny#" + newSkinny + "#" + index +","
       if (newSkinny == 1) {timer = 146}
       media.style.transform = "scale(" + scaleX + "," + scaleY + ")"}
     else if (ctr == 'Next') {						// media next
@@ -239,11 +241,11 @@
         media.playbackRate += rate
         speed.innerHTML = Math.round(media.playbackRate *100)}
       timer = 40}
-    else if (ypos < 0.33 && type != 'image' && type != 'thumb') {	// seek
-      if (media.paused == true) {interval = 0.1}
-      else if (media.duration < 91) {interval = 5}
-      else {interval = 200}
-      interval *= ypos 
+    else if (ypos < 0.3 && type != 'image' && type != 'thumb') {	// seek
+      if (media.paused == true) {interval = 5}
+      else if (media.duration < 91) {interval = 30}
+      else {interval = 300}
+      interval *= Math.abs(ypos - 0.3)
       if (WheelDown) {media.currentTime += interval}
       else  {media.currentTime -= interval}
       timer = 200}
@@ -281,6 +283,7 @@
         mediaY = rect.top + (media.offsetHeight * scaleY/2)}
       if (x + y > 5) {
         if (!gesture && !type) {					// thumb moved in htm tab
+          media.style.opacity = 1
           media.style.position = 'fixed'
           media.style.zIndex = Zindex += 1}
         gesture = true
@@ -292,6 +295,8 @@
     if (container.style.cursor != "crosshair") {
       container.style.cursor = "crosshair"
       setTimeout(function() {container.style.cursor="none"},244)}
+    if (xpos > 0.1 && ypos < 0.3 && type == "video") {player.style.border = '0.1px solid lightsalmon'}
+    else  {player.style.border = ''}
     var xp = (e.clientX - rect.left) / (media.offsetWidth * scaleX)
     if (ypos > 0.95 && xp > 0 && xp < 1 && !mouse_down && type == "video") {
       if (!seek_active) {media.pause(); seek_active = media.currentTime}
@@ -305,10 +310,14 @@
 
   function mouseDown(e) {
     mouse_down = true
+    long_click = false
     Xref = e.clientX
     Yref = e.clientY
     media.style.transition = '0.1s'
+    setTimeout(function(){
+      if (mouse_down && !gesture) {long_click=true; if(type){media.currentTime=0}}},340)
     if (seek_active) {seek_active = media.currentTime; media.play()}}
+
 
   function mouseUp(e) {
     togglePause(e)
@@ -318,7 +327,7 @@
 
 
   function togglePause(e) {
-    if (!mouse_down || gesture || seek_active || over_cap || !type) {return}
+    if (!mouse_down || gesture || seek_active || over_cap || !type || long_click) {return}
     if (xpos < 0.1 && ypos > 0.5) {return}
     if (type == "thumb") {getThumb(e); play_media('Thumb')}
     else if (media.paused) {
@@ -379,7 +388,7 @@
     if (cap.value != cap.innerHTML) {
       newcap = cap.value + "|" + t + "|"
       if (!cap.value) {newcap = ''}
-      capnav.href = "#Caption#" + newcap + "#" + index + ",#" + cap.innerHTML + "|" + t + "|"}}
+      capnav.href = '#Caption#' + newcap + '#' + index + ',#' + cap.innerHTML + '|' + t + '|'}}
 
 
   function positionMedia() {
@@ -390,26 +399,26 @@
 
   function spool(event, id, input) {					// spool lists into top html panel
     var content = ''
-    const z = input.split("|")
+    const z = input.split('|')
     var el = document.getElementById(id)
-    panel.style.direction = ""
+    panel.style.direction = ''
     if (id == "A" || id == "B" || id == "sub" || id == "music" || id == "fav") {
       for (x of z) {
         y = x.split("/")
         p = y.pop()
         if (id == "music" || id == "fav") {
           q = x.replace(p, "")						// substract playlist from input
-          panel.style.marginLeft = '240px'}
-        else {p = y.pop(); panel.style.margin = '0'}			// folder name
+          panel.style.marginLeft = '30%'}
+        else {p = y.pop(); panel.style.marginLeft = '5%'}		// folder name
         p = p.replace(/.m3u/g, "")					// remove .m3u - (leave just name)
         p = p.substring(0, 12)
         title = document.title.replace(/Inca - /g, "")
         if (p == title) {p = "<span style=\"color:lightsalmon\"</span>" + p}
         if (p == "New") {p = "<span style=\"color:red\"</span>" + p}
         q = x.replace(/ /g, "%20")
-        content = content + "<a href=#" + "Path#" + start + "#" + selected + "#" + q + "><div>" + p + "</div>" + "</a>"}
-      panel.innerHTML = content}						// command # value # selected # address
-    else if (id == "myInput" && !selected) {					// alpha selected search terms
+        content = content + '<a href=#Path#' + start + '#' + selected + '#' + q + '><div>' + p + '</div></a>'}
+      panel.innerHTML = content}					// command # value # selected # address
+    else if (id == "myInput" && !selected) {				// alpha selected search terms
       panel.style.margin = 'auto'
       z.sort()
       var w = el.offsetWidth
@@ -422,7 +431,7 @@
       for (const x of y) {
         p = x.substring(0, 14)
         q = x.replace(/ /g, "%20")
-        content = content + "<a href=#" + "Search#" + q + "><div>" + p + "</div>" + "</a>"}
+        content = content + '<a href=#Search#' + q + '##><div>' + p + '</div></a>'}
       id = upper}
     else {id = ''}
     panel.innerHTML = "<span style=\'grid-row-start:1; grid-row-end:3; color:red; font-size:2.2em\'>" + id + "</span>" + content}
@@ -441,7 +450,7 @@
     if (sort == 'Duration') {y = Math.floor(60 * x);units = "minutes +"}
     if (id =='slider2') {y = Math.floor(sort*x)+1; units = sort; sort = "Page"; of = " of "}
     if (current != "") {y = current}
-    el.href= link + ".htm#" + sort + "#" + y
+    el.href= link + '.htm#' + sort + '#' + y + '##'
     if (sort =='Random' || sort =='ext' || sort =='Shuffle') {return}
     if (sort == 'Alpha') {y = String.fromCharCode(y)}
     el.innerHTML = y + of + units}
@@ -449,20 +458,20 @@
 
   function openNav() {
     nav.style.opacity = 0.7
-    document.getElementById("myMp3").href = "#Mp3#" + Math.round(media.currentTime*100)/100 + "#" + index + ",#" + cue
-    document.getElementById("myMp4").href = "#Mp4#" + Math.round(media.currentTime*100)/100 + "#" + index + ",#" + cue
-    document.getElementById("myFav2").href = "#Favorite#" + Math.round(media.currentTime*10)/10 + "#" + index + ","}
+    var time = Math.round(media.currentTime*100)/100
+    document.getElementById('myMp3').href = '#Mp3#' + time + '#' + index + ',#' + cue
+    document.getElementById('myMp4').href = '#Mp4#' + time + '#' + index + ',#' + cue
+    document.getElementById('myFav').href = '#Favorite#' + time + '#' + index + ',#'}
   function closeNav() {nav.style.opacity = 0.3}
   function loop() {if (looping) {looping = false} else {looping = true}}
   function getLinks() {
-    document.getElementById("myJoin").href = "#Join##" + selected
-    document.getElementById("myRename").href = "#Rename#" + inputbox.value + "#" + selected
-    document.getElementById("myDelete").href = "#Delete##" + selected	// media from htm page
-    document.getElementById("myFav").href = "#Favorite##" + selected	// add link to 'new' playlist
-    media.load()}							// release media
+    document.getElementById("myJoin").href = '#Join##' + selected + '#'
+    document.getElementById("myRename").href = '#Rename#' + inputbox.value + '#' + selected + '#'
+    document.getElementById("myDelete").href = '#Delete##' + selected + '#'	// media from htm page
+    media.load()}								// release media
   function selectAll() {for (i=1; i <= 300; i++) {select(i)}}
-  function editCap() {cap.style.display='block'; cap.style.opacity=0.6; cap.innerHTML="New"; cap.focus()}
-  function exitThumb(el) {over_thumb = false; if (media != player){el.pause(); if (!media.style.position) {el.style.opacity = 0}}}
+  function editCap() {cap.style.display='block'; cap.style.opacity=0.6; cap.innerHTML='New'; cap.focus()}
+  function exitThumb(el) {over_thumb = false; if (media != player){el.pause()}}
 
 
 
