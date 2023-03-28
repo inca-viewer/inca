@@ -3,12 +3,11 @@
 
 // 5:50 wake up
 // have buttons on modal for all caption/favorite cut points
-// button for random speed / magnify effects
 // fast seek use new modal and same for list
 // reformat list html maybe grid
 // subfolders with non ascii chars
-// list view not to load video on page load - to speed up loading lists
-// stop move on non plists
+
+
 
   var container = document.getElementById('myModal')			// media player window
   var player = document.getElementById('myPlayer')
@@ -241,11 +240,11 @@
         media.playbackRate += rate
         speed.innerHTML = Math.round(media.playbackRate *100)}
       timer = 40}
-    else if (ypos < 0.3 && type != 'image' && type != 'thumb') {	// seek
+    else if (ypos > 0.8 && type != 'image' && type != 'thumb') {	// seek
       if (media.paused == true) {interval = 5}
       else if (media.duration < 91) {interval = 30}
       else {interval = 300}
-      interval *= Math.abs(ypos - 0.3)
+      interval *= Math.abs(ypos - 0.8)
       if (WheelDown) {media.currentTime += interval}
       else  {media.currentTime -= interval}
       timer = 200}
@@ -295,7 +294,7 @@
     if (container.style.cursor != "crosshair") {
       container.style.cursor = "crosshair"
       setTimeout(function() {container.style.cursor="none"},244)}
-    if (xpos > 0.1 && ypos < 0.3 && type == "video") {player.style.border = '0.1px solid lightsalmon'}
+    if (xpos > 0.1 && ypos > 0.8 && type == "video") {player.style.border = '0.1px solid lightsalmon'}
     else  {player.style.border = ''}
     var xp = (e.clientX - rect.left) / (media.offsetWidth * scaleX)
     if (ypos > 0.95 && xp > 0 && xp < 1 && !mouse_down && type == "video") {

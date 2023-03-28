@@ -155,13 +155,13 @@
     button2_Timer:
       IfWinActive, ahk_group Browsers
         if !timer
-          send, {Space}			; pause toggle YouTube
+          send, {Space}				; pause toggle YouTube
         else loop 10
           {
           if !timer
             break
           WinActivate, ahk_group Browsers
-          send, {Left}{Left}		; rewind YouTube 10 secs
+          send, {Left}{Left}			; rewind YouTube 10 secs
           sleep 624
           }
       return
@@ -322,6 +322,7 @@
           CreateList(1)
         if (reload == 2)
           RenderPage()
+        search_box =
         }
 
 
@@ -370,10 +371,7 @@
             reload := 1
             }
         if (command == "MovePos")
-            {
             MoveEntry()						; move entry within playlist
-            reload := 1
-            }
         if (command == "Caption")
             {
             FileRead, str, %inca%\cache\captions\%media%.srt
@@ -467,9 +465,14 @@
             }
         if (command == "Media")
             {
+            sleep 200
             list_id := value
             if GetMedia(0)
-                run, %src%						; pdf, wmv, avi etc
+              {
+              if (type == "video")
+                send, {CtrlBreak}
+              run, %src%
+              }							; pdf, wmv, avi etc
             }
         else if (command == "Searchbox" && search_term)			; add search to search list
             {
@@ -565,6 +568,7 @@
 
     SpoolList(i, j, input, sort_name, start)				; spool sorted media files into web page
         {
+
         if ((cap_size := view / 12) > 1.6)
           cap_size := 1.6
         if DetectMedia(input)
@@ -627,6 +631,9 @@ caption := x
 
 if (type=="document"||ext=="txt"||ext=="m3u"||ext=="wmv"||ext=="avi"||ext=="mpg"||ext=="ts"||ext=="flv") 
   href = href="#Media#%j%##"
+
+
+
         if (dur && type == "video")
             dur := Time(dur)
         else dur =
@@ -643,13 +650,14 @@ if (type=="document"||ext=="txt"||ext=="m3u"||ext=="wmv"||ext=="avi"||ext=="mpg"
         StringReplace, src, src, #, `%23, All				; html cannot have # in filename
         stringlower, thumb, thumb
  poster = poster="file:///%thumb%"
+
 if (type == "video")
   IfNotExist, %inca%\cache\thumbs\%media%.jpg
      poster = 
      start := Round(start,2)
-        if !view							; list view 
+        if !view							; list view
             {
-            entry = <div style="padding-left:5em;"><table><tr><td id="thumb%j%" style="position:absolute; margin-left:3.5em; width:10em" onwheel="wheelEvents(event, 'Thumb')"><a %href% id="sel%j%"><video id="media%j%" class='thumblist' style="%transform%" onmouseover="overThumb(event, %j%, %start%, %skinny%)" onmouseout='exitThumb(this)' onclick="play_media('Click', '%type%', %start%, %skinny%, '%cap%', %j%, event)" %poster% src="file:///%src%" type="video/mp4" muted></video></a></tr></table><table style="table-layout:fixed; width:100`%; font-size:0.9em"><tr><td style="width:4em; text-align:center"><span style="border-radius:9px; color:#777777">%sort_name%</span></td><td style="width:4em; text-align:center">%dur%</td><td style="width:3em; text-align:center">%size%</td><td style="width:4em; text-align:center">%ext%</td>%fol%<td><div id="title%j%" onclick="select(%j%)" class="searchbox" style="width:80`%; background-color:inherit">%media%</td></tr></table></div>`r`n`r`n
+            entry = <div style="padding-left:5em;"><table><tr><td id="thumb%j%" style="position:absolute; margin-left:3.5em; width:10em" onwheel="wheelEvents(event, 'Thumb')"><a %href% id="sel%j%"><video id="media%j%" class='thumblist' style="%transform%" onmouseover="overThumb(event, %j%, %start%, %skinny%)" onmouseout='exitThumb(this)' onclick="play_media('Click', '%type%', %start%, %skinny%, '%cap%', %j%, event)" %poster% src="file:///%src%" type="video/mp4" preload='none' muted></video></a></tr></table><table style="table-layout:fixed; width:100`%; font-size:0.9em"><tr><td style="width:4em; text-align:center"><span style="border-radius:9px; color:#777777">%sort_name%</span></td><td style="width:4em; text-align:center">%dur%</td><td style="width:3em; text-align:center">%size%</td><td style="width:4em; text-align:center">%ext%</td>%fol%<td><div id="title%j%" onclick="select(%j%)" class="searchbox" style="width:80`%; background-color:inherit">%media%</td></tr></table></div>`r`n`r`n
             }
         else
             {
@@ -665,7 +673,7 @@ if (type == "video")
                     }
 	        entry = <a href="#Media#%j%"><div style="display:inline-block; width:88`%; color:#555351; transition:color 1.4s; margin-left:8`%; text-align:center; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; %highlight%;">%sort_name% &nbsp;&nbsp;%media%</div></a><textarea rows=%rows% style="display:inline-block; overflow:hidden; margin-left:8`%; width:88`%; background-color:inherit; color:#826858; font-size:1.2em; font-family:inherit; border:none; outline:none;">%str2%</textarea>`r`n`r`n
                 }
-            else entry = <div id="thumb%j%" onclick="select(%j%)" class="thumbs" style="width:%view%em; margin-left:3em"><div id="title%j%" style="color:#555351; border-radius:9px; text-align:center; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; font-size:0.85em; margin:auto; width:80`%">%media%</div><a %href% id="sel%j%"><video %controls% class="thumbs" id="media%j%" style="position:inherit; %transform% width:%view%em" %select%" onwheel="wheelEvents(event, 'Thumb')" onmouseover="overThumb(event, %j%, %start%, %skinny%)" onmouseout='exitThumb(this)' onclick="play_media('Click', '%type%', %start%, %skinny%, '%cap%', %j%, event)" src="file:///%src%" %poster% muted type="video/mp4"></video></a>%caption%</div>`r`n`r`n
+            else entry = <div id="thumb%j%" onclick="select(%j%)" class="thumbs" style="width:%view%em; margin-left:3em"><div id="title%j%" style="color:#555351; border-radius:9px; text-align:center; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; font-size:0.85em; margin:auto; width:80`%">%media%</div><a %href% id="sel%j%"><video %controls% class="thumbs" id="media%j%" style="position:inherit; %transform% width:%view%em" %select%" onwheel="wheelEvents(event, 'Thumb')" onmouseover="overThumb(event, %j%, %start%, %skinny%)" onmouseout='exitThumb(this)' onclick="play_media('Click', '%type%', %start%, %skinny%, '%cap%', %j%, event)" src="file:///%src%" %poster% preload='none' muted type="video/mp4"></video></a>%caption%</div>`r`n`r`n
             }
         return entry
         }
@@ -746,7 +754,7 @@ if (type == "video")
         Critical
         MouseGetPos, xpos, ypos
         WinGetPos, xb, yb, wb, hb, ahk_group Browsers
-        if (WinActive("ahk_group Browsers") && title && inca_tab && xpos > xb+10 && ypos > yb+224 && ypos < yb+hb-50)
+        if (WinActive("ahk_group Browsers") && title && inca_tab && xpos > xb+10 && ypos > yb+230 && ypos < yb+hb-50)
             inside_browser = 1
         else inside_browser =
         if vol_popup							; show volume popup bar
@@ -1080,6 +1088,7 @@ return
             if (select <= list_id && InStr(toggles, "Reverse") || select > list_id && !InStr(toggles, "Reverse"))
                 FileAppend, %A_LoopField%`r`n, %plist%, UTF-8
             }
+        reload := 1
         }
 
 
@@ -1181,9 +1190,9 @@ return
         src =
         seek =
         FileReadLine, str, %inca%\cache\html\%tab_name%.htm, 3
-            Loop, Parse, str, `/
-              if (A_LoopField == list_id)
-                ptr := A_Index + next				; next media 
+        Loop, Parse, str, `/
+          if (A_Index == list_id)
+            ptr := A_Index + next + 1				; next media 
         array := StrSplit(str, "/")				; convert html pointer to internal list ptr
         list_id := array[ptr]
         Loop, Parse, list, `n, `r
