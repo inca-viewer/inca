@@ -44,6 +44,13 @@
   position:absolute;
   border-bottom:14px solid rgba(250, 128, 114, 0.3)}
 
+.seek {
+  position:absolute;
+  user-select:none;
+  border-radius:9%;
+  max-width:15em;
+  max-height:12em}
+
 .modal {
   display:flex;
   opacity:0;
