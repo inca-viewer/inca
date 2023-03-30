@@ -2,7 +2,13 @@
 
 // 5:50 wake up
 // have buttons on modal for next caption/favorite cut points
-// magnify mpv use ctrl key on wheel
+// thumb to have fast seek from top edge ?
+// mclick view change
+// make view change css change only not reload
+// backspace use same principle as middle click
+// loop release all media before delete not just index
+// indexer
+
 
   var container = document.getElementById('myModal')			// media player window
   var player = document.getElementById('myPlayer')
@@ -54,24 +60,14 @@
   var lastY = mediaY
 
 
+  document.addEventListener('auxclick', playMedia)			// middle click
+  document.addEventListener('keydown', mouseBack)			// mouse Back button
   document.addEventListener('mousedown', mouseDown)
   document.addEventListener('mouseup', mouseUp)
   document.addEventListener('mousemove', Gesture)
 
-  document.addEventListener('keydown', (event) => {			// inca.exe passing mouse buttons
-    if (event.key == 'Pause') {play_media('Mclick')}			// middle button
-    if (event.key == 'Cancel') {					// back button
-      if (!type) {							// no media playing
-        if (document.body.getBoundingClientRect().top < 0) {scroll(0,0)}
-        else {scroll(0,0); location.reload()}return}
-      else {
-        close_media()
-        if (messages) {
-          thin.href = messages; thin.click()
-          messages = ''}}}})						// send width changes to inca.exe
 
-
-  function timedEvents() {						// every 100mS if media
+  function timedEvents() {						// every ~84mS if media playing
     Captions()
     if (sound == 'yes' && media.volume <= 0.8) {media.volume += 0.2}
     if (sound == 'no' && media.volume >= 0.2) {media.volume -= 0.2}
@@ -88,7 +84,7 @@
     else {media.style.marginLeft = 0; seekbar.style.marginLeft = 0}}
 
 
-  function overThumb(e, id, strt, sk) {					// mouse over thumbnail in htm tab
+  function overThumb(e, id, strt, sk) {					// mouse over thumbnail in browser tab
     if (mouse_down) {return}
     index = id
     over_thumb = true
@@ -97,7 +93,7 @@
     if (selected.split(',').length == 2) {sel.href = '#MovePos#' + id + '#' + selected + '#'}
     var rect = media.getBoundingClientRect()				// play thumbnail video
     var yp = (e.clientY - rect.top) / (media.offsetHeight)
-    if (media.currentTime <= strt || yp > 0.9) {media.currentTime = strt+0.1}
+    if (media.currentTime <= strt || yp > 0.9) {media.currentTime = strt +0.1}
     media.style.transition = '0.1s'
     media.playbackRate = 0.74
     scaleX = sk; scaleY=1
@@ -105,43 +101,46 @@
     media.play()}
 
 
-  function play_media(event) {
+  function playMedia(e) {
+    if (e.button == 1) {e.preventDefault(); e = 'Mclick'}
+    else if (e.button) {return} 
     if (gesture) {return}
     media.pause()							// pause htm tab thumb
     media = player							// media assigned to modal
     last_type = type
     if (type) {close_media()}
-    if (event == 'WheelUp') {index-=1}
-    if (event == 'WheelDown') {index+=1}
-    if (event == 'Mclick' && last_type && last_type != 'video' && xpos > 0.1) {index+=1}
-    if (event == 'Mclick' && xpos < 0.1 && last_type != 'thumb') {index+=1}
-    if (!over_thumb && !last_type) {index = last_id; event = 'Thumb'}	// play last media
+    else if (long_click) {return}					// using external player
+    if (e == 'WheelUp') {index-=1}
+    if (e == 'WheelDown') {index+=1}
+    if (e == 'Mclick' && last_type && last_type != 'video' && xpos > 0.1) {index+=1}
+    if (e == 'Mclick' && xpos < 0.1 && last_type != 'thumb') {index+=1}
+    if (!over_thumb && !last_type) {index = last_id; e = 'Thumb'}	// play last media
     var Next = document.getElementById("media" + index)
     if (!Next) {index = 1; Next = document.getElementById('media1')}
     x = Next['onclick'].toString().split(","); x.pop(); x.pop()		// get next media arguments
     if (cap_list = x.pop().slice(0, -1).slice(2)) {cap.style.display='block'}
     skinny = 1*x.pop()
     newSkinny = skinny
-    if (event != 'Thumb') {start = x.pop().trim()} else {x.pop()}
+    if (e != 'Thumb') {start = x.pop().trim()} else {x.pop()}
     type = x.pop().replaceAll('\'', '').trim()
     media.style.opacity = 0
     media.src = Next.src
     if (type == 'document') {return}
     if (type == "image") {media.poster = Next.poster}
-    else if ((event == 'WheelUp' || event == 'WheelDown') && last_type == 'thumb') {type = 'thumb'}
-    if (event == 'Mclick' && type == 'video' && xpos > 0.1) {type = 'thumb'}
+    else if ((e == 'WheelUp' || e == 'WheelDown') && last_type == 'thumb') {type = 'thumb'}
+    if (e == 'Mclick' && type == 'video' && xpos > 0.1) {type = 'thumb'}
     if (type == 'video' || type == 'thumb') {
       x = Next.poster.replace("/posters/", "/thumbs/")
       p = x.split('%20')
       p = p.pop()
       p = p.replace('.jpg', '')
       if (!isNaN(p) && p.length > 2 && p.includes('.')) {
-        if (event != 'Thumb') {start = p}
+        if (e != 'Thumb') {start = p}
         x = x.replace('%20' + p, '')}
       if (type == "thumb") {media.poster = x}
       else {media.poster = ''; setTimeout(function() {media.poster = x},600)}}
     if (long_click) {start = 0}
-    if (type == "video" || type == "audio") {media.currentTime = start}
+    if (type == "video" || type == "audio") {media.currentTime = start - 0.6}
     if (type == "audio") {media.controls = true; sound == 'yes'; media.play()}
     setTimeout(function() {media.style.opacity=1; if (type=='video') {media.play()}},120)
     mediaX = lastX; mediaY = lastY
@@ -158,11 +157,12 @@
     media.style.maxWidth = window.innerWidth * 0.6 + "px"
     media.style.maxHeight = window.innerHeight * 0.7 + "px"
     media.addEventListener('ended', media_ended)
-    setTimeout(function(){block=0;wheel=0},300)
+    setTimeout(function(){block=0;wheel=0},400)
     mediaTimer = setInterval(timedEvents,84)
     thin.innerHTML = Math.round(skinny*100)
     container.style.opacity = 1
     container.style.zIndex = 20
+    seek.src = media.src
     media.muted = false
     media.volume = 0
     looping = true
@@ -226,8 +226,8 @@
       if (newSkinny == 1) {timer = 146}
       media.style.transform = "scale(" + scaleX + "," + scaleY + ")"}
     else if (ctr == 'Next') {						// media next
-      if (WheelDown) {play_media('WheelDown')}
-      else {play_media('WheelUp')}
+      if (WheelDown) {playMedia('WheelDown')}
+      else {playMedia('WheelUp')}
       next.innerHTML = index
       timer = 440}
     else if (ctr == 'Speed' || xpos < 0.1) {				// speed
@@ -304,6 +304,7 @@
 
 
   function mouseDown(e) {
+    if (e.button != 0) {e.preventDefault(); return}			// middle click
     mouse_down = true
     long_click = false
     Xref = e.clientX
@@ -324,7 +325,7 @@
   function togglePause(e) {
     if (!mouse_down || gesture || seek_active || over_cap || !type || long_click) {return}
     if (xpos < 0.1 && ypos > 0.5) {return}
-    if (type == "thumb") {getThumb(e); play_media('Thumb')}
+    if (type == "thumb") {getThumb(e); playMedia('Thumb')}
     else if (media.paused) {
       media.play()} 
     else {media.pause()}}
@@ -334,6 +335,18 @@
     if (sound == "yes") {sound = "no"} else {sound = "yes"}
     sessionStorage.setItem("sound",sound)
     media.play()}
+
+
+  function mouseBack(e) {
+    if (e.key == 'Pause') {						// inca.exe re-mapping mouse Back button
+      if (!type) {							// no media playing
+        if (document.body.getBoundingClientRect().top < 0) {scroll(0,0)}
+        else {scroll(0,0); location.reload()}return}
+      else {
+        close_media()
+        if (messages) {
+          thin.href = messages; thin.click()
+          messages = ''}}}}						// send width changes to inca.exe
 
 
   function select(i) {							// highlight selections on page
@@ -356,13 +369,13 @@
 
   function media_ended(e) {						// loop or next
     media.style.animationName = ""
-    if (!looping || type == "audio") {play_media('WheelDown')}
+    if (!looping || type == "audio") {playMedia('WheelDown')}
     if (type == "video") {
       if (media.playbackRate > 0.60) {media.playbackRate -= 0.05}
       if (!mouse_down) {						// magnify and slow
         media.style.transition = '1.46s'
         speed.innerHTML = Math.round(media.playbackRate *100)
-        if (scaleX < 6) {scaleX+=0.3; scaleY+=0.3; mediaY*=1.08}
+        if (scaleX < 6) {scaleX+=0.2; scaleY+=0.2; mediaY*=1.08}
         media.style.transform = "scale(" + scaleX + "," + scaleY + ")"
         media.style.top = mediaY
         setTimeout(function(){media.style.transition = '0s'},100)}}
