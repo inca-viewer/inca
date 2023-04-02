@@ -18,8 +18,7 @@
   vertical-align:top;
   position:relative;
   border-radius:6%;
-  outline:none;
-}
+  outline:none;}
 
 .caption {
   display:none;
@@ -42,7 +41,7 @@
 
 .seekbar {
   position:absolute;
-  border-bottom:14px solid rgba(250, 128, 114, 0.3)}
+  border-bottom:20px solid rgba(250, 128, 114, 0.3)}
 
 .seek {
   position:absolute;
@@ -70,25 +69,24 @@
   height:100%;
   width:10%;
   position:fixed;
+  top:34%;
   opacity:0.3;
-  bottom:-18em;
   left:0;
   transition:0.3s}
 
 .sidenav a {
   display:block;
-  padding: 0.3em;
-  font-size:2em;
+  font-size:1.7em;
+  padding: 0.1em;
   color:#826858;
   transition:0.3s}
 
 .sidenav a:hover {color:lightsalmon}
 
 .container {
-  font-family: 'ClearSans-Thin';
+  font-family:'Yu Gothic', 'Calibri Light';
   user-select:none;
-  cursor:default;
-  overflow-x:hidden;
+  overflow:hidden;
   background:#15110a;
   margin:auto;
   padding-top:5em; 
@@ -99,10 +97,9 @@
 
   @keyframes fadePage {from {opacity:0} to {opacity:1}}
 
-a {
-  text-decoration:none;
-  color:#826858;
-  cursor:default}
+a {text-decoration:none; color:#826858}
+a:hover {color:red;transition:color 0.36s}
+table:hover {color:red;transition:color 0.36s}
 
 .panel {
   display:grid;
@@ -117,22 +114,18 @@ a {
   margin:auto;
   height:6em;
   width:65%;
+  border-radius:1.6em;
   background-color:inherit}
 
-a.slider {
+.slider {
   display:inline-block;
   width:15%;
   height:1.2em;
   border-radius:9px;
   color:#826858;
   transition:color 1.4s;
-  font-size:0.95em;
   background-color:#1b1814;
   text-align:center}
-
-a.slider:hover {
-  color:red;
-  transition:color 0.36s}
 
 .searchbox {
   text-overflow:ellipsis;
@@ -148,24 +141,18 @@ a.slider:hover {
   white-space:nowrap;
   width:30%}
 
-ul.menu {
+.menu {
   column-gap:12px;
   margin:auto;
   list-style-type:none;
   padding:0;
   white-space:nowrap}
 
-ul.menu li {color:#826858;transition:color 1.4s}
-
-ul.menu li:hover {color:red;transition:color 0.36s}
-
 table {
   color:#826858;
   transition:color 1.4s;
   table-layout:fixed;
   border-collapse: collapse}
-
-table:hover {color:red;transition:color 0.36s}
 
 
 
