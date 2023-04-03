@@ -1,20 +1,24 @@
 <script>
 
-// 5:50 wake up
-// try brave, edge and opera
+// compliance firefox, brave, edge and opera
 // have buttons on modal for next caption/favorite cut points
-// thumb to have fast seek from top edge ?
 // firefox cannot position move thumbs when over thumb
 // make view change css change only not reload tab
 // mclick view change
 // mpv player default click and as good as internal one
-// alpha search slider easier using ypos
 // default speed
-// wheel on list size = (pages)
-// moved items trigger mpv player if wmv - firefox
-// moved items trigger movepos in playlist - firefox
-// play pause triggers end of fullscreen - firefox
-// time to delete long playlist - like history
+// thumb size on side nav individual and all down to list
+// reverse order of top menu, make static
+// get rid of all buttons - fol, fav, sub etc, use wheel
+// top button on side nav
+
+
+// top page - page = bottom
+// filter - duration etc
+// thumbs down to list
+// controls, fol, sub, slides, music, search
+
+
 
 
 
@@ -23,7 +27,7 @@
   var inputbox = document.getElementById('myInput')
   var panel = document.getElementById('myPanel')			// list of folders, playlists etc
   var nav = document.getElementById('mySidenav')			// nav buttons over htm tab
-  var stat = document.getElementById('myStatus')			// and href used messages
+  var stat = document.getElementById('myStatus')			// also href messages to inca.exe
   var speed = document.getElementById('mySpeed')
   var thin = document.getElementById('myThin')				// media width
   var next = document.getElementById('myNext')
@@ -37,7 +41,7 @@
   var long_click = false
   var block = 0								// block wheel input
   var last_id
-  var start = 0								// video initial start time
+  var start = 0								// video start time
   var last_start
   var index = 1								// current media index (e.g. media14)
   var type = ''								// audio, video, image, thumb, document
@@ -53,6 +57,7 @@
   var seek_active							// currently seeking video
   var selected = ''							// list of selected media in page
   var messages = ''							// from address bar to inca.exe
+  var alpha = 77							// alpha search start with 'M'
   var cue = 0
   var looping = true
   var scaleX = 1
@@ -97,8 +102,10 @@
     if (selected && media.style.position != 'fixed') {sel.href = '#MovePos#' + id + '#' + selected + '#'}
     media = document.getElementById('media' + id)
     var rect = media.getBoundingClientRect()
+    var xp = (e.clientX - rect.left) / (media.offsetWidth)
     var yp = (e.clientY - rect.top) / (media.offsetHeight)
-    if (media.currentTime <= strt || yp > 0.9) {media.currentTime = strt +0.1}
+    if (media.duration && yp > 0.9) {media.currentTime = media.duration *xp}
+    if (media.currentTime <= strt || yp < 0.1) {media.currentTime = strt +0.1}
     media.style.transition = '0.1s'
     media.playbackRate = 0.74						// play thumbnail video
     scaleX = sk; scaleY=1
@@ -145,7 +152,7 @@
       else {media.poster = ''; setTimeout(function() {media.poster = x},600)}}
     if (long_click) {start = 0}
     if (type == "video" || type == "audio") {media.currentTime = start - 0.6}
-if (type == "audio") {media.controls = true; sound == 'yes'; media.playbackRate=0.92; media.play()}
+if (type == "audio") {media.controls = true; sound == 'yes'; media.playbackRate=0.94; media.play()}
     setTimeout(function() {media.style.opacity=1; if (type=='video') {media.play()}},120)
     mediaX = lastX; mediaY = lastY
     scaleX = scaleY
@@ -246,7 +253,7 @@ if (type == "audio") {media.controls = true; sound == 'yes'; media.playbackRate=
       else  {media.currentTime -= interval}
       timer = 200}
     else if (ctr == 'Magnify') {					// magnify
-      if (WheelDown) {scaleX *= 1.02; scaleY *= 1.02; mediaY*=1.007}
+      if (WheelDown) {scaleX *= 1.015; scaleY *= 1.015; mediaY*=1.005}
       else {scaleX *= 0.98; scaleY *= 0.98; mediaY*=0.993}
       positionMedia()}
     setTimeout(function() {block=0;wheel=0},timer)
@@ -256,8 +263,6 @@ if (type == "audio") {media.controls = true; sound == 'yes'; media.playbackRate=
   function Gesture(e) {							// mouse move
     if (over_thumb) {e.preventDefault()}
     e.stopPropagation()
-    if (selected) {document.body.style.cursor = 'cell'}
-    else {document.body.style.cursor = 'default'}
     xpos = e.clientX / window.innerWidth
     ypos = e.clientY / window.innerHeight
     rect = media.getBoundingClientRect()
@@ -357,10 +362,11 @@ if (type == "audio") {media.controls = true; sound == 'yes'; media.playbackRate=
     if (type != 'video') {return}
     media.currentTime = 0
     media.play()
-    if (media.playbackRate > 0.60) {media.playbackRate -= 0.05}		// magnify and slow
+    if (xpos > 0.1) {return}
+    if (media.playbackRate > 0.40) {media.playbackRate -= 0.05}		// magnify and slow
     media.style.transition = '1.46s'
     stat.innerHTML = Math.round(media.playbackRate *100)
-    if (scaleX < 6) {scaleX+=0.15; scaleY+=0.15; mediaY*=1.06}
+    scaleX+=0.15; scaleY+=0.15; mediaY*=1.05
     media.style.transform = "scale(" + scaleX + "," + scaleY + ")"
     media.style.top = mediaY
     setTimeout(function() {media.style.transition = '0s'},300)}
@@ -413,7 +419,9 @@ if (type == "audio") {media.controls = true; sound == 'yes'; media.playbackRate=
     media.style.transform = "scale(" + scaleX + "," + scaleY + ")"}
 
 
-  function spool(event, id, input) {					// spool lists into top html panel
+  function spool(e, id, input) {					// spool lists into top html panel
+    e.preventDefault()
+    e.stopPropagation()
     var content = ''
     const z = input.split('|')
     var el = document.getElementById(id)
@@ -434,42 +442,41 @@ if (type == "audio") {media.controls = true; sound == 'yes'; media.playbackRate=
         q = x.replace(/ /g, "%20")
         content = content + '<a href=#Path#' + start + '#' + selected + '#' + q + '><div>' + p + '</div></a>'}
       panel.innerHTML = content}					// command # value # selected # address
-    else if (id == "myInput" && !selected) {				// alpha selected search terms
+    else if ((id == "myInput" || id == "myPanel") && !selected) {	// alpha selected search terms
+      wheel += Math.abs(e.deltaY)
+      if (wheel < 140) {return}
+      wheel = 0
+      if (alpha > 65 && e.deltaY < 0) {alpha--}
+      else if (alpha < 90 && e.deltaY > 0) {alpha++}
+      var x = String.fromCharCode(alpha)
       panel.style.marginLeft = '14%'
       z.sort()
-      var w = el.offsetWidth
-      var x = ((event.clientX - el.offsetLeft - el.scrollLeft)/w) + 0.02
-      var upper = String.fromCharCode(Math.floor(25 * x) + 65)
-      var lower = upper.toLowerCase()
-      const f_lower = z.filter(z => z.startsWith(lower))
-      const f_higher = z.filter(z => z.startsWith(upper))
-      y = f_higher.concat(f_lower)
+      const y = z.filter(z => z.startsWith(x))
       for (const x of y) {
         p = x.substring(0, 14)
         q = x.replace(/ /g, "%20")
         content = content + '<a href=#Search#' + q + '##><div>' + p + '</div></a>'}
-      id = upper}
+      id = x}
     else {id = ''}
     panel.innerHTML = "<span style=\'grid-row-start:1; grid-row-end:3; color:red; font-size:2.2em\'>" + id + "</span>" + content}
 
 
   function getCoords(event, id, sort, link, current) {			// selection sliders
-    var y = " "
-    var of = " "
-    var units = " "
+    var x = ''
+    var of = ''
+    var units = ''
     var el = document.getElementById(id)
-    var w = el.offsetWidth
-    var x = (event.clientX - el.offsetLeft - el.scrollLeft)/w
-    if (sort == 'Alpha') {y = Math.floor(26.9 * x) + 64}
-    if (sort == 'Size') {y = Math.floor(100 * x) * 10;units = "Mb +"}
-    if (sort == 'Date') {y = Math.floor(37 * x);units = "months +"}
-    if (sort == 'Duration') {y = Math.floor(60 * x);units = "minutes +"}
-    if (id =='slider2') {y = Math.floor(sort*x)+1; units = sort; sort = "Page"; of = " of "}
-    if (current != "") {y = current}
-    el.href= link + '.htm#' + sort + '#' + y + '##'
+    var xpos = (event.clientX - el.offsetLeft - el.scrollLeft)/el.offsetWidth
+    if (sort == 'Alpha') {x = Math.floor(26.9 * xpos) + 64}
+    if (sort == 'Size') {x = Math.floor(100 * xpos) * 10;units = "Mb +"}
+    if (sort == 'Date') {x = Math.floor(37 * xpos);units = "months +"}
+    if (sort == 'Duration') {x = Math.floor(60 * xpos);units = "minutes +"}
+    if (id =='slider2') {x = Math.floor(sort*xpos)+1; units = sort; sort = "Page"; of = " of "}
+    if (current != "") {x = current}
+    el.href= link + '.htm#' + sort + '#' + x + '##'
     if (sort =='Random' || sort =='ext' || sort =='Shuffle') {return}
-    if (sort == 'Alpha') {y = String.fromCharCode(y)}
-    el.innerHTML = y + of + units}
+    if (sort == 'Alpha') {x = String.fromCharCode(x)}
+    el.innerHTML = x + of + units}
 
 
   function openNav() {
@@ -483,12 +490,12 @@ if (type == "audio") {media.controls = true; sound == 'yes'; media.playbackRate=
   function getLinks() {
     document.getElementById("myJoin").href = '#Join##' + selected + '#'
     document.getElementById("myRename").href = '#Rename#' + inputbox.value + '#' + selected + '#'
-    document.getElementById("myDelete").href = '#Delete##' + selected + '#'	// media from htm page
-    for (i=1; i <= 100; i++) {document.getElementById('media' + i).load()}}	// release media
+    document.getElementById("myDelete").href = '#Delete##' + selected + '#'
+    var x = selected.split(',')						// release media 
+    for (var i = 0; i < x.length; i++) {document.getElementById('media' + x[i]).load()}}
   function selectAll() {for (i=1; i <= 600; i++) {select(i)}}
   function editCap() {cap.style.display='block'; cap.style.opacity=0.6; cap.innerHTML='New'; cap.focus()}
   function exitThumb(el) {if(!mouse_down) {over_thumb = false}; if (media != player){el.pause()}}
-
 
 
 </script>

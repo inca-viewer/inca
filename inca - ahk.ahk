@@ -361,6 +361,8 @@ caption := x
         type = video							; prime for list parsing
         page_w := Setting("Page Width")
         size := Setting("Page Size")
+        if search_term
+          size = 2000
         page_media = /							; cannot use | as seperator because this_search uses |
 
         count = 1
@@ -382,7 +384,7 @@ caption := x
             }
         pages := ceil(list_size/size)
         header_html = <!--`r`n%view%>%last_view%>%page%>%sort%>%toggles%>%this_search%>%search_term%>%path%>%folder%>%playlist%>%last_media%>`r`n%page_media%`r`n-->`r`n<!doctype html>`r`n<html>`r`n<head>`r`n<meta charset="UTF-8">`r`n<title>Inca - %title%</title>`r`n<meta name="viewport" content="width=device-width, initial-scale=1">`r`n<link rel="icon" type="image/x-icon" href="file:///%inca%\apps\icons\inca.ico">`r`n</head>`r`n
-        panel_html = <body style='background:#15110a; cursor:default'>`r`n<div class='container' style="width:%page_w%`%">`r`n<div class='panel' id='myPanel'></div>`r`n`r`n<ul class="menu" style="display:flex; justify-content:space-between; margin-left:1em; margin:1.2em">`r`n<a class='slider' id='Sub' onmouseover='spool(event, id, "%subfolders%")' style="width:7`%;">Sub</a>`r`n<a class='slider' id='Fol' onmouseover='spool(event, id, "%fol%")' style="width:7`%;">Fol</a>`r`n<a class='slider' id='Fav' onmouseover='spool(event, id, "%fav%")' style="width:7`%">Fav</a>`r`n<input class="searchbox" id="myInput" onmousemove='spool(event, id, "%search_list%")' type="search" value="%search_term%">`r`n<a href="#Searchbox###" style="color:lightsalmon;"><c>+</c></a>`r`n<a href="file:///%inca%/cache/html/new.htm" class='slider' id='Slides' onmouseover='spool(event, id, "%playlists%")' style="width:7`%;">Slides</a>`r`n<a class='slider' id='Music' onmouseover='spool(event, id, "%music%")' style="width:7`%;">Music</a>`r`n<a href="%title%.htm#%sort%" id='slider1' class='slider' onmousemove='getCoords(event, id, "%sort%", "%title%", "")'>%sort%</a>`r`n<a href="%title%.htm#Page" id='slider2' class='slider' onmousemove='getCoords(event, id, "%Pages%", "%title%", "")' onmouseleave='getCoords(event, id, "%Pages%", "%title%", "%page%")'>Page %page% of %pages%</a>`r`n</ul>`r`n`r`n
+        panel_html = <body style='background:#15110a; cursor:default'>`r`n<div class='container' style="width:%page_w%`%">`r`n<div class='panel' id='myPanel' onwheel='spool(event, id, "%search_list%")'></div>`r`n`r`n<ul class="menu" style="display:flex; justify-content:space-between; margin-left:1em; margin:1.2em">`r`n<a class='slider' id='Sub' onmouseover='spool(event, id, "%subfolders%")' style="width:7`%;">Sub</a>`r`n<a class='slider' id='Fol' onmouseover='spool(event, id, "%fol%")' style="width:7`%;">Fol</a>`r`n<a class='slider' id='Fav' onmouseover='spool(event, id, "%fav%")' style="width:7`%">Fav</a>`r`n<input class="searchbox" id="myInput" onmousemove='spool(event, id, "%search_list%")' type="search" value="%search_term%">`r`n<a href="#Searchbox###" style="color:lightsalmon;"><c>+</c></a>`r`n<a href="file:///%inca%/cache/html/new.htm" class='slider' id='Slides' onmouseover='spool(event, id, "%playlists%")' style="width:7`%;">Slides</a>`r`n<a class='slider' id='Music' onmouseover='spool(event, id, "%music%")' style="width:7`%;">Music</a>`r`n<a href="%title%.htm#%sort%" id='slider1' class='slider' onmousemove='getCoords(event, id, "%sort%", "%title%", "")'>%sort%</a>`r`n<a href="%title%.htm#Page" id='slider2' class='slider' onmousemove='getCoords(event, id, "%Pages%", "%title%", "")' onmouseleave='getCoords(event, id, "%Pages%", "%title%", "%page%")'>Page %page% of %pages%</a>`r`n</ul>`r`n`r`n
         filter_html =`r`n`r`n<ul onmouseover="getLinks()" class="menu" style="height:2em; display:flex; justify-content:space-between; margin-left:20px">`r`n`r`n<a href="#Thumbs#%view%" id='myThumbs' onwheel="wheelEvents(event, 'Thumbs')" onmouseover='media.style.opacity=1' onmouseout='media.style.opacity=null' class='slider' style='height:2em; width:6`%; background-color:inherit'>Thumbs</a>`r`n<a href='#' onclick='selectAll()' class='slider' style='width:6`%; background-color:inherit;'>Select</a>`r`n<a href='#' id='myDelete' class='slider' onmouseover="getLinks()" style='width:6`%; background-color:inherit;'>Delete</a>`r`n<a href='#' id='myRename' class='slider' onmouseover="getLinks()" style='width:6`%; background-color:inherit;'>Rename</a>`r`n<a href="#Join#" id='myJoin' class='slider' style='width:6`%; background-color:inherit;'>Join</a>`r`n<a href="#Settings###" class='slider' style='width:6`%; background-color:inherit;'>Menu</a>`r`n
         Loop, Parse, sort_list, `|
             if A_LoopField
@@ -423,58 +425,60 @@ caption := x
             SoundSet, volume						; slowly reduce volume
             vol_popup := 100						; check every 10 seconds
             }
-        else
+        x = %A_Hour%:%A_Min%
+        if (x == Setting("WakeUp Time"))
+          if (volume < 15)
+             {
+             volume += 0.025
+             SoundSet, volume
+             }
+        dim := inca_tab
+        inca_tab := 0
+        WinGetTitle title     ;  , Inca -
+        if InStr(title, "Inca - ")
+          tab_name := SubStr(title, 8)
+        StringGetPos, pos, tab_name, mozilla firefox, R
+        browser =
+        if (pos < 1)
+            StringGetPos, pos, tab_name, google chrome, R
+        else browser = firefox
+        StringLeft, tab_name, tab_name, % pos - 3
+        WinGet, state, MinMax, ahk_group Browsers
+        if (tab_name && state > -1)
+            inca_tab := 1
+        if (inca_tab != dim)
             {
-            dim := inca_tab
-            inca_tab := 0
-            WinGetTitle title     ;  , Inca -
-            if InStr(title, "Inca - ")
-              tab_name := SubStr(title, 8)
-            StringGetPos, pos, tab_name, mozilla firefox, R
-            browser =
-            if (pos < 1)
-                StringGetPos, pos, tab_name, google chrome, R
-            else browser = firefox
-            StringLeft, tab_name, tab_name, % pos - 3
-            WinGet, state, MinMax, ahk_group Browsers
-            if (tab_name && state > -1)
-                inca_tab := 1
-            if (inca_tab != dim)
+            mask1 := 0
+            if (mask2 := Setting("Dim Desktop"))
+              loop 20
                 {
-                mask1 := 0
-                if (mask2 := Setting("Dim Desktop"))
-                  loop 20
-                    {
-                    sleep 5
-                    mask1 += (Setting("Dim Desktop") * 2.55) / 20
-                    mask2 -= 10
-                    Gui, background:+LastFound
-                    if inca_tab
-                        WinSet, Transparent, %mask1%
-                    else WinSet, Transparent, %mask2%
-                    }
+                sleep 5
+                mask1 += (Setting("Dim Desktop") * 2.55) / 20
+                mask2 -= 10
+                Gui, background:+LastFound
+                if inca_tab
+                    WinSet, Transparent, %mask1%
+                else WinSet, Transparent, %mask2%
                 }
-            if (inca_tab && tab_name != previous_tab)			; is switched inca tab
+            }
+        if (inca_tab && tab_name != previous_tab)			; is switched inca tab
+            {
+            previous_tab := tab_name
+            GetTabSettings(1)					; get last tab ;settings
+CreateList(0)
+return
+            if (tab_name != "Playlists" && tab_name != "Music")
+              {
+              if (tab_name != "Downloads")
                 {
-                previous_tab := tab_name
-                GetTabSettings(1)					; get last tab ;settings
-;CreateList(0)
-;return
-                if (tab_name != "Playlists" && tab_name != "Music")
-                  {
-                  if (tab_name != "Downloads")
-                    {
-                    IfExist, %inca%\cache\lists\%tab_name%.txt		; from cache
-                      FileRead, list, %inca%\cache\lists\%tab_name%.txt
-                    }
-                  else CreateList(0)					; media list to match html page
-                  }
+                IfExist, %inca%\cache\lists\%tab_name%.txt		; from cache
+                  FileRead, list, %inca%\cache\lists\%tab_name%.txt
                 }
+              else CreateList(0)					; media list to match html page
+              }
             }
         ShowStatus()							; show time & vol
         return
-
-
 
 
 
@@ -680,8 +684,6 @@ caption := x
               if !view
                  view := last_view
               else view := 0
-;              if (view == 0 && last_view == 0)
-;                  view := 10
               }
             else 
               view := value
@@ -689,17 +691,17 @@ caption := x
             reload := 2
             }
         if (command == "Delete")
-            Loop, Parse, selected, `/
-              if A_LoopField
-                {
-                list_id := A_LoopField
-                GetMedia(0)
-                  if (InStr(path, "\playlists\") || InStr(path, "\music\"))
-                    DeleteEntry()
-                  else IfExist, %src%
-                     FileRecycle, %src%
-                reload := 1
-                }
+            {
+            if (InStr(path, "\playlists\") || InStr(path, "\music\"))
+              DeleteEntries()
+            else Loop, Parse, selected, `/
+              {
+              list_id := A_LoopField
+              if GetMedia(0)
+                FileRecycle, %src%
+              }
+            reload := 1
+            }
         if (command == "Rename")
             {
             if (StrLen(value) < 4)
@@ -708,7 +710,7 @@ caption := x
                 popup = no media
             if !popup
                {
-               UpdateFiles(value)
+               RenameFiles(value)
                popup = Renamed
                }
             Popup(popup,600,0,0)
@@ -1129,35 +1131,34 @@ caption := x
             list_id := A_LoopField
             if GetMedia(0)
               if (InStr(address, "playlists") || InStr(address, "music"))
-                {
                 FileAppend, %target%`r`n, %address%, UTF-8		; add media entry to playlist
-                if timer
-                  DeleteEntry()
-                }
               else if timer
                 FileMove, %src%, %address%				; move file to new folder
               else FileCopy, %src%, %address%
             }
+        if (InStr(address, "playlists") || InStr(address, "music"))
+          DeleteEntries()
         }  
 
 
-    DeleteEntry()
+    DeleteEntries()
         {
         plist = %path%%folder%.m3u
         FileRead, str, %plist%
         FileDelete, %plist%
-        Loop, Parse, str, `n, `r
-          if A_LoopField
-            if (!flag && (A_LoopField == target || A_LoopField == src))
-                {
-                flag = set
-                continue
-                }
-            else FileAppend, %A_LoopField%`r`n, %plist%, UTF-8
+        Loop, Parse, selected, `/
+         if A_LoopField
+          {
+          list_id := A_LoopField
+          GetMedia(0)
+          x = %target%`r`n
+          str := StrReplace(str, x)
+          }
+        FileAppend, %str%, %plist%, UTF-8
         }
 
 
-    UpdateFiles(new_name)
+    RenameFiles(new_name)
         {
         FileMove, %src%, %media_path%\%new_name%.%ext%			; FileMove = FileRename
         new_entry := StrReplace(target, media, new_name)
