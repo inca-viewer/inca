@@ -89,7 +89,6 @@
   overflow:hidden;
   background:#15110a;
   margin:auto;
-  padding-top:5em; 
   color:#666666;
   font-size:0.8em;
   animation-name:fadePage;
@@ -110,18 +109,18 @@ table:hover {color:red;transition:color 0.36s}
   overflow:hidden;
   font-size:0.9em;
   transition:color 1.4s;
-  padding:2em;
-  margin:auto;
+  padding:1em;
+  margin-top:6em;
   height:6em;
   width:65%;
-  border-radius:1.6em;
+  border-radius:1.4em;
   background-color:inherit}
 
 .slider {
   display:inline-block;
-  width:15%;
-  height:1.2em;
-  border-radius:9px;
+  width:35%;
+  height:1.4em;
+  border-radius:1em;
   color:#826858;
   transition:color 1.4s;
   background-color:#1b1814;

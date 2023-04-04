@@ -339,12 +339,20 @@ caption := x
         }
 
 
+
+
+
+
     RenderPage()							; construct web page from media list
         {
         if !(folder && path)
             return
         last := src
         title := tab_name
+
+        FileRead, ini, %inca%\all.ini
+ini := StrReplace(ini, "`r`n")
+
         FileRead, style, %inca%\inca - css.css
         FileRead, java, %inca%\inca - js.js
         Loop, Files, %inca%\music\*.m3u					; for top panel
@@ -384,24 +392,17 @@ caption := x
             }
         pages := ceil(list_size/size)
         header_html = <!--`r`n%view%>%last_view%>%page%>%sort%>%toggles%>%this_search%>%search_term%>%path%>%folder%>%playlist%>%last_media%>`r`n%page_media%`r`n-->`r`n<!doctype html>`r`n<html>`r`n<head>`r`n<meta charset="UTF-8">`r`n<title>Inca - %title%</title>`r`n<meta name="viewport" content="width=device-width, initial-scale=1">`r`n<link rel="icon" type="image/x-icon" href="file:///%inca%\apps\icons\inca.ico">`r`n</head>`r`n
-        panel_html = <body style='background:#15110a; cursor:default'>`r`n<div class='container' style="width:%page_w%`%">`r`n<div class='panel' id='myPanel' onwheel='spool(event, id, "%search_list%")'></div>`r`n`r`n<ul class="menu" style="display:flex; justify-content:space-between; margin-left:1em; margin:1.2em">`r`n<a class='slider' id='Sub' onmouseover='spool(event, id, "%subfolders%")' style="width:7`%;">Sub</a>`r`n<a class='slider' id='Fol' onmouseover='spool(event, id, "%fol%")' style="width:7`%;">Fol</a>`r`n<a class='slider' id='Fav' onmouseover='spool(event, id, "%fav%")' style="width:7`%">Fav</a>`r`n<input class="searchbox" id="myInput" onmousemove='spool(event, id, "%search_list%")' type="search" value="%search_term%">`r`n<a href="#Searchbox###" style="color:lightsalmon;"><c>+</c></a>`r`n<a href="file:///%inca%/cache/html/new.htm" class='slider' id='Slides' onmouseover='spool(event, id, "%playlists%")' style="width:7`%;">Slides</a>`r`n<a class='slider' id='Music' onmouseover='spool(event, id, "%music%")' style="width:7`%;">Music</a>`r`n<a href="%title%.htm#%sort%" id='slider1' class='slider' onmousemove='getCoords(event, id, "%sort%", "%title%", "")'>%sort%</a>`r`n<a href="%title%.htm#Page" id='slider2' class='slider' onmousemove='getCoords(event, id, "%Pages%", "%title%", "")' onmouseleave='getCoords(event, id, "%Pages%", "%title%", "%page%")'>Page %page% of %pages%</a>`r`n</ul>`r`n`r`n
-        filter_html =`r`n`r`n<ul onmouseover="getLinks()" class="menu" style="height:2em; display:flex; justify-content:space-between; margin-left:20px">`r`n`r`n<a href="#Thumbs#%view%" id='myThumbs' onwheel="wheelEvents(event, 'Thumbs')" onmouseover='media.style.opacity=1' onmouseout='media.style.opacity=null' class='slider' style='height:2em; width:6`%; background-color:inherit'>Thumbs</a>`r`n<a href='#' onclick='selectAll()' class='slider' style='width:6`%; background-color:inherit;'>Select</a>`r`n<a href='#' id='myDelete' class='slider' onmouseover="getLinks()" style='width:6`%; background-color:inherit;'>Delete</a>`r`n<a href='#' id='myRename' class='slider' onmouseover="getLinks()" style='width:6`%; background-color:inherit;'>Rename</a>`r`n<a href="#Join#" id='myJoin' class='slider' style='width:6`%; background-color:inherit;'>Join</a>`r`n<a href="#Settings###" class='slider' style='width:6`%; background-color:inherit;'>Menu</a>`r`n
-        Loop, Parse, sort_list, `|
-            if A_LoopField
-                {
-                query = %sort%%toggles%
-                x = id='%A_LoopField%#0' class='slider' style='width:7`%; background-color:inherit;'
-                name := A_LoopField
-                if InStr(query, name)
-                    name = <span style="color:lightsalmon;">%name%</span>
-                filter_html = %filter_html%<a href="#%A_LoopField%#" %x%>%name%</a>`r`n
-                }
-        title_html = `r`n`r`n<div style="margin-left:5em; width:100`%; margin-top:2.4em; margin-bottom:1.8em;"><a href="#Orphan#%tab_name%" style="font-size:1.8em; color:#555351;">%title% &nbsp;&nbsp;<span style="font-size:0.7em;">%list_size%</span></a></div>`r`n`r`n<div id="myModal" class="modal" onwheel="wheelEvents(event, 'Magnify')">`r`n<div><video id="myPlayer" class="player" type="video/mp4"></video><textarea id="myCap" class="caption" onmouseenter="over_cap=true" onmouseleave="over_cap=false"></textarea><span id="mySeekBar" class="seekbar"></span><span><video id='mySeek' class='seek' type="video/mp4"></video></span><span id="mySidenav" onmouseover="openNav()" onmouseleave="closeNav()" class="sidenav"><a id="mySpeed" onmouseover='stat.innerHTML=Math.round(media.playbackRate*100)' onwheel="wheelEvents(event, 'Speed')">Speed</a><a id="myNext" onmouseover='stat.innerHTML=index' onwheel="wheelEvents(event, 'Next')">Next</a><a id="myThin" onmouseover='stat.innerHTML=Math.round(newSkinny*100)' onwheel="wheelEvents(event, 'Skinny')">Thin</a><a onclick="loop()">Loop</a><a onclick="toggleMute()">Mute</a><a id="myFav">Fav</a><a id="myCapnav" onclick="editCap()">Cap</a><a onclick="cue = Math.round(media.currentTime*100)/100">Cue</a><a id="myMp4">mp4</a><a id="myMp3">mp3</a><a id="myStatus" style='font-size:5em; padding:0'></a></span></div></div>`r`n`r`n
+
+
+
+        panel_html = <body style='background:#15110a; cursor:default'>`r`n<div class='container' style="width:%page_w%`%">`r`n<div class='panel' id='myPanel' onmouseenter='getLinks()'onwheel="spool(event, '%ini%')"></div>`r`n`r`n<ul class="menu" style="margin:1em; display:flex; justify-content:space-between">`r`n<a href="#Thumbs#%view%" id='myThumbs' onwheel="wheelEvents(event, 'Thumbs')" onmouseover='media.style.opacity=1' onmouseout='media.style.opacity=null' class='slider' style='width:7`%'>Thumbs</a>`r`n<a class='slider' id='Sub' onmouseover='spool2(event, id, "%subfolders%")' style="width:7`%;">Sub</a>`r`n<a class='slider' id='Fol' onmouseover='spool2(event, id, "%fol%")' style="width:7`%;">Fol</a>`r`n<a class='slider' id='Fav' onmouseover='spool2(event, id, "%fav%")' style="width:7`%">Fav</a>`r`n<a href="file:///%inca%/cache/html/new.htm" class='slider' id='Slides' onmouseover='spool2(event, id, "%playlists%")' style="width:7`%;">Slides</a>`r`n<a class='slider' id='Music' onmouseover='spool2(event, id, "%music%")' style="width:7`%;">Music</a>`r`n<a href="#Searchbox###" style="color:lightsalmon;"><c>+</c></a>`r`n<input class="searchbox" id="myInput" onmousemove='spool2(event, id, "%search_list%")' type="search" value="%search_term%">`r`n<a style='width:30`%'></a>`r`n</ul>`r`n`r`n<ul class="menu" style="display:flex; justify-content:space-between; margin-left:1em; margin:1.2em">`r`n<a href="%title%.htm#%sort%" id='slider1' class='slider' onmousemove='getCoords(event, id, "%sort%", "%title%", "")'>%sort%</a>`r`n<a href="%title%.htm#Page" id='slider2' class='slider' onmousemove='getCoords(event, id, "%Pages%", "%title%", "")' onmouseleave='getCoords(event, id, "%Pages%", "%title%", "%page%")'>Page %page% of %pages%</a>`r`n<a style='width:30`%'></a></ul>`r`n`r`n
+
+        title_html = `r`n`r`n<div style="margin-left:5em; width:100`%; margin-top:0.4em; margin-bottom:0.8em;"><a href="#Orphan#%tab_name%" style="font-size:1.8em; color:#555351;">%title% &nbsp;&nbsp;<span style="font-size:0.7em;">%list_size%</span></a></div>`r`n`r`n<div id="myModal" class="modal" onwheel="wheelEvents(event, 'Magnify')">`r`n<div><video id="myPlayer" class="player" type="video/mp4"></video><textarea id="myCap" class="caption" onmouseenter="over_cap=true" onmouseleave="over_cap=false"></textarea><span id="mySeekBar" class="seekbar"></span><span><video id='mySeek' class='seek' type="video/mp4"></video></span><span id="mySidenav" onmouseover="openNav()" onmouseleave="closeNav()" class="sidenav"><a id="mySpeed" onmouseover='stat.innerHTML=Math.round(media.playbackRate*100)' onwheel="wheelEvents(event, 'Speed')">Speed</a><a id="myNext" onmouseover='stat.innerHTML=index' onwheel="wheelEvents(event, 'Next')">Next</a><a id="myThin" onmouseover='stat.innerHTML=Math.round(newSkinny*100)' onwheel="wheelEvents(event, 'Skinny')">Thin</a><a onclick="loop()">Loop</a><a onclick="toggleMute()">Mute</a><a id="myFav">Fav</a><a id="myCapnav" onclick="editCap()">Cap</a><a onclick="cue = Math.round(media.currentTime*100)/100">Cue</a><a id="myMp4">mp4</a><a id="myMp3">mp3</a><a id="myStatus" style='font-size:5em; padding:0'></a></span></div></div>`r`n`r`n
         html = `r`n%html%</div>`r`n<p style="height:240px;"></p>`r`n
         FileDelete, %inca%\cache\html\%tab_name%.htm
         StringReplace, header_html, header_html, \, /, All
         StringReplace, panel_html, panel_html, \, /, All
-        y = %filter_html%</ul>%title_html%%html%
+        y = %title_html%%html%
         StringReplace, y, y, \, /, All
         FileAppend, %header_html%%style%%panel_html%%y%%java%</body>`r`n</html>`r`n, %inca%\cache\html\%tab_name%.htm, UTF-8
         LoadHtml()
@@ -465,8 +466,8 @@ caption := x
             {
             previous_tab := tab_name
             GetTabSettings(1)					; get last tab ;settings
-CreateList(0)
-return
+;CreateList(0)
+;return
             if (tab_name != "Playlists" && tab_name != "Music")
               {
               if (tab_name != "Downloads")

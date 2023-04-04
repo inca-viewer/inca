@@ -12,13 +12,10 @@
 // get rid of all buttons - fol, fav, sub etc, use wheel
 // top button on side nav
 
-
 // top page - page = bottom
 // filter - duration etc
 // thumbs down to list
 // controls, fol, sub, slides, music, search
-
-
 
 
 
@@ -72,6 +69,7 @@
   var mediaX = window.innerWidth/2.6
   var lastX = mediaX
   var lastY = mediaY
+  var list_id = 0
 
 
   document.addEventListener('auxclick', playMedia)			// middle click
@@ -79,6 +77,61 @@
   document.addEventListener('mousedown', mouseDown)
   document.addEventListener('mouseup', mouseUp)
   document.addEventListener('mousemove', Gesture)
+
+
+  function spool(e, ini) {						// spool lists into top html panel
+    e.preventDefault()
+    e.stopPropagation()
+    wheel += Math.abs(e.deltaY)
+    if (wheel < 200) {return}
+    wheel = 0
+    if (e.deltaY < 0 && list_id) {list_id--}
+    else if (e.deltaY > 0 && list_id < 32) {list_id++}
+    list = ['Menu','Fav','Fol','Slides','Music','A','B','C','D','E','F','G','H','I','J',
+      'K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','Settings']
+    var id = list[list_id]
+    var content = "<span style=\'grid-row-start:1; grid-row-end:3; color:red; font-size:2.2em\'>"+id+"</span>"
+    ini = ini.split('=')
+
+    if(!list_id) {
+      var z = ini[list_id].split('|')
+      var r = ''
+      for (const x of z) {
+        p = x.substring(0, 14)
+        q = x.replace(/ /g, "%20")
+        if (p == 'Join') {r = " id=\'myJoin\'"}
+        if (p == 'Rename') {r = " id=\'myRename\'"}
+        if (p == 'Delete') {r = " id=\'myDelete\'"}
+        if (p == 'Select') {r = " onclick=\'selectAll()\'"}
+        content = content + '<a href=#' + q + '## ' + r + '><div>' + p + '</div></a>'}}
+
+    else if (list_id < 5) {
+      var z = ini[list_id].split('|')
+      for (x of z) {
+        y = x.split("/")
+        p = y.pop()
+        if (id == "Music" || id == "Slides") {q = x.replace(p, ""); p = p.replace(/.m3u/g, "")}
+        else {p = y.pop()}
+        p = p.substring(0, 12)
+        title = document.title.replace(/Inca - /g, "")
+        if (p == title) {p = "<span style=\"color:lightsalmon\"</span>" + p}
+        if (p == "New") {p = "<span style=\"color:red\"</span>" + p}
+        q = x.replace(/ /g, "%20")
+        content = content + '<a href=#Path#' + start + '#' + selected + '#' + q + '><div>' + p + '</div></a>'}}
+
+    else if (list_id > 4) {
+      var z = ini[6].split('|')
+      z.sort()
+      const y = z.filter(z => z.startsWith(id))
+      for (const x of y) {
+        p = x.substring(0, 14)
+        q = x.replace(/ /g, "%20")
+        content = content + '<a href=#Search#' + q + '##><div>' + p + '</div></a>'}}
+
+    panel.innerHTML = content}
+
+
+
 
 
   function timedEvents() {						// every ~84mS while media playing
@@ -419,7 +472,9 @@ if (type == "audio") {media.controls = true; sound == 'yes'; media.playbackRate=
     media.style.transform = "scale(" + scaleX + "," + scaleY + ")"}
 
 
-  function spool(e, id, input) {					// spool lists into top html panel
+
+
+  function spool2(e, id, input) {					// spool lists into top html panel
     e.preventDefault()
     e.stopPropagation()
     var content = ''
@@ -431,9 +486,8 @@ if (type == "audio") {media.controls = true; sound == 'yes'; media.playbackRate=
         y = x.split("/")
         p = y.pop()
         if (id == "Music" || id == "Slides") {
-          q = x.replace(p, "")						// substract playlist from input
-          panel.style.marginLeft = '24%'}
-        else {p = y.pop(); panel.style.marginLeft = '5%'}		// folder name
+          q = x.replace(p, "")}
+        else {p = y.pop()}		// folder name
         p = p.replace(/.m3u/g, "")					// remove .m3u - (leave just name)
         p = p.substring(0, 12)
         title = document.title.replace(/Inca - /g, "")
@@ -449,7 +503,6 @@ if (type == "audio") {media.controls = true; sound == 'yes'; media.playbackRate=
       if (alpha > 65 && e.deltaY < 0) {alpha--}
       else if (alpha < 90 && e.deltaY > 0) {alpha++}
       var x = String.fromCharCode(alpha)
-      panel.style.marginLeft = '14%'
       z.sort()
       const y = z.filter(z => z.startsWith(x))
       for (const x of y) {
