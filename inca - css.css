@@ -100,28 +100,21 @@ a {text-decoration:none; color:#826858}
 a:hover {color:red;transition:color 0.36s}
 table:hover {color:red;transition:color 0.36s}
 
-.panel {
-  display:grid;
-  grid-template-columns: auto auto auto auto auto auto auto;
-  grid-template-rows: auto auto auto auto;
-  grid-auto-flow: column;
+table {
   color:#826858;
-  overflow:hidden;
-  font-size:0.9em;
   transition:color 1.4s;
-  padding:1em;
-  margin-top:6em;
-  height:6em;
-  width:65%;
-  border-radius:1.4em;
-  background-color:inherit}
+  table-layout:fixed;
+  border-collapse: collapse}
 
 .slider {
-  display:inline-block;
-  width:35%;
+  display:block;
+  width:6em;
   height:1.4em;
-  border-radius:1em;
+  margin:0.6em;
+  margin-left:0;
   color:#826858;
+  border-radius:1em;
+  font-size:0.9em;
   transition:color 1.4s;
   background-color:#1b1814;
   text-align:center}
@@ -129,31 +122,36 @@ table:hover {color:red;transition:color 0.36s}
 .searchbox {
   text-overflow:ellipsis;
   overflow:hidden;
-  border-radius:1em; 
+  margin:0.6em;
+  margin-left:0;
+  border-radius:1em;
+  text-align:center;
   background-color:#1b1814;
   color:#826858;
   font-family:inherit;
   border:none;
-  padding-left:0.5em;
-  height:1.2em;
+  height:1.1em;
   outline:none;
-  white-space:nowrap;
-  width:30%}
-
-.menu {
-  column-gap:12px;
-  margin:auto;
-  list-style-type:none;
-  padding:0;
-  white-space:nowrap}
-
-table {
-  color:#826858;
   transition:color 1.4s;
-  table-layout:fixed;
-  border-collapse: collapse}
+  white-space:nowrap;
+  width:9%}
 
+.panel {
+  display:grid;
+  grid-template-columns: auto auto auto auto auto auto auto;
+  grid-template-rows: auto auto auto auto;
+  grid-auto-flow: column;
+  color:#826858;
+  overflow:hidden;
+  overflow-wrap:break-word;
+  transition:color 1.4s;
+  padding:0.3em;
+  padding-left:1.4em;
+  font-size:0.85em;
+  height:6em;
+  width:60%;
+  border-radius:0.8em;
+  background-color:inherit}
 
 
 </style>
-

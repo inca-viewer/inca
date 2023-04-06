@@ -4,19 +4,14 @@
 // have buttons on modal for next caption/favorite cut points
 // firefox cannot position move thumbs when over thumb
 // make view change css change only not reload tab
-// mclick view change
-// mpv player default click and as good as internal one
 // default speed
-// thumb size on side nav individual and all down to list
-// reverse order of top menu, make static
-// get rid of all buttons - fol, fav, sub etc, use wheel
-// top button on side nav
-
-// top page - page = bottom
-// filter - duration etc
-// thumbs down to list
-// controls, fol, sub, slides, music, search
-
+// thumb move in playlists triggers filemove
+// lower case alpha???
+// key shortcuts fade on mouseover bottom
+// fix sel div moving thumbs
+// no need pages
+// session save filter
+// new search should not remember page no.
 
 
   var modal = document.getElementById('myModal')			// media player window
@@ -39,7 +34,6 @@
   var block = 0								// block wheel input
   var last_id
   var start = 0								// video start time
-  var last_start
   var index = 1								// current media index (e.g. media14)
   var type = ''								// audio, video, image, thumb, document
   var cap_list = ''							// full caption text file
@@ -54,7 +48,7 @@
   var seek_active							// currently seeking video
   var selected = ''							// list of selected media in page
   var messages = ''							// from address bar to inca.exe
-  var alpha = 77							// alpha search start with 'M'
+  var alpha = 64							// alpha search start at 'A'
   var cue = 0
   var looping = true
   var scaleX = 1
@@ -69,7 +63,7 @@
   var mediaX = window.innerWidth/2.6
   var lastX = mediaX
   var lastY = mediaY
-  var list_id = 0
+  var filter = 1
 
 
   document.addEventListener('auxclick', playMedia)			// middle click
@@ -77,61 +71,6 @@
   document.addEventListener('mousedown', mouseDown)
   document.addEventListener('mouseup', mouseUp)
   document.addEventListener('mousemove', Gesture)
-
-
-  function spool(e, ini) {						// spool lists into top html panel
-    e.preventDefault()
-    e.stopPropagation()
-    wheel += Math.abs(e.deltaY)
-    if (wheel < 200) {return}
-    wheel = 0
-    if (e.deltaY < 0 && list_id) {list_id--}
-    else if (e.deltaY > 0 && list_id < 32) {list_id++}
-    list = ['Menu','Fav','Fol','Slides','Music','A','B','C','D','E','F','G','H','I','J',
-      'K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','Settings']
-    var id = list[list_id]
-    var content = "<span style=\'grid-row-start:1; grid-row-end:3; color:red; font-size:2.2em\'>"+id+"</span>"
-    ini = ini.split('=')
-
-    if(!list_id) {
-      var z = ini[list_id].split('|')
-      var r = ''
-      for (const x of z) {
-        p = x.substring(0, 14)
-        q = x.replace(/ /g, "%20")
-        if (p == 'Join') {r = " id=\'myJoin\'"}
-        if (p == 'Rename') {r = " id=\'myRename\'"}
-        if (p == 'Delete') {r = " id=\'myDelete\'"}
-        if (p == 'Select') {r = " onclick=\'selectAll()\'"}
-        content = content + '<a href=#' + q + '## ' + r + '><div>' + p + '</div></a>'}}
-
-    else if (list_id < 5) {
-      var z = ini[list_id].split('|')
-      for (x of z) {
-        y = x.split("/")
-        p = y.pop()
-        if (id == "Music" || id == "Slides") {q = x.replace(p, ""); p = p.replace(/.m3u/g, "")}
-        else {p = y.pop()}
-        p = p.substring(0, 12)
-        title = document.title.replace(/Inca - /g, "")
-        if (p == title) {p = "<span style=\"color:lightsalmon\"</span>" + p}
-        if (p == "New") {p = "<span style=\"color:red\"</span>" + p}
-        q = x.replace(/ /g, "%20")
-        content = content + '<a href=#Path#' + start + '#' + selected + '#' + q + '><div>' + p + '</div></a>'}}
-
-    else if (list_id > 4) {
-      var z = ini[6].split('|')
-      z.sort()
-      const y = z.filter(z => z.startsWith(id))
-      for (const x of y) {
-        p = x.substring(0, 14)
-        q = x.replace(/ /g, "%20")
-        content = content + '<a href=#Search#' + q + '##><div>' + p + '</div></a>'}}
-
-    panel.innerHTML = content}
-
-
-
 
 
   function timedEvents() {						// every ~84mS while media playing
@@ -161,6 +100,7 @@
     if (media.currentTime <= strt || yp < 0.1) {media.currentTime = strt +0.1}
     media.style.transition = '0.1s'
     media.playbackRate = 0.74						// play thumbnail video
+    start = media.currentTime
     scaleX = sk; scaleY=1
     seek.src = media.src
     media.play()}
@@ -185,7 +125,7 @@
     if (cap_list = x.pop().slice(0, -1).slice(2)) {cap.style.display='block'}
     skinny = 1*x.pop()
     newSkinny = skinny
-    if (e != 'Thumb') {start = x.pop().trim()} else {x.pop()}
+    if (!start && e != 'Thumb') {start = x.pop().trim()} else {x.pop()}
     type = x.pop().replaceAll('\'', '').trim()
     media.style.opacity = 0
     media.src = Next.src
@@ -205,8 +145,8 @@
       else {media.poster = ''; setTimeout(function() {media.poster = x},600)}}
     if (long_click) {start = 0}
     if (type == "video" || type == "audio") {media.currentTime = start - 0.6}
-if (type == "audio") {media.controls = true; sound == 'yes'; media.playbackRate=0.94; media.play()}
-    setTimeout(function() {media.style.opacity=1; if (type=='video') {media.play()}},120)
+    if (type == "audio") {media.controls = true; sound == 'yes'; media.playbackRate=0.94}
+    setTimeout(function() {media.style.opacity=1; if(type!='thumb') {media.play()}},120)
     mediaX = lastX; mediaY = lastY
     scaleX = scaleY
     if (scaleY > 1.4) {
@@ -221,18 +161,18 @@ if (type == "audio") {media.controls = true; sound == 'yes'; media.playbackRate=
     media.addEventListener('ended', media_ended)
     setTimeout(function(){block=0;wheel=0},400)
     mediaTimer = setInterval(timedEvents,84)
+    if (type == "audio") {media.volume = 1}
+    else {media.volume = 0}
     modal.style.opacity = 1
     modal.style.zIndex = 20
     seek.src = media.src
     media.muted = false
-    media.volume = 0
     looping = true
     block = 1}
 
 
   function close_media() {
     last_id = index
-    last_start = media.currentTime
     if (skinny && skinny != newSkinny) {
       messages = messages + '#Skinny#' + newSkinny + '#' + index + ',#'}
     if (cap.value != cap.innerHTML) {capnav.click()}
@@ -255,7 +195,7 @@ if (type == "audio") {media.controls = true; sound == 'yes'; media.playbackRate=
     type = ''}
 
 
-  function wheelEvents(e, ctr) {
+  function wheelEvents(e, id, el, sort) {
     e.preventDefault()
     e.stopPropagation()
     wheel += Math.abs(e.deltaY)
@@ -263,7 +203,20 @@ if (type == "audio") {media.controls = true; sound == 'yes'; media.playbackRate=
     var WheelDown = false
     var timer = 10
     if (e.deltaY > 0) {WheelDown = true}
-    if (ctr == 'Thumb' || ctr == 'Thumbs') {				// thumb width 
+    if (id == 'myFilter' || id == 'myPage') {				// page & search filter
+      timer = 40
+      var x = 0
+      var units = ''
+      if (WheelDown) {filter++} else if (filter>1) {filter--}
+      if (sort == 'Alpha') {if(filter < 26) {x = filter + 64}}
+      if (sort == 'Size')  {x = filter * 10; units = " Mb"}
+      if (sort == 'Date')  {x = filter; units = " months"}
+      if (sort == 'Duration') {x = filter; units = " minutes"}
+      el.href = '#' + sort + '#' + x + '##'
+      if (sort == 'Alpha') {x = String.fromCharCode(x)}
+      if (id == 'myPage') {el.href = '#Page#' + filter + '##'; el.innerHTML = 'Page ' +filter}
+      else {el.innerHTML = x + units}}
+    else if (id == 'Thumb1' || id == 'myThumbs') {			// thumb width 
       thumb = document.getElementById("thumb" + index)
       thumb_size = 1*thumb.style.width.slice(0,-2)
       if (WheelDown) {thumb_size += (thumb_size/40)}
@@ -272,25 +225,25 @@ if (type == "audio") {media.controls = true; sound == 'yes'; media.playbackRate=
       if (thumb_size < 4) {thumb_size = 4}
       thumb.style.width = thumb_size + "em"
       media.style.width = thumb_size + "em"
-      if (ctr == 'Thumbs') {
+      if (id == 'myThumbs') {
         thumbs.href = "#Thumbs#" + thumb_size +'##'
         for (i=1; i<41 ;i++) {
           if (el = document.getElementById("thumb" + i)) {
             el.style.width = thumb_size + 'em'
             document.getElementById("media" + i).style.width = thumb_size + 'em'}}}}
-    else if (ctr == 'Skinny') {						// media width
+    else if (id == 'myThin') {						// media width
       if (WheelDown) {scaleX -= 0.002}
       else {scaleX += 0.002}
       newSkinny = Math.round(1000*scaleX / scaleY)/1000
       stat.innerHTML = Math.round(newSkinny*100)
       if (newSkinny == 1) {timer = 146}
       media.style.transform = "scale(" + scaleX + "," + scaleY + ")"}
-    else if (ctr == 'Next') {						// media next
+    else if (id == 'myNext') {						// media next
       if (WheelDown) {playMedia('Next')}
       else {playMedia('Previous')}
       stat.innerHTML = index
       timer = 440}
-    else if (ctr == 'Speed' || xpos < 0.1) {				// speed
+    else if (id == 'mySpeed' || xpos < 0.1) {				// speed
       if (WheelDown) {rate = -0.01}
       else {rate = 0.01}
       if (type != 'image' && (media.playbackRate < 1 || rate < 0)) {
@@ -305,7 +258,7 @@ if (type == "audio") {media.controls = true; sound == 'yes'; media.playbackRate=
       if (WheelDown) {media.currentTime += interval}
       else  {media.currentTime -= interval}
       timer = 200}
-    else if (ctr == 'Magnify') {					// magnify
+    else if (id == 'myModal') {						// magnify
       if (WheelDown) {scaleX *= 1.015; scaleY *= 1.015; mediaY*=1.005}
       else {scaleX *= 0.98; scaleY *= 0.98; mediaY*=0.993}
       positionMedia()}
@@ -363,14 +316,14 @@ if (type == "audio") {media.controls = true; sound == 'yes'; media.playbackRate=
     var rect = media.getBoundingClientRect()
     var xp = (e.clientX - rect.left) / (media.offsetWidth * scaleX)
     var yp = (e.clientY - rect.top) / (media.offsetHeight * scaleY)
+    if (xp > 1 || yp < 0 || xp < 0 || yp > 1) {return}
     var row = Math.floor(yp * 6)
     var col = Math.ceil(xp * 6)
     var thumb = 5 * ((row * 6) + col)
     var offset = 0
     thumb = (thumb - 1) / 200
     if (media.duration > 60) {offset = 20}
-    start = offset - (thumb * offset) + media.duration * thumb
-    if (xp > 1 || yp < 0 || xp < 0 || yp > 1) {start = last_start}}
+    start = offset - (thumb * offset) + media.duration * thumb}
 
 
   function mouseDown(e) {
@@ -472,64 +425,55 @@ if (type == "audio") {media.controls = true; sound == 'yes'; media.playbackRate=
     media.style.transform = "scale(" + scaleX + "," + scaleY + ")"}
 
 
-
-
-  function spool2(e, id, input) {					// spool lists into top html panel
+  function spool(e, id, input, toggles, sort) {				// spool lists into top html panel
     e.preventDefault()
     e.stopPropagation()
-    var content = ''
-    const z = input.split('|')
-    var el = document.getElementById(id)
-    panel.style.direction = ''
-    if (id == "Fol" || id == "Fav" || id == "Sub" || id == "Music" || id == "Slides") {
+    wheel += Math.abs(e.deltaY)
+    if (e.deltaY && wheel < 200) {return}
+    if (alpha > 64 && e.deltaY < 0) {alpha--}
+    else if (alpha < 90 && e.deltaY > 0) {alpha++}
+    el = document.getElementById(id)
+    wheel = 0
+    var htm = ''
+    var p = ''
+    var z = ['Shuffle','Alpha','Duration','Date','Size','Ext','Reverse','Recurse','Images','Videos','Settings']
+    if (id && 'FolFavSubMusicSlides'.match(id)) {
+      z = input.split('|')
       for (x of z) {
         y = x.split("/")
         p = y.pop()
-        if (id == "Music" || id == "Slides") {
-          q = x.replace(p, "")}
-        else {p = y.pop()}		// folder name
-        p = p.replace(/.m3u/g, "")					// remove .m3u - (leave just name)
+        if (id == "Music" || id == "Slides") {q = x.replace(p, "")}
+        else {p = y.pop()}
+        p = p.replace(/.m3u/g, "")
         p = p.substring(0, 12)
         title = document.title.replace(/Inca - /g, "")
-        if (p == title) {p = "<span style=\"color:lightsalmon\"</span>" + p}
-        if (p == "New") {p = "<span style=\"color:red\"</span>" + p}
+        if (p == title) {p = "<span style='color:lightsalmon'</span>" + p}
+        if (p == "New") {p = "<span style='color:red'</span>" + p}
         q = x.replace(/ /g, "%20")
-        content = content + '<a href=#Path#' + start + '#' + selected + '#' + q + '><div>' + p + '</div></a>'}
-      panel.innerHTML = content}					// command # value # selected # address
-    else if ((id == "myInput" || id == "myPanel") && !selected) {	// alpha selected search terms
-      wheel += Math.abs(e.deltaY)
-      if (wheel < 140) {return}
-      wheel = 0
-      if (alpha > 65 && e.deltaY < 0) {alpha--}
-      else if (alpha < 90 && e.deltaY > 0) {alpha++}
-      var x = String.fromCharCode(alpha)
+        htm = htm + '<a href=#Path#' + start + '#' + selected + '#' + q + '><div>' + p + '</div></a>'}
+      panel.innerHTML = htm
+      x = selected.split(',')
+      for (var i = 0; i < x.length; i++) {document.getElementById('media' + x[i]).load()}}
+    else if (!input || alpha<65) {
+      for (const x of z) {
+        if (sort.match(x) || toggles.match(x)) {p = " style='color:lightsalmon'"} else {p=''}
+        htm = htm + '<a href=#'+x+'###' + p + '>' + x + '</a>'}
+      htm = htm + '<a href=#Join##'+selected+'#>Join</a><a href=#Rename#'+inputbox.value+'#'+selected+
+        '#>Rename</a><a href=#Delete##'+selected+'#>Delete</a><a href=#Select### onmouseup=\'selectAll()\'>Select</a>'
+      panel.innerHTML = htm}
+    else {
+      input = input.split('search_list=').pop()
+      input = input.split('search_folders=')
+      input = input[0]
+      var id = String.fromCharCode(alpha)
+      z = input.split('|')
       z.sort()
-      const y = z.filter(z => z.startsWith(x))
+      const y = z.filter(z => z.startsWith(id))
       for (const x of y) {
-        p = x.substring(0, 14)
+        p = x.substring(0, 15)
         q = x.replace(/ /g, "%20")
-        content = content + '<a href=#Search#' + q + '##><div>' + p + '</div></a>'}
-      id = x}
-    else {id = ''}
-    panel.innerHTML = "<span style=\'grid-row-start:1; grid-row-end:3; color:red; font-size:2.2em\'>" + id + "</span>" + content}
-
-
-  function getCoords(event, id, sort, link, current) {			// selection sliders
-    var x = ''
-    var of = ''
-    var units = ''
-    var el = document.getElementById(id)
-    var xpos = (event.clientX - el.offsetLeft - el.scrollLeft)/el.offsetWidth
-    if (sort == 'Alpha') {x = Math.floor(26.9 * xpos) + 64}
-    if (sort == 'Size') {x = Math.floor(100 * xpos) * 10;units = "Mb +"}
-    if (sort == 'Date') {x = Math.floor(37 * xpos);units = "months +"}
-    if (sort == 'Duration') {x = Math.floor(60 * xpos);units = "minutes +"}
-    if (id =='slider2') {x = Math.floor(sort*xpos)+1; units = sort; sort = "Page"; of = " of "}
-    if (current != "") {x = current}
-    el.href= link + '.htm#' + sort + '#' + x + '##'
-    if (sort =='Random' || sort =='ext' || sort =='Shuffle') {return}
-    if (sort == 'Alpha') {x = String.fromCharCode(x)}
-    el.innerHTML = x + of + units}
+        htm = htm + '<a href=#Search#' + q + '##>' + p + '</a>'}
+      panel.innerHTML = "<span style=\'grid-row-start:1;grid-row-end:3;color:red;font-size:2em\'>"+id+"</span>"+htm}}
 
 
   function openNav() {
@@ -540,12 +484,6 @@ if (type == "audio") {media.controls = true; sound == 'yes'; media.playbackRate=
     document.getElementById('myFav').href = '#Favorite#' + time + '#' + index + ',#'}
   function closeNav() {nav.style.opacity = 0.3}
   function loop() {if (looping) {looping = false} else {looping = true}}
-  function getLinks() {
-    document.getElementById("myJoin").href = '#Join##' + selected + '#'
-    document.getElementById("myRename").href = '#Rename#' + inputbox.value + '#' + selected + '#'
-    document.getElementById("myDelete").href = '#Delete##' + selected + '#'
-    var x = selected.split(',')						// release media 
-    for (var i = 0; i < x.length; i++) {document.getElementById('media' + x[i]).load()}}
   function selectAll() {for (i=1; i <= 600; i++) {select(i)}}
   function editCap() {cap.style.display='block'; cap.style.opacity=0.6; cap.innerHTML='New'; cap.focus()}
   function exitThumb(el) {if(!mouse_down) {over_thumb = false}; if (media != player){el.pause()}}
