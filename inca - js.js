@@ -11,7 +11,7 @@
 // fix sel div moving thumbs
 // no need pages
 // session save filter
-// new search should not remember page no.
+// use onload ini instead of through functions
 
 
   var modal = document.getElementById('myModal')			// media player window
@@ -34,6 +34,9 @@
   var block = 0								// block wheel input
   var last_id
   var start = 0								// video start time
+  var filter = 1
+  var sort = 'Alpha'
+  var page = 1
   var index = 1								// current media index (e.g. media14)
   var type = ''								// audio, video, image, thumb, document
   var cap_list = ''							// full caption text file
@@ -63,7 +66,6 @@
   var mediaX = window.innerWidth/2.6
   var lastX = mediaX
   var lastY = mediaY
-  var filter = 1
 
 
   document.addEventListener('auxclick', playMedia)			// middle click
@@ -139,7 +141,7 @@
       p = p.pop()
       p = p.replace('.jpg', '')
       if (!isNaN(p) && p.length > 2 && p.includes('.')) {
-        if (e != 'Thumb') {start = p}
+        if (!start && e != 'Thumb') {start = p}
         x = x.replace('%20' + p, '')}
       if (type == "thumb") {media.poster = x}
       else {media.poster = ''; setTimeout(function() {media.poster = x},600)}}
@@ -195,7 +197,7 @@
     type = ''}
 
 
-  function wheelEvents(e, id, el, sort) {
+  function wheelEvents(e, id, el) {
     e.preventDefault()
     e.stopPropagation()
     wheel += Math.abs(e.deltaY)
@@ -203,19 +205,22 @@
     var WheelDown = false
     var timer = 10
     if (e.deltaY > 0) {WheelDown = true}
-    if (id == 'myFilter' || id == 'myPage') {				// page & search filter
+    if (id == 'myPage') {						// page
       timer = 40
-      var x = 0
+      if (WheelDown) {page++} else if (page>1) {page--}
+      el.href = '#Page#' + page + '##'
+      el.innerHTML = 'Page ' + page}
+    if (id == 'myFilter') {						// search filter
+      timer = 40
       var units = ''
-      if (WheelDown) {filter++} else if (filter>1) {filter--}
-      if (sort == 'Alpha') {if(filter < 26) {x = filter + 64}}
+      var x = ''
+      if (WheelDown) {filter++} else if (filter) {filter--}
+      if (sort == 'Alpha') {if(filter < 26) {x = String.fromCharCode(filter + 64)}}
       if (sort == 'Size')  {x = filter * 10; units = " Mb"}
       if (sort == 'Date')  {x = filter; units = " months"}
       if (sort == 'Duration') {x = filter; units = " minutes"}
-      el.href = '#' + sort + '#' + x + '##'
-      if (sort == 'Alpha') {x = String.fromCharCode(x)}
-      if (id == 'myPage') {el.href = '#Page#' + filter + '##'; el.innerHTML = 'Page ' +filter}
-      else {el.innerHTML = x + units}}
+      el.href = '#Filter#' + filter + '##'
+      el.innerHTML = x + units}
     else if (id == 'Thumb1' || id == 'myThumbs') {			// thumb width 
       thumb = document.getElementById("thumb" + index)
       thumb_size = 1*thumb.style.width.slice(0,-2)
@@ -425,9 +430,17 @@
     media.style.transform = "scale(" + scaleX + "," + scaleY + ")"}
 
 
-  function spool(e, id, input, toggles, sort) {				// spool lists into top html panel
+  function spool(e, id, input, toggles, st, ft, pg) {		// spool lists into top html panel
     e.preventDefault()
     e.stopPropagation()
+    filter = ft
+    page = pg
+    sort = st
+    document.getElementById('myPage').innerHTML = 'Page ' + page
+    el = document.getElementById('myFilter')
+    if (!filter) {el.innerHTML = 'All'}
+    else if (sort == 'Alpha') {el.innerHTML = String.fromCharCode(filter + 64)}
+    else {el.innerHTML = filter}
     wheel += Math.abs(e.deltaY)
     if (e.deltaY && wheel < 200) {return}
     if (alpha > 64 && e.deltaY < 0) {alpha--}
@@ -439,7 +452,7 @@
     var z = ['Shuffle','Alpha','Duration','Date','Size','Ext','Reverse','Recurse','Images','Videos','Settings']
     if (id && 'FolFavSubMusicSlides'.match(id)) {
       z = input.split('|')
-      for (x of z) {
+      for (x of z) {						// folders and playlists
         y = x.split("/")
         p = y.pop()
         if (id == "Music" || id == "Slides") {q = x.replace(p, "")}
@@ -449,22 +462,19 @@
         title = document.title.replace(/Inca - /g, "")
         if (p == title) {p = "<span style='color:lightsalmon'</span>" + p}
         if (p == "New") {p = "<span style='color:red'</span>" + p}
-        q = x.replace(/ /g, "%20")
-        htm = htm + '<a href=#Path#' + start + '#' + selected + '#' + q + '><div>' + p + '</div></a>'}
+        var path = x.replace(/ /g, "%20")
+        htm = htm + '<a href=#Path##' + selected + '#' + path + '>' + p + '</a>'}
       panel.innerHTML = htm
       x = selected.split(',')
       for (var i = 0; i < x.length; i++) {document.getElementById('media' + x[i]).load()}}
-    else if (!input || alpha<65) {
+    else if (!input || alpha<65) {				// menu list
       for (const x of z) {
         if (sort.match(x) || toggles.match(x)) {p = " style='color:lightsalmon'"} else {p=''}
         htm = htm + '<a href=#'+x+'###' + p + '>' + x + '</a>'}
       htm = htm + '<a href=#Join##'+selected+'#>Join</a><a href=#Rename#'+inputbox.value+'#'+selected+
         '#>Rename</a><a href=#Delete##'+selected+'#>Delete</a><a href=#Select### onmouseup=\'selectAll()\'>Select</a>'
       panel.innerHTML = htm}
-    else {
-      input = input.split('search_list=').pop()
-      input = input.split('search_folders=')
-      input = input[0]
+    else {							// alpha search
       var id = String.fromCharCode(alpha)
       z = input.split('|')
       z.sort()
