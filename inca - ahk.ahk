@@ -50,8 +50,8 @@
         Global inca_tab			; inca tab exists
         Global click			; mouse click type
         Global timer			; click down timer
-        Global view := 14		; thumb view (em size)
-        Global last_view := 14
+        Global view := 9		; thumb view (em size)
+        Global last_view := 9
         Global vol_ref := 2
         Global wheel
         Global inside_browser		; clicked inside browser window
@@ -311,13 +311,10 @@ caption := x
         stringlower, thumb, thumb
  poster = poster="file:///%thumb%"
 
-; if (type == "video")
-;   IfNotExist, %inca%\cache\thumbs\%media%.jpg
-;     poster = 
      start := Round(start,2)
         if !view							; list view
             {
-            entry = <div><table><tr><td id="thumb%j%" style="position:absolute; margin-left:3.5em; width:10em" onwheel="wheelEvents(event, 'Thumb1', this)"><a href="#Media#%j%##" id="sel%j%"><video id="media%j%" class='thumblist' style="%transform%" onmouseover="overThumb(event, %j%, %start%, %skinny%)" onmouseout='exitThumb(this)' onclick="playMedia('Click', '%type%', %start%, %skinny%, '%cap%', %j%, event)" %poster% src="file:///%src%" type="video/mp4" preload='none' muted></video></a></tr></table><table style="table-layout:fixed; width:100`%; font-size:0.9em"><tr><td style="width:4em; text-align:center"><span style="border-radius:9px; color:#777777">%sort_name%</span></td><td style="width:4em; text-align:center">%dur%</td><td style="width:3em; text-align:center">%size%</td><td style="width:4em; text-align:center">%ext%</td>%fold%<td><div id="title%j%" onclick="select(%j%)" style="width:80`%; border-radius:1em; padding-left:0.5em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis">%media%</td></tr></table></div>`r`n`r`n
+            entry = <div><table><tr><td id="thumb%j%" style="position:absolute; margin-left:3.5em" onwheel="wheelEvents(event, 'Thumb1', this)"><a href="#Media#%j%##" id="sel%j%"><video id="media%j%" class='thumblist' style="%transform%" onmouseover="overThumb(event, %j%, %start%, %skinny%)" onmouseout='exitThumb(this)' onclick="playMedia('Click', '%type%', %start%, %skinny%, '%cap%', %j%, event)" %poster% src="file:///%src%" type="video/mp4" preload='none' muted></video></a></tr></table><table style="table-layout:fixed; width:100`%; font-size:0.9em"><tr><td style="width:4em; text-align:center"><span style="border-radius:9px; color:#777777">%sort_name%</span></td><td style="width:4em; text-align:center">%dur%</td><td style="width:3em; text-align:center">%size%</td><td style="width:4em; text-align:center">%ext%</td>%fold%<td><div id="title%j%" onclick="select(%j%)" style="width:80`%; border-radius:1em; padding-left:0.5em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis">%media%</td></tr></table></div>`r`n`r`n
             }
         else
             {
@@ -358,17 +355,12 @@ caption := x
         max_height := Floor(A_ScreenHeight * 0.34)			; max image height in web page
         menu_item =
         list_size := 0
-        previous := 1
-        if (page > 1)
-            previous := page - 1
-        next := page + 1
         type = video							; prime for list parsing
         page_w := Setting("Page Width")
         size := Setting("Page Size")
         if search_term
           size = 2000
         page_media = /							; cannot use | as seperator because this_search uses |
-
         count = 1
         Loop, Parse, list, `n, `r 					; split list into smaller web pages
             {
@@ -391,13 +383,13 @@ caption := x
         pages := ceil(list_size/size)
         header_html = <!--`r`n%view%>%last_view%>%page%>%filter%>%sort%>%toggles%>%this_search%>%search_term%>%path%>%folder%>%playlist%>%last_media%>`r`n%page_media%`r`n-->`r`n<!doctype html>`r`n<html>`r`n<head>`r`n<meta charset="UTF-8">`r`n<title>Inca - %title%</title>`r`n<meta name="viewport" content="width=device-width, initial-scale=1">`r`n<link rel="icon" type="image/x-icon" href="file:///%inca%\apps\icons\inca.ico">`r`n</head>`r`n
 
-        panel_html = <body onload="spool(event, '', '', '%toggles%', '%sort%', %filter%, %page%)" style='background:#15110a; cursor:default'>`r`n<div class='container' style="width:%page_w%`%; margin-top:7em">`r`n
+        panel_html = <body onload="spool(event, '', '%features%', '%toggles%', '%sort%', %filter%, %page%, %pages%, %view%)" style='background:#15110a; cursor:default'>`r`n<div class='container' style="width:%page_w%`%; margin-top:10em">`r`n
 
-<div style='display:flex; width:100`%'><div><a href="%title%.htm#Page" id='myPage' class='slider' onwheel='wheelEvents(event, id, this)' ></a>`r`n<a id='myFilter' class='slider' onwheel='wheelEvents(event, id, this)'></a>`r`n<a href="#Thumbs#%view%" id='myThumbs' onwheel="wheelEvents(event, id, this)" onmouseover='media.style.opacity=1' onmouseout='media.style.opacity=null' class='slider'>Thumbs</a></div>`r`n`r`n<div class='panel' id='myPanel' onwheel="spool(event, id, '%search_list%', '%toggles%', '%sort%', %filter%, %page%)"></div></div>`r`n`r`n
+<div class='panel' id='myPanel' onwheel="wheelEvents(event, id, this, '%search_list%')"></div>`r`n`r`n
 
-<div style='display:flex'>`r`n<a class='searchbox' id='Sub' onmouseover="spool(event, id, '%subfolders%', '%toggles%', '%sort%', %filter%, %page%)">Sub</a>`r`n<a class='searchbox' id='Fol' onmouseover="spool(event, id, '%fol%', '%toggles%', '%sort%', %filter%, %page%)">Fol</a>`r`n<a class='searchbox' id='Fav' onmouseover="spool(event, id, '%fav%', '%toggles%', '%sort%', %filter%, %page%)">Fav</a>`r`n<a href="file:///%inca%/cache/html/new.htm" class='searchbox' id='Slides' onmouseover="spool(event, id, '%playlists%', '%toggles%', '%sort%', %filter%, %page%)">Slides</a>`r`n<a id='Music' class='searchbox' onmouseover="spool(event, id, '%music%', '%toggles%', '%sort%', %filter%, %page%)">Music</a>`r`n</div>`r`n`r`n
+<div style='display:flex'>`r`n<a class='searchbox' onmouseover="spool(event, '', '')">Menu</a>`r`n<a class='searchbox' id='Fol' onmouseover="spool(event, id, '%fol%')">Fol</a>`r`n<a class='searchbox' id='Fav' onmouseover="spool(event, id, '%fav%')">Fav</a>`r`n<a href="file:///%inca%/cache/html/new.htm" class='searchbox' id='Slides' onmouseover="spool(event, id, '%playlists%')">Slides</a>`r`n<a id='Music' class='searchbox' onmouseover="spool(event, id, '%music%')">Music</a>`r`n<a class='searchbox' id='Sub' onmouseover="spool(event, id, '%subfolders%')">Sub</a>`r`n</div>`r`n`r`n
 
-<input class='searchbox' onmouseover="spool(event, '', '', '%toggles%', '%sort%', %filter%, %page%)" id='myInput' type='search' value='%search_term%' style='margin-right:0; width:60`%'>`r`n<a href='#Searchbox###' class='searchbox'><a>+</a></a>`r`n
+<input class='searchbox' onmouseover="spool(event, '', '%features%', '%toggles%', '%sort%', %filter%, %page%, %pages%, %view%)" id='myInput' type='search' value='%search_term%' style='margin-right:0; width:50`%'>`r`n<a href='#Searchbox###' class='searchbox'><a>+</a></a>`r`n
 
 
         title_html = `r`n`r`n<div><a href="#Orphan#%tab_name%" style="font-size:1.8em; color:red; margin-left:1em">%title% &nbsp;&nbsp;<span style="font-size:0.7em;">%list_size%</span></a></div>`r`n`r`n<div id="myModal" class="modal" onwheel="wheelEvents(event, id, this)">`r`n<div><video id="myPlayer" class="player" type="video/mp4"></video><textarea id="myCap" class="caption" onmouseenter="over_cap=true" onmouseleave="over_cap=false"></textarea><span id="mySeekBar" class="seekbar"></span><span><video id='mySeek' class='seek' type="video/mp4"></video></span><span id="mySidenav" onmouseover="openNav()" onmouseleave="closeNav()" class="sidenav"><a id="mySpeed" onmouseover='stat.innerHTML=Math.round(media.playbackRate*100)' onwheel="wheelEvents(event, id, this)">Speed</a><a id="myNext" onmouseover='stat.innerHTML=index' onwheel="wheelEvents(event, id, this)">Next</a><a id="myThin" onmouseover='stat.innerHTML=Math.round(newSkinny*100)' onwheel="wheelEvents(event, id, this)">Thin</a><a onclick="loop()">Loop</a><a onclick="toggleMute()">Mute</a><a id="myFav">Fav</a><a id="myCapnav" onclick="editCap()">Cap</a><a onclick="cue = Math.round(media.currentTime*100)/100">Cue</a><a id="myMp4">mp4</a><a id="myMp3">mp3</a><a id="myStatus" style='font-size:5em; padding:0'></a></span></div></div>`r`n`r`n
@@ -840,7 +832,6 @@ caption := x
                 if (StrLen(toggles) < 4)
                     toggles =
                 }
-            return 1
             }
         }
 

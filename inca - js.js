@@ -6,12 +6,8 @@
 // make view change css change only not reload tab
 // default speed
 // thumb move in playlists triggers filemove
-// lower case alpha???
 // key shortcuts fade on mouseover bottom
 // fix sel div moving thumbs
-// no need pages
-// session save filter
-// use onload ini instead of through functions
 
 
   var modal = document.getElementById('myModal')			// media player window
@@ -23,7 +19,6 @@
   var speed = document.getElementById('mySpeed')
   var thin = document.getElementById('myThin')				// media width
   var next = document.getElementById('myNext')
-  var thumbs = document.getElementById('myThumbs')			// thumbnail size
   var cap = document.getElementById('myCap')				// caption textarea element
   var capnav = document.getElementById('myCapnav')			// caption save button
   var seekbar = document.getElementById('mySeekBar')
@@ -34,9 +29,12 @@
   var block = 0								// block wheel input
   var last_id
   var start = 0								// video start time
-  var filter = 1
+  var filter = 0							// eg 30 minutes, 2 months, 'A'
+  var toggles = ''							// eg reverse, recurse
   var sort = 'Alpha'
+  var thumb_size = 9
   var page = 1
+  var pages = 1
   var index = 1								// current media index (e.g. media14)
   var type = ''								// audio, video, image, thumb, document
   var cap_list = ''							// full caption text file
@@ -51,7 +49,6 @@
   var seek_active							// currently seeking video
   var selected = ''							// list of selected media in page
   var messages = ''							// from address bar to inca.exe
-  var alpha = 64							// alpha search start at 'A'
   var cue = 0
   var looping = true
   var scaleX = 1
@@ -197,74 +194,88 @@
     type = ''}
 
 
-  function wheelEvents(e, id, el) {
+  function wheelEvents(e, id, el, input) {
     e.preventDefault()
     e.stopPropagation()
     wheel += Math.abs(e.deltaY)
     if (block || wheel < 40) {return}
-    var WheelDown = false
+    var wheelDown = false
     var timer = 10
-    if (e.deltaY > 0) {WheelDown = true}
-    if (id == 'myPage') {						// page
-      timer = 40
-      if (WheelDown) {page++} else if (page>1) {page--}
+    if (e.deltaY > 0) {wheelDown = true}
+    if (wheelDown) {filter++}
+    else if (filter) {filter--}
+    if (id == 'myPanel') {						// alpha search
+      timer = 60
+      id = String.fromCharCode(filter + 64)
+      var htm = ''
+      var z = input.split('|').sort()
+      const y = z.filter(z => z.toUpperCase().startsWith(id))
+      for (x of y) {
+        p = x.substring(0, 15)
+        q = x.replace(/ /g, "%20")
+        htm = htm + '<a href=#Search#' + q + '##>' + p + '</a>'}
+      if (!filter) { spool(e, '', '')}					// show Menu
+      else {panel.innerHTML = "<span style=\'grid-row-start:1;grid-row-end:3;color:red;font-size:2em\'>"+id+"</span>"+htm}}
+    else if (id == 'myPage') {						// page
+      if (wheelDown && page<pages) {page++} else if (page>1) {page--}
       el.href = '#Page#' + page + '##'
-      el.innerHTML = 'Page ' + page}
-    if (id == 'myFilter') {						// search filter
-      timer = 40
+      el.innerHTML = 'Page '+page+' of '+pages}
+    else if (id == 'myFilter') {					// search filter
+      timer = 50
       var units = ''
-      var x = ''
-      if (WheelDown) {filter++} else if (filter) {filter--}
+      var x = 'All'
       if (sort == 'Alpha') {if(filter < 26) {x = String.fromCharCode(filter + 64)}}
       if (sort == 'Size')  {x = filter * 10; units = " Mb"}
       if (sort == 'Date')  {x = filter; units = " months"}
       if (sort == 'Duration') {x = filter; units = " minutes"}
       el.href = '#Filter#' + filter + '##'
       el.innerHTML = x + units}
-    else if (id == 'Thumb1' || id == 'myThumbs') {			// thumb width 
+    else if (id == 'Thumb1' || id == 'myThumbs') {			// thumb width
+      timer = 10
+      var thumbs = document.getElementById('myThumbs')			// thumbnail size
       thumb = document.getElementById("thumb" + index)
       thumb_size = 1*thumb.style.width.slice(0,-2)
-      if (WheelDown) {thumb_size += (thumb_size/40)}
-      else if (thumb_size > 3) {thumb_size -= (thumb_size/40)}
+      if (wheelDown) {thumb_size += (thumb_size/40)}
+      else {thumb_size -= (thumb_size/40)}
       thumb_size = Math.round(10*thumb_size)/10
       if (thumb_size < 4) {thumb_size = 4}
       thumb.style.width = thumb_size + "em"
       media.style.width = thumb_size + "em"
       if (id == 'myThumbs') {
-        thumbs.href = "#Thumbs#" + thumb_size +'##'
+        thumbs.href = '#Thumbs#' + thumb_size +'##'
+        thumbs.innerHTML = 'Thumbs ' + Math.round(thumb_size)
         for (i=1; i<41 ;i++) {
           if (el = document.getElementById("thumb" + i)) {
             el.style.width = thumb_size + 'em'
             document.getElementById("media" + i).style.width = thumb_size + 'em'}}}}
     else if (id == 'myThin') {						// media width
-      if (WheelDown) {scaleX -= 0.002}
+      if (wheelDown) {scaleX -= 0.002}
       else {scaleX += 0.002}
       newSkinny = Math.round(1000*scaleX / scaleY)/1000
       stat.innerHTML = Math.round(newSkinny*100)
       if (newSkinny == 1) {timer = 146}
       media.style.transform = "scale(" + scaleX + "," + scaleY + ")"}
     else if (id == 'myNext') {						// media next
-      if (WheelDown) {playMedia('Next')}
+      if (wheelDown) {playMedia('Next')}
       else {playMedia('Previous')}
       stat.innerHTML = index
       timer = 440}
     else if (id == 'mySpeed' || xpos < 0.1) {				// speed
-      if (WheelDown) {rate = -0.01}
+      if (wheelDown) {rate = -0.01}
       else {rate = 0.01}
       if (type != 'image' && (media.playbackRate < 1 || rate < 0)) {
         media.playbackRate += rate
-        stat.innerHTML = Math.round(media.playbackRate *100)}
-      timer = 40}
+        stat.innerHTML = Math.round(media.playbackRate *100)}}
     else if (ypos > 0.75 && type != 'image' && type != 'thumb') {	// seek
       if (media.paused == true) {interval = 5}
       else if (media.duration < 91) {interval = 30}
       else {interval = 300}
       interval *= Math.abs(ypos - 0.75)
-      if (WheelDown) {media.currentTime += interval}
+      if (wheelDown) {media.currentTime += interval}
       else  {media.currentTime -= interval}
       timer = 200}
     else if (id == 'myModal') {						// magnify
-      if (WheelDown) {scaleX *= 1.015; scaleY *= 1.015; mediaY*=1.005}
+      if (wheelDown) {scaleX *= 1.015; scaleY *= 1.015; mediaY*=1.005}
       else {scaleX *= 0.98; scaleY *= 0.98; mediaY*=0.993}
       positionMedia()}
     setTimeout(function() {block=0;wheel=0},timer)
@@ -430,29 +441,12 @@
     media.style.transform = "scale(" + scaleX + "," + scaleY + ")"}
 
 
-  function spool(e, id, input, toggles, st, ft, pg) {		// spool lists into top html panel
-    e.preventDefault()
-    e.stopPropagation()
-    filter = ft
-    page = pg
-    sort = st
-    document.getElementById('myPage').innerHTML = 'Page ' + page
-    el = document.getElementById('myFilter')
-    if (!filter) {el.innerHTML = 'All'}
-    else if (sort == 'Alpha') {el.innerHTML = String.fromCharCode(filter + 64)}
-    else {el.innerHTML = filter}
-    wheel += Math.abs(e.deltaY)
-    if (e.deltaY && wheel < 200) {return}
-    if (alpha > 64 && e.deltaY < 0) {alpha--}
-    else if (alpha < 90 && e.deltaY > 0) {alpha++}
-    el = document.getElementById(id)
-    wheel = 0
+  function spool(e, id, input, to, so, fi, pa, ps, view) {			// onload - spool lists into top htm panel
     var htm = ''
     var p = ''
-    var z = ['Shuffle','Alpha','Duration','Date','Size','Ext','Reverse','Recurse','Images','Videos','Settings']
-    if (id && 'FolFavSubMusicSlides'.match(id)) {
-      z = input.split('|')
-      for (x of z) {						// folders and playlists
+    if (id && 'FolFavSubMusicSlides'.match(id)) {			// folders and playlists
+      var z = input.split('|')
+      for (x of z) {
         y = x.split("/")
         p = y.pop()
         if (id == "Music" || id == "Slides") {q = x.replace(p, "")}
@@ -467,23 +461,14 @@
       panel.innerHTML = htm
       x = selected.split(',')
       for (var i = 0; i < x.length; i++) {document.getElementById('media' + x[i]).load()}}
-    else if (!input || alpha<65) {				// menu list
-      for (const x of z) {
+    else if (!id) {							// menu
+      if (pa) {toggles = to; sort = so; filter = fi; page = pa; pages = ps; thumb_size = view}
+      htm = '<a href=#Settings###>Settings</a><a id="myFilter" onwheel="wheelEvents(event, id, this)">All</a><a href="%title%.htm#Page" id="myPage" onwheel="wheelEvents(event, id, this)">Page '+page+' of '+pages+'</a><a href=#Thumbs#'+thumb_size+'## id="myThumbs" onwheel="wheelEvents(event, id, this)" onmouseover="media.style.opacity=1" onmouseout="media.style.opacity=null">Thumbs '+Math.round(thumb_size)+'</a><a href=#Join##'+selected+'#>Join</a><a href=#Rename#'+inputbox.value+'#'+selected+'#>Rename</a><a href=#Delete##'+selected+'#>Delete</a><a href=#Select### onmouseup="selectAll()">Select</a>'
+      var z = ['Shuffle','Alpha','Duration','Date','Size','Ext','Reverse','Recurse','Images','Videos']
+      for (x of z) {
         if (sort.match(x) || toggles.match(x)) {p = " style='color:lightsalmon'"} else {p=''}
         htm = htm + '<a href=#'+x+'###' + p + '>' + x + '</a>'}
-      htm = htm + '<a href=#Join##'+selected+'#>Join</a><a href=#Rename#'+inputbox.value+'#'+selected+
-        '#>Rename</a><a href=#Delete##'+selected+'#>Delete</a><a href=#Select### onmouseup=\'selectAll()\'>Select</a>'
-      panel.innerHTML = htm}
-    else {							// alpha search
-      var id = String.fromCharCode(alpha)
-      z = input.split('|')
-      z.sort()
-      const y = z.filter(z => z.startsWith(id))
-      for (const x of y) {
-        p = x.substring(0, 15)
-        q = x.replace(/ /g, "%20")
-        htm = htm + '<a href=#Search#' + q + '##>' + p + '</a>'}
-      panel.innerHTML = "<span style=\'grid-row-start:1;grid-row-end:3;color:red;font-size:2em\'>"+id+"</span>"+htm}}
+      panel.innerHTML = htm}}
 
 
   function openNav() {

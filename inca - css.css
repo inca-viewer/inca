@@ -3,7 +3,7 @@
 
 .thumblist {
   opacity:0; 
-  width:10em;
+  width:9em;
   border-radius:3`%}
 
 .thumblist:hover {opacity:1}
@@ -106,24 +106,10 @@ table {
   table-layout:fixed;
   border-collapse: collapse}
 
-.slider {
-  display:block;
-  width:6em;
-  height:1.4em;
-  margin:0.6em;
-  margin-left:0;
-  color:#826858;
-  border-radius:1em;
-  font-size:0.9em;
-  transition:color 1.4s;
-  background-color:#1b1814;
-  text-align:center}
-
 .searchbox {
   text-overflow:ellipsis;
   overflow:hidden;
-  margin:0.6em;
-  margin-left:0;
+  margin:0.5em;
   border-radius:1em;
   text-align:center;
   background-color:#1b1814;
@@ -134,19 +120,19 @@ table {
   outline:none;
   transition:color 1.4s;
   white-space:nowrap;
-  width:9%}
+  width:8%}
 
 .panel {
   display:grid;
   grid-template-columns: auto auto auto auto auto auto auto;
   grid-template-rows: auto auto auto auto;
   grid-auto-flow: column;
+  padding:0.5em;
+  margin-left:1.5em;
   color:#826858;
   overflow:hidden;
   overflow-wrap:break-word;
   transition:color 1.4s;
-  padding:0.3em;
-  padding-left:1.4em;
   font-size:0.85em;
   height:6em;
   width:60%;
