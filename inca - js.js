@@ -2,13 +2,10 @@
 
 // compliance firefox, brave, edge and opera
 // have buttons on modal for next caption/favorite cut points
-// firefox cannot position move thumbs when over thumb
 // key shortcuts fade on mouseover bottom
-// fix sel div moving thumbs
-// list layout gaps
-// loop??
+// mpv from thumbsheet
 
-// thumb size tiny
+
 
   var modal = document.getElementById('myModal')			// media player window
   var player = document.getElementById('myPlayer')
@@ -62,8 +59,6 @@
   var media = document.getElementById('media1')				// current media element
   var mediaY = window.innerHeight/2					// centre of media player
   var mediaX = window.innerWidth/2.6
-  var lastX = mediaX
-  var lastY = mediaY
 
 
   document.addEventListener('auxclick', playMedia)			// middle click
@@ -147,9 +142,10 @@
     if (type == "video" || type == "audio") {media.currentTime = start - 0.6}
     if (type == "audio") {media.controls = true; sound == 'yes'}
     setTimeout(function() {media.style.opacity=1; if(type!='thumb') {media.play()}},120)
-    mediaX = lastX; mediaY = lastY
+    if (mediaX > window.innerWidth*0.7 || mediaX < 0) {mediaX = window.innerWidth/2.6}
+    if (mediaY > window.innerHeight*0.7 || mediaY < 0) {mediaY = window.innerHeight/2}
     scaleX = scaleY
-    if (scaleY > 1.4) {
+    if (scaleY > 2) {
       scaleX = 1.4; scaleY = 1.4
       mediaY = window.innerHeight/2}
     scaleX *= skinny
@@ -160,14 +156,16 @@
     media.style.maxHeight = window.innerHeight * 0.7 + "px"
     media.addEventListener('ended', media_ended)
     setTimeout(function(){block=0;wheel=0},400)
+    stat.innerHTML = Math.round(skinny*100)
     mediaTimer = setInterval(timedEvents,84)
     if (type == "audio") {media.volume = 1}
     else {media.volume = 0}
     modal.style.opacity = 1
-    modal.style.zIndex = 20
+    modal.style.zIndex = 40
     media.playbackRate = rate
     seek.src = media.src
     media.muted = false
+    positionMedia()
     looping = true
     block = 1}
 
@@ -190,8 +188,6 @@
     media.poster = ''
     media.src =''
     cap_time = 0
-    lastX = mediaX
-    lastY = mediaY
     closeNav()
     type = ''}
 
@@ -238,19 +234,18 @@
       var thumbs = document.getElementById('Thumbs')			// from top panel el
       thumb = document.getElementById("thumb" + index)
       thumb_size = 1*media.style.width.slice(0,-2)
-      if (wheelDown) {thumb_size += (thumb_size/40)}
-      else {thumb_size -= (thumb_size/40)}
+      if (wheelDown) {thumb_size += thumb_size/40}
+      else {thumb_size -= thumb_size/40}
       thumb_size = Math.round(10*thumb_size)/10
       if (thumb_size < 4) {thumb_size = 4}
-      thumb.style.width = thumb_size + "em"
-      media.style.width = thumb_size + "em"
       if (id == 'Thumbs') {
         thumbs.href = '#Thumbs#' + thumb_size +'##'
         thumbs.innerHTML = 'Thumbs ' + Math.round(thumb_size)
         for (i=1; i<41 ;i++) {
           if (el = document.getElementById("thumb" + i)) {
             el.style.width = thumb_size + 'em'
-            document.getElementById("media" + i).style.width = thumb_size + 'em'}}}}
+            document.getElementById("media" + i).style.width = thumb_size + 'em'}}}
+      else {media.style.width = thumb_size + "em"}}
     else if (id == 'myThin') {						// media width
       if (wheelDown) {scaleX -= 0.002}
       else {scaleX += 0.002}
@@ -301,7 +296,7 @@
       if (x + y > 5) {
         if (!gesture && !type && over_thumb) {				// thumb moved in htm tab
           media.style.position = 'fixed'
-          media.style.zIndex = Zindex += 1}
+          media.style.zIndex = Zindex+=1}
         gesture = true
         mediaY += e.clientY - Yref
         mediaX += e.clientX - Xref
@@ -442,6 +437,7 @@
   function spool(e, id, input, to, so, fi, pa, ps, ts, rt) {			// onload - spool lists into top htm panel
     var htm = ''
     var p = ''
+    wheel = 0
     if (!id) {									// menu
       if (pa) {toggles = to; sort = so; filter = fi; page = pa; pages = ps; thumb_size = ts; rate = rt}
       var z = ['Shuffle','Alpha','Duration','Date','Size','Ext','Reverse','Recurse','Images','Videos']

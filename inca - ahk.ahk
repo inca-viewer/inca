@@ -13,6 +13,8 @@
 	SetTitleMatchMode, 2
 	GroupAdd, Browsers, Google Chrome
 	GroupAdd, Browsers, Mozilla Firefox
+	GroupAdd, Browsers, ahk_exe brave.exe
+	GroupAdd, Browsers, ahk_exe msedge.exe
 	#SingleInstance force		; one program instance only
 	#MaxHotkeysPerInterval 999	; allow fast spinning wheel
 	SetWorkingDir, %A_ScriptDir%	; consistent start directory
@@ -332,7 +334,7 @@ caption := x
                         str2 = %str2%%str1%`r`n
                     else break
                     }
-	        entry = <a href="#Media#%j%"><div style="display:inline-block; width:88`%; color:#555351; transition:color 1.4s; margin-left:8`%; text-align:center; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; %highlight%;">%sort_name% &nbsp;&nbsp;%media%</div></a><textarea rows=%rows% style="display:inline-block; overflow:hidden; margin-left:8`%; width:88`%; background-color:inherit; color:#826858; font-size:1.2em; font-family:inherit; border:none; outline:none;">%str2%</textarea>`r`n`r`n
+	        entry = <a href="#Media#%j%##"><div style="display:inline-block; width:88`%; color:#555351; transition:color 1.4s; margin-left:8`%; text-align:center; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; %highlight%;">%sort_name% &nbsp;&nbsp;%media%</div></a><textarea rows=%rows% style="display:inline-block; overflow:hidden; margin-left:8`%; width:88`%; background-color:inherit; color:#826858; font-size:1.2em; font-family:inherit; border:none; outline:none;">%str2%</textarea>`r`n`r`n
                 }
             else entry = <div id="thumb%j%" onclick="select(%j%)" class="thumbs" style="width:%view%em; margin-right:3em"><div id="title%j%" style="color:#555351; border-radius:9px; text-align:center; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; font-size:0.85em; margin:auto; width:80`%">%media%</div><a href="#Media#%j%##" id="sel%j%"><video %controls% class="thumbs" id="media%j%" style="position:inherit; %transform% width:%view%em" %select%" onwheel="wheelEvents(event, 'Thumb1', this)" onmouseover="overThumb(event, %j%, %start%, %skinny%)" onmouseout='exitThumb(this)' onclick="playMedia('Click', '%type%', %start%, %skinny%, '%cap%', %j%, event)" src="file:///%src%" %poster% preload='none' muted type="video/mp4"></video></a>%caption%</div>`r`n`r`n
             }
@@ -380,21 +382,13 @@ caption := x
                     page_media = %page_media%%A_Index%/			; create array of media pointers with > seperator
                     }
             }
-
-
         pages := ceil(list_size/size)
         header_html = <!--`r`n%view%>%last_view%>%page%>%filter%>%sort%>%toggles%>%this_search%>%search_term%>%path%>%folder%>%playlist%>%last_media%>`r`n%page_media%`r`n-->`r`n<!doctype html>`r`n<html>`r`n<head>`r`n<meta charset="UTF-8">`r`n<title>Inca - %title%</title>`r`n<meta name="viewport" content="width=device-width, initial-scale=1">`r`n<link rel="icon" type="image/x-icon" href="file:///%inca%\apps\icons\inca.ico">`r`n</head>`r`n
 
-        panel_html = <body class='container' onload="spool(event, '', '', '%toggles%', '%sort%', %filter%, %page%, %pages%, %view%, %speed%)">`r`n<div style="width:%page_w%`%; margin:auto">`r`n
-
-<div style='display:flex'>`r`n<a class='searchbox' id='Sub' onmouseover="spool(event, id, '%subfolders%')">Sub</a>`r`n<a class='searchbox' id='Fol' onmouseover="spool(event, id, '%fol%')">Fol</a>`r`n<a class='searchbox' id='Fav' onmouseover="spool(event, id, '%fav%')">Fav</a>`r`n<a href="file:///%inca%/cache/html/new.htm" class='searchbox' id='Slides' onmouseover="spool(event, id, '%slides%')">Slides</a>`r`n<a id='Music' class='searchbox' onmouseover="spool(event, id, '%music%')">Music</a>`r`n</div>`r`n`r`n
-
-<div class='panel' id='myPanel' onwheel="wheelEvents(event, id, this, '%search_list%')"></div>`r`n`r`n
-
-<input class='searchbox' onmouseover="spool(event, '', '%features%', '%toggles%', '%sort%', %filter%, %page%, %pages%, %view%, %speed%)" id='myInput' type='search' value='%search_term%' style='margin-right:0; width:50`%'>`r`n<a href='#Searchbox###' class='searchbox'><a>+</a></a>`r`n
-
+        panel_html = <body class='container' onload="spool(event, '', '', '%toggles%', '%sort%', %filter%, %page%, %pages%, %view%, %speed%)">`r`n<div style="width:%page_w%`%; margin:auto">`r`n<div style='display:flex'>`r`n<a class='searchbox' style='width:5`%' id='Sub' onmouseover="spool(event, id, '%subfolders%')">Sub</a>`r`n<a class='searchbox' id='Fol' onmouseover="spool(event, id, '%fol%')">Fol</a>`r`n<a class='searchbox' id='Fav' onmouseover="spool(event, id, '%fav%')">Fav</a>`r`n<a href="file:///%inca%/cache/html/new.htm" class='searchbox' id='Slides' onmouseover="spool(event, id, '%slides%')">Slides</a>`r`n<a id='Music' class='searchbox' onmouseover="spool(event, id, '%music%')">Music</a>`r`n</div>`r`n`r`n<div class='panel' id='myPanel' onwheel="wheelEvents(event, id, this, '%search_list%')"></div>`r`n`r`n<input class='searchbox' onmouseover="spool(event, '', '%features%', '%toggles%', '%sort%', %filter%, %page%, %pages%, %view%, %speed%)" id='myInput' type='search' value='%search_term%' style='margin-right:0; width:50`%'>`r`n<a href='#Searchbox###' class='searchbox'><a>+</a></a>`r`n
 
         title_html = `r`n`r`n<div><a href="#Orphan#%tab_name%" style="font-size:1.8em; color:red; margin-left:1em">%title% &nbsp;&nbsp;<span style="font-size:0.7em;">%list_size%</span></a></div>`r`n`r`n<div id="myModal" class="modal" onwheel="wheelEvents(event, id, this)">`r`n<div><video id="myPlayer" class="player" type="video/mp4"></video><textarea id="myCap" class="caption" onmouseenter="over_cap=true" onmouseleave="over_cap=false"></textarea><span id="mySeekBar" class="seekbar"></span><span><video id='mySeek' class='seek' type="video/mp4"></video></span><span id="mySidenav" onmouseover="openNav()" onmouseleave="closeNav()" class="sidenav"><a id="mySpeed" onmouseover='stat.innerHTML=Math.round(media.playbackRate*100)' onwheel="wheelEvents(event, id, this)">Speed</a><a id="myNext" onmouseover='stat.innerHTML=index' onwheel="wheelEvents(event, id, this)">Next</a><a id="myThin" onmouseover='stat.innerHTML=Math.round(newSkinny*100)' onwheel="wheelEvents(event, id, this)">Thin</a><a onclick="loop()">Loop</a><a onclick="toggleMute()">Mute</a><a id="myFav">Fav</a><a id="myCapnav" onclick="editCap()">Cap</a><a onclick="cue = Math.round(media.currentTime*100)/100">Cue</a><a id="myMp4">mp4</a><a id="myMp3">mp3</a><a id="myStatus" style='font-size:5em; padding:0'></a></span></div></div>`r`n`r`n
+
         html = `r`n%html%</div>`r`n
         FileDelete, %inca%\cache\html\%tab_name%.htm
         StringReplace, header_html, header_html, \, /, All
@@ -412,7 +406,7 @@ caption := x
         Critical
         MouseGetPos, xpos, ypos
         WinGetPos, xb, yb, wb, hb, ahk_group Browsers
-        if (WinActive("ahk_group Browsers") && title && inca_tab && xpos > xb+10 && ypos > yb+230 && ypos < yb+hb-50)
+        if (WinActive("ahk_group Browsers") && inca_tab && xpos > xb+10 && ypos > yb+230 && ypos < yb+hb-50)
             inside_browser = 1
         else inside_browser =
         if vol_popup							; show volume popup bar
@@ -432,14 +426,22 @@ caption := x
              }
         dim := inca_tab
         inca_tab := 0
-        WinGetTitle title     ;  , Inca -
+        browser = 
+        WinGetTitle title, Inca -
         if InStr(title, "Inca - ")
           tab_name := SubStr(title, 8)
         StringGetPos, pos, tab_name, mozilla firefox, R
-        browser =
-        if (pos < 1)
-            StringGetPos, pos, tab_name, google chrome, R
-        else browser = firefox
+        if (pos>0)
+            browser = firefox
+        else StringGetPos, pos, tab_name, google chrome, R
+        if (pos>0)
+            browser = chrome
+        else StringGetPos, pos, tab_name, Brave, R
+        if (pos>0)
+            browser = brave
+        else StringGetPos, pos, tab_name, Profile 1 - Microsoft, R
+        if (pos>0)
+            browser = edge
         StringLeft, tab_name, tab_name, % pos - 3
         WinGet, state, MinMax, ahk_group Browsers
         if (tab_name && state > -1)
@@ -547,7 +549,7 @@ caption := x
         address =
         reload =
         type =
-        ptr := 0
+        ptr := 1
         WinActivate, ahk_group Browsers
         if !inside_browser
           return
@@ -557,10 +559,9 @@ caption := x
         if !InStr(input, "file:\\\")
           return
         array := StrSplit(input,"#")
-        ptr+=1
         if (array.MaxIndex() < 3) 
           return
-        Loop % array.MaxIndex()
+        Loop % array.MaxIndex()/4
           {
           command := array[ptr+=1]
           value := array[ptr+=1]
@@ -832,6 +833,8 @@ caption := x
         list =
         list_size := 1
         popup := tab_name
+        if (InStr(sort_list, command))
+            popup := command
         if search_term
             popup := search_term
         if show
