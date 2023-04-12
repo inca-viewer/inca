@@ -4,7 +4,7 @@
 // have buttons on modal for next caption/favorite cut points
 // key shortcuts fade on mouseover bottom
 // mpv from thumbsheet
-
+// mediaX Y in sessionstorage?
 
 
   var modal = document.getElementById('myModal')			// media player window
@@ -30,6 +30,7 @@
   var toggles = ''							// eg reverse, recurse
   var sort = 'Alpha'
   var thumb_size = 9
+  var media								// current media element
   var rate = 1
   var page = 1
   var pages = 1
@@ -56,9 +57,8 @@
   var Zindex = 1
   var xpos = 0.5
   var ypos = 0.5
-  var media = document.getElementById('media1')				// current media element
-  var mediaY = window.innerHeight/2					// centre of media player
-  var mediaX = window.innerWidth/2.6
+  var mediaX = 0
+  var mediaY = 0							// centre of media player
 
 
   document.addEventListener('auxclick', playMedia)			// middle click
@@ -93,8 +93,7 @@
     var yp = (e.clientY - rect.top) / (media.offsetHeight)
     if (media.duration && yp > 0.9) {media.currentTime = media.duration *xp}
     if (media.currentTime <= strt || yp < 0.1) {media.currentTime = strt +0.1}
-    media.style.transition = '0.1s'
-    media.playbackRate = 0.74						// play thumbnail video
+    media.playbackRate = 0.74
     start = media.currentTime
     scaleX = sk; scaleY=1
     seek.src = media.src
@@ -141,13 +140,14 @@
     if (long_click) {start = 0}
     if (type == "video" || type == "audio") {media.currentTime = start - 0.6}
     if (type == "audio") {media.controls = true; sound == 'yes'}
-    setTimeout(function() {media.style.opacity=1; if(type!='thumb') {media.play()}},120)
-    if (mediaX > window.innerWidth*0.7 || mediaX < 0) {mediaX = window.innerWidth/2.6}
-    if (mediaY > window.innerHeight*0.7 || mediaY < 0) {mediaY = window.innerHeight/2}
+    setTimeout(function() {
+      media.style.opacity=1
+      if (type != 'thumb') {media.playbackRate = rate; media.play()}},120)
     scaleX = scaleY
-    if (scaleY > 2) {
-      scaleX = 1.4; scaleY = 1.4
-      mediaY = window.innerHeight/2}
+    if (scaleY > 1.4) {scaleX = 1.4; scaleY = 1.4}
+    if (scaleY < 0.4) {scaleX = 1; scaleY = 1}
+    if (mediaY < 100 || mediaY > window.innerHeight*0.8) {mediaY = window.innerHeight/2}
+    if (mediaX < 100 || mediaX > window.innerWidth*0.8) {mediaX = window.innerWidth/2.6}
     scaleX *= skinny
     stat.innerHTML = index
     if (cap_list) {start -= 0.5}
@@ -156,13 +156,11 @@
     media.style.maxHeight = window.innerHeight * 0.7 + "px"
     media.addEventListener('ended', media_ended)
     setTimeout(function(){block=0;wheel=0},400)
-    stat.innerHTML = Math.round(skinny*100)
     mediaTimer = setInterval(timedEvents,84)
     if (type == "audio") {media.volume = 1}
     else {media.volume = 0}
     modal.style.opacity = 1
     modal.style.zIndex = 40
-    media.playbackRate = rate
     seek.src = media.src
     media.muted = false
     positionMedia()
@@ -274,8 +272,8 @@
       else  {media.currentTime -= interval}
       timer = 200}
     else if (id == 'myModal') {						// magnify
-      if (wheelDown) {scaleX *= 1.015; scaleY *= 1.015; mediaY*=1.005}
-      else {scaleX *= 0.98; scaleY *= 0.98; mediaY*=0.993}
+      if (wheelDown) {scaleX *= 1.015; scaleY *= 1.015}
+      else {scaleX *= 0.98; scaleY *= 0.98}
       positionMedia()}
     setTimeout(function() {block=0;wheel=0},timer)
     wheel = 0; block = 1}
@@ -295,6 +293,7 @@
         mediaY = rect.top + (media.offsetHeight * scaleY/2)}
       if (x + y > 5) {
         if (!gesture && !type && over_thumb) {				// thumb moved in htm tab
+          media.style.opacity = 1
           media.style.position = 'fixed'
           media.style.zIndex = Zindex+=1}
         gesture = true
@@ -342,13 +341,13 @@
     Xref = e.clientX
     Yref = e.clientY
     media.style.transition = '0.1s'
-    setTimeout(function(){
-      if (mouse_down && !gesture) {long_click=true; media_ended()}},340)
+    setTimeout(function() {if (mouse_down && !gesture) {long_click=true; media_ended()}},340)
     if (seek_active) {media.currentTime = seek_active; media.play()}}
 
 
   function mouseUp(e) {
-    togglePause(e) 
+    togglePause(e)
+    media.style.transition = '0s'
     setTimeout(function() {gesture=false},50)
     mouse_down=false}
 
@@ -377,13 +376,12 @@
     if (type != 'video') {return}
     media.currentTime = 0
     media.play()
-    if (scaleX > 6) {return}
+    if (scaleX > 4) {return}
     if (media.playbackRate > 0.40) {media.playbackRate -= 0.05}		// magnify and slow
     media.style.transition = '1.46s'
     stat.innerHTML = Math.round(media.playbackRate *100)
-    scaleX+=0.15; scaleY+=0.15; mediaY*=1.05
+    scaleX+=0.15; scaleY+=0.15
     media.style.transform = "scale(" + scaleX + "," + scaleY + ")"
-    media.style.top = mediaY
     setTimeout(function() {media.style.transition = '0s'},300)}
 
 
@@ -435,6 +433,7 @@
 
 
   function spool(e, id, input, to, so, fi, pa, ps, ts, rt) {			// onload - spool lists into top htm panel
+    media = document.getElementById('media1')
     var htm = ''
     var p = ''
     wheel = 0

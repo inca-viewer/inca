@@ -1,6 +1,5 @@
 
 ; mouse back button is intercepted and converted to {Pause} key for java
-; IfWinActive, ahk_class Chrome_WidgetWin_1
 
 
 	; Inca Media Viewer for Windows - Firefox & Chrome compatible
@@ -55,6 +54,7 @@
         Global timer			; click down timer
         Global view := 9		; thumb view (em size)
         Global last_view := 9
+        Global wheel_count = 0
         Global vol_ref := 2
         Global wheel
         Global inside_browser		; clicked inside browser window
@@ -71,7 +71,6 @@
         Global target
         Global reload
         Global browser
-        Global wheel_count = 0
 
 
 
@@ -79,7 +78,16 @@
 
     main:
       initialize()				; set environment
-      SetTimer, TimedEvents, 100, -1		; timer event every 100mS
+      WinActivate, ahk_group Browsers
+      SetTimer, TimedEvents, 100		; every 100mS
+      sleep 150
+      if !inca_tab
+         {
+         command = Path
+         address = %profile%\Pictures\
+         ProcessMessage()
+         }
+      CreateList(0)
       return					; wait for mouse/key events
 
     Esc up::
@@ -88,7 +96,6 @@
 
     ~LButton::					; click events
      RButton::
-      Critical
       MouseDown()
       Gui PopUp:Cancel
       return
@@ -345,6 +352,7 @@ caption := x
 
     RenderPage()							; construct web page from media list
         {
+        Critical							; stop key interrupts
         if !(folder && path)
             return
         last := src
@@ -402,8 +410,7 @@ caption := x
         }
 
 
-    TimedEvents:							; every 100mS
-        Critical
+    TimedEvents:
         MouseGetPos, xpos, ypos
         WinGetPos, xb, yb, wb, hb, ahk_group Browsers
         if (WinActive("ahk_group Browsers") && inca_tab && xpos > xb+10 && ypos > yb+230 && ypos < yb+hb-50)
@@ -465,7 +472,6 @@ caption := x
             {
             previous_tab := tab_name
             GetTabSettings(1)						; get last tab settings
-
             if (tab_name != "Downloads" && FileExist(inca "\cache\lists\" tab_name ".txt"))
               FileRead, list, %inca%\cache\lists\%tab_name%.txt
             else CreateList(0)						; media list to match html page
@@ -555,7 +561,6 @@ caption := x
           return
         input := ReadAddressBar(1)
         input := StrReplace(input, "/", "\")
-; tooltip %input%
         if !InStr(input, "file:\\\")
           return
         array := StrSplit(input,"#")
@@ -826,6 +831,7 @@ caption := x
 
     CreateList(show)							; list of files in path
         {
+        Critical
         if !(folder || this_search)
             return
         IfNotExist, %path%
@@ -1459,16 +1465,12 @@ caption := x
         WinSet, ExStyle, +0x20
         SoundGet, volume
         SetTimer, indexer, -2000, -2
-        command = Path
-        address = %profile%\Pictures\
-        ProcessMessage()
-        inca_tab := 2
-        CreateList(0)
         }
 
 
 
     Indexer:								; update thumb cache
+        Critical Off
         Loop, Files, %profile%\Downloads\*.*, R
 ;        Loop, Files, D:\media\gifs\youtube\*.*, R
             {
@@ -1513,12 +1515,13 @@ IfNotExist, %inca%\cache\posters\%filen%.jpg
                     }
                 FileCopy, %inca%\cache\temp1\1.jpg, %inca%\cache\posters\%filen%.jpg, 1
 ;                if (dur >= 20)
-                    RunWait %inca%\apps\ffmpeg -i %inca%\cache\temp1\`%d.jpg -filter_complex "tile=6x6" -y "%inca%\cache\thumbs\%filen%.jpg",, Hide
+IfNotExist, %inca%\cache\thumbs\%filen%.jpg
+                    Runwait %inca%\apps\ffmpeg -i %inca%\cache\temp1\`%d.jpg -filter_complex "tile=6x6" -y "%inca%\cache\thumbs\%filen%.jpg",, Hide
                 }
             }
         FileRemoveDir, %inca%\cache\temp1, 1
         GuiControl, Indexer:, GuiInd
-        SetTimer, indexer, 30000, -2
+        SetTimer, indexer, 60000, -2
         return
 
 
