@@ -23,6 +23,7 @@
   var sound = sessionStorage.getItem('sound')				// remember sound setting
   var wheel = 0								// mouse wheel count
   var long_click = false
+  var long_middle = false
   var block = 0								// block wheel input
   var last_id
   var start = 0								// video start time
@@ -108,6 +109,7 @@
     media = player							// media assigned to modal
     last_type = type
     if (type) {close_media()}
+    if (long_middle) {e = 'Previous'}
     if (e == 'Next') {index+=1}
     if (e == 'Previous') {index-=1}
     if (e == 'Mclick' && last_type && last_type != 'video' && xpos > 0.1) {index+=1}
@@ -145,7 +147,7 @@
       if (type != 'thumb') {media.playbackRate = rate; media.play()}},120)
     scaleX = scaleY
     if (scaleY > 1.4) {scaleX = 1.4; scaleY = 1.4}
-    if (scaleY < 0.4) {scaleX = 1; scaleY = 1}
+    if (scaleY < 0.4) {scaleX = 0.4; scaleY = 0.4}
     if (mediaY < 100 || mediaY > window.innerHeight*0.8) {mediaY = window.innerHeight/2}
     if (mediaX < 100 || mediaX > window.innerWidth*0.8) {mediaX = window.innerWidth/2.6}
     scaleX *= skinny
@@ -310,9 +312,10 @@
     seek.style.left = e.clientX -80 +'px'
     seekbar.style.left = mediaX - (scaleX*media.offsetWidth / 2) + "px"
     if (type == "video") {
+      seekbar.style.display = 'block'
       if (ypos > 0.75) {seekbar.style.top = window.innerHeight - 12 + 'px'}
       else {seekbar.style.top = window.innerHeight - 3 + 'px'}}
-    else {seekbar.style.top = window.innerHeight + 50 + 'px'}
+    else {seekbar.style.display = 'none'}
     if (ypos > 0.9 && xp > 0 && xp < 1 && !mouse_down && type == 'video') { 	// fast seek video
       seek_active = media.duration * xp
       seek.style.opacity = 1
@@ -335,7 +338,9 @@
 
 
   function mouseDown(e) {
-    if (e.button != 0) {e.preventDefault(); return}			// middle click
+    if (e.button != 0) {						// middle click
+      e.preventDefault()
+      if (e.button == 1) {setTimeout(function() {long_middle = true},350)}; return}
     mouse_down = true
     long_click = false
     Xref = e.clientX
@@ -348,7 +353,7 @@
   function mouseUp(e) {
     togglePause(e)
     media.style.transition = '0s'
-    setTimeout(function() {gesture=false},50)
+    setTimeout(function() {gesture=false; long_middle = false},350)
     mouse_down=false}
 
 
