@@ -1,11 +1,8 @@
 <script>
 
 // compliance firefox, brave, edge and opera
-// have buttons on modal for next caption/favorite cut points
 // key shortcuts fade on mouseover bottom
-// mpv from thumbsheet
-// mediaX Y in sessionstorage?
-
+// rename in playlists
 
   var modal = document.getElementById('myModal')			// media player window
   var player = document.getElementById('myPlayer')
@@ -21,6 +18,8 @@
   var seekbar = document.getElementById('mySeekBar')
   var seek = document.getElementById('mySeek')
   var sound = sessionStorage.getItem('sound')				// remember sound setting
+  var mediaX = sessionStorage.getItem('mediaX')*1
+  var mediaY = sessionStorage.getItem('mediaY')*1			// centre of media player
   var wheel = 0								// mouse wheel count
   var long_click = false
   var long_middle = false
@@ -51,15 +50,13 @@
   var messages = ''							// from address bar to inca.exe
   var cue = 0
   var looping = true
-  var scaleX = 1
-  var scaleY = 1
   var Xref
   var Yref
   var Zindex = 1
   var xpos = 0.5
   var ypos = 0.5
-  var mediaX = 0
-  var mediaY = 0							// centre of media player
+  var scaleX = 1
+  var scaleY = 1
 
 
   document.addEventListener('auxclick', playMedia)			// middle click
@@ -76,15 +73,16 @@
     cap.style.top = mediaY + (scaleY*media.offsetHeight/2) + 10 + "px"
     cap.style.left = mediaX - (scaleX*media.offsetWidth / 2) + "px"
     seekbar.style.width = (scaleX * media.offsetWidth * media.currentTime / media.duration) + "px"
-    positionMedia()
-    if (window.innerWidth > screen.width * 0.9) {
-      media.style.marginLeft = '355px'; seekbar.style.marginLeft = '355px'}	// full screen mode
-    else {media.style.marginLeft = 0; seekbar.style.marginLeft = 0}}
+    if (window.innerWidth == screen.width) {				// full screen mode
+      media.style.marginLeft = '350px'; media.style.marginTop = '100px'; seekbar.style.marginLeft = '350px'}
+    else {media.style.marginLeft = 0; media.style.marginTop = 0; seekbar.style.marginLeft = 0}
+    positionMedia()}
 
 
   function overThumb(e, id, strt, sk) {					// mouse over thumbnail in browser tab
     if (mouse_down) {return}
     index = id
+    scaleX *= sk
     over_thumb = true
     var sel = document.getElementById('sel' + id)
     if (selected) {sel.href = '#MovePos#' + id + '#' + selected + '#'}
@@ -96,7 +94,6 @@
     if (media.currentTime <= strt || yp < 0.1) {media.currentTime = strt +0.1}
     media.playbackRate = 0.74
     start = media.currentTime
-    scaleX = sk; scaleY=1
     seek.src = media.src
     media.play()}
 
@@ -153,7 +150,7 @@
     scaleX *= skinny
     stat.innerHTML = index
     if (cap_list) {start -= 0.5}
-    setTimeout(function() {document.body.style.overflow="hidden"},300)
+    setTimeout(function() {positionMedia(); document.body.style.overflow="hidden"},300)
     media.style.maxWidth = window.innerWidth * 0.6 + "px"
     media.style.maxHeight = window.innerHeight * 0.7 + "px"
     media.addEventListener('ended', media_ended)
@@ -165,7 +162,6 @@
     modal.style.zIndex = 40
     seek.src = media.src
     media.muted = false
-    positionMedia()
     looping = true
     block = 1}
 
@@ -303,6 +299,8 @@
         mediaX += e.clientX - Xref
         Xref = e.clientX
         Yref = e.clientY
+        sessionStorage.setItem("mediaX",mediaX)
+        sessionStorage.setItem("mediaY",mediaY)
         positionMedia()}}
     if (type && modal.style.cursor != "crosshair") {
       modal.style.cursor = "crosshair"
@@ -340,21 +338,23 @@
   function mouseDown(e) {
     if (e.button != 0) {						// middle click
       e.preventDefault()
-      if (e.button == 1) {setTimeout(function() {long_middle = true},350)}; return}
-    mouse_down = true
+      if (e.button == 1) {MClick = setTimeout(function() {long_middle=true},250)}
+      return}
     long_click = false
+    mouse_down = true
     Xref = e.clientX
     Yref = e.clientY
     media.style.transition = '0.1s'
-    setTimeout(function() {if (mouse_down && !gesture) {long_click=true; media_ended()}},340)
-    if (seek_active) {media.currentTime = seek_active; media.play()}}
+    setTimeout(function() {if (mouse_down && !gesture) {long_click=true; media_ended()}},240)
+    if (seek_active) {media.currentTime = seek_active}}
 
 
   function mouseUp(e) {
     togglePause(e)
+    mouse_down=false
     media.style.transition = '0s'
-    setTimeout(function() {gesture=false; long_middle = false},350)
-    mouse_down=false}
+    setTimeout(function() {gesture=false; long_middle=false},50)
+    clearTimeout(MClick)}
 
 
   function togglePause(e) {
@@ -423,6 +423,14 @@
       newcap = cap.value + "|" + t + "|"
       if (!cap.value) {newcap = ''}
       capnav.href = '#Caption#' + newcap + '#' + index + ',#' + cap.innerHTML + '|' + t + '|'}}
+
+
+  function nextCaption() {
+    var z = cap_list.split('|')
+    for (x of z) {
+      if (!isNaN(x) && x > media.currentTime) {
+        media.currentTime = x - 0.8
+        break}}}
 
 
   function toggleMute() {

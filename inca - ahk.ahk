@@ -80,15 +80,17 @@
       initialize()				; set environment
       WinActivate, ahk_group Browsers
       SetTimer, TimedEvents, 100		; every 100mS
-      sleep 150
+      sleep 350
       if !inca_tab
-         {
-         command = Path
-         address = %profile%\Pictures\
-         ProcessMessage()
-         }
+        {
+        path = %profile%\Pictures\
+        tab_name = pictures
+        this_search := path
+        folder = pictures
+        }
       CreateList(0)
       return					; wait for mouse/key events
+
 
     Esc up::
       ExitApp
@@ -395,7 +397,7 @@ caption := x
 
         panel_html = <body class='container' onload="spool(event, '', '', '%toggles%', '%sort%', %filter%, %page%, %pages%, %view%, %speed%)">`r`n<div style="width:%page_w%`%; margin:auto">`r`n<div style='display:flex'>`r`n<a class='searchbox' style='width:5`%' id='Sub' onmouseover="spool(event, id, '%subfolders%')">Sub</a>`r`n<a class='searchbox' id='Fol' onmouseover="spool(event, id, '%fol%')">Fol</a>`r`n<a class='searchbox' id='Fav' onmouseover="spool(event, id, '%fav%')">Fav</a>`r`n<a href="file:///%inca%/cache/html/new.htm" class='searchbox' id='Slides' onmouseover="spool(event, id, '%slides%')">Slides</a>`r`n<a id='Music' class='searchbox' onmouseover="spool(event, id, '%music%')">Music</a>`r`n</div>`r`n`r`n<div class='panel' id='myPanel' onwheel="wheelEvents(event, id, this, '%search_list%')"></div>`r`n`r`n<input class='searchbox' onmouseover="spool(event, '', '%features%', '%toggles%', '%sort%', %filter%, %page%, %pages%, %view%, %speed%)" id='myInput' type='search' value='%search_term%' style='margin-right:0; width:50`%'>`r`n<a href='#Searchbox###' class='searchbox'><a>+</a></a>`r`n
 
-        title_html = `r`n`r`n<div><a href="#Orphan#%tab_name%" style="font-size:1.8em; color:red; margin-left:1em">%title% &nbsp;&nbsp;<span style="font-size:0.7em;">%list_size%</span></a></div>`r`n`r`n<div id="myModal" class="modal" onwheel="wheelEvents(event, id, this)">`r`n<div><video id="myPlayer" class="player" type="video/mp4"></video><textarea id="myCap" class="caption" onmouseenter="over_cap=true" onmouseleave="over_cap=false"></textarea><span id="mySeekBar" class="seekbar"></span><span><video id='mySeek' class='seek' type="video/mp4"></video></span><span id="mySidenav" onmouseover="openNav()" onmouseleave="closeNav()" class="sidenav"><a id="mySpeed" onmouseover='stat.innerHTML=Math.round(media.playbackRate*100)' onwheel="wheelEvents(event, id, this)">Speed</a><a id="myNext" onmouseover='stat.innerHTML=index' onwheel="wheelEvents(event, id, this)">Next</a><a id="myThin" onmouseover='stat.innerHTML=Math.round(newSkinny*100)' onwheel="wheelEvents(event, id, this)">Thin</a><a onclick="loop()">Loop</a><a onclick="toggleMute()">Mute</a><a id="myFav">Fav</a><a id="myCapnav" onclick="editCap()">Cap</a><a onclick="cue = Math.round(media.currentTime*100)/100">Cue</a><a id="myMp4">mp4</a><a id="myMp3">mp3</a><a id="myStatus" style='font-size:5em; padding:0'></a></span></div></div>`r`n`r`n
+        title_html = `r`n`r`n<div><a href="#Orphan#%tab_name%#" style="font-size:1.8em; color:red; margin-left:1em">%title% &nbsp;&nbsp;<span style="font-size:0.7em;">%list_size%</span></a></div>`r`n`r`n<div id="myModal" class="modal" onwheel="wheelEvents(event, id, this)">`r`n<div><video id="myPlayer" class="player" type="video/mp4"></video><textarea id="myCap" class="caption" onmouseenter="over_cap=true" onmouseleave="over_cap=false"></textarea><span id="mySeekBar" class="seekbar"></span><span><video id='mySeek' class='seek' type="video/mp4"></video></span><span id="mySidenav" onmouseover="openNav()" onmouseleave="closeNav()" class="sidenav"><a id="mySpeed" onmouseover='stat.innerHTML=Math.round(media.playbackRate*100)' onwheel="wheelEvents(event, id, this)">Speed</a><a id="myNext" onmouseover='stat.innerHTML=index' onclick='nextCaption()' onwheel="wheelEvents(event, id, this)">Next</a><a id="myThin" onmouseover='stat.innerHTML=Math.round(newSkinny*100)' onwheel="wheelEvents(event, id, this)">Thin</a><a onclick="loop()">Loop</a><a onclick="toggleMute()">Mute</a><a id="myFav">Fav</a><a id="myCapnav" onclick="editCap()">Cap</a><a onclick="cue = Math.round(media.currentTime*100)/100">Cue</a><a id="myMp4">mp4</a><a id="myMp3">mp3</a><a id="myStatus" style='font-size:5em; padding:0'></a></span></div></div>`r`n`r`n
 
         html = `r`n%html%</div>`r`n
         FileDelete, %inca%\cache\html\%tab_name%.htm
@@ -470,11 +472,11 @@ caption := x
             }
         if (inca_tab && tab_name != previous_tab)			; has inca tab changed
             {
-            previous_tab := tab_name
             GetTabSettings(1)						; get last tab settings
-            if (tab_name != "Downloads" && FileExist(inca "\cache\lists\" tab_name ".txt"))
+            if (previous_tab && tab_name != "Downloads" && FileExist(inca "\cache\lists\" tab_name ".txt"))
               FileRead, list, %inca%\cache\lists\%tab_name%.txt
             else CreateList(0)						; media list to match html page
+            previous_tab := tab_name
             }
         ShowStatus()							; show time & vol
         return
@@ -1159,6 +1161,9 @@ caption := x
     RenameFiles(new_name)
         {
         FileMove, %src%, %media_path%\%new_name%.%ext%			; FileMove = FileRename
+        SetTimer, indexer, 1000, -2
+        if (folder == "Downloads") 
+            return
         new_entry := StrReplace(target, media, new_name)
         Loop, Files, %inca%\slides\*.m3u, FR
             {
