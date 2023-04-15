@@ -1,11 +1,40 @@
 
 <style>
 
-.thumblist {
-  opacity:0; 
-  width:9em;
-  border-radius:3`%}
+.searchbox {
+  text-overflow:ellipsis;
+  overflow:hidden;
+  margin:0.5em;
+  border-radius:1em;
+  text-align:center;
+  background-color:#1b1814;
+  color:#826858;
+  font-family:inherit;
+  border:none;
+  height:1.1em;
+  outline:none;
+  transition:color 1.4s;
+  white-space:nowrap;
+  width:10%}
 
+.panel {
+  display:grid;
+  grid-template-columns: auto auto auto auto auto auto auto;
+  grid-template-rows: auto auto auto auto;
+  grid-auto-flow: column;
+  padding:0.5em;
+  margin-left:1.5em;
+  color:#826858;
+  overflow:hidden;
+  overflow-wrap:break-word;
+  transition:color 1.4s;
+  font-size:0.85em;
+  height:6em;
+  width:64%;
+  border-radius:0.8em;
+  background-color:inherit}
+
+.thumblist {opacity:0; transition:0.1s; border-radius:3`%}
 .thumblist:hover {opacity:1}
 
 .player {
@@ -53,7 +82,7 @@
 .modal {
   display:flex;
   opacity:0;
-  transition:0.4s;
+  transition:opacity 0.4s;
   user-select:none;
   position:fixed;
   justify-content:center;
@@ -85,10 +114,11 @@
 
 .container {
   font-family:'Yu Gothic', 'Calibri Light';
+  cursor:default;
+  padding-top:10em;
+  padding-bottom:20em;
   user-select:none;
-  overflow:hidden;
   background:#15110a;
-  margin:auto;
   color:#666666;
   font-size:0.8em;
   animation-name:fadePage;
@@ -105,39 +135,6 @@ table {
   transition:color 1.4s;
   table-layout:fixed;
   border-collapse: collapse}
-
-.searchbox {
-  text-overflow:ellipsis;
-  overflow:hidden;
-  margin:0.5em;
-  border-radius:1em;
-  text-align:center;
-  background-color:#1b1814;
-  color:#826858;
-  font-family:inherit;
-  border:none;
-  height:1.1em;
-  outline:none;
-  transition:color 1.4s;
-  white-space:nowrap;
-  width:8%}
-
-.panel {
-  display:grid;
-  grid-template-columns: auto auto auto auto auto auto auto;
-  grid-template-rows: auto auto auto auto;
-  grid-auto-flow: column;
-  padding:0.5em;
-  margin-left:1.5em;
-  color:#826858;
-  overflow:hidden;
-  overflow-wrap:break-word;
-  transition:color 1.4s;
-  font-size:0.85em;
-  height:6em;
-  width:60%;
-  border-radius:0.8em;
-  background-color:inherit}
 
 
 </style>
