@@ -15,7 +15,7 @@
   outline:none;
   transition:color 1.4s;
   white-space:nowrap;
-  width:10%}
+  width:11%}
 
 .panel {
   display:grid;
@@ -25,6 +25,7 @@
   padding:0.5em;
   margin-left:1.5em;
   color:#826858;
+  white-space:nowrap;
   overflow:hidden;
   overflow-wrap:break-word;
   transition:color 1.4s;
@@ -111,6 +112,7 @@
   transition:0.3s}
 
 .sidenav a:hover {color:lightsalmon}
+.sidenav a:active {background-color:#222222}
 
 .container {
   font-family:'Yu Gothic', 'Calibri Light';

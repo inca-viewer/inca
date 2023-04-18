@@ -267,7 +267,7 @@
             if start
               IfExist, %inca%\cache\posters\%media% %start%.jpg
                 thumb = %inca%\cache\posters\%media% %start%.jpg
-            if !start 
+            if (!start && !playlist)
               if (dur > 60)
                 start := 20 + (4 * (dur - 20)/200)
               else start := 4 * dur / 200
@@ -395,9 +395,9 @@ caption := x
         pages := ceil(list_size/size)
         header_html = <!--`r`n%view%>%last_view%>%page%>%filter%>%sort%>%toggles%>%this_search%>%search_term%>%path%>%folder%>%playlist%>%last_media%>`r`n%page_media%`r`n-->`r`n<!doctype html>`r`n<html>`r`n<head>`r`n<meta charset="UTF-8">`r`n<title>Inca - %title%</title>`r`n<meta name="viewport" content="width=device-width, initial-scale=1">`r`n<link rel="icon" type="image/x-icon" href="file:///%inca%\apps\icons\inca.ico">`r`n</head>`r`n
 
-        panel_html = <body class='container' onload="spool(event, '', '', '%toggles%', '%sort%', %filter%, %page%, %pages%, %view%, %speed%)">`r`n<div style="width:%page_w%`%; margin:auto">`r`n<div style='display:flex'>`r`n<a class='searchbox' style='width:5`%' id='Sub' onmouseover="spool(event, id, '%subfolders%')">Sub</a>`r`n<a class='searchbox' id='Fol' onmouseover="spool(event, id, '%fol%')">Fol</a>`r`n<a class='searchbox' id='Fav' onmouseover="spool(event, id, '%fav%')">Fav</a>`r`n<a href="file:///%inca%/cache/html/new.htm" class='searchbox' id='Slides' onmouseover="spool(event, id, '%slides%')">Slides</a>`r`n<a id='Music' class='searchbox' onmouseover="spool(event, id, '%music%')">Music</a>`r`n</div>`r`n`r`n<div class='panel' id='myPanel' onwheel="wheelEvents(event, id, this, '%search_list%')"></div>`r`n`r`n<input class='searchbox' onmouseover="spool(event, '', '%features%', '%toggles%', '%sort%', %filter%, %page%, %pages%, %view%, %speed%)" id='myInput' type='search' value='%search_term%' style='margin-right:0; width:50`%'>`r`n<a href='#Searchbox###' class='searchbox'>+</a>`r`n
+        panel_html = <body class='container' onload="spool(event, '', '', '%toggles%', '%sort%', %filter%, %page%, %pages%, %view%, %speed%)">`r`n<div style="width:%page_w%`%; margin:auto">`r`n<div style='display:flex'>`r`n<a class='searchbox' style='width:5`%' id='Sub' onmouseover="spool(event, id, '%subfolders%')">Sub</a>`r`n<a class='searchbox' id='Fol' onmouseover="spool(event, id, '%fol%')">Fol</a>`r`n<a class='searchbox' id='Fav' onmouseover="spool(event, id, '%fav%')">Fav</a>`r`n<a href="file:///%inca%/cache/html/new.htm" class='searchbox' id='Slides' onmouseover="spool(event, id, '%slides%')">Slides</a>`r`n<a id='Music' class='searchbox' onmouseover="spool(event, id, '%music%')">Music</a>`r`n</div>`r`n`r`n<div class='panel' id='myPanel' onwheel="wheelEvents(event, id, this, '%search_list%')"></div>`r`n`r`n<input class='searchbox' onmouseover="spool(event, '', '%features%', '%toggles%', '%sort%', %filter%, %page%, %pages%, %view%, %speed%)" id='myInput' type='search' value='%search_term%' style='margin-right:0; width:53`%'>`r`n<a href='#Searchbox###' class='searchbox'>+</a>`r`n
 
-        title_html = `r`n`r`n<div><a href="#Orphan#%tab_name%#" style="font-size:1.8em; color:red; margin-left:1em">%title% &nbsp;&nbsp;<span style="font-size:0.7em;">%list_size%</span></a></div>`r`n`r`n<div id="myModal" class="modal" onwheel="wheelEvents(event, id, this)">`r`n<div><video id="myPlayer" class="player" type="video/mp4"></video><textarea id="myCap" class="caption" onmouseenter="over_cap=true" onmouseleave="over_cap=false"></textarea><span id="mySeekBar" class="seekbar"></span><span><video id='mySeek' class='seek' type="video/mp4"></video></span><span id="mySidenav" onmouseover="openNav()" onmouseleave="closeNav()" class="sidenav"><a id="mySpeed" onmouseover='stat.innerHTML=Math.round(media.playbackRate*100)' onwheel="wheelEvents(event, id, this)">Speed</a><a id="myNext" onmouseover='stat.innerHTML=index' onclick='nextCaption()' onwheel="wheelEvents(event, id, this)">Next</a><a id="myThin" onmouseover='stat.innerHTML=Math.round(newSkinny*100)' onwheel="wheelEvents(event, id, this)">Thin</a><a onclick="loop()">Loop</a><a onclick="toggleMute()">Mute</a><a id="myFav">Fav</a><a id="myCapnav" onclick="editCap()">Cap</a><a onclick="cue = Math.round(media.currentTime*100)/100">Cue</a><a id="myMp4">mp4</a><a id="myMp3">mp3</a><a id="myStatus" style='font-size:5em; padding:0'></a></span></div></div>`r`n`r`n
+        title_html = `r`n`r`n<div><a href="#Orphan#%tab_name%#" style="font-size:1.8em; color:red; margin-left:1em">%title% &nbsp;&nbsp;<span style="font-size:0.7em;">%list_size%</span></a></div>`r`n`r`n<div id="myModal" class="modal" onwheel="wheelEvents(event, id, this)">`r`n<div><video id="myPlayer" class="player" type="video/mp4"></video><textarea id="myCap" class="caption" onmouseenter="over_cap=true" onmouseleave="over_cap=false"></textarea><span id="mySeekBar" class="seekbar"></span><span><video id='mySeek' class='seek' type="video/mp4"></video></span><span id="mySidenav" onmouseover="openNav()" onmouseleave="closeNav()" class="sidenav"><a id="mySpeed" onmouseover='stat.innerHTML=Math.round(media.playbackRate*100)' onwheel="wheelEvents(event, id, this)">Speed</a><a id="myNext" onmouseover='stat.innerHTML=index' onclick='nextCaption()' onwheel="wheelEvents(event, id, this)">Next</a><a id="myThin" onmouseover='stat.innerHTML=Math.round(newSkinny*100)' onwheel="wheelEvents(event, id, this)">Thin</a><a id='myLoop' onclick="loop()">Loop</a><a onclick="toggleMute()">Mute</a><a id="myFav">Fav</a><a id="myCapnav" onclick="editCap()">Cap</a><a onclick="cue = Math.round(media.currentTime*100)/100">Cue</a><a id="myMp4">mp4</a><a id="myMp3">mp3</a><a id="myStatus" style='font-size:5em; padding:0'></a></span></div></div>`r`n`r`n
 
         html = `r`n%html%</div>`r`n
         FileDelete, %inca%\cache\html\%tab_name%.htm
@@ -428,9 +428,9 @@ caption := x
             }
         x = %A_Hour%:%A_Min%
         if (x == Setting("WakeUp Time"))
-          if (volume < 15)
+          if (volume < 12)
              {
-             volume += 0.025
+             volume += 0.02
              SoundSet, volume
              }
         dim := inca_tab
@@ -473,7 +473,7 @@ caption := x
         if (inca_tab && tab_name != previous_tab)			; has inca tab changed
             {
             GetTabSettings(1)						; get last tab settings
-            if (previous_tab && tab_name != "Downloads" && FileExist(inca "\cache\lists\" tab_name ".txt"))
+            if (previous_tab && FileExist(inca "\cache\lists\" tab_name ".txt"))
               FileRead, list, %inca%\cache\lists\%tab_name%.txt
             else CreateList(0)						; media list to match html page
             previous_tab := tab_name
@@ -675,7 +675,7 @@ caption := x
             }
         if (command == "Delete")
             {
-            if (InStr(path, "\slides\") || InStr(path, "\music\"))
+            if (InStr(path, "\inca\slides\") || InStr(path, "\inca\music\"))
               DeleteEntries()
             else Loop, Parse, selected, `/
               {
@@ -873,6 +873,8 @@ caption := x
         FileDelete, %inca%\cache\lists\%tab_name%.txt
         FileAppend, %list%, %inca%\cache\lists\%tab_name%.txt, UTF-8
         RenderPage()
+        if (folder == "Downloads") 
+            SetTimer, indexer, 1000, -2
         }
 
 
@@ -1122,7 +1124,7 @@ caption := x
             {
             list_id := A_LoopField
             if GetMedia(0)
-              if (InStr(address, "slides") || InStr(address, "music"))
+              if (InStr(address, "inca\slides") || InStr(address, "inca\music"))
                 FileAppend, %target%`r`n, %address%, UTF-8		; add media entry to playlist
               else if timer
                 FileMove, %src%, %address%				; move file to new folder
@@ -1146,7 +1148,9 @@ caption := x
           list_id := A_LoopField
           GetMedia(0)
           x = %target%`r`n
+          y = %src%`r`n
           str := StrReplace(str, x)
+          str := StrReplace(str, y)
           }
         FileAppend, %str%, %plist%, UTF-8
         }
@@ -1493,7 +1497,12 @@ caption := x
                 }
             if (med == "audio")
                 continue
-IfNotExist, %inca%\cache\posters\%filen%.jpg
+            x =
+            IfNotExist, %inca%\cache\posters\%filen%.jpg
+              x = 1
+            IfNotExist, %inca%\cache\thumbs\%filen%.jpg
+              x = 1
+            if x
                 {
                 GuiControl, Indexer:, GuiInd, indexing - %filen%
                 FileCreateDir, %inca%\cache\temp1

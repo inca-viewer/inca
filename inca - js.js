@@ -1,6 +1,7 @@
 <script>
 
 // compliance firefox, brave, edge and opera
+// open in notepad mpv etc not run src ?
 
 
   var modal = document.getElementById('myModal')			// media player window
@@ -16,6 +17,7 @@
   var capnav = document.getElementById('myCapnav')			// caption save button
   var seekbar = document.getElementById('mySeekBar')
   var seek = document.getElementById('mySeek')
+  var Loop = document.getElementById('myLoop')
   var sound = sessionStorage.getItem('sound')				// remember sound setting
   var wheel = 0
   var long_click = false
@@ -64,7 +66,7 @@
   document.addEventListener('mousedown', mouseDown)
   document.addEventListener('mouseup', mouseUp)
   document.addEventListener('mousemove', Gesture)
-
+  loop();loop()
 
   function timedEvents() {						// every ~84mS while media playing
     Captions()
@@ -76,6 +78,8 @@
     if (window.innerWidth == screen.width) {				// full screen mode
       media.style.marginLeft = '350px'; media.style.marginTop = '100px'; seekbar.style.marginLeft = '350px'}
     else {media.style.marginLeft = 0; media.style.marginTop = 0; seekbar.style.marginLeft = 0}
+    if (ypos > 0.6) {stat.innerHTML=Math.round(newSkinny*100)}
+    if (ypos > 0.75) {stat.innerHTML=Math.round(10*media.currentTime)/10}
     positionMedia()}
 
 
@@ -107,9 +111,8 @@
     last_type = type
     if (type) {close_media()}
     if (long_middle) {e = 'Previous'}
-    else if (e != 'Thumb') {start = 0}
-    if (e == 'Next') {index+=1}
-    if (e == 'Previous') {index-=1}
+    if (e == 'Next') {index+=1; start=0}
+    if (e == 'Previous') {index-=1; start=0}
     if (e == 'Mclick' && last_type && last_type != 'video' && xpos > 0.1) {index+=1}
     if (e == 'Mclick' && xpos < 0.1 && last_type != 'thumb') {index+=1}
     if (!over_thumb && !last_type) {index = last_id; e = 'Thumb'}	// play last media
@@ -165,7 +168,6 @@
     modal.style.zIndex = 40
     seek.src = media.src
     media.muted = false
-    looping = true
     block = 1}
 
 
@@ -174,7 +176,7 @@
     if (skinny && skinny != newSkinny) {
       messages = messages + '#Skinny#' + newSkinny + '#' + index + ',#'}
     if (cap.value != cap.innerHTML) {capnav.click()}
-    document.getElementById('title' + index).style.color = "lightsalmon"
+    document.getElementById('title' + index).style.color = 'lightsalmon'
     document.body.style.overflow = "auto"
     media.removeEventListener('ended', media_ended)
     clearInterval(mediaTimer)
@@ -230,7 +232,7 @@
       el.innerHTML = x + units}
     else if (id == 'Thumb1' || id == 'Thumbs') {			// thumb width
       timer = 10
-      var thumbs = document.getElementById('Thumbs')			// from top panel el
+      var thumbs = document.getElementById('Thumbs')			// from top panel htm
       thumb = document.getElementById("thumb" + index)
       thumb_size = 1*media.style.width.slice(0,-2)
       if (wheelDown) {thumb_size += thumb_size/40}
@@ -252,7 +254,7 @@
       stat.innerHTML = Math.round(newSkinny*100)
       if (newSkinny == 1) {timer = 146}
       media.style.transform = "scale("+scaleX+","+scaleY+")"}
-    else if (id == 'myNext') {						// media next
+    else if (id == 'myNext') {						// next media
       if (wheelDown) {playMedia('Next')}
       else {playMedia('Previous')}
       stat.innerHTML = index
@@ -293,7 +295,7 @@
         mediaX = rect.left + (media.offsetWidth * scaleX/2)
         mediaY = rect.top + (media.offsetHeight * scaleY/2)}
       if (x + y > 5) {
-        if (!gesture && !type && over_thumb) {				// thumb moved in htm tab
+        if (!gesture && !type && over_thumb) {				// thumb moved in browser tab
           media.style.opacity = 1
           media.style.position = 'fixed'
           media.style.zIndex = Zindex+=1}
@@ -309,16 +311,10 @@
     if (type && modal.style.cursor != "crosshair") {
       modal.style.cursor = "crosshair"
       setTimeout(function() {modal.style.cursor="none"},244)}
-    var xp = (e.clientX - rect.left) / (media.offsetWidth * scaleX)
+    var xp = (e.clientX - rect.left) / (media.offsetWidth * scaleX)	 // fast seek video
     seek.style.bottom = 50 +'px'	
     seek.style.left = e.clientX -80 +'px'
-    seekbar.style.left = mediaX - (scaleX*media.offsetWidth / 2) + "px"
-    if (type == "video") {
-      seekbar.style.display = 'block'
-      if (ypos > 0.75) {seekbar.style.top = window.innerHeight - 12 + 'px'}
-      else {seekbar.style.top = window.innerHeight - 3 + 'px'}}
-    else {seekbar.style.display = 'none'}
-    if (ypos > 0.9 && xp > 0 && xp < 1 && !mouse_down && type == 'video') { 	// fast seek video
+    if (ypos > 0.9 && xp > 0 && xp < 1 && !mouse_down && type == 'video') {
       seek_active = media.duration * xp
       seek.style.opacity = 1
       if (xp < 0.98) {seek.currentTime = seek_active}}
@@ -362,9 +358,9 @@
 
 
   function togglePause(e) {
-    if (!mouse_down || gesture || seek_active || over_cap || !type || long_click) {return}
+    if (!mouse_down || gesture || seek_active || over_cap || !type) {return}
     if (xpos < 0.1 && ypos > 0.5) {return}
-    if (type == "thumb") {getThumb(e); playMedia('Thumb')}
+    if (type == "thumb" || long_click) {getThumb(e); playMedia('Thumb')}
     else if (media.paused) {
       media.play()} 
     else {media.pause()}}
@@ -422,7 +418,7 @@
       cap.value = cap.innerHTML
       cap.style.opacity = 0.6
       media.pause()}
-    else if (cap.innerHTML != 'New' && (!cap.value || ptr <= 0)) {cap.style.opacity=0}  
+    else if (cap.innerHTML != '-' && (!cap.value || ptr <= 0)) {cap.style.opacity=0}  
     if (cap.value != cap.innerHTML) {
       newcap = cap.value + "|" + t + "|"
       if (!cap.value) {newcap = ''}
@@ -444,6 +440,12 @@
 
 
   function positionMedia() {
+    seekbar.style.left = mediaX - (scaleX*media.offsetWidth / 2) + "px"
+    if (type == "video") {
+      seekbar.style.display = 'block'
+      if (ypos > 0.75) {seekbar.style.top = window.innerHeight - 12 + 'px'}
+      else {seekbar.style.top = window.innerHeight - 3 + 'px'}}
+    else {seekbar.style.display = 'none'}
     media.style.top = mediaY - (media.offsetHeight / 2) + "px"
     media.style.left = mediaX - (media.offsetWidth / 2) + "px"
     media.style.transform = "scale("+scaleX+","+scaleY+")"}
@@ -487,9 +489,9 @@
     document.getElementById('myMp4').href = '#mp4#' + time + '#' + index + ',#' + cue
     document.getElementById('myFav').href = '#Favorite#' + time + '#' + index + ',#'}
   function closeNav() {nav.style.opacity = 0.3}
-  function loop() {if (looping) {looping = false} else {looping = true}}
+  function loop() {if (looping) {looping = false;Loop.style.color=null} else {looping = true;Loop.style.color='red'}}
   function selectAll() {for (i=1; i <= 600; i++) {select(i)}}
-  function editCap() {cap.style.display='block'; cap.style.opacity=0.6; cap.innerHTML='New'; cap.focus()}
+  function editCap() {cap.style.display='block'; cap.style.opacity=0.6; cap.innerHTML='-'; cap.focus()}
   function exitThumb(el) {if(!mouse_down) {over_thumb = false}; if (media != player){el.pause()}}
   function rename() {document.getElementById('myRename').href='#Rename#'+inputbox.value.replace(/ /g, "%20")+'#'+selected+'#'}
 
