@@ -19,12 +19,14 @@
   var seek = document.getElementById('mySeek')
   var Loop = document.getElementById('myLoop')
   var sound = sessionStorage.getItem('sound')				// remember sound setting
-  var wheel = 0
   var long_click = false
   var long_middle = false
+  var wheel = 0
   var block = 0								// block wheel input
   var last_id
+  var time = 0								// current media time
   var start = 0								// video start time
+  var last_start
   var filter = 0							// eg 30 minutes, 2 months, 'A'
   var toggles = ''							// eg reverse, recurse
   var sort = 'Alpha'
@@ -66,10 +68,11 @@
   document.addEventListener('mousedown', mouseDown)
   document.addEventListener('mouseup', mouseUp)
   document.addEventListener('mousemove', Gesture)
-  loop();loop()
+  loop();loop()								// set button color
+
 
   function timedEvents() {						// every ~84mS while media playing
-    Captions()
+    time = Math.round(10*media.currentTime)/10
     if (sound == 'yes' && media.volume <= 0.8) {media.volume += 0.2}
     if (sound == 'no' && media.volume >= 0.2) {media.volume -= 0.2}
     cap.style.top = mediaY + (scaleY*media.offsetHeight/2) + 10 + "px"
@@ -79,8 +82,9 @@
       media.style.marginLeft = '350px'; media.style.marginTop = '100px'; seekbar.style.marginLeft = '350px'}
     else {media.style.marginLeft = 0; media.style.marginTop = 0; seekbar.style.marginLeft = 0}
     if (ypos > 0.6) {stat.innerHTML=Math.round(newSkinny*100)}
-    if (ypos > 0.75) {stat.innerHTML=Math.round(10*media.currentTime)/10}
-    positionMedia()}
+    if (ypos > 0.75) {stat.innerHTML=time}
+    positionMedia()
+    Captions()}
 
 
   function overThumb(e, id, strt, sk) {					// mouse over thumbnail in browser tab
@@ -106,7 +110,7 @@
     if (e.button == 1) {e.preventDefault(); e = 'Mclick'}
     else if (e.button) {return}
     if (gesture) {return}
-    media.pause()							// pause htm tab thumb
+    media.pause()							// pause browser tab thumb
     media = player							// media assigned to modal
     last_type = type
     if (type) {close_media()}
@@ -115,7 +119,7 @@
     if (e == 'Previous') {index-=1; start=0}
     if (e == 'Mclick' && last_type && last_type != 'video' && xpos > 0.1) {index+=1}
     if (e == 'Mclick' && xpos < 0.1 && last_type != 'thumb') {index+=1}
-    if (!over_thumb && !last_type) {index = last_id; e = 'Thumb'}	// play last media
+    if (!over_thumb && !last_type) {index = last_id; start = last_start; e = 'Thumb'}	// play last media
     var Next = document.getElementById("media" + index)
     if (!Next) {index = 1; Next = document.getElementById('media1')}
     x = Next['onclick'].toString().split(","); x.pop(); x.pop()		// get next media arguments
@@ -155,7 +159,6 @@
     if (!mediaX || mediaX < 100 || mediaX > window.innerWidth*0.8) {mediaX = window.innerWidth/2.6}
     scaleX *= skinny
     stat.innerHTML = index
-    if (cap_list) {start -= 0.5}
     setTimeout(function() {positionMedia(); document.body.style.overflow="hidden"},300)
     media.style.maxWidth = window.innerWidth * 0.6 + "px"
     media.style.maxHeight = window.innerHeight * 0.7 + "px"
@@ -173,9 +176,9 @@
 
   function close_media() {
     last_id = index
+    last_start = media.currentTime
     if (skinny && skinny != newSkinny) {
       messages = messages + '#Skinny#' + newSkinny + '#' + index + ',#'}
-    if (cap.value != cap.innerHTML) {capnav.click()}
     document.getElementById('title' + index).style.color = 'lightsalmon'
     document.body.style.overflow = "auto"
     media.removeEventListener('ended', media_ended)
@@ -282,7 +285,7 @@
     wheel = 0; block = 1}
 
 
-  function Gesture(e) {							// mouse move
+  function Gesture(e) {							// mouse move over window
     if (over_thumb) {e.preventDefault()}
     e.stopPropagation()
     xpos = e.clientX / window.innerWidth
@@ -360,14 +363,15 @@
   function togglePause(e) {
     if (!mouse_down || gesture || seek_active || over_cap || !type) {return}
     if (xpos < 0.1 && ypos > 0.5) {return}
-    if (type == "thumb" || long_click) {getThumb(e); playMedia('Thumb')}
+    if (type == "thumb") {getThumb(e); playMedia('Thumb')}
+    if (long_click) {return}
     else if (media.paused) {
       media.play()} 
     else {media.pause()}}
 
 
   function mouseBack(e) {
-    if (e.key != 'Pause') {return}					// inca.exe re-map mouse Back button
+    if (e.key != 'Pause') {return}					// inca.exe re-map of mouse Back button
     var flag = false
     var top = document.body.getBoundingClientRect().top
     if (!type && top < 0) {scroll(0,0); return}				// scroll to top page
@@ -390,7 +394,7 @@
     setTimeout(function() {media.style.transition = '0s'},300)}
 
 
-  function select(i) {							// highlight selections on page
+  function select(i) {							// highlight selected media
     if (over_thumb || gesture) {return}
     index = i
     if (!(el = document.getElementById("title" + i))) {return}
@@ -406,31 +410,6 @@
     panel.innerHTML = ""
     if (selected) {panel.innerHTML=selected; panel.style.border = "0.1px solid #826858"}
     else  {panel.style.border = ""}}
-
-
-  function Captions() {
-    var t = Math.round(10*media.currentTime)/10
-    var ptr = cap_list.indexOf('|'+ t + '|')
-    if (ptr < 1) {ptr = cap_list.indexOf('|'+ t-0.1 + '|')}
-    if ((ptr > 0 && cap_time != t) || type == 'image') {
-      cap_time = t
-      cap.innerHTML = cap_list.slice(0,ptr).split('|').pop()
-      cap.value = cap.innerHTML
-      cap.style.opacity = 0.6
-      media.pause()}
-    else if (cap.innerHTML != '-' && (!cap.value || ptr <= 0)) {cap.style.opacity=0}  
-    if (cap.value != cap.innerHTML) {
-      newcap = cap.value + "|" + t + "|"
-      if (!cap.value) {newcap = ''}
-      capnav.href = '#Caption#' + newcap + '#' + index + ',#' + cap.innerHTML + '|' + t + '|'}}
-
-
-  function nextCaption() {
-    var z = cap_list.split('|')
-    for (x of z) {
-      if (!isNaN(x) && x > media.currentTime) {
-        media.currentTime = x - 0.8
-        return}}playMedia('Next')}
 
 
   function toggleMute() {
@@ -484,16 +463,40 @@
 
   function openNav() {
     nav.style.opacity = 0.7
-    var time = Math.round(media.currentTime*100)/100
     document.getElementById('myMp3').href = '#mp3#' + time + '#' + index + ',#' + cue
     document.getElementById('myMp4').href = '#mp4#' + time + '#' + index + ',#' + cue
     document.getElementById('myFav').href = '#Favorite#' + time + '#' + index + ',#'}
   function closeNav() {nav.style.opacity = 0.3}
   function loop() {if (looping) {looping = false;Loop.style.color=null} else {looping = true;Loop.style.color='red'}}
   function selectAll() {for (i=1; i <= 600; i++) {select(i)}}
-  function editCap() {cap.style.display='block'; cap.style.opacity=0.6; cap.innerHTML='-'; cap.focus()}
   function exitThumb(el) {if(!mouse_down) {over_thumb = false}; if (media != player){el.pause()}}
   function rename() {document.getElementById('myRename').href='#Rename#'+inputbox.value.replace(/ /g, "%20")+'#'+selected+'#'}
+  function editCap() {
+    if (cap.value && cap.value != cap.innerHTML) {
+      newcap = cap.value + "|" + time + "|"
+      messages = messages + '#Caption#' + newcap + '#' + index + ',#' + cap.innerHTML + '|' + time + '|'}
+    cap.style.display='block'
+    cap.style.opacity=0.6
+    cap.value = '-'
+    cap.innerHTML = '-'
+    cap.focus()}
+
+  function nextCaption() {
+    var z = cap_list.split('|')
+    for (x of z) {
+      if (!isNaN(x) && x > media.currentTime) {media.currentTime = x - 0.8; return}}
+    playMedia('Next')}
+
+  function Captions() {
+    var ptr = cap_list.indexOf('|'+ time + '|')
+    if (ptr < 1) {ptr = cap_list.indexOf('|'+ time - 0.1 + '|')}
+    if ((ptr > 0 && cap_time != time) || type == 'image') {
+      cap_time = time
+      cap.innerHTML = cap_list.slice(0,ptr).split('|').pop()
+      cap.value = cap.innerHTML
+      cap.style.opacity = 0.6
+      media.pause()}
+    else if (cap.innerHTML != '-' && (!cap.value || ptr <= 0)) {cap.style.opacity=0}}
 
 
 </script>
