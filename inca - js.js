@@ -18,7 +18,8 @@
   var seekbar = document.getElementById('mySeekBar')
   var seek = document.getElementById('mySeek')
   var Loop = document.getElementById('myLoop')
-  var sound = sessionStorage.getItem('sound')				// remember sound setting
+  var folder = sessionStorage.getItem('folder')
+  var sound = sessionStorage.getItem('sound')
   var long_click = false
   var long_middle = false
   var wheel = 0
@@ -200,14 +201,13 @@
     e.preventDefault()
     e.stopPropagation()
     wheel += Math.abs(e.deltaY)
-    if (block || wheel < 40) {return}
+    if (block || wheel < 140) {return}
     var wheelDown = false
     var timer = 10
     if (e.deltaY > 0) {wheelDown = true}
     if (wheelDown) {filter++}
     else if (filter) {filter--}
     if (id == 'myPanel') {						// alpha search
-      timer = 80
       if (filter > 26) {filter = 26}
       id = String.fromCharCode(filter + 64)
       var htm = ''
@@ -224,7 +224,6 @@
       el.href = '#Page#' + page + '##'
       el.innerHTML = 'Page '+page+' of '+pages}
     else if (id == 'myFilter') {					// search filter
-      timer = 50
       var units = ''
       var x = 'All'
       if (sort == 'Alpha') {if(filter < 26) {x = String.fromCharCode(filter + 64)}}
@@ -234,7 +233,6 @@
       el.href = '#Filter#' + filter + '##'
       el.innerHTML = x + units}
     else if (id == 'Thumb1' || id == 'Thumbs') {			// thumb width
-      timer = 10
       var thumbs = document.getElementById('Thumbs')			// from top panel htm
       thumb = document.getElementById("thumb" + index)
       thumb_size = 1*media.style.width.slice(0,-2)
@@ -263,7 +261,6 @@
       stat.innerHTML = index
       timer = 440}
     else if (id == 'mySpeed' || xpos < 0.1) {				// speed
-      timer = 40
       if (wheelDown) {x = -0.01}
       else {x = 0.01}
       if (type != 'image' && (media.playbackRate < 1 || x < 0)) {
@@ -443,6 +440,7 @@
         htm = htm + '<a href=#'+x+'###' + p + '>' + x + '</a>'}
       htm = htm + '<a id="myFilter" onwheel="wheelEvents(event, id, this)">All</a><a href=#Thumbs#'+thumb_size+'## id="Thumbs" onwheel="wheelEvents(event, id, this)" onmouseover="media.style.opacity=1" onmouseout="media.style.opacity=null">Thumbs '+Math.round(thumb_size)+'</a><a id="myRename" onmousemove="rename()">Rename</a><a href=#Delete##'+selected+'#>Delete</a><a href=#Select### onmouseup="selectAll()">Select</a><a href="%title%.htm#Page" id="myPage" onwheel="wheelEvents(event, id, this)">Page '+page+' of '+pages+'</a><a href=#Settings###>Settings</a><a href=#Join##'+selected+'#>Join</a>'}
     else if ('FolFavSubMusicSlides'.match(id)) {				// folders and playlists
+      sessionStorage.setItem("folder",id)
       var z = input.split('|')
       for (x of z) {
         y = x.split("/")
@@ -458,6 +456,7 @@
         htm = htm + '<a href=#Path##' + selected + '#' + path + '>' + p + '</a>'}}
     panel.innerHTML = htm
     x = selected.split(',')
+    document.getElementById(folder).style.color = 'lightsalmon'
     for (var i = 0; i < x.length; i++) {document.getElementById('media' + x[i]).load()}}	// release media
 
 
