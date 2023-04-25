@@ -2,7 +2,7 @@
 
 // compliance firefox, brave, edge and opera
 // open in notepad mpv etc not run src ?
-
+// mclick next sets start to 0
 
   var modal = document.getElementById('myModal')			// media player window
   var player = document.getElementById('myPlayer')
@@ -264,6 +264,7 @@
       if (wheelDown) {x = -0.01}
       else {x = 0.01}
       if (type != 'image' && (media.playbackRate < 1 || x < 0)) {
+        timer = 34
         media.playbackRate += x
         stat.innerHTML = Math.round(media.playbackRate *100)}}
     else if (ypos > 0.75 && type != 'image' && type != 'thumb') {	// seek

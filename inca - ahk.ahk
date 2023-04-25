@@ -1,6 +1,15 @@
 
 ; mouse back button is intercepted and converted to {Pause} key for java
 
+        Loop, Files, %profile%\Downloads\*.*, R
+            {
+            source = %A_LoopFileFullPath%
+            SplitPath, source,,fold,ex,filen
+            runwait, %inca%\apps\ffmpeg.exe -i "%source%" "%profile%\Downloads\%filen% 0.mp4",,Hide
+            }
+
+
+
 
 	; Inca Media Viewer for Windows - Firefox & Chrome compatible
 
@@ -47,14 +56,14 @@
         Global vol_popup		; volume bar popup 
         Global volume
         Global page := 1		; current page within list
-        Global sort = Alpha
+        Global sort := "Date"
 	Global filter := 0		; secondary search filter eg. date, duration, Alpha letter
         Global inca_tab			; inca tab exists
         Global click			; mouse click type
         Global timer			; click down timer
         Global view := 9		; thumb view (em size)
         Global last_view := 9
-        Global wheel_count = 0
+        Global wheel_count := 0
         Global vol_ref := 2
         Global wheel
         Global inside_browser		; clicked inside browser window
@@ -247,6 +256,517 @@
 
 
 
+    MouseDown()
+      {
+      gesture =
+      timer := A_TickCount + 350
+      MouseGetPos, xpos, ypos
+      StringReplace, click, A_ThisHotkey, ~,, All
+      IfWinNotActive, ahk_group Browsers
+        inside_browser =
+      loop					; gesture detection
+        {
+        MouseGetPos, x, y
+        x -= xpos
+        y -= ypos
+        xy := Abs(x + y)
+        if (!GetKeyState("LButton", "P") && !GetKeyState("RButton", "P"))
+          break
+        if (xy > 6)				; gesture started
+          {
+          MouseGetPos, xpos, ypos
+          gesture = 1
+          if (xpos < 15)			; gesture at screen edges
+              xpos := 15
+          if (xpos > A_ScreenWidth - 15)
+              xpos := A_ScreenWidth - 15
+          MouseMove, % xpos, % ypos, 0
+          if GetKeyState("RButton", "P")
+              SetVolume(1.4 * x)
+          }
+        if (!gesture && A_TickCount > timer)
+          {
+          timer =
+          send, {Lbutton up}
+          if (A_Cursor == "IBeam")
+            {
+            if WinActive("ahk_group Browsers")
+              {
+              clip := Clipboard
+              Clipboard =
+              send, ^c
+              ClipWait, 0
+              if ClipBoard
+                {
+                path =
+                address =
+                command = Search
+                value := Clipboard
+                search_box := value
+                ProcessMessage()
+                CreateList(1)
+                }
+              else send, !+0
+              Clipboard := clip
+              }
+            else send, !+0			; trigger osk keyboard
+            }
+          break
+          }
+        }
+      if (click == "LButton" && inside_browser && A_Cursor != "IBeam")
+        GetAddressBar()
+      if (click == "RButton" && !gesture)
+        send {RButton}
+      }
+
+
+    GetAddressBar()			; messages from browser address bar
+        {
+        selected =
+        select =
+        command =
+        value =
+        address =
+        reload =
+        type =
+        ptr := 1
+;        WinActivate, ahk_group Browsers
+        if !inside_browser
+          return
+        input := ReadAddressBar(1)
+        input := StrReplace(input, "/", "\")
+        if !InStr(input, "file:\\\")
+          return
+        array := StrSplit(input,"#")
+        if (array.MaxIndex() < 3) 
+          return
+        Loop % array.MaxIndex()/4
+          {
+          command := array[ptr+=1]
+          value := array[ptr+=1]
+          select := array[ptr+=1]
+          address := array[ptr+=1]
+          select := StrReplace(select, ",", "/")
+          if (StrLen(select) > 1)
+            {
+            selected = %select%
+            list_id := StrSplit(selected, "/").1
+            GetMedia(0)
+            }
+          if !command
+            continue
+          ProcessMessage()
+          }
+        if (reload == 1)
+          CreateList(1)
+        if (reload == 2)
+          RenderPage()
+        search_box =
+        }
+
+
+    ReadAddressBar(reset)
+        {
+        Critical
+        clip := clipboard
+        clipboard =
+        sleep 24
+        send, ^l
+        sleep 24
+        send, ^c
+        sleep 24
+        input := clipboard
+        clipboard := clip
+        if reset
+            {
+            if InStr(input, "#")
+                send, !{Left}						; reset location bar to last address
+            send, +{F6}							; focus back to page
+            if (browser == "edge")
+                send, +{F6}
+            }
+        Pos := 1
+        While Pos := RegExMatch(input, "i)(%[\da-f]{2})+", Code, Pos)	; convert url to utf-8
+	    {
+            VarSetCapacity(Var, StrLen(Code) // 3, 0), Code := SubStr(Code,2)
+            Loop, Parse, Code, `%
+                NumPut("0x" A_LoopField, Var, A_Index-1, "UChar")
+            decoded := StrGet(&Var, "UTF-8")
+            input := SubStr(input, 1, Pos-1) . decoded . SubStr(input, Pos+StrLen(Code)+1)
+            Pos += StrLen(decoded)+1
+            }
+        sleep 34							; release location bar
+        return input
+        }
+
+
+
+
+    ProcessMessage()
+        {
+        if (command == "Orphan")					; open in notepad if playlist
+            {
+            IfExist, %inca%\slides\%value%.m3u
+              run, %inca%\slides\%value%.m3u
+            IfExist, %inca%\music\%value%.m3u
+              run, %inca%\music\%value%.m3u
+            }
+        if (command == "Join")
+            {
+            if !GetMedia(0)
+              return
+            src2 := src
+            media2 := media
+            list_id := StrSplit(selected, "/").2
+            if GetMedia(0)
+              {
+              str = file '%media_path%\%media2%.%ext%'`r`nfile '%media_path%\%media%.%ext%'`r`n
+              FileAppend,  %str%, %inca%\apps\temp1.txt, utf-8
+              runwait, %inca%\apps\Utf-WithoutBOM.bat %inca%\apps\temp1.txt > %inca%\apps\temp.txt,,Hide
+              runwait, %inca%\apps\ffmpeg.exe -f concat -safe 0 -i "%inca%\apps\temp.txt" -c copy "%media_path%\%media%- join.mp4",,Hide
+              FileDelete, %inca%\apps\temp.txt
+              FileDelete, %inca%\apps\temp1.txt
+              }
+            sleep 1000
+            reload := 1
+            }
+        if (command == "mp3" || command == "mp4")
+            {
+            if !address
+                x = 0.0
+            if (!address && !value)
+              run, %inca%\apps\ffmpeg.exe -i "%src%" "%media_path%\%media% 0.0.%command%",,Hide
+            else run, %inca%\apps\ffmpeg.exe -ss %address% -to %value% -i "%src%" "%media_path%\%media% %x%.%command%",,Hide
+            sleep 1000
+            reload := 1
+            }
+        if (command == "MovePos")
+            MoveEntry()						; move entry within playlist
+        if (command == "Caption")
+            {
+            FileRead, str, %inca%\cache\captions\%media%.srt
+            FileDelete, %inca%\cache\captions\%media%.srt
+            if InStr(str, address)
+              str := StrReplace(str, address, value)
+            else str = %str%%value%
+            FileAppend, %str%, %inca%\cache\captions\%media%.srt, UTF-8
+            reload := 2
+            }
+        if (command == "Favorite")
+            {
+            if !value
+                value := seek
+            if (InStr(path, "slides") && !search_term)
+                FileAppend, %src%|%value%`r`n, %path%%folder%.m3u, UTF-8
+            else FileAppend, %src%|%value%`r`n, %inca%\slides\new.m3u, UTF-8
+            Runwait, %inca%\apps\ffmpeg.exe -ss %value% -i "%src%" -y -vf scale=480:-2 -vframes 1 "%inca%\cache\posters\%media%%A_Space%%value%.jpg",, Hide
+            }
+        if (command == "Skinny")
+            {
+            FileDelete, %inca%\cache\widths\%media%.txt
+            if (value > 0.5 && value < 0.995 || value > 1.005 && value < 1.5)
+              FileAppend, %value%, %inca%\cache\widths\%media%.txt
+            reload := 2
+            }
+        if (command == "Thumbs")
+            {
+            page := 1
+            if (view == value)
+              {
+              if !view
+                 view := last_view
+              else view := 0
+              }
+            else 
+              view := value
+            last_view := value
+            reload := 2
+            }
+        if (command == "Delete")
+            {
+            if (InStr(path, "\inca\slides\") || InStr(path, "\inca\music\"))
+              DeleteEntries()
+            else Loop, Parse, selected, `/
+              {
+              list_id := A_LoopField
+              if GetMedia(0)
+                FileRecycle, %src%
+              }
+            reload := 1
+            }
+        if (command == "Rename")
+            {
+            if (StrLen(value) < 4)
+                popup = too small
+            if !GetMedia(0)
+                popup = no media
+            if !popup
+               {
+               RenameFiles(value)
+               popup = Renamed
+               }
+            Popup(popup,600,0,0)
+            sleep 555
+            reload := 1
+            }
+        if (command == "Path" && selected)
+            {
+            FileTransfer()						; between folders or playlists
+            reload := 1
+            }
+        if (command == "Path")						; set inca path
+            {
+            if InStr(address, ".m3u")
+              {
+              playlist := address
+              SplitPath, address,,path,,folder
+              path = %path%\
+              }
+            else
+              {
+              playlist =
+              path := address
+              StringTrimRight, address, address, 1
+              SplitPath, address,,,,folder
+              }
+            }
+        if (command == "Media")
+            {
+            list_id := value
+            if GetMedia(0)
+              if (!timer||type=="document"||ext=="txt"||ext=="m3u"||ext=="wmv"||ext=="avi"||ext=="mpg"
+              ||ext=="ts"||ext=="flv" || (type == "video" && browser != "chrome" && ext != "mp4"))
+                {
+                sleep 200
+                send, {Pause}
+                run, %src%
+                }
+            }
+        else if (command == "Searchbox" && search_term)			; add search to search list
+            {
+            search_list = %search_list%|%search_term%
+            IniWrite,%search_list%,%inca%\inca - ini.ini,Settings,search_list
+            LoadSettings()
+            PopUp("Added",600,0,0)
+            reload := 1
+            }
+        else if (command == "Page" || command == "View")
+            {
+            if (command == "Page")
+                page := value
+            if (command == "View")
+                view := value
+            Popup(value,0,0,0)
+            reload := 1
+            }
+        else if (command == "Settings") 
+            ShowSettings()
+        else if (command == "Filter" || command == "Path" || command == "Search" || InStr(sort_list, command))
+            {
+            reload = 1
+            if (command == "Search")
+              search_term = %value%					; clears white space
+            else if search_box
+              search_term = %search_box%
+            if address
+                {
+                search_term =
+                tab_name := folder
+                this_search := path
+                x := playlist
+                GetTabSettings(0)					; load previous settings from cache
+                playlist := x
+                if !InStr(subfolders, folder)
+                    subfolders =
+                if playlist
+                   Loop, Files, %inca%\%folder%\*.m3u, FR
+                     {
+                     SplitPath, A_LoopFileName,,,ex,name
+                     subfolders = %subfolders%|%name%
+                     }
+                else Loop, Files,%path%*.*, D
+                  if A_LoopFileAttrib not contains H,S
+                    if !InStr(subfolders, A_LoopFileFullPath)
+                      if subfolders
+                        subfolders = %subfolders%|%A_LoopFileFullPath%\
+                      else subfolders = %A_LoopFileFullPath%\
+                filter := 0
+                }
+            if search_term						; search text from link or search box
+                {
+                tab_name := search_term
+                folder := search_term
+                GetTabSettings(0)					; load cached tab settings
+                this_search := search_folders
+                if (search_box && !InStr(this_search, path))		; search this folder, then search paths
+                    this_search = %path%|%this_search%			; search this folder only
+                if search_box
+                    {
+                    view := 0
+                    toggles =
+                    sort = Duration
+                   }
+                filter := 0
+                }
+            if (command == "Filter")			; alpha letter
+                filter := value
+            page := 1
+            if (InStr(sort_list, command))				; sort filter
+                {
+                filter := 0
+                toggle_list = Reverse Recurse Videos Images
+                if (sort != command)					; new sort
+                    {
+                    if (command != "Reverse" && !InStr(toggle_list, command))
+                        StringReplace, toggles, toggles, Reverse	; remove reverse
+                    }
+                else if (sort != "Shuffle")
+                    command = Reverse
+                if InStr(toggle_list, command)
+                    if !InStr(toggles, command)				; toggle the sort switches
+                        toggles = %toggles%%command%			; add switch
+                    else StringReplace, toggles, toggles, %command%	; remove switch
+                else sort := command
+                if (StrLen(toggles) < 4)
+                    toggles =
+                }
+            }
+        }
+
+
+    CreateList(show)							; list of files in path
+        {
+        Critical
+        if !(folder || this_search)
+            return
+        IfNotExist, %path%
+            path = %search_term%\
+        list =
+        list_size := 1
+        popup := tab_name
+        if (InStr(sort_list, command))
+            popup := command
+        if search_term
+            popup := search_term
+        if show
+            Popup(popup,0,0,0)
+        if (InStr(toggles, "Recurse") || search_term)
+            recurse = R
+        FileRead, str, %playlist%
+        if playlist
+           {
+           Loop, Parse, str, `n, `r
+             {
+             x := StrSplit(A_Loopfield, "|").1
+             y := StrSplit(A_Loopfield, "|").2
+             if (x && spool(x, A_Index, y))
+                 break
+             }
+           }
+        else Loop, Parse, this_search, `|
+           Loop, Files, %A_LoopField%*.*, F%recurse%
+             if A_LoopFileAttrib not contains H,S
+               if spool(A_LoopFileFullPath, A_Index, 0)
+                 break 2
+        StringTrimRight, list, list, 2					; remove end `r`n
+        if (InStr(toggles, "Reverse") && sort != "Date")
+            reverse = R
+        if (!InStr(toggles, "Reverse") && sort == "Date")
+            reverse = R
+        if (sort == "Ext")
+            Sort, list, %reverse% Z					; alpha sort
+        else if (sort != "Shuffle")
+            Sort, list, %reverse% Z N					; numeric sort
+        if (sort == "Shuffle")
+            Sort, list, Random Z
+        FileDelete, %inca%\cache\lists\%tab_name%.txt
+        FileAppend, %list%, %inca%\cache\lists\%tab_name%.txt, UTF-8
+        RenderPage()
+        if (folder == "Downloads") 
+            SetTimer, indexer, 1000, -2
+        }
+
+
+
+    TimedEvents:
+        MouseGetPos, xpos, ypos
+        WinGetPos, xb, yb, wb, hb, ahk_group Browsers
+        if (inca_tab && xpos > xb+10) ; && ypos > yb+230 && ypos < yb+hb-50)
+            inside_browser = 1
+        else inside_browser =
+        if vol_popup							; show volume popup bar
+            vol_popup -= 1
+        if (volume > 0.1 && !vol_popup && Setting("Sleep Timer") > 10 && A_TimeIdlePhysical > 600000)
+            {
+            volume -= vol_ref / (Setting("Sleep Timer") * 6)		; sleep timer
+            SoundSet, volume						; slowly reduce volume
+            vol_popup := 100						; check every 10 seconds
+            }
+        x = %A_Hour%:%A_Min%
+        if (x == Setting("WakeUp Time"))
+          if (volume < 12)
+             {
+             volume += 0.02
+             SoundSet, volume
+             }
+        dim := inca_tab
+        inca_tab := 0
+        browser = 
+        WinGetTitle title, Inca -
+        if InStr(title, "Inca - ")
+          tab_name := SubStr(title, 8)
+        browser = firefox
+        StringGetPos, pos, tab_name, mozilla firefox, R
+        if (pos<1)
+          {
+          browser = chrome
+          StringGetPos, pos, tab_name, google chrome, R
+          }
+        if (pos<1)
+          {
+          browser = brave
+          StringGetPos, pos, tab_name, Brave, R
+          }
+        if (pos<1)
+          {
+          browser = edge
+          StringGetPos, pos, tab_name, Profile 1 - Microsoft, R
+          }
+;        if (pos<1)
+;          return 
+        StringLeft, tab_name, tab_name, % pos - 3
+        WinGet, state, MinMax, ahk_group Browsers
+        if (tab_name && state > -1)
+            inca_tab := 1
+        if (inca_tab != dim)
+            {
+            mask1 := 0
+            if (mask2 := Setting("Dim Desktop"))
+              loop 20
+                {
+                sleep 5
+                mask1 += (Setting("Dim Desktop") * 2.55) / 20
+                mask2 -= 10
+                Gui, background:+LastFound
+                if inca_tab
+                    WinSet, Transparent, %mask1%
+                else WinSet, Transparent, %mask2%
+                }
+            }
+        if (inca_tab && tab_name != previous_tab)			; has inca tab changed
+            {
+            GetTabSettings(1)						; get last tab settings
+            if (previous_tab && FileExist(inca "\cache\lists\" tab_name ".txt"))
+              FileRead, list, %inca%\cache\lists\%tab_name%.txt
+            else CreateList(0)						; media list to match html page
+            previous_tab := tab_name
+            }
+        ShowStatus()							; show time & vol
+        return
+
+
+
     SpoolList(i, j, input, sort_name, start)				; spool sorted media files into web page
         {
         if ((cap_size := view / 12) > 1.6)
@@ -412,472 +932,6 @@ caption := x
         }
 
 
-    TimedEvents:
-        MouseGetPos, xpos, ypos
-        WinGetPos, xb, yb, wb, hb, ahk_group Browsers
-        if (WinActive("ahk_group Browsers") && inca_tab && xpos > xb+10 && ypos > yb+230 && ypos < yb+hb-50)
-            inside_browser = 1
-        else inside_browser =
-        if vol_popup							; show volume popup bar
-            vol_popup -= 1
-        if (volume > 0.1 && !vol_popup && Setting("Sleep Timer") > 10 && A_TimeIdlePhysical > 600000)
-            {
-            volume -= vol_ref / (Setting("Sleep Timer") * 6)		; sleep timer
-            SoundSet, volume						; slowly reduce volume
-            vol_popup := 100						; check every 10 seconds
-            }
-        x = %A_Hour%:%A_Min%
-        if (x == Setting("WakeUp Time"))
-          if (volume < 12)
-             {
-             volume += 0.02
-             SoundSet, volume
-             }
-        dim := inca_tab
-        inca_tab := 0
-        browser = 
-        WinGetTitle title, Inca -
-        if InStr(title, "Inca - ")
-          tab_name := SubStr(title, 8)
-        StringGetPos, pos, tab_name, mozilla firefox, R
-        if (pos>0)
-            browser = firefox
-        else StringGetPos, pos, tab_name, google chrome, R
-        if (pos>0)
-            browser = chrome
-        else StringGetPos, pos, tab_name, Brave, R
-        if (pos>0)
-            browser = brave
-        else StringGetPos, pos, tab_name, Profile 1 - Microsoft, R
-        if (pos>0)
-            browser = edge
-        StringLeft, tab_name, tab_name, % pos - 3
-        WinGet, state, MinMax, ahk_group Browsers
-        if (tab_name && state > -1)
-            inca_tab := 1
-        if (inca_tab != dim)
-            {
-            mask1 := 0
-            if (mask2 := Setting("Dim Desktop"))
-              loop 20
-                {
-                sleep 5
-                mask1 += (Setting("Dim Desktop") * 2.55) / 20
-                mask2 -= 10
-                Gui, background:+LastFound
-                if inca_tab
-                    WinSet, Transparent, %mask1%
-                else WinSet, Transparent, %mask2%
-                }
-            }
-        if (inca_tab && tab_name != previous_tab)			; has inca tab changed
-            {
-            GetTabSettings(1)						; get last tab settings
-            if (previous_tab && FileExist(inca "\cache\lists\" tab_name ".txt"))
-              FileRead, list, %inca%\cache\lists\%tab_name%.txt
-            else CreateList(0)						; media list to match html page
-            previous_tab := tab_name
-            }
-        ShowStatus()							; show time & vol
-        return
-
-
-
-    MouseDown()
-      {
-      gesture =
-      timer := A_TickCount + 350
-      MouseGetPos, xpos, ypos
-      StringReplace, click, A_ThisHotkey, ~,, All
-      IfWinNotActive, ahk_group Browsers
-        inside_browser =
-      loop					; gesture detection
-        {
-        MouseGetPos, x, y
-        x -= xpos
-        y -= ypos
-        xy := Abs(x + y)
-        if (!GetKeyState("LButton", "P") && !GetKeyState("RButton", "P"))
-          break
-        if (xy > 6)				; gesture started
-          {
-          MouseGetPos, xpos, ypos
-          gesture = 1
-          if (xpos < 15)			; gesture at screen edges
-              xpos := 15
-          if (xpos > A_ScreenWidth - 15)
-              xpos := A_ScreenWidth - 15
-          MouseMove, % xpos, % ypos, 0
-          if GetKeyState("RButton", "P")
-              SetVolume(1.4 * x)
-          }
-        if (!gesture && A_TickCount > timer)
-          {
-          timer =
-          if (A_Cursor == "IBeam")
-            {
-            if WinActive("ahk_group Browsers")
-              {
-              clip := Clipboard
-              Clipboard =
-              send, ^c
-              ClipWait, 0
-              send, {Lbutton up}
-              if ClipBoard
-                {
-                path =
-                value := Clipboard
-                command = Search
-                search_box := value
-                if value
-                ProcessMessage()
-                CreateList(1)
-                }
-              else send, !+0
-              Clipboard := clip
-              }
-            else send, !+0			; trigger osk keyboard
-            }
-          break
-          }
-        }
-      if (click == "LButton" && inside_browser && A_Cursor != "IBeam")
-        GetAddressBar()
-      if (click == "RButton" && !gesture)
-        send {RButton}
-      }
-
-
-    GetAddressBar()			; messages from browser address bar
-        {
-        selected =
-        select =
-        command =
-        value =
-        address =
-        reload =
-        type =
-        ptr := 1
-        WinActivate, ahk_group Browsers
-        if !inside_browser
-          return
-        input := ReadAddressBar(1)
-        input := StrReplace(input, "/", "\")
-        if !InStr(input, "file:\\\")
-          return
-        array := StrSplit(input,"#")
-        if (array.MaxIndex() < 3) 
-          return
-        Loop % array.MaxIndex()/4
-          {
-          command := array[ptr+=1]
-          value := array[ptr+=1]
-          select := array[ptr+=1]
-          address := array[ptr+=1]
-          select := StrReplace(select, ",", "/")
-          if (StrLen(select) > 1)
-            {
-            selected = %select%
-            list_id := StrSplit(selected, "/").1
-            GetMedia(0)
-            }
-          if !command
-            continue
-          ProcessMessage()
-          }
-        if (reload == 1)
-          CreateList(1)
-        if (reload == 2)
-          RenderPage()
-        search_box =
-        }
-
-
-    ProcessMessage()
-        {
-        if (command == "Orphan")					; open in notepad if playlist
-            {
-            IfExist, %inca%\slides\%value%.m3u
-              run, %inca%\slides\%value%.m3u
-            IfExist, %inca%\music\%value%.m3u
-              run, %inca%\music\%value%.m3u
-            }
-        if (command == "Join")
-            {
-            if !GetMedia(0)
-              return
-            src2 := src
-            media2 := media
-            list_id := StrSplit(selected, "/").2
-            if GetMedia(0)
-              {
-              str = file '%media_path%\%media2%.%ext%'`r`nfile '%media_path%\%media%.%ext%'`r`n
-              FileAppend,  %str%, %inca%\apps\temp1.txt, utf-8
-              runwait, %inca%\apps\Utf-WithoutBOM.bat %inca%\apps\temp1.txt > %inca%\apps\temp.txt,,Hide
-              runwait, %inca%\apps\ffmpeg.exe -f concat -safe 0 -i "%inca%\apps\temp.txt" -c copy "%media_path%\%media%- join.mp4",,Hide
-              FileDelete, %inca%\apps\temp.txt
-              FileDelete, %inca%\apps\temp1.txt
-              }
-            sleep 1000
-            reload := 1
-            }
-        if (command == "mp3" || command == "mp4")
-            {
-            if !address
-                x = 0.0
-            if (!address && !value)
-              run, %inca%\apps\ffmpeg.exe -i "%src%" "%media_path%\%media% 0.0.%command%",,Hide
-            else run, %inca%\apps\ffmpeg.exe -ss %address% -to %value% -i "%src%" "%media_path%\%media% %x%.%command%",,Hide
-            sleep 1000
-            reload := 1
-            }
-        if (command == "MovePos")
-            MoveEntry()						; move entry within playlist
-        if (command == "Caption")
-            {
-            FileRead, str, %inca%\cache\captions\%media%.srt
-            FileDelete, %inca%\cache\captions\%media%.srt
-            if InStr(str, address)
-              str := StrReplace(str, address, value)
-            else str = %str%%value%
-            FileAppend, %str%, %inca%\cache\captions\%media%.srt, UTF-8
-            reload := 2
-            }
-        if (command == "Favorite")
-            {
-            if !value
-                value := seek
-            if (InStr(path, "slides") && !search_term)
-                FileAppend, %src%|%value%`r`n, %path%%folder%.m3u, UTF-8
-            else FileAppend, %src%|%value%`r`n, %inca%\slides\new.m3u, UTF-8
-            Runwait, %inca%\apps\ffmpeg.exe -ss %value% -i "%src%" -y -vf scale=480:-2 -vframes 1 "%inca%\cache\posters\%media%%A_Space%%value%.jpg",, Hide
-            }
-        if (command == "Skinny")
-            {
-            FileDelete, %inca%\cache\widths\%media%.txt
-            if (value > 0.5 && value < 0.995 || value > 1.005 && value < 1.5)
-              FileAppend, %value%, %inca%\cache\widths\%media%.txt
-            reload := 2
-            }
-        if (command == "Thumbs")
-            {
-            page := 1
-            if (view == value)
-              {
-              if !view
-                 view := last_view
-              else view := 0
-              }
-            else 
-              view := value
-            last_view := value
-            reload := 2
-            }
-        if (command == "Delete")
-            {
-            if (InStr(path, "\inca\slides\") || InStr(path, "\inca\music\"))
-              DeleteEntries()
-            else Loop, Parse, selected, `/
-              {
-              list_id := A_LoopField
-              if GetMedia(0)
-                FileRecycle, %src%
-              }
-            reload := 1
-            }
-        if (command == "Rename")
-            {
-            if (StrLen(value) < 4)
-                popup = too small
-            if !GetMedia(0)
-                popup = no media
-            if !popup
-               {
-               RenameFiles(value)
-               popup = Renamed
-               }
-            Popup(popup,600,0,0)
-            sleep 555
-            reload := 1
-            }
-        if (command == "Path" && selected)
-            {
-            FileTransfer()						; between folders or playlists
-            reload := 1
-            }
-        if (command == "Path")						; set inca path
-            {
-            if InStr(address, ".m3u")
-              {
-              playlist := address
-              SplitPath, address,,path,,folder
-              path = %path%\
-              }
-            else
-              {
-              playlist =
-              path := address
-              StringTrimRight, address, address, 1
-              SplitPath, address,,,,folder
-              }
-            }
-        if (command == "Media")
-            {
-            list_id := value
-            if GetMedia(0)
-              if (!timer||type=="document"||ext=="txt"||ext=="m3u"||ext=="wmv"||ext=="avi"||ext=="mpg"
-              ||ext=="ts"||ext=="flv" || (type == "video" && browser == "firefox" && ext != "mp4"))
-                {
-                sleep 200
-                send, {Pause}
-                run, %src%
-                }
-            }
-        else if (command == "Searchbox" && search_term)			; add search to search list
-            {
-            search_list = %search_list%|%search_term%
-            IniWrite,%search_list%,%inca%\inca - ini.ini,Settings,search_list
-            LoadSettings()
-            PopUp("Added",600,0,0)
-            reload := 1
-            }
-        else if (command == "Page" || command == "View")
-            {
-            if (command == "Page")
-                page := value
-            if (command == "View")
-                view := value
-            Popup(value,0,0,0)
-            reload := 1
-            }
-        else if (command == "Settings") 
-            ShowSettings()
-        else if (command == "Filter" || command == "Path" || command == "Search" || InStr(sort_list, command))
-            {
-            reload = 1
-            if (command == "Search")
-              search_term = %value%					; clears white space
-            else if search_box
-              search_term = %search_box%
-            if address
-                {
-                search_term =
-                tab_name := folder
-                this_search := path
-                x := playlist
-                GetTabSettings(0)					; load previous settings from cache
-                playlist := x
-                if !InStr(subfolders, folder)
-                    subfolders =
-                if playlist
-                   Loop, Files, %inca%\%folder%\*.m3u, FR
-                     {
-                     SplitPath, A_LoopFileName,,,ex,name
-                     subfolders = %subfolders%|%name%
-                     }
-                else Loop, Files,%path%*.*, D
-                  if A_LoopFileAttrib not contains H,S
-                    if !InStr(subfolders, A_LoopFileFullPath)
-                      if subfolders
-                        subfolders = %subfolders%|%A_LoopFileFullPath%\
-                      else subfolders = %A_LoopFileFullPath%\
-                filter := 0
-                }
-            if search_term						; search text from link or search box
-                {
-                tab_name := search_term
-                folder := search_term
-                GetTabSettings(0)					; load cached tab settings
-                this_search := search_folders
-                if (search_box && !InStr(this_search, path))		; search this folder, then search paths
-                    this_search = %path%|%this_search%			; search this folder only
-                if search_box
-                    {
-                    view := 0
-                    toggles =
-                    sort = Duration
-                   }
-                filter := 0
-                }
-            if (command == "Filter")			; alpha letter
-                filter := value
-            page := 1
-            if (InStr(sort_list, command))				; sort filter
-                {
-                filter := 0
-                toggle_list = Reverse Recurse Videos Images
-                if (sort != command)					; new sort
-                    {
-                    if (command != "Reverse" && !InStr(toggle_list, command))
-                        StringReplace, toggles, toggles, Reverse	; remove reverse
-                    }
-                else if (sort != "Shuffle")
-                    command = Reverse
-                if InStr(toggle_list, command)
-                    if !InStr(toggles, command)				; toggle the sort switches
-                        toggles = %toggles%%command%			; add switch
-                    else StringReplace, toggles, toggles, %command%	; remove switch
-                else sort := command
-                if (StrLen(toggles) < 4)
-                    toggles =
-                }
-            }
-        }
-
-
-    CreateList(show)							; list of files in path
-        {
-        Critical
-        if !(folder || this_search)
-            return
-        IfNotExist, %path%
-            path = %search_term%\
-        list =
-        list_size := 1
-        popup := tab_name
-        if (InStr(sort_list, command))
-            popup := command
-        if search_term
-            popup := search_term
-        if show
-            Popup(popup,0,0,0)
-        if (InStr(toggles, "Recurse") || search_term)
-            recurse = R
-        FileRead, str, %playlist%
-        if playlist
-           {
-           Loop, Parse, str, `n, `r
-             {
-             x := StrSplit(A_Loopfield, "|").1
-             y := StrSplit(A_Loopfield, "|").2
-             if (x && spool(x, A_Index, y))
-                 break
-             }
-           }
-        else Loop, Parse, this_search, `|
-           Loop, Files, %A_LoopField%*.*, F%recurse%
-             if A_LoopFileAttrib not contains H,S
-               if spool(A_LoopFileFullPath, A_Index, 0)
-                 break 2
-        StringTrimRight, list, list, 2					; remove end `r`n
-        if (InStr(toggles, "Reverse") && sort != "Date")
-            reverse = R
-        if (!InStr(toggles, "Reverse") && sort == "Date")
-            reverse = R
-        if (sort == "Ext")
-            Sort, list, %reverse% Z					; alpha sort
-        else if (sort != "Shuffle")
-            Sort, list, %reverse% Z N					; numeric sort
-        if (sort == "Shuffle")
-            Sort, list, Random Z
-        FileDelete, %inca%\cache\lists\%tab_name%.txt
-        FileAppend, %list%, %inca%\cache\lists\%tab_name%.txt, UTF-8
-        RenderPage()
-        if (folder == "Downloads") 
-            SetTimer, indexer, 1000, -2
-        }
-
-
     Spool(input, count, start)
         {
         SplitPath, input,,,ex, filen
@@ -958,7 +1012,7 @@ caption := x
     LoadHtml()								; create / update browser tab
         {
         Critical
-        WinActivate, ahk_group Browsers
+;        WinActivate, ahk_group Browsers
         new_html = file:///%inca%\cache\html\%tab_name%.htm
         StringReplace, new_html, new_html, \,/, All
         if !inca_tab
@@ -981,46 +1035,6 @@ caption := x
         previous_tab := tab_name
         sleep 333							; time for browser to render behind mpv
         WinActivate, ahk_group Browsers
-        }
-
-
-    ReadAddressBar(escape)
-        {
-        Critical
-        send, {Alt up}{Ctrl up}{Shift up}
-        send, {LButton up}
-        clip := clipboard
-        Loop 2
-            {
-            clipboard =
-            sleep 24
-            send, ^l
-            sleep 24
-            send, ^c
-            Clipwait, 0
-            if ClipBoard
-               break
-            }
-        input := clipboard
-        clipboard := clip
-        if escape
-            {
-            if InStr(input, "#")
-                send, !{Left}						; reset location bar to last address
-            send, +{F6}							; focus back to page
-            }
-        Pos := 1
-        While Pos := RegExMatch(input, "i)(%[\da-f]{2})+", Code, Pos)	; convert url to utf-8
-	    {
-            VarSetCapacity(Var, StrLen(Code) // 3, 0), Code := SubStr(Code,2)
-            Loop, Parse, Code, `%
-                NumPut("0x" A_LoopField, Var, A_Index-1, "UChar")
-            decoded := StrGet(&Var, "UTF-8")
-            input := SubStr(input, 1, Pos-1) . decoded . SubStr(input, Pos+StrLen(Code)+1)
-            Pos += StrLen(decoded)+1
-            }
-        sleep 34							; release location bar
-        return input
         }
 
 
