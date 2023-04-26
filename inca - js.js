@@ -2,7 +2,7 @@
 
 // compliance firefox, brave, edge and opera
 // open in notepad mpv etc not run src ?
-// mclick next sets start to 0
+
 
   var modal = document.getElementById('myModal')			// media player window
   var player = document.getElementById('myPlayer')
@@ -88,10 +88,10 @@
     Captions()}
 
 
-  function overThumb(e, id, strt, sk) {					// mouse over thumbnail in browser tab
+  function overThumb(e, id, st, sx) {					// mouse over thumbnail in browser tab
     if (mouse_down) {return}
     index = id
-    scaleX = sk
+    scaleX = sx
     over_thumb = true
     var sel = document.getElementById('sel' + id)
     if (selected) {sel.href = '#MovePos#' + id + '#' + selected + '#'}
@@ -100,7 +100,7 @@
     var xp = (e.clientX - rect.left) / (media.offsetWidth)
     var yp = (e.clientY - rect.top) / (media.offsetHeight)
     if (media.duration && yp > 0.9) {media.currentTime = media.duration *xp}
-    if (media.currentTime <= strt || yp < 0.1) {media.currentTime = strt +0.1}
+    if (media.currentTime <= st || yp < 0.1) {media.currentTime = st +0.1}
     media.playbackRate = 0.74
     start = media.currentTime
     seek.src = media.src
@@ -119,7 +119,7 @@
     if (e == 'Next') {index+=1; start=0}
     if (e == 'Previous') {index-=1; start=0}
     if (e == 'Mclick' && last_type && last_type != 'video' && xpos > 0.1) {index+=1}
-    if (e == 'Mclick' && xpos < 0.1 && last_type != 'thumb') {index+=1}
+    if (e == 'Mclick' && xpos < 0.1 && last_type != 'thumb') {index+=1; start=0}
     if (!over_thumb && !last_type) {index = last_id; start = last_start; e = 'Thumb'}	// play last media
     var Next = document.getElementById("media" + index)
     if (!Next) {index = 1; Next = document.getElementById('media1')}
@@ -150,7 +150,7 @@
     if (type == "audio") {media.controls = true; sound == 'yes'}
     setTimeout(function() {
       media.style.opacity=1
-      if (type != 'thumb') {media.playbackRate = rate; media.play()}},120)
+      if (type != 'thumb' || media.duration < 20) {media.playbackRate = rate; media.play()}},120)
     mediaX = sessionStorage.getItem('mediaX')*1
     mediaY = sessionStorage.getItem('mediaY')*1
     scaleX = scaleY
@@ -339,14 +339,14 @@
   function mouseDown(e) {
     if (e.button != 0) {						// middle click
       e.preventDefault()
-      if (e.button == 1) {MClick = setTimeout(function() {long_middle=true},250)}
+      if (e.button == 1) {MClick = setTimeout(function() {long_middle=true},300)}
       return}
     long_click = false
     mouse_down = true
     Xref = e.clientX
     Yref = e.clientY
     media.style.transition = '0.1s'
-    setTimeout(function() {if (mouse_down && !gesture) {long_click=true; media_ended()}},240)
+    setTimeout(function() {if (mouse_down && !gesture) {long_click=true; media_ended()}},280)
     if (seek_active) {media.currentTime = seek_active}}
 
 
