@@ -2,7 +2,7 @@
 
 // compliance firefox, brave, edge and opera
 // open in notepad mpv etc not run src ?
-
+// thumbsheet not showing
 
   var modal = document.getElementById('myModal')			// media player window
   var player = document.getElementById('myPlayer')
@@ -31,7 +31,6 @@
   var filter = 0							// eg 30 minutes, 2 months, 'A'
   var toggles = ''							// eg reverse, recurse
   var sort = 'Alpha'
-  var thumb_size = 9
   var media								// current media element
   var rate = 1
   var page = 1
@@ -41,10 +40,11 @@
   var cap_list = ''							// full caption text file
   var cap_time = 0
   var mouse_down = false
-  var thumb = false
   var gesture = false
   var over_cap = false							// cursor over caption
   var over_thumb = false
+  var thumb_size = 9
+  var thumb = 0								// over thumbsheet xy
   var skinny = 1							// media width setting
   var newSkinny = 1
   var seek_active							// currently seeking video
@@ -118,8 +118,8 @@
     if (long_middle) {e = 'Previous'}
     if (e == 'Next') {index+=1; start=0}
     if (e == 'Previous') {index-=1; start=0}
-    if (e == 'Mclick' && last_type && last_type != 'video' && xpos > 0.1) {index+=1}
-    if (e == 'Mclick' && xpos < 0.1 && last_type != 'thumb') {index+=1; start=0}
+    if (e == 'Mclick' && last_type && last_type != 'video' && thumb) {index+=1}
+    if (e == 'Mclick' && !thumb && last_type != 'thumb') {index+=1; start=0}
     if (!over_thumb && !last_type) {index = last_id; start = last_start; e = 'Thumb'}	// play last media
     var Next = document.getElementById("media" + index)
     if (!Next) {index = 1; Next = document.getElementById('media1')}
@@ -134,7 +134,7 @@
     if (type == 'document') {return}
     if (type == "image") {media.poster = Next.poster}
     else if ((e == 'Next' || e == 'Previous') && last_type == 'thumb') {type = 'thumb'}
-    if (e == 'Mclick' && type == 'video' && xpos > 0.1) {type = 'thumb'}
+    if (e == 'Mclick' && type == 'video' && thumb) {type = 'thumb'}
     if (type == 'video' || type == 'thumb') {
       x = Next.poster.replace("/posters/", "/thumbs/")
       p = x.split('%20')
@@ -149,8 +149,9 @@
     if (type == "video" || type == "audio") {media.currentTime = start - 0.6}
     if (type == "audio") {media.controls = true; sound == 'yes'}
     setTimeout(function() {
-      media.style.opacity=1
-      if (type != 'thumb' || media.duration < 20) {media.playbackRate = rate; media.play()}},120)
+      media.style.opacity = 1
+      if (media.duration < 61 && type == 'thumb') {type = 'video'}
+      if (type != 'thumb') {media.playbackRate = rate; media.play()}},120)
     mediaX = sessionStorage.getItem('mediaX')*1
     mediaY = sessionStorage.getItem('mediaY')*1
     scaleX = scaleY
@@ -234,7 +235,6 @@
       el.innerHTML = x + units}
     else if (id == 'Thumb1' || id == 'Thumbs') {			// thumb width
       var thumbs = document.getElementById('Thumbs')			// from top panel htm
-      thumb = document.getElementById("thumb" + index)
       thumb_size = 1*media.style.width.slice(0,-2)
       if (wheelDown) {thumb_size += thumb_size/40}
       else {thumb_size -= thumb_size/40}
@@ -289,6 +289,17 @@
     xpos = e.clientX / window.innerWidth
     ypos = e.clientY / window.innerHeight
     rect = media.getBoundingClientRect()
+    var xp = (e.clientX - rect.left) / (media.offsetWidth * scaleX)
+    var yp = (e.clientY - rect.top) / (media.offsetHeight * scaleY)
+    if (xp > 0 && xp < 1 && yp > 0 && yp < 1) {				// mouse over thumbsheet
+      var row = Math.floor(yp * 6)
+      var col = Math.ceil(xp * 6)
+      var offset = 0
+      thumb = 5 * ((row * 6) + col)
+      thumb = (thumb - 1) / 200
+      if (media.duration > 60) {offset = 20}
+      if (type == 'thumb') {start = offset - (thumb * offset) + media.duration * thumb}}
+    else {thumb = 0; start = last_start}
     if (mouse_down) {
       var x = Math.abs(Xref - e.clientX)
       var y =  Math.abs(Yref - e.clientY)
@@ -322,20 +333,6 @@
     else {seek_active = false; seek.style.opacity = 0}}
 
 
-  function getThumb(e) {						// mouse over thumbsheet
-    var rect = media.getBoundingClientRect()
-    var xp = (e.clientX - rect.left) / (media.offsetWidth * scaleX)
-    var yp = (e.clientY - rect.top) / (media.offsetHeight * scaleY)
-    if (xp > 1 || yp < 0 || xp < 0 || yp > 1) {return}
-    var row = Math.floor(yp * 6)
-    var col = Math.ceil(xp * 6)
-    var thumb = 5 * ((row * 6) + col)
-    var offset = 0
-    thumb = (thumb - 1) / 200
-    if (media.duration > 60) {offset = 20}
-    start = offset - (thumb * offset) + media.duration * thumb}
-
-
   function mouseDown(e) {
     if (e.button != 0) {						// middle click
       e.preventDefault()
@@ -361,7 +358,7 @@
   function togglePause(e) {
     if (!mouse_down || gesture || seek_active || over_cap || !type) {return}
     if (xpos < 0.1 && ypos > 0.5) {return}
-    if (type == "thumb") {getThumb(e); playMedia('Thumb')}
+    if (type == "thumb") {playMedia('Thumb')}
     if (long_click) {return}
     else if (media.paused) {
       media.play()} 

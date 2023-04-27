@@ -1,14 +1,6 @@
 
 ; mouse back button is intercepted and converted to {Pause} key for java
 
-        Loop, Files, %profile%\Downloads\*.*, R
-            {
-            source = %A_LoopFileFullPath%
-            SplitPath, source,,fold,ex,filen
-            runwait, %inca%\apps\ffmpeg.exe -i "%source%" "%profile%\Downloads\%filen% 0.mp4",,Hide
-            }
-
-
 
 
 	; Inca Media Viewer for Windows - Firefox & Chrome compatible
@@ -23,6 +15,7 @@
 	GroupAdd, Browsers, Mozilla Firefox
 	GroupAdd, Browsers, ahk_exe brave.exe
 	GroupAdd, Browsers, ahk_exe msedge.exe
+	GroupAdd, Browsers, ahk_exe opera.exe
 	#SingleInstance force		; one program instance only
 	#MaxHotkeysPerInterval 999	; allow fast spinning wheel
 	SetWorkingDir, %A_ScriptDir%	; consistent start directory
@@ -48,10 +41,10 @@
         Global media_path
         Global type			; eg. video
 	Global subfolders
-        Global folder			; no path
+        Global folder			; current folder name, no path
         Global path
         Global ext			; file extension
-        Global inca_tab			; browser tab title
+        Global inca_tab			; browser tab title (usually folder name)
 	Global previous_tab
         Global vol_popup		; volume bar popup 
         Global volume
@@ -279,7 +272,6 @@
         if (!gesture && A_TickCount > timer)
           {
           timer =
-          send, {Lbutton up}
           if (A_Cursor == "IBeam")
             {
             if WinActive("ahk_group Browsers")
@@ -288,6 +280,7 @@
               Clipboard =
               send, ^c
               ClipWait, 0
+              send, {Lbutton up}
               if ClipBoard
                 {
                 path =
@@ -306,9 +299,9 @@
           break
           }
         }
-      if (click == "LButton" && inca_tab && A_Cursor != "IBeam")
+      if (!gesture && click == "LButton" && inca_tab && A_Cursor != "IBeam")
         GetAddressBar()
-      if (click == "RButton" && !gesture)
+      if (!gesture && click == "RButton")
         send {RButton}
       }
 
@@ -374,7 +367,7 @@
             if InStr(input, "#")
                 send, !{Left}						; reset location bar to last address
             send, +{F6}							; focus back to page
-            if (browser == "edge")
+            if (browser == "Profile 1 - Microsoft")
                 send, +{F6}
             }
         Pos := 1
@@ -395,10 +388,12 @@
 
 
     TimedEvents:
+        title =
         Gui, background:+LastFound
         WinGet, state, MinMax, ahk_group Browsers
-        WinGetTitle title, Inca -
-        if (state > -1 && InStr(title, "Inca - "))
+        if (state > -1)
+          WinGetTitle title, A
+        if InStr(title, "Inca - ")
           inca_tab := SubStr(title, 8)
         else inca_tab =
         if InStr(title, "mozilla firefox")       
@@ -407,15 +402,18 @@
           browser = google chrome
         else if InStr(title, "Brave")       
           browser = Brave
+        else if InStr(title, "Opera")       
+          browser = Opera
         else if InStr(title, "Profile 1 - Microsoft")       
           browser = Profile 1 - Microsoft
         StringGetPos, pos, inca_tab, %browser%, R
         StringLeft, inca_tab, inca_tab, % pos - 3
-        if (inca_tab && state > -1)
+        if inca_tab
             WinSet, Transparent, % Setting("Dim Desktop")
         else WinSet, Transparent, 0
         if (inca_tab && inca_tab != previous_tab)			; has inca tab changed
             {
+            folder := inca_tab
             GetTabSettings(1)						; get last tab settings
             if (previous_tab && FileExist(inca "\cache\lists\" inca_tab ".txt"))
               FileRead, list, %inca%\cache\lists\%inca_tab%.txt
@@ -438,7 +436,6 @@
              SoundSet, volume
              }
         ShowStatus()							; show time & vol
-; tooltip %inca_tab% - %browser%
         return
 
 
@@ -576,8 +573,8 @@
             list_id := value
             if GetMedia(0)
               if (!timer||type=="document"||ext=="txt"||ext=="m3u"||ext=="wmv"||ext=="avi"||ext=="mpg"
-              ||ext=="ts"||ext=="flv" || (type == "video" && ext != "mp4" && browser == "mozilla firefox")
-              || (type == "video" && ext != "mp4" && browser == "Profile 1 - Microsoft"))
+              ||ext=="ts"||ext=="flv" || (type=="video" && ext!="mp4" && browser=="mozilla firefox")
+              || (type=="video" && ext!="mp4" && browser=="Profile 1 - Microsoft"))
                 {
                 sleep 200
                 send, {Pause}
@@ -613,7 +610,6 @@
             if address
                 {
                 search_term =
-                inca_tab := folder
                 this_search := path
                 x := playlist
                 GetTabSettings(0)					; load previous settings from cache
@@ -636,7 +632,6 @@
                 }
             if search_term						; search text from link or search box
                 {
-                inca_tab := search_term
                 folder := search_term
                 GetTabSettings(0)					; load cached tab settings
                 this_search := search_folders
@@ -685,7 +680,7 @@
             path = %search_term%\
         list =
         list_size := 1
-        popup := inca_tab
+        popup := folder
         if (InStr(sort_list, command))
             popup := command
         if search_term
@@ -721,8 +716,8 @@
             Sort, list, %reverse% Z N					; numeric sort
         if (sort == "Shuffle")
             Sort, list, Random Z
-        FileDelete, %inca%\cache\lists\%inca_tab%.txt
-        FileAppend, %list%, %inca%\cache\lists\%inca_tab%.txt, UTF-8
+        FileDelete, %inca%\cache\lists\%folder%.txt
+        FileAppend, %list%, %inca%\cache\lists\%folder%.txt, UTF-8
         RenderPage()
         if (folder == "Downloads") 
             SetTimer, indexer, 1000, -2
@@ -841,7 +836,7 @@ caption := x
         if !(folder && path)
             return
         last := src
-        title := inca_tab
+        title := folder
         speed := Setting("Default Speed")
         FileRead, style, %inca%\inca - css.css
         FileRead, java, %inca%\inca - js.js
@@ -880,15 +875,15 @@ caption := x
 
         panel_html = <body class='container' onload="spool(event, '', '', '%toggles%', '%sort%', %filter%, %page%, %pages%, %view%, %speed%)">`r`n<div style="width:%page_w%`%; margin:auto">`r`n<div style='display:flex'>`r`n<a class='searchbox' style='width:5`%' id='Sub' onmouseover="spool(event, id, '%subfolders%')">Sub</a>`r`n<a class='searchbox' id='Fol' onmouseover="spool(event, id, '%fol%')">Fol</a>`r`n<a class='searchbox' id='Fav' onmouseover="spool(event, id, '%fav%')">Fav</a>`r`n<a href="file:///%inca%/cache/html/new.htm" class='searchbox' id='Slides' onmouseover="spool(event, id, '%slides%')">Slides</a>`r`n<a id='Music' class='searchbox' onmouseover="spool(event, id, '%music%')">Music</a>`r`n</div>`r`n`r`n<div class='panel' id='myPanel' onwheel="wheelEvents(event, id, this, '%search_list%')"></div>`r`n`r`n<input class='searchbox' onmouseover="spool(event, '', '%features%', '%toggles%', '%sort%', %filter%, %page%, %pages%, %view%, %speed%)" id='myInput' type='search' value='%search_term%' style='margin-right:0; width:53`%'>`r`n<a href='#Searchbox###' class='searchbox'>+</a>`r`n
 
-        title_html = `r`n`r`n<div><a href="#Orphan#%inca_tab%#" style="font-size:1.8em; color:red; margin-left:1em">%title% &nbsp;&nbsp;<span style="font-size:0.7em;">%list_size%</span></a></div>`r`n`r`n<div id="myModal" class="modal" onwheel="wheelEvents(event, id, this)">`r`n<div><video id="myPlayer" class="player" type="video/mp4"></video><textarea id="myCap" class="caption" onmouseenter="over_cap=true" onmouseleave="over_cap=false"></textarea><span id="mySeekBar" class="seekbar"></span><span><video id='mySeek' class='seek' type="video/mp4"></video></span><span id="mySidenav" onmouseover="openNav()" onmouseleave="closeNav()" class="sidenav"><a id="mySpeed" onmouseover='stat.innerHTML=Math.round(media.playbackRate*100)' onwheel="wheelEvents(event, id, this)">Speed</a><a id="myNext" onmouseover='stat.innerHTML=index' onclick='nextCaption()' onwheel="wheelEvents(event, id, this)">Next</a><a id="myThin" onmouseover='stat.innerHTML=Math.round(newSkinny*100)' onwheel="wheelEvents(event, id, this)">Thin</a><a id='myLoop' onclick="loop()">Loop</a><a onclick="toggleMute()">Mute</a><a id="myFav">Fav</a><a id="myCapnav" onclick="editCap()">Cap</a><a onclick="cue = Math.round(media.currentTime*100)/100">Cue</a><a id="myMp4">mp4</a><a id="myMp3">mp3</a><a id="myStatus" style='font-size:5em; padding:0'></a></span></div></div>`r`n`r`n
+        title_html = `r`n`r`n<div><a href="#Orphan#%folder%#" style="font-size:1.8em; color:red; margin-left:1em">%title% &nbsp;&nbsp;<span style="font-size:0.7em;">%list_size%</span></a></div>`r`n`r`n<div id="myModal" class="modal" onwheel="wheelEvents(event, id, this)">`r`n<div><video id="myPlayer" class="player" type="video/mp4"></video><textarea id="myCap" class="caption" onmouseenter="over_cap=true" onmouseleave="over_cap=false"></textarea><span id="mySeekBar" class="seekbar"></span><span><video id='mySeek' class='seek' type="video/mp4"></video></span><span id="mySidenav" onmouseover="openNav()" onmouseleave="closeNav()" class="sidenav"><a id="mySpeed" onmouseover='stat.innerHTML=Math.round(media.playbackRate*100)' onwheel="wheelEvents(event, id, this)">Speed</a><a id="myNext" onmouseover='stat.innerHTML=index' onclick='nextCaption()' onwheel="wheelEvents(event, id, this)">Next</a><a id="myThin" onmouseover='stat.innerHTML=Math.round(newSkinny*100)' onwheel="wheelEvents(event, id, this)">Thin</a><a id='myLoop' onclick="loop()">Loop</a><a onclick="toggleMute()">Mute</a><a id="myFav">Fav</a><a id="myCapnav" onclick="editCap()">Cap</a><a onclick="cue = Math.round(media.currentTime*100)/100">Cue</a><a id="myMp4">mp4</a><a id="myMp3">mp3</a><a id="myStatus" style='font-size:5em; padding:0'></a></span></div></div>`r`n`r`n
 
         html = `r`n%html%</div>`r`n
-        FileDelete, %inca%\cache\html\%inca_tab%.htm
+        FileDelete, %inca%\cache\html\%folder%.htm
         StringReplace, header_html, header_html, \, /, All
         StringReplace, panel_html, panel_html, \, /, All
         y = %title_html%%html%
         StringReplace, y, y, \, /, All
-        FileAppend, %header_html%%style%%panel_html%%y%%java%</body>`r`n</html>`r`n, %inca%\cache\html\%inca_tab%.htm, UTF-8
+        FileAppend, %header_html%%style%%panel_html%%y%%java%</body>`r`n</html>`r`n, %inca%\cache\html\%folder%.htm, UTF-8
         LoadHtml()
         PopUp("",0,0,0)
         DetectMedia(last)						; restore media parameters
@@ -975,11 +970,13 @@ caption := x
     LoadHtml()								; create / update browser tab
         {
         Critical
-        new_html = file:///%inca%\cache\html\%inca_tab%.htm
+        new_html = file:///%inca%\cache\html\%folder%.htm
         StringReplace, new_html, new_html, \,/, All
         IfWinNotExist, ahk_group Browsers
             run, %new_html%						; open a new web tab
-        else if (inca_tab == previous_tab)				; just refresh existing tab
+        if !inca_tab
+            run, %new_html%						; open a new web tab
+        else if (folder == previous_tab)				; just refresh existing tab
             send, {F5}
         else	
             {								; re-load tab
@@ -987,16 +984,7 @@ caption := x
             ReadAddressBar(0)
             sendraw, %new_html%%A_Space%`n
             }
-        Loop, 100							; allow to load before TimedEvents
-            {
-            sleep 20
-            WinGetTitle title, Inca -
-            if InStr(title, inca_tab)
-                break
-            }
         previous_tab := inca_tab
-        sleep 333							; time for browser to render behind mpv
-        WinActivate, ahk_group Browsers
         }
 
 
@@ -1010,7 +998,7 @@ caption := x
         if (InStr(path, "\slides\") || InStr(path, "\music\"))
           sort = Alpha
         else sort = Shuffle
-        FileReadLine, array, %inca%\cache\html\%inca_tab%.htm, 2	; embedded page data
+        FileReadLine, array, %inca%\cache\html\%folder%.htm, 2	; embedded page data
         if array
             {
             StringReplace, array, array, /, \, All
@@ -1194,7 +1182,7 @@ caption := x
         {
         src =
         seek =
-        FileReadLine, str, %inca%\cache\html\%inca_tab%.htm, 3
+        FileReadLine, str, %inca%\cache\html\%folder%.htm, 3
         Loop, Parse, str, `/
           if (A_Index == list_id)
             ptr := A_Index + next + 1				; next media 
