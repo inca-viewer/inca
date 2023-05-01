@@ -1,12 +1,10 @@
 <script>
+// move file
 
-// compliance firefox, brave, edge and opera
-// open in notepad mpv etc not run src ?
-// thumbsheet not showing
 
   var modal = document.getElementById('myModal')			// media player window
   var player = document.getElementById('myPlayer')
-  var inputbox = document.getElementById('myInput')
+  var inputbox = document.getElementById('myInput')			// search/edit bar
   var panel = document.getElementById('myPanel')			// list of folders, playlists etc
   var nav = document.getElementById('mySidenav')			// nav buttons over htm tab
   var stat = document.getElementById('myStatus')			// also href messages to inca.exe
@@ -16,26 +14,28 @@
   var cap = document.getElementById('myCap')				// caption textarea element
   var capnav = document.getElementById('myCapnav')			// caption save button
   var seekbar = document.getElementById('mySeekBar')
-  var seek = document.getElementById('mySeek')
-  var Loop = document.getElementById('myLoop')
-  var folder = sessionStorage.getItem('folder')
+  var seek = document.getElementById('mySeek')				// seek thumb under video
+  var Loop = document.getElementById('myLoop')				// loop video or next
   var sound = sessionStorage.getItem('sound')
   var long_click = false
   var long_middle = false
   var wheel = 0
-  var block = 0								// block wheel input
-  var last_id
-  var time = 0								// current media time
+  var block = 10							// block wheel input
+  var last_id = 1
+  var time = 0								// media time
   var start = 0								// video start time
-  var last_start
-  var filter = 0							// eg 30 minutes, 2 months, 'A'
+  var last_start = 0
+  var filter = ''							// eg 30 minutes, 2 months, 'A'
   var toggles = ''							// eg reverse, recurse
   var sort = 'Alpha'
-  var media								// current media element
+  var units = ''							// minutes, months, MB etc.
+  var media								// media element
   var rate = 1
   var page = 1
   var pages = 1
-  var index = 1								// current media index (e.g. media14)
+  var fol = ''								// media folder
+  var items = 1								// number of media
+  var index = 1								// media index (e.g. media14)
   var type = ''								// audio, video, image, thumb, document
   var cap_list = ''							// full caption text file
   var cap_time = 0
@@ -47,10 +47,10 @@
   var thumb = 0								// over thumbsheet xy
   var skinny = 1							// media width setting
   var newSkinny = 1
-  var seek_active							// currently seeking video
+  var seek_active							// seek thumb under video
   var selected = ''							// list of selected media in page
-  var messages = ''							// from address bar to inca.exe
-  var cue = 0
+  var messages = ''							// through browser address bar to inca.exe
+  var cue = 0								// start time for mp3/4 conversion
   var looping = true
   var Zindex = 1
   var xpos = 0.5
@@ -69,7 +69,7 @@
   document.addEventListener('mousedown', mouseDown)
   document.addEventListener('mouseup', mouseUp)
   document.addEventListener('mousemove', Gesture)
-  loop();loop()								// set button color
+  loop();loop()								// set nav button color
 
 
   function timedEvents() {						// every ~84mS while media playing
@@ -165,7 +165,6 @@
     media.style.maxWidth = window.innerWidth * 0.6 + "px"
     media.style.maxHeight = window.innerHeight * 0.7 + "px"
     media.addEventListener('ended', media_ended)
-    setTimeout(function(){block=0;wheel=0},400)
     mediaTimer = setInterval(timedEvents,84)
     if (type == "audio") {media.volume = 1}
     else {media.volume = 0}
@@ -173,7 +172,7 @@
     modal.style.zIndex = 40
     seek.src = media.src
     media.muted = false
-    block = 1}
+    block = 400}
 
 
   function close_media() {
@@ -202,14 +201,14 @@
     e.preventDefault()
     e.stopPropagation()
     wheel += Math.abs(e.deltaY)
-    if (block || wheel < 140) {return}
+    if (wheel < block) {return}
     var wheelDown = false
-    var timer = 10
-    if (e.deltaY > 0) {wheelDown = true}
-    if (wheelDown) {filter++}
+    block = 120
+    if (e.deltaY > 0) {wheelDown = true; filter++}
     else if (filter) {filter--}
-    if (id == 'myPanel') {						// alpha search
+    if (id == 'myPanel' || id == 'Search') { 				// alpha search
       if (filter > 26) {filter = 26}
+      if (filter == 0) {filter = 1}
       id = String.fromCharCode(filter + 64)
       var htm = ''
       var z = input.split('|').sort()
@@ -218,53 +217,77 @@
         p = x.substring(0, 15)
         q = x.replace(/ /g, "%20")
         htm = htm + '<a href=#Search#' + q + '##>' + p + '</a>'}
-      if (!filter) { spool(e, '', '')}					// show Menu
-      else {panel.innerHTML = "<span style=\'grid-row-start:1;grid-row-end:3;color:red;font-size:2em\'>"+id+"</span>"+htm}}
+      panel.innerHTML = "<span style=\'grid-row-start:1;grid-row-end:3;color:red;font-size:2em\'>"+id+"</span>"+htm}
     else if (id == 'myPage') {						// page
       if (wheelDown && page<pages) {page++} else if (page>1) {page--}
       el.href = '#Page#' + page + '##'
       el.innerHTML = 'Page '+page+' of '+pages}
+    else if (id == 'myFiles') {						// media folders
+      block = 240
+      if (filter > 4) {filter = 4}
+      var z = ['fol','fav','slides','music','subs']
+      var q = z[filter]
+      htm = "<span style=\'grid-row-start:1;grid-row-end:3;color:red;font-size:2em\'>"+q+"</span>"
+      z = input.split(q+'=').pop().split('||')
+// if (q == "subs") {alert(z)}
+      z = z[0].split('|')
+      for (x of z) {
+        var y = x.split("/")
+        p = y.pop()
+        if (q != "music" && q != "slides") {p = y.pop()}
+        p = p.replace(/.m3u/g, "")
+        p = p.substring(0, 12)
+        title = document.title.replace(/Inca - /g, "")
+        if (p == title) {p = "<span style='color:lightsalmon'</span>" + p}
+        if (p == "New") {p = "<span style='color:red'</span>" + p}
+        var path = x.replace(/ /g, "%20")
+        htm = htm + '<a href=#Path##' + selected + '#' + path + '>' + p + '</a>'}
+      panel.innerHTML = htm}
+    else if (id == 'mySort') {						// sort filter
+      block = 240
+      if (filter > 5) {filter = 5}
+      var z = ['Duration','Date','Alpha','Size','Ext','Shuffle']
+      sort = z[filter]
+      el.href = '#'+sort+'#'+sort+'##'
+      el.innerHTML = sort}
     else if (id == 'myFilter') {					// search filter
-      var units = ''
-      var x = 'All'
-      if (sort == 'Alpha') {if(filter < 26) {x = String.fromCharCode(filter + 64)}}
-      if (sort == 'Size')  {x = filter * 10; units = " Mb"}
-      if (sort == 'Date')  {x = filter; units = " months"}
-      if (sort == 'Duration') {x = filter; units = " minutes"}
       el.href = '#Filter#' + filter + '##'
-      el.innerHTML = x + units}
-    else if (id == 'Thumb1' || id == 'Thumbs') {			// thumb width
-      var thumbs = document.getElementById('Thumbs')			// from top panel htm
+      el.innerHTML = filt() + units}
+    else if (id == 'Fixed') {						// fixed thumb
       thumb_size = 1*media.style.width.slice(0,-2)
+      if (wheelDown) {thumb_size += thumb_size/40}
+      else {thumb_size -= thumb_size/40}
+      media.style.width = thumb_size + 'em'}
+    else if (id == 'Thumbs') {						// thumb width
+      thumb_size = 1*media.style.width.slice(0,-2)
+      var thumbs = document.getElementById('Thumbs')			// top panel htm
       if (wheelDown) {thumb_size += thumb_size/40}
       else {thumb_size -= thumb_size/40}
       thumb_size = Math.round(10*thumb_size)/10
       if (thumb_size < 4) {thumb_size = 4}
-      if (id == 'Thumbs') {
-        thumbs.href = '#Thumbs#' + thumb_size +'##'
-        thumbs.innerHTML = 'Thumbs ' + Math.round(thumb_size)
-        for (i=1; i<41 ;i++) {
-          if (el = document.getElementById("thumb" + i)) {
-            el.style.width = thumb_size + 'em'
-            document.getElementById("media" + i).style.width = thumb_size + 'em'}}}
-      else {media.style.width = thumb_size + "em"}}
-    else if (id == 'myThin') {						// media width
+      thumbs.href = '#Thumbs#' + thumb_size +'##'
+      thumbs.innerHTML = 'Thumbs ' + Math.round(thumb_size)
+      for (i=1; i<41 ;i++) {
+        if (el = document.getElementById("thumb" + i)) {
+          el.style.width = thumb_size + 'em'
+          document.getElementById("media" + i).style.width = thumb_size + 'em'}}}
+    else if (id == 'myThin') {						// width
       if (wheelDown) {scaleX -= 0.002}
       else {scaleX += 0.002}
       newSkinny = Math.round(1000*scaleX / scaleY)/1000
       stat.innerHTML = Math.round(newSkinny*100)
-      if (newSkinny == 1) {timer = 146}
+      if (newSkinny > 0.998 && newSkinny < 1.002) {block = 999}
+      else {block = 24}
       media.style.transform = "scale("+scaleX+","+scaleY+")"}
-    else if (id == 'myNext') {						// next media
+    else if (id == 'myNext') {						// next
+      block = 28
       if (wheelDown) {playMedia('Next')}
       else {playMedia('Previous')}
-      stat.innerHTML = index
-      timer = 440}
+      stat.innerHTML = index}
     else if (id == 'mySpeed' || xpos < 0.1) {				// speed
       if (wheelDown) {x = -0.01}
       else {x = 0.01}
       if (type != 'image' && (media.playbackRate < 1 || x < 0)) {
-        timer = 34
         media.playbackRate += x
         stat.innerHTML = Math.round(media.playbackRate *100)}}
     else if (ypos > 0.75 && type != 'image' && type != 'thumb') {	// seek
@@ -273,15 +296,13 @@
       else {interval = 300}
       interval *= Math.abs(ypos - 0.75)
       if (wheelDown) {media.currentTime += interval}
-      else  {media.currentTime -= interval}
-      timer = 200}
+      else  {media.currentTime -= interval}}
     else if (id == 'myModal') {						// magnify
       if (wheelDown) {scaleX *= 1.015; scaleY *= 1.015}
       else {scaleX *= 0.98; scaleY *= 0.98}
-      positionMedia()}
-    setTimeout(function() {block=0;wheel=0},timer)
-    wheel = 0; block = 1}
-
+      positionMedia()
+      block = 24}
+    wheel = 0}
 
   function Gesture(e) {							// mouse move over window
     if (over_thumb) {e.preventDefault()}
@@ -342,15 +363,13 @@
     mouse_down = true
     Xref = e.clientX
     Yref = e.clientY
-    media.style.transition = '0.1s'
     setTimeout(function() {if (mouse_down && !gesture) {long_click=true; media_ended()}},280)
     if (seek_active) {media.currentTime = seek_active}}
 
 
   function mouseUp(e) {
     togglePause(e)
-    mouse_down=false
-    media.style.transition = '0s'
+    mouse_down = false
     setTimeout(function() {gesture=false; long_middle=false},50)
     clearTimeout(MClick)}
 
@@ -425,36 +444,32 @@
     media.style.transform = "scale("+scaleX+","+scaleY+")"}
 
 
-  function spool(e, id, input, to, so, fi, pa, ps, ts, rt) {			// onload - spool lists into top htm panel
+  function filt() {
+    var x = filter
+    if (sort == 'Alpha') {if (filter < 26) {x = String.fromCharCode(filter + 65)} else {filter=26}}
+    if (sort == 'Size')  {x = filter * 10; units = " Mb"}
+    if (sort == 'Date')  {units = " months"}
+    if (sort == 'Duration') {units = " minutes"}
+    if (!x) {x=''}
+    return x}
+
+
+  function spool(e, id, input, to, so, fi, pa, ps, ts, rt, fo, it) {	// onload - spool lists into top htm panel
+    if (mouse_down) {return}
     media = document.getElementById('media1')
     var htm = ''
     var p = ''
     wheel = 0
-    if (!id) {									// menu
-      if (pa) {toggles=to; sort=so; filter=fi; page=pa; pages=ps; thumb_size=ts; rate=rt}
-      var z = ['Shuffle','Alpha','Duration','Date','Size','Ext','Reverse','Recurse','Images','Videos']
+    if (!id || id=='Menu') {
+      if (pa) {toggles=to; sort=so; filter=fi; page=pa; pages=ps; thumb_size=ts; rate=rt; fol=fo; items=it}
+      var z = ['Reverse','Recurse','Images','Videos']
       for (x of z) {
         if (sort.match(x) || toggles.match(x)) {p = " style='color:lightsalmon'"} else {p=''}
         htm = htm + '<a href=#'+x+'###' + p + '>' + x + '</a>'}
-      htm = htm + '<a id="myFilter" onwheel="wheelEvents(event, id, this)">All</a><a href=#Thumbs#'+thumb_size+'## id="Thumbs" onwheel="wheelEvents(event, id, this)" onmouseover="media.style.opacity=1" onmouseout="media.style.opacity=null">Thumbs '+Math.round(thumb_size)+'</a><a id="myRename" onmousemove="rename()">Rename</a><a href=#Delete##'+selected+'#>Delete</a><a href=#Select### onmouseup="selectAll()">Select</a><a href="%title%.htm#Page" id="myPage" onwheel="wheelEvents(event, id, this)">Page '+page+' of '+pages+'</a><a href=#Settings###>Settings</a><a href=#Join##'+selected+'#>Join</a>'}
-    else if ('FolFavSubMusicSlides'.match(id)) {				// folders and playlists
-      sessionStorage.setItem("folder",id)
-      var z = input.split('|')
-      for (x of z) {
-        y = x.split("/")
-        p = y.pop()
-        if (id == "Music" || id == "Slides") {q = x.replace(p, "")}
-        else {p = y.pop()}
-        p = p.replace(/.m3u/g, "")
-        p = p.substring(0, 12)
-        title = document.title.replace(/Inca - /g, "")
-        if (p == title) {p = "<span style='color:lightsalmon'</span>" + p}
-        if (p == "New") {p = "<span style='color:red'</span>" + p}
-        var path = x.replace(/ /g, "%20")
-        htm = htm + '<a href=#Path##' + selected + '#' + path + '>' + p + '</a>'}}
-    panel.innerHTML = htm
+      htm = htm + '<a href=#Join##'+selected+'#>Join</a><a id="myRename" onmousemove="rename()">Rename</a><a href=#Delete##'+selected+'#>Delete</a><a href=#Select### onmouseup="selectAll()">Select</a><a href=#Settings###>Settings</a>'
+      document.getElementById('myFilter').innerHTML = filt()+' '+units}
+    if (id) {panel.innerHTML = htm}
     x = selected.split(',')
-    document.getElementById(folder).style.color = 'lightsalmon'
     for (var i = 0; i < x.length; i++) {document.getElementById('media' + x[i]).load()}}	// release media
 
 

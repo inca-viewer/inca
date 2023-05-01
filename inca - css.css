@@ -1,11 +1,27 @@
 
 <style>
 
+
+.ribbon {
+  display:flex;
+  align-items:flex-end;
+  text-align:center;
+  justify-content: center;
+  text-overflow:ellipsis;
+  overflow:hidden;
+  color:#826858;
+  height:2.4em;
+  outline:none;
+  font-size:1.1em;
+  transition:color 1.4s;
+  white-space:nowrap;
+  width:9%}
+
 .searchbox {
   text-overflow:ellipsis;
   overflow:hidden;
-  margin:0.5em;
-  border-radius:1em;
+  margin-right:2.1em;
+  border-radius:1em 0 0 1em;
   text-align:center;
   background-color:#1b1814;
   color:#826858;
@@ -15,7 +31,7 @@
   outline:none;
   transition:color 1.4s;
   white-space:nowrap;
-  width:11%}
+  width:8%}
 
 .panel {
   display:grid;
@@ -23,15 +39,16 @@
   grid-template-rows: auto auto auto auto;
   grid-auto-flow: column;
   padding:0.5em;
-  margin-left:1.5em;
+  margin:1.5em;
+  margin-left:4em;
   color:#826858;
+  overflow-wrap:break-word;
   white-space:nowrap;
   overflow:hidden;
-  overflow-wrap:break-word;
   transition:color 1.4s;
   font-size:0.85em;
   height:6em;
-  width:64%;
+  width:74%;
   border-radius:0.8em;
   background-color:inherit}
 
@@ -117,7 +134,7 @@
 .container {
   font-family:'Yu Gothic', 'Calibri Light';
   cursor:default;
-  padding-top:10em;
+  padding-top:4em;
   padding-bottom:20em;
   user-select:none;
   background:#15110a;
