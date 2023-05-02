@@ -10,7 +10,7 @@
   text-overflow:ellipsis;
   overflow:hidden;
   color:#826858;
-  height:2.4em;
+  height:40px;
   outline:none;
   font-size:1.1em;
   transition:color 1.4s;
@@ -40,6 +40,7 @@
   grid-auto-flow: column;
   padding:0.5em;
   margin:1.5em;
+  margin-bottom:0;
   margin-left:4em;
   color:#826858;
   overflow-wrap:break-word;
@@ -117,8 +118,8 @@
   width:10%;
   position:fixed;
   top:34%;
+  right:3%;
   opacity:0.3;
-  left:0;
   transition:0.3s}
 
 .sidenav a {
@@ -134,7 +135,7 @@
 .container {
   font-family:'Yu Gothic', 'Calibri Light';
   cursor:default;
-  padding-top:4em;
+  padding-top:6em;
   padding-bottom:20em;
   user-select:none;
   background:#15110a;

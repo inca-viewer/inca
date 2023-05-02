@@ -26,7 +26,7 @@
         Global features			; program settings
         Global fol			; folder list 1
         Global fav			; folder list 2
-        Global search_list		; models, studios, genre, key words etc.
+        Global search			; models, studios, genre, key words etc.
         Global search_folders		; default search locations
         Global this_search		; current search folders
         Global inca			; default folder path
@@ -144,9 +144,9 @@
             pg = Page %page% of %pages%
         header_html = <!--`r`n%view%>%last_view%>%page%>%filter%>%sort%>%toggles%>%this_search%>%search_term%>%path%>%folder%>%playlist%>%last_media%>`r`n%page_media%`r`n-->`r`n<!doctype html>`r`n<html>`r`n<head>`r`n<meta charset="UTF-8">`r`n<title>Inca - %title%</title>`r`n<meta name="viewport" content="width=device-width, initial-scale=1">`r`n<link rel="icon" type="image/x-icon" href="file:///%inca%\apps\icons\inca.ico">`r`n</head>`r`n
 
-        panel_html = <body class='container' onload="spool(event, '', '', '%toggles%', '%sort%', %filter%, %page%, %pages%, %view%, %speed%, '%title%', %list_size%)">`r`n<div style="width:%page_w%`%; margin:auto">`r`n<div class='panel' id='myPanel'></div>`r`n`r`n
+        panel_html = <body class='container' onload="spool(event, '', '%ini%', '%toggles%', '%sort%', %filter%, %page%, %pages%, %view%, %speed%)">`r`n<div style="width:%page_w%`%; margin:auto">`r`n<div class='panel' id='myPanel' onwheel="wheelEvents(event, id, this, '%ini%')"></div>`r`n`r`n
 
-        title_html = `r`n`r`n<div style='display:flex'>`r`n<div class='ribbon' style='color:lightsalmon; width:6`%'>%list_size%</div>`r`n<a href="%title%.htm#Page" id="myPage" class='ribbon' style='width:14`%' onwheel="wheelEvents(event, id, this)">%pg%</a>`r`n<a href=#Thumbs#%view%## id="Thumbs" class='ribbon' style='width:10.4`%' onwheel="wheelEvents(event, id, this)" onmouseover="media.style.opacity=1" onmouseout="media.style.opacity=null">Thumbs</a>`r`n<a href="#Orphan#%folder%#" id='myFiles' class='ribbon' style='color:red; width:16`%' onmouseover="wheelEvents(event, id, this, '%ini%')" onwheel="wheelEvents(event, id, this, '%ini%')">%title%</a><a class='ribbon' id='Search' onmouseover="filter=14; wheelEvents(event, id, this, '%search_list%')" onwheel="wheelEvents(event, id, this, '%search_list%')">Search</a>`r`n<a href='#%sort%#%sort%#' id='mySort' class='ribbon' onwheel="wheelEvents(event, id, this)">%sort%`r`n<a id='myFilter' class='ribbon' onwheel="wheelEvents(event, id, this)">All</a>`r`n<a id='Menu' class='ribbon' onmouseover="spool(event, id, '%features%', '%toggles%', '%sort%', %filter%, %page%, %pages%, %view%, %speed%, '%title%', %list_size%)">Menu</a>`r`n</div><div style='display:flex'>`r`n<input id='myInput' class='searchbox' onmouseover="spool(event, id, '%features%', '%toggles%', '%sort%', %filter%, %page%, %pages%, %view%, %speed%, '%title%', %list_size%)" type='search' value='%search_box%' style='width:78`%; margin-bottom:2em; margin-right:0'>`r`n<a href='#Searchbox###' class='searchbox' style='width:3`%; border-radius:0 1em 1em 0'>+</a></div>`r`n`r`n<div id="myModal" class="modal" onwheel="wheelEvents(event, id, this)">`r`n<div><video id="myPlayer" class="player" type="video/mp4"></video><textarea id="myCap" class="caption" onmouseenter="over_cap=true" onmouseleave="over_cap=false"></textarea><span id="mySeekBar" class="seekbar"></span><span><video id='mySeek' class='seek' type="video/mp4"></video></span><span id="mySidenav" onmouseover="openNav()" onmouseleave="closeNav()" class="sidenav"><a id="mySpeed" onmouseover='stat.innerHTML=Math.round(media.playbackRate*100)' onwheel="wheelEvents(event, id, this)">Speed</a><a id="myNext" onmouseover='stat.innerHTML=index' onclick='nextCaption()' onwheel="wheelEvents(event, id, this)">Next</a><a id="myThin" onmouseover='stat.innerHTML=Math.round(newSkinny*100)' onwheel="wheelEvents(event, id, this)">Thin</a><a id='myLoop' onclick="loop()">Loop</a><a onclick="toggleMute()">Mute</a><a id="myFav">Fav</a><a id="myCapnav" onclick="editCap()">Cap</a><a onclick="cue = Math.round(media.currentTime*100)/100">Cue</a><a id="myMp4">mp4</a><a id="myMp3">mp3</a><a id="myStatus" style='font-size:5em; padding:0'></a></span></div></div>`r`n`r`n
+        title_html = `r`n`r`n<div style='display:flex'>`r`n<a href='#%sort%#%sort%#' id='mySort' class='ribbon' onwheel="wheelEvents(event, id, this)">%sort%`r`n<a id='myFilter' class='ribbon' onwheel="wheelEvents(event, id, this)">All</a>`r`n<a href=#Thumbs#%view%## id="Thumbs" class='ribbon' style='width:10.4`%' onwheel="wheelEvents(event, id, this)" onmouseover="media.style.opacity=1" onmouseout="media.style.opacity=null">Thumbs</a>`r`n<a href="#Orphan#%folder%#" id='myFiles' class='ribbon' style='color:lightsalmon; font-size:1.5em; width:22`%' onmouseover="pos=1; spool(event, id, '%ini%')" onwheel="wheelEvents(event, id, this, '%ini%')">%title%</a>`r`n<div class='ribbon' style='color:lightsalmon; width:6`%'>%list_size%</div>`r`n<a href="%title%.htm#Page" id="myPage" class='ribbon' style='width:14`%' onwheel="wheelEvents(event, id, this)">%pg%</a>`r`n</div><div style='display:flex'>`r`n<input id='myInput' class='searchbox' type='search' value='%search_box%' style='width:67`%; margin-bottom:2em; margin-right:0'>`r`n<a id='myRename' class='searchbox' style='width:9`%; margin-right:0; border-radius:0' onmouseover='rename()'>Rename</a>`r`n<a href='#Searchbox###' class='searchbox' style='width:5`%; border-radius:0 1em 1em 0'>Add</a></div>`r`n`r`n<div id="myModal" class="modal" onwheel="wheelEvents(event, id, this)">`r`n<div><video id="myPlayer" class="player" type="video/mp4"></video><textarea id="myCap" class="caption" onmouseenter="over_cap=true" onmouseleave="over_cap=false"></textarea><span id="mySeekBar" class="seekbar"></span><span><video id='mySeek' class='seek' type="video/mp4"></video></span><span id="mySidenav" onmouseover="openNav()" onmouseleave="closeNav()" class="sidenav"><a id="mySpeed" onmouseover='stat.innerHTML=Math.round(media.playbackRate*100)' onwheel="wheelEvents(event, id, this)">Speed</a><a id="myNext" onmouseover='stat.innerHTML=index' onclick='nextCaption()' onwheel="wheelEvents(event, id, this)">Next</a><a id="myThin" onmouseover='stat.innerHTML=Math.round(newSkinny*100)' onwheel="wheelEvents(event, id, this)">Thin</a><a id='myLoop' onclick="loop()">Loop</a><a onclick="toggleMute()">Mute</a><a id="myFav">Fav</a><a id="myCapnav" onclick="editCap()">Cap</a><a onclick="cue = Math.round(media.currentTime*100)/100">Cue</a><a id="myMp4">mp4</a><a id="myMp3">mp3</a><a id="myStatus" style='font-size:5em; padding:0'></a></span></div></div>`r`n`r`n
 
         html = `r`n%html%</div>`r`n
         FileDelete, %inca%\cache\html\%folder%.htm
@@ -516,13 +516,6 @@
 
     ProcessMessage()
         {
-        if (command == "Orphan")					; open in notepad if playlist
-            {
-            IfExist, %inca%\slides\%value%.m3u
-              run, %inca%\slides\%value%.m3u
-            IfExist, %inca%\music\%value%.m3u
-              run, %inca%\music\%value%.m3u
-            }
         if (command == "Join")
             {
             if !GetMedia(0)
@@ -645,7 +638,7 @@
             {
             list_id := value
             if GetMedia(0)
-              if (!timer||type=="document"||ext=="txt"||ext=="m3u"||ext=="wmv"||ext=="avi"||ext=="mpg"
+              if (!timer||type=="document"||ext=="txt"||ext=="m3u"||ext=="wmu"||ext=="avi"||ext=="mpg"
               ||ext=="ts"||ext=="flv" || (type=="video" && ext!="mp4" && browser=="mozilla firefox")
               || (type=="video" && ext!="mp4" && browser=="Profile 1 - Microsoft"))
                 {
@@ -660,8 +653,8 @@
             }
         else if (command == "Searchbox" && search_term)			; add search to search list
             {
-            search_list = %search_list%|%search_term%
-            IniWrite,%search_list%,%inca%\inca - ini.ini,Settings,search_list
+            search = %search%|%search_term%
+            IniWrite,%search%,%inca%\inca - ini.ini,Settings,search
             LoadSettings()
             PopUp("Added",600,0,0)
             reload := 1
@@ -1260,7 +1253,7 @@ caption := x
         gui, settings:add, text, x165 yp+85, favorite folders
         gui, settings:add, edit, x160 yp+13 h80 w500 vfav, %fav%
         gui, settings:add, text, x165 yp+84, search terms
-        gui, settings:add, edit, x160 yp+13 h120 w500 vsearch_list, %search_list%
+        gui, settings:add, edit, x160 yp+13 h120 w500 vsearch, %search%
         gui, settings:add, text, x165 yp+125, folders to search
         gui, settings:add, edit, x160 yp+13 h18 w500 vsearch_folders, %search_folders%
         gui, settings:add, button, x165 y385 w60, Source
@@ -1305,7 +1298,7 @@ caption := x
         StringTrimRight,new,new,1
         IniWrite,%new%,%inca%\inca - ini.ini,Settings,features
         IniWrite,%search_folders%,%inca%\inca - ini.ini,Settings,search_folders
-        IniWrite,%search_list%,%inca%\inca - ini.ini,Settings,search_list
+        IniWrite,%search%,%inca%\inca - ini.ini,Settings,search
         IniWrite,%fol%,%inca%\inca - ini.ini,Settings,fol
         IniWrite,%fav%,%inca%\inca - ini.ini,Settings,fav
         run %inca%\apps\Compile.exe
@@ -1411,7 +1404,7 @@ caption := x
         IniRead,search_folders,%inca%\inca - ini.ini,Settings,search_folders
         IniRead,fol,%inca%\inca - ini.ini,Settings,fol
         IniRead,fav,%inca%\inca - ini.ini,Settings,fav
-        IniRead,search_list,%inca%\inca - ini.ini,Settings,search_list
+        IniRead,search,%inca%\inca - ini.ini,Settings,search
         }
 
 

@@ -1,9 +1,13 @@
 <script>
-// move file
 
+// history using session storage
+// setting thin random fail in slides
+// seek interval + show time int
+// filter pos confusion on thumbs etc
 
   var modal = document.getElementById('myModal')			// media player window
   var player = document.getElementById('myPlayer')
+  var media = document.getElementById('media1')				// media element
   var inputbox = document.getElementById('myInput')			// search/edit bar
   var panel = document.getElementById('myPanel')			// list of folders, playlists etc
   var nav = document.getElementById('mySidenav')			// nav buttons over htm tab
@@ -25,17 +29,14 @@
   var time = 0								// media time
   var start = 0								// video start time
   var last_start = 0
-  var filter = ''							// eg 30 minutes, 2 months, 'A'
   var toggles = ''							// eg reverse, recurse
   var sort = 'Alpha'
   var units = ''							// minutes, months, MB etc.
-  var media								// media element
   var rate = 1
   var page = 1
   var pages = 1
-  var fol = ''								// media folder
-  var items = 1								// number of media
   var index = 1								// media index (e.g. media14)
+  var pos = 1								// top panel list pointer
   var type = ''								// audio, video, image, thumb, document
   var cap_list = ''							// full caption text file
   var cap_time = 0
@@ -69,6 +70,7 @@
   document.addEventListener('mousedown', mouseDown)
   document.addEventListener('mouseup', mouseUp)
   document.addEventListener('mousemove', Gesture)
+  setInterval(function() {if (wheel>9) {wheel-=9}}, 99)
   loop();loop()								// set nav button color
 
 
@@ -204,55 +206,20 @@
     if (wheel < block) {return}
     var wheelDown = false
     block = 120
-    if (e.deltaY > 0) {wheelDown = true; filter++}
-    else if (filter) {filter--}
-    if (id == 'myPanel' || id == 'Search') { 				// alpha search
-      if (filter > 26) {filter = 26}
-      if (filter == 0) {filter = 1}
-      id = String.fromCharCode(filter + 64)
-      var htm = ''
-      var z = input.split('|').sort()
-      const y = z.filter(z => z.toUpperCase().startsWith(id))
-      for (x of y) {
-        p = x.substring(0, 15)
-        q = x.replace(/ /g, "%20")
-        htm = htm + '<a href=#Search#' + q + '##>' + p + '</a>'}
-      panel.innerHTML = "<span style=\'grid-row-start:1;grid-row-end:3;color:red;font-size:2em\'>"+id+"</span>"+htm}
-    else if (id == 'myPage') {						// page
+    if (e.deltaY > 0) {wheelDown = true; pos++}
+    else if (pos) {pos--}
+    if (id == 'myPage') {						// page
       if (wheelDown && page<pages) {page++} else if (page>1) {page--}
       el.href = '#Page#' + page + '##'
       el.innerHTML = 'Page '+page+' of '+pages}
-    else if (id == 'myFiles') {						// media folders
-      block = 240
-      if (filter > 4) {filter = 4}
-      var z = ['fol','fav','slides','music','subs']
-      var q = z[filter]
-      htm = "<span style=\'grid-row-start:1;grid-row-end:3;color:red;font-size:2em\'>"+q+"</span>"
-      z = input.split(q+'=').pop().split('||')
-// if (q == "subs") {alert(z)}
-      z = z[0].split('|')
-      for (x of z) {
-        var y = x.split("/")
-        p = y.pop()
-        if (q != "music" && q != "slides") {p = y.pop()}
-        p = p.replace(/.m3u/g, "")
-        p = p.substring(0, 12)
-        title = document.title.replace(/Inca - /g, "")
-        if (p == title) {p = "<span style='color:lightsalmon'</span>" + p}
-        if (p == "New") {p = "<span style='color:red'</span>" + p}
-        var path = x.replace(/ /g, "%20")
-        htm = htm + '<a href=#Path##' + selected + '#' + path + '>' + p + '</a>'}
-      panel.innerHTML = htm}
-    else if (id == 'mySort') {						// sort filter
-      block = 240
-      if (filter > 5) {filter = 5}
+    else if (id=='myFiles' || id=='myPanel') {spool(e, id, input)}	// media files
+    else if (id=='mySort') {						// sort filter
+      if (pos > 5) {pos = 5}
       var z = ['Duration','Date','Alpha','Size','Ext','Shuffle']
-      sort = z[filter]
+      sort = z[pos]
       el.href = '#'+sort+'#'+sort+'##'
       el.innerHTML = sort}
-    else if (id == 'myFilter') {					// search filter
-      el.href = '#Filter#' + filter + '##'
-      el.innerHTML = filt() + units}
+    else if (id == 'myFilter') {filt()}					// search filter
     else if (id == 'Fixed') {						// fixed thumb
       thumb_size = 1*media.style.width.slice(0,-2)
       if (wheelDown) {thumb_size += thumb_size/40}
@@ -266,7 +233,6 @@
       thumb_size = Math.round(10*thumb_size)/10
       if (thumb_size < 4) {thumb_size = 4}
       thumbs.href = '#Thumbs#' + thumb_size +'##'
-      thumbs.innerHTML = 'Thumbs ' + Math.round(thumb_size)
       for (i=1; i<41 ;i++) {
         if (el = document.getElementById("thumb" + i)) {
           el.style.width = thumb_size + 'em'
@@ -284,7 +250,7 @@
       if (wheelDown) {playMedia('Next')}
       else {playMedia('Previous')}
       stat.innerHTML = index}
-    else if (id == 'mySpeed' || xpos < 0.1) {				// speed
+    else if (id == 'mySpeed' || xpos > 0.9) {				// speed
       if (wheelDown) {x = -0.01}
       else {x = 0.01}
       if (type != 'image' && (media.playbackRate < 1 || x < 0)) {
@@ -376,7 +342,7 @@
 
   function togglePause(e) {
     if (!mouse_down || gesture || seek_active || over_cap || !type) {return}
-    if (xpos < 0.1 && ypos > 0.5) {return}
+    if (xpos > 0.9 && ypos > 0.5) {return}
     if (type == "thumb") {playMedia('Thumb')}
     if (long_click) {return}
     else if (media.paused) {
@@ -444,33 +410,57 @@
     media.style.transform = "scale("+scaleX+","+scaleY+")"}
 
 
-  function filt() {
-    var x = filter
-    if (sort == 'Alpha') {if (filter < 26) {x = String.fromCharCode(filter + 65)} else {filter=26}}
-    if (sort == 'Size')  {x = filter * 10; units = " Mb"}
+  function filt() {							// eg 30 minutes, 2 months, alpha 'A'
+    var x = pos
+    if (sort == 'Alpha') {if (pos < 26) {x = String.fromCharCode(pos + 65)} else {pos=25}}
+    if (sort == 'Size')  {x = pos * 10; units = " Mb"}
     if (sort == 'Date')  {units = " months"}
     if (sort == 'Duration') {units = " minutes"}
     if (!x) {x=''}
-    return x}
+    el = document.getElementById('myFilter')
+    el.href = '#Filter#' + pos + '##'
+    el.innerHTML = x + ' ' + units
+    return}
 
 
-  function spool(e, id, input, to, so, fi, pa, ps, ts, rt, fo, it) {	// onload - spool lists into top htm panel
-    if (mouse_down) {return}
-    media = document.getElementById('media1')
+  function spool(e, id, input, to, so, fi, pa, ps, ts, rt) {		// spool lists into top htm panel
+    if (mouse_down) {return}						// if moving thumbs near panel
+    if (pa) {toggles=to; sort=so; page=pa; pages=ps; thumb_size=ts; rate=rt}
+    if (pos > 32) {pos = 32}
+//    filt()
+    var title = document.title.replace(/Inca - /g, "")
+    var z = ['slides','fav','fol','subs','music','menu']
+    var p = String.fromCharCode(pos + 58)
+    var q = 'search'
+    if (pos < 6) {p = z[pos]; q = p}
     var htm = ''
-    var p = ''
-    wheel = 0
-    if (!id || id=='Menu') {
-      if (pa) {toggles=to; sort=so; filter=fi; page=pa; pages=ps; thumb_size=ts; rate=rt; fol=fo; items=it}
-      var z = ['Reverse','Recurse','Images','Videos']
+    if (p == 'menu') {
+      z = ['Reverse','Recurse','Images','Videos']
       for (x of z) {
-        if (sort.match(x) || toggles.match(x)) {p = " style='color:lightsalmon'"} else {p=''}
-        htm = htm + '<a href=#'+x+'###' + p + '>' + x + '</a>'}
-      htm = htm + '<a href=#Join##'+selected+'#>Join</a><a id="myRename" onmousemove="rename()">Rename</a><a href=#Delete##'+selected+'#>Delete</a><a href=#Select### onmouseup="selectAll()">Select</a><a href=#Settings###>Settings</a>'
-      document.getElementById('myFilter').innerHTML = filt()+' '+units}
-    if (id) {panel.innerHTML = htm}
+        if (sort.match(x) || toggles.match(x)) {q = " style='color:lightsalmon'"} else {q=''}
+        htm = htm + '<a href=#'+x+'###' + q + '>' + x + '</a>'}
+      htm = htm + '<a href=#Select### onmouseup="selectAll()">Select</a><a href=#Delete##'+selected+'#>Delete</a><a href=#Join##'+selected+'#>Join</a><a href=#Settings###>Settings</a>'}
+    else {
+      z = input.split(q+'=').pop().split('||')
+      z = z[0].split('|')
+      if (pos > 6) {							// alpha search
+        z = z.sort()
+        var y = z.filter(z => z.toUpperCase().startsWith(p))
+        for (x of y) {
+          q = x.substring(0, 15)
+          htm = htm + '<a href=#Search#' + x.replace(/ /g, "%20") + '##>' + q + '</a>'}}
+      else for (x of z) {						// folders
+        var y = x.split("/")
+        q = y.pop()
+        if (p != "music" && p != "slides") {q = y.pop()}
+        q = q.replace(/.m3u/g, "")
+        q = q.substring(0, 12)
+        if (q == "New") {q = "<span style='color:red'</span>" + q}
+        var path = x.replace(/ /g, "%20")
+        htm = htm + '<a href=#Path##' + selected + '#' + path + '>' + q + '</a>'}}
+    if (id) {panel.innerHTML = "<span style=\'grid-row-start:1;grid-row-end:3;color:red;font-size:2em\'>"+p+"</span>"+htm}
     x = selected.split(',')
-    for (var i = 0; i < x.length; i++) {document.getElementById('media' + x[i]).load()}}	// release media
+    for (var i = 0; i < (x.length-1); i++) {document.getElementById('media' + x[i]).load()}}	// release media
 
 
   function openNav() {
