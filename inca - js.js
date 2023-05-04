@@ -2,8 +2,10 @@
 
 // history using session storage
 // setting thin random fail in slides
-// seek interval + show time int
-// filter pos confusion on thumbs etc
+// could have ribbon above but inside panel fol fav etc
+// add fav from downloads
+// consider allow mouse back normal propagation
+
 
   var modal = document.getElementById('myModal')			// media player window
   var player = document.getElementById('myPlayer')
@@ -20,12 +22,14 @@
   var seekbar = document.getElementById('mySeekBar')
   var seek = document.getElementById('mySeek')				// seek thumb under video
   var Loop = document.getElementById('myLoop')				// loop video or next
+  var Mute = document.getElementById('myMute')				// loop video or next
   var sound = sessionStorage.getItem('sound')
   var long_click = false
   var long_middle = false
   var wheel = 0
   var block = 10							// block wheel input
   var last_id = 1
+  var type = ''								// audio, video, image, thumb, document
   var time = 0								// media time
   var start = 0								// video start time
   var last_start = 0
@@ -36,8 +40,8 @@
   var page = 1
   var pages = 1
   var index = 1								// media index (e.g. media14)
-  var pos = 1								// top panel list pointer
-  var type = ''								// audio, video, image, thumb, document
+  var filter = 1							// filter or sort 
+  var pos = 1								// top panel list ref
   var cap_list = ''							// full caption text file
   var cap_time = 0
   var mouse_down = false
@@ -70,12 +74,13 @@
   document.addEventListener('mousedown', mouseDown)
   document.addEventListener('mouseup', mouseUp)
   document.addEventListener('mousemove', Gesture)
-  setInterval(function() {if (wheel>9) {wheel-=9}}, 99)
   loop();loop()								// set nav button color
 
 
   function timedEvents() {						// every ~84mS while media playing
     time = Math.round(10*media.currentTime)/10
+    if ((t=Math.round(time%60))<10) {t=':0'+t} else {t=':'+t}
+    if (ypos > 0.2) {stat.innerHTML = Math.round(time/60)+t}
     if (sound == 'yes' && media.volume <= 0.8) {media.volume += 0.2}
     if (sound == 'no' && media.volume >= 0.2) {media.volume -= 0.2}
     cap.style.top = mediaY + (scaleY*media.offsetHeight/2) + 10 + "px"
@@ -84,8 +89,7 @@
     if (window.innerWidth == screen.width) {				// full screen mode
       media.style.marginLeft = '350px'; media.style.marginTop = '100px'; seekbar.style.marginLeft = '350px'}
     else {media.style.marginLeft = 0; media.style.marginTop = 0; seekbar.style.marginLeft = 0}
-    if (ypos > 0.6) {stat.innerHTML=Math.round(newSkinny*100)}
-    if (ypos > 0.75) {stat.innerHTML=time}
+    if (ypos < 0.2 || xpos < 0.1) {nav.style.opacity=0.7} else {nav.style.opacity=0}
     positionMedia()
     Captions()}
 
@@ -190,12 +194,12 @@
     modal.style.opacity = 0
     cap.style.display = 'none'
     cap.style.opacity = 0
+    nav.style.opacity = 0
     cap.innerHTML = ''
     cap.value = ''
     media.poster = ''
     media.src =''
     cap_time = 0
-    closeNav()
     type = ''}
 
 
@@ -206,20 +210,24 @@
     if (wheel < block) {return}
     var wheelDown = false
     block = 120
-    if (e.deltaY > 0) {wheelDown = true; pos++}
-    else if (pos) {pos--}
+    if (e.deltaY > 0) {wheelDown = true}
     if (id == 'myPage') {						// page
       if (wheelDown && page<pages) {page++} else if (page>1) {page--}
       el.href = '#Page#' + page + '##'
       el.innerHTML = 'Page '+page+' of '+pages}
-    else if (id=='myFiles' || id=='myPanel') {spool(e, id, input)}	// media files
+    else if (id=='myPanel') {						// media files
+      if (wheelDown) {pos++} else if (pos) {pos--}
+      spool(e, id, input)}
     else if (id=='mySort') {						// sort filter
-      if (pos > 5) {pos = 5}
+      if (wheelDown) {filter++} else if (filter) {filter--}
+      if (filter > 5) {filter = 5}
       var z = ['Duration','Date','Alpha','Size','Ext','Shuffle']
-      sort = z[pos]
+      sort = z[filter]
       el.href = '#'+sort+'#'+sort+'##'
       el.innerHTML = sort}
-    else if (id == 'myFilter') {filt()}					// search filter
+    else if (id == 'myFilter') {
+      if (wheelDown) {filter++} else if (filter) {filter--}		// search filter
+      filt()}
     else if (id == 'Fixed') {						// fixed thumb
       thumb_size = 1*media.style.width.slice(0,-2)
       if (wheelDown) {thumb_size += thumb_size/40}
@@ -246,21 +254,19 @@
       else {block = 24}
       media.style.transform = "scale("+scaleX+","+scaleY+")"}
     else if (id == 'myNext') {						// next
-      block = 28
       if (wheelDown) {playMedia('Next')}
       else {playMedia('Previous')}
       stat.innerHTML = index}
-    else if (id == 'mySpeed' || xpos > 0.9) {				// speed
+    else if (id == 'mySpeed' || id == 'myStatus') {			// speed
       if (wheelDown) {x = -0.01}
       else {x = 0.01}
       if (type != 'image' && (media.playbackRate < 1 || x < 0)) {
         media.playbackRate += x
         stat.innerHTML = Math.round(media.playbackRate *100)}}
-    else if (ypos > 0.75 && type != 'image' && type != 'thumb') {	// seek
+    else if (ypos>0.2 && xpos<0.2 && type!='image' && type!='thumb') {	// seek
       if (media.paused == true) {interval = 5}
-      else if (media.duration < 91) {interval = 30}
-      else {interval = 300}
-      interval *= Math.abs(ypos - 0.75)
+      else {interval = media.duration/40}
+      interval *= (ypos-0.2)
       if (wheelDown) {media.currentTime += interval}
       else  {media.currentTime -= interval}}
     else if (id == 'myModal') {						// magnify
@@ -269,6 +275,7 @@
       positionMedia()
       block = 24}
     wheel = 0}
+
 
   function Gesture(e) {							// mouse move over window
     if (over_thumb) {e.preventDefault()}
@@ -387,22 +394,15 @@
       el.style.border = "0.1px solid lightsalmon"
       if (!x.match("," + i + ",")) {selected = selected + i + ","}
       inputbox.value = document.getElementById("title" + i).innerHTML}
-    panel.innerHTML = ""
-    if (selected) {panel.innerHTML=selected; panel.style.border = "0.1px solid #826858"}
-    else  {panel.style.border = ""}}
-
-
-  function toggleMute() {
-    if (sound == "yes") {sound = "no"} else {sound = "yes"}
-    sessionStorage.setItem("sound",sound)
-    media.play()}
+    if (selected) {panel.style.border = "0.1px solid #826858"}
+    else {panel.style.border = ""}}
 
 
   function positionMedia() {
     seekbar.style.left = mediaX - (scaleX*media.offsetWidth / 2) + "px"
     if (type == "video") {
       seekbar.style.display = 'block'
-      if (ypos > 0.75) {seekbar.style.top = window.innerHeight - 12 + 'px'}
+      if (xpos < 0.2) {seekbar.style.top = window.innerHeight - 12 + 'px'}
       else {seekbar.style.top = window.innerHeight - 3 + 'px'}}
     else {seekbar.style.display = 'none'}
     media.style.top = mediaY - (media.offsetHeight / 2) + "px"
@@ -411,25 +411,27 @@
 
 
   function filt() {							// eg 30 minutes, 2 months, alpha 'A'
-    var x = pos
-    if (sort == 'Alpha') {if (pos < 26) {x = String.fromCharCode(pos + 65)} else {pos=25}}
-    if (sort == 'Size')  {x = pos * 10; units = " Mb"}
+    var x = filter
+    if (sort == 'Alpha') {if (filter < 26) {x = String.fromCharCode(filter + 65)} else {filter=25}}
+    if (sort == 'Size')  {x = filter * 10; units = " Mb"}
     if (sort == 'Date')  {units = " months"}
     if (sort == 'Duration') {units = " minutes"}
     if (!x) {x=''}
     el = document.getElementById('myFilter')
-    el.href = '#Filter#' + pos + '##'
+    el.href = '#Filter#' + filter + '##'
     el.innerHTML = x + ' ' + units
     return}
 
 
   function spool(e, id, input, to, so, fi, pa, ps, ts, rt) {		// spool lists into top htm panel
     if (mouse_down) {return}						// if moving thumbs near panel
-    if (pa) {toggles=to; sort=so; page=pa; pages=ps; thumb_size=ts; rate=rt}
+    if (pa) {toggles=to; sort=so; page=pa; filter=fi; pages=ps; thumb_size=ts; rate=rt}
+    if (!id) {pos = 1; panel.style.opacity = 0}
+    else {panel.style.opacity = 1}
     if (pos > 32) {pos = 32}
-//    filt()
+    filt()
     var title = document.title.replace(/Inca - /g, "")
-    var z = ['slides','fav','fol','subs','music','menu']
+    var z = ['slides','fav','fol','fol','subs','music','menu']
     var p = String.fromCharCode(pos + 58)
     var q = 'search'
     if (pos < 6) {p = z[pos]; q = p}
@@ -439,7 +441,7 @@
       for (x of z) {
         if (sort.match(x) || toggles.match(x)) {q = " style='color:lightsalmon'"} else {q=''}
         htm = htm + '<a href=#'+x+'###' + q + '>' + x + '</a>'}
-      htm = htm + '<a href=#Select### onmouseup="selectAll()">Select</a><a href=#Delete##'+selected+'#>Delete</a><a href=#Join##'+selected+'#>Join</a><a href=#Settings###>Settings</a>'}
+      htm = htm + '<a href=#Join##'+selected+'#>Join</a><a href=#Settings###>Settings</a>'}
     else {
       z = input.split(q+'=').pop().split('||')
       z = z[0].split('|')
@@ -458,9 +460,13 @@
         if (q == "New") {q = "<span style='color:red'</span>" + q}
         var path = x.replace(/ /g, "%20")
         htm = htm + '<a href=#Path##' + selected + '#' + path + '>' + q + '</a>'}}
-    if (id) {panel.innerHTML = "<span style=\'grid-row-start:1;grid-row-end:3;color:red;font-size:2em\'>"+p+"</span>"+htm}
-    x = selected.split(',')
-    for (var i = 0; i < (x.length-1); i++) {document.getElementById('media' + x[i]).load()}}	// release media
+    panel.innerHTML = "<span style=\'grid-row-start:1;grid-row-end:3;color:red;font-size:2em\'>"+p+"</span>"+htm
+    release()}
+
+
+  function release() {							// release media
+    var x = selected.split(',')
+    for (var i = 0; i < (x.length-1); i++) {document.getElementById('media' + x[i]).load()}}
 
 
   function openNav() {
@@ -468,11 +474,17 @@
     document.getElementById('myMp3').href = '#mp3#' + time + '#' + index + ',#' + cue
     document.getElementById('myMp4').href = '#mp4#' + time + '#' + index + ',#' + cue
     document.getElementById('myFav').href = '#Favorite#' + time + '#' + index + ',#'}
-  function closeNav() {nav.style.opacity = 0.3}
+
   function loop() {if (looping) {looping = false;Loop.style.color=null} else {looping = true;Loop.style.color='red'}}
   function selectAll() {for (i=1; i <= 600; i++) {select(i)}}
   function exitThumb(el) {if(!mouse_down) {over_thumb = false}; if (media != player){el.pause()}}
-  function rename() {document.getElementById('myRename').href='#Rename#'+inputbox.value.replace(/ /g, "%20")+'#'+selected+'#'}
+  function rename() {release(); document.getElementById('myRename').href='#Rename#'+inputbox.value.replace(/ /g, "%20")+'#'+selected+'#'}
+  function del() {release(); document.getElementById('myDelete').href='#Delete##'+selected+'#'}
+
+  function mute() {
+    if (sound == "yes") {sound = "no"; Mute.style.color='red'} else {sound = "yes"; Mute.style.color=null}
+    sessionStorage.setItem("sound",sound); media.play()}
+
   function editCap() {
     if (cap.value && cap.value != cap.innerHTML) {
       newcap = cap.value + "|" + time + "|"

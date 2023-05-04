@@ -102,8 +102,6 @@
         last := src
         title := folder
         speed := Setting("Default Speed")
-        FileRead, ini, %inca%\inca - ini.ini
-        ini := StrReplace(ini, "`r`n", "|")
         FileRead, style, %inca%\inca - css.css
         FileRead, java, %inca%\inca - js.js
         Loop, Files, %inca%\music\*.m3u					; for top panel
@@ -113,6 +111,8 @@
         IniWrite,%slides%,%inca%\inca - ini.ini,Settings,slides
         IniWrite,%music%,%inca%\inca - ini.ini,Settings,music
         IniWrite,%subfolders%,%inca%\inca - ini.ini,Settings,subs
+        FileRead, ini, %inca%\inca - ini.ini
+        ini := StrReplace(ini, "`r`n", "|")
 
         max_height := Floor(A_ScreenHeight * 0.34)			; max image height in web page
         menu_item =
@@ -144,9 +144,9 @@
             pg = Page %page% of %pages%
         header_html = <!--`r`n%view%>%last_view%>%page%>%filter%>%sort%>%toggles%>%this_search%>%search_term%>%path%>%folder%>%playlist%>%last_media%>`r`n%page_media%`r`n-->`r`n<!doctype html>`r`n<html>`r`n<head>`r`n<meta charset="UTF-8">`r`n<title>Inca - %title%</title>`r`n<meta name="viewport" content="width=device-width, initial-scale=1">`r`n<link rel="icon" type="image/x-icon" href="file:///%inca%\apps\icons\inca.ico">`r`n</head>`r`n
 
-        panel_html = <body class='container' onload="spool(event, '', '%ini%', '%toggles%', '%sort%', %filter%, %page%, %pages%, %view%, %speed%)">`r`n<div style="width:%page_w%`%; margin:auto">`r`n<div class='panel' id='myPanel' onwheel="wheelEvents(event, id, this, '%ini%')"></div>`r`n`r`n
+        panel_html = <body class='container' onload="spool(event, '', '%ini%', '%toggles%', '%sort%', %filter%, %page%, %pages%, %view%, %speed%)">`r`n<div style="width:%page_w%`%; margin:auto">`r`n<div class='panel' id='myPanel' onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0" onwheel="wheelEvents(event, id, this, '%ini%')"></div>`r`n`r`n
 
-        title_html = `r`n`r`n<div style='display:flex'>`r`n<a href='#%sort%#%sort%#' id='mySort' class='ribbon' onwheel="wheelEvents(event, id, this)">%sort%`r`n<a id='myFilter' class='ribbon' onwheel="wheelEvents(event, id, this)">All</a>`r`n<a href=#Thumbs#%view%## id="Thumbs" class='ribbon' style='width:10.4`%' onwheel="wheelEvents(event, id, this)" onmouseover="media.style.opacity=1" onmouseout="media.style.opacity=null">Thumbs</a>`r`n<a href="#Orphan#%folder%#" id='myFiles' class='ribbon' style='color:lightsalmon; font-size:1.5em; width:22`%' onmouseover="pos=1; spool(event, id, '%ini%')" onwheel="wheelEvents(event, id, this, '%ini%')">%title%</a>`r`n<div class='ribbon' style='color:lightsalmon; width:6`%'>%list_size%</div>`r`n<a href="%title%.htm#Page" id="myPage" class='ribbon' style='width:14`%' onwheel="wheelEvents(event, id, this)">%pg%</a>`r`n</div><div style='display:flex'>`r`n<input id='myInput' class='searchbox' type='search' value='%search_box%' style='width:67`%; margin-bottom:2em; margin-right:0'>`r`n<a id='myRename' class='searchbox' style='width:9`%; margin-right:0; border-radius:0' onmouseover='rename()'>Rename</a>`r`n<a href='#Searchbox###' class='searchbox' style='width:5`%; border-radius:0 1em 1em 0'>Add</a></div>`r`n`r`n<div id="myModal" class="modal" onwheel="wheelEvents(event, id, this)">`r`n<div><video id="myPlayer" class="player" type="video/mp4"></video><textarea id="myCap" class="caption" onmouseenter="over_cap=true" onmouseleave="over_cap=false"></textarea><span id="mySeekBar" class="seekbar"></span><span><video id='mySeek' class='seek' type="video/mp4"></video></span><span id="mySidenav" onmouseover="openNav()" onmouseleave="closeNav()" class="sidenav"><a id="mySpeed" onmouseover='stat.innerHTML=Math.round(media.playbackRate*100)' onwheel="wheelEvents(event, id, this)">Speed</a><a id="myNext" onmouseover='stat.innerHTML=index' onclick='nextCaption()' onwheel="wheelEvents(event, id, this)">Next</a><a id="myThin" onmouseover='stat.innerHTML=Math.round(newSkinny*100)' onwheel="wheelEvents(event, id, this)">Thin</a><a id='myLoop' onclick="loop()">Loop</a><a onclick="toggleMute()">Mute</a><a id="myFav">Fav</a><a id="myCapnav" onclick="editCap()">Cap</a><a onclick="cue = Math.round(media.currentTime*100)/100">Cue</a><a id="myMp4">mp4</a><a id="myMp3">mp3</a><a id="myStatus" style='font-size:5em; padding:0'></a></span></div></div>`r`n`r`n
+        title_html = `r`n`r`n<div style='display:flex'>`r`n<a href="#Orphan#%folder%#" class='ribbon' style='color:lightsalmon; font-size:1.5em; width:22`%'>%title%</a>`r`n<div class='ribbon' style='color:lightsalmon; width:6`%'>%list_size%</div>`r`n<a href=#Thumbs#%view%## id="Thumbs" class='ribbon' style='width:10.4`%' onwheel="wheelEvents(event, id, this)" onmouseover="media.style.opacity=1" onmouseout="media.style.opacity=null">Thumbs</a>`r`n<a href='#%sort%#%sort%#' id='mySort' class='ribbon' onwheel="wheelEvents(event, id, this)">%sort%`r`n<a id='myFilter' class='ribbon' onwheel="wheelEvents(event, id, this)">All</a>`r`n<a href="%title%.htm#Page" id="myPage" class='ribbon' style='width:14`%' onwheel="wheelEvents(event, id, this)">%pg%</a></div>`r`n<div style='display:flex'>`r`n<input id='myInput' class='searchbox' onmouseenter="spool(event, '', '%ini%')" type='search' value='%search_box%' style='width:62`%; margin-bottom:2em; margin-right:0'>`r`n<a onclick="selectAll()">All</a>`r`n<a id='myDelete' onmouseover='del()' class='searchbox' style='width:7`%; margin-right:0; border-radius:0'>Delete</a>`r`n<a id='myRename' class='searchbox' style='width:8`%; margin-right:0; border-radius:0' onmouseover='rename()'>Rename</a>`r`n<a href='#Searchbox###' class='searchbox' style='width:5`%; border-radius:0 1em 1em 0'>Add</a></div>`r`n`r`n<div id="myModal" class="modal" onwheel="wheelEvents(event, id, this)">`r`n<div><video id="myPlayer" class="player" type="video/mp4"></video><textarea id="myCap" class="caption" onmouseenter="over_cap=true" onmouseleave="over_cap=false"></textarea><span id="mySeekBar" class="seekbar"></span><span><video id='mySeek' class='seek' type="video/mp4"></video></span>`r`n<span id="mySidenav" onmouseover="openNav()" onmouseleave="nav.style.opacity=0" class="sidenav"><a id="myStatus" style='font-size:4em; padding:0; width:15`%' onmouseover='stat.innerHTML=Math.round(media.playbackRate*100)' onwheel="wheelEvents(event, id, this)"></a><a id="mySpeed" onmouseover='stat.innerHTML=Math.round(media.playbackRate*100)' onwheel="wheelEvents(event, id, this)">Speed</a><a id="myNext" onmouseover='stat.innerHTML=index' onclick='nextCaption()' onwheel="wheelEvents(event, id, this)">Next</a><a id="myThin" onmouseover='stat.innerHTML=Math.round(newSkinny*100)' onwheel="wheelEvents(event, id, this)">Thin</a><a id='myLoop' onclick="loop()">Loop</a><a id='myMute' onclick="mute()">Mute</a><a id="myFav">Fav</a><a id="myCapnav" onclick="editCap()">Cap</a><a onclick="cue = Math.round(media.currentTime*100)/100">Cue</a><a id="myMp4">mp4</a><a id="myMp3">mp3</a></span></div></div>`r`n`r`n
 
         html = `r`n%html%</div>`r`n
         FileDelete, %inca%\cache\html\%folder%.htm
@@ -516,6 +516,14 @@
 
     ProcessMessage()
         {
+        if (command == "Orphan")					; open in notepad if playlist
+            {
+            IfExist, %inca%\slides\%value%.m3u
+              run, %inca%\slides\%value%.m3u
+            else IfExist, %inca%\music\%value%.m3u
+              run, %inca%\music\%value%.m3u
+            else reload := 1
+            }
         if (command == "Join")
             {
             if !GetMedia(0)
