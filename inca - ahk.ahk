@@ -264,6 +264,7 @@
         Clipboard =
         send, {end}+{Home}^c
         ClipWait, 0
+        address =
         value := Clipboard
         command = Search
         search_box := value
@@ -557,7 +558,6 @@
             }
         if (command == "mp3" || command == "mp4")
             {
-; tooltip --------%address% - %value%
             if !address						; address = cue, value = current time
                 x = 0.0
             if (!address && !value)
@@ -641,7 +641,7 @@
             FileTransfer()						; between folders or playlists
             reload := 1
             }
-        if (command == "Path")						; set inca path
+        if (command == "Path")
             {
             if InStr(address, ".m3u")
               {
