@@ -1,7 +1,10 @@
 <script>
 
+// last media fail
 // history using session storage
-//looping toggle
+// mgnify loop menu switch
+
+
   var modal = document.getElementById('myModal')			// media player window
   var player = document.getElementById('myPlayer')
   var media = document.getElementById('media1')				// media element
@@ -26,7 +29,7 @@
   var type = ''								// audio, video, image, thumb, document
   var time = 0								// media time
   var start = 0								// video start time
-  var interval = 1							// wheel seeking interval
+  var interval = 0							// wheel seeking interval
   var last_start = 0
   var toggles = ''							// eg reverse, recurse
   var sort = 'Alpha'
@@ -36,7 +39,7 @@
   var pages = 1
   var index = 1								// media index (e.g. media14)
   var filter = 1							// filter or sort 
-  var pos = 1								// top panel list ref
+  var pos = 12								// top panel list ref
   var cap_list = ''							// full caption text file
   var cap_time = 0
   var looping = false
@@ -74,12 +77,14 @@
   function timedEvents() {						// every ~84mS while media playing
     time = Math.round(10*media.currentTime)/10
     if ((t=Math.round(time%60))<10) {t=':0'+t} else {t=':'+t}
-    if (media.paused == true) {interval = 5}
-    else {interval = media.duration/20}
-    interval = Math.ceil(interval * (1 - xpos))
-    if (ypos < 0.2) {nav.style.opacity=0.7} else {nav.style.opacity=0}
+    if (media.duration) {interval = Math.round(media.duration/20)}
+    if (ypos < 0.5) {interval = Math.ceil(interval * 3 * (ypos-0.2))}
+    if (media.paused == true) {interval = Math.round(10*interval/4)/10}
+    if (ypos < 0.2 || xpos < 0.1) {nav.style.opacity=0.5} else {nav.style.opacity=0}
+    if (xpos < 0.2 && ypos < 0.2 && ypos > 0.1) {nav.style.opacity=0}
     if (xpos > 0.37) {stat.innerHTML = Math.round(time/60)+t}
-    if (xpos > 0.5) {stat.innerHTML = interval}
+    else if (xpos < 0.2 && ypos < 0.1) {stat.innerHTML=Math.round(media.playbackRate*100)}
+    if (xpos < 0.1 && ypos > 0.2) {stat.innerHTML = interval}
     if (sound == 'yes' && media.volume <= 0.8) {media.volume += 0.2}
     if (sound == 'no' && media.volume >= 0.2) {media.volume -= 0.2}
     cap.style.top = mediaY + (scaleY*media.offsetHeight/2) + 10 + "px"
@@ -154,7 +159,6 @@
     if (type == "audio") {media.controls = true; sound == 'yes'}
     setTimeout(function() {
       media.style.opacity = 1
-      if (media.duration < 61 && type == 'thumb') {type = 'video'}
       if (type != 'thumb') {media.playbackRate = rate; media.play()}},120)
     mediaX = sessionStorage.getItem('mediaX')*1
     mediaY = sessionStorage.getItem('mediaY')*1
@@ -176,7 +180,7 @@
     modal.style.zIndex = 40
     seek.src = media.src
     media.muted = false
-    block = 400}
+    block = 200}
 
 
   function close_media() {
@@ -213,7 +217,7 @@
       if (wheelDown && page<pages) {page++} else if (page>1) {page--}
       el.href = '#Page#' + page + '##'
       el.innerHTML = 'Page '+page+' of '+pages}
-    else if (id=='myPanel') {						// media files
+    else if (id=='search') {						// media files
       if (wheelDown) {pos++} else if (pos) {pos--}
       spool(e, id, input)}
     else if (id=='mySort') {						// sort filter
@@ -251,16 +255,16 @@
       if (newSkinny > 0.998 && newSkinny < 1.002) {block = 999}
       else {block = 24}
       media.style.transform = "scale("+scaleX+","+scaleY+")"}
-    else if (id == 'mySpeed' || id == 'myStatus' || xpos < 0.1) {	// speed
+    else if (id == 'mySpeed' || id == 'myStatus') {			// speed
       if (wheelDown) {x = -0.01}
       else {x = 0.01}
       if (type != 'image' && (media.playbackRate < 1 || x < 0)) {
         media.playbackRate += x
         stat.innerHTML = Math.round(media.playbackRate *100)}}
-    else if (ypos<0.2 && xpos>0.5 && type!='image' && type!='thumb') {	// seek
+    else if (xpos < 0.1 && type!='image' && type!='thumb') {		// seek
       if (wheelDown) {media.currentTime += interval}
       else  {media.currentTime -= interval}}
-    else if (id == 'myModal' && ypos > 0.2) {				// magnify
+    else if (id == 'myModal' && xpos > 0.1) {				// magnify
       if (wheelDown) {scaleX *= 1.015; scaleY *= 1.015}
       else {scaleX *= 0.98; scaleY *= 0.98}
       positionMedia()
@@ -359,7 +363,7 @@
 
 
   function media_ended() {
-    if (!looping || type == 'audio') {playMedia('Next'); return}	// loop or next media
+    if (!long_click && (!looping || type == 'audio')) {playMedia('Next'); return}	// loop or next media
     if (type != 'video') {return}
     media.currentTime = 0
     media.play()
@@ -393,7 +397,7 @@
     seekbar.style.left = mediaX - (scaleX*media.offsetWidth / 2) + "px"
     if (type == "video") {
       seekbar.style.display = 'block'
-      if (ypos < 0.2 && xpos > 0.5) {seekbar.style.top = window.innerHeight - 12 + 'px'}
+      if (ypos > 0.2 && xpos < 0.1) {seekbar.style.top = window.innerHeight - 12 + 'px'}
       else {seekbar.style.top = window.innerHeight - 3 + 'px'}}
     else {seekbar.style.display = 'none'}
     media.style.top = mediaY - (media.offsetHeight / 2) + "px"
@@ -417,19 +421,18 @@
   function spool(e, id, input, to, so, fi, pa, ps, ts, rt) {		// spool lists into top htm panel
     if (mouse_down) {return}						// in case sliding thumbs over panel
     if (pa) {toggles=to; sort=so; filter=fi; page=pa; pages=ps; thumb_size=ts; rate=rt}
-    if (!id) {pos = 1; panel.style.opacity = 0}				// onload & mouseover search bar
+    if (!id) {panel.style.opacity = 0; return}				// onload & mouseover search bar
     else {panel.style.opacity = 1}
-    if (pos > 32) {pos = 32}
+    if (pos > 25) {pos = 25}
     filt()
     var title = document.title.replace(/Inca - /g, "")
-    var z = ['slides','fol','fav','fav','subs','music']
-    var p = String.fromCharCode(pos + 58)
-    var q = 'search'
-    if (pos < 6) {p = z[pos]; q = p}
+    var p = String.fromCharCode(pos + 65)
+    var q = ''
     var htm = ''
-    z = input.split(q+'=').pop().split('||')
+    z = input.split(id+'=').pop().split('||')
     z = z[0].split('|')
-    if (pos > 6) {							// alpha search
+    if (id == 'search') {						// alpha search
+      id = p
       z = z.sort()
       var y = z.filter(z => z.toUpperCase().startsWith(p))
       for (x of y) {
@@ -438,13 +441,13 @@
     else for (x of z) {							// folders
       var y = x.split("/")
       q = y.pop()
-      if (p != "music" && p != "slides") {q = y.pop()}
+      if (id != "music" && id != "slides") {q = y.pop()}
       q = q.replace(/.m3u/g, "")
       q = q.substring(0, 12)
       if (q == "New") {q = "<span style='color:red'</span>" + q}
       var path = x.replace(/ /g, "%20")
       htm = htm + '<a href=#Path##' + selected + '#' + path + '>' + q + '</a>'}
-    panel.innerHTML = "<span style=\'grid-row-start:1;grid-row-end:3;color:red;font-size:2em\'>"+p+"</span>"+htm
+    panel.innerHTML = "<span style=\'grid-row-start:1;grid-row-end:3;color:red;font-size:2em\'>"+id+"</span>"+htm
     release()}
 
 
