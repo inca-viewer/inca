@@ -22,6 +22,8 @@
 
         Global profile
         Global sort_list		:= "Shuffle|Alpha|Duration|Date|Size|Ext|Reverse|Recurse|Videos|Images|"
+        Global models
+        Global genre
         Global toggles			; eg. reverse
         Global features			; program settings
         Global fol			; folder list 1
@@ -101,6 +103,7 @@
             return
         last := src
         title := folder
+        title_s := SubStr(title, 1, 16)
         speed := Setting("Default Speed")
         FileRead, style, %inca%\inca - css.css
         FileRead, java, %inca%\inca - js.js
@@ -112,7 +115,9 @@
         IniWrite,%music%,%inca%\inca - ini.ini,Settings,music
         IniWrite,%subfolders%,%inca%\inca - ini.ini,Settings,subs
         FileRead, ini, %inca%\inca - ini.ini
-        ini := StrReplace(ini, "`r`n", "|")
+        ini := StrReplace(ini, "`r`n", "|")				; java cannot accept in strings
+        ini := StrReplace(ini, "'")
+        ini := StrReplace(ini, "&")
         max_height := Floor(A_ScreenHeight * 0.34)			; max image height in web page
         menu_item =
         list_size := 0
@@ -153,12 +158,12 @@
 
         header_html = <!--`r`n%view%>%last_view%>%page%>%filter%>%sort%>%toggles%>%this_search%>%search_term%>%path%>%folder%>%playlist%>%last_media%>`r`n%page_media%`r`n-->`r`n<!doctype html>`r`n<html>`r`n<head>`r`n<meta charset="UTF-8">`r`n<title>Inca - %title%</title>`r`n<meta name="viewport" content="width=device-width, initial-scale=1">`r`n<link rel="icon" type="image/x-icon" href="file:///%inca%\apps\icons\inca.ico">`r`n</head>`r`n
 
-        panel_html = <body class='container' onload="spool(event, 0, '%ini%', '%toggles%', '%sort%', %filter%, %page%, %pages%, %view%, %speed%)">`r`n<div style="width:%page_w%`%; margin:auto">`r`n<div class='panel' id='myPanel'></div>`r`n`r`n
+        panel_html = <body class='container' onload="spool(event, '', '%ini%', '%toggles%', '%sort%', %filter%, %page%, %pages%, %view%, %speed%)">`r`n<div style="width:%page_w%`%; margin:auto">`r`n<div class='panel' id='myPanel'></div>`r`n`r`n
 
-        title_html = <div class='ribbon2' style='left:-1.9em'><a></a><a onmouseover="spool(event, 'subs', '%ini%')">Subs</a><a style='border-radius:1em' onmouseover="spool(event, 'fol', '%ini%')">Fol</a>`r`n<a style='border-radius:1em' onmouseover="spool(event, 'fav', '%ini%')">Fav</a>`r`n<a style='border-radius:1em' id='mySearch' onmouseover="spool(event, 'search', '%ini%')" onwheel="wheelEvents(event, 'search', this, '%ini%')">Search</a><a style='border-radius:1em' onmouseover="spool(event, 'slides', '%ini%')">Slides</a>`r`n<a style='border-radius:1em' onmouseover="spool(event, 'music', '%ini%')">Music</a><a></a><a></a><a></a><a></a></div>`r`n`r`n<div id='myRibbon' class='ribbon2'><a></a><a onclick="selectAll()">Select</a>`r`n<a id='myDelete' onmouseover='del()'>Delete</a>`r`n<a id='myRename' onmouseover='rename()'>Rename</a>`r`n<a href='#Reverse###' %w%>Reverse</a><a href='#Recurse###' %x%>Recurse</a><a href='#Images###' %y%>Images</a><a href='#Videos###' %z%>Videos</a><a href='#Join###'>Join</a><a href='#Settings###'>Menu</a></div>`r`n`r`n`r`n`r`n<div style='display:flex'>`r`n<input id='myInput' class='searchbox' onmouseover="spool(event, 0, '%ini%')" type='search' value='%search_box%' style='width:77`%; margin-right:0'>`r`n<a href='#Searchbox###' class='searchbox' style='width:4`%; border-radius:0 1em 1em 0'>+</a></div>`r`n`r`n
+        title_html = <div class='ribbon2' style='left:-1.4em'><a></a><a onmouseover="spool(event, 'subs')">Subs</a><a style='border-radius:1em' onmouseover="spool(event, 'fol')">Fol</a>`r`n<a style='border-radius:1em' onmouseover="spool(event, 'fav')">Fav</a>`r`n<a style='border-radius:1em' onmouseover="spool(event, 'slides')">Slides</a>`r`n<a style='border-radius:1em' id='myModels' onmouseover="spool(event, 'models')" onwheel="wheelEvents(event, 'models', this)">Models</a><a style='border-radius:1em' id='myGenre' onmouseover="spool(event, 'genre')" onwheel="wheelEvents(event, 'genre', this)">Genre</a><a style='border-radius:1em' onmouseover="spool(event, 'music')">Music</a><a></a><a></a><a></a><a></a></div>`r`n`r`n<div id='myRibbon' class='ribbon2'><a></a><a onclick="selectAll()">Select</a>`r`n<a id='myDelete' onmouseover='del()'>Delete</a>`r`n<a id='myRename' onmouseover='rename()'>Rename</a>`r`n<a href='#Reverse###' %w%>Reverse</a><a href='#Recurse###' %x%>Recurse</a><a href='#Images###' %y%>Images</a><a href='#Videos###' %z%>Videos</a><a href='#Join###'>Join</a><a href='#Settings###'>Menu</a></div>`r`n`r`n`r`n`r`n<div style='display:flex'>`r`n<input id='myInput' class='searchbox' onmouseout='panel.style.opacity=0' type='search' value='%search_box%' style='width:77`%; margin-right:0'>`r`n<a href='#Searchbox###' class='searchbox' style='width:4`%; border-radius:0 1em 1em 0'>+</a></div>`r`n`r`n
 
 
-<div style='display:flex'>`r`n<a href="#Orphan#%folder%#" class='ribbon' style='color:lightsalmon; font-size:1.7em; width:22`%'>%title%</a>`r`n<div class='ribbon' style='color:lightsalmon; width:6`%'>%list_size%</div>`r`n<a href=#Thumbs#%view%## id="Thumbs" class='ribbon' style='width:10.4`%' onwheel="wheelEvents(event, id, this)" onmouseover="media.style.opacity=1" onmouseout="media.style.opacity=null">Thumbs</a>`r`n<a href='#%sort%#%sort%#' id='mySort' class='ribbon' onwheel="wheelEvents(event, id, this)">%sort%`r`n<a id='myFilter' class='ribbon' onwheel="wheelEvents(event, id, this)">All</a>`r`n<a href="%title%.htm#Page" id="myPage" class='ribbon' style='width:14`%' onwheel="wheelEvents(event, id, this)">%pg%</a></div>`r`n<div id="myModal" class="modal" onwheel="wheelEvents(event, id, this)">`r`n<div><video id="myPlayer" class="player" type="video/mp4"></video><textarea id="myCap" class="caption" onmouseenter="over_cap=true" onmouseleave="over_cap=false"></textarea><span id="mySeekBar" class="seekbar"></span><span><video id='mySeek' class='seek' type="video/mp4"></video></span>`r`n<span id="mySidenav" onmouseover="openNav()" onmouseleave="nav.style.opacity=0" class="sidenav"><a id="myStatus" style='font-size:4em; padding:0; width:15`%' onwheel="wheelEvents(event, id, this)"></a><a id="mySpeed" onmouseover='stat.innerHTML=Math.round(media.playbackRate*100)' onwheel="wheelEvents(event, id, this)">Speed</a><a id="myThin" onmouseover='stat.innerHTML=Math.round(newSkinny*100)' onwheel="wheelEvents(event, id, this)">Thin</a><a id="myNext" onmouseover='stat.innerHTML=index' onclick='nextCaption()'>Next</a><a id='myLoop' onclick="loop()">Loop</a><a id='myMute' onclick="mute()">Mute</a><a id="myFav">Fav</a><a id="myCapnav" onclick="editCap()">Cap</a><a onclick="cue = Math.round(media.currentTime*10)/10">Cue</a><a id="myMp4">mp4</a><a id="myMp3">mp3</a></span></div></div>`r`n`r`n
+<div style='display:flex'>`r`n<a href="#Orphan#%folder%#" class='ribbon' style='color:lightsalmon; font-size:1.7em; width:22`%'>%title_s%</a>`r`n<div class='ribbon' style='color:lightsalmon; width:6`%'>%list_size%</div>`r`n<a href=#Thumbs#%view%## id="Thumbs" class='ribbon' style='width:10.4`%' onwheel="wheelEvents(event, id, this)" onmouseover="media.style.opacity=1" onmouseout="media.style.opacity=null">Thumbs</a>`r`n<a href='#%sort%#%sort%#' id='mySort' class='ribbon' onwheel="wheelEvents(event, id, this)">%sort%`r`n<a id='myFilter' class='ribbon' onwheel="wheelEvents(event, id, this)">All</a>`r`n<a href="%title%.htm#Page" id="myPage" class='ribbon' style='width:14`%' onwheel="wheelEvents(event, id, this)">%pg%</a></div>`r`n<div id="myModal" class="modal" onwheel="wheelEvents(event, id, this)">`r`n<div><video id="myPlayer" class="player" type="video/mp4"></video><textarea id="myCap" class="caption" onmouseenter="over_cap=true" onmouseleave="over_cap=false"></textarea><span id="mySeekBar" class="seekbar"></span><span><video id='mySeek' class='seek' type="video/mp4"></video></span>`r`n<span id="mySidenav" onmouseover="openNav()" onmouseleave="nav.style.opacity=0" class="sidenav"><a id="myStatus" style='font-size:4em; padding:0; width:15`%' onwheel="wheelEvents(event, id, this)"></a><a id="mySpeed" onmouseover='stat.innerHTML=Math.round(media.playbackRate*100)' onwheel="wheelEvents(event, id, this)">Speed</a><a id="myThin" onmouseover='stat.innerHTML=Math.round(newSkinny*100)' onwheel="wheelEvents(event, id, this)">Thin</a><a id="myNext" onmouseover='stat.innerHTML=index' onclick='nextCaption()'>Next</a><a id='myLoop' onclick="loop()">Loop</a><a id='myMute' onclick="mute()">Mute</a><a id="myFav">Fav</a><a id="myCapnav" onclick="editCap()">Cap</a><a onclick="cue = Math.round(media.currentTime*10)/10">Cue</a><a id="myMp4">mp4</a><a id="myMp3">mp3</a></span></div></div>`r`n`r`n
 
         html = `r`n%html%</div>`r`n
         FileDelete, %inca%\cache\html\%folder%.htm
@@ -392,6 +397,58 @@
       }
 
 
+    TimedEvents:
+        title =
+        Gui, background:+LastFound
+        WinGet, state, MinMax, ahk_group Browsers
+        if (state > -1)
+          WinGetTitle title, A
+        if InStr(title, "Inca - ")
+          inca_tab := SubStr(title, 8)
+        else inca_tab =
+        if InStr(title, "mozilla firefox")       
+          browser = mozilla firefox
+        else if InStr(title, "google chrome")       
+          browser = google chrome
+        else if InStr(title, "Brave")       
+          browser = Brave
+        else if InStr(title, "Opera")       
+          browser = Opera
+        else if InStr(title, "Profile 1 - Microsoft")       
+          browser = Profile 1 - Microsoft
+        StringGetPos, pos, inca_tab, %browser%, R
+        StringLeft, inca_tab, inca_tab, % pos - 3
+        if inca_tab
+            WinSet, Transparent, % Setting("Dim Desktop")
+        else WinSet, Transparent, 0
+        if (inca_tab && inca_tab != previous_tab)			; has inca tab changed
+            {
+            folder := inca_tab
+            GetTabSettings(1)						; get last tab settings
+            if (previous_tab && FileExist(inca "\cache\lists\" inca_tab ".txt"))
+              FileRead, list, %inca%\cache\lists\%inca_tab%.txt
+            else CreateList(0)						; media list to match html page
+            previous_tab := inca_tab
+            }
+        if vol_popup							; show volume popup bar
+            vol_popup -= 1
+        if (volume > 0.1 && !vol_popup && Setting("Sleep Timer") > 10 && A_TimeIdlePhysical > 600000)
+            {
+            volume -= vol_ref / (Setting("Sleep Timer") * 6)		; sleep timer
+            SoundSet, volume						; slowly reduce volume
+            vol_popup := 100						; check every 10 seconds
+            }
+        x = %A_Hour%:%A_Min%
+        if (x == Setting("WakeUp Time"))
+          if (volume < 12)
+             {
+             volume += 0.02
+             SoundSet, volume
+             }
+        ShowStatus()							; show time & vol
+        return
+
+
     GetAddressBar()			; messages from browser address bar
         {
         selected =
@@ -472,63 +529,15 @@
         }
 
 
-
-
-    TimedEvents:
-        title =
-        Gui, background:+LastFound
-        WinGet, state, MinMax, ahk_group Browsers
-        if (state > -1)
-          WinGetTitle title, A
-        if InStr(title, "Inca - ")
-          inca_tab := SubStr(title, 8)
-        else inca_tab =
-        if InStr(title, "mozilla firefox")       
-          browser = mozilla firefox
-        else if InStr(title, "google chrome")       
-          browser = google chrome
-        else if InStr(title, "Brave")       
-          browser = Brave
-        else if InStr(title, "Opera")       
-          browser = Opera
-        else if InStr(title, "Profile 1 - Microsoft")       
-          browser = Profile 1 - Microsoft
-        StringGetPos, pos, inca_tab, %browser%, R
-        StringLeft, inca_tab, inca_tab, % pos - 3
-        if inca_tab
-            WinSet, Transparent, % Setting("Dim Desktop")
-        else WinSet, Transparent, 0
-        if (inca_tab && inca_tab != previous_tab)			; has inca tab changed
-            {
-            folder := inca_tab
-            GetTabSettings(1)						; get last tab settings
-            if (previous_tab && FileExist(inca "\cache\lists\" inca_tab ".txt"))
-              FileRead, list, %inca%\cache\lists\%inca_tab%.txt
-            else CreateList(0)						; media list to match html page
-            previous_tab := inca_tab
-            }
-        if vol_popup							; show volume popup bar
-            vol_popup -= 1
-        if (volume > 0.1 && !vol_popup && Setting("Sleep Timer") > 10 && A_TimeIdlePhysical > 600000)
-            {
-            volume -= vol_ref / (Setting("Sleep Timer") * 6)		; sleep timer
-            SoundSet, volume						; slowly reduce volume
-            vol_popup := 100						; check every 10 seconds
-            }
-        x = %A_Hour%:%A_Min%
-        if (x == Setting("WakeUp Time"))
-          if (volume < 12)
-             {
-             volume += 0.02
-             SoundSet, volume
-             }
-        ShowStatus()							; show time & vol
-        return
-
-
-
     ProcessMessage()
         {
+        if (command == "History")
+            {
+            timer = 0
+            address = %inca%\slides\History.m3u
+            FileTransfer(0)
+            return
+            }
         if (command == "Orphan")					; open in notepad if playlist
             {
             IfExist, %inca%\slides\%value%.m3u
@@ -594,7 +603,7 @@
             FileDelete, %inca%\cache\widths\%media%.txt
             if (value > 0.5 && value < 0.995 || value > 1.005 && value < 1.5)
               FileAppend, %value%, %inca%\cache\widths\%media%.txt
-            reload := 2
+;            reload := 2		messes up last_id etc. if page reset 
             }
         if (command == "Thumbs")
             {
@@ -636,12 +645,13 @@
             sleep 555
             reload := 1
             }
-        if (command == "Path" && selected)
+        if (command == "Path")
+          if selected
             {
-            FileTransfer()						; between folders or playlists
+            FileTransfer(1)						; between folders or playlists
             reload := 1
             }
-        if (command == "Path")
+          else
             {
             if InStr(address, ".m3u")
               {
@@ -661,8 +671,7 @@
             {
             list_id := value
             if GetMedia(0)
-              if (!timer||type=="document"||ext=="txt"||ext=="m3u"||ext=="wmu"||ext=="avi"||ext=="mpg"
-              ||ext=="ts"||ext=="flv" || (type=="video" && ext!="mp4" && browser=="mozilla firefox")
+              if (!timer||type=="document"||ext=="txt"||ext=="m3u"||(type=="video" && ext!="mp4" && browser=="mozilla firefox")
               || (type=="video" && ext!="mp4" && browser=="Profile 1 - Microsoft"))
                 {
                 sleep 200
@@ -676,8 +685,8 @@
             }
         else if (command == "Searchbox" && search_term)			; add search to search list
             {
-            search = %search%|%search_term%
-            IniWrite,%search%,%inca%\inca - ini.ini,Settings,search
+            search = %genre%|%search_term%
+            IniWrite,%search%,%inca%\inca - ini.ini,Settings,genre
             LoadSettings()
             PopUp("Added",600,0,0)
             reload := 1
@@ -1110,11 +1119,12 @@ caption := x
         }
 
 
-    FileTransfer()
+    FileTransfer(show)
         {
-        if timer
-          PopUp("Move",400,0,0)
-        else PopUp("Copy",400,0,0)
+        if show
+          if timer
+            PopUp("Move",400,0,0)
+          else PopUp("Copy",400,0,0)
         Loop, Parse, selected, `/
             {
             list_id := A_LoopField
@@ -1124,7 +1134,8 @@ caption := x
               else if timer
                 FileMove, %src%, %address%				; move file to new folder
               else FileCopy, %src%, %address%
-            PopUp(media,0,0,0)
+            if show
+              PopUp(media,0,0,0)
             }
         if timer
           if (InStr(address, "slides") || InStr(address, "music"))
@@ -1272,18 +1283,20 @@ caption := x
             gui, settings:add, text, x68 yp+2, %key%
             }
         gui, settings:add, text, x165 y10, root folders
-        gui, settings:add, edit, x160 yp+13 h80 w500 vfol, %fol%
-        gui, settings:add, text, x165 yp+85, favorite folders
-        gui, settings:add, edit, x160 yp+13 h80 w500 vfav, %fav%
-        gui, settings:add, text, x165 yp+84, search terms
-        gui, settings:add, edit, x160 yp+13 h120 w500 vsearch, %search%
-        gui, settings:add, text, x165 yp+125, folders to search
+        gui, settings:add, edit, x160 yp+13 h60 w500 vfol, %fol%
+        gui, settings:add, text, x165 yp+65, favorite folders
+        gui, settings:add, edit, x160 yp+13 h60 w500 vfav, %fav%
+        gui, settings:add, text, x165 yp+64, models
+        gui, settings:add, edit, x160 yp+13 h60 w500 vmodels, %models%
+        gui, settings:add, text, x165 yp+64, genre
+        gui, settings:add, edit, x160 yp+13 h60 w500 vgenre, %genre%
+        gui, settings:add, text, x165 yp+66, folders to search
         gui, settings:add, edit, x160 yp+13 h18 w500 vsearch_folders, %search_folders%
-        gui, settings:add, button, x165 y385 w60, Source
-        gui, settings:add, button, x260 y385 w60, Compile
-        gui, settings:add, button, x340 y385 w60, Help
-        gui, settings:add, button, x420 y385 w60, Cancel
-        gui, settings:add, button, x500 y385 w60 default, Save
+        gui, settings:add, button, x160 y365 w60, Source
+        gui, settings:add, button, x240 y365 w60, Compile
+        gui, settings:add, button, x320 y365 w60, Help
+        gui, settings:add, button, x400 y365 w60, Cancel
+        gui, settings:add, button, x480 y365 w60 default, Save
         gui, settings:show
         send, +{Tab}
         }
@@ -1429,7 +1442,8 @@ caption := x
         IniRead,search_folders,%inca%\inca - ini.ini,Settings,search_folders
         IniRead,fol,%inca%\inca - ini.ini,Settings,fol
         IniRead,fav,%inca%\inca - ini.ini,Settings,fav
-        IniRead,search,%inca%\inca - ini.ini,Settings,search
+        IniRead,models,%inca%\inca - ini.ini,Settings,models
+        IniRead,genre,%inca%\inca - ini.ini,Settings,genre
         }
 
 

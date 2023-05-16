@@ -1,8 +1,10 @@
 <script>
 
-// last media fail
-// history using session storage
-// mgnify loop menu switch
+// magnify loop menu switch
+// caps punctuation
+// subs heading red when folders
+// inca.exe scan history and m3u at startup
+
 
 
   var modal = document.getElementById('myModal')			// media player window
@@ -21,11 +23,12 @@
   var Loop = document.getElementById('myLoop')				// loop video or next
   var Mute = document.getElementById('myMute')				// loop video or next
   var sound = sessionStorage.getItem('sound')
+  var ini								// .ini file folders, searches etc.
   var long_click = false
   var long_middle = false
   var wheel = 0
   var block = 10							// block wheel input
-  var last_id = 1
+  var last_id = 0
   var type = ''								// audio, video, image, thumb, document
   var time = 0								// media time
   var start = 0								// video start time
@@ -54,6 +57,7 @@
   var seek_active							// seek thumb under video
   var selected = ''							// list of selected media in page
   var messages = ''							// through browser address bar to inca.exe
+  var hist = ''
   var cue = 0								// start time for mp3/4 conversion
   var Zindex = 1
   var xpos = 0.5
@@ -184,6 +188,7 @@
 
 
   function close_media() {
+    if (last_id != index && document.title != 'Inca - History') {hist = hist + index + ','}
     last_id = index
     last_start = media.currentTime
     if (skinny && skinny != newSkinny) {
@@ -217,7 +222,7 @@
       if (wheelDown && page<pages) {page++} else if (page>1) {page--}
       el.href = '#Page#' + page + '##'
       el.innerHTML = 'Page '+page+' of '+pages}
-    else if (id=='search') {						// media files
+    else if (id=='models' || id=='genre') {				// media files
       if (wheelDown) {pos++} else if (pos) {pos--}
       spool(e, id, input)}
     else if (id=='mySort') {						// sort filter
@@ -358,6 +363,7 @@
     var top = document.body.getBoundingClientRect().top
     if (!type && top < 0) {scroll(0,0); return}				// scroll to top page
     if (type) {close_media(); flag = true}				// media was playing
+    if (hist) {messages = messages+'#History##'+hist+'#'; hist=''}
     if (messages) {stat.href=messages; stat.click(); messages=''}	// send messages to inca.exe
     if (!flag) {location.reload()}}					// update htm tab
 
@@ -420,18 +426,18 @@
 
   function spool(e, id, input, to, so, fi, pa, ps, ts, rt) {		// spool lists into top htm panel
     if (mouse_down) {return}						// in case sliding thumbs over panel
+    if (input) {ini = input}
     if (pa) {toggles=to; sort=so; filter=fi; page=pa; pages=ps; thumb_size=ts; rate=rt}
     if (!id) {panel.style.opacity = 0; return}				// onload & mouseover search bar
     else {panel.style.opacity = 1}
     if (pos > 25) {pos = 25}
     filt()
-    var title = document.title.replace(/Inca - /g, "")
     var p = String.fromCharCode(pos + 65)
     var q = ''
     var htm = ''
-    z = input.split(id+'=').pop().split('||')
+    z = ini.split(id+'=').pop().split('||')
     z = z[0].split('|')
-    if (id == 'search') {						// alpha search
+    if (id=='models' || id=='genre') {					// alpha search
       id = p
       z = z.sort()
       var y = z.filter(z => z.toUpperCase().startsWith(p))

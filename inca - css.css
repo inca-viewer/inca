@@ -17,17 +17,18 @@
   text-overflow:ellipsis;
   overflow:hidden;
   color:#826858;
-  height:60px;
   outline:none;
   font-size:1.1em;
   transition:color 1.4s;
   white-space:nowrap;
+  height:50px;
   width:9%}
 
 .searchbox {
   text-overflow:ellipsis;
   overflow:hidden;
   margin-right:2.1em;
+  margin-bottom:1em;
   border-radius:1em 0 0 1em;
   text-align:center;
   background-color:#1b1814;
@@ -47,7 +48,7 @@
   grid-auto-flow: column;
   padding:1em;
   margin:1.2em;
-  margin-left:4em;
+  margin-left:2.6em;
   color:#826858;
   overflow-wrap:break-word;
   white-space:nowrap;
