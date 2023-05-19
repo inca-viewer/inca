@@ -1,10 +1,7 @@
 <script>
 
-// magnify loop menu switch
-// caps punctuation
-// subs heading red when folders
-// inca.exe scan history and m3u at startup
-
+// caps punctuation issues
+// scan m3u for dead links ?
 
 
   var modal = document.getElementById('myModal')			// media player window
@@ -15,7 +12,7 @@
   var nav = document.getElementById('mySidenav')			// nav buttons over htm tab
   var stat = document.getElementById('myStatus')			// also href messages to inca.exe
   var speed = document.getElementById('mySpeed')
-  var thin = document.getElementById('myThin')				// media width
+  var thin = document.getElementById('mySkinny')			// media width
   var cap = document.getElementById('myCap')				// caption textarea element
   var capnav = document.getElementById('myCapnav')			// caption save button
   var seekbar = document.getElementById('mySeekBar')
@@ -23,7 +20,7 @@
   var Loop = document.getElementById('myLoop')				// loop video or next
   var Mute = document.getElementById('myMute')				// loop video or next
   var sound = sessionStorage.getItem('sound')
-  var ini								// .ini file folders, searches etc.
+  var ini								// .ini folders, models, etc.
   var long_click = false
   var long_middle = false
   var wheel = 0
@@ -42,7 +39,7 @@
   var pages = 1
   var index = 1								// media index (e.g. media14)
   var filter = 1							// filter or sort 
-  var pos = 12								// top panel list ref
+  var pos = 0								// top panel list ref
   var cap_list = ''							// full caption text file
   var cap_time = 0
   var looping = false
@@ -68,7 +65,7 @@
   var scaleY = 1
   var Xref
   var Yref
-
+  var Xoff = screenLeft
 
 
   document.addEventListener('auxclick', playMedia)			// middle click
@@ -77,25 +74,23 @@
   document.addEventListener('mouseup', mouseUp)
   document.addEventListener('mousemove', Gesture)
 
-
   function timedEvents() {						// every ~84mS while media playing
     time = Math.round(10*media.currentTime)/10
     if ((t=Math.round(time%60))<10) {t=':0'+t} else {t=':'+t}
     if (media.duration) {interval = Math.round(media.duration/20)}
-    if (ypos < 0.5) {interval = Math.ceil(interval * 3 * (ypos-0.2))}
+    if (ypos < 0.5) {interval = Math.ceil(interval * 3 * (ypos-0.1))}
     if (media.paused == true) {interval = Math.round(10*interval/4)/10}
-    if (ypos < 0.2 || xpos < 0.1) {nav.style.opacity=0.5} else {nav.style.opacity=0}
-    if (xpos < 0.2 && ypos < 0.2 && ypos > 0.1) {nav.style.opacity=0}
-    if (xpos > 0.37) {stat.innerHTML = Math.round(time/60)+t}
-    else if (xpos < 0.2 && ypos < 0.1) {stat.innerHTML=Math.round(media.playbackRate*100)}
-    if (xpos < 0.1 && ypos > 0.2) {stat.innerHTML = interval}
+    if (ypos < 0.1 || xpos < 0.1 || (type=='video'&&time < 2)) {nav.style.opacity=0.6} else {nav.style.opacity=0}
+    if (xpos > 0.37 && ypos < 0.1) {stat.innerHTML = Math.round(time/60)+t}
+    if (ypos > 0.1) {stat.innerHTML=Math.round(media.playbackRate*100)}
+    if (xpos < 0.1 && ypos > 0.1) {stat.innerHTML = interval}
     if (sound == 'yes' && media.volume <= 0.8) {media.volume += 0.2}
     if (sound == 'no' && media.volume >= 0.2) {media.volume -= 0.2}
     cap.style.top = mediaY + (scaleY*media.offsetHeight/2) + 10 + "px"
     cap.style.left = mediaX - (scaleX*media.offsetWidth / 2) + "px"
     seekbar.style.width = (scaleX * media.offsetWidth * media.currentTime / media.duration) + "px"
     if (window.innerWidth == screen.width) {				// full screen mode
-      media.style.marginLeft = '350px'; media.style.marginTop = '100px'; seekbar.style.marginLeft = '350px'}
+      media.style.marginLeft = Xoff + 'px'; media.style.marginTop = '100px'; seekbar.style.marginLeft = Xoff + 'px'}
     else {media.style.marginLeft = 0; media.style.marginTop = 0; seekbar.style.marginLeft = 0}
     positionMedia()
     Captions()}
@@ -168,7 +163,7 @@
     mediaY = sessionStorage.getItem('mediaY')*1
     scaleX = scaleY
     if (scaleY > 1.4) {scaleX = 1.4; scaleY = 1.4}
-    if (scaleY < 0.4) {scaleX = 0.4; scaleY = 0.4}
+    if (scaleY < 0.6) {scaleX = 0.6; scaleY = 0.6}
     if (!mediaY || mediaY < 100 || mediaY > window.innerHeight*0.8) {mediaY = window.innerHeight/2}
     if (!mediaX || mediaX < 100 || mediaX > window.innerWidth*0.8) {mediaX = window.innerWidth/2.6}
     scaleX *= skinny
@@ -188,9 +183,9 @@
 
 
   function close_media() {
-    if (last_id != index && document.title != 'Inca - History') {hist = hist + index + ','}
     last_id = index
     last_start = media.currentTime
+    if (type == 'video') {hist = hist + index + ','}
     if (skinny && skinny != newSkinny) {
       messages = messages + '#Skinny#' + newSkinny + '#' + index + ',#'}
     document.getElementById('title' + index).style.color = 'lightsalmon'
@@ -222,7 +217,7 @@
       if (wheelDown && page<pages) {page++} else if (page>1) {page--}
       el.href = '#Page#' + page + '##'
       el.innerHTML = 'Page '+page+' of '+pages}
-    else if (id=='models' || id=='genre') {				// media files
+    else if (id=='model' || id=='genre' || id=='studio') {		// media files
       if (wheelDown) {pos++} else if (pos) {pos--}
       spool(e, id, input)}
     else if (id=='mySort') {						// sort filter
@@ -242,17 +237,16 @@
       media.style.width = thumb_size + 'em'}
     else if (id == 'Thumbs') {						// thumb width
       thumb_size = 1*media.style.width.slice(0,-2)
-      var thumbs = document.getElementById('Thumbs')			// top panel htm
       if (wheelDown) {thumb_size += thumb_size/40}
       else {thumb_size -= thumb_size/40}
       thumb_size = Math.round(10*thumb_size)/10
       if (thumb_size < 4) {thumb_size = 4}
-      thumbs.href = '#Thumbs#' + thumb_size +'##'
+      document.getElementById(id).href = '#Thumbs#'+thumb_size+'##'
       for (i=1; i<41 ;i++) {
         if (el = document.getElementById("thumb" + i)) {
           el.style.width = thumb_size + 'em'
           document.getElementById("media" + i).style.width = thumb_size + 'em'}}}
-    else if (id == 'myThin') {						// width
+    else if (id == 'mySkinny') {					// media width
       if (wheelDown) {scaleX -= 0.002}
       else {scaleX += 0.002}
       newSkinny = Math.round(1000*scaleX / scaleY)/1000
@@ -260,13 +254,13 @@
       if (newSkinny > 0.998 && newSkinny < 1.002) {block = 999}
       else {block = 24}
       media.style.transform = "scale("+scaleX+","+scaleY+")"}
-    else if (id == 'mySpeed' || id == 'myStatus') {			// speed
+    else if ((ypos<0.1&&xpos<0.2) || id=='mySpeed' || id=='myStatus') {	// speed
       if (wheelDown) {x = -0.01}
       else {x = 0.01}
       if (type != 'image' && (media.playbackRate < 1 || x < 0)) {
         media.playbackRate += x
         stat.innerHTML = Math.round(media.playbackRate *100)}}
-    else if (xpos < 0.1 && type!='image' && type!='thumb') {		// seek
+    else if (xpos<0.1 && type!='image' && type!='thumb') {		// seek
       if (wheelDown) {media.currentTime += interval}
       else  {media.currentTime -= interval}}
     else if (id == 'myModal' && xpos > 0.1) {				// magnify
@@ -347,6 +341,17 @@
     clearTimeout(MClick)}
 
 
+  function mouseBack(e) {
+    if (e.key != 'Pause') {return}					// inca.exe re-map of mouse Back button
+    var flag = false
+    var top = document.body.getBoundingClientRect().top
+    if (!type && top < 0) {scroll(0,0); return}				// scroll to top page
+    if (type) {close_media(); flag = true}				// media was playing
+    if (hist) {messages = messages+'#History##'+hist+'#'; hist=''}
+    if (messages) {stat.href=messages; messages=''; stat.click()}	// send messages to inca.exe
+    if (!flag) {location.reload()}}					// update htm tab
+
+
   function togglePause(e) {
     if (!mouse_down || gesture || seek_active || over_cap || !type) {return}
     if (ypos < 0.1 && xpos > 0.3) {return}				// over nav controls
@@ -355,17 +360,6 @@
     else if (media.paused) {
       media.play()} 
     else {media.pause()}}
-
-
-  function mouseBack(e) {
-    if (e.key != 'Pause') {return}					// inca.exe re-map of mouse Back button
-    var flag = false
-    var top = document.body.getBoundingClientRect().top
-    if (!type && top < 0) {scroll(0,0); return}				// scroll to top page
-    if (type) {close_media(); flag = true}				// media was playing
-    if (hist) {messages = messages+'#History##'+hist+'#'; hist=''}
-    if (messages) {stat.href=messages; stat.click(); messages=''}	// send messages to inca.exe
-    if (!flag) {location.reload()}}					// update htm tab
 
 
   function media_ended() {
@@ -428,32 +422,29 @@
     if (mouse_down) {return}						// in case sliding thumbs over panel
     if (input) {ini = input}
     if (pa) {toggles=to; sort=so; filter=fi; page=pa; pages=ps; thumb_size=ts; rate=rt}
-    if (!id) {panel.style.opacity = 0; return}				// onload & mouseover search bar
-    else {panel.style.opacity = 1}
     if (pos > 25) {pos = 25}
     filt()
     var p = String.fromCharCode(pos + 65)
-    var q = ''
     var htm = ''
     z = ini.split(id+'=').pop().split('||')
     z = z[0].split('|')
-    if (id=='models' || id=='genre') {					// alpha search
+    if (id=='model' || id=='genre' || id=='studio') {			// alpha search
       id = p
+      var count = 0
       z = z.sort()
-      var y = z.filter(z => z.toUpperCase().startsWith(p))
-      for (x of y) {
-        q = x.substring(0, 15)
-        htm = htm + '<a href=#Search#' + x.replace(/ /g, "%20") + '##>' + q + '</a>'}}
+      for (x of z) {
+        if (x.substring(0, 1) >= p && count < 22) {
+          count += 1
+          htm = htm + '<a href=#Search#' + x.replace(/ /g, "%20") + '##>' + x.substring(0, 15) + '</a>'}}}
     else for (x of z) {							// folders
       var y = x.split("/")
-      q = y.pop()
+      var q = y.pop()
       if (id != "music" && id != "slides") {q = y.pop()}
-      q = q.replace(/.m3u/g, "")
+      q = q.replace(/.m3u/g, '')
       q = q.substring(0, 12)
       if (q == "New") {q = "<span style='color:red'</span>" + q}
-      var path = x.replace(/ /g, "%20")
-      htm = htm + '<a href=#Path##' + selected + '#' + path + '>' + q + '</a>'}
-    panel.innerHTML = "<span style=\'grid-row-start:1;grid-row-end:3;color:red;font-size:2em\'>"+id+"</span>"+htm
+      htm = htm + '<a href=#Path##' + selected + '#' + x.replace(/ /g, "%20") + '>' + q + '</a>'}
+    if (id) {panel.innerHTML = "<span style=\'grid-row-start:1;grid-row-end:3;color:red;font-size:2em\'>"+id+"</span>"+htm}
     release()}
 
 
@@ -462,7 +453,6 @@
     for (var i = 0; i < (x.length-1); i++) {document.getElementById('media' + x[i]).load()}}
 
   function openNav() {
-    nav.style.opacity = 0.7
     document.getElementById('myMp3').href = '#mp3#' + time + '#' + index + ',#' + cue
     document.getElementById('myMp4').href = '#mp4#' + time + '#' + index + ',#' + cue
     document.getElementById('myFav').href = '#Favorite#' + time + '#' + index + ',#'}

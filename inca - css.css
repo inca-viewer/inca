@@ -2,12 +2,15 @@
 <style>
 
 .ribbon2 {
-  display:grid;
-  grid-template-columns: auto auto auto auto auto auto auto auto auto auto auto;
-  align-items:center;
-  text-align:center;
+  display:flex;
   position:relative;
-  width:84%}
+  text-align:center;
+  align-items:center;
+  font-size:1.1em;
+  justify-content:space-between;
+  width:560px}
+
+.ribbon2 a {border-radius:1em}
 
 .ribbon {
   display:flex;
@@ -21,13 +24,13 @@
   font-size:1.1em;
   transition:color 1.4s;
   white-space:nowrap;
-  height:50px;
-  width:9%}
+  height:30px;
+  width:12%}
 
 .searchbox {
   text-overflow:ellipsis;
   overflow:hidden;
-  margin-right:2.1em;
+  margin:0.4em;
   margin-bottom:1em;
   border-radius:1em 0 0 1em;
   text-align:center;
@@ -39,16 +42,14 @@
   outline:none;
   transition:color 1.4s;
   white-space:nowrap;
-  width:8%}
+  width:550px}
 
 .panel {
   display:grid;
   grid-template-columns: auto auto auto auto auto auto auto;
   grid-template-rows: auto auto auto auto;
   grid-auto-flow: column;
-  padding:1em;
-  margin:1.2em;
-  margin-left:2.6em;
+  padding:2em;
   color:#826858;
   overflow-wrap:break-word;
   white-space:nowrap;
@@ -56,9 +57,12 @@
   transition: 0.2s;
   font-size:0.85em;
   height:6em;
-  width:74%;
+  width:580px;
+  opacity:0;
   border-radius:0.8em;
   background-color:inherit}
+
+.panel:hover {opacity:1}
 
 .thumblist {opacity:0; transition:0.1s; border-radius:3`%}
 .thumblist:hover {opacity:1}
@@ -123,7 +127,7 @@
 .sidenav {
   display:flex;
   width:100%;
-  height:20%;
+  height:10%;
   position:fixed;
   text-align:right;
   top:0;
@@ -144,7 +148,7 @@
 .container {
   font-family:'Yu Gothic', 'Calibri Light';
   cursor:default;
-  padding-top:8em;
+  padding-top:3em;
   padding-bottom:20em;
   user-select:none;
   background:#15110a;
@@ -164,6 +168,5 @@ table {
   transition:color 1.4s;
   table-layout:fixed;
   border-collapse: collapse}
-
-
 </style>
+
