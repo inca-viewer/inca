@@ -1,6 +1,4 @@
 
-; mouse back button is intercepted and converted to {Pause} key for java
-
 
 
 	; Inca Media Viewer for Windows - Firefox & Chrome compatible
@@ -159,13 +157,13 @@
 
         header_html = <!--`r`n%view%>%last_view%>%page%>%filter%>%sort%>%toggles%>%this_search%>%search_term%>%path%>%folder%>%playlist%>%last_media%>`r`n%page_media%`r`n-->`r`n<!doctype html>`r`n<html>`r`n<head>`r`n<meta charset="UTF-8">`r`n<title>Inca - %title%</title>`r`n<meta name="viewport" content="width=device-width, initial-scale=1">`r`n<link rel="icon" type="image/x-icon" href="file:///%inca%\apps\icons\inca.ico">`r`n</head>`r`n
 
-        panel_html = <body class='container' onload="spool(event, '', '%ini%', '%toggles%', '%sort%', %filter%, %page%, %pages%, %view%, %speed%)">`r`n<div style="width:%page_w%`%; margin:auto">`r`n<div class='panel' id='myPanel'></div>`r`n`r`n
+        panel_html = <body class='container' onload="spool(event, '', '%ini%', '%toggles%', '%sort%', %filter%, %page%, %pages%, %view%, %speed%)">`r`n<div style="width:%page_w%`%; margin:auto">`r`n<div class='panel' id='myPanel' onwheel="wheelEvents(event, '', this)"></div>`r`n`r`n
 
-        title_html = <div class='ribbon2' onmouseover='panel.style.opacity=1' onmouseout='panel.style.opacity=null'>`r`n<a onmouseover="spool(event, 'studio')" onwheel="wheelEvents(event, 'studio', this)">Studio</a>`r`n<a id='myGenre' onmouseover="spool(event, 'genre')" onwheel="wheelEvents(event, 'genre', this)">Genre</a>`r`n<a id='myModels' onmouseover="spool(event, 'model')" onwheel="wheelEvents(event, 'model', this)">Model</a>`r`n<a onmouseover="spool(event, 'fol')">Fol</a>`r`n<a onmouseover="spool(event, 'fav')">Fav</a>`r`n<a onmouseover="spool(event, 'slides')">Slides</a>`r`n<a onmouseover="spool(event, 'music')">Music</a>`r`n<a onmouseover="spool(event, 'subs')">Subs</a></div>`r`n`r`n
+        title_html = <div class='ribbon2' onmouseover='panel.style.opacity=1' onmouseout='panel.style.opacity=null'>`r`n<a onmouseover="spool(event, 'subs')" onwheel="wheelEvents(event, 'subs', this)">Subs</a><a onmouseover="spool(event, 'fol')" onwheel="wheelEvents(event, 'fol', this)">Fol</a>`r`n<a onmouseover="spool(event, 'fav')" onwheel="wheelEvents(event, 'fav', this)">Fav</a>`r`n<a onmouseover="spool(event, 'slides')" onwheel="wheelEvents(event, 'slides', this)">Slides</a>`r`n<a id='myModels' onmouseover="spool(event, 'model')" onwheel="wheelEvents(event, 'model', this)">Model</a>`r`n<a id='myGenre' onmouseover="spool(event, 'genre')" onwheel="wheelEvents(event, 'genre', this)">Genre</a>`r`n<a onmouseover="spool(event, 'studio')" onwheel="wheelEvents(event, 'studio', this)">Studio</a>`r`n<a onmouseover="spool(event, 'music')" onwheel="wheelEvents(event, 'music', this)">Music</a>`r`n</div>`r`n`r`n
 
 <div id='myRibbon' class='ribbon2' style='font-size:1em'>`r`n<a onclick="selectAll()">Select</a>`r`n<a id='myDelete' onmouseover='del()'>Delete</a>`r`n<a id='myRename' onmouseover='rename()'>Rename</a>`r`n<a href='#Reverse###' %w%>Reverse</a>`r`n<a href='#Recurse###' %x%>Recurse</a>`r`n<a href='#Images###' %y%>Images</a>`r`n<a href='#Videos###' %z%>Videos</a>`r`n<a href='#Join###'>Join</a>`r`n<a href='#Settings###'>Menu</a></div>`r`n`r`n<div style='display:flex'>`r`n<input id='myInput' class='searchbox' type='search' value='%search_box%'>`r`n<a href='#Searchbox###' class='searchbox' style='width:4`%; border-radius:0 1em 1em 0'>+</a></div>`r`n`r`n
 
-<div style='display:flex; margin-left:3em'>`r`n<a href="#Orphan#%folder%#" class='ribbon' style='color:lightsalmon; font-size:1.7em; width:8em; margin-bottom:0.3em'>%title_s%</a>`r`n<div class='ribbon' style='color:lightsalmon; width:5em'>%list_size%</div>`r`n`r`n<a href=#Thumbs#%view%## id="Thumbs" class='ribbon' style='width:10.4`%' onwheel="wheelEvents(event, id, this)" onmouseover="media.style.opacity=1" onmouseout="media.style.opacity=null">Thumbs</a>`r`n<a href='#%sort%#%sort%#' id='mySort' class='ribbon' onwheel="wheelEvents(event, id, this)">%sort%</a>`r`n<a id='myFilter' class='ribbon' onwheel="wheelEvents(event, id, this)">All</a>`r`n<a href="%title%.htm#Page" id="myPage" class='ribbon' style='width:15`%' onwheel="wheelEvents(event, id, this)">%pg%</a></div>`r`n`r`n<div id="myModal" class="modal" onwheel="wheelEvents(event, id, this)">`r`n<div><video id="myPlayer" class="player" type="video/mp4"></video>`r`n<textarea id="myCap" class="caption" onmouseenter="over_cap=true" onmouseleave="over_cap=false"></textarea>`r`n<span id="mySeekBar" class="seekbar"></span>`r`n<span><video id='mySeek' class='seek' type="video/mp4"></video></span>`r`n`r`n<span id="mySidenav" onmouseover="openNav()" onmouseleave="nav.style.opacity=0" class="sidenav">`r`n<a id="myStatus" style='font-size:4em; padding:0; width:15`%' onwheel="wheelEvents(event, id, this)"></a>`r`n<a id="mySpeed" onmouseover='stat.innerHTML=Math.round(media.playbackRate*100)' onwheel="wheelEvents(event, id, this)">Speed</a>`r`n<a id="mySkinny" onmouseover='stat.innerHTML=Math.round(newSkinny*100)' onwheel="wheelEvents(event, id, this)">Thin</a>`r`n<a id="myNext" onmouseover='stat.innerHTML=index' onclick='nextCaption()'>Next</a>`r`n<a id='myLoop' onclick="loop()">Loop</a>`r`n<a id='myMute' onclick="mute()">Mute</a>`r`n<a id="myFav">Fav</a>`r`n<a id="myCapnav" onclick="editCap()">Cap</a>`r`n<a onclick="cue = Math.round(media.currentTime*10)/10">Cue</a>`r`n<a id="myMp4">mp4</a>`r`n<a id="myMp3">mp3</a></span></div></div>`r`n`r`n
+<div style='display:flex; margin-left:1em'>`r`n<a href=#Thumbs#%view%## id="Thumbs" class='ribbon' style='width:12`%' onwheel="wheelEvents(event, id, this)" onmouseover="media.style.opacity=1" onmouseout="media.style.opacity=null">Thumbs</a>`r`n<a href="#Orphan#%folder%#" class='ribbon' style='color:lightsalmon; font-size:1.7em; width:8em; margin-bottom:0.3em'>%title_s%</a>`r`n<div class='ribbon' style='color:lightsalmon; width:5em'>%list_size%</div>`r`n`r`n<a href='#%sort%#%sort%#' id='mySort' class='ribbon' onwheel="wheelEvents(event, id, this)">%sort%</a>`r`n<a id='myFilter' class='ribbon' onwheel="wheelEvents(event, id, this)">All</a>`r`n<a href="%title%.htm#Page" id="myPage" class='ribbon' style='width:15`%' onwheel="wheelEvents(event, id, this)">%pg%</a></div>`r`n`r`n<div id="myModal" class="modal" onwheel="wheelEvents(event, id, this)">`r`n<div><video id="myPlayer" class="player" type="video/mp4"></video>`r`n<textarea id="myCap" class="caption" onmouseenter="over_cap=true" onmouseleave="over_cap=false"></textarea>`r`n<span id="mySeekBar" class="seekbar"></span>`r`n<span><video id='mySeek' class='seek' type="video/mp4"></video></span>`r`n`r`n<span id="mySidenav" onmouseover="openNav()" onmouseleave="nav.style.opacity=0" class="sidenav">`r`n<a id="myStatus" style='font-size:4em; padding:0; width:15`%' onwheel="wheelEvents(event, id, this)"></a>`r`n<a id="mySpeed" onmouseover='stat.innerHTML=Math.round(media.playbackRate*100)' onwheel="wheelEvents(event, id, this)">Speed</a>`r`n<a id="mySkinny" onmouseover='stat.innerHTML=Math.round(newSkinny*100)' onwheel="wheelEvents(event, id, this)">Thin</a>`r`n<a id="myNext" onmouseover='stat.innerHTML=index' onclick='nextCaption()'>Next</a>`r`n<a id='myLoop' onclick="loop()">Loop</a>`r`n<a id='myMute' onclick="mute()">Mute</a>`r`n<a id="myFav">Fav</a>`r`n<a id="myCapnav" onclick="editCap()">Cap</a>`r`n<a onclick="cue = Math.round(media.currentTime*10)/10">Cue</a>`r`n<a id="myMp4">mp4</a>`r`n<a id="myMp3">mp3</a></span></div></div>`r`n`r`n
         FileDelete, %inca%\cache\html\%folder%.htm
         html = %header_html%%style%%panel_html%%title_html%%html%</div>`r`n
         StringReplace, html, html, \, /, All
@@ -689,7 +687,11 @@
             }
         else if (command == "Searchbox" && search_term)			; add search to search list
             {
+            StringUpper, search_term, search_term, T
             genre = %genre%|%search_term%
+            StringReplace, genre, genre, |, `n, All
+            Sort, genre, u
+            StringReplace, genre, genre, `n, |, All
             IniWrite,%genre%,%inca%\inca - ini.ini,Settings,genre
             LoadSettings()
             PopUp("Added",600,0,0)
@@ -1148,6 +1150,8 @@ caption := x
     DeleteEntries()
         {
         plist = %path%%folder%.m3u
+        IfNotExist, %plist%
+          return
         FileRead, str, %plist%
         FileDelete, %plist%
         Loop, Parse, selected, `/
@@ -1157,8 +1161,10 @@ caption := x
           GetMedia(0)
           x = %target%`r`n
           y = %src%`r`n
-          str := StrReplace(str, x,,,1)
-          str := StrReplace(str, y,,,1)
+          str := StrReplace(str, x,,,1)					; slides with start time
+          str := StrReplace(str, y,,,1)					; music with no start time
+          if (folder != "Trash" && folder != "History")
+            FileAppend, %x%, %inca%\slides\Trash.m3u, UTF-8
           }
         FileAppend, %str%, %plist%, UTF-8
         }
@@ -1293,15 +1299,17 @@ caption := x
         gui, settings:add, edit, x160 yp+13 h60 w500 vmodel, %model%
         gui, settings:add, text, x165 yp+64, genre
         gui, settings:add, edit, x160 yp+13 h60 w500 vgenre, %genre%
+        gui, settings:add, text, x165 yp+64, studio
+        gui, settings:add, edit, x160 yp+13 h60 w500 vstudio, %studio%
         gui, settings:add, text, x165 yp+66, folders to search
         gui, settings:add, edit, x160 yp+13 h18 w500 vsearch_folders, %search_folders%
         gui, settings:add, text, x165 yp+23, folders to index
         gui, settings:add, edit, x160 yp+13 h18 w500 vindex_folders, %index_folders%
-        gui, settings:add, button, x160 y400 w60, Source
-        gui, settings:add, button, x240 y400 w60, Compile
-        gui, settings:add, button, x320 y400 w60, Help
-        gui, settings:add, button, x400 y400 w60, Cancel
-        gui, settings:add, button, x480 y400 w60 default, Save
+        gui, settings:add, button, x160 y480 w60, Source
+        gui, settings:add, button, x240 y480 w60, Compile
+        gui, settings:add, button, x320 y480 w60, Help
+        gui, settings:add, button, x400 y480 w60, Cancel
+        gui, settings:add, button, x480 y480 w60 default, Save
         gui, settings:show
         send, +{Tab}
         }
@@ -1337,6 +1345,15 @@ caption := x
             new = %new%%key%/%value%|         
             }
         StringTrimRight,new,new,1
+        StringReplace, model, model, |, `n, All
+        Sort, model, u						; alpha sort and removes duplicates
+        StringReplace, model, model, `n, |, All
+        StringReplace, genre, genre, |, `n, All
+        Sort, genre, u
+        StringReplace, genre, genre, `n, |, All
+        StringReplace, studio, studio, |, `n, All
+        Sort, studio, u
+        StringReplace, studio, studio, `n, |, All
         IniWrite,%new%,%inca%\inca - ini.ini,Settings,features
         IniWrite,%search_folders%,%inca%\inca - ini.ini,Settings,search_folders
         IniWrite,%index_folders%,%inca%\inca - ini.ini,Settings,index_folders

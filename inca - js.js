@@ -1,7 +1,8 @@
 <script>
 
 // caps punctuation issues
-// scan m3u for dead links ?
+// combine search long press?
+// start time random fails ?? important
 
 
   var modal = document.getElementById('myModal')			// media player window
@@ -26,7 +27,6 @@
   var wheel = 0
   var block = 10							// block wheel input
   var last_id = 0
-  var type = ''								// audio, video, image, thumb, document
   var time = 0								// media time
   var start = 0								// video start time
   var interval = 0							// wheel seeking interval
@@ -39,7 +39,9 @@
   var pages = 1
   var index = 1								// media index (e.g. media14)
   var filter = 1							// filter or sort 
-  var pos = 0								// top panel list ref
+  var menu = ''								// top panel list type
+  var pos = 0								// top panel list pointer
+  var type = ''								// audio, video, image, thumb, document
   var cap_list = ''							// full caption text file
   var cap_time = 0
   var looping = false
@@ -67,7 +69,6 @@
   var Yref
   var Xoff = screenLeft
 
-
   document.addEventListener('auxclick', playMedia)			// middle click
   document.addEventListener('keydown', mouseBack)			// mouse Back button
   document.addEventListener('mousedown', mouseDown)
@@ -90,7 +91,7 @@
     cap.style.left = mediaX - (scaleX*media.offsetWidth / 2) + "px"
     seekbar.style.width = (scaleX * media.offsetWidth * media.currentTime / media.duration) + "px"
     if (window.innerWidth == screen.width) {				// full screen mode
-      media.style.marginLeft = Xoff + 'px'; media.style.marginTop = '100px'; seekbar.style.marginLeft = Xoff + 'px'}
+      media.style.marginLeft = Xoff+'px'; media.style.marginTop='100px'; seekbar.style.marginLeft = Xoff+'px'}
     else {media.style.marginLeft = 0; media.style.marginTop = 0; seekbar.style.marginLeft = 0}
     positionMedia()
     Captions()}
@@ -212,14 +213,11 @@
     if (wheel < block) {return}
     var wheelDown = false
     block = 120
-    if (e.deltaY > 0) {wheelDown = true}
+    if (e.deltaY > 0) {wheelDown=true; pos+=4} else if (pos) {pos-=4}
     if (id == 'myPage') {						// page
       if (wheelDown && page<pages) {page++} else if (page>1) {page--}
       el.href = '#Page#' + page + '##'
       el.innerHTML = 'Page '+page+' of '+pages}
-    else if (id=='model' || id=='genre' || id=='studio') {		// media files
-      if (wheelDown) {pos++} else if (pos) {pos--}
-      spool(e, id, input)}
     else if (id=='mySort') {						// sort filter
       if (wheelDown) {filter++} else if (filter) {filter--}
       if (filter > 5) {filter = 5}
@@ -268,6 +266,7 @@
       else {scaleX *= 0.98; scaleY *= 0.98}
       positionMedia()
       block = 24}
+    else {spool(e, id)} 						// scroll top panel
     wheel = 0}
 
 
@@ -388,9 +387,7 @@
     else {
       el.style.border = "0.1px solid lightsalmon"
       if (!x.match("," + i + ",")) {selected = selected + i + ","}
-      inputbox.value = document.getElementById("title" + i).innerHTML}
-    if (selected) {panel.style.border = "0.1px solid #826858"}
-    else {panel.style.border = ""}}
+      inputbox.value = document.getElementById("title" + i).innerHTML}}
 
 
   function positionMedia() {
@@ -420,31 +417,30 @@
 
   function spool(e, id, input, to, so, fi, pa, ps, ts, rt) {		// spool lists into top htm panel
     if (mouse_down) {return}						// in case sliding thumbs over panel
-    if (input) {ini = input}
-    if (pa) {toggles=to; sort=so; filter=fi; page=pa; pages=ps; thumb_size=ts; rate=rt}
-    if (pos > 25) {pos = 25}
-    filt()
-    var p = String.fromCharCode(pos + 65)
+    if (input) {ini=input; toggles=to; sort=so; filter=fi; page=pa; pages=ps; thumb_size=ts; rate=rt}
+    if (id) {menu = id} else {id = menu}
+    if (!e.deltaY) {pos = 0}
+    var count = -pos
     var htm = ''
+    filt()
     z = ini.split(id+'=').pop().split('||')
     z = z[0].split('|')
-    if (id=='model' || id=='genre' || id=='studio') {			// alpha search
-      id = p
-      var count = 0
-      z = z.sort()
+    if (id=='model' || id=='genre' || id=='studio') {
       for (x of z) {
-        if (x.substring(0, 1) >= p && count < 22) {
-          count += 1
+        count++
+        if (count > 0 && count < 23) {
+          if (count==1 && pos) {id = x.substring(0, 1)}
           htm = htm + '<a href=#Search#' + x.replace(/ /g, "%20") + '##>' + x.substring(0, 15) + '</a>'}}}
-    else for (x of z) {							// folders
+    else for (x of z) {							// folders, slides, music
       var y = x.split("/")
       var q = y.pop()
-      if (id != "music" && id != "slides") {q = y.pop()}
-      q = q.replace(/.m3u/g, '')
-      q = q.substring(0, 12)
-      if (q == "New") {q = "<span style='color:red'</span>" + q}
-      htm = htm + '<a href=#Path##' + selected + '#' + x.replace(/ /g, "%20") + '>' + q + '</a>'}
-    if (id) {panel.innerHTML = "<span style=\'grid-row-start:1;grid-row-end:3;color:red;font-size:2em\'>"+id+"</span>"+htm}
+      count++
+      if (id=='subs' || id=='fol' || id=='fav') {q = y.pop()}
+      q = q.replace('.m3u', '').substring(0, 12)
+      if (selected || q == "New") {q = "<span style='color:red'</span>" + q}
+      if (count > 0 && count < 27) {
+        htm = htm + '<a href=#Path##' + selected + '#' + x.replace(/ /g, "%20") + '>' + q + '</a>'}}
+    if (menu) {panel.innerHTML = "<span style=\'grid-row-start:1;grid-row-end:3;color:red;font-size:2em\'>"+id+"</span>"+htm}
     release()}
 
 
