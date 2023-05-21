@@ -35,7 +35,6 @@
 	Global list_id			; pointer to media file
         Global list_size
         Global selected			; selected files from web page
-        Global search_box		; html textbox
         Global search_term
         Global src			; current media file incl. path
         Global media			; media filename, no path or ext
@@ -82,17 +81,11 @@
       WinActivate, ahk_group Browsers
       SetTimer, TimedEvents, 100		; every 100mS
       sleep 350
-      if !inca_tab
-        {
-        path = %profile%\Pictures\
-        this_search := path
-        inca_tab = pictures
-        folder = pictures
-        }
+      path = %profile%\Pictures\
+      this_search := path
+      folder = pictures
       CreateList(0)
       return					; wait for mouse/key events
-
-
 
 
     RenderPage()							; construct web page from media list
@@ -161,7 +154,7 @@
 
         title_html = <div class='ribbon2' onmouseover='panel.style.opacity=1' onmouseout='panel.style.opacity=null'>`r`n<a onmouseover="spool(event, 'subs')" onwheel="wheelEvents(event, 'subs', this)">Subs</a><a onmouseover="spool(event, 'fol')" onwheel="wheelEvents(event, 'fol', this)">Fol</a>`r`n<a onmouseover="spool(event, 'fav')" onwheel="wheelEvents(event, 'fav', this)">Fav</a>`r`n<a onmouseover="spool(event, 'slides')" onwheel="wheelEvents(event, 'slides', this)">Slides</a>`r`n<a id='myModels' onmouseover="spool(event, 'model')" onwheel="wheelEvents(event, 'model', this)">Model</a>`r`n<a id='myGenre' onmouseover="spool(event, 'genre')" onwheel="wheelEvents(event, 'genre', this)">Genre</a>`r`n<a onmouseover="spool(event, 'studio')" onwheel="wheelEvents(event, 'studio', this)">Studio</a>`r`n<a onmouseover="spool(event, 'music')" onwheel="wheelEvents(event, 'music', this)">Music</a>`r`n</div>`r`n`r`n
 
-<div id='myRibbon' class='ribbon2' style='font-size:1em'>`r`n<a onclick="selectAll()">Select</a>`r`n<a id='myDelete' onmouseover='del()'>Delete</a>`r`n<a id='myRename' onmouseover='rename()'>Rename</a>`r`n<a href='#Reverse###' %w%>Reverse</a>`r`n<a href='#Recurse###' %x%>Recurse</a>`r`n<a href='#Images###' %y%>Images</a>`r`n<a href='#Videos###' %z%>Videos</a>`r`n<a href='#Join###'>Join</a>`r`n<a href='#Settings###'>Menu</a></div>`r`n`r`n<div style='display:flex'>`r`n<input id='myInput' class='searchbox' type='search' value='%search_box%'>`r`n<a href='#Searchbox###' class='searchbox' style='width:4`%; border-radius:0 1em 1em 0'>+</a></div>`r`n`r`n
+<div id='myRibbon' class='ribbon2' style='font-size:1em'>`r`n<a onclick="selectAll()">Select</a>`r`n<a id='myDelete' onmouseover='del()'>Delete</a>`r`n<a id='myRename' onmouseover='rename()'>Rename</a>`r`n<a href='#Reverse###' %w%>Reverse</a>`r`n<a href='#Recurse###' %x%>Recurse</a>`r`n<a href='#Images###' %y%>Images</a>`r`n<a href='#Videos###' %z%>Videos</a>`r`n<a href='#Join###'>Join</a>`r`n<a href='#Settings###'>Menu</a></div>`r`n`r`n<div style='display:flex'>`r`n<input id='myInput' class='searchbox' type='search' value='%search_term%'>`r`n<a class='searchbox' onmouseover="this.href='#SearchAdd#'+inputbox.value+'##'" style='width:4`%; border-radius:0 1em 1em 0'>+</a></div>`r`n`r`n
 
 <div style='display:flex; margin-left:1em'>`r`n<a href=#Thumbs#%view%## id="Thumbs" class='ribbon' style='width:12`%' onwheel="wheelEvents(event, id, this)" onmouseover="media.style.opacity=1" onmouseout="media.style.opacity=null">Thumbs</a>`r`n<a href="#Orphan#%folder%#" class='ribbon' style='color:lightsalmon; font-size:1.7em; width:8em; margin-bottom:0.3em'>%title_s%</a>`r`n<div class='ribbon' style='color:lightsalmon; width:5em'>%list_size%</div>`r`n`r`n<a href='#%sort%#%sort%#' id='mySort' class='ribbon' onwheel="wheelEvents(event, id, this)">%sort%</a>`r`n<a id='myFilter' class='ribbon' onwheel="wheelEvents(event, id, this)">All</a>`r`n<a href="%title%.htm#Page" id="myPage" class='ribbon' style='width:15`%' onwheel="wheelEvents(event, id, this)">%pg%</a></div>`r`n`r`n<div id="myModal" class="modal" onwheel="wheelEvents(event, id, this)">`r`n<div><video id="myPlayer" class="player" type="video/mp4"></video>`r`n<textarea id="myCap" class="caption" onmouseenter="over_cap=true" onmouseleave="over_cap=false"></textarea>`r`n<span id="mySeekBar" class="seekbar"></span>`r`n<span><video id='mySeek' class='seek' type="video/mp4"></video></span>`r`n`r`n<span id="mySidenav" onmouseover="openNav()" onmouseleave="nav.style.opacity=0" class="sidenav">`r`n<a id="myStatus" style='font-size:4em; padding:0; width:15`%' onwheel="wheelEvents(event, id, this)"></a>`r`n<a id="mySpeed" onmouseover='stat.innerHTML=Math.round(media.playbackRate*100)' onwheel="wheelEvents(event, id, this)">Speed</a>`r`n<a id="mySkinny" onmouseover='stat.innerHTML=Math.round(newSkinny*100)' onwheel="wheelEvents(event, id, this)">Thin</a>`r`n<a id="myNext" onmouseover='stat.innerHTML=index' onclick='nextCaption()'>Next</a>`r`n<a id='myLoop' onclick="loop()">Loop</a>`r`n<a id='myMute' onclick="mute()">Mute</a>`r`n<a id="myFav">Fav</a>`r`n<a id="myCapnav" onclick="editCap()">Cap</a>`r`n<a onclick="cue = Math.round(media.currentTime*10)/10">Cue</a>`r`n<a id="myMp4">mp4</a>`r`n<a id="myMp3">mp3</a></span></div></div>`r`n`r`n
         FileDelete, %inca%\cache\html\%folder%.htm
@@ -256,22 +249,13 @@
       return
 
 
-    ~Enter::					; file search - from html input box
+    ~Enter::					; search request from htm input box
       if inca_tab
         {
-        send, !0
-        Clipboard =
-        send, {end}+{Home}^c
-        ClipWait, 0
-        address =
-        value := Clipboard
-        command = Search
-        search_box := value
-        if value
-            {
-            ProcessMessage()
-            CreateList(1)
-            }
+        send, {Enter}				; trigger java to send messages
+        sleep 250
+        timer := 1				; not long click
+        GetAddressBar()				; process address bar messages
         }
       return
 
@@ -372,7 +356,6 @@
                 address =
                 command = Search
                 value := Clipboard
-                search_box := value
                 ProcessMessage()
                 CreateList(1)
                 }
@@ -415,7 +398,7 @@
         if inca_tab
             WinSet, Transparent, % Setting("Dim Desktop")
         else WinSet, Transparent, 0
-        if (inca_tab && inca_tab != previous_tab)			; has inca tab changed
+        if (previous_tab && inca_tab && inca_tab != previous_tab)	; has inca tab changed
             {
             folder := inca_tab
             GetTabSettings(1)						; get last tab settings
@@ -443,8 +426,10 @@
         return
 
 
-    GetAddressBar()			; messages from browser address bar
+    GetAddressBar()							; messages from browser address bar
         {
+        IfWinExist, ahk_class OSKMainClass
+        send, !0							; close onscreen keyboard
         selected =
         select =
         command =
@@ -480,7 +465,6 @@
             continue
           ProcessMessage()
           }
-        search_box =
         if (reload == 1)
           CreateList(1)
         if (reload == 2)
@@ -685,18 +669,6 @@
                 else Run, %src%
                 }
             }
-        else if (command == "Searchbox" && search_term)			; add search to search list
-            {
-            StringUpper, search_term, search_term, T
-            genre = %genre%|%search_term%
-            StringReplace, genre, genre, |, `n, All
-            Sort, genre, u
-            StringReplace, genre, genre, `n, |, All
-            IniWrite,%genre%,%inca%\inca - ini.ini,Settings,genre
-            LoadSettings()
-            PopUp("Added",600,0,0)
-            reload := 1
-            }
         else if (command == "Page" || command == "View")
             {
             if (command == "Page")
@@ -708,13 +680,26 @@
             }
         else if (command == "Settings") 
             ShowSettings()
-        else if (command == "Filter" || command == "Path" || command == "Search" || InStr(sort_list, command))
+        else if (command=="Filter" || command=="Path" || command=="Search" || command=="SearchAdd" || InStr(sort_list, command))
             {
             reload = 1
+            if (command == "SearchAdd" && value)			; add search_term to genre list
+              {
+              StringUpper, search_term, value, T
+              genre = %genre%|%search_term%
+              StringReplace, genre, genre, |, `n, All
+              Sort, genre, u
+              StringReplace, genre, genre, `n, |, All
+              IniWrite,%genre%,%inca%\inca - ini.ini,Settings,genre
+              LoadSettings()
+              PopUp("Added",600,0,0)
+              }
             if (command == "Search")
-              search_term = %value%					; clears white space
-            else if search_box
-              search_term = %search_box%
+              {
+              if !timer
+                search_term = %search_term%+%value%			; long click adds new search term
+              else search_term = %value%
+              }
             if address
                 {
                 search_term =
@@ -743,9 +728,9 @@
                 folder := search_term
                 GetTabSettings(0)					; load cached tab settings
                 this_search := search_folders
-                if (search_box && !InStr(this_search, path))		; search this folder, then search paths
+                if (search_term && !InStr(this_search, path))		; search this folder, then search paths
                     this_search = %path%|%this_search%			; search this folder only
-                if search_box
+                if search_term
                     {
                     view := 0
                     toggles =
@@ -958,15 +943,10 @@ caption := x
                 PopUp(count,0,0,0)
             if search_term
               {
-              StringSplit, array, search_term, %A_Space%
-                Loop, %array0%
-                {
-                if !InStr(filen, array%A_Index%)
+              array := StrSplit(search_term,"+")
+              Loop, % array.MaxIndex()
+                if (!InStr(filen, array[A_Index]))
                   return
-                if (StrLen(array%A_Index%) < 2)
-                  if !InStr(filen, search_term)
-                    return
-                }
               }
             if (sort == "Ext")
                 list_id := ex
@@ -1020,17 +1000,15 @@ caption := x
         StringReplace, new_html, new_html, \,/, All
         IfWinNotExist, ahk_group Browsers
             run, %new_html%						; open a new web tab
-        if !inca_tab
+        else if !inca_tab
             run, %new_html%						; open a new web tab
         else if (folder == previous_tab)				; just refresh existing tab
             send, {F5}
         else	
             {								; re-load tab
-            previous_tab := inca_tab
             ReadAddressBar(0)
             sendraw, %new_html%%A_Space%`n
             }
-        previous_tab := inca_tab
         }
 
 

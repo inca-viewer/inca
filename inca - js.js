@@ -1,8 +1,9 @@
 <script>
 
 // caps punctuation issues
-// combine search long press?
 // start time random fails ?? important
+// search Recurse
+// startup when music
 
 
   var modal = document.getElementById('myModal')			// media player window
@@ -70,17 +71,18 @@
   var Xoff = screenLeft
 
   document.addEventListener('auxclick', playMedia)			// middle click
-  document.addEventListener('keydown', mouseBack)			// mouse Back button
+  document.addEventListener('keydown', mouseBack)			// Back and Enter
   document.addEventListener('mousedown', mouseDown)
   document.addEventListener('mouseup', mouseUp)
   document.addEventListener('mousemove', Gesture)
+
 
   function timedEvents() {						// every ~84mS while media playing
     time = Math.round(10*media.currentTime)/10
     if ((t=Math.round(time%60))<10) {t=':0'+t} else {t=':'+t}
     if (media.duration) {interval = Math.round(media.duration/20)}
     if (ypos < 0.5) {interval = Math.ceil(interval * 3 * (ypos-0.1))}
-    if (media.paused == true) {interval = Math.round(10*interval/4)/10}
+    if (media.paused == true) {interval = Math.round(10*interval/20)/10}
     if (ypos < 0.1 || xpos < 0.1 || (type=='video'&&time < 2)) {nav.style.opacity=0.6} else {nav.style.opacity=0}
     if (xpos > 0.37 && ypos < 0.1) {stat.innerHTML = Math.round(time/60)+t}
     if (ypos > 0.1) {stat.innerHTML=Math.round(media.playbackRate*100)}
@@ -100,6 +102,7 @@
   function overThumb(e, id, st, sx) {					// mouse over thumbnail in browser tab
     if (mouse_down) {return}
     index = id
+    start = 0
     scaleX = sx
     over_thumb = true
     var sel = document.getElementById('sel' + id)
@@ -109,10 +112,8 @@
     var xp = (e.clientX - rect.left) / (media.offsetWidth)
     var yp = (e.clientY - rect.top) / (media.offsetHeight)
     if (media.duration && yp > 0.9) {media.currentTime = media.duration *xp}
-    if (media.currentTime <= st || yp < 0.1) {media.currentTime = st +0.1}
+    else if (media.currentTime <= st || yp < 0.1) {media.currentTime = st +0.1}
     media.playbackRate = 0.74
-    start = media.currentTime
-    seek.src = media.src
     media.play()}
 
 
@@ -341,14 +342,15 @@
 
 
   function mouseBack(e) {
-    if (e.key != 'Pause') {return}					// inca.exe re-map of mouse Back button
     var flag = false
-    var top = document.body.getBoundingClientRect().top
-    if (!type && top < 0) {scroll(0,0); return}				// scroll to top page
-    if (type) {close_media(); flag = true}				// media was playing
-    if (hist) {messages = messages+'#History##'+hist+'#'; hist=''}
-    if (messages) {stat.href=messages; messages=''; stat.click()}	// send messages to inca.exe
-    if (!flag) {location.reload()}}					// update htm tab
+    if (e.key == 'Enter' && inputbox.value) {messages = messages+'#Search#'+inputbox.value+'##'; flag = true}
+    if (e.key == 'Pause' || e.key == 'Enter') {				// Pause is mouse Back button
+      var top = document.body.getBoundingClientRect().top
+      if (!type && top < 0) {scroll(0,0); return}			// scroll to top of htm page
+      if (type) {close_media(); flag = true}				// media was playing, don't reset page
+      if (hist) {messages = messages+'#History##'+hist+'#'; hist=''}	// add to media history list
+      if (messages) {stat.href=messages; messages=''; stat.click()}	// send messages to inca.exe
+      if (!flag) {location.reload()}}}					// just reset htm tab (clear selected etc.)
 
 
   function togglePause(e) {
@@ -437,7 +439,7 @@
       count++
       if (id=='subs' || id=='fol' || id=='fav') {q = y.pop()}
       q = q.replace('.m3u', '').substring(0, 12)
-      if (selected || q == "New") {q = "<span style='color:red'</span>" + q}
+      if (selected || q == "New") {q = "<span style='color:lightsalmon'</span>" + q}
       if (count > 0 && count < 27) {
         htm = htm + '<a href=#Path##' + selected + '#' + x.replace(/ /g, "%20") + '>' + q + '</a>'}}
     if (menu) {panel.innerHTML = "<span style=\'grid-row-start:1;grid-row-end:3;color:red;font-size:2em\'>"+id+"</span>"+htm}
