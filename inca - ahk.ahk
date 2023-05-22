@@ -80,11 +80,16 @@
       initialize()				; set environment
       WinActivate, ahk_group Browsers
       SetTimer, TimedEvents, 100		; every 100mS
-      sleep 350
-      path = %profile%\Pictures\
-      this_search := path
-      folder = pictures
-      CreateList(0)
+      sleep 350					; wait for browser page to identify
+      folder := inca_tab			; align current folder to browser
+      if !inca_tab				; inca tab not exist
+        {
+        path = %profile%\Pictures\		; use pictures as default
+        this_search := path
+        folder = pictures
+        }
+      else GetTabSettings(1)			; get full cache folder/htm environment
+      CreateList(0)				; construct web page
       return					; wait for mouse/key events
 
 
@@ -156,7 +161,7 @@
 
 <div id='myRibbon' class='ribbon2' style='font-size:1em'>`r`n<a onclick="selectAll()">Select</a>`r`n<a id='myDelete' onmouseover='del()'>Delete</a>`r`n<a id='myRename' onmouseover='rename()'>Rename</a>`r`n<a href='#Reverse###' %w%>Reverse</a>`r`n<a href='#Recurse###' %x%>Recurse</a>`r`n<a href='#Images###' %y%>Images</a>`r`n<a href='#Videos###' %z%>Videos</a>`r`n<a href='#Join###'>Join</a>`r`n<a href='#Settings###'>Menu</a></div>`r`n`r`n<div style='display:flex'>`r`n<input id='myInput' class='searchbox' type='search' value='%search_term%'>`r`n<a class='searchbox' onmouseover="this.href='#SearchAdd#'+inputbox.value+'##'" style='width:4`%; border-radius:0 1em 1em 0'>+</a></div>`r`n`r`n
 
-<div style='display:flex; margin-left:1em'>`r`n<a href=#Thumbs#%view%## id="Thumbs" class='ribbon' style='width:12`%' onwheel="wheelEvents(event, id, this)" onmouseover="media.style.opacity=1" onmouseout="media.style.opacity=null">Thumbs</a>`r`n<a href="#Orphan#%folder%#" class='ribbon' style='color:lightsalmon; font-size:1.7em; width:8em; margin-bottom:0.3em'>%title_s%</a>`r`n<div class='ribbon' style='color:lightsalmon; width:5em'>%list_size%</div>`r`n`r`n<a href='#%sort%#%sort%#' id='mySort' class='ribbon' onwheel="wheelEvents(event, id, this)">%sort%</a>`r`n<a id='myFilter' class='ribbon' onwheel="wheelEvents(event, id, this)">All</a>`r`n<a href="%title%.htm#Page" id="myPage" class='ribbon' style='width:15`%' onwheel="wheelEvents(event, id, this)">%pg%</a></div>`r`n`r`n<div id="myModal" class="modal" onwheel="wheelEvents(event, id, this)">`r`n<div><video id="myPlayer" class="player" type="video/mp4"></video>`r`n<textarea id="myCap" class="caption" onmouseenter="over_cap=true" onmouseleave="over_cap=false"></textarea>`r`n<span id="mySeekBar" class="seekbar"></span>`r`n<span><video id='mySeek' class='seek' type="video/mp4"></video></span>`r`n`r`n<span id="mySidenav" onmouseover="openNav()" onmouseleave="nav.style.opacity=0" class="sidenav">`r`n<a id="myStatus" style='font-size:4em; padding:0; width:15`%' onwheel="wheelEvents(event, id, this)"></a>`r`n<a id="mySpeed" onmouseover='stat.innerHTML=Math.round(media.playbackRate*100)' onwheel="wheelEvents(event, id, this)">Speed</a>`r`n<a id="mySkinny" onmouseover='stat.innerHTML=Math.round(newSkinny*100)' onwheel="wheelEvents(event, id, this)">Thin</a>`r`n<a id="myNext" onmouseover='stat.innerHTML=index' onclick='nextCaption()'>Next</a>`r`n<a id='myLoop' onclick="loop()">Loop</a>`r`n<a id='myMute' onclick="mute()">Mute</a>`r`n<a id="myFav">Fav</a>`r`n<a id="myCapnav" onclick="editCap()">Cap</a>`r`n<a onclick="cue = Math.round(media.currentTime*10)/10">Cue</a>`r`n<a id="myMp4">mp4</a>`r`n<a id="myMp3">mp3</a></span></div></div>`r`n`r`n
+<div style='display:flex; margin-left:1em'>`r`n<a href=#Thumbs#%view%## id="Thumbs" class='ribbon' style='width:12`%' onwheel="wheelEvents(event, id, this)" onmouseover="media.style.opacity=1" onmouseout="if(!mouse_down){media.style.opacity=null}">Thumbs</a>`r`n<a href="#Orphan#%folder%#" class='ribbon' style='color:lightsalmon; font-size:1.7em; width:8em; margin-bottom:0.3em'>%title_s%</a>`r`n<div class='ribbon' style='color:lightsalmon; width:5em'>%list_size%</div>`r`n`r`n<a href='#%sort%#%sort%#' id='mySort' class='ribbon' onwheel="wheelEvents(event, id, this)">%sort%</a>`r`n<a id='myFilter' class='ribbon' onwheel="wheelEvents(event, id, this)">All</a>`r`n<a href="%title%.htm#Page" id="myPage" class='ribbon' style='width:15`%' onwheel="wheelEvents(event, id, this)">%pg%</a></div>`r`n`r`n<div id="myModal" class="modal" onwheel="wheelEvents(event, id, this)">`r`n<div><video id="myPlayer" class="player" type="video/mp4"></video>`r`n<textarea id="myCap" class="caption" onmouseenter="over_cap=true" onmouseleave="over_cap=false"></textarea>`r`n<span id="mySeekBar" class="seekbar"></span>`r`n<span><video id='mySeek' class='seek' type="video/mp4"></video></span>`r`n`r`n<span id="mySidenav" onmouseover="openNav()" onmouseleave="nav.style.opacity=0" class="sidenav">`r`n<a id="myStatus" style='font-size:4em; padding:0; width:15`%' onwheel="wheelEvents(event, id, this)"></a>`r`n<a id="mySpeed" onmouseover='stat.innerHTML=Math.round(media.playbackRate*100)' onwheel="wheelEvents(event, id, this)">Speed</a>`r`n<a id="mySkinny" onmouseover='stat.innerHTML=Math.round(newSkinny*100)' onwheel="wheelEvents(event, id, this)">Thin</a>`r`n<a id="myNext" onmouseover='stat.innerHTML=index' onclick='nextCaption()'>Next</a>`r`n<a id='myLoop' onclick="loop()">Loop</a>`r`n<a id='myMute' onclick="mute()">Mute</a>`r`n<a id="myFav">Fav</a>`r`n<a id="myCapnav" onclick="editCap()">Cap</a>`r`n<a onclick="cue = Math.round(media.currentTime*10)/10">Cue</a>`r`n<a id="myMp4">mp4</a>`r`n<a id="myMp3">mp3</a></span></div></div>`r`n`r`n
         FileDelete, %inca%\cache\html\%folder%.htm
         html = %header_html%%style%%panel_html%%title_html%%html%</div>`r`n
         StringReplace, html, html, \, /, All
@@ -446,7 +451,7 @@
         if !InStr(input, "file:\\\")
           return
         array := StrSplit(input,"#")
-        if (array.MaxIndex() < 3) 
+        if (array.MaxIndex() < 3)
           return
         Loop % array.MaxIndex()/4
           {
@@ -565,6 +570,8 @@
             }
         if (command == "MovePos")
             MoveEntry()						; move entry within playlist
+        if (command == "Settings") 
+            ShowSettings()
         if (command == "Caption")
             {
             FileRead, str, %inca%\cache\captions\%media%.srt
@@ -589,7 +596,6 @@
             FileDelete, %inca%\cache\widths\%media%.txt
             if (value > 0.5 && value < 0.995 || value > 1.005 && value < 1.5)
               FileAppend, %value%, %inca%\cache\widths\%media%.txt
-;            reload := 2		messes up last_id etc. if page reset 
             }
         if (command == "Thumbs")
             {
@@ -631,28 +637,6 @@
             sleep 555
             reload := 1
             }
-        if (command == "Path")
-          if selected
-            {
-            FileTransfer()						; between folders or playlists
-            reload := 1
-            }
-          else
-            {
-            if InStr(address, ".m3u")
-              {
-              playlist := address
-              SplitPath, address,,path,,folder
-              path = %path%\
-              }
-            else
-              {
-              playlist =
-              path := address
-              StringTrimRight, address, address, 1
-              SplitPath, address,,,,folder
-              }
-            }
         if (command == "Media")
             {
             list_id := value
@@ -669,7 +653,7 @@
                 else Run, %src%
                 }
             }
-        else if (command == "Page" || command == "View")
+        if (command == "Page" || command == "View")
             {
             if (command == "Page")
                 page := value
@@ -678,11 +662,29 @@
             Popup(value,0,0,0)
             reload := 1
             }
-        else if (command == "Settings") 
-            ShowSettings()
-        else if (command=="Filter" || command=="Path" || command=="Search" || command=="SearchAdd" || InStr(sort_list, command))
+        if (command == "Path" && selected)
+            {
+            FileTransfer()						; between folders or playlists
+            reload := 1
+            return
+            }
+        if (command=="Filter" || command=="Path" || command=="Search" || command=="SearchAdd" || InStr(sort_list, command))
             {
             reload = 1
+            if (command == "Path") 
+              if InStr(address, ".m3u")
+                {
+                playlist := address
+                SplitPath, address,,path,,folder
+                path = %path%\
+                }
+              else
+                {
+                playlist =
+                path := address
+                StringTrimRight, address, address, 1
+                SplitPath, address,,,,folder
+                }
             if (command == "SearchAdd" && value)			; add search_term to genre list
               {
               StringUpper, search_term, value, T
@@ -705,7 +707,7 @@
                 search_term =
                 this_search := path
                 x := playlist
-                GetTabSettings(0)					; load previous settings from cache
+                GetTabSettings(0)					; load previous tab settings from cache
                 playlist := x
                 if !InStr(subfolders, folder)
                     subfolders =
@@ -730,7 +732,7 @@
                 this_search := search_folders
                 if (search_term && !InStr(this_search, path))		; search this folder, then search paths
                     this_search = %path%|%this_search%			; search this folder only
-                if search_term
+                if (search_term && !InStr(sort_list, command))
                     {
                     view := 0
                     toggles =
@@ -1055,7 +1057,7 @@ caption := x
         year = 2017
         x := in
         year += x, seconds
-        FormatTime, in, %year%, H:mm:ss						; show duration in hours:mins format
+        FormatTime, in, %year%, H:mm:ss			; show duration in hours:mins format
         if (x < 3600)
             FormatTime, in, %year%, mm:ss
         if (x < 600)
