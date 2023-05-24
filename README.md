@@ -25,13 +25,13 @@ Search, organize, edit & view media files in browser<br>
 Create captions for images & video<br>
 Create Favorites, history, slideshows, storylines<br><br>
 Music and playlists from browser tab<br>
-Sleep timer gradually lowers master volume when mouse quiet<br><br>
+Sleep timer gradually lowers master volume when mouse quiet<br>
 
 To see if you already have a video from an outside website,<br>
 Select part of the title text then 'long click' on it<br>
 A tab will immediately open with all matching files from your computer<br>
 
-Downloads folder is indexed at about 50 videos per minute<br>
+Thumbsheets index at about 50 videos per minute<br>
 
 Written in a simple scripting languages - Java & AutoHotkey<br>
 If it's not exactly what you want, change it. It re-compiles in under a second<br>
