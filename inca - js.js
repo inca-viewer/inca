@@ -1,6 +1,7 @@
 <script>
 
 // caps punctuation issues
+// search on 2 tabs open fail
 
   var modal = document.getElementById('myModal')			// media player window
   var player = document.getElementById('myPlayer')
@@ -18,12 +19,14 @@
   var Loop = document.getElementById('myLoop')				// loop video or next
   var Mute = document.getElementById('myMute')				// loop video or next
   var sound = sessionStorage.getItem('sound')
+  var last_id = sessionStorage.getItem('last_id')			// last top panel menu eg 'slides'
   var ini								// .ini folders, models, etc.
   var long_click = false
   var long_middle = false
   var wheel = 0
   var block = 10							// block wheel input
-  var last_id = 0
+  var index = 1								// media index (e.g. media14)
+  var last_index = 0
   var time = 0								// media time
   var start = 0								// video start time
   var interval = 0							// wheel seeking interval
@@ -34,9 +37,7 @@
   var rate = 1
   var page = 1
   var pages = 1
-  var index = 1								// media index (e.g. media14)
   var filter = 1							// filter or sort 
-  var menu = ''								// top panel list type
   var pos = 0								// top panel list pointer
   var type = ''								// audio, video, image, thumb, document
   var cap_list = ''							// full caption text file
@@ -85,8 +86,6 @@
     if (xpos < 0.1 && ypos > 0.1) {stat.innerHTML = interval}
     if (sound == 'yes' && media.volume <= 0.8) {media.volume += 0.2}
     if (sound == 'no' && media.volume >= 0.2) {media.volume -= 0.2}
-    cap.style.top = mediaY + (scaleY*media.offsetHeight/2) + 10 + "px"	// caption position
-    cap.style.left = mediaX - (scaleX*media.offsetWidth / 2) + "px"
     seekbar.style.width = (scaleX * media.offsetWidth * media.currentTime / media.duration) + "px"
     if (window.innerWidth == screen.width) {				// full screen mode
       media.style.marginLeft = Xoff+'px'; media.style.marginTop='100px'; seekbar.style.marginLeft = Xoff+'px'}
@@ -126,7 +125,7 @@
     if (e == 'Previous') {index-=1; start=0}
     if (e == 'Mclick' && last_type && last_type != 'video' && thumb) {index+=1}
     if (e == 'Mclick' && !thumb && last_type != 'thumb') {index+=1; start=0}
-    if (!over_thumb && !last_type) {index = last_id; start = last_start; e = 'Thumb'}	// play last media
+    if (!over_thumb && !last_type) {index=last_index; start=last_start; e='Thumb'}	// play last media
     var Next = document.getElementById("media" + index)
     if (!Next) {index = 1; Next = document.getElementById('media1')}	// end of list, return to first media
     x = Next['onclick'].toString().split(","); x.pop(); x.pop()		// get next media arguments
@@ -179,8 +178,8 @@
 
 
   function close_media() {
-    last_id = index
-    last_start = media.currentTime
+    last_index = index
+    last_start = time
     if (type == 'video') {hist = hist + index + ','}			// transfer play history to inca.exe
     if (skinny && skinny != newSkinny) {
       messages = messages + '#Skinny#' + newSkinny + '#' + index + ',#'}	// transfer width edits to inca.exe
@@ -372,7 +371,7 @@
 
 
   function select(i) {							// highlight selected media
-    if (over_thumb || gesture) {return}
+    if (gesture) {return}
     index = i
     if (!(el = document.getElementById("title" + i))) {return}
     x = ',' + selected
@@ -414,7 +413,8 @@
   function spool(e, id, input, to, so, fi, pa, ps, ts, rt) {		// spool lists into top htm panel
     if (mouse_down) {return}						// in case sliding thumbs over panel
     if (input) {ini=input; toggles=to; sort=so; filter=fi; page=pa; pages=ps; thumb_size=ts; rate=rt} // from inca.exe
-    if (id) {menu = id} else {id = menu}
+    if (id) {last_id = id} else {id = last_id}
+    sessionStorage.setItem("last_id",last_id)
     if (!e.deltaY) {pos = 0}
     var count = -pos
     var htm = ''
@@ -436,7 +436,7 @@
       if (selected || q == "New") {q = "<span style='color:lightsalmon'</span>" + q}
       if (count > 0 && count < 27) {
         htm = htm + '<a href=#Path##' + selected + '#' + x.replace(/ /g, "%20") + '>' + q + '</a>'}}
-    if (menu) {panel.innerHTML = "<span style=\'grid-row-start:1;grid-row-end:3;color:red;font-size:2em\'>"+id+"</span>"+htm}
+    if (id) {panel.innerHTML = "<span style=\'grid-row-start:1;grid-row-end:3;color:red;font-size:2em\'>"+id+"</span>"+htm}
     release()}
 
 
@@ -471,12 +471,14 @@
 
   function nextCaption() {
     var z = cap_list.split('|')
-    for (x of z) {
-      if (!isNaN(x) && x > media.currentTime) {media.currentTime = x - 0.8; return}}
+    for (x of z) {if (!isNaN(x) && x > (media.currentTime+0.2)) {media.currentTime = x - 0.8; media.play(); return}}
     playMedia('Next')}
 
   function Captions() {
+    if (!time) {time = '0.0'}
     var ptr = cap_list.indexOf('|'+ time + '|')
+    cap.style.top = mediaY + (scaleY*media.offsetHeight/2) + 10 + "px"	// caption position
+    cap.style.left = mediaX - (scaleX*media.offsetWidth / 2) + "px"
     if (ptr < 1) {ptr = cap_list.indexOf('|'+ time - 0.1 + '|')}
     if ((ptr > 0 && cap_time != time) || type == 'image') {
       cap_time = time
