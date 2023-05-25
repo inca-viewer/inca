@@ -1160,6 +1160,7 @@ caption := x
           str := StrReplace(str, x,,,1)					; slides with start time
           str := StrReplace(str, y,,,1)					; music with no start time
           if (folder != "Trash" && folder != "History")
+           if InStr(path, "\inca\")
             FileAppend, %x%, %inca%\slides\Trash.m3u, UTF-8
           }
         FileAppend, %str%, %plist%, UTF-8

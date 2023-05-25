@@ -3,6 +3,8 @@
 // caps punctuation issues
 // ctrl shift i problem
 // poster aspect issues
+// random page + start times
+
 
   var modal = document.getElementById('myModal')			// media player window
   var player = document.getElementById('myPlayer')
@@ -126,7 +128,7 @@
     if (e == 'Next') {index+=1; start=0}				// when start = 0, it's later derived from parameters
     if (e == 'Previous') {index-=1; start=0}
     if (e == 'Mclick' && last_type && last_type != 'video' && thumb) {index+=1}
-    if (e == 'Mclick' && !thumb && last_type != 'thumb') {index+=1; start=0}
+    if (e == 'Mclick' && !thumb) {index+=1; start=0}
     if (!over_thumb && !last_type) {index=last_index; start=last_start; e='Thumb'}	// play last media
     var Next = document.getElementById("media" + index)
     if (!Next) {index = 1; Next = document.getElementById('media1')}	// end of list, return to first media
@@ -308,7 +310,7 @@
     if (type && modal.style.cursor != "crosshair") {
       modal.style.cursor = "crosshair"
       setTimeout(function() {modal.style.cursor="none"},244)}
-    if (ym > 0 && ym < seek.offsetHeight/media.offsetHeight && xm > 0 && xm < 1 && !mouse_down && type == 'video') {	// seek thumbnail
+    if (ym > 0 && ym < seek.offsetHeight/(media.offsetHeight*scaleY) && xm > 0 && xm < 1 && !mouse_down && type == 'video') {	// seek thumbnail
       seek_active = media.duration * xm
       seek.style.opacity = 1
       seek.style.left = xpos - seek.offsetWidth/2 + 'px'
