@@ -1,7 +1,8 @@
 <script>
 
 // caps punctuation issues
-// search on 2 tabs open fail
+// ctrl shift i problem
+// poster aspect issues
 
   var modal = document.getElementById('myModal')			// media player window
   var player = document.getElementById('myPlayer')
@@ -42,12 +43,12 @@
   var type = ''								// audio, video, image, thumb, document
   var cap_list = ''							// full caption text file
   var cap_time = 0
-  var looping = false
+  var looping = false							// play next or loop media
   var mouse_down = false
   var gesture = false
   var over_cap = false							// cursor over caption
   var over_thumb = false
-  var thumb_size = 10
+  var thumb_size = 9
   var thumb = 0								// over thumbsheet xy
   var skinny = 1							// media width setting
   var newSkinny = 1
@@ -57,15 +58,20 @@
   var hist = ''
   var cue = 0								// start time for mp3/4 conversion
   var Zindex = 1
-  var xpos = 0.5
-  var ypos = 0.5
-  var mediaX = 0
-  var mediaY = 0							// centre of media player
-  var scaleX = 1
+  var xpos								// cursor px coordinate
+  var ypos
+  var xw = 0.5								// cursor over window ratio
+  var yw = 0.5
+  var xm = 0								// cursor over media ratio
+  var ym = 0
+  var Xoff = 0								// fullscreen offset
+  var Yoff = 0
+  var mediaX = 0							// centre of media player
+  var mediaY = 0
+  var scaleX = 1							// skinny & magnify factor
   var scaleY = 1
-  var Xref
+  var Xref								// last cursor coordinate
   var Yref
-  var Xoff = screenLeft
 
   document.addEventListener('auxclick', playMedia)			// middle click
   document.addEventListener('keydown', mouseBack)			// Back and Enter
@@ -77,19 +83,14 @@
   function timedEvents() {						// every ~84mS while media playing
     time = Math.round(10*media.currentTime)/10
     if ((t=Math.round(time%60))<10) {t=':0'+t} else {t=':'+t}		// convert seconds to MMM:SS format
-    if (media.duration) {interval = Math.round(media.duration/20)}
-    if (ypos < 0.5) {interval = Math.ceil(interval * 3 * (ypos-0.1))}	// seek interval changes with ypos
+    if (media.duration) {interval = Math.ceil(10*media.duration/40)/10}
+    if (yw > 0.1) {interval = Math.ceil(interval *2* (0.9-yw))}		// seek interval changes with yw
     if (media.paused == true) {interval = Math.round(10*interval/20)/10}
-    if (ypos < 0.1 || xpos < 0.1) {nav.style.opacity=0.6} else {nav.style.opacity=0}
-    if (xpos > 0.37 && ypos < 0.1) {stat.innerHTML = Math.round(time/60)+t}
-    if (ypos > 0.1) {stat.innerHTML=Math.round(media.playbackRate*100)}
-    if (xpos < 0.1 && ypos > 0.1) {stat.innerHTML = interval}
+    if (yw > 0.9 || type=='video' && (xw < 0.1||xm < 0)) {nav.style.opacity=0.6} else {nav.style.opacity=0}
+    if (yw < 0.9 || xw > 0.37) {stat.innerHTML = Math.round(time/60)+t}
+    if (yw < 0.9 && yw > 0.5 && xw < 0.1) {stat.innerHTML = interval}
     if (sound == 'yes' && media.volume <= 0.8) {media.volume += 0.2}
     if (sound == 'no' && media.volume >= 0.2) {media.volume -= 0.2}
-    seekbar.style.width = (scaleX * media.offsetWidth * media.currentTime / media.duration) + "px"
-    if (window.innerWidth == screen.width) {				// full screen mode
-      media.style.marginLeft = Xoff+'px'; media.style.marginTop='100px'; seekbar.style.marginLeft = Xoff+'px'}
-    else {media.style.marginLeft = 0; media.style.marginTop = 0; seekbar.style.marginLeft = 0}
     positionMedia()
     Captions()}
 
@@ -98,22 +99,23 @@
     if (mouse_down) {return}						// in case thumb slides over another
     index = id
     start = 0
+    scaleY = 1
     scaleX = sx
     over_thumb = true
     var sel = document.getElementById('sel' + id)
     if (selected) {sel.href = '#MovePos#' + id + '#' + selected + '#'}	// preload href for thumb move position
     media = document.getElementById('media' + id)
     var rect = media.getBoundingClientRect()
-    var xp = (e.clientX - rect.left) / (media.offsetWidth)
-    var yp = (e.clientY - rect.top) / (media.offsetHeight)
-    if (media.duration && yp > 0.9) {media.currentTime = media.duration *xp; start = media.duration *xp}
-    else if (media.currentTime <= st || yp < 0.1) {media.currentTime = st +0.1}
+    var x = (e.clientX - rect.left) / (media.offsetWidth)
+    var y = (e.clientY - rect.top) / (media.offsetHeight)
+    if (media.duration && y > 0.9) {media.currentTime = media.duration * x; start = media.duration * x}
+    else if (media.currentTime <= st || y < 0.1) {media.currentTime = st +0.1}
     media.playbackRate = 0.74
     media.play()}
 
 
   function playMedia(e) {
-    if (e.button == 1) {e.preventDefault(); e = 'Mclick'}
+    if (e.button == 1) {e.preventDefault(); e='Mclick'}
     else if (e.button) {return}
     if (gesture) {return}
     media.pause()							// pause browser tab thumb
@@ -180,7 +182,7 @@
   function close_media() {
     last_index = index
     last_start = time
-    if (type == 'video') {hist = hist + index + ','}			// transfer play history to inca.exe
+    if (type == 'video') {hist = hist + index + ','}				// transfer play history to inca.exe
     if (skinny && skinny != newSkinny) {
       messages = messages + '#Skinny#' + newSkinny + '#' + index + ',#'}	// transfer width edits to inca.exe
     document.getElementById('title' + index).style.color = 'lightsalmon'	// highlight played media in tab
@@ -246,16 +248,16 @@
       if (newSkinny > 0.998 && newSkinny < 1.002) {block = 999}
       else {block = 24}
       media.style.transform = "scale("+scaleX+","+scaleY+")"}
-    else if ((ypos<0.1&&xpos<0.2) || id=='mySpeed' || id=='myStatus') {	// speed
+    else if ((yw>0.9&&xw<0.2) || id=='mySpeed' || id=='myStatus') {	// speed
       if (wheelDown) {x = -0.01}
       else {x = 0.01}
       if (type != 'image' && (media.playbackRate < 1 || x < 0)) {
         media.playbackRate += x
         stat.innerHTML = Math.round(media.playbackRate *100)}}
-    else if (xpos<0.1 && type!='image' && type!='thumb') {		// seek
+    else if ((xm < 0 || xw < 0.1) && type!='image' && type!='thumb') {	// seek
       if (wheelDown) {media.currentTime += interval}
       else  {media.currentTime -= interval}}
-    else if (id == 'myModal' && xpos > 0.1) {				// magnify
+    else if (id == 'myModal' && xw > 0.1) {				// magnify
       if (wheelDown) {scaleX *= 1.015; scaleY *= 1.015}
       else {scaleX *= 0.98; scaleY *= 0.98}
       positionMedia()
@@ -267,14 +269,16 @@
   function Gesture(e) {							// mouse move over window
     if (over_thumb) {e.preventDefault()}
     e.stopPropagation()
-    xpos = e.clientX / window.innerWidth
-    ypos = e.clientY / window.innerHeight
+    xpos = e.clientX
+    ypos = e.clientY
+    xw =  xpos / window.innerWidth
+    yw =  ypos / window.innerHeight
     rect = media.getBoundingClientRect()
-    var xp = (e.clientX - rect.left) / (media.offsetWidth * scaleX)
-    var yp = (e.clientY - rect.top) / (media.offsetHeight * scaleY)
-    if (xp > 0 && xp < 1 && yp > 0 && yp < 1) {				// mouse over thumbsheet
-      var row = Math.floor(yp * 6)					// derive media seek time from mouse xy
-      var col = Math.ceil(xp * 6)
+    xm = (xpos - rect.left) / (media.offsetWidth*scaleX)
+    ym = (ypos - rect.top) / (media.offsetHeight*scaleY)
+    if (xm > 0 && xm < 1 && ym > 0 && ym < 1) {				// mouse over thumbsheet
+      var row = Math.floor(ym * 6)					// derive media seek time from mouse xy
+      var col = Math.ceil(xm * 6)
       var offset = 0
       thumb = 5 * ((row * 6) + col)
       thumb = (thumb - 1) / 200
@@ -282,8 +286,8 @@
       if (type == 'thumb') {start = offset - (thumb * offset) + media.duration * thumb}}
     else {thumb = 0; start = last_start}
     if (mouse_down) {
-      var x = Math.abs(Xref - e.clientX)
-      var y =  Math.abs(Yref - e.clientY)
+      var x = Math.abs(Xref - xpos)
+      var y =  Math.abs(Yref - ypos)
       if (!gesture && !type && over_thumb) {
         mediaX = rect.left + (media.offsetWidth * scaleX/2)
         mediaY = rect.top + (media.offsetHeight * scaleY/2)}
@@ -293,10 +297,10 @@
           media.style.position = 'fixed'
           media.style.zIndex = Zindex+=1}
         gesture = true							// media playback position moved
-        mediaY += e.clientY - Yref
-        mediaX += e.clientX - Xref
-        Xref = e.clientX
-        Yref = e.clientY
+        mediaX += xpos - Xref
+        mediaY += ypos - Yref
+        Xref = xpos
+        Yref = ypos
         positionMedia()
         if (type) {
           sessionStorage.setItem("mediaX",mediaX)
@@ -304,14 +308,33 @@
     if (type && modal.style.cursor != "crosshair") {
       modal.style.cursor = "crosshair"
       setTimeout(function() {modal.style.cursor="none"},244)}
-    var xp = (e.clientX - rect.left) / (media.offsetWidth * scaleX)	 // fast seek video
-    seek.style.bottom = 50 +'px'	
-    seek.style.left = e.clientX -80 +'px'
-    if (ypos > 0.9 && xp > 0 && xp < 1 && !mouse_down && type == 'video') {
-      seek_active = media.duration * xp
+    if (ym > 0 && ym < seek.offsetHeight/media.offsetHeight && xm > 0 && xm < 1 && !mouse_down && type == 'video') {	// seek thumbnail
+      seek_active = media.duration * xm
       seek.style.opacity = 1
-      if (xp < 0.98) {seek.currentTime = seek_active}}
+      seek.style.left = xpos - seek.offsetWidth/2 + 'px'
+      seek.style.top = rect.top + 'px'
+      if (xm < 0.98) {seek.currentTime = seek_active}}
     else {seek_active = false; seek.style.opacity = 0}}
+
+
+  function positionMedia() {
+    if (screenLeft) {x=0; y=0; Xoff=screenLeft; Yoff=outerHeight-innerHeight} else {x=Xoff; y=Yoff}	// fullscreen
+    media.style.marginLeft = x+'px'; media.style.marginTop = y+'px'
+    seekbar.style.marginLeft = x+'px'; seekbar.style.marginTop = y+'px'
+    cap.style.marginLeft = x+'px'; cap.style.marginTop = y+'px'
+    seekbar.style.left = mediaX - media.offsetWidth*scaleX/2 + "px"
+    seekbar.style.top = 3 + mediaY + media.offsetHeight*scaleY/2 + "px"
+    seekbar.style.width = scaleX * media.offsetWidth * media.currentTime / media.duration + "px"
+    cap.style.left = mediaX - media.offsetWidth*scaleX/2 + "px"
+    cap.style.top = mediaY + media.offsetHeight*scaleY/2 + 10 + "px"
+    media.style.top = mediaY - media.offsetHeight/2 + "px"
+    media.style.left = mediaX - media.offsetWidth/2 + "px"
+    media.style.transform = "scale("+scaleX+","+scaleY+")"
+    if (type == 'video' || type == 'audio') {
+      seekbar.style.display = 'block'
+      if (yw < 0.9 && (xw < 0.1 || xm < 0)) {seekbar.style.borderBottom='6px solid rgba(250, 128, 114, 0.7)'}
+      else {seekbar.style.borderBottom='1px solid rgba(250, 128, 114, 0.5)'}}
+    else {seekbar.style.display = 'none'}}
 
 
   function mouseDown(e) {
@@ -324,13 +347,13 @@
     Xref = e.clientX
     Yref = e.clientY
     setTimeout(function() {if (mouse_down && !gesture) {long_click=true; if(type) {media_ended()}}},280)
-    if (seek_active) {media.currentTime = seek_active}}
+    if (seek_active) {media.currentTime=seek_active; seek.style.opacity=0; media.play()}}
 
 
   function mouseUp(e) {
     togglePause(e)
     mouse_down = false 
-    setTimeout(function() {gesture=false; long_middle=false},50)
+    setTimeout(function() {gesture=false; long_click=false; long_middle=false},50)
     clearTimeout(MClick)}
 
 
@@ -339,7 +362,7 @@
     if (e.key == 'Enter' && inputbox.value) {messages = messages+'#Search#'+inputbox.value+'##'; flag = true}
     if (e.key == 'Pause' || e.key == 'Enter') {				// Pause is mouse Back button
       var top = document.body.getBoundingClientRect().top
-      if (!type && top < 0) {scroll(0,0); return}			// scroll to top of htm page
+      if (!type && top < -90) {scroll(0,0); return}			// scroll to top of htm page
       if (type) {close_media(); flag = true}				// media was playing, don't reset page
       if (hist) {messages = messages+'#History##'+hist+'#'; hist=''}	// add to media history list
       if (messages) {stat.href=messages; messages=''; stat.click()}	// send messages to inca.exe
@@ -348,7 +371,7 @@
 
   function togglePause(e) {
     if (!mouse_down || gesture || seek_active || over_cap || !type) {return}
-    if (ypos < 0.1 && xpos > 0.3) {return}				// over nav buttons
+    if (yw > 0.9 && xw > 0.3) {return}				// over nav buttons
     if (type == "thumb") {playMedia('Thumb')}
     if (long_click) {return}
     else if (media.paused) {
@@ -383,18 +406,6 @@
       el.style.border = "0.1px solid lightsalmon"
       if (!x.match("," + i + ",")) {selected = selected + i + ","}
       inputbox.value = document.getElementById("title" + i).innerHTML}}
-
-
-  function positionMedia() {
-    seekbar.style.left = mediaX - (scaleX*media.offsetWidth / 2) + "px"
-    if (type == "video") {
-      seekbar.style.display = 'block'
-      if (ypos > 0.2 && xpos < 0.1) {seekbar.style.top = window.innerHeight - 12 + 'px'}
-      else {seekbar.style.top = window.innerHeight - 3 + 'px'}}
-    else {seekbar.style.display = 'none'}
-    media.style.top = mediaY - (media.offsetHeight / 2) + "px"
-    media.style.left = mediaX - (media.offsetWidth / 2) + "px"
-    media.style.transform = "scale("+scaleX+","+scaleY+")"}
 
 
   function filt() {							// eg 30 minutes, 2 months, alpha 'A'
@@ -436,7 +447,8 @@
       if (selected || q == "New") {q = "<span style='color:lightsalmon'</span>" + q}
       if (count > 0 && count < 27) {
         htm = htm + '<a href=#Path##' + selected + '#' + x.replace(/ /g, "%20") + '>' + q + '</a>'}}
-    if (id) {panel.innerHTML = "<span style=\'grid-row-start:1;grid-row-end:3;color:red;font-size:2em\'>"+id+"</span>"+htm}
+    if (id!='null') {panel.innerHTML = "<a href='#Orphan#"+id+"##' style='grid-row-start:1;grid-row-end:3;color:red;font-size:2em'>"+id+"</a>"+htm}
+
     release()}
 
 
@@ -477,8 +489,6 @@
   function Captions() {
     if (!time) {time = '0.0'}
     var ptr = cap_list.indexOf('|'+ time + '|')
-    cap.style.top = mediaY + (scaleY*media.offsetHeight/2) + 10 + "px"	// caption position
-    cap.style.left = mediaX - (scaleX*media.offsetWidth / 2) + "px"
     if (ptr < 1) {ptr = cap_list.indexOf('|'+ time - 0.1 + '|')}
     if ((ptr > 0 && cap_time != time) || type == 'image') {
       cap_time = time

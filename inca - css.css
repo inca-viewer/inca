@@ -70,7 +70,19 @@
 .player {
   position:absolute;
   user-select:none;
-  border-radius:2%;}
+  border-radius:2%}
+
+.seekbar {
+  position:absolute;
+  border-radius:6px;
+  transition: 0.2s}
+
+.seek {
+  position:absolute;
+  user-select:none;
+  border-radius:6%;
+  max-width:180px;
+  max-height:140px}
 
 .thumbs {
   display:inline-block;
@@ -98,17 +110,6 @@
   border-radius:5%;
   font-size:1.4em}
 
-.seekbar {
-  position:absolute;
-  border-bottom:20px solid rgba(250, 128, 114, 0.3)}
-
-.seek {
-  position:absolute;
-  user-select:none;
-  border-radius:9%;
-  max-width:15em;
-  max-height:12em}
-
 .modal {
   display:flex;
   opacity:0;
@@ -130,7 +131,7 @@
   height:10%;
   position:fixed;
   text-align:right;
-  top:0;
+  bottom:0;
   left:24px;
   transition:0.3s}
 

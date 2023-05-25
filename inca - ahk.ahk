@@ -53,8 +53,8 @@
 	Global filter := 0		; secondary search filter eg. date, duration, Alpha letter
         Global click			; mouse click type
         Global timer			; click down timer
-        Global view := 10		; thumb view (em size)
-        Global last_view := 10
+        Global view := 9		; thumb view (em size)
+        Global last_view := 0
         Global wheel_count := 0
         Global vol_ref := 2
         Global wheel
@@ -233,8 +233,6 @@
         send, f
         }
       return
-
-
 
 
     MouseDown()
@@ -449,17 +447,29 @@
                 }
             return
             }
-        if (command == "EditCap")						; open in notepad if caption
+        if (command == "EditCap")					; open in notepad if caption
             {
             IfExist, %inca%\cache\captions\%value%.srt
               run, %inca%\cache\captions\%value%.srt
             }
         if (command == "Orphan")					; open in notepad if playlist
             {
-            IfExist, %inca%\slides\%value%.m3u
-              run, %inca%\slides\%value%.m3u
-            else IfExist, %inca%\music\%value%.m3u
-              run, %inca%\music\%value%.m3u
+            if !timer
+              {
+              if playlist
+                {
+                IfExist, %inca%\slides\%value%.m3u
+                  run, %inca%\slides\%value%.m3u
+                else IfExist, %inca%\music\%value%.m3u
+                  run, %inca%\music\%value%.m3u
+                else IfExist, %inca%\%value%\
+                  run, %inca%\%value%\
+                }
+              else IfExist, %path%
+                run, %path%
+              }
+            else IfExist, %inca%\%value%\
+              run, %inca%\%value%\
             else reload := 1
             }
         if (command == "Join")
@@ -813,7 +823,7 @@
 
 <div id='myRibbon' class='ribbon2' style='font-size:1em'>`r`n<a onclick="selectAll()">Select</a>`r`n<a id='myDelete' onmouseover='del()'>Delete</a>`r`n<a id='myRename' onmouseover='rename()'>Rename</a>`r`n<a href='#Reverse###' %w%>Reverse</a>`r`n<a href='#Recurse###' %x%>Recurse</a>`r`n<a href='#Images###' %y%>Images</a>`r`n<a href='#Videos###' %z%>Videos</a>`r`n<a href='#Join###'>Join</a>`r`n<a href='#Settings###'>Menu</a></div>`r`n`r`n<div style='display:flex'>`r`n<input id='myInput' class='searchbox' type='search' value='%search_term%'>`r`n<a class='searchbox' onmouseover="this.href='#SearchAdd#'+inputbox.value+'##'" style='width:4`%; border-radius:0 1em 1em 0'>+</a></div>`r`n`r`n
 
-<div style='display:flex; margin-left:1em'>`r`n<a href=#Thumbs#%view%## id="Thumbs" class='ribbon' style='width:12`%' onwheel="wheelEvents(event, id, this)" onmouseover="media.style.opacity=1" onmouseout="if(!mouse_down){media.style.opacity=null}">Thumbs</a>`r`n<a href="#Orphan#%folder%##" class='ribbon' style='color:lightsalmon; font-size:1.7em; width:8em; margin-bottom:0.3em'>%title_s%</a>`r`n<div class='ribbon' style='color:lightsalmon; width:5em'>%list_size%</div>`r`n`r`n<a href='#%sort%#%sort%#' id='mySort' class='ribbon' onwheel="wheelEvents(event, id, this)">%sort%</a>`r`n<a id='myFilter' class='ribbon' onwheel="wheelEvents(event, id, this)">All</a>`r`n<a href="%title%.htm#Page" id="myPage" class='ribbon' style='width:15`%' onwheel="wheelEvents(event, id, this)">%pg%</a></div>`r`n`r`n<div id="myModal" class="modal" onwheel="wheelEvents(event, id, this)">`r`n<div><video id="myPlayer" class="player" type="video/mp4"></video>`r`n<textarea id="myCap" class="caption" onmouseenter="over_cap=true" onmouseleave="over_cap=false"></textarea>`r`n<span id="mySeekBar" class="seekbar"></span>`r`n<span><video id='mySeek' class='seek' type="video/mp4"></video></span>`r`n`r`n<span id="mySidenav" onmouseover="openNav()" onmouseleave="nav.style.opacity=0" class="sidenav">`r`n<a id="myStatus" style='font-size:4em; padding:0; width:15`%' onwheel="wheelEvents(event, id, this)"></a>`r`n<a id="mySpeed" onmouseover='stat.innerHTML=Math.round(media.playbackRate*100)' onwheel="wheelEvents(event, id, this)">Speed</a>`r`n<a id="mySkinny" onmouseover='stat.innerHTML=Math.round(newSkinny*100)' onwheel="wheelEvents(event, id, this)">Thin</a>`r`n<a id="myNext" onmouseover='stat.innerHTML=index' onclick='nextCaption()'>Next</a>`r`n<a id='myLoop' onclick="loop()">Loop</a>`r`n<a id='myMute' onclick="mute()">Mute</a>`r`n<a id="myFav">Fav</a>`r`n<a id="myCapnav" onclick="editCap()">Cap</a>`r`n<a onclick="cue = Math.round(media.currentTime*10)/10">Cue</a>`r`n<a id="myMp4">mp4</a>`r`n<a id="myMp3">mp3</a></span></div></div>`r`n`r`n
+<div style='display:flex; margin-left:1em'>`r`n<a href=#Thumbs#%view%## id="Thumbs" class='ribbon' style='width:12`%' onwheel="wheelEvents(event, id, this)">Thumbs</a>`r`n<a href="#Orphan#%folder%##" class='ribbon' style='color:lightsalmon; font-size:1.7em; width:8em; margin-bottom:0.3em'>%title_s%</a>`r`n<div class='ribbon' style='color:lightsalmon; width:5em'>%list_size%</div>`r`n`r`n<a href='#%sort%#%sort%#' id='mySort' class='ribbon' onwheel="wheelEvents(event, id, this)">%sort%</a>`r`n<a id='myFilter' class='ribbon' onwheel="wheelEvents(event, id, this)">All</a>`r`n<a href="%title%.htm#Page" id="myPage" class='ribbon' style='width:15`%' onwheel="wheelEvents(event, id, this)">%pg%</a></div>`r`n`r`n<div id="myModal" class="modal" onwheel="wheelEvents(event, id, this)">`r`n<div><video id="myPlayer" class="player" type="video/mp4"></video>`r`n<span id="mySeekBar" class='seekbar'></span>`r`n<textarea id="myCap" class="caption" onmouseenter="over_cap=true" onmouseleave="over_cap=false"></textarea>`r`n<span><video id='mySeek' class='seek' type="video/mp4"></video></span>`r`n`r`n<span id="mySidenav" onmouseover="openNav()" onmouseleave="nav.style.opacity=0" class="sidenav">`r`n<a id="myStatus" style='font-size:4em; padding:0; width:15`%' onmouseover='stat.innerHTML=Math.round(media.playbackRate*100)' onwheel="wheelEvents(event, id, this)"></a>`r`n<a id="mySpeed" onmouseover='stat.innerHTML=Math.round(media.playbackRate*100)' onwheel="wheelEvents(event, id, this)">Speed</a>`r`n<a id="mySkinny" onmouseover='stat.innerHTML=Math.round(newSkinny*100)' onwheel="wheelEvents(event, id, this)">Thin</a>`r`n<a id="myNext" onmouseover='stat.innerHTML=index' onclick='nextCaption()'>Next</a>`r`n<a id='myLoop' onclick="loop()">Loop</a>`r`n<a id='myMute' onclick="mute()">Mute</a>`r`n<a id="myFav">Fav</a>`r`n<a id="myCapnav" onclick="editCap()">Cap</a>`r`n<a onclick="cue = Math.round(media.currentTime*10)/10">Cue</a>`r`n<a id="myMp4">mp4</a>`r`n<a id="myMp3">mp3</a></span></div></div>`r`n`r`n
         FileDelete, %inca%\cache\html\%folder%.htm
         html = %header_html%%style%%panel_html%%title_html%%html%</div>`r`n
         StringReplace, html, html, \, /, All
@@ -1035,6 +1045,8 @@ caption := x
             array := StrSplit(array,">")
             view := array.1
             last_view := array.2
+            if (!view && view == last_view)
+              view := 10
             page := array.3
             filter := array.4
             sort := array.5
@@ -1290,10 +1302,11 @@ caption := x
         gui, settings:add, text, x165 yp+23, folders to index
         gui, settings:add, edit, x160 yp+13 h18 w500 vindex_folders, %index_folders%
         gui, settings:add, button, x160 y480 w60, Source
-        gui, settings:add, button, x240 y480 w60, Compile
-        gui, settings:add, button, x320 y480 w60, Help
-        gui, settings:add, button, x400 y480 w60, Cancel
-        gui, settings:add, button, x480 y480 w60 default, Save
+        gui, settings:add, button, x240 y480 w60, Java
+        gui, settings:add, button, x320 y480 w60, Compile
+        gui, settings:add, button, x400 y480 w60, Help
+        gui, settings:add, button, x480 y480 w60, Cancel
+        gui, settings:add, button, x560 y480 w60 default, Save
         gui, settings:show
         send, +{Tab}
         }
@@ -1306,6 +1319,10 @@ caption := x
         settingsButtonSource:
         WinClose
         run, notepad %inca%\inca - ahk.ahk
+        return
+
+        settingsButtonJava:
+        WinClose
         run, notepad %inca%\inca - js.js
         return
 
