@@ -1,8 +1,6 @@
 <script>
 
 // caps punctuation issues
-// ctrl shift i problem
-// poster aspect issues
 // random page + start times
 
 
@@ -85,12 +83,12 @@
   function timedEvents() {						// every ~84mS while media playing
     time = Math.round(10*media.currentTime)/10
     if ((t=Math.round(time%60))<10) {t=':0'+t} else {t=':'+t}		// convert seconds to MMM:SS format
-    if (media.duration) {interval = Math.ceil(10*media.duration/40)/10}
+    if (media.duration) {interval = Math.ceil(10*media.duration/60)/10}
     if (yw > 0.1) {interval = Math.ceil(interval *2* (0.9-yw))}		// seek interval changes with yw
     if (media.paused == true) {interval = Math.round(10*interval/20)/10}
     if (yw > 0.9 || type=='video' && (xw < 0.1||xm < 0)) {nav.style.opacity=0.6} else {nav.style.opacity=0}
     if (yw < 0.9 || xw > 0.37) {stat.innerHTML = Math.round(time/60)+t}
-    if (yw < 0.9 && yw > 0.5 && xw < 0.1) {stat.innerHTML = interval}
+    if (yw < 0.9 && xw < 0.1) {stat.innerHTML = interval}
     if (sound == 'yes' && media.volume <= 0.8) {media.volume += 0.2}
     if (sound == 'no' && media.volume >= 0.2) {media.volume -= 0.2}
     positionMedia()
@@ -236,7 +234,7 @@
       if (wheelDown) {thumb_size += thumb_size/40}
       else {thumb_size -= thumb_size/40}
       thumb_size = Math.round(10*thumb_size)/10
-      if (thumb_size < 4) {thumb_size = 4}
+      if (thumb_size < 4) {thumb_size = 9}
       document.getElementById(id).href = '#Thumbs#'+thumb_size+'##'
       for (i=1; i<41 ;i++) {
         if (el = document.getElementById("thumb" + i)) {
@@ -426,6 +424,7 @@
   function spool(e, id, input, to, so, fi, pa, ps, ts, rt) {		// spool lists into top htm panel
     if (mouse_down) {return}						// in case sliding thumbs over panel
     if (input) {ini=input; toggles=to; sort=so; filter=fi; page=pa; pages=ps; thumb_size=ts; rate=rt} // from inca.exe
+    if (!last_id) {last_id = 'fol'}
     if (id) {last_id = id} else {id = last_id}
     sessionStorage.setItem("last_id",last_id)
     if (!e.deltaY) {pos = 0}
@@ -449,8 +448,7 @@
       if (selected || q == "New") {q = "<span style='color:lightsalmon'</span>" + q}
       if (count > 0 && count < 27) {
         htm = htm + '<a href=#Path##' + selected + '#' + x.replace(/ /g, "%20") + '>' + q + '</a>'}}
-    if (id!='null') {panel.innerHTML = "<a href='#Orphan#"+id+"##' style='grid-row-start:1;grid-row-end:3;color:red;font-size:2em'>"+id+"</a>"+htm}
-
+    if (id) {panel.innerHTML = "<a href='#Orphan#"+id+"##' style='grid-row-start:1;grid-row-end:3;color:red;font-size:2em'>"+id+"</a>"+htm}
     release()}
 
 

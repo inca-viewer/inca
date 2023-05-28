@@ -6,7 +6,7 @@
 	#NoEnv
 	#UseHook, On
 	SetWinDelay, 0
-	SetKeyDelay, 0
+	SetKeyDelay, 00
 	SetBatchLines -1
 	SetTitleMatchMode, 2
 	GroupAdd, Browsers, Google Chrome
@@ -90,7 +90,6 @@
         CreateList(0)				; construct web page
         }
       return					; wait for mouse/key events
-
 
 
     Esc up::
@@ -227,10 +226,10 @@
         }
       else
         {
-        title =
-        if !WinGetTitle, title, YouTube
-          send, {f11}				; fullscreen
-        send, f
+        title := ReadAddressBar(0)
+        if (InStr(title, "youtube.com/") || InStr(title, "bitchute.com/"))
+          send, f
+        else send, {f11}			; fullscreen
         }
       return
 
@@ -364,7 +363,7 @@
         if !inca_tab
           return
         send, {Lbutton up}
-        input := ReadAddressBar(1)
+        input := ReadAddressBar(0)
         input := StrReplace(input, "/", "\")
         if !InStr(input, "file:\\\")
           return
@@ -395,7 +394,7 @@
         }
 
 
-    ReadAddressBar(reset)
+    ReadAddressBar(new_html)
         {
         Critical
         clip := clipboard
@@ -407,14 +406,16 @@
         sleep 24
         input := clipboard
         clipboard := clip
-        if reset
-            {
-            if InStr(input, "#")
-                send, !{Left}						; reset location bar to last address
-            send, +{F6}							; focus back to page
-            if (browser == "Profile 1 - Microsoft")
-                send, +{F6}
-            }
+        if new_html
+          sendraw, %new_html%%A_Space%`n
+        else 
+          {
+          if InStr(input, "#")
+            send, !{Left}						; reset location bar to last address
+          send, +{F6}							; focus back to page
+          if (browser == "Profile 1 - Microsoft")
+            send, +{F6}
+          }
         Pos := 1
         While Pos := RegExMatch(input, "i)(%[\da-f]{2})+", Code, Pos)	; convert url to utf-8
 	    {
@@ -524,7 +525,7 @@
             if (InStr(path, "slides") && !search_term)
                 FileAppend, %src%|%value%`r`n, %path%%folder%.m3u, UTF-8
             else FileAppend, %src%|%value%`r`n, %inca%\slides\new.m3u, UTF-8
-            Runwait, %inca%\apps\ffmpeg.exe -ss %value% -i "%src%" -y -vf scale=480:-2 -vframes 1 "%inca%\cache\posters\%media%%A_Space%%value%.jpg",, Hide
+            Runwait, %inca%\apps\ffmpeg.exe -ss %value% -i "%src%" -y -vf scale=480:480/dar -vframes 1 "%inca%\cache\posters\%media%%A_Space%%value%.jpg",, Hide
             }
         if (command == "Skinny")
             {
@@ -548,7 +549,7 @@
         if (command == "Delete")
             {
             if (InStr(path, "\inca\slides\") || InStr(path, "\inca\music\"))
-              DeleteEntries()
+              DeleteEntries(1)
             else Loop, Parse, selected, `/
               {
               list_id := A_LoopField
@@ -754,13 +755,11 @@
         }
 
 
-
     RenderPage()							; construct web page from media list
         {
         Critical							; stop key interrupts
         if !(folder && path)
             return
-        last := src
         title := folder
         title_s := SubStr(title, 1, 16)
         speed := Setting("Default Speed")
@@ -830,7 +829,6 @@
         FileAppend, %html%%java%</body>`r`n</html>`r`n, %inca%\cache\html\%folder%.htm, UTF-8
         LoadHtml()
         PopUp("",0,0,0)
-        DetectMedia(last)						; restore media parameters
         }
 
 
@@ -1020,11 +1018,7 @@ caption := x
             run, %new_html%						; open a new web tab
         else if (folder == previous_tab)				; just refresh existing tab
             send, {F5}
-        else	
-            {								; re-load tab
-            ReadAddressBar(0)
-            sendraw, %new_html%%A_Space%`n
-            }
+        else ReadAddressBar(new_html)					; re-load tab
         }
 
 
@@ -1065,7 +1059,6 @@ caption := x
             return 1
             }
         }
-
 
 
     Time(in)
@@ -1139,11 +1132,11 @@ caption := x
             }
         if timer
           if (InStr(address, "inca\slides") || InStr(address, "inca\music"))
-            DeleteEntries()
+            DeleteEntries(0)
         }  
 
 
-    DeleteEntries()
+    DeleteEntries(trash)
         {
         plist = %path%%folder%.m3u
         IfNotExist, %plist%
@@ -1159,13 +1152,12 @@ caption := x
           y = %src%`r`n
           str := StrReplace(str, x,,,1)					; slides with start time
           str := StrReplace(str, y,,,1)					; music with no start time
-          if (folder != "Trash" && folder != "History")
+          if (trash && folder != "Trash" && folder != "History")
            if InStr(path, "\inca\")
             FileAppend, %x%, %inca%\slides\Trash.m3u, UTF-8
           }
         FileAppend, %str%, %plist%, UTF-8
         }
-
 
 
     RenameFiles(new_name)
@@ -1459,7 +1451,6 @@ caption := x
         }
 
 
-
     LoadSettings()
         {
         Global
@@ -1545,7 +1536,6 @@ caption := x
               create = 1
             if create
                 {
-
                 GuiControl, Indexer:, GuiInd, indexing - %filen%
                 FileCreateDir, %inca%\cache\temp1
                 t := 0
@@ -1558,14 +1548,11 @@ caption := x
                     {
                     y := Round(A_Index / 5)
                     if !Mod(A_Index,5)
-                        runwait, %inca%\apps\ffmpeg.exe -ss %t% -i "%source%" -y -vf scale=480:-2 -vframes 1 "%inca%\cache\temp1\%y%.jpg",, Hide
+                        runwait, %inca%\apps\ffmpeg.exe -ss %t% -i "%source%" -y -vf scale=480:480/dar -vframes 1 "%inca%\cache\temp1\%y%.jpg",, Hide
                     t += (dur / 200)
-;                    if (dur < 20 && y >= 5)
-;                        break
                     }
                 FileCopy, %inca%\cache\temp1\1.jpg, %inca%\cache\posters\%filen%.jpg, 1
-;                if (dur >= 20)
-IfNotExist, %inca%\cache\thumbs\%filen%.jpg
+                IfNotExist, %inca%\cache\thumbs\%filen%.jpg
                     Runwait %inca%\apps\ffmpeg -i %inca%\cache\temp1\`%d.jpg -filter_complex "tile=6x6" -y "%inca%\cache\thumbs\%filen%.jpg",, Hide
                 }
             }
@@ -1573,5 +1560,4 @@ IfNotExist, %inca%\cache\thumbs\%filen%.jpg
         GuiControl, Indexer:, GuiInd
         SetTimer, indexer, 60000, -2
         return
-
 
