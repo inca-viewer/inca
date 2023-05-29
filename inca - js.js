@@ -2,6 +2,16 @@
 
 // random page + start times
 // cap intuitive editing
+// idea of removing modal, everything in htm
+// consider move to mpv only for fullscreen due to location bar access
+// if exit thumb from bottom, keep playing
+// thumbsheet pops up from thumb larger size
+// wheel works on thumb once clicked or pulled from htm
+// magnify thumb from cursor ref. not edge
+// back click over fixed thumb closes first, not whole page reset
+// save popout collections
+// show seekbar on thumb onmouseover
+
 
 
   var modal = document.getElementById('myModal')			// media player window
@@ -11,7 +21,6 @@
   var panel = document.getElementById('myPanel')			// list of folders, playlists etc
   var nav = document.getElementById('mySidenav')			// nav buttons over htm tab
   var stat = document.getElementById('myStatus')			// also href messages to inca.exe
-  var speed = document.getElementById('mySpeed')
   var thin = document.getElementById('mySkinny')			// media width
   var cap = document.getElementById('myCap')				// caption textarea element
   var capnav = document.getElementById('myCapnav')			// caption save button
@@ -82,7 +91,6 @@
 
   function timedEvents() {						// every ~84mS while media playing
     time = Math.round(10*media.currentTime)/10
-    if ((t=Math.round(time%60))<10) {t=':0'+t} else {t=':'+t}		// convert seconds to MMM:SS format
     if (media.duration) {interval = Math.ceil(10*media.duration/60)/10}
     if (media.paused) {interval = 0.04}
     mySkinny.innerHTML = Math.round(100*newSkinny)/100
@@ -244,7 +252,7 @@
       if (newSkinny > 0.998 && newSkinny < 1.002) {block = 999}
       else {block = 24}
       media.style.transform = "scale("+scaleX+","+scaleY+")"}
-    else if (id=='mySpeed' || id=='myStatus') {				// speed
+    else if (id=='mySidenav') {						// speed
       if (wheelDown) {x = -0.01}
       else {x = 0.01}
       if (type != 'image' && (media.playbackRate < 1 || x < 0)) {
@@ -303,13 +311,18 @@
     if (type && modal.style.cursor != "crosshair") {
       modal.style.cursor = "crosshair"
       setTimeout(function() {modal.style.cursor="none"},244)}
-    if (yw > 0.9 && xm > 0 && xm < 1 && type == 'video') {
+    if (ym > 0.9 && ym < 1 && xm > 0 && xm < 1 && type == 'video') {
       seek_active = media.duration * xm
       seek.style.opacity = 1
       seek.style.left = xpos - seek.offsetWidth/2 + 'px'		// seek thumbnail
-      seek.style.top = rect.bottom - seek.offsetHeight + 'px'
+      seek.style.top = rect.bottom - seek.offsetHeight - media.offsetHeight*scaleY/10 + 'px'
       seek.currentTime = seek_active}
-    else {seek_active = 0; seek.style.opacity = 0}}
+    else {seek_active = 0; seek.style.opacity = 0}
+    if (rect.right > innerWidth -100) {nav.style.top = "100px"; nav.style.left = innerWidth -100 + "px"}
+    else {nav.style.top = rect.top + "px"; nav.style.left = rect.right + 4 + "px"}
+    if (scaleX < 1.2) {x = scaleX} else {x = 1}
+    nav.style.transform = "scale("+x+","+x+")"
+    nav.style.transformOrigin = "0 0"}
 
 
   function positionMedia() {
