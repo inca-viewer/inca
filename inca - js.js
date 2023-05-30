@@ -4,14 +4,11 @@
 // cap intuitive editing
 // idea of removing modal, everything in htm
 // consider move to mpv only for fullscreen due to location bar access
-// if exit thumb from bottom, keep playing
 // thumbsheet pops up from thumb larger size
 // wheel works on thumb once clicked or pulled from htm
 // magnify thumb from cursor ref. not edge
 // back click over fixed thumb closes first, not whole page reset
 // save popout collections
-// show seekbar on thumb onmouseover
-
 
 
   var modal = document.getElementById('myModal')			// media player window
@@ -24,7 +21,7 @@
   var thin = document.getElementById('mySkinny')			// media width
   var cap = document.getElementById('myCap')				// caption textarea element
   var capnav = document.getElementById('myCapnav')			// caption save button
-  var seekbar = document.getElementById('mySeekBar')
+  var seekbar = document.getElementById('mySeekBar')			// player seekbar
   var seek = document.getElementById('mySeek')				// seek thumb under video
   var Loop = document.getElementById('myLoop')				// loop video or next
   var Mute = document.getElementById('myMute')				// loop video or next
@@ -67,7 +64,7 @@
   var hist = ''
   var cue = 0								// start time for mp3/4 conversion
   var Zindex = 1
-  var xpos								// cursor px coordinate
+  var xpos								// cursor coordinate in pixels
   var ypos
   var xw = 0.5								// cursor over window ratio
   var yw = 0.5
@@ -104,20 +101,20 @@
   function overThumb(e, id, st, sx) {					// mouse over thumbnail in browser tab
     if (mouse_down) {return}						// in case thumb slides over another
     index = id
-    start = 0
+    start = st
     scaleY = 1
     scaleX = sx
     over_thumb = true
     var sel = document.getElementById('sel' + id)
     if (selected) {sel.href = '#MovePos#' + id + '#' + selected + '#'}	// preload href for thumb move position
     media = document.getElementById('media' + id)
-    var rect = media.getBoundingClientRect()
-    var x = (e.clientX - rect.left) / (media.offsetWidth)
-    var y = (e.clientY - rect.top) / (media.offsetHeight)
-    if (media.duration && y > 0.9) {media.currentTime = media.duration * x; start = media.duration * x}
-    else if (media.currentTime <= st || y < 0.1) {media.currentTime = st +0.1}
+    if (media.duration && ym > 0.9) {media.currentTime = media.duration * xm; start = media.duration * xm}
+    else if (media.currentTime <= st || ym < 0.1) {media.currentTime = st + 0.1}
+
     media.playbackRate = 0.74
     media.play()}
+
+  function exitThumb(e, el) {over_thumb=false; if (ym < 0.9 || media.style.position!='fixed') {el.pause()}}
 
 
   function playMedia(e) {
@@ -239,7 +236,7 @@
       if (wheelDown) {thumb_size += thumb_size/40}
       else {thumb_size -= thumb_size/40}
       thumb_size = Math.round(10*thumb_size)/10
-      if (thumb_size < 4) {thumb_size = 9}
+      if (thumb_size < 4) {thumb_size = 4}
       document.getElementById(id).href = '#Thumbs#'+thumb_size+'##'
       for (i=1; i<41 ;i++) {
         if (el = document.getElementById("thumb" + i)) {
@@ -252,15 +249,15 @@
       if (newSkinny > 0.998 && newSkinny < 1.002) {block = 999}
       else {block = 24}
       media.style.transform = "scale("+scaleX+","+scaleY+")"}
-    else if (id=='mySidenav') {						// speed
+    else if (id=='myStatus') {						// speed
       if (wheelDown) {x = -0.01}
       else {x = 0.01}
       if (type != 'image' && (media.playbackRate < 1 || x < 0)) {
         media.playbackRate += x}}
-    else if ((xw > 0.9 || xm > 1) && (type=='video' || type=='audio')) { // seek
+    else if (type && type != 'image' && (xm>1 || xw>0.9)) {		 // seek
       if (wheelDown) {media.currentTime += interval}
       else  {media.currentTime -= interval}}
-    else if (id == 'myModal') {						// magnify
+    else if (type) {							// magnify
       if (wheelDown) {scaleX *= 1.015; scaleY *= 1.015}
       else {scaleX *= 0.98; scaleY *= 0.98}
       positionMedia()
@@ -318,11 +315,13 @@
       seek.style.top = rect.bottom - seek.offsetHeight - media.offsetHeight*scaleY/10 + 'px'
       seek.currentTime = seek_active}
     else {seek_active = 0; seek.style.opacity = 0}
-    if (rect.right > innerWidth -100) {nav.style.top = "100px"; nav.style.left = innerWidth -100 + "px"}
-    else {nav.style.top = rect.top + "px"; nav.style.left = rect.right + 4 + "px"}
-    if (scaleX < 1.2) {x = scaleX} else {x = 1}
-    nav.style.transform = "scale("+x+","+x+")"
-    nav.style.transformOrigin = "0 0"}
+    if (scaleY < 1.2) {y = scaleY} else {y = 1}
+    nav.style.transform = "scale("+y+","+y+")"
+    nav.style.transformOrigin = "0 0"
+    nav.style.left = rect.right + 4 + "px"
+    nav.style.bottom = y*(innerHeight-rect.bottom) + "px"
+    if (rect.right > innerWidth-100) {nav.style.left = innerWidth-100 + "px"}
+    if (rect.bottom > innerHeight) {nav.style.bottom = 0}}
 
 
   function positionMedia() {
@@ -332,6 +331,7 @@
     cap.style.marginLeft = x+'px'; cap.style.marginTop = y+'px'
     seekbar.style.left = mediaX - media.offsetWidth*scaleX/2 + "px"
     seekbar.style.top = 3 + mediaY + media.offsetHeight*scaleY/2 + "px"
+    if (3 + mediaY + media.offsetHeight*scaleY/2 > innerHeight) {seekbar.style.top = innerHeight - 6 + "px"}
     seekbar.style.width = scaleX * media.offsetWidth * media.currentTime / media.duration + "px"
     cap.style.left = mediaX - media.offsetWidth*scaleX/2 + "px"
     cap.style.top = mediaY + media.offsetHeight*scaleY/2 + 10 + "px"
@@ -340,7 +340,7 @@
     media.style.transform = "scale("+scaleX+","+scaleY+")"
     if (type == 'video' || type == 'audio') {
       seekbar.style.display = 'block'
-      if (xw > 0.9 || xm > 1) {seekbar.style.borderBottom='6px solid rgba(250, 128, 114, 0.7)'}
+      if (xm > 1 || xw > 0.9) {seekbar.style.borderBottom='6px solid rgba(250, 128, 114, 0.7)'}
       else {seekbar.style.borderBottom='1px solid rgba(250, 128, 114, 0.5)'}}
     else {seekbar.style.display = 'none'}}
 
@@ -469,8 +469,9 @@
     document.getElementById('myFav').href = '#Favorite#' + time + '#' + index + ',#'}
 
   function loop() {if (looping) {looping = false;Loop.style.color=null} else {looping = true;Loop.style.color='red'}}
+
   function selectAll() {for (i=1; i <= 600; i++) {select(i)}}
-  function exitThumb(el) {if(!mouse_down) {over_thumb = false}; if (media != player){el.pause()}}
+
   function rename() {release(); document.getElementById('myRename').href='#Rename#'+inputbox.value.replace(/ /g, "%20")+'#'+selected+'#'}
   function del() {release(); document.getElementById('myDelete').href='#Delete##'+selected+'#'}
 
