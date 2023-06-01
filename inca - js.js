@@ -1,14 +1,13 @@
 <script>
 
+// save popout collections
 // random page + start times
 // cap intuitive editing
 // idea of removing modal, everything in htm
 // consider move to mpv only for fullscreen due to location bar access
 // thumbsheet pops up from thumb larger size
-// wheel works on thumb once clicked or pulled from htm
-// magnify thumb from cursor ref. not edge
-// back click over fixed thumb closes first, not whole page reset
-// save popout collections
+// utf in subs finish
+
 
 
   var modal = document.getElementById('myModal')			// media player window
@@ -110,11 +109,12 @@
     media = document.getElementById('media' + id)
     if (media.duration && ym > 0.9) {media.currentTime = media.duration * xm; start = media.duration * xm}
     else if (media.currentTime <= st || ym < 0.1) {media.currentTime = st + 0.1}
-
     media.playbackRate = 0.74
     media.play()}
 
-  function exitThumb(e, el) {over_thumb=false; if (ym < 0.9 || media.style.position!='fixed') {el.pause()}}
+  function exitThumb(e, el) {
+    if (!mouse_down) {over_thumb=false}
+    if (ym < 0.9 || media.style.position!='fixed') {el.pause()}}
 
 
   function playMedia(e) {
@@ -238,7 +238,7 @@
       thumb_size = Math.round(10*thumb_size)/10
       if (thumb_size < 4) {thumb_size = 4}
       document.getElementById(id).href = '#Thumbs#'+thumb_size+'##'
-      for (i=1; i<41 ;i++) {
+      for (i=1; i<33 ;i++) {
         if (el = document.getElementById("thumb" + i)) {
           el.style.width = thumb_size + 'em'
           document.getElementById("media" + i).style.width = thumb_size + 'em'}}}
@@ -331,7 +331,7 @@
     cap.style.marginLeft = x+'px'; cap.style.marginTop = y+'px'
     seekbar.style.left = mediaX - media.offsetWidth*scaleX/2 + "px"
     seekbar.style.top = 3 + mediaY + media.offsetHeight*scaleY/2 + "px"
-    if (3 + mediaY + media.offsetHeight*scaleY/2 > innerHeight) {seekbar.style.top = innerHeight - 6 + "px"}
+    if (3 + mediaY + media.offsetHeight*scaleY/2 + y > innerHeight) {seekbar.style.top = innerHeight -6 -y + "px"}
     seekbar.style.width = scaleX * media.offsetWidth * media.currentTime / media.duration + "px"
     cap.style.left = mediaX - media.offsetWidth*scaleX/2 + "px"
     cap.style.top = mediaY + media.offsetHeight*scaleY/2 + 10 + "px"
@@ -450,7 +450,7 @@
       var y = x.split("/")
       var q = y.pop()
       count++
-      if (id=='subs' || id=='fol' || id=='fav') {q = y.pop()}
+      if (id=='fol' || id=='fav') {q = y.pop()}
       q = q.replace('.m3u', '').substring(0, 12)
       if (selected || q == "New") {q = "<span style='color:lightsalmon'</span>" + q}
       if (count > 0 && count < 27) {
