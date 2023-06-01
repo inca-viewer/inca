@@ -1,13 +1,13 @@
 <script>
 
+// need for speed
 // save popout collections
 // random page + start times
 // cap intuitive editing
 // idea of removing modal, everything in htm
 // consider move to mpv only for fullscreen due to location bar access
 // thumbsheet pops up from thumb larger size
-// utf in subs finish
-
+// F11 while video, dissapears after win/ toggle
 
 
   var modal = document.getElementById('myModal')			// media player window
@@ -79,7 +79,7 @@
   var Yref
 
   document.addEventListener('auxclick', playMedia)			// middle click
-  document.addEventListener('keydown', mouseBack)			// Back and Enter
+  document.addEventListener('keydown', keyDown)				// mouse Back and Enter
   document.addEventListener('mousedown', mouseDown)
   document.addEventListener('mouseup', mouseUp)
   document.addEventListener('mousemove', Gesture)
@@ -222,7 +222,8 @@
       var z = ['Duration','Date','Alpha','Size','Ext','Shuffle']
       sort = z[filter]
       el.href = '#'+sort+'#'+sort+'##'
-      el.innerHTML = sort}
+      el.innerHTML = sort
+      block = 200}
     else if (id == 'myFilter') {
       if (wheelDown) {filter++} else if (filter) {filter--}		// search filter
       filt()}
@@ -254,9 +255,10 @@
       else {x = 0.01}
       if (type != 'image' && (media.playbackRate < 1 || x < 0)) {
         media.playbackRate += x}}
-    else if (type && type != 'image' && (xm>1 || xw>0.9)) {		 // seek
+    else if (type && type != 'image' && xm>0 && xm<1 && (ym>0.9 && ym<1 || yw>0.9)) {	 // seek
       if (wheelDown) {media.currentTime += interval}
-      else  {media.currentTime -= interval}}
+      else  {media.currentTime -= interval}
+      seek.style.opacity = 0; seek_active = 0}
     else if (type) {							// magnify
       if (wheelDown) {scaleX *= 1.015; scaleY *= 1.015}
       else {scaleX *= 0.98; scaleY *= 0.98}
@@ -308,11 +310,12 @@
     if (type && modal.style.cursor != "crosshair") {
       modal.style.cursor = "crosshair"
       setTimeout(function() {modal.style.cursor="none"},244)}
-    if (ym > 0.9 && ym < 1 && xm > 0 && xm < 1 && type == 'video') {
+    if (xm>0 && xm<1 && (ym>0.9 && ym<1 || yw>0.9) && type == 'video') {
       seek_active = media.duration * xm
       seek.style.opacity = 1
       seek.style.left = xpos - seek.offsetWidth/2 + 'px'		// seek thumbnail
       seek.style.top = rect.bottom - seek.offsetHeight - media.offsetHeight*scaleY/10 + 'px'
+      if (yw>0.9) {seek.style.top = innerHeight -160 + "px"}
       seek.currentTime = seek_active}
     else {seek_active = 0; seek.style.opacity = 0}
     if (scaleY < 1.2) {y = scaleY} else {y = 1}
@@ -340,7 +343,7 @@
     media.style.transform = "scale("+scaleX+","+scaleY+")"
     if (type == 'video' || type == 'audio') {
       seekbar.style.display = 'block'
-      if (xm > 1 || xw > 0.9) {seekbar.style.borderBottom='6px solid rgba(250, 128, 114, 0.7)'}
+      if (xm>0 && xm<1 && (ym>0.9 && ym<1 || yw>0.9)) {seekbar.style.borderBottom='6px solid rgba(250, 128, 114, 0.7)'}
       else {seekbar.style.borderBottom='1px solid rgba(250, 128, 114, 0.5)'}}
     else {seekbar.style.display = 'none'}}
 
@@ -365,7 +368,7 @@
     clearTimeout(MTimer)}
 
 
-  function mouseBack(e) {
+  function keyDown(e) {
     var flag = false
     if (e.key == 'Enter' && inputbox.value) {messages = messages+'#Search#'+inputbox.value+'##'; flag = true}
     if (e.key == 'Pause' || e.key == 'Enter') {				// Pause is mouse Back button
