@@ -1,18 +1,23 @@
 <script>
 
-// need for speed
+// need for speed edging
 // save popout collections
 // random page + start times
 // cap intuitive editing
 // idea of removing modal, everything in htm
-// consider move to mpv only for fullscreen due to location bar access
-// thumbsheet pops up from thumb larger size
+// consider move to mpv only for fullscreen due to location bar access etc
 // F11 while video, dissapears after win/ toggle
+// start entry times on fixed thumbs
+// more intuitive mp3/4 conversions
+// select/delete folders
+// drop files onto back button
+
 
 
   var modal = document.getElementById('myModal')			// media player window
   var player = document.getElementById('myPlayer')
   var media = document.getElementById('media1')				// media element
+  var path = document.getElementById('myPath')
   var inputbox = document.getElementById('myInput')			// search/edit bar
   var panel = document.getElementById('myPanel')			// list of folders, playlists etc
   var nav = document.getElementById('mySidenav')			// nav buttons over htm tab
@@ -25,7 +30,7 @@
   var Loop = document.getElementById('myLoop')				// loop video or next
   var Mute = document.getElementById('myMute')				// loop video or next
   var sound = sessionStorage.getItem('sound')
-  var last_id = sessionStorage.getItem('last_id')			// last top panel menu eg 'slides'
+  var last_id = sessionStorage.getItem('last_id')			// last top panel menu eg 'music'
   var ini								// .ini folders, models, etc.
   var long_click = false
   var long_middle = false
@@ -43,7 +48,7 @@
   var rate = 1
   var page = 1
   var pages = 1
-  var filter = 1							// filter or sort 
+  var filt = 1								// filter or sort 
   var pos = 0								// top panel list pointer
   var type = ''								// audio, video, image, thumb, document
   var cap_list = ''							// full caption text file
@@ -87,7 +92,7 @@
 
   function timedEvents() {						// every ~84mS while media playing
     time = Math.round(10*media.currentTime)/10
-    if (media.duration) {interval = Math.ceil(10*media.duration/60)/10}
+    if (media.duration) {interval = Math.ceil(10*media.duration/100)/10}
     if (media.paused) {interval = 0.04}
     mySkinny.innerHTML = Math.round(100*newSkinny)/100
     stat.innerHTML = Math.round(media.playbackRate *100)
@@ -121,6 +126,7 @@
     if (e.button == 1) {e.preventDefault(); e='Mclick'}
     else if (e.button) {return}
     if (gesture) {return}
+    if (selected && path.href.slice(27).match('/inca/')) {return}	// moving thumb position within a playlist
     media.pause()							// pause browser tab thumb
     media = player							// media assigned to modal
     last_type = type
@@ -217,16 +223,16 @@
       el.href = '#Page#' + page + '##'
       el.innerHTML = 'Page '+page+' of '+pages}
     else if (id=='mySort') {						// sort filter
-      if (wheelDown) {filter++} else if (filter) {filter--}
-      if (filter > 5) {filter = 5}
+      if (wheelDown) {filt++} else if (filt) {filt--}
+      if (filt > 5) {filt = 5}
       var z = ['Duration','Date','Alpha','Size','Ext','Shuffle']
-      sort = z[filter]
+      sort = z[filt]
       el.href = '#'+sort+'#'+sort+'##'
       el.innerHTML = sort
       block = 200}
-    else if (id == 'myFilter') {
-      if (wheelDown) {filter++} else if (filter) {filter--}		// search filter
-      filt()}
+    else if (id == 'myFilt') {
+      if (wheelDown) {filt++} else if (filt) {filt--}			// search filter
+      filter()}
     else if (id == 'Fixed') {						// fixed thumb
       thumb_size = 1*media.style.width.slice(0,-2)
       if (wheelDown) {thumb_size += thumb_size/40}
@@ -255,10 +261,10 @@
       else {x = 0.01}
       if (type != 'image' && (media.playbackRate < 1 || x < 0)) {
         media.playbackRate += x}}
-    else if (type && type != 'image' && xm>0 && xm<1 && (ym>0.9 && ym<1 || yw>0.9)) {	 // seek
+    else if (type && type != 'image' && (ym>0.9 || yw>0.9)) {		 // seek
       if (wheelDown) {media.currentTime += interval}
       else  {media.currentTime -= interval}
-      seek.style.opacity = 0; seek_active = 0}
+seek.style.opacity = 0; seek_active = 0}
     else if (type) {							// magnify
       if (wheelDown) {scaleX *= 1.015; scaleY *= 1.015}
       else {scaleX *= 0.98; scaleY *= 0.98}
@@ -310,7 +316,7 @@
     if (type && modal.style.cursor != "crosshair") {
       modal.style.cursor = "crosshair"
       setTimeout(function() {modal.style.cursor="none"},244)}
-    if (xm>0 && xm<1 && (ym>0.9 && ym<1 || yw>0.9) && type == 'video') {
+    if (type == 'video' && xm>0 && xm<1 && (ym>0.9 && ym<1) || (ym<1 && yw>0.9)) {
       seek_active = media.duration * xm
       seek.style.opacity = 1
       seek.style.left = xpos - seek.offsetWidth/2 + 'px'		// seek thumbnail
@@ -343,7 +349,7 @@
     media.style.transform = "scale("+scaleX+","+scaleY+")"
     if (type == 'video' || type == 'audio') {
       seekbar.style.display = 'block'
-      if (xm>0 && xm<1 && (ym>0.9 && ym<1 || yw>0.9)) {seekbar.style.borderBottom='6px solid rgba(250, 128, 114, 0.7)'}
+      if (ym>0.9 || yw>0.9) {seekbar.style.borderBottom='6px solid rgba(250, 128, 114, 0.7)'}
       else {seekbar.style.borderBottom='1px solid rgba(250, 128, 114, 0.5)'}}
     else {seekbar.style.display = 'none'}}
 
@@ -358,7 +364,7 @@
     Xref = e.clientX
     Yref = e.clientY
     setTimeout(function() {if (mouse_down && !gesture) {long_click=true; if(type) {media_ended()}}},280)
-    if (seek_active) {media.currentTime=seek_active; media.play()}}
+    if (seek_active) {media.currentTime=seek_active}}
 
 
   function mouseUp(e) {
@@ -370,7 +376,7 @@
 
   function keyDown(e) {
     var flag = false
-    if (e.key == 'Enter' && inputbox.value) {messages = messages+'#Search#'+inputbox.value+'##'; flag = true}
+    if (e.key == 'Enter' && inputbox.value) {messages = messages+'#SearchBox#'+inputbox.value+'##'; flag = true}
     if (e.key == 'Pause' || e.key == 'Enter') {				// Pause is mouse Back button
       var top = document.body.getBoundingClientRect().top
       if (!type && top < -90) {scroll(0,0); return}			// scroll to top of htm page
@@ -382,7 +388,7 @@
 
   function togglePause(e) {
     if (!mouse_down||gesture||seek_active||over_cap||!type) {return}
-    if (yw > 0.9 && xw > 0.5) {return}			// over nav buttons
+    if (nav.matches(":hover")) {return}					// over nav buttons
     if (type == "thumb") {playMedia('Thumb')}
     if (long_click) {return}
     else if (media.paused) {media.play()} 
@@ -418,47 +424,48 @@
       inputbox.value = document.getElementById("title" + i).innerHTML}}
 
 
-  function filt() {							// eg 30 minutes, 2 months, alpha 'A'
-    var x = filter
-    if (sort == 'Alpha') {if (x > 25) {filter=25}; x = String.fromCharCode(filter + 65)}
+  function filter() {							// eg 30 minutes, 2 months, alpha 'A'
+    var x = filt
+    if (sort == 'Alpha') {if (x > 25) {filt=25}; x = String.fromCharCode(filt + 65)}
     if (sort == 'Size')  {x *= 10; units = " Mb"}
     if (sort == 'Date')  {units = " months"}
     if (sort == 'Duration') {units = " minutes"}
     if (!x) {x=''}
-    el = document.getElementById('myFilter')
-    el.href = '#Filter#' + filter + '##'
+    el = document.getElementById('myFilt')
+    el.href = '#Filt#' + filt + '##'
     el.innerHTML = x + ' ' + units
     return}
 
 
   function spool(e, id, input, to, so, fi, pa, ps, ts, rt) {		// spool lists into top htm panel
     if (mouse_down) {return}						// in case sliding thumbs over panel
-    if (input) {ini=input; toggles=to; sort=so; filter=fi; page=pa; pages=ps; thumb_size=ts; rate=rt} // from inca.exe
-    if (!last_id) {last_id = 'fol'}
+    if (id) {panel.style.opacity = 1}
+    if (input) {ini=input; toggles=to; sort=so; filt=fi; page=pa; pages=ps; thumb_size=ts; rate=rt} // from inca.exe
+    if (!last_id) {last_id = 'Folders'}
     if (id) {last_id = id} else {id = last_id}
     sessionStorage.setItem("last_id",last_id)
     if (!e.deltaY) {pos = 0}
     var count = -pos
     var htm = ''
-    filt()
+    filter()
     z = ini.split(id+'=').pop().split('||')				// slice section matching the id
     z = z[0].split('|')
-    if (id=='model' || id=='genre' || id=='studio') {			// alpha search
+    if (id == 'Search') {						// alpha search
       for (x of z) {
         count++
-        if (count > 0 && count < 23) {
+        if (count > 0 && count < 25) {
           if (count==1 && pos) {id = x.substring(0, 1)}
           htm = htm + '<a href=#Search#' + x.replace(/ /g, "%20") + '##>' + x.substring(0, 15) + '</a>'}}}
-    else for (x of z) {							// folders, slides, music
+    else for (x of z) {							// folders, playlists, music
       var y = x.split("/")
       var q = y.pop()
       count++
-      if (id=='fol' || id=='fav') {q = y.pop()}
+      if (id == 'Folders') {q = y.pop()}
       q = q.replace('.m3u', '').substring(0, 12)
       if (selected || q == "New") {q = "<span style='color:lightsalmon'</span>" + q}
-      if (count > 0 && count < 27) {
+      if (count > 0 && count < 29) {
         htm = htm + '<a href=#Path##' + selected + '#' + x.replace(/ /g, "%20") + '>' + q + '</a>'}}
-    if (id) {panel.innerHTML = "<a href='#Orphan#"+id+"##' style='grid-row-start:1;grid-row-end:3;color:red;font-size:2em'>"+id+"</a>"+htm}
+    if (id) {panel.innerHTML = "<a href='#Orphan#"+id+"##' style='grid-row-start:1;grid-row-end:5;color:red;font-size:2em'>"+id+"</a>"+htm}
     release()}
 
 

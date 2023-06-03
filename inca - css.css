@@ -6,7 +6,8 @@
   position:relative;
   text-align:center;
   align-items:center;
-  font-size:1.1em;
+  margin-left:1em;
+  font-size:1em;
   justify-content:space-between;
   width:560px}
 
@@ -75,7 +76,7 @@
 .seekbar {
   position:absolute;
   border-radius:6px;
-  transition: 0.2s}
+  transition:0.2s}
 
 .seek {
   position:absolute;
@@ -147,7 +148,7 @@
 .container {
   font-family:'Yu Gothic', 'Calibri Light';
   cursor:default;
-  padding-top:4em;
+  padding-top:6em;
   padding-bottom:40em;
   user-select:none;
   background:#15110a;

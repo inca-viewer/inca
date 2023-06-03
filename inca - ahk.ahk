@@ -20,13 +20,10 @@
 
         Global profile
         Global sort_list		:= "Shuffle|Alpha|Duration|Date|Size|Ext|Reverse|Recurse|Videos|Images|"
-        Global model
-        Global genre
         Global toggles			; eg. reverse
         Global features			; program settings
-        Global fol			; folder list 1
-        Global fav			; folder list 2
-        Global search			; key words
+        Global folders			; favorite folders
+        Global search			; list of search words
         Global search_folders		; default search locations
         Global index_folders		; to index thumb sheets
         Global this_search		; current search folders
@@ -50,7 +47,7 @@
         Global volume
         Global page := 1		; current page within list
         Global sort := "Date"
-	Global filter := 0		; secondary search filter eg. date, duration, Alpha letter
+	Global filt := 0		; secondary search filter eg. date, duration, Alpha letter
         Global click			; mouse click type
         Global timer			; click down timer
         Global view := 9		; thumb view (em size)
@@ -60,7 +57,7 @@
         Global wheel
         Global last_media		; last media played in page
 	Global last_status		; time, vol etc display
-        Global playlist			; slide playlist - full path
+        Global playlist			; playlist - full path
 	Global xpos			; current mouse position - 100mS updated 
 	Global ypos
         Global command
@@ -176,7 +173,7 @@
     ~Enter::					; search request from htm input box
       if inca_tab
         {
-        sleep 250				; wait for java messages
+        sleep 250				; wait for java inputbox text in 'messages'
         timer := 1				; not long click
         GetAddressBar()				; process address bar messages
         }
@@ -275,7 +272,7 @@
                 path =
                 address =
                 search_term =
-                command = Search
+                command = Search		; search from selected text
                 value := Clipboard
                 ProcessMessage()
                 CreateList(1)
@@ -391,6 +388,8 @@
           CreateList(1)
         if (reload == 2)
           RenderPage()
+        if (reload == 3)
+          CreateList(0)
         }
 
 
@@ -453,9 +452,9 @@
                 list_id := A_LoopField
                 if GetMedia(0)
                   {
-                  FileRead, str, %inca%\slides\History.m3u
+                  FileRead, str, %inca%\playlists\History.m3u
                   if !InStr(str, target)
-                    FileAppend, %target%`r`n, %inca%\slides\History.m3u, UTF-8	; add media entry to playlist
+                    FileAppend, %target%`r`n, %inca%\playlists\History.m3u, UTF-8	; add media entry to playlist
                   }
                 }
             return
@@ -471,8 +470,8 @@
               {
               if playlist
                 {
-                IfExist, %inca%\slides\%value%.m3u
-                  run, %inca%\slides\%value%.m3u
+                IfExist, %inca%\playlists\%value%.m3u
+                  run, %inca%\playlists\%value%.m3u
                 else IfExist, %inca%\music\%value%.m3u
                   run, %inca%\music\%value%.m3u
                 else IfExist, %inca%\%value%\
@@ -483,7 +482,7 @@
               }
             else IfExist, %inca%\%value%\
               run, %inca%\%value%\
-            else reload := 1
+            else reload := 3
             }
         if (command == "Join")
             {
@@ -502,7 +501,7 @@
               FileDelete, %inca%\apps\temp1.txt
               }
             sleep 1000
-            reload := 1
+            reload := 3
             }
         if (command == "mp3" || command == "mp4")
             {
@@ -514,7 +513,7 @@
               run, %inca%\apps\ffmpeg.exe -ss %address% -i "%src%" "%media_path%\%media% 0.0.%command%",,Hide
             else run, %inca%\apps\ffmpeg.exe -ss %address% -to %value% -i "%src%" "%media_path%\%media% %x%.%command%",,Hide
             sleep 1000
-            reload := 1
+            reload := 3
             }
         if (command == "MovePos")
             MoveEntry()						; move entry within playlist
@@ -534,9 +533,9 @@
             {
             if !value
                 value := seek
-            if (InStr(path, "slides") && !search_term)
+            if (InStr(path, "playlists") && !search_term)
                 FileAppend, %src%|%value%`r`n, %path%%folder%.m3u, UTF-8
-            else FileAppend, %src%|%value%`r`n, %inca%\slides\new.m3u, UTF-8
+            else FileAppend, %src%|%value%`r`n, %inca%\playlists\new.m3u, UTF-8
             Runwait, %inca%\apps\ffmpeg.exe -ss %value% -i "%src%" -y -vf scale=480:480/dar -vframes 1 "%inca%\cache\posters\%media%%A_Space%%value%.jpg",, Hide
             }
         if (command == "Skinny")
@@ -560,7 +559,7 @@
             }
         if (command == "Delete")
             {
-            if (InStr(path, "\inca\slides\") || InStr(path, "\inca\music\"))
+            if (InStr(path, "\inca\playlists\") || InStr(path, "\inca\music\"))
               DeleteEntries(1)
             else Loop, Parse, selected, `/
               {
@@ -568,7 +567,7 @@
               if GetMedia(0)
                 FileRecycle, %src%
               }
-            reload := 1
+            reload := 3
             }
         if (command == "Rename")
             {
@@ -583,7 +582,7 @@
                }
             Popup(popup,600,0,0)
             sleep 555
-            reload := 1
+            reload := 3
             }
         if (command == "Media")
             {
@@ -613,15 +612,15 @@
             if (command == "View")
                 view := value
             Popup(value,0,0,0)
-            reload := 1
+            reload := 3
             }
         if (command == "Path" && selected)
             {
             FileTransfer()						; between folders or playlists
-            reload := 1
+            reload := 3
             return
             }
-        if (command=="Filter" || command=="Path" || command=="Search" || command=="SearchAdd" || InStr(sort_list, command))
+        if (command=="Filt"||command=="Path"||command=="Search"||command=="SearchBox"||command=="SearchAdd"||InStr(sort_list, command))
             {
             reload = 1
             if (command == "Path") 
@@ -637,8 +636,8 @@
                 path := address
                 StringTrimRight, address, address, 1
                 SplitPath, address,,,,folder
-if !folder
-folder = none
+                if !folder
+                  folder = none
                 }
             if (command == "SearchAdd" && value)			; add search_term to genre list
               {
@@ -651,8 +650,10 @@ folder = none
               LoadSettings()
               PopUp("Added",600,0,0)
               }
-            if (command == "Search")
+            if (command == "Search" || command == "SearchBox")
               {
+              if (command == "Search")
+                subfolders =
               if !timer
                 search_term = %search_term%+%value%			; long click adds new search term
               else search_term = %value%
@@ -664,8 +665,7 @@ folder = none
                 x := playlist
                 GetTabSettings(0)					; load previous tab settings from cache
                 playlist := x
-;                if !InStr(subfolders, folder)
-                    subfolders =
+                subfolders =
                 if playlist
                    Loop, Files, %inca%\%folder%\*.m3u, FR
                      {
@@ -678,7 +678,7 @@ folder = none
                       if subfolders
                         subfolders = %subfolders%|%A_LoopFileFullPath%\
                       else subfolders = %A_LoopFileFullPath%\
-                filter := 0
+                filt := 0
                 }
             if search_term						; search text from link or search box
                 {
@@ -693,14 +693,14 @@ folder = none
                     toggles =
                     sort = Duration
                    }
-                filter := 0
+                filt := 0
                 }
-            if (command == "Filter")			; alpha letter
-                filter := value
+            if (command == "Filt")					; alpha letter
+                filt := value
             page := 1
             if (InStr(sort_list, command))				; sort filter
                 {
-                filter := 0
+                filt := 0
                 toggle_list = Reverse Recurse Videos Images
                 if (sort != command)					; new sort
                     {
@@ -784,12 +784,6 @@ folder = none
         speed := Setting("Default Speed")
         FileRead, style, %inca%\inca - css.css
         FileRead, java, %inca%\inca - js.js
-        Loop, Files, %inca%\music\*.m3u					; for top panel
-            music = %music%%A_LoopFileFullPath%|
-        Loop, Files, %inca%\slides\*.m3u
-            slides = %slides%%A_LoopFileFullPath%|
-        IniWrite,%slides%,%inca%\inca - ini.ini,Settings,slides
-        IniWrite,%music%,%inca%\inca - ini.ini,Settings,music
         FileRead, ini, %inca%\inca - ini.ini
         ini := StrReplace(ini, "`r`n", "|")				; java cannot accept in strings
         ini := StrReplace(ini, "'")
@@ -842,17 +836,15 @@ folder = none
         if subs
             subs = %subs% <div style='height:1em'></div>
 
-        header_html = <!--`r`n%view%>%last_view%>%page%>%filter%>%sort%>%toggles%>%this_search%>%search_term%>%path%>%folder%>%playlist%>%last_media%>`r`n%page_media%`r`n-->`r`n<!doctype html>`r`n<html>`r`n<head>`r`n<meta charset="UTF-8">`r`n<title>Inca - %title%</title>`r`n<meta name="viewport" content="width=device-width, initial-scale=1">`r`n<link rel="icon" type="image/x-icon" href="file:///%inca%\apps\icons\inca.ico">`r`n</head>`r`n
+        header_html = <!--`r`n%view%>%last_view%>%page%>%filt%>%sort%>%toggles%>%this_search%>%search_term%>%path%>%folder%>%playlist%>%last_media%>`r`n%page_media%`r`n-->`r`n<!doctype html>`r`n<html>`r`n<head>`r`n<meta charset="UTF-8">`r`n<title>Inca - %title%</title>`r`n<meta name="viewport" content="width=device-width, initial-scale=1">`r`n<link rel="icon" type="image/x-icon" href="file:///%inca%\apps\icons\inca.ico">`r`n</head>`r`n
 
-        panel_html = <body class='container' onload="spool(event, '', '%ini%', '%toggles%', '%sort%', %filter%, %page%, %pages%, %view%, %speed%)">`r`n<div style="width:%page_w%`%; margin:auto">`r`n<div class='panel' id='myPanel' onwheel="wheelEvents(event, '', this)"></div>`r`n`r`n
+        panel_html = <body class='container' onload="spool(event, '', '%ini%', '%toggles%', '%sort%', %filt%, %page%, %pages%, %view%, %speed%)">`r`n<div style="width:%page_w%`%; margin:auto">`r`n<div class='panel' id='myPanel' onwheel="wheelEvents(event, '', this)"></div>`r`n`r`n
 
-        title_html = <div class='ribbon2' onmouseover='panel.style.opacity=1' onmouseout='panel.style.opacity=null'>`r`n<a href='#Path###%inca%\music\' onmouseover="spool(event, 'music')" onwheel="wheelEvents(event, 'music', this)">Music</a>`r`n<a onmouseover="spool(event, 'fol')" onwheel="wheelEvents(event, 'fol', this)">Fol</a>`r`n<a onmouseover="spool(event, 'fav')" onwheel="wheelEvents(event, 'fav', this)">Fav</a>`r`n<a href='#Path###%inca%\slides\' onmouseover="spool(event, 'slides')" onwheel="wheelEvents(event, 'slides', this)">Slides</a>`r`n<a id='myModels' onmouseover="spool(event, 'model')" onwheel="wheelEvents(event, 'model', this)">Model</a>`r`n<a id='myGenre' onmouseover="spool(event, 'genre')" onwheel="wheelEvents(event, 'genre', this)">Genre</a>`r`n<a onmouseover="spool(event, 'studio')" onwheel="wheelEvents(event, 'studio', this)">Studio</a>`r`n</div>`r`n`r`n
+<div id='myRibbon' class='ribbon2'>`r`n<a onclick="selectAll()">Select</a>`r`n<a id='myDelete' onmouseover='del()'>Delete</a>`r`n<a id='myRename' onmouseover='rename()'>Rename</a>`r`n<a onmouseover="spool(event, 'Folders')" onwheel="wheelEvents(event, 'Folders', this)">Folders</a>`r`n<a href='#Path###%inca%\playlists\' onmouseover="spool(event, 'Playlists')" onwheel="wheelEvents(event, 'Playlists', this)">Playlists</a>`r`n<a onmouseover="spool(event, 'Search')" onwheel="wheelEvents(event, 'Search', this)">Search</a>`r`n<a href='#Path###%inca%\music\' onmouseover="spool(event, 'Music')" onwheel="wheelEvents(event, 'Music', this)">Music</a>`r`n<a href='#Recurse###' %x%>Recurse</a>`r`n<a href='#Images###' %y%>Pics</a>`r`n<a href='#Videos###' %z%>Vids</a>`r`n<a href='#Join###'>Join</a>`r`n<a href='#Settings###'>Menu</a></div>`r`n`r`n<div style='display:flex'>`r`n<input id='myInput' onmouseover='panel.style.opacity=null' class='searchbox' type='search' value='%search_term%'>`r`n<a class='searchbox' onmouseover="this.href='#SearchAdd#'+inputbox.value+'##'" style='width:4`%; border-radius:0 1em 1em 0'>+</a></div>`r`n`r`n
 
-<div id='myRibbon' class='ribbon2' style='font-size:1em'>`r`n<a onclick="selectAll()">Select</a>`r`n<a id='myDelete' onmouseover='del()'>Delete</a>`r`n<a id='myRename' onmouseover='rename()'>Rename</a>`r`n<a href='#Reverse###' %w%>Reverse</a>`r`n<a href='#Recurse###' %x%>Recurse</a>`r`n<a href='#Images###' %y%>Images</a>`r`n<a href='#Videos###' %z%>Videos</a>`r`n<a href='#Join###'>Join</a>`r`n<a href='#Settings###'>Menu</a></div>`r`n`r`n<div style='display:flex'>`r`n<input id='myInput' class='searchbox' type='search' value='%search_term%'>`r`n<a class='searchbox' onmouseover="this.href='#SearchAdd#'+inputbox.value+'##'" style='width:4`%; border-radius:0 1em 1em 0'>+</a></div>`r`n`r`n
-
-<div style='display:flex; margin-left:1em'>`r`n<a href='#Up###%path%' class='ribbon' style='width:4`%; font-size:1.4em'>&#8678<a href=#Thumbs#%view%## id="Thumbs" class='ribbon' style='width:12`%' onwheel="wheelEvents(event, id, this)">Thumbs</a>`r`n<a href="#Orphan#%folder%##" class='ribbon' style='color:lightsalmon; font-size:1.7em; width:8em; margin-bottom:0.3em'>%title_s%</a>`r`n<div class='ribbon' style='color:lightsalmon; width:5em'>%list_size%</div>`r`n`r`n<a href='#%sort%#%sort%#' id='mySort' class='ribbon' onwheel="wheelEvents(event, id, this)">%sort%</a>`r`n<a id='myFilter' class='ribbon' onwheel="wheelEvents(event, id, this)">All</a>`r`n<a href="%title%.htm#Page" id="myPage" class='ribbon' style='width:15`%' onwheel="wheelEvents(event, id, this)">%pg%</a></div>`r`n`r`n<div id="myModal" class="modal" onwheel="wheelEvents(event, id, this)">`r`n<div><video id="myPlayer" class="player" type="video/mp4"></video>`r`n<span id="mySeekBar" class='seekbar'></span>`r`n<textarea id="myCap" class="caption" onmouseenter="over_cap=true" onmouseleave="over_cap=false"></textarea>`r`n<span><video id='mySeek' class='seek' type="video/mp4"></video></span>`r`n`r`n<span id="mySidenav" onmouseover="openNav()" class="sidenav">`r`n<a id="myMp3">mp3</a>`r`n<a id="myMp4">mp4</a>`r`n<a onclick="cue = Math.round(media.currentTime*10)/10">Cue</a>`r`n<a id="myCapnav" onclick="editCap()">Cap</a>`r`n<a id="myFav">Fav</a>`r`n<a id='myLoop' onclick="loop()">Loop</a>`r`n<a id='myMute' onclick="mute()">Mute</a>`r`n<a id="mySkinny" onwheel="wheelEvents(event, id, this)">Skinny</a>`r`n<a id="myStatus" onwheel="wheelEvents(event, id, this)" style='font-size:4em'></a>`r`n</span></div></div>`r`n`r`n
+<div style='display:flex; margin-left:1em'>`r`n<a href='#Up###%path%' id='myPath' class='ribbon' style='width:4`%; font-size:1.4em'>&#8678<a href=#Thumbs#%view%## id="Thumbs" class='ribbon' style='width:12`%' onwheel="wheelEvents(event, id, this)">Thumbs</a>`r`n<a href="#Orphan#%folder%##" class='ribbon' style='color:lightsalmon; font-size:1.7em; width:8em; margin-bottom:0.3em'>%title_s%</a>`r`n<div class='ribbon' style='color:lightsalmon; width:5em'>%list_size%</div>`r`n`r`n<a href='#%sort%#%sort%#' id='mySort' class='ribbon' %w% onwheel="wheelEvents(event, id, this)">%sort%</a>`r`n<a id='myFilt' class='ribbon' onwheel="wheelEvents(event, id, this)">All</a>`r`n<a href="%title%.htm#Page" id="myPage" class='ribbon' style='width:15`%' onwheel="wheelEvents(event, id, this)">%pg%</a></div>`r`n`r`n<div id="myModal" class="modal" onwheel="wheelEvents(event, id, this)">`r`n<div><video id="myPlayer" class="player" type="video/mp4"></video>`r`n<span id="mySeekBar" class='seekbar'></span>`r`n<textarea id="myCap" class="caption" onmouseenter="over_cap=true" onmouseleave="over_cap=false"></textarea>`r`n<span><video id='mySeek' class='seek' type="video/mp4"></video></span>`r`n`r`n<span id="mySidenav" onmouseover="openNav()" class="sidenav">`r`n<a id="myMp3">mp3</a>`r`n<a id="myMp4">mp4</a>`r`n<a onclick="cue = Math.round(media.currentTime*10)/10">Cue</a>`r`n<a id="myCapnav" onclick="editCap()">Cap</a>`r`n<a id="myFav">Fav</a>`r`n<a id='myLoop' onclick="loop()">Loop</a>`r`n<a id='myMute' onclick="mute()">Mute</a>`r`n<a id="mySkinny" onwheel="wheelEvents(event, id, this)">Skinny</a>`r`n<a id="myStatus" onwheel="wheelEvents(event, id, this)" style='font-size:4em'></a>`r`n</span></div></div>`r`n`r`n
         FileDelete, %inca%\cache\html\%folder%.htm
-        html = %header_html%%style%%panel_html%%title_html%%subs%%html%</div>`r`n
+        html = %header_html%%style%%panel_html%%subs%%html%</div>`r`n
         StringReplace, html, html, \, /, All
         FileAppend, %html%%java%</body>`r`n</html>`r`n, %inca%\cache\html\%folder%.htm, UTF-8
         LoadHtml()
@@ -998,7 +990,7 @@ caption := x
               {
               StringGetPos, pos, input, \, R, 1
               StringMid, 1st_char, input, % pos + 2, 1
-              if (filter && sort == "Alpha" && 1st_char < Chr(filter+64))
+              if (filt && sort == "Alpha" && 1st_char < Chr(filt+64))
                 return
               }
             else if (sort == "Date")
@@ -1012,7 +1004,7 @@ caption := x
                 sort_name = %years% y
               else if sort_date 
                 sort_name = %sort_date% d
-              if (filter && sort_date/30 < filter)
+              if (filt && sort_date/30 < filt)
                 return
               }
             else if (sort == "Size")
@@ -1021,13 +1013,13 @@ caption := x
                 FileGetSize, list_id, %input%, M
               else FileGetSize, list_id, %input%, K
               sort_name := Round(list_id)
-              if (filter && list_id < filter*10)
+              if (filt && list_id < filt*10)
                 return
               }
             else if (sort == "Duration")
               {
               FileRead, list_id, %inca%\cache\durations\%filen%.txt
-              if (filter && list_id/60 < filter)
+              if (filt && list_id/60 < filt)
                 return
               sort_name := Time(list_id)
               }
@@ -1055,11 +1047,11 @@ caption := x
     GetTabSettings(extended)						; from .htm cache file
         {
         page := 1							; default view settings
-        filter := 1
+        filt := 1
         toggles =
         playlist =
         last_media =
-        if (InStr(path, "\slides\") || InStr(path, "\music\"))
+        if (InStr(path, "\playlists\") || InStr(path, "\music\"))
           sort = Alpha
         else sort = Shuffle
         FileReadLine, array, %inca%\cache\html\%folder%.htm, 2	; embedded page data
@@ -1072,7 +1064,7 @@ caption := x
             if (!view && view == last_view)
               view := 10
             page := array.3
-            filter := array.4
+            filt := array.4
             sort := array.5
             toggles := array.6
             last_media := array.12
@@ -1140,7 +1132,7 @@ caption := x
             if (select <= list_id && InStr(toggles, "Reverse") || select > list_id && !InStr(toggles, "Reverse"))
                 FileAppend, %A_LoopField%`r`n, %plist%, UTF-8
             }
-        reload := 1
+        reload := 3
         }
 
 
@@ -1153,7 +1145,7 @@ caption := x
             {
             list_id := A_LoopField
             if GetMedia(0)
-              if (InStr(address, "inca\slides") || InStr(address, "inca\music"))
+              if (InStr(address, "inca\playlists") || InStr(address, "inca\music"))
                 FileAppend, %target%`r`n, %address%, UTF-8		; add media entry to playlist
               else if timer
                 FileMove, %src%, %address%				; move file to new folder
@@ -1161,7 +1153,7 @@ caption := x
             PopUp(media,0,0,0)
             }
         if timer
-          if (InStr(address, "inca\slides") || InStr(address, "inca\music"))
+          if (InStr(address, "inca\playlists") || InStr(address, "inca\music"))
             DeleteEntries(0)
         }  
 
@@ -1180,11 +1172,11 @@ caption := x
           GetMedia(0)
           x = %target%`r`n
           y = %src%`r`n
-          str := StrReplace(str, x,,,1)					; slides with start time
+          str := StrReplace(str, x,,,1)					; playlists with start time
           str := StrReplace(str, y,,,1)					; music with no start time
           if (trash && folder != "Trash" && folder != "History")
            if InStr(path, "\inca\")
-            FileAppend, %x%, %inca%\slides\Trash.m3u, UTF-8
+            FileAppend, %x%, %inca%\playlists\Trash.m3u, UTF-8
           }
         FileAppend, %str%, %plist%, UTF-8
         }
@@ -1197,7 +1189,7 @@ caption := x
         if (folder == "Downloads") 
             return
         new_entry := StrReplace(target, media, new_name)
-        Loop, Files, %inca%\slides\*.m3u, FR
+        Loop, Files, %inca%\playlists\*.m3u, FR
             {
             FileRead, str, %A_LoopFileFullPath%				; find & replace in .m3u files
             if !InStr(str, target)
@@ -1298,7 +1290,7 @@ caption := x
         {
         Global
         gui, settings:Destroy
-        Gui, settings:+lastfound +AlwaysOnTop -Caption +ToolWindow
+        Gui, settings:+lastfound -Caption +ToolWindow
 	Gui, settings: Font, s8, Verdana
         Loop, Parse, features, `|
             {
@@ -1310,26 +1302,24 @@ caption := x
             else gui, settings:add, text
             gui, settings:add, text, x68 yp+2, %key%
             }
-        gui, settings:add, text, x165 y10, root folders
-        gui, settings:add, edit, x160 yp+13 h60 w500 vfol, %fol%
-        gui, settings:add, text, x165 yp+65, favorite folders
-        gui, settings:add, edit, x160 yp+13 h60 w500 vfav, %fav%
-        gui, settings:add, text, x165 yp+64, model
-        gui, settings:add, edit, x160 yp+13 h60 w500 vmodel, %model%
-        gui, settings:add, text, x165 yp+64, genre
-        gui, settings:add, edit, x160 yp+13 h60 w500 vgenre, %genre%
-        gui, settings:add, text, x165 yp+64, studio
-        gui, settings:add, edit, x160 yp+13 h60 w500 vstudio, %studio%
+        gui, settings:add, text, x165 y10, Folders
+        gui, settings:add, edit, x160 yp+13 h60 w500 vFolders, %folders%
+        gui, settings:add, text, x165 yp+66, Searches
+        gui, settings:add, edit, x160 yp+13 h60 w500 vSearch, %search%
+        gui, settings:add, text, x165 yp+66, Playlists
+        gui, settings:add, edit, x160 yp+13 h60 w500 vPlaylists, %playlists%
+        gui, settings:add, text, x165 yp+66, Music
+        gui, settings:add, edit, x160 yp+13 h60 w500 vMusic, %music%
         gui, settings:add, text, x165 yp+66, folders to search
         gui, settings:add, edit, x160 yp+13 h18 w500 vsearch_folders, %search_folders%
         gui, settings:add, text, x165 yp+23, folders to index
         gui, settings:add, edit, x160 yp+13 h18 w500 vindex_folders, %index_folders%
-        gui, settings:add, button, x160 y480 w60, Source
-        gui, settings:add, button, x240 y480 w60, Java
-        gui, settings:add, button, x320 y480 w60, Compile
-        gui, settings:add, button, x400 y480 w60, Help
-        gui, settings:add, button, x480 y480 w60, Cancel
-        gui, settings:add, button, x560 y480 w60 default, Save
+        gui, settings:add, button, x160 y410 w60, Source
+        gui, settings:add, button, x240 y410 w60, Java
+        gui, settings:add, button, x320 y410 w60, Compile
+        gui, settings:add, button, x400 y410 w60, Help
+        gui, settings:add, button, x480 y410 w60, Cancel
+        gui, settings:add, button, x560 y410 w60 default, Save
         gui, settings:show
         send, +{Tab}
         }
@@ -1340,12 +1330,10 @@ caption := x
         return
 
         settingsButtonSource:
-        WinClose
         run, notepad %inca%\inca - ahk.ahk
         return
 
         settingsButtonJava:
-        WinClose
         run, notepad %inca%\inca - js.js
         return
 
@@ -1369,23 +1357,16 @@ caption := x
             new = %new%%key%/%value%|         
             }
         StringTrimRight,new,new,1
-        StringReplace, model, model, |, `n, All
-        Sort, model, u						; alpha sort and removes duplicates
-        StringReplace, model, model, `n, |, All
-        StringReplace, genre, genre, |, `n, All
-        Sort, genre, u
-        StringReplace, genre, genre, `n, |, All
-        StringReplace, studio, studio, |, `n, All
-        Sort, studio, u
-        StringReplace, studio, studio, `n, |, All
+        StringReplace, search, search, |, `n, All
+        Sort, search, u
+        StringReplace, search, search, `n, |, All
         IniWrite,%new%,%inca%\inca - ini.ini,Settings,features
         IniWrite,%search_folders%,%inca%\inca - ini.ini,Settings,search_folders
         IniWrite,%index_folders%,%inca%\inca - ini.ini,Settings,index_folders
-        IniWrite,%genre%,%inca%\inca - ini.ini,Settings,genre
-        IniWrite,%model%,%inca%\inca - ini.ini,Settings,model
-        IniWrite,%studio%,%inca%\inca - ini.ini,Settings,studio
-        IniWrite,%fol%,%inca%\inca - ini.ini,Settings,fol
-        IniWrite,%fav%,%inca%\inca - ini.ini,Settings,fav
+        IniWrite,%folders%,%inca%\inca - ini.ini,Settings,Folders
+        IniWrite,%search%,%inca%\inca - ini.ini,Settings,Search
+        IniWrite,%playlists%,%inca%\inca - ini.ini,Settings,Playlists
+        IniWrite,%music%,%inca%\inca - ini.ini,Settings,Music
         run %inca%\apps\Compile.exe
         return
 
@@ -1489,11 +1470,10 @@ caption := x
         IniRead,features,%inca%\inca - ini.ini,Settings,features
         IniRead,search_folders,%inca%\inca - ini.ini,Settings,search_folders
         IniRead,index_folders,%inca%\inca - ini.ini,Settings,index_folders
-        IniRead,fol,%inca%\inca - ini.ini,Settings,fol
-        IniRead,fav,%inca%\inca - ini.ini,Settings,fav
-        IniRead,model,%inca%\inca - ini.ini,Settings,model
-        IniRead,genre,%inca%\inca - ini.ini,Settings,genre
-        IniRead,studio,%inca%\inca - ini.ini,Settings,studio
+        IniRead,folders,%inca%\inca - ini.ini,Settings,Folders
+        IniRead,search,%inca%\inca - ini.ini,Settings,Search
+        IniRead,playlists,%inca%\inca - ini.ini,Settings,Playlists
+        IniRead,music,%inca%\inca - ini.ini,Settings,Music
         }
 
 
