@@ -131,18 +131,18 @@
   width:10%;
   text-align:right;
   opacity:0;
-  transition:0.3s}
+  transition:opacity 0.4s}
 
 .sidenav a {
   display:block;
   font-size:1.6em;
   text-align:left;
   align-items:center;
-  color:#826858;
+  color:lightsalmon;
   transition:0.3s}
 
 .sidenav:hover {opacity:1}
-.sidenav a:hover {color:lightsalmon}
+.sidenav a:hover {color:salmon}
 .sidenav a:active {background-color:#222222}
 
 .container {

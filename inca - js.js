@@ -1,17 +1,10 @@
 <script>
 
-// need for speed edging
-// save popout collections
-// random page + start times
-// cap intuitive editing
-// idea of removing modal, everything in htm
-// consider move to mpv only for fullscreen due to location bar access etc
-// F11 while video, dissapears after win/ toggle
-// start entry times on fixed thumbs
-// more intuitive mp3/4 conversions
+// random page & start times
+// more intuitive mp3/4/cue conversions
 // select/delete folders
 // drop files onto back button
-
+// background-color:rgba(0, 0, 0, 0.5)
 
 
   var modal = document.getElementById('myModal')			// media player window
@@ -28,7 +21,7 @@
   var seekbar = document.getElementById('mySeekBar')			// player seekbar
   var seek = document.getElementById('mySeek')				// seek thumb under video
   var Loop = document.getElementById('myLoop')				// loop video or next
-  var Mute = document.getElementById('myMute')				// loop video or next
+  var Mute = document.getElementById('myMute')
   var sound = sessionStorage.getItem('sound')
   var last_id = sessionStorage.getItem('last_id')			// last top panel menu eg 'music'
   var ini								// .ini folders, models, etc.
@@ -83,8 +76,9 @@
   var Xref								// last cursor coordinate
   var Yref
 
-  document.addEventListener('auxclick', playMedia)			// middle click
-  document.addEventListener('keydown', keyDown)				// mouse Back and Enter
+  if (!sound) {sound='yes'}
+  if (sound=="no") {Mute.style.color='red'} 
+  document.addEventListener('keydown', keyDown)
   document.addEventListener('mousedown', mouseDown)
   document.addEventListener('mouseup', mouseUp)
   document.addEventListener('mousemove', Gesture)
@@ -92,17 +86,19 @@
 
   function timedEvents() {						// every ~84mS while media playing
     time = Math.round(10*media.currentTime)/10
+    if ((t=Math.round(time%60))<10) {t=':0'+t} else {t=':'+t}		// convert seconds to MMM:SS format
+    if (!stat.style.color) {stat.innerHTML = Math.round(time/60)+t}
+    else {stat.innerHTML=Math.round(media.playbackRate *100)}
     if (media.duration) {interval = Math.ceil(10*media.duration/100)/10}
     if (media.paused) {interval = 0.04}
     mySkinny.innerHTML = Math.round(100*newSkinny)/100
-    stat.innerHTML = Math.round(media.playbackRate *100)
     if (sound == 'yes' && media.volume <= 0.8) {media.volume += 0.2}
     if (sound == 'no' && media.volume >= 0.2) {media.volume -= 0.2}
     positionMedia()
     Captions()}
 
 
-  function overThumb(e, id, st, sx) {					// mouse over thumbnail in browser tab
+  function overThumb(e, type, st, sx, cp, id) {				// mouse over thumbnail in browser tab
     if (mouse_down) {return}						// in case thumb slides over another
     index = id
     start = st
@@ -117,14 +113,13 @@
     media.playbackRate = 0.74
     media.play()}
 
+
   function exitThumb(e, el) {
-    if (!mouse_down) {over_thumb=false}
+    if (!mouse_down) {over_thumb = false}
     if (ym < 0.9 || media.style.position!='fixed') {el.pause()}}
 
 
   function playMedia(e) {
-    if (e.button == 1) {e.preventDefault(); e='Mclick'}
-    else if (e.button) {return}
     if (gesture) {return}
     if (selected && path.href.slice(27).match('/inca/')) {return}	// moving thumb position within a playlist
     media.pause()							// pause browser tab thumb
@@ -132,14 +127,14 @@
     last_type = type
     if (type) {close_media()}						// no type if no media playing 
     if (long_middle) {e = 'Previous'}					// play previous media on long Mclick
-    if (e == 'Next') {index+=1; start=0}				// when start = 0, it's later derived from parameters
-    if (e == 'Previous') {index-=1; start=0}
+    if (e == 'Next') {index+=1; start=0}				// later derived from parameters
+    if (e == 'Previous') {index-=2; start=0}
     if (e == 'Mclick' && last_type && last_type != 'video' && thumb) {index+=1}
     if (e == 'Mclick' && !thumb) {index+=1; start=0}
     if (!over_thumb && !last_type) {index=last_index; start=last_start; e='Thumb'}	// play last media
     var Next = document.getElementById("media" + index)
     if (!Next) {index = 1; Next = document.getElementById('media1')}	// end of list, return to first media
-    x = Next['onclick'].toString().split(","); x.pop(); x.pop()		// get next media arguments
+    x = Next['onmouseover'].toString().split(","); x.pop()		// get next media arguments
     if (cap_list = x.pop().slice(0, -1).slice(2)) {cap.style.display='block'}	// if caption exists
     skinny = 1*x.pop()							// saved media width
     newSkinny = skinny
@@ -180,6 +175,8 @@
     media.style.maxHeight = window.innerHeight * 0.7 + "px"
     media.addEventListener('ended', media_ended)
     mediaTimer = setInterval(timedEvents,84)
+    if (type == "thumb") {nav.style.display = 'none'}
+    else {nav.style.display = null}
     modal.style.opacity = 1
     modal.style.zIndex = 40						// in case moved thumbs exist at z levels
     stat.innerHTML = index
@@ -260,11 +257,11 @@
       if (wheelDown) {x = -0.01}
       else {x = 0.01}
       if (type != 'image' && (media.playbackRate < 1 || x < 0)) {
-        media.playbackRate += x}}
-    else if (type && type != 'image' && (ym>0.9 || yw>0.9)) {		 // seek
+        media.playbackRate += x
+        stat.innerHTML=Math.round(media.playbackRate *100)}}
+    else if (type && type != 'image' && (xm<0 || xw<0.1 || nav.matches(":hover"))) {	 // seek
       if (wheelDown) {media.currentTime += interval}
-      else  {media.currentTime -= interval}
-seek.style.opacity = 0; seek_active = 0}
+      else  {media.currentTime -= interval}}
     else if (type) {							// magnify
       if (wheelDown) {scaleX *= 1.015; scaleY *= 1.015}
       else {scaleX *= 0.98; scaleY *= 0.98}
@@ -323,17 +320,16 @@ seek.style.opacity = 0; seek_active = 0}
       seek.style.top = rect.bottom - seek.offsetHeight - media.offsetHeight*scaleY/10 + 'px'
       if (yw>0.9) {seek.style.top = innerHeight -160 + "px"}
       seek.currentTime = seek_active}
-    else {seek_active = 0; seek.style.opacity = 0}
-    if (scaleY < 1.2) {y = scaleY} else {y = 1}
-    nav.style.transform = "scale("+y+","+y+")"
-    nav.style.transformOrigin = "0 0"
-    nav.style.left = rect.right + 4 + "px"
-    nav.style.bottom = y*(innerHeight-rect.bottom) + "px"
-    if (rect.right > innerWidth-100) {nav.style.left = innerWidth-100 + "px"}
-    if (rect.bottom > innerHeight) {nav.style.bottom = 0}}
+    else {seek_active = 0; seek.style.opacity = 0}}
 
 
   function positionMedia() {
+    y = scaleY*1.05
+    rect = media.getBoundingClientRect()
+    nav.style.transform = "scale("+y+","+y+")"
+    nav.style.transformOrigin = "0 0"
+    nav.style.left = rect.left + "px"
+    nav.style.top = rect.top + "px"
     if (screenLeft) {x=0; y=0; Xoff=screenLeft; Yoff=outerHeight-innerHeight} else {x=Xoff; y=Yoff}	// fullscreen
     media.style.marginLeft = x+'px'; media.style.marginTop = y+'px'
     seekbar.style.marginLeft = x+'px'; seekbar.style.marginTop = y+'px'
@@ -349,35 +345,43 @@ seek.style.opacity = 0; seek_active = 0}
     media.style.transform = "scale("+scaleX+","+scaleY+")"
     if (type == 'video' || type == 'audio') {
       seekbar.style.display = 'block'
-      if (ym>0.9 || yw>0.9) {seekbar.style.borderBottom='6px solid rgba(250, 128, 114, 0.7)'}
+      if (ym>0.9 && ym<1 || xm<0 || xw<0.1 || nav.matches(":hover")) {
+        seekbar.style.borderBottom='6px solid rgba(250, 128, 114, 0.7)'}
       else {seekbar.style.borderBottom='1px solid rgba(250, 128, 114, 0.5)'}}
     else {seekbar.style.display = 'none'}}
 
 
   function mouseDown(e) {
-    if (e.button != 0) {						// middle click
+    if (e.button) {
       e.preventDefault()
-      if (e.button == 1) {if(over_cap) {NextCap()}; MTimer=setTimeout(function() {long_middle=true},300)}
+      if (e.button == 1) {						// middle click
+        if (over_cap || nav.matches(":hover")) {nextCap()}
+        else {playMedia('Mclick')}
+        MTimer=setTimeout(function() {long_middle=true},300)}
       return}
-    long_click = false
     mouse_down = true
+    long_click = false
     Xref = e.clientX
     Yref = e.clientY
-    setTimeout(function() {if (mouse_down && !gesture) {long_click=true; if(type) {media_ended()}}},280)
-    if (seek_active) {media.currentTime=seek_active}}
+    setTimeout(function() {if (mouse_down && !gesture) {long_click=true; if(type && !over_cap) {media_ended()}}},280)
+    if (seek_active) {media.currentTime=seek_active}
+    if (cap.style.color=='red') {editCap()}}
 
 
   function mouseUp(e) {
-    togglePause(e)
+    if (e.button == 1) {clearTimeout(MTimer)}
+    if (over_thumb) {playMedia('Click')}
+    else {togglePause(e)}
     mouse_down = false 
-    setTimeout(function() {gesture=false; long_click=false; long_middle=false},50)
-    clearTimeout(MTimer)}
+    if (long_middle && type) {playMedia('Previous')}
+    setTimeout(function() {gesture=false; long_click=false; long_middle=false},50)}
 
 
   function keyDown(e) {
     var flag = false
-    if (e.key == 'Enter' && inputbox.value) {messages = messages+'#SearchBox#'+inputbox.value+'##'; flag = true}
+    if (e.key == 'Enter') {if (inputbox.value) {messages = messages+'#SearchBox#'+inputbox.value+'##'; flag=true}}
     if (e.key == 'Pause' || e.key == 'Enter') {				// Pause is mouse Back button
+      if (document.activeElement.id == 'myCap') {editCap()}
       var top = document.body.getBoundingClientRect().top
       if (!type && top < -90) {scroll(0,0); return}			// scroll to top of htm page
       if (type) {close_media(); flag = true}				// media was playing, don't reset page
@@ -489,7 +493,8 @@ seek.style.opacity = 0; seek_active = 0}
     if (sound == "yes") {sound = "no"; Mute.style.color='red'} else {sound = "yes"; Mute.style.color=null}
     sessionStorage.setItem("sound",sound); media.play()}
 
-  function editCap() {							// captions
+  function editCap() {							// edit caption
+    if (!time) {time = '0.0'}
     if (cap.value && cap.value != cap.innerHTML) {
       newcap = cap.value + "|" + time + "|"
       messages = messages + '#Caption#' + newcap + '#' + index + ',#' + cap.innerHTML + '|' + time + '|'}
@@ -499,12 +504,14 @@ seek.style.opacity = 0; seek_active = 0}
     cap.innerHTML = '-'
     cap.focus()}
 
-  function nextCap() {
+  function nextCap() {							// seek to next caption in movie
     var z = cap_list.split('|')
-    for (x of z) {if (!isNaN(x) && x > (media.currentTime+0.2)) {media.currentTime = x - 0.8; media.play(); return}}
+    for (x of z) {if (!isNaN(x) && x>(media.currentTime+0.2)) {media.currentTime = x-0.8; media.play(); return}}
     playMedia('Next')}
 
-  function Captions() {
+  function Captions() {							// display captions
+    if (document.activeElement.id == 'myCap') {cap.style.color='red'; return}
+    else {cap.style.color=null}
     if (!time) {time = '0.0'}
     var ptr = cap_list.indexOf('|'+ time + '|')
     if (ptr < 1) {ptr = cap_list.indexOf('|'+ time - 0.1 + '|')}
