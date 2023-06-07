@@ -58,9 +58,8 @@
   transition: 0.2s;
   font-size:0.85em;
   height:6em;
-  width:580px;
   opacity:0;
-  border-radius:0.8em;
+  width:580px;
   background-color:inherit}
 
 .panel:hover {opacity:1}
@@ -128,8 +127,8 @@
 
 .sidenav {
   position:fixed;
-  width:10%;
-  text-align:right;
+  left:1em;
+  bottom:0;
   opacity:0;
   transition:opacity 0.4s}
 
@@ -137,12 +136,12 @@
   display:block;
   font-size:1.6em;
   text-align:left;
-  align-items:center;
+  padding:2px;
   color:lightsalmon;
   transition:0.3s}
 
 .sidenav:hover {opacity:1}
-.sidenav a:hover {color:salmon}
+.sidenav a:hover {color:tomato}
 .sidenav a:active {background-color:#222222}
 
 .container {
@@ -160,8 +159,8 @@
   @keyframes fadePage {from {opacity:0} to {opacity:1}}
 
 a {text-decoration:none; color:#826858}
-a:hover {color:red;transition:color 0.36s}
-table:hover {color:red;transition:color 0.36s}
+a:hover {color:tomato;transition:color 0.36s}
+table:hover {color:tomato;transition:color 0.36s}
 
 table {
   color:#826858;
