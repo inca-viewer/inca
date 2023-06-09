@@ -73,8 +73,11 @@
   border-radius:2%}
 
 .seekbar {
+  display:block;
   position:absolute;
-  border-radius:6px;
+  opacity:0;
+  border-radius:1px;
+  border:1px solid lightsalmon;
   transition:0.2s}
 
 .seek {
@@ -125,24 +128,43 @@
   width:100vw;
   background-color:black}
 
-.sidenav {
+a {text-decoration:none; color:#826858}
+a:hover {color:tomato;transition:color 0.36s}
+table:hover {color:tomato;transition:color 0.36s}
+
+table {
+  color:#826858;
+  transition:color 1.4s;
+  table-layout:fixed;
+  border-collapse: collapse}
+.nav:hover .sidenav {display:block}
+
+.stat {
   position:fixed;
-  left:1em;
+  left:0;
   bottom:0;
-  opacity:0;
-  transition:opacity 0.4s}
+  width:2.5em;
+  opacity:0.3;
+  color:lightsalmon;}
+
+.stat:hover {color:red; opacity:1} 
+
+.sidenav {
+  display:none;
+  position:fixed;
+  left:0;
+  bottom:4.6em;
+  width:5em;
+  font-size:1.2em;}
 
 .sidenav a {
   display:block;
-  font-size:1.6em;
+  font-size:1.2em;
   text-align:left;
-  padding:2px;
-  color:lightsalmon;
-  transition:0.3s}
+  color:lightsalmon;}
 
-.sidenav:hover {opacity:1}
 .sidenav a:hover {color:tomato}
-.sidenav a:active {background-color:#222222}
+.sidenav a:active {background-color:#333333}
 
 .container {
   font-family:'Yu Gothic', 'Calibri Light';
@@ -158,14 +180,5 @@
 
   @keyframes fadePage {from {opacity:0} to {opacity:1}}
 
-a {text-decoration:none; color:#826858}
-a:hover {color:tomato;transition:color 0.36s}
-table:hover {color:tomato;transition:color 0.36s}
-
-table {
-  color:#826858;
-  transition:color 1.4s;
-  table-layout:fixed;
-  border-collapse: collapse}
 </style>
 
