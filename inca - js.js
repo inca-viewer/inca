@@ -2,10 +2,11 @@
 
 // can use cursor change to trigger inca location bar read eg, thumbs or list view
 // random start times
-// select/delete folders
 // join function ??
 // more intuitive mp3/4/cue conversions
 // loop in out point
+// player size on long click
+// long seek sound blast
 
 
   var modal = document.getElementById('myModal')			// media player window
@@ -84,10 +85,19 @@
   document.addEventListener('keydown', keyDown)
 
 
+  function ScreenSize() {
+    scaleX = skinny; scaleY = 1
+    if (screenLeft) {Xoff=0; Yoff=10}
+    mediaX=(innerWidth/2)-Xoff; mediaY=(innerHeight/2)-Yoff
+    media.style.maxWidth = window.innerWidth + "px"
+    media.style.maxHeight = window.innerHeight + "px"
+    media.style.width = innerWidth + "px"
+    media.style.height = innerHeight + "px"}
+
   function mouseDown(e) {
     if (e.button==1) {							// middle click
       e.preventDefault()
-      setTimeout(function() {if(Mclick==true){playMedia('Mclick')}},244) // show 6x6 thumbsheet
+      setTimeout(function() {if(Mclick==true){playMedia('Mclick')}},200) // show 6x6 thumbsheet
       if (cap_list && (over_cap || xw<0.1)) {nextCap()}			// if over caption, goto next caption
       else {playMedia('Mclick')}
       Mclick=true
@@ -99,7 +109,8 @@
     setTimeout(function() {
       if (mouse_down && !gesture) {
         long_click=true; 
-        if (type && !over_cap) {media_ended()}}},280)
+        if (seek_active) {media_ended()}
+        else if (type) {ScreenSize()}}},280)
     if (seek_active) {media.currentTime=seek_active}			// bottom seeking trackbar
     if (cap.style.color=='red') {editCap()}}				// caption active - in edit mode
 
@@ -215,7 +226,7 @@
       document.body.style.overflow="hidden"
       positionMedia()
       media.style.opacity = 1
-      if (type != 'thumb') {media.playbackRate=rate; media.play()}},150)
+      if (type != 'thumb') {media.playbackRate=rate; media.play()}},220)
     media.style.maxWidth = window.innerWidth * 0.6 + "px"
     media.style.maxHeight = window.innerHeight * 0.7 + "px"
     media.addEventListener('ended', media_ended)

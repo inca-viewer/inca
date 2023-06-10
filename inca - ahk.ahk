@@ -1,7 +1,7 @@
 
 
 
-	; Inca Media Viewer for Windows - Firefox & Chrome compatible
+	; Browser File Explorer - Windows
 
 	#NoEnv
 	#UseHook, On
@@ -23,6 +23,7 @@
         Global toggles			; eg. reverse
         Global features			; program settings
         Global fol			; favorite folders
+        Global fav			; favorite playlists
         Global search			; list of search words
         Global search_folders		; default search locations
         Global index_folders		; to index thumb sheets
@@ -234,7 +235,7 @@
     MouseDown()
       {
       gesture =
-      timer := A_TickCount + 350
+      timer := A_TickCount + 400
       MouseGetPos, xpos, ypos
       StringReplace, click, A_ThisHotkey, ~,, All
       loop					; gesture detection
@@ -643,14 +644,14 @@
                 if !folder
                   folder = none
                 }
-            if (command == "SearchAdd" && value)			; add search_term to genre list
+            if (command == "SearchAdd" && value)			; add search_term to list
               {
               StringUpper, search_term, value, T
-              genre = %genre%|%search_term%
-              StringReplace, genre, genre, |, `n, All
-              Sort, genre, u
-              StringReplace, genre, genre, `n, |, All
-              IniWrite,%genre%,%inca%\inca - ini.ini,Settings,genre
+              search = %search%|%search_term%
+              StringReplace, search, search, |, `n, All
+              Sort, search, u
+              StringReplace, search, search, `n, |, All
+              IniWrite,%search%,%inca%\inca - ini.ini,Settings,Search
               LoadSettings()
               PopUp("Added",600,0,0)
               }
@@ -886,7 +887,7 @@
         else skinny := 1
         FileRead, cap, %inca%\cache\captions\%media%.srt
         caption := StrSplit(cap, "|").1
-        caption = <a href="#EditCap#%media%##" style="color:#826858; font-size:%cap_size%em">%caption%</a>
+        caption = <a href="#EditCap#%media%##"><p style="color:#826858; font-size:%cap_size%em">%caption%</p></a>
         cap := StrReplace(cap, "`r`n", "|")
         cap := StrReplace(cap, ",", "§")
         cap := StrReplace(cap, "'", "±")
@@ -1280,13 +1281,13 @@
             else gui, settings:add, text
             gui, settings:add, text, x68 yp+2, %key%
             }
-        gui, settings:add, text, x165 y10, Searches
-        gui, settings:add, edit, x160 yp+13 h60 w500 vFol, %search%
-        gui, settings:add, text, x165 yp+66, Fol
-        gui, settings:add, edit, x160 yp+13 h60 w500 vSearch, %fol%
-        gui, settings:add, text, x165 yp+66, Fav
+        gui, settings:add, text, x165 y10, Search Terms
+        gui, settings:add, edit, x160 yp+13 h60 w500 vSearch, %search%
+        gui, settings:add, text, x165 yp+66, Favorite Folders
+        gui, settings:add, edit, x160 yp+13 h60 w500 vFol, %fol%
+        gui, settings:add, text, x165 yp+66, Favorite Playlists
         gui, settings:add, edit, x160 yp+13 h60 w500 vFav, %fav%
-        gui, settings:add, text, x165 yp+66, Music
+        gui, settings:add, text, x165 yp+66, Music Playlists
         gui, settings:add, edit, x160 yp+13 h60 w500 vMusic, %music%
         gui, settings:add, text, x165 yp+66, folders to search
         gui, settings:add, edit, x160 yp+13 h18 w500 vsearch_folders, %search_folders%
@@ -1325,16 +1326,16 @@
         return
 
         settingsButtonSave:
-        IniWrite,%search_folders%,%inca%\inca - ini.ini,Settings,search_folders
-        IniWrite,%index_folders%,%inca%\inca - ini.ini,Settings,index_folders
-        IniWrite,%fol%,%inca%\inca - ini.ini,Settings,Fol
-        IniWrite,%fav%,%inca%\inca - ini.ini,Settings,Fav
-        IniWrite,%music%,%inca%\inca - ini.ini,Settings,Music
+        gui, settings:submit
         StringReplace, search, search, |, `n, All
         Sort, search, u
         StringReplace, search, search, `n, |, All
         IniWrite,%search%,%inca%\inca - ini.ini,Settings,Search
-        gui, settings:submit
+        IniWrite,%fol%,%inca%\inca - ini.ini,Settings,Fol
+        IniWrite,%fav%,%inca%\inca - ini.ini,Settings,Fav
+        IniWrite,%music%,%inca%\inca - ini.ini,Settings,Music
+        IniWrite,%search_folders%,%inca%\inca - ini.ini,Settings,search_folders
+        IniWrite,%index_folders%,%inca%\inca - ini.ini,Settings,index_folders
         new =
         Loop, Parse, features, `|
             {
