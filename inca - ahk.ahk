@@ -334,7 +334,6 @@
             {
             volume -= vol_ref / (Setting("Sleep Timer") * 6)		; sleep timer
             SoundSet, volume						; slowly reduce volume
-            vol_popup := 100						; check every 10 seconds
             }
         x = %A_Hour%:%A_Min%
         if (x == Setting("WakeUp Time"))
@@ -837,7 +836,7 @@
             subs = %subs% <div><table><tr><td><a href="#Path###%A_Loopfield%" style="width:80`%; margin-left:4.2em; border-radius:1em; white-space:nowrap; overflow:hidden; border-radius:1em; text-overflow:ellipsis" onmouseover="this.href=this.href.replace('###', '##'+selected+'#')">%fname%</a></td></tr></table></div>`r`n`r`n
             }
         if subs
-            subs = %subs% <div style='height:1em'></div>
+            subs = %subs% <hr style='height:1em; width:77`%; margin-left:0; outline:none; border:0 none; border-top:0.1px solid #826858'></hr>
 
         header_html = <!--`r`n%view%>%last_view%>%page%>%filt%>%sort%>%toggles%>%this_search%>%search_term%>%path%>%folder%>%playlist%>%last_media%>`r`n%page_media%`r`n-->`r`n<!doctype html>`r`n<html>`r`n<head>`r`n<meta charset="UTF-8">`r`n<title>Inca - %title%</title>`r`n<meta name="viewport" content="width=device-width, initial-scale=1">`r`n<link rel="icon" type="image/x-icon" href="file:///%inca%\apps\icons\inca.ico">`r`n</head>`r`n
 
@@ -1289,9 +1288,9 @@
         gui, settings:add, edit, x160 yp+13 h60 w500 vFav, %fav%
         gui, settings:add, text, x165 yp+66, Music Playlists
         gui, settings:add, edit, x160 yp+13 h60 w500 vMusic, %music%
-        gui, settings:add, text, x165 yp+66, folders to search
+        gui, settings:add, text, x165 yp+66, Folders to Search
         gui, settings:add, edit, x160 yp+13 h18 w500 vsearch_folders, %search_folders%
-        gui, settings:add, text, x165 yp+23, folders to index
+        gui, settings:add, text, x165 yp+23, Folders to Index
         gui, settings:add, edit, x160 yp+13 h18 w500 vindex_folders, %index_folders%
         gui, settings:add, button, x160 y410 w60, Source
         gui, settings:add, button, x240 y410 w60, Java

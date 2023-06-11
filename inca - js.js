@@ -5,8 +5,12 @@
 // join function ??
 // more intuitive mp3/4/cue conversions
 // loop in out point
-// player size on long click
-// long seek sound blast
+// false start times
+// user interface next/thumbsheet
+//    if (media.style.position!='fixed' || !mouse_down) {over_thumb=false}
+//    if (media.style.position!='fixed' || ym < 0.9) {el.pause()}}
+// 121201 ????
+
 
 
   var modal = document.getElementById('myModal')			// media player window
@@ -49,7 +53,7 @@
   var looping = true							// play next or loop media
   var mouse_down = false
   var long_click = false
-  var Mclick = false
+  var long_Mclick = false
   var gesture = false
   var over_cap = false							// cursor over caption
   var over_thumb = false
@@ -87,20 +91,21 @@
 
   function ScreenSize() {
     scaleX = skinny; scaleY = 1
-    if (screenLeft) {Xoff=0; Yoff=10}
-    mediaX=(innerWidth/2)-Xoff; mediaY=(innerHeight/2)-Yoff
-    media.style.maxWidth = window.innerWidth + "px"
-    media.style.maxHeight = window.innerHeight + "px"
-    media.style.width = innerWidth + "px"
-    media.style.height = innerHeight + "px"}
+    media.style.maxWidth = innerWidth + "px"
+    media.style.maxHeight = innerHeight + "px"
+    if (media.offsetWidth/media.offsetHeight > 1)
+      {media.style.width = innerWidth + "px"; mediaX=innerWidth/2}
+    else {media.style.height = innerHeight + "px"; mediaY=innerHeight/2}
+    if (!screenLeft) {mediaX=innerWidth/2; mediaY=innerHeight/2; mediaX-=Xoff; mediaY-=Yoff}}
+
 
   function mouseDown(e) {
     if (e.button==1) {							// middle click
       e.preventDefault()
-      setTimeout(function() {if(Mclick==true){playMedia('Mclick')}},200) // show 6x6 thumbsheet
-      if (cap_list && (over_cap || xw<0.1)) {nextCap()}			// if over caption, goto next caption
+      setTimeout(function() {if(long_Mclick==true){playMedia('Mclick')}},240) // show 6x6 thumbsheet
+      if (cap_list && (over_cap || yw>0.9 || ym>1)) {nextCap()}		// if over caption, goto next caption
       else {playMedia('Mclick')}
-      Mclick=true
+      long_Mclick = true
       return}
     mouse_down = true
     long_click = false
@@ -109,15 +114,16 @@
     setTimeout(function() {
       if (mouse_down && !gesture) {
         long_click=true; 
-        if (seek_active) {media_ended()}
-        else if (type) {ScreenSize()}}},280)
-    if (seek_active) {media.currentTime=seek_active}			// bottom seeking trackbar
-    if (cap.style.color=='red') {editCap()}}				// caption active - in edit mode
+        if (seek_active) {seek_active=0; media_ended()}
+        else if (type) {ScreenSize()}}},280)}
 
 
   function mouseUp(e) {
-    if (!e.button) {if (over_thumb || type == "thumb") {playMedia('')} else {togglePause(e)}}
-    gesture=false; long_click=false; mouse_down=false; Mclick=false}
+    if (!e.button) {
+      if (over_thumb || type == "thumb") {playMedia('Click')} else {togglePause(e)}
+      if (seek_active) {media.currentTime=seek_active}			// bottom seeking trackbar
+      if (cap.style.color=='red') {editCap()}}				// caption in edit mode
+    gesture=false; long_click=false; mouse_down=false; long_Mclick=false}
 
 
   function keyDown(e) {
@@ -147,6 +153,7 @@
     if (media.duration) {interval = Math.ceil(10*media.duration/100)/10} // set seek interval
     if (media.paused) {interval = 0.04}
     mySkinny.innerHTML = Math.round(100*newSkinny)/100
+    if (type == 'image') {stat.innerHTML = mySkinny.innerHTML}
     if (sound == 'yes' && media.volume <= 0.8) {media.volume += 0.2}	// fade sound in or out
     if (sound == 'no' && media.volume >= 0.2) {media.volume -= 0.2}
     positionMedia()
@@ -156,15 +163,17 @@
   function overThumb(e, type, st, sx, cp, id) {				// mouse over thumbnail in browser tab
     if (mouse_down) {return}						// in case thumb slides over another thumb
     index = id								// htm page media id
-    start = st
     scaleY = 1
     scaleX = sx
     over_thumb = true
+    media = document.getElementById('media' + id)
+    rect = media.getBoundingClientRect()
+    xm = (xpos - rect.left) / media.offsetWidth
+    ym = (ypos - rect.top) / media.offsetHeight
     var sel = document.getElementById('sel' + id)
     if (selected) {sel.href = '#MovePos#' + id + '#' + selected + '#'}	// preload href for thumb position change in m3u list
-    media = document.getElementById('media' + id)
-    if (media.duration && ym > 0.9) {media.currentTime = media.duration * xm; start = media.duration * xm}
-    else if (media.currentTime <= st || ym < 0.1) {media.currentTime = st + 0.1} // thumb in/out seek time
+    if (media.duration && ym>0.9) {media.currentTime = media.duration * xm; start = media.duration * xm}
+    else if (media.currentTime <= st || ym<0.1) {start=st; media.currentTime = st + 0.1} // thumb in/out seek time
     media.playbackRate = 0.74						// play thumb slower
     media.play()}
 
@@ -178,14 +187,22 @@
     if (gesture) {return}
     if (selected && path.href.slice(27).match('/inca/')) {return}	// moving thumb position within a playlist
     if (path.href.slice(27).match('/inca/music/')) {looping=false}	// default not loop music playlist
+    if (e=='Click' && type=='thumb') {
+      if (xm > 0 && xm < 1 && ym > 0 && ym < 1) {			// mouse over thumbsheet
+        var row = Math.floor(ym * 6)					// derive media seek time from mouse xy
+        var col = Math.ceil(xm * 6)
+        var offset = 0
+        thumb = 5 * ((row * 6) + col)
+        thumb = (thumb - 1) / 200
+        if (media.duration > 60) {offset = 20}
+        start = offset - (thumb * offset) + media.duration * thumb}
+      else {start = last_start}}
     media.pause()							// pause browser tab thumb
     media = player							// media assigned to modal
     last_type = type
-    if (type) {close_media()}						// no type if no media playing 
-    if (e == 'Next') {index+=1; start=0}				// later derived from parameters
-    if (Mclick) {index-=3; start=0}
-    if (e == 'Mclick' && last_type && last_type != 'video' && thumb) {index+=1}
-    if (e == 'Mclick' && !thumb) {index+=1; start=0}
+    if (type) {close_media()}						// no type if no media playing
+    if (long_Mclick) {index-=3; start=0}
+    if ((e == 'Mclick' && last_type && last_type != 'video') || yw>0.9 || ym>1) {index+=1; start=0}
     if (!over_thumb && !last_type) {index=last_index; start=last_start; e='Thumb'}	// play last media
     var Next = document.getElementById("media" + index)
     if (!Next) {index = 1; Next = document.getElementById('media1')}	// end of list, return to first media
@@ -199,8 +216,8 @@
     media.src = Next.src
     if (type == 'document') {return}
     if (type == "image") {media.poster = Next.poster}
-    else if ((e == 'Next' || Mclick) && last_type == 'thumb') {type = 'thumb'}
-    if (e == 'Mclick' && type == 'video' && thumb) {type = 'thumb'}
+    if (e == 'Mclick' && type == 'video') {type = 'thumb'}
+    if (e == 'Mclick' && type == 'thumb' && (yw>0.9 || ym>1)) {type = 'video'}
     if (type == 'video' || type == 'thumb') {
       x = Next.poster.replace("/posters/", "/thumbs/")			// get start time from filename
       p = x.split('%20')
@@ -219,16 +236,18 @@
     scaleX = scaleY
     if (scaleY > 1.4) {scaleX = 1.4; scaleY = 1.4}			// keep media within window
     if (scaleY < 0.6) {scaleX = 0.6; scaleY = 0.6}
-    if (!mediaY || mediaY < 100 || mediaY > window.innerHeight*0.8) {mediaY = window.innerHeight/2}
-    if (!mediaX || mediaX < 100 || mediaX > window.innerWidth*0.8) {mediaX = window.innerWidth/2.6}
+    if (!mediaY || mediaY < 100 || mediaY > innerHeight*0.8) {mediaY = innerHeight/2}
+    if (!mediaX || mediaX < 100 || mediaX > innerWidth*0.8) {mediaX = innerWidth/2.6}
     scaleX *= skinny
     setTimeout(function() {
       document.body.style.overflow="hidden"
       positionMedia()
       media.style.opacity = 1
-      if (type != 'thumb') {media.playbackRate=rate; media.play()}},220)
-    media.style.maxWidth = window.innerWidth * 0.6 + "px"
-    media.style.maxHeight = window.innerHeight * 0.7 + "px"
+      if (type != 'thumb') {media.playbackRate=rate; media.play()}},260)
+    media.style.width=null
+    media.style.height=null
+    media.style.maxWidth = innerWidth * 0.7 + "px"
+    media.style.maxHeight = innerHeight * 0.8 + "px"
     media.addEventListener('ended', media_ended)
     mediaTimer = setInterval(timedEvents,84)
     modal.style.opacity = 1
@@ -330,20 +349,11 @@
     e.stopPropagation()
     xpos = e.clientX
     ypos = e.clientY
-    xw =  xpos / window.innerWidth
-    yw =  ypos / window.innerHeight
+    xw =  xpos / innerWidth
+    yw =  ypos / innerHeight
     rect = media.getBoundingClientRect()
     xm = (xpos - rect.left) / (media.offsetWidth*scaleX)
     ym = (ypos - rect.top) / (media.offsetHeight*scaleY)
-    if (xm > 0 && xm < 1 && ym > 0 && ym < 1) {				// mouse over thumbsheet
-      var row = Math.floor(ym * 6)					// derive media seek time from mouse xy
-      var col = Math.ceil(xm * 6)
-      var offset = 0
-      thumb = 5 * ((row * 6) + col)
-      thumb = (thumb - 1) / 200
-      if (media.duration > 60) {offset = 20}
-      if (type == 'thumb') {start = offset - (thumb * offset) + media.duration * thumb}}
-    else {thumb = 0; start = last_start}
     if (mouse_down) {
       if (!gesture && !type && over_thumb) {
         mediaX = rect.left + (media.offsetWidth * scaleX/2)
@@ -396,7 +406,7 @@
 
 
   function media_ended() {
-    if (!long_click && (!looping || type == 'audio')) {playMedia('Next'); return}	// loop or next media
+    if (!long_click && (!looping || type == 'audio')) {playMedia('Mclick'); return}	// loop or next media
     if (type != 'video') {return}
     media.currentTime = 0
     media.play()
@@ -438,7 +448,7 @@
 
 
   function spool(e, id, input, to, so, fi, pa, ps, ts, rt) {		// spool lists into top htm panel
-    if (mouse_down) {return}						// in case sliding thumbs over panel
+    if (mouse_down || id=='myModal') {return}				// in case sliding thumbs over panel
     if (id) {panel.style.opacity = 1}
     if (input) {ini=input; toggles=to; sort=so; filt=fi; page=pa; pages=ps; thumb_size=ts; rate=rt} // from inca.exe
     if (!last_id) {last_id = 'Folders'}
@@ -503,7 +513,7 @@
   function nextCap() {							// seek to next caption in movie
     var z = cap_list.split('|')
     for (x of z) {if (!isNaN(x) && x>(media.currentTime+0.2)) {media.currentTime = x-0.8; media.play(); return}}
-    playMedia('Next')}
+    playMedia('Mclick')}
 
   function Captions() {							// display captions
     if (document.activeElement.id == 'myCap') {cap.style.color='red'; return}
