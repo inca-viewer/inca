@@ -72,8 +72,6 @@
 
 
 
-
-
     main:
       initialize()				; set environment
       WinActivate, ahk_group Browsers
@@ -182,56 +180,6 @@
       return
 
 
-    #/::					; 1st mouse option button win/
-      timer = set
-      SetTimer, button2_Timer, -240
-      return
-    #/ up::
-      timer =
-      return
-    button2_Timer:
-      IfWinActive, ahk_group Browsers
-        if !timer
-          send, {Space}				; pause toggle YouTube
-        else loop 10
-          {
-          if !timer
-            break
-          WinActivate, ahk_group Browsers
-          send, {Left}{Left}			; rewind YouTube 10 secs
-          sleep 624
-          }
-      return
-
-
-    #\::					; 2nd mouse option button win\
-      timer3 = set
-      SetTimer, button1_Timer, -240
-      return
-    #\ up::
-      timer3 =
-      return
-    button1_Timer:
-      if !timer3				; toggle browser / desktop
-        {
-        WinGet, state, MinMax, ahk_group Browsers
-        if (state > -1)
-            WinMinimize, ahk_group Browsers
-        else WinRestore, ahk_group Browsers
-        IfWinNotExist, ahk_group Browsers
-            run, %inca%\cache\html\pictures.htm
-        last_status =
-        }
-      else
-        {
-        title := ReadAddressBar(0)
-        if (InStr(title, "youtube.com/") || InStr(title, "bitchute.com/"))
-          send, f
-        else send, {f11}			; fullscreen
-        }
-      return
-
-
     MouseDown()
       {
       gesture =
@@ -290,6 +238,8 @@
         }
       if (!gesture && click == "LButton" && inca_tab && A_Cursor != "IBeam")
         GetAddressBar()
+      if (!inca_tab && !timer && WinActive("ahk_group Browsers"))
+          send, f
       if (!gesture && click == "RButton")
         send {RButton}
       }
@@ -592,7 +542,7 @@
             {
             list_id := value
             if GetMedia(0)
-              if (!timer||type=="document"||ext=="txt"||(type=="video" && ext!="mp4" && browser=="mozilla firefox")
+              if (type=="document"||ext=="txt"||(type=="video" && ext!="mp4" && browser=="mozilla firefox")
               || (type=="video" && ext!="mp4" && browser=="Profile 1 - Microsoft"))
                 {
                 sleep 200
