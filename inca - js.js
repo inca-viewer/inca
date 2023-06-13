@@ -5,6 +5,8 @@
 // join function ??
 // more intuitive mp3/4/cue conversions
 // loop in out point
+// magnify from cursor origin
+
 
   var modal = document.getElementById('myModal')			// media player window
   var player = document.getElementById('myPlayer')
@@ -46,8 +48,6 @@
   var looping = true							// play next or loop media
   var mouse_down = false
   var long_click = false
-  var long_Mclick = false
-  var theater = 0							// full window/fullscreen toggle
   var gesture = false
   var over_cap = false							// cursor over caption
   var over_thumb = false
@@ -67,8 +67,6 @@
   var yw = 0.5
   var xm = 0								// cursor over media ratio
   var ym = 0
-  var Xoff = 0								// fullscreen offset
-  var Yoff = 0
   var mediaX = 0							// centre of media player
   var mediaY = 0
   var scaleX = 1							// skinny & magnify factor
@@ -87,37 +85,27 @@
     if (e.button==1) {							// middle click
       e.preventDefault()
       setTimeout(function() {
-        if(long_Mclick==true) {playMedia('Mclick')}},240) 		// show 6x6 thumbsheet
+        if (long_click) {playMedia('Mclick')}},240) 			// show 6x6 thumbsheet
       if (cap_list && (over_cap || xw<0.1 || xm<0)) {nextCap()}		// next caption or next media
       else {playMedia('Mclick')}
-      long_Mclick = true
+      long_click = true
       return}
+    setTimeout(function() {if(mouse_down) {long_click=true}},200)
+    long_click=false
     mouse_down = true
-    long_click = false
     Xref = e.clientX							// for when moving thumb or media position
-    Yref = e.clientY
-    if (stat.matches(":hover")) {media_ended()}
-    setTimeout(function() {
-      if (mouse_down && !gesture) {
-        long_click=true; 
-        theater += 1							// full window/fullscreen toggle
-        if (theater == 1) {
-          playMedia('Click')
-          modal.requestFullscreen()}
-        if (theater > 2) {
-          start = media.currentTime
-          document.exitFullscreen()
-          playMedia('')
-          long_click = false
-          theater=0}}},280)}
+    Yref = e.clientY}
 
 
   function mouseUp(e) {
     if (!e.button) {
-      if (!long_click && (over_thumb || type == "thumb")) {playMedia('Click')} else {togglePause(e)}
-      if (seek_active) {media.currentTime=seek_active}			// bottom seeking trackbar
+      if ((over_thumb && media.style.position!='fixed') || type == "thumb") {playMedia('Click')} else {togglePause(e)}
+      if (long_click) {
+        if (over_thumb && media.style.position=='fixed') {playMedia('Click')}
+        else if (stat.matches(":hover")) {media_ended()}
+        else if (seek_active) {media.currentTime=seek_active}}		// trackbar seeking video
       if (cap.style.color=='red') {editCap()}}				// caption in edit mode
-    gesture=false; long_Mclick=false; mouse_down=false}
+    gesture=false; mouse_down=false; long_click=false}
 
 
   function keyDown(e) {
@@ -128,10 +116,10 @@
       var top = document.body.getBoundingClientRect().top
       if (!type && top < -90) {scroll(0,0); return}			// scroll to top of htm page
       if (type) {							// media was playing
-        close_media()
-        theater = 0
-        document.body.style.overflow = "auto"
-        modal.style.display = null					// close modal overlay
+        media.style.opacity = 0
+        document.body.style.overflow = "auto"; 
+        setTimeout(function() {document.exitFullscreen()},50)    
+        setTimeout(function() {modal.style.display='none'; close_media()},100)
         flag = true}							// don't reset page
       if (hist) {messages = messages+'#History##'+hist+'#'; hist=''}	// add to media history list
       if (messages) {stat.href=messages; messages=''; stat.click()}	// send messages to inca.exe
@@ -139,8 +127,7 @@
 
 
   function togglePause(e) {
-    if (!mouse_down||long_click||gesture||seek_active||over_cap||!type
-    ||nav.matches(":hover")||stat.matches(":hover")) {return}
+    if (!mouse_down||gesture||over_cap||long_click||nav.matches(":hover")) {return}
     if (media.paused) {media.play()} else {media.pause()}}
 
 
@@ -201,7 +188,7 @@
     media = player							// media assigned to modal
     last_type = type
     if (type) {close_media()}						// no type if no media playing
-    if (long_Mclick) {index-=3; start=0}
+    if (long_click) {index-=3}
     if (e == 'Loop') {index+=1; start=0}
     if ((e == 'Mclick' && last_type && last_type != 'video') || xw<0.1 || xm<0) {index+=1; start=0}
     if (!over_thumb && !last_type) {index=last_index; start=last_start; e='Thumb'}	// play last media
@@ -229,29 +216,30 @@
         x = x.replace('%20' + p, '')}
       if (type == "thumb") {media.poster = x}
       else {media.poster = ''; setTimeout(function() {media.poster = x},600)}} // stops flickering poster
-    if (long_click && !theater) {start = 0}
     if (type == "video" || type == "audio") {media.currentTime = start-0.2}
     if (type == "audio") {media.controls = true; sound == 'yes'}
     mediaX = sessionStorage.getItem('mediaX')*1
     mediaY = sessionStorage.getItem('mediaY')*1				// last media position on screen
+    if (!mediaX) {mediaX=screen.width/2; mediaY=screen.height/2}
     scaleX = scaleY
     if (scaleY > 1.4) {scaleX = 1.4; scaleY = 1.4}			// keep media within window
     if (scaleY < 0.6) {scaleX = 0.6; scaleY = 0.6}
-    if (!mediaY || mediaY < 100 || mediaY > innerHeight*0.8) {mediaY = innerHeight/2}
-    if (!mediaX || mediaX < 100 || mediaX > innerWidth*0.8) {mediaX = innerWidth/2.6}
+    if (!mediaY || mediaY < 100 || mediaY > outerHeight*0.8) {mediaY = outerHeight/2}
+    if (!mediaX || mediaX < 100 || mediaX > outerWidth*0.8) {mediaX = outerWidth/2.6}
     scaleX *= skinny
     setTimeout(function() {
-      document.body.style.overflow="hidden"
       positionMedia()
-      media.style.opacity = 1
-      if (type != 'thumb') {media.playbackRate=rate; media.play()}},260)
+      modal.requestFullscreen()
+      if (type != 'thumb') {media.playbackRate=rate; media.play()}},150)
+    setTimeout(function() {media.style.opacity = 1},260)
+    document.body.style.overflow="hidden"
+    modal.style.display='flex'
     media.style.width=null
     media.style.height=null
-    media.style.maxWidth = innerWidth * 0.7 + "px"
-    media.style.maxHeight = innerHeight * 0.8 + "px"
+    media.style.maxWidth = outerWidth * 0.7 + "px"
+    media.style.maxHeight = outerHeight * 0.8 + "px"
     media.addEventListener('ended', media_ended)
     mediaTimer = setInterval(timedEvents,84)
-    modal.style.display='flex'
     stat.innerHTML = index
     seek.src = media.src						// seek thumbnail under video
     media.muted = false
@@ -278,8 +266,10 @@
 
 
   function wheelEvents(e, id, el, input) {
+    if (id == 'Fixed' && media.style.position != 'fixed') {return}
     e.preventDefault()
     e.stopPropagation()
+    seek.style.opacity = 0
     wheel += Math.abs(e.deltaY)
     if (wheel < block) {return}
     var wheelDown = false
@@ -329,12 +319,15 @@
       if (type != 'image' && (media.playbackRate < 1 || x < 0)) {
         media.playbackRate += x
         stat.innerHTML=Math.round(media.playbackRate *100)}}
-    else if (type && type != 'image' && (xm<0||xm>1||ym<0||xw<0.1||xw>0.9||yw<0.1||yw>0.85)) {	 // seek
+    else if (seek_active) {						// seek
       if (wheelDown) {media.currentTime += interval}
       else  {media.currentTime -= interval}}
     else if (type) {							// magnify
       if (wheelDown) {scaleX *= 1.015; scaleY *= 1.015}
       else {scaleX *= 0.98; scaleY *= 0.98}
+x = (mediaX - xpos)
+y = (mediaY - ypos)
+// media.style.transform = "translate(100px,100px)"
       positionMedia()
       block = 24}
     else {spool(e, id)} 						// scroll top panel
@@ -346,12 +339,12 @@
     e.stopPropagation()
     xpos = e.clientX
     ypos = e.clientY
-    xw =  xpos / innerWidth
-    yw =  ypos / innerHeight
+    xw =  xpos / outerWidth
+    yw =  ypos / outerHeight
     rect = media.getBoundingClientRect()
     xm = (xpos - rect.left) / (media.offsetWidth*scaleX)
     ym = (ypos - rect.top) / (media.offsetHeight*scaleY)
-    if (mouse_down && !long_click) {
+    if (mouse_down) {
       if (!gesture && !type && over_thumb) {
         mediaX = rect.left + (media.offsetWidth * scaleX/2)
         mediaY = rect.top + (media.offsetHeight * scaleY/2)}
@@ -372,40 +365,31 @@
     if (type && modal.style.cursor != "crosshair") {
       modal.style.cursor = "crosshair"
       setTimeout(function() {modal.style.cursor = 'none'},244)}
-    if (xm<0||xm>1||ym<0||xw>0.9||xw<0.1||yw<0.1||yw>0.85) {
-      if (!stat.matches(":hover")) {stat.style.opacity=null}
-      if (type == 'video' || type == 'audio') {seekbar.style.opacity = 0.6}}
-    else {seekbar.style.opacity = null; stat.style.opacity = 0}
-    if (!nav.matches(":hover") && type == 'video' && xm>0 && xm<1 && yw>0.85) {
+    if (type && xm>0 && xm<1 && ym>0.85 && ym<1) {
+      stat.style.opacity = 1
+      if (type == 'video') {seek.style.opacity = 1}
+      seekbar.style.opacity = 1
       seek_active = media.duration * xm
-      seek.style.opacity = 1
-      seek.style.left = xpos - seek.offsetWidth/2 + 'px'		// seek thumbnail
-      seek.style.top = innerHeight -100 + "px"
+      seek.style.left = xpos +'px'					// seek thumbnail
+      seek.style.top = rect.bottom - 150 + 'px'
+      stat.style.top = rect.bottom - 60 +'px'
+      nav.style.left = rect.left + 'px'
+      nav.style.top = rect.bottom - 290 +'px'
+      stat.style.left = rect.left +'px'
       seek.currentTime = seek_active}
-    else {seek_active = 0; seek.style.opacity = 0}}
+    else {seek_active=0; seek.style.opacity=0; seekbar.style.opacity=null; stat.style.opacity=null}}
 
 
   function positionMedia() {
-    if (screenLeft) {x=0; y=0; Xoff=screenLeft; Yoff=outerHeight-innerHeight} else {x=Xoff; y=Yoff}	// fullscreen offsets
-    media.style.marginLeft = x+'px'; media.style.marginTop = y+'px'
-    seekbar.style.marginLeft = x+'px'; seekbar.style.marginTop = y+'px'
-    cap.style.marginLeft = x+'px'; cap.style.marginTop = y+'px'
     seekbar.style.left = mediaX - media.offsetWidth*scaleX/2 + "px"
     seekbar.style.top = 3 + mediaY + media.offsetHeight*scaleY/2 + "px"
-    if (3 + mediaY + media.offsetHeight*scaleY/2 + y > innerHeight) {seekbar.style.top = innerHeight -6 -y + "px"}
+    if (3 + mediaY + media.offsetHeight*scaleY/2 > innerHeight) {seekbar.style.top = innerHeight -6 + "px"}
     seekbar.style.width = scaleX * media.offsetWidth * media.currentTime / media.duration + "px"
     cap.style.left = mediaX - media.offsetWidth*scaleX/2 + "px"
     cap.style.top = mediaY + media.offsetHeight*scaleY/2 + 10 + "px"
     media.style.top = mediaY - media.offsetHeight/2 + "px"
     media.style.left = mediaX - media.offsetWidth/2 + "px"
-    media.style.transform = "scale("+scaleX+","+scaleY+")"
-    if (theater > 1) {									// full screen mode
-      media.style.maxWidth = innerWidth + "px"
-      media.style.maxHeight = innerHeight + "px"
-      if (media.offsetWidth/media.offsetHeight > 1)
-        {media.style.width = innerWidth + "px"; mediaX=innerWidth/2}
-      else {media.style.height = innerHeight + "px"; mediaY=innerHeight/2}
-      if (!screenLeft) {mediaX=innerWidth/2; mediaY=innerHeight/2; mediaX-=Xoff; mediaY-=Yoff}}}
+    media.style.transform = "scale("+scaleX+","+scaleY+")"}
 
 
   function media_ended() {

@@ -85,7 +85,8 @@
   user-select:none;
   border-radius:6%;
   max-width:160px;
-  max-height:120px}
+  max-height:120px;
+  transition:opacity 1s}
 
 .thumbs {
   display:inline-block;
@@ -141,18 +142,16 @@ table {
 .stat {
   position:fixed;
   left:0;
-  bottom:0;
   width:2.5em;
-  opacity:0.3;
+  opacity:0;
   color:lightsalmon;}
 
 .stat:hover {color:red; opacity:1} 
 
 .sidenav {
+  left:0;
   display:none;
   position:fixed;
-  left:0;
-  bottom:4.6em;
   width:5em;
   font-size:1.2em;}
 
