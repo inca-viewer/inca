@@ -181,7 +181,7 @@
     MouseDown()
       {
       gesture =
-      timer := A_TickCount + 400
+      timer := A_TickCount + 300
       MouseGetPos, xpos, ypos
       StringReplace, click, A_ThisHotkey, ~,, All
       loop					; gesture detection
@@ -282,6 +282,7 @@
             {
             volume -= vol_ref / (Setting("Sleep Timer") * 6)		; sleep timer
             SoundSet, volume						; slowly reduce volume
+            vol_popup := 100						; check every 10 seconds
             }
         x = %A_Hour%:%A_Min%
         if (x == Setting("WakeUp Time"))
