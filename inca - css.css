@@ -137,7 +137,6 @@ table {
   transition:color 1.4s;
   table-layout:fixed;
   border-collapse: collapse}
-.nav:hover .sidenav {display:block}
 
 .stat {
   position:fixed;
@@ -161,6 +160,7 @@ table {
   text-align:left;
   color:lightsalmon;}
 
+.statnav:hover .sidenav {display:block}
 .sidenav a:hover {color:tomato}
 .sidenav a:active {background-color:#333333}
 

@@ -72,6 +72,7 @@
   var scaleY = 1
   var Xref								// last cursor coordinate
   var Yref
+  var idx
 
   if (!sound) {sound='yes'}
   document.addEventListener('mousedown', mouseDown)
@@ -85,7 +86,7 @@
     if (e.button==1) {							// middle click
       e.preventDefault()
       setTimeout(function() {if(long_click) {playMedia('Mclick')}},240) // show 6x6 thumbsheet
-      if (cap_list && (over_cap || xm>1 || xw>0.9)) {nextCap()}		// next caption or next media
+      if (cap_list && (over_cap || yw>0.9)) {nextCap()}			// next caption (or next media)
       else {playMedia('Mclick')}
       long_click = true
       return}
@@ -97,14 +98,12 @@
 
 
   function mouseUp(e) {
-    if (!e.button) {
-      if ((over_thumb && media.style.position!='fixed') || type == "thumb") {playMedia('Click')} else {togglePause(e)}
-      if (long_click) {
-        if (over_thumb && media.style.position=='fixed') {playMedia('Click')}
-        else if (stat.matches(":hover")) {media_ended()}
-        else if (seek_active) {media.currentTime=seek_active}}		// trackbar seeking video
-      if (cap.style.color=='red') {editCap()}}				// caption in edit mode
-    gesture=false; mouse_down=false; long_click=false}
+    if (!e.button) {					
+      if (seek_active && type == 'image') {index = idx; playMedia('')}	// seek thumbnail under media
+      else if (seek_active && type == 'video' && long_click) {media.currentTime=seek_active}
+      else if (cap.style.color=='red') {editCap()}			// caption in edit mode
+      else if (over_thumb || type == "thumb") {playMedia('Click')} else {togglePause(e)}}
+    gesture=false; mouse_down=false; long_click=false; seek.style.opacity=0}
 
 
   function keyDown(e) {
@@ -118,6 +117,7 @@
         document.body.style.overflow = "auto" 
         document.exitFullscreen()   
         modal.style.display='none'
+        seek_active = 0
         close_media()
         flag = true}							// don't reset page
       if (hist) {messages = messages+'#History##'+hist+'#'; hist=''}	// add to media history list
@@ -126,7 +126,7 @@
 
 
   function togglePause(e) {
-    if (!mouse_down||gesture||over_cap||long_click||nav.matches(":hover")) {return}
+    if (!type||!mouse_down||gesture||over_cap||long_click||nav.matches(":hover")) {return}
     if (media.paused) {media.play()} else {media.pause()}}
 
 
@@ -144,8 +144,6 @@
     if (selected) {sel.href = '#MovePos#' + id + '#' + selected + '#'}	// preload href for thumb position change in m3u list
     if (media.duration && ym>0.9 && ym<1.1) {media.currentTime = media.duration * xm; start = media.duration * xm}
     else if (media.currentTime <= st || ym<0.1) {start=st; media.currentTime = st + 0.1} // thumb in/out seek time
-
-
     media.playbackRate = 0.74						// play thumb slower
     media.play()}
 
@@ -174,7 +172,7 @@
     if (type) {close_media()}						// no type if no media playing
     if (e == 'Mclick' && long_click) {index-=3}
     if (e == 'Loop') {index+=1; start=0}
-    if ((e == 'Mclick' && last_type && last_type != 'video') || xm>1 || xw>0.9) {index+=1; start=0}
+    if (e == 'Mclick' && (last_type && last_type != 'video' || yw>0.9)) {index+=1; start=0}
     if (!over_thumb && !last_type) {index=last_index; start=last_start; e='Thumb'}	// play last media
     var Next = document.getElementById("media" + index)
     if (!Next) {index = 1; Next = document.getElementById('media1')}	// end of list, return to first media
@@ -186,10 +184,10 @@
     type = x.pop().replaceAll('\'', '').trim()				// eg video, image, thumbsheet
     media.style.opacity = 0						// prevent flashing
     media.src = Next.src
-    if (type == 'document') {return}
+    if (type == 'document') {type=''; return}
     if (type == "image") {media.poster = Next.poster}
     if (e == 'Mclick' && type == 'video') {type = 'thumb'}
-    if (e == 'Mclick' && type == 'thumb' && (xm>1 || xw>0.9)) {type = 'video'}
+    if (e == 'Mclick' && type == 'thumb' && yw>0.9) {type = 'video'}
     if (type == 'video' || type == 'thumb') {
       x = Next.poster.replace("/posters/", "/thumbs/")			// get start time from filename
       p = x.split('%20')
@@ -218,13 +216,15 @@
     setTimeout(function() {media.style.opacity = 1},260)
     document.body.style.overflow="hidden"
     modal.style.display='flex'
-    media.style.maxWidth = outerWidth * 0.7 + "px"
-    media.style.maxHeight = outerHeight * 0.8 + "px"
+    media.style.maxWidth = outerWidth * 0.6 + "px"
+    media.style.maxHeight = outerHeight * 0.6 + "px"
     media.addEventListener('ended', media_ended)
     mediaTimer = setInterval(timedEvents,84)
+    seek.poster = media.poster
     stat.innerHTML = index
     seek.src = media.src						// seek thumbnail under video
     media.muted = false
+    idx = index
     block = 200}							// block wheel input
 
 
@@ -251,11 +251,11 @@
     if (id == 'Fixed' && media.style.position != 'fixed') {return}
     e.preventDefault()
     e.stopPropagation()
-    seek.style.opacity = 0
     wheel += Math.abs(e.deltaY)
     if (wheel < block) {return}
     var wheelDown = false
     block = 120
+    if (type != 'image')    {seek.style.opacity = 0}			// don't fade seek thumb on wheel
     if (e.deltaY > 0) {wheelDown=true; pos+=4} else if (pos) {pos-=4}
     if (id == 'myPage') {						// page
       if (wheelDown && page<pages) {page++} else if (page>1) {page--}
@@ -301,13 +301,18 @@
       if (type != 'image' && (media.playbackRate < 1 || x < 0)) {
         media.playbackRate += x
         stat.innerHTML=Math.round(media.playbackRate *100)}}
-    else if ((xm>1 || xw>0.9) && (type=='video' || type=='audio')) {	// seek
+    else if ((xm<0 || xw<0.1 || yw>0.9) && (type=='video' || type=='audio')) {	// seek
       if (wheelDown) {media.currentTime += interval}
       else  {media.currentTime -= interval}}
+    else if (type == 'image' && yw>0.9) {				// image seek thumb
+      if (wheelDown) {idx +=1} else {idx -=1}
+      var Next = document.getElementById("media" + idx)
+      if (!Next) {idx = 1; Next = document.getElementById('media1')}
+      seek.poster = Next.poster}
     else if (type) {							// magnify
       if (wheelDown) {scaleX *= 1.015; scaleY *= 1.015}
       else {scaleX *= 0.985; scaleY *= 0.985}
-      if (xm>0 && xm<1 && ym>0 && ym<1) {
+      if (xm>0 && xm<1 && ym>0 && ym<1) {				// over image, zoom at cursor
         if (wheelDown) {mediaX += (mediaX-xpos)/66; mediaY += (mediaY-ypos)/66}
         else {mediaX -= (mediaX-xpos)/66; mediaY -= (mediaY-ypos)/66}}
       positionMedia()
@@ -348,17 +353,21 @@
     if (modal.style.cursor != "crosshair") {
       modal.style.cursor = "crosshair"
       setTimeout(function() {modal.style.cursor = 'none'},244)}
-    if (xm>0 && xm<1 && ym>0.85 && ym<1 && type == 'video') {		// seek thumbnail
-      seek.style.opacity = 1; seek_active = media.duration * xm; seek.currentTime = seek_active}
+    if (yw>0.9 && xm>-0.2 && xm<1.2) {					// seek thumbnail
+      seek.style.opacity = 1
+      if (type == 'image') {seek_active = 1}
+      if (type == 'video') {seek_active = media.duration * xm; seek.currentTime = seek_active}}
     else {seek_active=0; seek.style.opacity=0}
-    if ((xm>1 || xw>0.9) && (type=='video' || type=='audio')) {seekbar.style.opacity = 0.6; stat.style.opacity = 0.6} 
+    if ((xm<0 || xw<0.1 || yw>0.9) && (type=='video' || type=='audio')) {
+      seekbar.style.opacity = 0.6; stat.style.opacity = 0.6} 
     else {seekbar.style.opacity = null; stat.style.opacity = null}}
 
 
   function positionMedia() {
-    seek.style.left = xpos +'px'					// seek thumbnail
-    seek.style.top = rect.bottom - 150 + 'px'
     stat.style.top = rect.bottom - 60 +'px'
+    seek.style.top = innerHeight - 150 + 'px'
+    if (type == 'video') {seek.style.left = xpos - seek.offsetWidth/2 +'px'}
+    else {seek.style.left = innerWidth/2 - seek.offsetWidth/2 +'px'}
     nav.style.left = rect.left + 'px'
     nav.style.top = rect.bottom - 290 +'px'
     stat.style.left = rect.left +'px'
@@ -431,7 +440,7 @@
     if (mouse_down || id=='myModal') {return}				// in case sliding thumbs over panel
     if (id) {panel.style.opacity = 1}
     if (input) {ini=input; toggles=to; sort=so; filt=fi; page=pa; pages=ps; thumb_size=ts; rate=rt} // from inca.exe
-    if (!last_id) {last_id = 'Folders'}
+    if (!last_id) {last_id = 'Fol'}
     if (id) {last_id = id} else {id = last_id}
     sessionStorage.setItem("last_id",last_id)
     if (!e.deltaY) {pos = 0}
@@ -508,7 +517,7 @@
       cap_time = time
       cap.innerHTML = cap_list.slice(0,ptr).split('|').pop().replaceAll("§", "\,").replaceAll("±", "\'")
       cap.value = cap.innerHTML
-      cap.style.opacity = 0.6
+      cap.style.opacity = 1
       media.pause()}
     else if (cap.innerHTML != '-' && (!cap.value || ptr <= 0)) {cap.style.opacity=0}}
 

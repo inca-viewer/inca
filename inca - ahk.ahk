@@ -541,8 +541,7 @@
             {
             list_id := value
             if GetMedia(0)
-              if (type=="document"||ext=="txt"||(type=="video" && ext!="mp4" && browser=="mozilla firefox")
-              || (type=="video" && ext!="mp4" && browser=="Profile 1 - Microsoft"))
+              if (type=="document"||ext=="txt")
                 {
                 sleep 200
                 send, {Pause}
@@ -791,9 +790,11 @@
 
         panel_html = <body class='container' onload="spool(event, '', '%ini%', '%toggles%', '%sort%', %filt%, %page%, %pages%, %view%, %speed%)">`r`n<div style="width:%page_w%`%; margin:auto">`r`n<div class='panel' id='myPanel' onwheel="wheelEvents(event, '', this)"></div>`r`n`r`n
 
-<div id='myRibbon' class='ribbon2'>`r`n<a href='#Settings###'>Menu</a>`r`n<a href='#Recurse###' %x%>Recurse</a>`r`n<a onmouseover="spool(event, 'Fol')" onwheel="wheelEvents(event, 'Fol', this)">Fol</a>`r`n<a href='#Path###%inca%\fav\' onmouseover="spool(event, 'Fav')" onwheel="wheelEvents(event, 'Fav', this)">Fav</a>`r`n<a href='#Path###%inca%\music\' onmouseover="spool(event, 'Music')" onwheel="wheelEvents(event, 'Music', this)">Music</a>`r`n<a onmouseover="spool(event, 'Search')" onwheel="wheelEvents(event, 'Search', this)">Search</a>`r`n<a onclick="selectAll()">Select</a>`r`n<a id='myDelete' onmouseover='del()'>Delete</a>`r`n<a id='myRename' onmouseover='rename()'>Rename</a>`r`n<a href='#Images###' %y%>Pics</a>`r`n<a href='#Videos###' %z%>Vids</a>`r`n</div>`r`n`r`n<div style='display:flex'>`r`n<input id='myInput' onmouseover='panel.style.opacity=null' class='searchbox' type='search' value='%search_term%'>`r`n<a class='searchbox' onmouseover="this.href='#SearchAdd#'+inputbox.value+'##'" style='width:4`%; border-radius:0 1em 1em 0'>+</a></div>`r`n`r`n
+<div id='myRibbon' class='ribbon2'>`r`n<a onclick="selectAll()">Select</a>`r`n<a id='myDelete' onmouseover='del()'>Delete</a>`r`n<a id='myRename' onmouseover='rename()'>Rename</a>`r`n<a onmouseover="spool(event, 'Fol')" onwheel="wheelEvents(event, 'Fol', this)">Fol</a>`r`n<a href='#Path###%inca%\fav\' onmouseover="spool(event, 'Fav')" onwheel="wheelEvents(event, 'Fav', this)">Fav</a>`r`n<a href='#Path###%inca%\music\' onmouseover="spool(event, 'Music')" onwheel="wheelEvents(event, 'Music', this)">Music</a>`r`n<a onmouseover="spool(event, 'Search')" onwheel="wheelEvents(event, 'Search', this)">Search</a>`r`n<a href='#Images###' %y%>Pics</a>`r`n<a href='#Videos###' %z%>Vids</a>`r`n<a href='#Recurse###' %x%>Recurse</a>`r`n<a href='#Settings###'>Menu</a>`r`n</div>`r`n`r`n
 
-<div style='display:flex; margin-left:1em'>`r`n<a href='#Up###%path%' id='myPath' class='ribbon' style='width:4`%; font-size:1.4em'>&#8678<a href="#Orphan#%folder%##" class='ribbon' style='color:lightsalmon; font-size:1.7em; width:8em; margin-bottom:0.3em'>%title_s%</a>`r`n<div class='ribbon' style='color:lightsalmon; width:5em'>%list_size%</div>`r`n<a href=#Thumbs#%view%## id="Thumbs" class='ribbon' style='width:12`%' onwheel="wheelEvents(event, id, this)">Thumbs</a>`r`n<a href='#%sort%#%sort%#' id='mySort' class='ribbon' %w% onwheel="wheelEvents(event, id, this)">%sort%</a>`r`n<a id='myFilt' class='ribbon' onwheel="wheelEvents(event, id, this)">All</a>`r`n<a href="%title%.htm#Page" id="myPage" class='ribbon' style='width:15`%' onwheel="wheelEvents(event, id, this)">%pg%</a></div>`r`n`r`n<div id="myModal" class="modal" onwheel="wheelEvents(event, id, this)">`r`n<div><video id="myPlayer" class="player" type="video/mp4"></video>`r`n<span id="mySeekBar" class='seekbar'></span>`r`n<textarea id="myCap" class="caption" onmouseenter="over_cap=true" onmouseleave="over_cap=false"></textarea>`r`n<span><video id='mySeek' class='seek' type="video/mp4"></video></span>`r`n`r`n<span class='nav'>`r`n<a id="myStatus" class='stat' style='font-size:4em' onmouseover='stat.innerHTML=Math.round(media.playbackRate*100)' onwheel="wheelEvents(event, id, this)"></a>`r`n<span id="mySidenav" class='sidenav' onmouseover="openNav()">`r`n<a id="myMp3">mp3</a>`r`n<a id="myMp4">mp4</a>`r`n<a onclick="cue = Math.round(media.currentTime*10)/10">Cue</a>`r`n<a id="myCapnav" onclick="editCap()">Cap</a>`r`n<a id="myFav">Fav</a>`r`n<a id='myLoop' onclick="loop()">Loop</a>`r`n<a id='myMute' onclick="mute()">Mute</a>`r`n<a id="mySkinny" style='font-size:1.4em' onwheel="wheelEvents(event, id, this)"></a>`r`n</span></span></div></div>`r`n`r`n
+<div style='display:flex'>`r`n<input id='myInput' onmouseover='panel.style.opacity=null' class='searchbox' type='search' value='%search_term%'>`r`n<a class='searchbox' onmouseover="this.href='#SearchAdd#'+inputbox.value+'##'" style='width:4`%; border-radius:0 1em 1em 0'>+</a></div>`r`n`r`n
+
+<div style='display:flex; margin-left:1em'>`r`n<a href='#Up###%path%' id='myPath' class='ribbon' style='width:4`%; font-size:1.4em'>&#8678<a href="#Orphan#%folder%##" class='ribbon' style='color:lightsalmon; font-size:1.7em; width:8em; margin-bottom:0.3em'>%title_s%</a>`r`n<div class='ribbon' style='color:lightsalmon; width:5em'>%list_size%</div>`r`n<a href=#Thumbs#%view%## id="Thumbs" class='ribbon' style='width:12`%' onwheel="wheelEvents(event, id, this)">Thumbs</a>`r`n<a href='#%sort%#%sort%#' id='mySort' class='ribbon' %w% onwheel="wheelEvents(event, id, this)">%sort%</a>`r`n<a id='myFilt' class='ribbon' onwheel="wheelEvents(event, id, this)">All</a>`r`n<a href="%title%.htm#Page" id="myPage" class='ribbon' style='width:15`%' onwheel="wheelEvents(event, id, this)">%pg%</a></div>`r`n`r`n<div id="myModal" class="modal" onwheel="wheelEvents(event, id, this)">`r`n<div><video id="myPlayer" class="player" type="video/mp4"></video>`r`n<span id="mySeekBar" class='seekbar'></span>`r`n<textarea id="myCap" class="caption" onmouseenter="over_cap=true" onmouseleave="over_cap=false"></textarea>`r`n<span><video id='mySeek' class='seek' type="video/mp4"></video></span>`r`n`r`n<span class='statnav'>`r`n<a id="myStatus" class='stat' style='font-size:4em' onmouseover='stat.innerHTML=Math.round(media.playbackRate*100)' onwheel="wheelEvents(event, id, this)"></a>`r`n<span id="mySidenav" class='sidenav' onmouseover="openNav()">`r`n<a id="myMp3">mp3</a>`r`n<a id="myMp4">mp4</a>`r`n<a onclick="cue = Math.round(media.currentTime*10)/10">Cue</a>`r`n<a id="myCapnav" onclick="editCap()">Cap</a>`r`n<a id="myFav">Fav</a>`r`n<a id='myLoop' onclick="loop()">Loop</a>`r`n<a id='myMute' onclick="mute()">Mute</a>`r`n<a id="mySkinny" style='font-size:1.4em' onwheel="wheelEvents(event, id, this)"></a>`r`n</span></span></div></div>`r`n`r`n
 
         FileDelete, %inca%\cache\html\%folder%.htm
         html = %header_html%%style%%panel_html%%subs%%html%</div>`r`n
@@ -1266,7 +1267,9 @@
 
         settingsButtonHelp:
         WinClose
-        run, %inca%\apps\help.txt
+        if (browser == "google chrome")
+          Run, chrome.exe "https://github.com/inca-viewer/inca"
+        else Run, msedge.exe "https://github.com/inca-viewer/inca"
         return
 
         settingsButtonCancel:
