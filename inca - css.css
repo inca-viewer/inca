@@ -73,7 +73,7 @@
   border-radius:2%}
 
 .seekbar {
-  display:block;
+  display:none;
   position:absolute;
   opacity:0;
   border-radius:1px;
@@ -139,8 +139,8 @@ table {
   border-collapse: collapse}
 
 .stat {
+  display:none;
   position:fixed;
-  left:0;
   width:2.5em;
   opacity:0;
   color:lightsalmon;}
@@ -148,7 +148,6 @@ table {
 .stat:hover {color:red; opacity:1} 
 
 .sidenav {
-  left:0;
   display:none;
   position:fixed;
   width:5em;

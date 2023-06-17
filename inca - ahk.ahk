@@ -71,7 +71,6 @@
         Global browser
 
 
-
     main:
       initialize()				; set environment
       WinActivate, ahk_group Browsers
@@ -349,12 +348,17 @@
         Critical
         clip := clipboard
         clipboard =
-        sleep 24
-        send, ^l
-        sleep 24
-        send, ^c
-        sleep 24
-        input := clipboard
+        loop 10
+          {
+          sleep 24
+          send, ^l
+          sleep 24
+          send, ^c
+          sleep 24
+          input := clipboard
+          if input
+          break
+          }
         if new_html
             {
             clipboard := new_html

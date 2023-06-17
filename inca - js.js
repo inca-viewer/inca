@@ -4,7 +4,7 @@
 // join function ??
 // more intuitive mp3/4/cue conversions
 // loop in out point
-// mp3 player
+
 
 
   var modal = document.getElementById('myModal')			// media player window
@@ -85,9 +85,8 @@
   function mouseDown(e) {
     if (e.button==1) {							// middle click
       e.preventDefault()
-      setTimeout(function() {if(long_click) {playMedia('Mclick')}},240) // show 6x6 thumbsheet
-      if (cap_list && (over_cap || yw>0.9)) {nextCap()}			// next caption (or next media)
-      else {playMedia('Mclick')}
+      setTimeout(function() {if(long_click) {playMedia('Mclick')}},240) // goto previous media
+      nextCap()								// next caption (or next media)
       long_click = true
       return}
     setTimeout(function() {if(mouse_down) {long_click=true}},200)
@@ -97,7 +96,7 @@
     Yref = e.clientY}
 
 
-  function mouseUp(e) {
+  function mouseUp(e) {							// !! inca.exe triggers mouseup on long click
     if (!e.button) {					
       if (seek_active && type == 'image') {index = idx; playMedia('')}	// seek thumbnail under media
       else if (seek_active && type == 'video' && long_click) {media.currentTime=seek_active}
@@ -114,11 +113,16 @@
       var top = document.body.getBoundingClientRect().top
       if (!type && top < -90) {scroll(0,0); return}			// scroll to top of htm page
       if (type) {							// media was playing
-        document.body.style.overflow = "auto" 
-        document.exitFullscreen()   
-        modal.style.display='none'
-        seek_active = 0
-        close_media()
+        media.style.opacity=0
+        stat.style.display='none'
+        seekbar.style.display='none'
+        document.body.style.overflow = "auto"
+        setTimeout(function() {document.exitFullscreen()},50)
+        setTimeout(function() {
+          seek_active = 0
+          modal.style.display='none'
+          close_media()
+          window.scrollTo(0, scroll_Y)},400)
         flag = true}							// don't reset page
       if (hist) {messages = messages+'#History##'+hist+'#'; hist=''}	// add to media history list
       if (messages) {stat.href=messages; messages=''; stat.click()}	// send messages to inca.exe
@@ -166,6 +170,7 @@
         if (media.duration > 60) {offset = 20}
         start = offset - (thumb * offset) + media.duration * thumb}
       else {start = last_start}}
+    scroll_Y = window.scrollY
     media.pause()							// pause browser tab thumb
     media = player							// media assigned to modal
     last_type = type
@@ -196,7 +201,7 @@
       if (!isNaN(p) && p.length > 2 && p.includes('.')) {		// very likely a suffix timestamp
         if (!start && e != 'Thumb') {start = p}
         x = x.replace('%20' + p, '')}
-      if (type == "thumb") {media.poster = x}
+      if (type == "thumb") {media.poster = x}				// show 6x6 thumbsheet
       else {media.poster = ''; setTimeout(function() {media.poster = x},600)}} // stops flickering poster
     if (type == "video" || type == "audio") {media.currentTime = start-0.2}
     if (type == "audio") {media.controls = true; sound == 'yes'}
@@ -206,18 +211,22 @@
     scaleX = scaleY
     if (scaleY > 1.4) {scaleX = 1.4; scaleY = 1.4}			// keep media within window
     if (scaleY < 0.6) {scaleX = 0.6; scaleY = 0.6}
-    if (!mediaY || mediaY < 100 || mediaY > outerHeight*0.8) {mediaY = outerHeight/2}
-    if (!mediaX || mediaX < 100 || mediaX > outerWidth*0.8) {mediaX = outerWidth/2.6}
+    if (!mediaY || mediaY < 100 || mediaY > innerHeight*0.8) {mediaY = innerHeight/2}
+    if (!mediaX || mediaX < 100 || mediaX > innerWidth*0.8) {mediaX = innerWidth/2.6}
     scaleX *= skinny
     setTimeout(function() {
       if (path.href.slice(27).match('/inca/music/') || type=='audio') {looping=false}
       else {modal.requestFullscreen()}
       if (type != 'thumb') {media.playbackRate=rate; media.play()}},200)
-    setTimeout(function() {media.style.opacity = 1},260)
+    setTimeout(function() {
+      media.style.opacity=1
+      stat.style.display='block'
+      seekbar.style.display='block'
+      Gesture(e)},260)
     document.body.style.overflow="hidden"
     modal.style.display='flex'
-    media.style.maxWidth = outerWidth * 0.6 + "px"
-    media.style.maxHeight = outerHeight * 0.6 + "px"
+    media.style.maxWidth = innerWidth * 0.7 + "px"
+    media.style.maxHeight = innerHeight * 0.8 + "px"
     media.addEventListener('ended', media_ended)
     mediaTimer = setInterval(timedEvents,84)
     seek.poster = media.poster
@@ -326,8 +335,8 @@
     e.stopPropagation()
     xpos = e.clientX
     ypos = e.clientY
-    xw =  xpos / outerWidth
-    yw =  ypos / outerHeight
+    xw =  xpos / innerWidth
+    yw =  ypos / innerHeight
     rect = media.getBoundingClientRect()
     xm = (xpos - rect.left) / (media.offsetWidth*scaleX)
     ym = (ypos - rect.top) / (media.offsetHeight*scaleY)
@@ -353,9 +362,8 @@
     if (modal.style.cursor != "crosshair") {
       modal.style.cursor = "crosshair"
       setTimeout(function() {modal.style.cursor = 'none'},244)}
-    if (yw>0.9 && xm>-0.2 && xm<1.2) {					// seek thumbnail
-      seek.style.opacity = 1
-      if (type == 'image') {seek_active = 1}
+    if (yw>0.9 && xm>-0.2 && xm<1.2) {			// seek thumbnail
+      if (type != 'thumb') {seek_active = 1; seek.style.opacity = 1}
       if (type == 'video') {seek_active = media.duration * xm; seek.currentTime = seek_active}}
     else {seek_active=0; seek.style.opacity=0}
     if ((xm<0 || xw<0.1 || yw>0.9) && (type=='video' || type=='audio')) {
@@ -364,13 +372,13 @@
 
 
   function positionMedia() {
-    stat.style.top = rect.bottom - 60 +'px'
     seek.style.top = innerHeight - 150 + 'px'
     if (type == 'video') {seek.style.left = xpos - seek.offsetWidth/2 +'px'}
     else {seek.style.left = innerWidth/2 - seek.offsetWidth/2 +'px'}
-    nav.style.left = rect.left + 'px'
-    nav.style.top = rect.bottom - 290 +'px'
-    stat.style.left = rect.left +'px'
+    nav.style.left = '10px'
+    nav.style.top = innerHeight - 320 +'px'
+    stat.style.left ='10px'
+    stat.style.top = innerHeight - 90 +'px'
     seekbar.style.left = mediaX - media.offsetWidth*scaleX/2 + "px"
     seekbar.style.top = 3 + mediaY + media.offsetHeight*scaleY/2 + "px"
     if (3 + mediaY + media.offsetHeight*scaleY/2 > innerHeight) {seekbar.style.top = innerHeight -6 + "px"}
@@ -473,7 +481,7 @@
     for (var i = 0; i < (x.length-1); i++) {document.getElementById('media' + x[i]).load()}}
 
   function openNav() {
-    document.getElementById('myMp3').href = '#mp3#' + time + '#' + index + ',#' + cue
+    document.getElementById('myMp3').href = '#mp3#' + time + '#' + index + ',#' + cue	// inca messages
     document.getElementById('myMp4').href = '#mp4#' + time + '#' + index + ',#' + cue
     document.getElementById('myFav').href = '#Favorite#' + time + '#' + index + ',#'}
 
@@ -503,8 +511,9 @@
     cap.focus()}
 
   function nextCap() {							// seek to next caption in movie
-    var z = cap_list.split('|')
-    for (x of z) {if (!isNaN(x) && x>(media.currentTime+0.2)) {media.currentTime = x-0.8; media.play(); return}}
+    if (cap_list && yw>0.9) {
+      var z = cap_list.split('|')
+      for (x of z) {if (!isNaN(x) && x>(media.currentTime+0.2)) {media.currentTime = x-0.8; media.play(); return}}}
     playMedia('Mclick')}
 
   function Captions() {							// display captions
