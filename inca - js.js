@@ -4,7 +4,8 @@
 // join function ??
 // more intuitive mp3/4/cue conversions
 // loop in out point
-
+// 1st sheet small size
+// inca timer delay issue
 
 
   var modal = document.getElementById('myModal')			// media player window
@@ -113,16 +114,14 @@
       var top = document.body.getBoundingClientRect().top
       if (!type && top < -90) {scroll(0,0); return}			// scroll to top of htm page
       if (type) {							// media was playing
+        seek_active = 0
         media.style.opacity=0
         stat.style.display='none'
         seekbar.style.display='none'
         document.body.style.overflow = "auto"
+        close_media()
         setTimeout(function() {document.exitFullscreen()},50)
-        setTimeout(function() {
-          seek_active = 0
-          modal.style.display='none'
-          close_media()
-          window.scrollTo(0, scroll_Y)},400)
+        setTimeout(function() {modal.style.display='none'; window.scrollTo(0, scroll_Y)},400)	// browser cannot remember ??
         flag = true}							// don't reset page
       if (hist) {messages = messages+'#History##'+hist+'#'; hist=''}	// add to media history list
       if (messages) {stat.href=messages; messages=''; stat.click()}	// send messages to inca.exe
@@ -189,7 +188,7 @@
     type = x.pop().replaceAll('\'', '').trim()				// eg video, image, thumbsheet
     media.style.opacity = 0						// prevent flashing
     media.src = Next.src
-    if (type == 'document') {type=''; return}
+    if (type == 'document' || type == 'm3u') {type=''; return}
     if (type == "image") {media.poster = Next.poster}
     if (e == 'Mclick' && type == 'video') {type = 'thumb'}
     if (e == 'Mclick' && type == 'thumb' && yw>0.9) {type = 'video'}
@@ -205,14 +204,13 @@
       else {media.poster = ''; setTimeout(function() {media.poster = x},600)}} // stops flickering poster
     if (type == "video" || type == "audio") {media.currentTime = start-0.2}
     if (type == "audio") {media.controls = true; sound == 'yes'}
-    mediaX = sessionStorage.getItem('mediaX')*1
-    mediaY = sessionStorage.getItem('mediaY')*1				// last media position on screen
-    if (!mediaX) {mediaX=screen.width/2; mediaY=screen.height/2}
+    mediaX = sessionStorage.getItem('mediaX')*1				// last media position
+    mediaY = sessionStorage.getItem('mediaY')*1
     scaleX = scaleY
-    if (scaleY > 1.4) {scaleX = 1.4; scaleY = 1.4}			// keep media within window
-    if (scaleY < 0.6) {scaleX = 0.6; scaleY = 0.6}
-    if (!mediaY || mediaY < 100 || mediaY > innerHeight*0.8) {mediaY = innerHeight/2}
-    if (!mediaX || mediaX < 100 || mediaX > innerWidth*0.8) {mediaX = innerWidth/2.6}
+    if (scaleX > 1.4) {scaleX = 1.4; scaleY = 1.4}			// keep media within view
+    if (scaleX < 0.6) {scaleX = 0.6; scaleY = 0.6}
+    if (!mediaX || mediaX < 0 || mediaX > innerWidth) {mediaX = screen.width/2}
+    if (!mediaY || mediaY < 0 || mediaY > innerHeight) {mediaY = screen.height/2}
     scaleX *= skinny
     setTimeout(function() {
       if (path.href.slice(27).match('/inca/music/') || type=='audio') {looping=false}
@@ -225,15 +223,15 @@
       Gesture(e)},260)
     document.body.style.overflow="hidden"
     modal.style.display='flex'
-    media.style.maxWidth = innerWidth * 0.7 + "px"
-    media.style.maxHeight = innerHeight * 0.8 + "px"
+    media.style.maxWidth = screen.width/1.6 + "px"
+    media.style.maxHeight = screen.height/1.4 + "px"
     media.addEventListener('ended', media_ended)
     mediaTimer = setInterval(timedEvents,84)
     seek.poster = media.poster
     stat.innerHTML = index
     seek.src = media.src						// seek thumbnail under video
     media.muted = false
-    idx = index
+    idx = index								// seek image index
     block = 200}							// block wheel input
 
 
@@ -302,7 +300,7 @@
       else {scaleX += 0.002}
       newSkinny = Math.round(1000*scaleX / scaleY)/1000
       if (newSkinny > 0.998 && newSkinny < 1.002) {block = 999}
-      else {block = 24}
+      else {block = 20}
       media.style.transform = "scale("+scaleX+","+scaleY+")"}
     else if (id=='myStatus') {						// speed
       if (wheelDown) {x = -0.01}

@@ -121,7 +121,7 @@
         {
         WinGetPos,,,w,,a
         send, {Pause}				; close java modal (media window)
-        sleep 250
+sleep 100
         GetAddressBar()				; read address bar message
         }
       else send, {Xbutton1}
@@ -345,7 +345,6 @@
 
     ReadAddressBar(new_html)
         {
-        Critical
         clip := clipboard
         clipboard =
         loop 10
@@ -406,11 +405,12 @@
                 {
                 list_id := A_LoopField
                 if GetMedia(0)
-                  {
-                  FileRead, str, %inca%\fav\History.m3u
-                  if !InStr(str, target)
-                    FileAppend, %target%`r`n, %inca%\fav\History.m3u, UTF-8	; add media entry to playlist
-                  }
+                  if (type != "document")
+                    {
+                    FileRead, str, %inca%\fav\History.m3u
+                    if !InStr(str, target)
+                      FileAppend, %target%`r`n, %inca%\fav\History.m3u, UTF-8	; add media entry to playlist
+                    }
                 }
             return
             }
@@ -545,21 +545,8 @@
             {
             list_id := value
             if GetMedia(0)
-              if (type=="document"||ext=="txt")
-                {
-                sleep 200
-                send, {Pause}
-                if (ext == "txt" || ext == "ini" || ext == "css" || ext == "js" || ext == "ahk")
-                    Run, % "notepad.exe " . src
-                else if (type == "video")
-                    Run %inca%\apps\mpv "%src%"
-                else Run, %src%
-                }
-              else if (ext=="m3u")
-                 {
-                 command = Path
-                 address = %src%
-                 }
+              if (type=="document" || type=="m3u")
+                 Run, % "notepad.exe " . src
             }
         if (command == "Page" || command == "View")
             {
