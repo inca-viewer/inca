@@ -121,7 +121,7 @@
         {
         WinGetPos,,,w,,a
         send, {Pause}				; close java modal (media window)
-sleep 100
+        sleep 100
         GetAddressBar()				; read address bar message
         }
       else send, {Xbutton1}
@@ -203,7 +203,7 @@ sleep 100
           if GetKeyState("RButton", "P")
               SetVolume(1.4 * x)
           }
-        if (!gesture && A_TickCount > timer)
+        if (!gesture && A_TickCount > timer && !GetKeyState("RButton", "P"))
           {
           if (A_Cursor == "IBeam")
             {
@@ -266,7 +266,7 @@ sleep 100
         if inca_tab
             WinSet, Transparent, % Setting("Dim Desktop")
         else WinSet, Transparent, 0
-        if (inca_tab && inca_tab != previous_tab)	; has inca tab changed
+        if (inca_tab && inca_tab != previous_tab)			; has inca tab changed
             {
             folder := inca_tab
             GetTabSettings(1)						; get last tab settings
@@ -345,6 +345,8 @@ sleep 100
 
     ReadAddressBar(new_html)
         {
+        IfWinNotActive, ahk_group Browsers
+          return
         clip := clipboard
         clipboard =
         loop 10
@@ -458,14 +460,13 @@ sleep 100
             sleep 1000
             reload := 3
             }
-        if (command == "mp3" || command == "mp4")
+        if (command == "mp3" || command == "mp4")		; address = cue, value = current time
             {
-            if !address						; address = cue, value = current time
-                x = 0.0
+            x = %value%						; convert number to string
             if (!address && value < 4)
-              run, %inca%\apps\ffmpeg.exe -i "%src%" "%media_path%\%media% 0.0.%command%",,Hide
+              run, %inca%\apps\ffmpeg.exe -i "%src%" "%media_path%\%media% %x%.%command%",,Hide
             else if (address == value)
-              run, %inca%\apps\ffmpeg.exe -ss %address% -i "%src%" "%media_path%\%media% 0.0.%command%",,Hide
+              run, %inca%\apps\ffmpeg.exe -ss %address% -i "%src%" "%media_path%\%media% %x%.%command%",,Hide
             else run, %inca%\apps\ffmpeg.exe -ss %address% -to %value% -i "%src%" "%media_path%\%media% %x%.%command%",,Hide
             sleep 1000
             reload := 3
@@ -476,6 +477,8 @@ sleep 100
             ShowSettings()
         if (command == "Caption")
             {
+            if (SubStr(value,1,1) == "|")			; no text before time
+              value = 
             FileRead, str, %inca%\cache\captions\%media%.srt
             FileDelete, %inca%\cache\captions\%media%.srt
             if InStr(str, address)
@@ -785,7 +788,7 @@ sleep 100
 
 <div style='display:flex'>`r`n<input id='myInput' onmouseover='panel.style.opacity=null' class='searchbox' type='search' value='%search_term%'>`r`n<a class='searchbox' onmouseover="this.href='#SearchAdd#'+inputbox.value+'##'" style='width:4`%; border-radius:0 1em 1em 0'>+</a></div>`r`n`r`n
 
-<div style='display:flex; margin-left:1em'>`r`n<a href='#Up###%path%' id='myPath' class='ribbon' style='width:4`%; font-size:1.4em'>&#8678<a href="#Orphan#%folder%##" class='ribbon' style='color:lightsalmon; font-size:1.7em; width:8em; margin-bottom:0.3em'>%title_s%</a>`r`n<div class='ribbon' style='color:lightsalmon; width:5em'>%list_size%</div>`r`n<a href=#Thumbs#%view%## id="Thumbs" class='ribbon' style='width:12`%' onwheel="wheelEvents(event, id, this)">Thumbs</a>`r`n<a href='#%sort%#%sort%#' id='mySort' class='ribbon' %w% onwheel="wheelEvents(event, id, this)">%sort%</a>`r`n<a id='myFilt' class='ribbon' onwheel="wheelEvents(event, id, this)">All</a>`r`n<a href="%title%.htm#Page" id="myPage" class='ribbon' style='width:15`%' onwheel="wheelEvents(event, id, this)">%pg%</a></div>`r`n`r`n<div id="myModal" class="modal" onwheel="wheelEvents(event, id, this)">`r`n<div><video id="myPlayer" class="player" type="video/mp4"></video>`r`n<span id="mySeekBar" class='seekbar'></span>`r`n<textarea id="myCap" class="caption" onmouseenter="over_cap=true" onmouseleave="over_cap=false"></textarea>`r`n<span><video id='mySeek' class='seek' type="video/mp4"></video></span>`r`n`r`n<span class='statnav'>`r`n<a id="myStatus" class='stat' style='font-size:4em' onmouseover='stat.innerHTML=Math.round(media.playbackRate*100)' onwheel="wheelEvents(event, id, this)"></a>`r`n<span id="mySidenav" class='sidenav' onmouseover="openNav()">`r`n<a id="myMp3">mp3</a>`r`n<a id="myMp4">mp4</a>`r`n<a onclick="cue = Math.round(media.currentTime*10)/10">Cue</a>`r`n<a id="myCapnav" onclick="editCap()">Cap</a>`r`n<a id="myFav">Fav</a>`r`n<a id='myLoop' onclick="loop()">Loop</a>`r`n<a id='myMute' onclick="mute()">Mute</a>`r`n<a id="mySkinny" style='font-size:1.4em' onwheel="wheelEvents(event, id, this)"></a>`r`n</span></span></div></div>`r`n`r`n
+<div style='display:flex; margin-left:1em'>`r`n<a href='#Up###%path%' id='myPath' class='ribbon' style='width:4`%; font-size:1.4em'>&#8678<a href="#Orphan#%folder%##" class='ribbon' style='color:lightsalmon; font-size:1.7em; width:8em; margin-bottom:0.3em'>%title_s%</a>`r`n<div class='ribbon' style='color:lightsalmon; width:5em'>%list_size%</div>`r`n<a href=#Thumbs#%view%## id="Thumbs" class='ribbon' style='width:12`%' onwheel="wheelEvents(event, id, this)">Thumbs</a>`r`n<a href='#%sort%#%sort%#' id='mySort' class='ribbon' %w% onwheel="wheelEvents(event, id, this)">%sort%</a>`r`n<a id='myFilt' class='ribbon' onwheel="wheelEvents(event, id, this)">All</a>`r`n<a href="%title%.htm#Page" id="myPage" class='ribbon' style='width:15`%' onwheel="wheelEvents(event, id, this)">%pg%</a></div>`r`n`r`n<div id="myModal" class="modal" onwheel="wheelEvents(event, id, this)">`r`n<div><video id="myPlayer" class="player" type="video/mp4"></video>`r`n<span id="mySeekBar" class='seekbar'></span>`r`n<textarea id="myCap" class="caption" onmouseenter="over_cap=true" onmouseleave="over_cap=false"></textarea>`r`n<span><video id='mySeek' class='seek' type="video/mp4"></video></span>`r`n`r`n<span class='statnav'>`r`n<a id="myStatus" class='stat' style='font-size:4em' onmouseover='stat.innerHTML=Math.round(media.playbackRate*100)' onwheel="wheelEvents(event, id, this)"></a>`r`n<span id="mySidenav" class='sidenav'>`r`n<a id="myMp3" onclick='createMp3()'>mp3</a>`r`n<a id="myMp4" onclick='createMp4()'>mp4</a>`r`n<a onclick="cue = Math.round(media.currentTime*10)/10">Cue</a>`r`n<a id="myCapnav" onclick="editCap()">Cap</a>`r`n<a id="myFav" onclick='createFav()'>Fav</a>`r`n<a id='myLoop' onclick="loop()">Loop</a>`r`n<a id='myMute' onclick="mute()">Mute</a>`r`n<a id="mySkinny" style='font-size:1.4em' onwheel="wheelEvents(event, id, this)"></a>`r`n</span></span></div></div>`r`n`r`n
 
         FileDelete, %inca%\cache\html\%folder%.htm
         html = %header_html%%style%%panel_html%%subs%%html%</div>`r`n
@@ -856,7 +859,7 @@ sleep 100
 
         if !view							; list view
             {
-            entry = <div><table><tr><td id="thumb%j%" style="position:absolute; margin-left:3.5em"><a href="#Media#%j%##" id="sel%j%"><video id="media%j%" class='thumblist' style="width:10em; %transform%" onwheel="wheelEvents(event, 'Fixed', this)" onmouseover="overThumb(event, '%type%', %start%, %skinny%, '%cap%', %j%)" onmouseout='exitThumb(event, this)' %poster% src="file:///%src%" type="video/mp4" preload='none' muted></video></a></tr></table><table style="table-layout:fixed; width:100`%; font-size:0.9em"><tr><td style="width:4em; text-align:center"><span style="border-radius:9px; color:#777777">%sort_name%</span></td><td style="width:4em; text-align:center">%dur%</td><td style="width:3em; text-align:center">%size%</td><td style="width:4em; text-align:center">%ext%</td>%fold%<td><div id="title%j%" onclick="select(%j%)" style="width:80`%; border-radius:1em; padding-left:0.5em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis">%media%</div></td></tr></table></div>`r`n`r`n
+            entry = <div><table><tr><td id="thumb%j%" style="position:absolute; margin-left:3.5em"><a href="#Media#%j%##" id="sel%j%"><video id="media%j%" class='thumblist' style="width:10em; %transform%" onwheel="wheelEvents(event, 'Fixed', this)" onmousedown="overThumb(event, '%type%', %start%, %skinny%, '%cap%', %j%)" onmouseover="overThumb(event, '%type%', %start%, %skinny%, '%cap%', %j%)" onmouseout='exitThumb(event, this)' %poster% src="file:///%src%" type="video/mp4" preload='none' muted></video></a></tr></table><table style="table-layout:fixed; width:100`%; font-size:0.9em"><tr><td style="width:4em; text-align:center"><span style="border-radius:9px; color:#777777">%sort_name%</span></td><td style="width:4em; text-align:center">%dur%</td><td style="width:3em; text-align:center">%size%</td><td style="width:4em; text-align:center">%ext%</td>%fold%<td><div id="title%j%" onclick="select(%j%)" style="width:80`%; border-radius:1em; padding-left:0.5em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis">%media%</div></td></tr></table></div>`r`n`r`n
             }
         else
             {
@@ -872,7 +875,7 @@ sleep 100
                     }
 	        entry = <a href="#Media#%j%##"><div style="display:inline-block; width:88`%; color:#555351; transition:color 1.4s; margin-left:8`%; text-align:center; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; %highlight%;">%sort_name% &nbsp;&nbsp;%media%</div></a><textarea rows=%rows% style="display:inline-block; overflow:hidden; margin-left:8`%; width:88`%; background-color:inherit; color:#826858; font-size:1.2em; font-family:inherit; border:none; outline:none;">%str2%</textarea>`r`n`r`n
                 }
-            else entry = <div id="thumb%j%" class="thumbs" style="width:%view%em; margin-right:3em"><div id="title%j%" onclick="select(%j%)" style="display:grid; align-content:end; text-align:center; padding:0.3em; color:#555351; border-radius:1.5em; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; font-size:0.85em; height:2em">%media%</div><a href="#Media#%j%##" id="sel%j%"><video %controls% class="thumbs" id="media%j%" style="position:inherit; %transform% width:%view%em" onwheel="wheelEvents(event, 'Fixed', this)" onmouseover="overThumb(event, '%type%', %start%, %skinny%, '%cap%', %j%)" onmouseout='exitThumb(event, this)' src="file:///%src%" %poster% preload='none' muted type="video/mp4"></video></a>%caption%<div style='height:4em'></div></div>`r`n`r`n
+            else entry = <div id="thumb%j%" class="thumbs" style="width:%view%em; margin-right:3em"><div id="title%j%" onclick="select(%j%)" style="display:grid; align-content:end; text-align:center; padding:0.3em; color:#555351; border-radius:1.5em; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; font-size:0.85em; height:2em">%media%</div><a href="#Media#%j%##" id="sel%j%"><video %controls% class="thumbs" id="media%j%" style="position:inherit; %transform% width:%view%em" onwheel="wheelEvents(event, 'Fixed', this)" onmouseover="overThumb(event, '%type%', %start%, %skinny%, '%cap%', %j%)" onmousedown="overThumb(event, '%type%', %start%, %skinny%, '%cap%', %j%)" onmouseout='exitThumb(event, this)' src="file:///%src%" %poster% preload='none' muted type="video/mp4"></video></a>%caption%<div style='height:4em'></div></div>`r`n`r`n
             }
         return entry
         }

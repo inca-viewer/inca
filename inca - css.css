@@ -141,6 +141,7 @@ table {
 .stat {
   display:none;
   position:fixed;
+  left:0;
   width:2.5em;
   opacity:0;
   color:lightsalmon;}
@@ -150,6 +151,7 @@ table {
 .sidenav {
   display:none;
   position:fixed;
+  left:0;
   width:5em;
   font-size:1.2em;}
 
