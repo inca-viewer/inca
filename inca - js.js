@@ -3,8 +3,6 @@
 // can use cursor change to trigger inca location bar read eg, thumbs or list view
 // join function ??
 // loop in out point
-// reconsider using backspace as reset page instead of default?
-// media not closing
 
 
   var modal = document.getElementById('myModal')			// media player window
@@ -75,13 +73,15 @@
   var idx
 
   if (!sound) {sound='yes'}
-  document.addEventListener('mousedown', mouseDown)
-  document.addEventListener('mouseup', mouseUp)
-  document.addEventListener('mousemove', Gesture)
-  document.addEventListener('keydown', keyDown)
   function timedEvents() {positionMedia(); Captions()}			// every ~84mS while media playing
-    
-    
+  document.addEventListener('mousedown', mouseDown)
+  document.addEventListener('mouseup', mouseUp)				// mouseUp alone = mouse back button
+  document.addEventListener('mousemove', Gesture)
+  document.addEventListener('keypress', (e) => {if (e.key=='Enter') {
+    if (inputbox.value) {messages = messages+'#SearchBox#'+inputbox.value+'##'
+    stat.href=messages; messages=''; stat.click()}}}, false)
+
+
   function mouseDown(e) {
     if (e.button==1) {							// middle click
       e.preventDefault()
@@ -96,7 +96,8 @@
     Yref = e.clientY}
 
 
-  function mouseUp(e) {							// !! inca.exe triggers mouseup on long click
+  function mouseUp(e) {							// !! inca.exe triggers mouseUp event after every Click
+    if (e.button && !long_click) {mouseBack()}				// inca.exe replaces mouse back button with MClick Up
     if (!e.button) {					
       if (seek_active && type == 'image') {index = idx; playMedia('')}	// seek thumbnail under media
       else if (seek_active && type == 'video' && long_click) {media.currentTime=seek_active}
@@ -105,26 +106,24 @@
     gesture=false; mouse_down=false; long_click=false; seek.style.opacity=0}
 
 
-  function keyDown(e) {
-    var flag = false
-    if (e.key == 'Enter') {if (inputbox.value) {messages = messages+'#SearchBox#'+inputbox.value+'##'; flag=true}}
-    if (e.key == 'Pause' || e.key == 'Enter') {				// Pause is mouse Back button
-      var top = document.body.getBoundingClientRect().top
-      if (!type && top < -90) {scroll(0,0); return}			// scroll to top of htm page
-      if (type) {							// media was playing
-        seek_active = 0
-        media.style.opacity=0
-        stat.style.display='none'
-        seekbar.style.display='none'
-        document.body.style.overflow = "auto"
-        if (cap.style.color=='red') {editCap()}
-        close_media()
-        setTimeout(function() {document.exitFullscreen()},50)
-        setTimeout(function() {modal.style.display='none'; window.scrollTo(0, scroll_Y)},400)	// browser cannot remember ??
-        flag = true}							// don't reset page
-      if (hist) {messages = messages+'#History##'+hist+'#'; hist=''}	// add to media history list
-      if (messages) {stat.href=messages; messages=''; stat.click()}	// send messages to inca.exe
-      if (!flag) {location.reload()}}}					// just reset htm tab (clear selected etc.)
+  function mouseBack() {						// quit media
+    var top = document.body.getBoundingClientRect().top
+    if (!type && top < -90) {						// scroll to top of htm page
+      setTimeout(function() {scrollTo(0,0)},300); return}
+    if (type) {								// media was playing
+      seek_active = 0
+      media.style.opacity=0
+      stat.style.display='none'
+      seekbar.style.display='none'
+      document.body.style.overflow = "auto"
+      if (cap.style.color=='red') {editCap()}
+      close_media()
+      setTimeout(function() {document.exitFullscreen()},100)
+      setTimeout(function() {window.scrollTo(0, scroll_Y); modal.style.display='none'},400)	// browser cannot remember ??
+      var flag = true}							// don't reset page
+    if (hist) {messages = messages+'#History##'+hist+'#'; hist=''}	// add to media history list
+    if (messages) {stat.href=messages; messages=''; stat.click()}	// send messages to inca.exe
+    if (!flag) {location.reload()}}					// just reset htm tab (clear selected etc.)
 
 
   function togglePause(e) {
@@ -214,14 +213,14 @@
     setTimeout(function() {
       if (path.href.slice(27).match('/inca/music/') || type=='audio') {looping=false}
       else {modal.requestFullscreen()}
-      if (type != 'thumb') {media.playbackRate=rate; media.play()}},200)
+      if (type != 'thumb') {media.playbackRate=rate; media.play()}},25)
     setTimeout(function() {
-      media.style.opacity=1
       stat.style.display='block'
-      seekbar.style.display='block'},260)
+      seekbar.style.display='block'
+      media.style.opacity=1},50)
     document.body.style.overflow="hidden"
     modal.style.display='flex'
-    media.style.maxWidth = screen.width/1.8 + "px"
+    media.style.maxWidth = screen.width/1.7 + "px"
     media.style.maxHeight = screen.height/1.4 + "px"
     media.addEventListener('ended', media_ended)
     mediaTimer = setInterval(timedEvents,84)
@@ -375,8 +374,6 @@
     seek.style.top = innerHeight - 120 + 'px'
     if (type == 'video') {seek.style.left = xpos - seek.offsetWidth/2 +'px'}
     else {seek.style.left = innerWidth/2 - seek.offsetWidth/2 +'px'}
-    nav.style.top = innerHeight - 320 +'px'
-    stat.style.top = innerHeight - 90 +'px'
     var cueX = mediaX - media.offsetWidth*scaleX/2 + 'px'
     var cueW = scaleX * media.offsetWidth * media.currentTime / media.duration + 'px'
     if (cue && cue <= Math.round(media.currentTime*10)/10) {

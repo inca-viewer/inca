@@ -119,8 +119,8 @@
         Send,  {Esc}^s^w
       else if inca_tab
         {
-        WinGetPos,,,w,,a
-        send, {Pause}				; close java modal (media window)
+        send, {Alt up}{Ctrl up}{Shift up}	; just in case 
+        send, {MButton up}			; close java modal (media player)
         sleep 100
         GetAddressBar()				; read address bar message
         }
@@ -345,12 +345,12 @@
 
     ReadAddressBar(new_html)
         {
-        IfWinNotActive, ahk_group Browsers
-          return
         clip := clipboard
         clipboard =
         loop 10
           {
+          IfWinNotActive, ahk_group Browsers
+            return
           sleep 24
           send, ^l
           sleep 24
@@ -463,7 +463,7 @@
         if (command == "mp3" || command == "mp4")		; address = cue, value = current time
             {
             x = %value%						; convert number to string
-            if (!address && value < 4)
+            if !address
               run, %inca%\apps\ffmpeg.exe -i "%src%" "%media_path%\%media% %x%.%command%",,Hide
             else if (address == value)
               run, %inca%\apps\ffmpeg.exe -ss %address% -i "%src%" "%media_path%\%media% %x%.%command%",,Hide
@@ -1247,15 +1247,16 @@
         }
 
         settingsButtonCompile:
-        WinClose
         run %inca%\apps\Compile.exe
         return
 
         settingsButtonSource:
+        WinClose
         run, notepad %inca%\inca - ahk.ahk
         return
 
         settingsButtonJava:
+        WinClose
         run, notepad %inca%\inca - js.js
         return
 
@@ -1291,6 +1292,7 @@
             }
         StringTrimRight,new,new,1
         IniWrite,%new%,%inca%\inca - ini.ini,Settings,features
+        settingsFinished:
         run %inca%\apps\Compile.exe
         return
 

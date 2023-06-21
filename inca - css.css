@@ -142,6 +142,7 @@ table {
   display:none;
   position:fixed;
   left:0;
+  bottom:0;
   width:2.5em;
   opacity:0;
   color:lightsalmon;}
@@ -152,6 +153,7 @@ table {
   display:none;
   position:fixed;
   left:0;
+  bottom:70px;
   width:5em;
   font-size:1.2em;}
 
