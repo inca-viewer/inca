@@ -1,5 +1,5 @@
 <script>
-// hide scrollbar
+
 
   var modal = document.getElementById('myModal')			// media player window
   var player = document.getElementById('myPlayer')
@@ -319,8 +319,9 @@
       if (wheelDown) {scaleX *= 1.015; scaleY *= 1.015}
       else {scaleX *= 0.985; scaleY *= 0.985}
       if (over_media) {							// zoom at cursor
-        if (wheelDown) {mediaX += (mediaX-xpos)/66; mediaY += (mediaY-ypos)/66}
-        else {mediaX -= (mediaX-xpos)/66; mediaY -= (mediaY-ypos)/66}}
+        if (screenLeft) {x=0; y=0; Xoff=screenLeft; Yoff=outerHeight-innerHeight} else {x=Xoff; y=Yoff}
+        if (wheelDown) {mediaX += (mediaX-xpos+x)/66; mediaY += (mediaY-ypos+y)/66}
+        else {mediaX -= (mediaX-xpos+x)/66; mediaY -= (mediaY-ypos+y)/66}}
       positionMedia()
       block = 24}
     else {spool(e, id)} 						// scroll top panel
@@ -378,18 +379,24 @@
     rect = media.getBoundingClientRect()
     xm = (xpos - rect.left) / (media.offsetWidth*scaleX)
     ym = (ypos - rect.top) / (media.offsetHeight*scaleY)
+    if (screenLeft) {x=0; y=0; Xoff=screenLeft; Yoff=outerHeight-innerHeight} else {x=Xoff; y=Yoff}
+    media.style.marginLeft = x+'px'; media.style.marginTop = y+'px'
+    seekbar.style.marginLeft = x+'px'; seekbar.style.marginTop = y+'px'
+    cap.style.marginLeft = x+'px'; cap.style.marginTop = y+'px'
+//    seek.style.marginLeft = x+'px'; seek.style.marginTop = y+'px'
 
     if (xm>0 && xm<1 && ym>0 && ym<1) {over_media=true} else {over_media=false}
     if (type == 'video' && seek.style.opacity == 1 && yw<0.98) {seek_active = false}
     if (seek_active && seek.style.opacity < 1) {seek.style.opacity -= '-0.05'}
     if (!seek_active && seek.style.opacity > 0) {seek.style.opacity -= '0.05'}
     if (type == 'video') {seek.style.left = xpos - seek.offsetWidth/2 +'px'}
-    else {seek.style.left = mediaX - seek.offsetWidth/2 + "px"}
+    else {seek.style.left = mediaX + x - seek.offsetWidth/2 + "px"}
     var cueX = mediaX - media.offsetWidth*scaleX/2 + 'px'
     var cueW = scaleX * media.offsetWidth * media.currentTime / media.duration + 'px'
     if (cue && cue <= Math.round(media.currentTime*10)/10) {
       cueX = mediaX - media.offsetWidth*scaleX/2 + scaleX * media.offsetWidth * cue/media.duration + 'px'
-      if (cue < Math.round(media.currentTime*10)/10) {cueW = scaleX*media.offsetWidth*(media.currentTime-cue)/media.duration+'px'}
+      if (cue < Math.round(media.currentTime*10)/10) {
+        cueW = scaleX*media.offsetWidth*(media.currentTime-cue)/media.duration+'px'}
       else {cueW = scaleX * media.offsetWidth * (1-(cue/media.duration)) + 'px'}}
     seekbar.style.left = cueX
     seekbar.style.width = cueW
