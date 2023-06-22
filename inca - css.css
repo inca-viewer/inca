@@ -1,6 +1,8 @@
 
 <style>
 
+::-webkit-scrollbar {width:0}
+
 .ribbon2 {
   display:flex;
   position:relative;
@@ -78,15 +80,16 @@
   opacity:0;
   border-radius:1px;
   border:1px solid lightsalmon;
-  transition:0.2s}
+  transition:0.1s}
 
 .seek {
   position:absolute;
+  bottom:124px;
   user-select:none;
   border-radius:6%;
   max-width:160px;
   max-height:120px;
-  transition:opacity 1s}
+  transition:opacity 0.2s}
 
 .thumbs {
   display:inline-block;

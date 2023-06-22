@@ -69,6 +69,7 @@
         Global target
         Global reload
         Global browser
+        Global mpv_player
 
 
     main:
@@ -101,6 +102,8 @@
 
     Xbutton1::					; mouse "back" button
       Critical
+      Process, Close, mpv.exe
+sleep 24
       timer := A_TickCount + 350
       SetTimer, Timer_up, -350
       return
@@ -119,7 +122,7 @@
         Send,  {Esc}^s^w
       else if inca_tab
         {
-        send, {Alt up}{Ctrl up}{Shift up}	; just in case 
+        send, {Alt up}{Ctrl up}{Shift up}
         send, {MButton up}			; close java modal (media player)
         sleep 100
         GetAddressBar()				; read address bar message
@@ -308,6 +311,7 @@
         ptr := 1
         if !inca_tab
           return
+        send, {Alt up}{Ctrl up}{Shift up}
         if (GetKeyState("LButton", "P"))
           send, {Lbutton up}
         input := ReadAddressBar(0)
@@ -349,6 +353,8 @@
         clipboard =
         loop 10
           {
+          if !inca_tab
+            return
           IfWinNotActive, ahk_group Browsers
             return
           sleep 24
@@ -441,25 +447,6 @@
               run, %inca%\%value%\
             else reload := 3
             }
-        if (command == "Join")
-            {
-            if !GetMedia(0)
-              return
-            src2 := src
-            media2 := media
-            list_id := StrSplit(selected, "/").2
-            if GetMedia(0)
-              {
-              str = file '%media_path%\%media2%.%ext%'`r`nfile '%media_path%\%media%.%ext%'`r`n
-              FileAppend,  %str%, %inca%\apps\temp1.txt, utf-8
-              runwait, %inca%\apps\Utf-WithoutBOM.bat %inca%\apps\temp1.txt > %inca%\apps\temp.txt,,Hide
-              runwait, %inca%\apps\ffmpeg.exe -f concat -safe 0 -i "%inca%\apps\temp.txt" -c copy "%media_path%\%media%- join.mp4",,Hide
-              FileDelete, %inca%\apps\temp.txt
-              FileDelete, %inca%\apps\temp1.txt
-              }
-            sleep 1000
-            reload := 3
-            }
         if (command == "mp3" || command == "mp4")		; address = cue, value = current time
             {
             x = %value%						; convert number to string
@@ -548,7 +535,9 @@
             {
             list_id := value
             if GetMedia(0)
-              if (type=="document" || type=="m3u")
+              if mpv_player
+                 Run %inca%\apps\mpv "%src%"
+              else if (type=="document" || type=="m3u")
                  Run, % "notepad.exe " . src
             }
         if (command == "Page" || command == "View")
@@ -565,6 +554,44 @@
             FileTransfer()						; between folders or fav
             reload := 3
             return
+            }
+        if (command == "SearchAdd" && value)
+            {
+            array := StrSplit(selected, "/")
+            x := array.MaxIndex() - 1
+            if (x <= 1)
+              {
+              if !value
+                return
+              StringUpper, search_term, value, T
+              search = %search%|%search_term%
+              StringReplace, search, search, |, `n, All
+              Sort, search, u
+              StringReplace, search, search, `n, |, All
+              IniWrite,%search%,%inca%\inca - ini.ini,Settings,Search
+              LoadSettings()
+              PopUp("Added",600,0,0)
+              }
+            if (x == 2)
+              {
+              if !GetMedia(0)
+                return
+              src2 := src
+              media2 := media
+              list_id := StrSplit(selected, "/").2
+              if GetMedia(0)
+                {
+                Popup("Join Media",0,0,0)
+                str = file '%media_path%\%media2%.%ext%'`r`nfile '%media_path%\%media%.%ext%'`r`n
+                FileAppend,  %str%, %inca%\apps\temp1.txt, utf-8
+                runwait, %inca%\apps\Utf-WithoutBOM.bat %inca%\apps\temp1.txt > %inca%\apps\temp.txt,,Hide
+                runwait, %inca%\apps\ffmpeg.exe -f concat -safe 0 -i "%inca%\apps\temp.txt" -c copy "%media_path%\%media%- join.mp4",,Hide
+                FileDelete, %inca%\apps\temp.txt
+                FileDelete, %inca%\apps\temp1.txt
+                }
+              sleep 1000
+              reload := 3
+              }
             }
         if (command=="Filt"||command=="Path"||command=="Search"||command=="SearchBox"||command=="SearchAdd"||InStr(sort_list, command))
             {
@@ -585,17 +612,6 @@
                 if !folder
                   folder = none
                 }
-            if (command == "SearchAdd" && value)			; add search_term to list
-              {
-              StringUpper, search_term, value, T
-              search = %search%|%search_term%
-              StringReplace, search, search, |, `n, All
-              Sort, search, u
-              StringReplace, search, search, `n, |, All
-              IniWrite,%search%,%inca%\inca - ini.ini,Settings,Search
-              LoadSettings()
-              PopUp("Added",600,0,0)
-              }
             if (command == "Search" || command == "SearchBox")
               {
               if (command == "Search")
@@ -740,6 +756,8 @@
         type = video							; prime for list parsing
         page_w := Setting("Page Width")
         size := Setting("Page Size")
+        fs := Setting("Full Screen")
+        mpv_player := Setting("External Player")
         if search_term
           size = 1000
         page_media = /							; cannot use | as seperator because this_search uses |
@@ -782,11 +800,11 @@
 
         header_html = <!--`r`n%view%>%last_view%>%page%>%filt%>%sort%>%toggles%>%this_search%>%search_term%>%path%>%folder%>%playlist%>%last_media%>`r`n%page_media%`r`n-->`r`n<!doctype html>`r`n<html>`r`n<head>`r`n<meta charset="UTF-8">`r`n<title>Inca - %title%</title>`r`n<meta name="viewport" content="width=device-width, initial-scale=1">`r`n<link rel="icon" type="image/x-icon" href="file:///%inca%\apps\icons\inca.ico">`r`n</head>`r`n
 
-        panel_html = <body class='container' onload="spool(event, '', '%ini%', '%toggles%', '%sort%', %filt%, %page%, %pages%, %view%, %speed%)">`r`n<div style="width:%page_w%`%; margin:auto">`r`n<div class='panel' id='myPanel' onwheel="wheelEvents(event, '', this)"></div>`r`n`r`n
+        panel_html = <body class='container' onload="spool(event, '', '%ini%', '%toggles%', '%sort%', %filt%, %page%, %pages%, %view%, %speed%, %fs%, %mpv_player%)">`r`n<div style="width:%page_w%`%; margin:auto">`r`n<div class='panel' id='myPanel' onwheel="wheelEvents(event, '', this)"></div>`r`n`r`n
 
 <div id='myRibbon' class='ribbon2'>`r`n<a onclick="selectAll()">Select</a>`r`n<a id='myDelete' onmouseover='del()'>Delete</a>`r`n<a id='myRename' onmouseover='rename()'>Rename</a>`r`n<a onmouseover="spool(event, 'Fol')" onwheel="wheelEvents(event, 'Fol', this)">Fol</a>`r`n<a href='#Path###%inca%\fav\' onmouseover="spool(event, 'Fav')" onwheel="wheelEvents(event, 'Fav', this)">Fav</a>`r`n<a href='#Path###%inca%\music\' onmouseover="spool(event, 'Music')" onwheel="wheelEvents(event, 'Music', this)">Music</a>`r`n<a onmouseover="spool(event, 'Search')" onwheel="wheelEvents(event, 'Search', this)">Search</a>`r`n<a href='#Images###' %y%>Pics</a>`r`n<a href='#Videos###' %z%>Vids</a>`r`n<a href='#Recurse###' %x%>Recurse</a>`r`n<a href='#Settings###'>Menu</a>`r`n</div>`r`n`r`n
 
-<div style='display:flex'>`r`n<input id='myInput' onmouseover='panel.style.opacity=null' class='searchbox' type='search' value='%search_term%'>`r`n<a class='searchbox' onmouseover="this.href='#SearchAdd#'+inputbox.value+'##'" style='width:4`%; border-radius:0 1em 1em 0'>+</a></div>`r`n`r`n
+<div style='display:flex'>`r`n<input id='myInput' onmouseover='panel.style.opacity=null' class='searchbox' type='search' value='%search_term%'>`r`n<a class='searchbox' onmouseover="this.href='#SearchAdd#'+inputbox.value+'#'+selected+'#'" style='width:4`%; border-radius:0 1em 1em 0'>+</a></div>`r`n`r`n
 
 <div style='display:flex; margin-left:1em'>`r`n<a href='#Up###%path%' id='myPath' class='ribbon' style='width:4`%; font-size:1.4em'>&#8678<a href="#Orphan#%folder%##" class='ribbon' style='color:lightsalmon; font-size:1.7em; width:8em; margin-bottom:0.3em'>%title_s%</a>`r`n<div class='ribbon' style='color:lightsalmon; width:5em'>%list_size%</div>`r`n<a href=#Thumbs#%view%## id="Thumbs" class='ribbon' style='width:12`%' onwheel="wheelEvents(event, id, this)">Thumbs</a>`r`n<a href='#%sort%#%sort%#' id='mySort' class='ribbon' %w% onwheel="wheelEvents(event, id, this)">%sort%</a>`r`n<a id='myFilt' class='ribbon' onwheel="wheelEvents(event, id, this)">All</a>`r`n<a href="%title%.htm#Page" id="myPage" class='ribbon' style='width:15`%' onwheel="wheelEvents(event, id, this)">%pg%</a></div>`r`n`r`n<div id="myModal" class="modal" onwheel="wheelEvents(event, id, this)">`r`n<div><video id="myPlayer" class="player" type="video/mp4"></video>`r`n<span id="mySeekBar" class='seekbar'></span>`r`n<textarea id="myCap" class="caption" onmouseenter="over_cap=true" onmouseleave="over_cap=false"></textarea>`r`n<span><video id='mySeek' class='seek' type="video/mp4"></video></span>`r`n`r`n<span class='statnav'>`r`n<a id="myStatus" class='stat' style='font-size:4em' onmouseover='stat.innerHTML=Math.round(media.playbackRate*100)' onwheel="wheelEvents(event, id, this)"></a>`r`n<span id="mySidenav" class='sidenav'>`r`n<a id="myMp3" onclick='createMp3()'>mp3</a>`r`n<a id="myMp4" onclick='createMp4()'>mp4</a>`r`n<a onclick="cue = Math.round(media.currentTime*10)/10">Cue</a>`r`n<a id="myCapnav" onclick="editCap()">Cap</a>`r`n<a id="myFav" onclick='createFav()'>Fav</a>`r`n<a id='myLoop' onclick="loop()">Loop</a>`r`n<a id='myMute' onclick="mute()">Mute</a>`r`n<a id="mySkinny" style='font-size:1.4em' onwheel="wheelEvents(event, id, this)"></a>`r`n</span></span></div></div>`r`n`r`n
 
@@ -1310,8 +1328,6 @@
 
     ShowStatus()
         {
-        if !Setting("Status Bar")
-            return
         FormatTime, time,, h:mm
         vol := Round(volume)
         if (volume < 0.95)
@@ -1334,6 +1350,8 @@
         if vol_popup
             gui, vol: show, x%xv% y%yv% w30 h4 NA
         else gui, vol: hide
+        if !Setting("Status Bar")
+            Gui, Status:Hide, NA
         }
 
 
