@@ -103,7 +103,6 @@
     Xbutton1::					; mouse "back" button
       Critical
       Process, Close, mpv.exe
-sleep 24
       timer := A_TickCount + 350
       SetTimer, Timer_up, -350
       return
@@ -123,8 +122,12 @@ sleep 24
       else if inca_tab
         {
         send, {Alt up}{Ctrl up}{Shift up}
+        WinGetPos,,,w,,a
+        If (!Setting("Full Screen") && w == A_ScreenWidth)
+          send, {F11}
+        sleep 24
         send, {MButton up}			; close java modal (media player)
-        sleep 100
+        sleep 76
         GetAddressBar()				; read address bar message
         }
       else send, {Xbutton1}

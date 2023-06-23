@@ -1,6 +1,9 @@
 <script>
 
-
+// skinny not visible until reload
+// mute toggle on thumb
+// audio spurt when mute
+// rate = 1
   var modal = document.getElementById('myModal')			// media player window
   var player = document.getElementById('myPlayer')
   var media = document.getElementById('media1')				// media element
@@ -38,6 +41,7 @@
   var type = ''								// audio, video, image, thumb, document
   var cap_list = ''							// full caption text file
   var cap_time = 0
+  var view = 0								// list view or thumb view
   var looping = true							// play next or loop media
   var mpv_player = false						// use external media player
   var fullscreen = false
@@ -71,6 +75,7 @@
   var Yref
   var idx
 
+
   if (!sound) {sound='yes'}
   document.addEventListener('mousedown', mouseDown)
   document.addEventListener('mouseup', mouseUp)				// mouseUp alone = mouse back button
@@ -95,7 +100,7 @@
 
 
   function mouseUp(e) {							// !! inca.exe triggers mouseUp event after every Click
-    if (e.button && !long_click) {mouseBack()}				// inca.exe replaces mouse back button with MClick Up
+    if (e.button==1 && !long_click) {mouseBack()}			// inca.exe replaces mouse back button with MClick Up
     if (!e.button) {					
       if (seek_active && type == 'image') {index = idx; playMedia('')}	// seek thumbnail under media
       else if (type == 'video' && seek.style.opacity>0.3 && !over_cap) {media.currentTime=start}
@@ -138,14 +143,13 @@
     scaleX = sx
     over_thumb = true
     media = document.getElementById('media' + id)
-    rect = media.getBoundingClientRect()
-    xm = (xpos - rect.left) / media.offsetWidth
-    ym = (ypos - rect.top) / media.offsetHeight
     var sel = document.getElementById('sel' + id)
-    if (selected) {sel.href = '#MovePos#' + id + '#' + selected + '#'}	// preload href for thumb position change in m3u list
+    if (view) {document.getElementById("thumb" + index).style.zIndex = Zindex+=1}
+    positionMedia()
+    if (selected) {sel.href = '#MovePos#' + id + '#' + selected + '#'}	// preload href for thumb position change in playlist
     if (media.duration && ym>0.9 && ym<1.1) {media.currentTime = media.duration * xm; start = media.duration * xm}
     else if (media.currentTime <= st || ym<0.1) {start=st; media.currentTime = st + 0.1} // thumb in/out seek time
-    media.playbackRate = 0.74						// play thumb slower
+    media.playbackRate = 0.74						// play thumb slower  xm<0.05 || xm>0.95
     media.play()}
 
 
@@ -203,6 +207,7 @@
     if (type == "video" || type == "audio") {media.currentTime = start-0.2}
     if (type == "audio") {media.controls = true; sound == 'yes'}
     if (long_click) {media.currentTime = 0}
+    else {media.playbackRate = rate}
     mediaX = sessionStorage.getItem('mediaX')*1				// last media position
     mediaY = sessionStorage.getItem('mediaY')*1
     scaleX = scaleY
@@ -222,13 +227,14 @@
     media.addEventListener('ended', media_ended)
     setTimeout(function() {media.style.opacity=1},300)
     if (mpv_player) {return}
+    modal.style.zIndex = Zindex+=1
     modal.style.display='flex'
     setTimeout(function() {
       if (!fullscreen && !long_click) {media.style.opacity=1}
       if (path.href.slice(27).match('/inca/music/') || type=='audio') {looping=false}
       else if (fullscreen) {modal.requestFullscreen()}
       stat.style.display='block'; seekbar.style.display='block'
-      if (type != 'thumb') {media.playbackRate=rate; media.play()}},120)}
+      if (type != 'thumb') {media.play()}},120)}
 
 
   function close_media() {
@@ -253,7 +259,7 @@
 
 
   function wheelEvents(e, id, el, input) {
-    if (id == 'Fixed' && media.style.position != 'fixed') {return}
+    if (id=='Fixed' && !allow_zoom) {return}
     e.preventDefault()
     e.stopPropagation()
     wheel += Math.abs(e.deltaY)
@@ -281,7 +287,8 @@
       thumb_size = 1*media.style.width.slice(0,-2)
       if (wheelDown) {thumb_size += thumb_size/40}
       else {thumb_size -= thumb_size/40}
-      media.style.width = thumb_size + 'em'}
+      media.style.width = thumb_size + 'em'
+      block=40}
     else if (id == 'Thumbs') {						// thumb width
       thumb_size = 1*media.style.width.slice(0,-2)
       if (wheelDown) {thumb_size += thumb_size/40}
@@ -332,7 +339,7 @@
     e.stopPropagation()
     xpos = e.clientX
     ypos = e.clientY
-    if (type) {positionMedia()}
+    positionMedia()
     if (mouse_down) {
       if (!gesture && !type && over_thumb) {
         mediaX = rect.left + (media.offsetWidth * scaleX/2)
@@ -345,10 +352,11 @@
         gesture = true							// media playback position moved
         mediaX += xpos - Xref
         mediaY += ypos - Yref
+        media.style.top = mediaY - media.offsetHeight/2 + "px"
+        media.style.left = mediaX - media.offsetWidth/2 + "px"
         Xref = xpos
         Yref = ypos
-        positionMedia()
-        if (type) {
+        if (type && type != 'thumb') {
           sessionStorage.setItem("mediaX",mediaX)
           sessionStorage.setItem("mediaY",mediaY)}}}
     if (!type) {return}
@@ -373,6 +381,8 @@
     rect = media.getBoundingClientRect()
     xm = (xpos - rect.left) / (media.offsetWidth*scaleX)
     ym = (ypos - rect.top) / (media.offsetHeight*scaleY)
+    if (ym>0 && ym<0.2) {allow_zoom=true} else {allow_zoom=false}
+    if (!type) {return}
     if (screenLeft) {x=0; y=0; Xoff=screenLeft; Yoff=outerHeight-innerHeight} else {x=Xoff; y=Yoff}	// fullscreen
     media.style.marginLeft = x+'px'; media.style.marginTop = y+'px'
     seekbar.style.marginLeft = x+'px'; seekbar.style.marginTop = y+'px'
@@ -394,11 +404,11 @@
     seekbar.style.width = cueW
     seekbar.style.top = 3 + mediaY + media.offsetHeight*scaleY/2 + "px"
     if (3 + mediaY + media.offsetHeight*scaleY/2 > innerHeight) {seekbar.style.top = innerHeight -6 + "px"}
-    cap.style.left = mediaX - media.offsetWidth*scaleX/2 + "px"
-    cap.style.top = mediaY + media.offsetHeight*scaleY/2 + 10 + "px"
     media.style.top = mediaY - media.offsetHeight/2 + "px"
     media.style.left = mediaX - media.offsetWidth/2 + "px"
     media.style.transform = "scale("+scaleX+","+scaleY+")"
+    cap.style.left = mediaX - media.offsetWidth*scaleX/2 + "px"
+    cap.style.top = mediaY + media.offsetHeight*scaleY/2 + 10 + "px"
     if (looping) {Loop.style.color='red'} else {Loop.style.color=null}
     if (sound=='no') {Mute.style.color='red'} else {Mute.style.color=null}
     time = media.currentTime.toFixed(1)
@@ -459,7 +469,7 @@
   function spool(e, id, input, to, so, fi, pa, ps, ts, rt, fs, ep) {	// spool lists into top htm panel
     if (mouse_down || id=='myModal') {return}				// in case sliding thumbs over panel
     if (id) {panel.style.opacity = 1}
-    if (input) {ini=input; toggles=to; sort=so; filt=fi; page=pa; pages=ps; thumb_size=ts; rate=rt; fullscreen=fs; mpv_player=ep}
+    if (input) {ini=input; toggles=to; sort=so; filt=fi; page=pa; pages=ps; view=ts; rate=rt; fullscreen=fs; mpv_player=ep}
     if (!last_id) {last_id = 'Fol'}
     if (id) {last_id = id} else {id = last_id}
     sessionStorage.setItem("last_id",last_id)

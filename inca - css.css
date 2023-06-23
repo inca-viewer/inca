@@ -96,6 +96,7 @@
   vertical-align:top;
   position:relative;
   border-radius:6%;
+  cursor:crosshair;
   outline:none;}
 
 .caption {
@@ -124,7 +125,6 @@
   position:fixed;
   justify-content:center;
   align-items:center;
-  z-index:40;
   top:0;
   left:0;
   height:100vh;
