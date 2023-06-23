@@ -72,7 +72,6 @@
   var idx
 
   if (!sound) {sound='yes'}
-  function timedEvents() {positionMedia(); Captions()}			// every ~84mS while media playing
   document.addEventListener('mousedown', mouseDown)
   document.addEventListener('mouseup', mouseUp)				// mouseUp alone = mouse back button
   document.addEventListener('mousemove', Gesture)
@@ -108,7 +107,7 @@
 
   function mouseBack() {						// quit media
     var top = document.body.getBoundingClientRect().top
-    if (!type && top < -90) {setTimeout(function() {scrollTo(0,0)},300); return}
+    if (!type && top < -90) {setTimeout(function() {scrollTo(0,0)},100); return}
     if (type) {								// media was playing
       over_media = true
       seek_active = false
@@ -219,13 +218,13 @@
     media.muted = false
     idx = index								// seek image index
     block = 200								// block wheel input
-    mediaTimer = setInterval(timedEvents,84)
+    mediaTimer = setInterval(positionMedia,84)
     media.addEventListener('ended', media_ended)
     setTimeout(function() {media.style.opacity=1},300)
     if (mpv_player) {return}
     modal.style.display='flex'
     setTimeout(function() {
-      if (!fullscreen) {media.style.opacity=1}
+      if (!fullscreen && !long_click) {media.style.opacity=1}
       if (path.href.slice(27).match('/inca/music/') || type=='audio') {looping=false}
       else if (fullscreen) {modal.requestFullscreen()}
       stat.style.display='block'; seekbar.style.display='block'
@@ -287,7 +286,7 @@
       thumb_size = 1*media.style.width.slice(0,-2)
       if (wheelDown) {thumb_size += thumb_size/40}
       else {thumb_size -= thumb_size/40}
-      thumb_size = Math.round(10*thumb_size)/10
+      thumb_size = thumb_size.toFixed(1)
       if (thumb_size < 4) {thumb_size = 4}
       document.getElementById(id).href = '#Thumbs#'+thumb_size+'##'
       for (i=1; i<33 ;i++) {
@@ -307,7 +306,7 @@
       if (type != 'image' && (media.playbackRate < 1 || x < 0)) {
         media.playbackRate += x
         stat.innerHTML=Math.round(media.playbackRate *100)}}
-    else if ((!over_media || xw<0.1 || yw>0.9) && (type=='video' || type=='audio')) {	// seek
+    else if (!over_media && (type=='video' || type=='audio')) {		// seek
       if (wheelDown) {media.currentTime += interval}
       else  {media.currentTime -= interval}}
     else if (type == 'image' && (ym>1 || yw >0.9)) {			// image seek thumb
@@ -333,11 +332,7 @@
     e.stopPropagation()
     xpos = e.clientX
     ypos = e.clientY
-    xw =  xpos / innerWidth
-    yw =  ypos / innerHeight
-    rect = media.getBoundingClientRect()
-    xm = (xpos - rect.left) / (media.offsetWidth*scaleX)
-    ym = (ypos - rect.top) / (media.offsetHeight*scaleY)
+    if (type) {positionMedia()}
     if (mouse_down) {
       if (!gesture && !type && over_thumb) {
         mediaX = rect.left + (media.offsetWidth * scaleX/2)
@@ -368,24 +363,21 @@
     stat.style.opacity = null
     seekbar.style.opacity = null
     if (type=='video' || type=='audio') {
-      if (!over_media || xw<0.1 || yw>0.9) {seekbar.style.opacity = 0.6}
+      if (!over_media) {seekbar.style.opacity = 0.6}
       if (yw>0.9 || ym>1) {stat.style.opacity = 0.6}}}
 
 
-  function positionMedia() {
-
+  function positionMedia() {						// every ~84mS while media playing
     xw =  xpos / innerWidth
     yw =  ypos / innerHeight
     rect = media.getBoundingClientRect()
     xm = (xpos - rect.left) / (media.offsetWidth*scaleX)
     ym = (ypos - rect.top) / (media.offsetHeight*scaleY)
-    if (screenLeft) {x=0; y=0; Xoff=screenLeft; Yoff=outerHeight-innerHeight} else {x=Xoff; y=Yoff}
+    if (screenLeft) {x=0; y=0; Xoff=screenLeft; Yoff=outerHeight-innerHeight} else {x=Xoff; y=Yoff}	// fullscreen
     media.style.marginLeft = x+'px'; media.style.marginTop = y+'px'
     seekbar.style.marginLeft = x+'px'; seekbar.style.marginTop = y+'px'
     cap.style.marginLeft = x+'px'; cap.style.marginTop = y+'px'
-//    seek.style.marginLeft = x+'px'; seek.style.marginTop = y+'px'
-
-    if (xm>0 && xm<1 && ym>0 && ym<1) {over_media=true} else {over_media=false}
+    if (xm>0 && xm<1 && ym>0 && ym<1 && xw>0.1 && yw<0.9) {over_media=true} else {over_media=false}
     if (type == 'video' && seek.style.opacity == 1 && yw<0.98) {seek_active = false}
     if (seek_active && seek.style.opacity < 1) {seek.style.opacity -= '-0.05'}
     if (!seek_active && seek.style.opacity > 0) {seek.style.opacity -= '0.05'}
@@ -393,9 +385,9 @@
     else {seek.style.left = mediaX + x - seek.offsetWidth/2 + "px"}
     var cueX = mediaX - media.offsetWidth*scaleX/2 + 'px'
     var cueW = scaleX * media.offsetWidth * media.currentTime / media.duration + 'px'
-    if (cue && cue <= Math.round(media.currentTime*10)/10) {
+    if (cue && cue <= media.currentTime.toFixed(1)) {
       cueX = mediaX - media.offsetWidth*scaleX/2 + scaleX * media.offsetWidth * cue/media.duration + 'px'
-      if (cue < Math.round(media.currentTime*10)/10) {
+      if (cue < media.currentTime.toFixed(1)) {
         cueW = scaleX*media.offsetWidth*(media.currentTime-cue)/media.duration+'px'}
       else {cueW = scaleX * media.offsetWidth * (1-(cue/media.duration)) + 'px'}}
     seekbar.style.left = cueX
@@ -409,16 +401,17 @@
     media.style.transform = "scale("+scaleX+","+scaleY+")"
     if (looping) {Loop.style.color='red'} else {Loop.style.color=null}
     if (sound=='no') {Mute.style.color='red'} else {Mute.style.color=null}
-    time = Math.round(10*media.currentTime)/10
+    time = media.currentTime.toFixed(1)
     if ((t=Math.round(time%60))<10) {t=':0'+t} else {t=':'+t}		// convert seconds to MMM:SS format
     if (!stat.matches(":hover")) {stat.innerHTML=Math.round(time/60)+t}
     if (media.duration > 120) {interval = 5} 				// set seek interval
     else {interval = 1}
     if (media.paused) {interval = 0.04}
-    mySkinny.innerHTML = Math.round(100*newSkinny)/100
+    mySkinny.innerHTML = newSkinny.toFixed(2)
     if (type == 'image') {stat.innerHTML = mySkinny.innerHTML}
     if (sound == 'yes' && media.volume <= 0.8) {media.volume += 0.2}	// fade sound in or out
-    if (sound == 'no' && media.volume >= 0.2) {media.volume -= 0.2}}
+    if (sound == 'no' && media.volume >= 0.2) {media.volume -= 0.2}
+    showCaption()}
 
 
   function media_ended() {
@@ -529,12 +522,12 @@
     cap.focus()}
 
   function nextCap() {							// seek to next caption in movie
-    if (cap_list && yw>0.85) {
+    if (type && cap_list && yw>0.85) {
       var z = cap_list.split('|')
       for (x of z) {if (!isNaN(x) && x>(media.currentTime+0.2)) {media.currentTime = x-0.8; media.play(); return}}}
     playMedia('Mclick')}
 
-  function Captions() {							// display captions
+  function showCaption() {						// display captions
     if (document.activeElement.id == 'myCap') {cap.style.color='red'; return}
     else {cap.style.color=null}
     if (!time) {time = '0.0'}
