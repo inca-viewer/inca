@@ -82,7 +82,6 @@
 .seek {
   display:none;
   position:absolute;
-  bottom:124px;
   user-select:none;
   border-radius:6%;
   max-width:160px;
@@ -95,14 +94,13 @@
   position:relative;
   border-radius:5%;
   cursor:crosshair;
-  outline:none;
   transition 1s}
 
 .media {
   position:absolute;
   user-select:none;
-  border-radius:5%;
-  transition:0.16s}
+  border-radius:3%;
+  transition:0.2s}
 
 .caption {
   display:none;
@@ -146,42 +144,28 @@ table {
   table-layout:fixed;
   border-collapse: collapse}
 
-.stat {
-  display:none;
-  position:fixed;
-  opacity:0;
-  font-size:4em;
-  width:2em;
-  color:red}
-
-#myControls:hover .sidenav {display:block}
-.stat:hover {opacity:1}
-
 .sidenav {
   display:none;
-  opacity:0;
-  width:5em;
   position:fixed;
-  font-size:1.2em;
-  background-color:rgba(0,0,0,0.3)}
+  font-size:1.5em;
+  transition:0.14s;
+  background-color:rgba(0,0,0,0.4)}
 
 .sidenav a {
   display:block;
-  font-size:1.2em;
-  text-align:left;
+  height:1em;
+  padding:0.3em;
   color:lightsalmon;}
 
-.sidenav:hover {opacity:1}
-.sidenav a:hover {color:white}
-.sidenav a:active {background-color:#333333}
+.sidenav a:hover {background-color:#222222}
 
 .container {
   font-family:'Yu Gothic', 'Calibri Light';
   cursor:default;
   padding-top:6em;
   padding-bottom:40em;
-  user-select:none;
   background:#15110a;
+  user-select:none;
   color:#666666;
   font-size:0.8em;
   animation-name:fadePage;

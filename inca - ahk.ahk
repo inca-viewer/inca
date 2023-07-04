@@ -1,7 +1,11 @@
 
 
-
 	; Browser File Explorer - Windows
+
+	; this back end AutoHotKey script manages keystrokes and generates web pages of your media
+	; messages to and from the browser are through the address bar
+	; web page styling is from vanilla Java script
+
 
 	#NoEnv
 	#UseHook, On
@@ -14,6 +18,7 @@
 	GroupAdd, Browsers, ahk_exe brave.exe
 	GroupAdd, Browsers, ahk_exe msedge.exe
 	GroupAdd, Browsers, ahk_exe opera.exe
+
 	#SingleInstance force		; one program instance only
 	#MaxHotkeysPerInterval 999	; allow fast spinning wheel
 	SetWorkingDir, %A_ScriptDir%	; consistent start directory
@@ -78,7 +83,7 @@
       SetTimer, TimedEvents, 100		; every 100mS
       sleep 350					; wait for browser page to identify
       folder := inca_tab			; align current folder to browser
-      send, {F5}
+      send, {F5}				; refresh browser tab
       if !inca_tab				; inca tab not exist
         {
         path = %profile%\Pictures\		; use pictures as default
@@ -155,14 +160,14 @@
            send, e
          else send, f
          }
-       else
+       else					; browser magnify
          {
          wheel_count += 1
          if (wheel_count > 10 && ypos < 50 && xpos < 50)
              {
              wheel_count = 0
              WinGet, state, MinMax, ahk_group Browsers
-             if (state > -1)		; browser magnify
+             if (state > -1)
                {
                WinActivate, ahk_group Browsers
                if (wheel == "up")
@@ -242,12 +247,12 @@
           break
           }
         }
-      if (!gesture && click == "LButton" && inca_tab && A_Cursor != "IBeam")
+      if (!gesture && click == "LButton" && inca_tab && A_Cursor != "IBeam" && A_Cursor != "Arrow")
         GetAddressBar()
       if (!inca_tab && !timer && WinActive("ahk_group Browsers" && A_Cursor != "IBeam"))
           send, f
       if (!gesture && click == "RButton")
-        send {RButton}
+          send {RButton}
       }
 
 
@@ -259,7 +264,6 @@ sleep 100
 GetAddressBar()
 sleep 1000
 }
-
 
         title =
         Gui, background:+LastFound
@@ -570,23 +574,10 @@ sleep 1000
             reload := 3
             return
             }
-        if (command == "SearchAdd" && value)
+        if (command == "Join")
             {
             array := StrSplit(selected, "/")
             x := array.MaxIndex() - 1
-            if (x <= 1)
-              {
-              if !value
-                return
-              StringUpper, search_term, value, T
-              search = %search%|%search_term%
-              StringReplace, search, search, |, `n, All
-              Sort, search, u
-              StringReplace, search, search, `n, |, All
-              IniWrite,%search%,%inca%\inca - ini.ini,Settings,Search
-              LoadSettings()
-              PopUp("Added",600,0,0)
-              }
             if (x == 2)
               {
               if !GetMedia(0)
@@ -607,6 +598,19 @@ sleep 1000
               sleep 1000
               reload := 3
               }
+            }
+        if (command == "SearchAdd" && value)
+            {
+            if !value
+              return
+            StringUpper, search_term, value, T
+            search = %search%|%search_term%
+            StringReplace, search, search, |, `n, All
+            Sort, search, u
+            StringReplace, search, search, `n, |, All
+            IniWrite,%search%,%inca%\inca - ini.ini,Settings,Search
+            LoadSettings()
+            PopUp("Added",600,0,0)
             }
         if (command=="Filt"||command=="Path"||command=="Search"||command=="SearchBox"||command=="SearchAdd"||InStr(sort_list, command))
             {
@@ -821,7 +825,7 @@ sleep 1000
 
 <div style='display:flex'>`r`n<input id='myInput' onmouseover='panel.style.opacity=null' class='searchbox' type='search' value='%search_term%'>`r`n<a class='searchbox' onmouseover="this.href='#SearchAdd#'+inputbox.value+'#'+selected+'#'" style='width:4`%; border-radius:0 1em 1em 0'>+</a></div>`r`n`r`n
 
-<div style='display:flex; margin-left:1em'>`r`n<a href='#Up###%path%' id='myPath' class='ribbon' style='width:4`%; font-size:1.4em'>&#8678<a href="#Orphan#%folder%##" class='ribbon' style='color:lightsalmon; font-size:1.7em; width:8em; margin-bottom:0.3em'>%title_s%</a>`r`n<div class='ribbon' style='color:lightsalmon; width:5em'>%list_size%</div>`r`n<a href=#myThumbs#%view%## id='myThumbs' class='ribbon' style='width:12`%' onwheel="wheelEvents(event, id, this)">Thumbs</a>`r`n<a href='#%sort%#%sort%#' id='mySort' class='ribbon' %w% onwheel="wheelEvents(event, id, this)">%sort%</a>`r`n<a id='myFilt' class='ribbon' onwheel="wheelEvents(event, id, this)">All</a>`r`n<a href="%title%.htm#Page" id="myPage" class='ribbon' style='width:15`%' onwheel="wheelEvents(event, id, this)">%pg%</a></div>`r`n`r`n<div id="myModal" class="modal" onwheel="wheelEvents(event, id, this)">`r`n<div><video id="myMedia" class="media" type="video/mp4" muted></video>`r`n<span id="mySeekBar" class='seekbar'></span>`r`n<textarea id="myCap" class="caption" onmouseenter="over_cap=true" onmouseleave="over_cap=false"></textarea>`r`n<span><video id='mySeek' class='seek' type="video/mp4"></video></span>`r`n`r`n<span id='myControls'><a id="myStatus" class='stat' onwheel="wheelEvents(event, id, this)"></a>`r`n<span id="mySidenav" class='sidenav'>`r`n<a id="mySkinny" style='font-size:1.4em' onwheel="wheelEvents(event, id, this)">1</a>`r`n<a id='myLoop' onclick="loop()">Loop</a>`r`n<a id="myFav" onclick='createFav()'>Fav</a>`r`n<a id="myCapnav" onclick="editCap()">Cap</a>`r`n<a onclick="cue = Math.round(media.currentTime*10)/10">Cue</a>`r`n<a id="myMp4" onclick='createMp4()'>mp4</a>`r`n<a id="myMp3" onclick='createMp3()'>mp3</a>`r`n</span></span></div></div>`r`n`r`n
+<div style='display:flex; margin-left:1em'>`r`n<a href='#Up###%path%' id='myPath' class='ribbon' style='width:4`%; font-size:1.4em'>&#8678<a href="#Orphan#%folder%##" class='ribbon' style='color:lightsalmon; font-size:1.7em; width:8em; margin-bottom:0.3em'>%title_s%</a>`r`n<div class='ribbon' style='color:lightsalmon; width:5em'>%list_size%</div>`r`n<a href=#myThumbs#%view%## id='myThumbs' class='ribbon' style='width:12`%' onwheel="wheelEvents(event, id, this)">Thumbs</a>`r`n<a href='#%sort%#%sort%#' id='mySort' class='ribbon' %w% onwheel="wheelEvents(event, id, this)">%sort%</a>`r`n<a id='myFilt' class='ribbon' onwheel="wheelEvents(event, id, this)">All</a>`r`n<a href="%title%.htm#Page" id="myPage" class='ribbon' style='width:15`%' onwheel="wheelEvents(event, id, this)">%pg%</a></div>`r`n`r`n<div id="myModal" class="modal" onwheel="wheelEvents(event, id, this)" oncontextmenu='context(event)'>`r`n<div><video id="myMedia" class="media" type="video/mp4" muted></video>`r`n<span id="mySeekBar" class='seekbar'></span>`r`n<textarea id="myCap" class="caption" onmouseenter="over_cap=true" onmouseleave="over_cap=false"></textarea>`r`n<span><video id='mySeek' class='seek' type="video/mp4"></video></span>`r`n`r`n<span id="mySidenav" class='sidenav'>`r`n<a id='myMute' onclick="mute()">Mute</a>`r`n<a id="myStatus" class='stat' onwheel="wheelEvents(event, id, this)"></a>`r`n<a id="mySkinny" onwheel="wheelEvents(event, id, this)">1</a>`r`n<a id='myLoop' onclick="loop()">Loop</a>`r`n<a id="myFav" onclick='createFav()'>Fav</a>`r`n<a id="myCapnav" onclick="editCap()">Cap</a>`r`n<a onclick="cue = Math.round(media.currentTime*10)/10">Cue</a>`r`n<a id="myMp4" onclick='createMp4()'>mp4</a>`r`n<a id="myMp3" onclick='createMp3()'>mp3</a>`r`n<a onclick='join()'>Join</a>`r`n</span></div></div>`r`n`r`n
 
         FileDelete, %inca%\cache\html\%folder%.htm
         html = %header_html%%style%%panel_html%%subs%%html%</div>`r`n
@@ -892,7 +896,7 @@ sleep 1000
             {
             entry = <div><table><tr><td id="thumb%j%" style="position:absolute; margin-left:3.5em"><a href="#Media#%j%##" id="sel%j%"><video id="media%j%" class='thumblist' style="width:10em; %transform%" onwheel="wheelEvents(event, 'Thumb', this)" onmouseover="overThumb(%j%, %skinny%, '%type%', %start%, '%cap%', event)" onmouseout='over_thumb=false' %poster% src="file:///%src%" type="video/mp4" preload='none' muted></video></a></tr></table><table style="table-layout:fixed; width:100`%; font-size:0.9em"><tr><td style="width:4em; text-align:center"><span style="border-radius:9px; color:#777777">%sort_name%</span></td><td style="width:4em; text-align:center">%dur%</td><td style="width:3em; text-align:center">%size%</td><td style="width:4em; text-align:center">%ext%</td>%fold%<td><div id="title%j%" onclick="select(%j%)" style="width:80`%; border-radius:1em; padding-left:0.5em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis">%media%</div></td></tr></table></div>`r`n`r`n
             }
-        else
+        else								; thumbnail view
             {
             if (ext == "txt")
                 {
@@ -912,7 +916,7 @@ sleep 1000
         }
 
 
-    Spool(input, count, start)
+    Spool(input, count, start)					; sorting and search filters
         {
         SplitPath, input,,,ex, filen
         if (ex == "lnk")
@@ -1091,19 +1095,20 @@ sleep 1000
 
     FileTransfer()
         {
-        if timer
-          PopUp("Move",400,0,0)
-        else PopUp("Copy",400,0,0)
         Loop, Parse, selected, `/
             {
             list_id := A_LoopField
+            GetMedia(0)
+            if timer
+              popup = Move - %media%
+            else popup = Copy - %media%
+            PopUp(popup,0,0,0)
             if GetMedia(0)
               if (InStr(address, "inca\fav") || InStr(address, "inca\music"))
                 FileAppend, %target%`r`n, %address%, UTF-8		; add media entry to playlist
-              else if timer
+              else if timer						; not long click
                 FileMove, %src%, %address%				; move file to new folder
               else FileCopy, %src%, %address%
-            PopUp(media,0,0,0)
             }
         if timer
           if (InStr(address, "inca\fav") || InStr(address, "inca\music"))
