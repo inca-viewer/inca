@@ -10,6 +10,9 @@
 // focus zoom
 // wheeldown triggers fast seeking back
 // zoom shaky because target changes during transition
+// revert software version option
+// thumb view by column count not width
+// seekbar position etc. radius etc.
 
 
   var thumb = document.getElementById('media1')				// first media element
@@ -73,15 +76,16 @@
   var yw = 0.5
   var xm = 0								// cursor over media ratio
   var ym = 0
-  var mediaX = 0							// centre of media player
-  var mediaY = 0
+  var mediaX								// centre of media player
+  var mediaY
   var thumbX = 0							// original thumb offsets
   var thumbY = 0
   var scaleX = 1							// skinny & magnify factor
   var scaleY = 1
   var Xref								// last cursor coordinate
   var Yref
-var wheelUp
+  var ratio								// media width/height ratio
+
 
   document.addEventListener('mousedown', mouseDown)
   document.addEventListener('mouseup', mouseUp)				// mouseUp alone = mouse back button
@@ -117,7 +121,7 @@ var wheelUp
       else if (type == 'thumb') {thumbSheet()}				// play at thumbsheet coordinate
       else if (type == 'video' && seek.style.opacity>0.3 && !nav.matches(":hover")) {media.currentTime=start}
       else if (cap.value != cap.innerHTML) {editCap()}			// caption in edit mode
-      else if (over_thumb) {playMedia('Click')} 
+      else if (over_thumb) {playMedia('Click')}
       else {togglePause(e)}}
     if (!e.button || e.button == 1) {
       if (xm<0||xm>1||ym<0.8||ym>1) {seek.style.opacity=0; seek_active=false}
@@ -145,7 +149,6 @@ var wheelUp
 
 
   function togglePause(e) {
-if (type != 'audio' && scaleY<3) {scaleY*=3; scaleX*=3; return}
     if (!type||!mouse_down||gesture||long_click||over_cap||nav.matches(":hover")) {return}
     if (media.paused) {media.play()} else {media.pause()}}
 
@@ -155,14 +158,11 @@ if (type != 'audio' && scaleY<3) {scaleY*=3; scaleX*=3; return}
     skinny=sk; newSkinny=sk
     over_thumb = true
     thumb = document.getElementById('media' + id)
-    var thumb_container = document.getElementById('thumb' + id)
-    var offset = 1*thumb.style.transform.slice(7,-1)
-    if (offset) {offset = (thumb_container.offsetWidth-thumb.offsetWidth*offset)/2}
     thumb_size = 1*thumb.style.width.slice(0,-2)
     rect = thumb.getBoundingClientRect()
+    media.style.top = rect.top +3*view +'px'
+    media.style.left = rect.left -6*view*(1-sk) +'px'			// thumb => media player
     media.style.transform = 'scale('+skinny+',1)'
-    media.style.top = rect.top +'px'
-    media.style.left = rect.left -offset +'px'				// thumb => media player
     media.style.width = thumb_size +'em'
     var sel = document.getElementById('sel' + id)
     if (view) {document.getElementById("thumb" + index).style.zIndex = Zindex+=1}
@@ -173,9 +173,7 @@ if (type != 'audio' && scaleY<3) {scaleY*=3; scaleX*=3; return}
     if (selected && path.href.slice(27).match('/inca/')) {return}	// moving thumb position within a playlist
     start = 0
     thumb = media							// media assigned from  thumb to modal player
-// over_thumb=false
     if (type) {close_media()}						// no type if no media playing
-    else if (e) {scaleY=3}						// default media size (ref. to thumb size)
     scroll_Y = window.scrollY
     if (e == 'Loop') {index+=1; start=0}
     if (e == 'Mclick' && long_click) {index-=3}
@@ -203,13 +201,17 @@ if (type != 'audio' && scaleY<3) {scaleY*=3; scaleX*=3; return}
     else if (fullscreen) {modal.requestFullscreen()}
     if (type == 'audio') {media.controls = true; media.muted=false; scaleY=1}
     if (type != 'thumb') {media.play()}
-//if (scaleY<2) {scaleY=1}
+    ratio = media.offsetWidth/media.offsetHeight
+    if (ratio > 1) {ratio = 1}
+    if (type == 'thumb') {scaleY=6.4*ratio}
+    else {scaleY=3*ratio}
     x = 1*thumb.style.transform.slice(7,-1)
     if (x) {skinny=x; newSkinny=x}					// media width was edited
     scaleX = scaleY
     scaleX *= skinny
-    mediaX = sessionStorage.getItem('mediaX')*1				// last media position
-    mediaY = sessionStorage.getItem('mediaY')*1
+    mediaX = localStorage.getItem('mediaX')*1				// last media position
+    mediaY = localStorage.getItem('mediaY')*1
+    if (!mediaX) {mediaX=innerWidth/2; mediaY=innerHeight/2}
     thumbX = 1*media.style.left.slice(0,-2)				// originating thumb offsets
     thumbY = 1*media.style.top.slice(0,-2)
     thumb.style.opacity = 0						// hide thumb while media playing
@@ -231,7 +233,6 @@ if (type != 'audio' && scaleY<3) {scaleY*=3; scaleX*=3; return}
     cap.style.display = 'none'
     cap.style.color = null
     cap.style.opacity = 0
-// over_media=false
     cap.innerHTML = ''
     cap.value = ''
     media.poster=''
@@ -245,7 +246,7 @@ if (type != 'audio' && scaleY<3) {scaleY*=3; scaleX*=3; return}
     e.stopPropagation()
     wheel += Math.abs(e.deltaY)
     if (wheel < block) {return}
-wheelUp = false
+    var wheelUp = false
     block = 120
     if (type != 'image') {seek_active=false; seek.style.opacity=0}	// don't fade seek thumb on wheel
     if (e.deltaY > 0) {wheelUp=true; pos+=4} else if (pos) {pos-=4}
@@ -300,10 +301,9 @@ wheelUp = false
       seek.poster = thumb.poster}
     else if (type || id == 'Thumb') {					// zoom
       block = 24
-      if (wheelUp && over_thumb) {playMedia('Click');block=444}
-//      else if (wheelUp && scaleY==3) {scaleX*=1.7; scaleY*=1.7}
-      else if (wheelUp) {scaleX *= 1.03; scaleY *= 1.03}
-      else if (type!='audio' && scaleY>1 && scaleY<1.8) {modal.style.cursor='e-resize'} // inca to close media
+      if (wheelUp && over_thumb) {playMedia('Click')}
+      else if (wheelUp) {scaleX *= 1.02; scaleY *= 1.02}
+      else if (scaleY>1 && scaleY<2.5*ratio) {modal.style.cursor='progress'}	// inca to close media
       else if (scaleY>1.05) {scaleX *= 0.95; scaleY *= 0.95}
       positionMedia()}							// slide media to mediaX,Y position while zoom}
     else {spool(e, id)} 						// scroll top panel
@@ -323,8 +323,8 @@ wheelUp = false
       Xref = xpos
       Yref = ypos
       if (type != 'thumb') {
-        sessionStorage.setItem("mediaX",mediaX)
-        sessionStorage.setItem("mediaY",mediaY)}}
+        localStorage.setItem("mediaX",mediaX)
+        localStorage.setItem("mediaY",mediaY)}}
     if (!nav.matches(":hover")) {nav.style.display = null}
 modal.style.cursor = "crosshair"
     if (type != 'thumb') {
@@ -346,16 +346,17 @@ modal.style.cursor = "crosshair"
     ym = (ypos - rect.top) / (media.offsetHeight*scaleY)
     if (type) {
       if (screenLeft) {x=0; y=0; Xoff=screenLeft; Yoff=outerHeight-innerHeight} else {x=Xoff; y=Yoff}	// fullscreen
-      var slide = (scaleY-0.5)/8					
-      if (slide>1||gesture) {slide=1}
-      if (!wheelUp && scaleY<1.7) {slide = 0}
-      media.style.top = thumbY + ((mediaY-media.offsetHeight/2)-thumbY)*slide +y +"px"
-      media.style.left = thumbX + ((mediaX-media.offsetWidth/2)-thumbX)*slide +x +"px"
+      X=(scaleX-2*ratio)/(5*ratio); Y=(scaleY-2)/5
+if (ratio<1) {Y=(scaleY-1)/1.5*ratio}
+      if (X>1) {X=1}; if (Y>1) {Y=1}
+      if (X<0) {X=0}; if (Y<0) {Y=0}
+      media.style.top = thumbY + ((mediaY-media.offsetHeight/2)-thumbY)*Y +y +"px"
+      media.style.left = thumbX + ((mediaX-media.offsetWidth/2)-thumbX)*X +x +"px"
       media.style.transform = "scale("+scaleX+","+scaleY+")"}
     if (type && scaleY>2) {
       seek.style.display='block'
       seekbar.style.display='block'
-      if ((type=='video' || type=='audio') && ym>1 ) {seekbar.style.opacity = 0.6}
+    if (((type=='video' || type=='audio') && ym>1) || media.duration<200 ) {seekbar.style.opacity = 0.6}
       else {seekbar.style.opacity = null}
       if (type == 'video') {seek.style.left = xpos - seek.offsetWidth/2 +'px'}
       else {seek.style.left = mediaX + x - seek.offsetWidth/2 + "px"}
@@ -375,7 +376,7 @@ modal.style.cursor = "crosshair"
       vol = (media.volume+0.06)*(scaleY-1)
       if (vol < 1) {media.volume = vol} else {media.volume = 1}
       media.style.transform = "scale("+scaleX+","+scaleY+")"
-      modal.style.backgroundColor = 'rgba(0,0,0,'+(scaleX-1)/3+')'}
+      modal.style.backgroundColor = 'rgba(0,0,0,'+(scaleX-0.5)/2+')'}
     if (type == 'video' && seek.style.opacity == 1 && (xm<0||xm>1||ym<0.8||ym>1)) {seek_active = false}
     if (seek_active && seek.style.opacity < 1) {seek.style.opacity -= '-0.05'}
     if (!seek_active && seek.style.opacity > 0) {seek.style.opacity -= '0.05'}

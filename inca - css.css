@@ -83,22 +83,29 @@
   display:none;
   position:absolute;
   user-select:none;
-  border-radius:6%;
+  border-radius:5%;
   max-width:160px;
   max-height:120px;
   transition:opacity 0.2s}
 
-.thumbs {
+.thumb_container {
+  display:inline-block;
+  vertical-align:top;
+  position:relative;}
+
+.thumb {
   display:inline-block;
   vertical-align:top;
   position:relative;
   border-radius:5%;
+  object-fit:scale-down;
   cursor:crosshair;
   transition 1s}
 
 .media {
   position:absolute;
   user-select:none;
+  object-fit:scale-down;
   border-radius:3%;
   transition:0.2s}
 
@@ -146,6 +153,7 @@ table {
 
 .sidenav {
   display:none;
+  width:5em;
   position:fixed;
   font-size:1.5em;
   transition:0.14s;
@@ -155,7 +163,8 @@ table {
   display:block;
   height:1em;
   padding:0.3em;
-  color:lightsalmon;}
+  padding-left:1em;
+  color:lightsalmon}
 
 .sidenav a:hover {background-color:#222222}
 
