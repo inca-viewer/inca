@@ -886,6 +886,8 @@ sleep 1000
         stringlower, thumb, thumb
         poster = poster="file:///%thumb%"
         start := Round(start+0.1,2)
+        max_height := view*1.4
+
 
 ; FileRead, dur, %inca%\cache\durations\%media%.txt
 ; random, start, 0, dur-5
@@ -910,7 +912,7 @@ sleep 1000
                     }
 	        entry = <a href="#Media#%j%##"><div style="display:inline-block; width:88`%; color:#555351; transition:color 1.4s; margin-left:8`%; text-align:center; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; %highlight%;">%sort_name% &nbsp;&nbsp;%media%</div></a><textarea rows=%rows% style="display:inline-block; overflow:hidden; margin-left:8`%; width:88`%; background-color:inherit; color:#826858; font-size:1.2em; font-family:inherit; border:none; outline:none;">%str2%</textarea>`r`n`r`n
                 }
-            else entry = <div id="thumb%j%" class="thumb_container" style="width:%view%em; margin-right:3em">`r`n<div id="title%j%" onclick="select(%j%)" style="display:grid; align-content:end; text-align:center; padding:0.3em; color:#555351; border-radius:1.5em; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; font-size:0.85em; height:2em">%media%</div>`r`n<a href="#Media#%j%##" id="sel%j%">`r`n<video class="thumb" id="media%j%" style="position:inherit; %transform% width:%view%em; height:%view%em" onwheel="wheelEvents(event, 'Thumb', this)" onmouseover="overThumb(%j%, %skinny%, '%type%', %start%, '%cap%', event)" onmouseout='over_thumb=false' src="file:///%src%" %poster% preload='none' muted type="video/mp4"></video>`r`n</a>%caption%<div style='height:4em'></div></div>`r`n`r`n
+            else entry = <div id="thumb%j%" class="thumb_container" style="width:%view%em; margin-right:3em">`r`n<div id="title%j%" onclick="select(%j%)" style="display:grid; align-content:end; text-align:center; padding:0.3em; color:#555351; border-radius:1.5em; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; font-size:0.85em; height:2em">%media%</div>`r`n<a href="#Media#%j%##" id="sel%j%">`r`n<video class="media" id="media%j%" style="position:inherit; %transform% width:%view%em; max-height:%max_height%em" onmouseover="overThumb(%j%, %skinny%, '%type%', %start%, '%cap%', event)" onmouseout='over_thumb=false' onwheel="wheelEvents(event, 'Thumb', this)" src="file:///%src%" %poster% preload='none' muted type="video/mp4"></video>`r`n</a>%caption%<div style='height:4em'></div></div>`r`n`r`n
             }
         return entry
         }

@@ -70,7 +70,6 @@
 .thumblist:hover {opacity:1}
 
 .seekbar {
-  display:none;
   position:absolute;
   opacity:0;
   border-radius:1px;
@@ -80,8 +79,8 @@
   transition:0.1s}
 
 .seek {
-  display:none;
   position:absolute;
+  opacity:0;
   user-select:none;
   border-radius:5%;
   max-width:160px;
@@ -97,17 +96,13 @@
   display:inline-block;
   vertical-align:top;
   position:relative;
-  border-radius:5%;
-  object-fit:scale-down;
-  cursor:crosshair;
-  transition 1s}
+  cursor:crosshair}
 
 .media {
   position:absolute;
-  user-select:none;
-  object-fit:scale-down;
   border-radius:3%;
-  transition:0.2s}
+  user-select:none;
+  transition:0.12s}
 
 .caption {
   display:none;
@@ -124,9 +119,9 @@
   overflow:hidden;
   user-select:none;
   color:burlywood;
-  transition:1s;
   border-radius:5%;
-  font-size:1.4em}
+  font-size:1.4em;
+  transition:0.2s}
 
 .modal {
   display:none;
@@ -155,7 +150,7 @@ table {
   display:none;
   width:5em;
   position:fixed;
-  font-size:1.5em;
+  font-size:1.4em;
   transition:0.14s;
   background-color:rgba(0,0,0,0.4)}
 
@@ -171,7 +166,7 @@ table {
 .container {
   font-family:'Yu Gothic', 'Calibri Light';
   cursor:default;
-  padding-top:6em;
+  padding-top:8em;
   padding-bottom:40em;
   background:#15110a;
   user-select:none;
