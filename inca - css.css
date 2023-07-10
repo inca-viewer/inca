@@ -3,7 +3,7 @@
 
 ::-webkit-scrollbar {width:0}
 
-.ribbon2 {
+.ribbon {
   display:flex;
   position:relative;
   text-align:center;
@@ -11,24 +11,12 @@
   margin-left:1em;
   font-size:1em;
   justify-content:space-between;
-  width:560px}
+  width:75%}
 
-.ribbon2 a {border-radius:1em}
-
-.ribbon {
-  display:flex;
-  text-align:center;
-  align-items:center;
-  justify-content:center;
-  text-overflow:ellipsis;
-  overflow:hidden;
-  color:#826858;
-  outline:none;
-  font-size:1.1em;
-  transition:color 1.4s;
-  white-space:nowrap;
-  height:30px;
-  width:12%}
+.ribbon a {border-radius:1em}
+.ribbon a:hover {
+  transition:0.2s;
+  transform:scale(1.2,1.2) translate(0,-0.2em)}
 
 .searchbox {
   text-overflow:ellipsis;
@@ -100,7 +88,7 @@
 
 .media {
   position:absolute;
-  border-radius:3%;
+  border-radius:2%;
   user-select:none;
   transition:0.12s}
 
@@ -146,22 +134,23 @@ table {
   table-layout:fixed;
   border-collapse: collapse}
 
-.sidenav {
+.context {
   display:none;
-  width:5em;
+  z-index:999;
   position:fixed;
   font-size:1.4em;
   transition:0.14s;
   background-color:rgba(0,0,0,0.4)}
 
-.sidenav a {
+.context a {
   display:block;
   height:1em;
-  padding:0.3em;
-  padding-left:1em;
+  padding-left:0.6em;
+  padding-right:0.6em;
+  padding-bottom:0.6em;
   color:lightsalmon}
 
-.sidenav a:hover {background-color:#222222}
+.context a:hover {background-color:#222222}
 
 .container {
   font-family:'Yu Gothic', 'Calibri Light';
