@@ -6,6 +6,11 @@
 // wmv/nonplay warning
 // videos click opening zoom jitter
 // put menu in panel?
+// zoom when thumbs huge - need to shrink media size
+// thumbs all not zooming above threshold
+// music delay
+// maybe, if media over screen size, scroll up/down instead of magnify until end, then back to magnify
+// revisit remove thumb container - grid layout
 
 
   var thumb = document.getElementById('media1')				// first media element
@@ -55,11 +60,11 @@
   var gesture = false
   var over_cap = false							// cursor over caption
   var over_media = false
+  var seek_active = false						// seek thumb under video
   var thumb_ratio							// thumb/screen ratio
   var media_ratio							// media/screen ratio
   var skinny = 1							// media width
   var newSkinny = 1
-  var seek_active = false						// seek thumb under video
   var selected = ''							// list of selected media in page
   var messages = ''							// through browser address bar to inca.exe
   var cue = 0								// start time for mp3/4 conversion
@@ -112,7 +117,7 @@
     if (e.button==1 && !long_click) {mouseBack()}			// inca.exe replaces mouse back button with MClick Up
     if (!e.button && !gesture) {					
       if (type == 'thumbsheet') {thumbSheet()}				// play at thumbsheet coordinate
-      else if (type == 'video' && ym>0.8 && ym<1 && seek.style.opacity>0.3 && !nav.matches(":hover")) {media.currentTime=start}
+      else if (type == 'video' && ym>0.8 && ym<1 && seek.style.opacity>0.3 && !nav2.matches(":hover")) {media.currentTime=start}
       else if (cap.value != cap.innerHTML) {editCap()}			// caption in edit mode
       else if (over_media && !type) {playMedia('Click')}
       else {togglePause()}}
@@ -147,8 +152,8 @@
 
 
   function overThumb(id) {						// mouse over thumbnail in browser tab
-    over_media = true
     index = id
+    over_media=true
     getParameters('')
     type = ''
     var sel = document.getElementById('sel' + id)
@@ -183,13 +188,16 @@
     else if (fullscreen) {modal.requestFullscreen()}
     if (type != 'thumbsheet') {media.play()}
     thumb_ratio = media.offsetHeight/innerHeight			// original thumb/screen ratio
-    if (e=='Click' || type == 'thumbsheet') {scaleY=0.6/thumb_ratio}	// 'Click' thumb sets media size
+    if (e=='Click' || type == 'thumbsheet') {
+      if (media.offsetHeight/media.offsetWidth < 1 && type != 'thumbsheet') {scaleY=0.5/thumb_ratio}
+      else {scaleY=0.7/thumb_ratio}}					// 'Click' thumb sets media size
     x = 1*thumb.style.transform.slice(7,-1)
     if (!e && x) {skinny=x; newSkinny=x}				// media width was edited
     scaleX = scaleY
     scaleX *= skinny
     mediaX = localStorage.getItem('mediaX')*1				// last media position
     mediaY = localStorage.getItem('mediaY')*1
+// if (thumb_ratio > 0.5) {scaleY=0.2/thumb_ratio; scaleX=0.2/thumb_ratio;mediaX=0}
     if (!mediaX) {mediaX=innerWidth/2; mediaY=innerHeight/2}
     if (type == 'audio') {media.controls=true; media.muted=false; media.volume=1; scaleY=1; scaleX=1; media.style.width='25%'}
     thumbX = 1*media.style.left.slice(0,-2)				// originating thumb position
@@ -204,9 +212,9 @@
     last_index = index
     last_start = time
     if (skinny != newSkinny) {
-      messages = messages+'#Skinny#'+newSkinny+'#'+index+',#'}			// width changes
-    if (type == 'video') {messages = messages+'#History##'+index+',#'}		// play history
-    document.getElementById('media' + index).style.opacity = null		// resume original thumb opacity
+      messages = messages+'#Skinny#'+newSkinny+'#'+index+',#'}		// width changes
+    if (type == 'video') {messages = messages+'#History##'+index+',#'}	// play history
+    document.getElementById('media' + index).style.opacity = null	// resume original thumb opacity
     if (!mpv_player) {
       media.removeEventListener('ended', media_ended)
       clearInterval(mediaTimer)}
@@ -276,14 +284,16 @@
       block = 24
       if (wheelUp && id=='Thumb') {playMedia('')}
       if (wheelUp) {scaleX *= 1.03; scaleY *= 1.03}
-      else if (media_ratio<thumb_ratio+0.1) {modal.style.cursor='progress'}	// inca.exe closes media
+      else if (media_ratio<thumb_ratio+0.03) {modal.style.cursor='help'} // inca.exe closes media
       else {scaleX *= 0.95; scaleY *= 0.95}
+      x = 1*media.style.marginLeft.slice(0,-2)
+      y = 1*media.style.marginTop.slice(0,-2)				// focus zoom at cursor
       if (wheelUp && over_media && media_ratio > 0.7 && (xm>0.8||xm<0.2||ym>0.8||ym<0.2)) {
-        x = 1*media.style.marginLeft.slice(0,-2)
-        y = 1*media.style.marginTop.slice(0,-2)				// focus zoom at cursor
         media.style.marginLeft = x+(mediaX-xpos)/24 +'px'
         media.style.marginTop = y+(mediaY-ypos)/24 +'px'}
-      else {media.style.marginLeft=0; media.style.marginTop=0}
+      else {
+        media.style.marginLeft = '0px'
+        media.style.marginTop = '0px'}
       positionMedia()}							// slide media to mediaX,Y position while zoom}
     else {spool(e, id)} 						// scroll top panel
     wheel = 0}
@@ -309,7 +319,7 @@
     if (!nav.matches(":hover")) {nav.style.display = null}
     modal.style.cursor = "crosshair"
     if (type != 'thumbsheet') {setTimeout(function() {modal.style.cursor = 'none'},244)}
-    if (xm>0&&xm<1&&ym>0.8&&ym<1&&media_ratio>0.5) {			// seek thumbnail
+    if (xm>0&&xm<1&&ym>0.8&&ym<1&&media_ratio>0.3) {			// seek thumbnail
       if (type == 'video') {seek_active = true}
       start = media.duration*xm
       seek.currentTime = start}
@@ -339,7 +349,7 @@
     if (cap_list) {cap.style.display='block'}
     stat2.innerHTML = (1*newSkinny).toFixed(2)
     time = media.currentTime.toFixed(1)
-    t1 = media.duration - media.currentTime
+    t1 = media.currentTime
     if ((t2=Math.round(t1%60))<10) {t2=':0'+t2} else {t2=':'+t2}	// convert seconds to MMM:SS format
     stat3.innerHTML = Math.round(t1/60)+t2
     if (type == 'image') {stat.innerHTML=''}
@@ -465,7 +475,6 @@
     if (!last_id) {last_id = 'Fol'}
     if (id) {last_id = id} else {id = last_id}
     sessionStorage.setItem("last_id",last_id)
-    sessionStorage.setItem("pos",pos)
     if (id != 'Search' && !e.deltaY) {pos = 0}
     var count = -pos
     var htm = ''
@@ -474,10 +483,14 @@
     z = z[0].split('|')
     if (id == 'Search') {						// alpha search
       for (x of z) {
-        count++
-        if (count > 0 && count < 25) {
-          if (count==1 && pos) {id = x.substring(0, 1)}
-          htm = htm + '<a href=#Search#' + x.replace(/ /g, "%20") + '##>' + x.substring(0, 15) + '</a>'}}}
+        count++								// count initialised -ve by last pos
+        if (count > 0 && count < 25) {					// within panel display capacity
+          if (id != x.substring(0, 1)) {
+            id = x.substring(0, 1)
+            htm = htm + "<a style='grid-row-start:1;grid-row-end:5;color:red;font-size:2em'>"+id+"</a>"}
+          htm = htm + '<a href=#Search#' + x.replace(/ /g, "%20") + '##>' + x.substring(0, 15) + '</a>'}}
+      if (count < 25) {pos-=4}						// end of .ini search list
+      sessionStorage.setItem("pos",pos)}
     else for (x of z) {							// folders, fav, music
       var y = x.split("/")
       var q = y.pop()
@@ -487,7 +500,7 @@
       if (selected || q == "New") {q = "<span style='color:lightsalmon'</span>" + q}
       if (count > 0 && count < 29) {
         htm = htm + '<a href=#Path##' + selected + '#' + x.replace(/ /g, "%20") + '>' + q + '</a>'}}
-    if (id) {panel.innerHTML = "<a href='#Orphan#"+id+"##' style='grid-row-start:1;grid-row-end:5;color:red;font-size:2em'>"+id+"</a>"+htm}
+    if (id) {panel.innerHTML = htm}
     release()}
 
 
@@ -508,8 +521,9 @@
     if (selected) {document.getElementById('myDelete').href='#Delete##'+selected+'#'}
     else {document.getElementById('myDelete').href='#Delete##'+index+',#'}}
   function rename() {release(); document.getElementById('myRename').href='#Rename#'+inputbox.value.replace(/ /g, "%20")+'#'+selected+'#'}
-  function context(e) { e.preventDefault()
-    if (!over_media && !type) {index=0}					// prevent accidental media delete
+  function context(e) { 
+    e.preventDefault()
+    Gesture(e)
     nav2.style.left=xpos-32+'px'; nav2.style.top=ypos-40+'px'
     nav.style.left=e.clientX-40+'px'; nav.style.top=e.clientY-18+'px'
     if (type) {nav2.style.display='block'} else {nav.style.display='block'}}

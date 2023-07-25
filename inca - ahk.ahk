@@ -257,14 +257,13 @@
 
 
     TimedEvents:
-          if (inca_tab && A_Cursor == "AppStarting")
+          if (inca_tab && A_Cursor == "Help")
 {
 send, {MButton up}
 sleep 100
 GetAddressBar()
 sleep 1000
 }
-
         title =
         Gui, background:+LastFound
         WinGet, state, MinMax, ahk_group Browsers
@@ -464,7 +463,7 @@ sleep 1000
               }
             else IfExist, %inca%\%value%\
               run, %inca%\%value%\
-            else reload := 3
+            else command = Path
             }
         if (command == "mp3" || command == "mp4")		; address = cue, value = current time
             {
@@ -823,16 +822,18 @@ sleep 1000
 
         header_html = <!--`r`n%view%>%last_view%>%page%>%filt%>%sort%>%toggles%>%this_search%>%search_term%>%path%>%folder%>%playlist%>%last_media%>`r`n%page_media%`r`n-->`r`n<!doctype html>`r`n<html>`r`n<head>`r`n<meta charset="UTF-8">`r`n<title>Inca - %title%</title>`r`n<meta name="viewport" content="width=device-width, initial-scale=1">`r`n<link rel="icon" type="image/x-icon" href="file:///%inca%\apps\icons\inca.ico">`r`n</head>`r`n
 
-        panel_html = <body id='myBody' class='container' onload="spool(event, '', '%ini%', '%toggles%', '%sort%', %filt%, %page%, %pages%, %view%, %speed%, %fs%, %mpv_player%)">`r`n<div style="width:%page_w%`%; margin:auto" oncontextmenu='context(event)'>`r`n`r`n<span id="myContext" class='context'>`r`n<a href=#myThumbs#%view%## id='myThumbs' onwheel="wheelEvents(event, id, this)">Thumbs</a>`r`n<a id="myFav" onmouseover='createFav()'>Fav</a>`r`n<a onclick='selectAll()'>Select</a>`r`n<a id='myDelete' onmouseover='del()'>Delete</a>`r`n<a id='myRename' onmouseover='rename()'>Rename</a>`r`n<a onmouseover='join()'>Join</a>`r`n</span>`r`n`r`n<span id="myContext2" class='context'>`r`n<a id="Seek" onwheel="wheelEvents(event, id, this)">Seek</a>`r`n<a id='myMute' onclick="mute()" onwheel="wheelEvents(event, id, this)">Mute</a>`r`n<a id="mySpeed" class='stat' onwheel="wheelEvents(event, id, this)"></a>`r`n<a id="mySkinny" onwheel="wheelEvents(event, id, this)">1</a>`r`n<a id='myLoop' onclick="loop()">Loop</a>`r`n<a id='myFav2' onmouseover='createFav()'>Fav</a>`r`n<a id="myCapnav" onclick="editCap()">Cap</a>`r`n<a onclick="cue = Math.round(media.currentTime*10)/10">Cue</a>`r`n<a id="myMp4" onclick='createMp4()'>mp4</a>`r`n<a id="myMp3" onclick='createMp3()'>mp3</a>`r`n</span>`r`n`r`n<div id="myModal" class="modal" onwheel="wheelEvents(event, id, this)">`r`n<div><video id="myMedia" class="media" type="video/mp4" muted></video>`r`n<span id="mySeekBar" class='seekbar'></span>`r`n<textarea id="myCap" class="caption" onmouseenter="over_cap=true" onmouseleave="over_cap=false"></textarea>`r`n<span><video id='mySeek' class='seek' type="video/mp4"></video></span></div></div>`r`n`r`n<div class='panel' id='myPanel' onwheel="wheelEvents(event, '', this)"></div>`r`n`r`n
+        panel_html = <body id='myBody' class='container' onload="spool(event, '', '%ini%', '%toggles%', '%sort%', %filt%, %page%, %pages%, %view%, %speed%, %fs%, %mpv_player%)">`r`n<div oncontextmenu='context(event)'>`r`n`r`n<span id="myContext" class='context'>`r`n<a href=#myThumbs#%view%## id='myThumbs' onwheel="wheelEvents(event, id, this)">Thumbs</a>`r`n<a id="myFav" onmouseover='createFav()'>Fav</a>`r`n<a onclick='selectAll()'>Select</a>`r`n<a id='myDelete' onmouseover='del()'>Delete</a>`r`n<a id='myRename' onmouseover='rename()'>Rename</a>`r`n<a onmouseover='join()'>Join</a>`r`n</span>`r`n`r`n<span id="myContext2" class='context'>`r`n<a id='myMute' onclick="mute()" onwheel="wheelEvents(event, id, this)">Mute</a>`r`n<a id="Seek" onclick='if(media.paused){media.play()} else {media.pause()} context(event)' onwheel="wheelEvents(event, id, this)">Seek</a>`r`n<a id="mySpeed" class='stat' onwheel="wheelEvents(event, id, this)"></a>`r`n<a id="mySkinny" onwheel="wheelEvents(event, id, this)">1</a>`r`n<a id='myLoop' onclick="loop()">Loop</a>`r`n<a id='myFav2' onmouseover='createFav()'>Fav</a>`r`n<a id="myCapnav" onclick="editCap()">Cap</a>`r`n<a onclick="cue = Math.round(media.currentTime*10)/10">Cue</a>`r`n<a id="myMp4" onclick='createMp4()'>mp4</a>`r`n<a id="myMp3" onclick='createMp3()'>mp3</a>`r`n</span>`r`n`r`n<div id="myModal" class="modal" onwheel="wheelEvents(event, id, this)">`r`n<div><video id="myMedia" class="media" type="video/mp4" muted></video>`r`n<span id="mySeekBar" class='seekbar'></span>`r`n<textarea id="myCap" class="caption" onmouseenter="over_cap=true" onmouseleave="over_cap=false"></textarea>`r`n<span><video id='mySeek' class='seek' type="video/mp4"></video></span></div></div>`r`n`r`n
 
-<div id='myRibbon' class='ribbon'>`r`n<a href='#Recurse###' %x%>Recurse</a>`r`n<a href='#Settings###'>Menu</a>`r`n<a onmouseover="spool(event, 'Fol')" onwheel="wheelEvents(event, 'Fol', this)">Fol</a>`r`n<a href='#Path###%inca%\fav\' onmouseover="spool(event, 'Fav')" onwheel="wheelEvents(event, 'Fav', this)">Fav</a>`r`n<a href='#Path###%inca%\music\' onmouseover="spool(event, 'Music')" onwheel="wheelEvents(event, 'Music', this)">Music</a>`r`n<a onmouseover="spool(event, 'Search')" onwheel="wheelEvents(event, 'Search', this)">Search</a>`r`n<a href='#Images###' %y%>Pics</a>`r`n<a href='#Videos###' %z%>Vids</a>`r`n</div>`r`n`r`n
+<div style="width:%page_w%`%; margin:auto">`r`n
+<div class='panel' id='myPanel' onwheel="wheelEvents(event, '', this)"></div>`r`n`r`n
+<div id='myRibbon' class='ribbon'>`r`n<a href='#Settings###'>Menu</a>`r`n<a onmouseover="spool(event, 'Fol')">Fol</a>`r`n<a href='#Path###%inca%\fav\' onmouseover="spool(event, 'Fav')">Fav</a>`r`n<a href='#Path###%inca%\music\' onmouseover="spool(event, 'Music')">Music</a>`r`n<a onmouseover="spool(event, 'Search')" onwheel="wheelEvents(event, 'Search', this)">Search</a>`r`n<a href='#Images###' %y%>Pics</a>`r`n<a href='#Videos###' %z%>Vids</a>`r`n<a href='#Recurse###' %x%>Recurse</a>`r`n</div>`r`n`r`n
 
 <div style='display:flex'>`r`n<input id='myInput' onmouseover='panel.style.opacity=null' class='searchbox' type='search' value='%search_term%'>`r`n<a class='searchbox' onmouseover="this.href='#SearchAdd#'+inputbox.value+'#'+selected+'#'" style='width:4`%; border-radius:0 1em 1em 0'>+</a></div>`r`n`r`n
 
-<div class='ribbon'>`r`n<a href='#Up###%path%' id='myPath' style='font-size:1.4em'>&#8678<a href="#Orphan#%folder%##" style='font-size:1.7em; transform:none'>%title_s%</a>`r`n<a style='font-size:1.3em; transform:none'>%list_size%</a>`r`n<a href='#%sort%#%sort%#' id='mySort' %w% onwheel="wheelEvents(event, id, this)">%sort%</a>`r`n<a id='myFilt' onwheel="wheelEvents(event, id, this)">All</a>`r`n<a href="%title%.htm#Page" id="myPage" onwheel="wheelEvents(event, id, this)">%pg%</a></div>`r`n`r`n
+<div class='ribbon'>`r`n<a href='#Up###%path%' id='myPath' style='font-size:1.4em'>&#8678<a href="#Orphan#%folder%##%path%" style='font-size:1.7em; transform:none'>%title_s%</a>`r`n<a style='font-size:1.3em; transform:none'>%list_size%</a>`r`n<a href='#%sort%#%sort%#' id='mySort' %w% style='width:7em' onwheel="wheelEvents(event, id, this)">%sort%</a>`r`n<a id='myFilt' onwheel="wheelEvents(event, id, this)">All</a>`r`n<a href="%title%.htm#Page" id="myPage" onwheel="wheelEvents(event, id, this)">%pg%</a></div>`r`n`r`n
 
         FileDelete, %inca%\cache\html\%folder%.htm
-        html = %header_html%%style%%panel_html%%subs%%html%</div>`r`n
+        html = %header_html%%style%%panel_html%%subs%%html%</div></div>`r`n
         StringReplace, html, html, \, /, All
         FileAppend, %html%%java%</body>`r`n</html>`r`n, %inca%\cache\html\%folder%.htm, UTF-8
         LoadHtml()
@@ -1278,12 +1279,13 @@ sleep 1000
         gui, settings:add, edit, x160 yp+13 h18 w500 vsearch_folders, %search_folders%
         gui, settings:add, text, x165 yp+23, Folders to Index
         gui, settings:add, edit, x160 yp+13 h18 w500 vindex_folders, %index_folders%
-        gui, settings:add, button, x160 y410 w60, Source
-        gui, settings:add, button, x240 y410 w60, Java
-        gui, settings:add, button, x320 y410 w60, Compile
-        gui, settings:add, button, x400 y410 w60, Help
-        gui, settings:add, button, x480 y410 w60, Cancel
-        gui, settings:add, button, x560 y410 w60 default, Save
+        gui, settings:add, button, x160 y410 w60, ahk
+        gui, settings:add, button, x230 y410 w60, java
+        gui, settings:add, button, x300 y410 w60, css
+        gui, settings:add, button, x370 y410 w60, Compile
+        gui, settings:add, button, x440 y410 w60, About
+        gui, settings:add, button, x510 y410 w60, Cancel
+        gui, settings:add, button, x580 y410 w60 default, Save
         gui, settings:show
         send, +{Tab}
         }
@@ -1292,17 +1294,22 @@ sleep 1000
         run %inca%\apps\Compile.exe
         return
 
-        settingsButtonSource:
-        WinClose
+        settingsButtoncss:
+;        WinClose
+        run, notepad %inca%\inca - css.css
+        return
+
+        settingsButtonahk:
+;        WinClose
         run, notepad %inca%\inca - ahk.ahk
         return
 
         settingsButtonJava:
-        WinClose
+;        WinClose
         run, notepad %inca%\inca - js.js
         return
 
-        settingsButtonHelp:
+        settingsButtonAbout:
         WinClose
         if (browser == "google chrome")
           Run, chrome.exe "https://github.com/inca-viewer/inca"

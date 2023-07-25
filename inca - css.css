@@ -1,9 +1,9 @@
 
 <style>
 
-::-webkit-scrollbar {width:0}
+::-webkit-scrollbar {width:0}			/* hide bright white scrollbar */
 
-.ribbon {
+.ribbon {					/* menu, fol, fav, search ... */
   display:flex;
   position:relative;
   text-align:center;
@@ -13,12 +13,12 @@
   justify-content:space-between;
   width:75%}
 
-.ribbon a {border-radius:1em}
+.ribbon a {transition:0.8s; border-radius:1em}
 .ribbon a:hover {
   transition:0.2s;
   transform:scale(1.2,1.2) translate(0,-0.2em)}
 
-.searchbox {
+.searchbox {					/* input searchbox in htm tab	*/
   text-overflow:ellipsis;
   overflow:hidden;
   margin-top:0.4em;
@@ -35,7 +35,7 @@
   white-space:nowrap;
   width:550px}
 
-.panel {
+.panel {					/* top panel element showing folders etc.*/
   display:grid;
   grid-template-columns: auto auto auto auto auto auto auto;
   grid-template-rows: auto auto auto auto;
@@ -54,10 +54,14 @@
 
 .panel:hover {opacity:1}
 
-.thumblist {opacity:0; transition:0.1s; border-radius:3`%}
-.thumblist:hover {opacity:1}
+.thumblist {					/* media list, when view = 0	*/
+  opacity:0;
+  transition:0.2s;
+  border-radius:5%}
 
-.seekbar {
+.thumblist:hover {opacity:1}			/* show thumbnail on hover	*/
+
+.seekbar {					/* video progress bar	*/
   position:absolute;
   opacity:0;
   border-radius:1px;
@@ -66,7 +70,7 @@
   border-top:2px solid lightsalmon;
   transition:0.1s}
 
-.seek {
+.seek {						/* moving seek thumbnail under video */
   position:absolute;
   opacity:0;
   user-select:none;
@@ -75,18 +79,18 @@
   max-height:120px;
   transition:opacity 0.2s}
 
-.thumb_container {
+.thumb_container {				/* around thumbnail in htm tab */
   display:inline-block;
   vertical-align:top;
   position:relative;}
 
-.thumb {
+.thumb {					/* media thumbnail in htm tab */
   display:inline-block;
   vertical-align:top;
   position:relative;
   cursor:crosshair}
 
-.media {
+.media {					/* player in modal overlay */
   position:absolute;
   border-radius:2%;
   user-select:none;
@@ -111,7 +115,7 @@
   font-size:1.4em;
   transition:0.2s}
 
-.modal {
+.modal {					/* media player overlay htm tab */
   display:none;
   transition:0.2s;
   user-select:none;
@@ -125,16 +129,16 @@
   background-color:rgba(0,0,0,0)}
 
 a {text-decoration:none; color:#826858}
-a:hover {color:tomato;transition:color 0.36s}
-table:hover {color:tomato;transition:color 0.36s}
+a:hover {color:tomato;transition:color 0.46s}
+table:hover {color:tomato;transition:color 0.46s}
 
-table {
+table {						/* list view formatting */
   color:#826858;
   transition:color 1.4s;
   table-layout:fixed;
   border-collapse: collapse}
 
-.context {
+.context {					/* right click menu */
   display:none;
   z-index:999;
   position:fixed;
@@ -152,7 +156,7 @@ table {
 
 .context a:hover {background-color:#222222}
 
-.container {
+.container {					/* whole body element */
   font-family:'Yu Gothic', 'Calibri Light';
   cursor:default;
   padding-top:8em;
