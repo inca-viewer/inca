@@ -1109,6 +1109,8 @@ sleep 1000
             if timer
               popup = Move - %media%
             else popup = Copy - %media%
+            if (InStr(address, "inca\fav") || InStr(address, "inca\music"))
+              popup = Added - %media%
             PopUp(popup,0,0,0)
             if GetMedia(0)
               if (InStr(address, "inca\fav") || InStr(address, "inca\music"))
@@ -1269,9 +1271,9 @@ sleep 1000
             }
         gui, settings:add, text, x165 y10, Search Terms
         gui, settings:add, edit, x160 yp+13 h60 w500 vSearch, %search%
-        gui, settings:add, text, x165 yp+66, Favorite Folders
+        gui, settings:add, text, x165 yp+66, Folders
         gui, settings:add, edit, x160 yp+13 h60 w500 vFol, %fol%
-        gui, settings:add, text, x165 yp+66, Favorite Playlists
+        gui, settings:add, text, x165 yp+66, Fav Playlists
         gui, settings:add, edit, x160 yp+13 h60 w500 vFav, %fav%
         gui, settings:add, text, x165 yp+66, Music Playlists
         gui, settings:add, edit, x160 yp+13 h60 w500 vMusic, %music%
