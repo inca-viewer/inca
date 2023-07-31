@@ -171,6 +171,7 @@
     if (e == 'Mclick' && long_click) {index-=3}
     if (e == 'Mclick' && type && (type != 'video' || !over_media)) {index+=1; start=0}
     if (e == 'Mclick' && !type && !over_media) {index=last_index; start=last_start; e='Thumb'; scaleY=2} // play last media
+    if (e == 'Mclick' && !type) {scaleY=0.7/thumb_ratio}
     getParameters(e)
     if (type == 'document' || type == 'm3u') {type=''; return}
     if (e == 'Mclick' && type == 'video' && yw<0.9) {thumbSheet()}
@@ -186,7 +187,7 @@
     if (path.href.slice(27).match('/inca/music/') || type=='audio') {looping=false}
     else if (fullscreen) {modal.requestFullscreen()}
     if (type != 'thumbsheet') {media.play()}
-    if (e=='Click' || e=='Mclick') {
+    if (e=='Click') {
       if (media.offsetHeight/media.offsetWidth < 1 && type != 'thumbsheet') {scaleY=0.4/thumb_ratio}
       else {scaleY=0.5/thumb_ratio}}					// 'Click' thumb sets media size
     skinny = 1*thumb.style.transform.slice(7,-1)
@@ -459,7 +460,7 @@
     if (id) {last_id = id} else {id = last_id}
     sessionStorage.setItem("last_id",last_id)
     if (id != 'Search' && !e.deltaY) {pos = 0}
-    if (pos < 0 && pos > 25) {pos = 0}
+    if (pos < 0 || pos > 25) {pos = 0}
     var count = -pos
     var htm = ''
     filter()
