@@ -813,8 +813,10 @@ sleep 1000
           z = style='color:red'
         Loop, Parse, subfolders, `|
             {
-            StringTrimRight, fpath, A_Loopfield, 1
-            SplitPath, fpath,,,,fname
+            StringTrimRight, x, A_Loopfield, 1
+            array := StrSplit(x,"\")
+            x := array.MaxIndex()
+            fname := array[x]
             subs = %subs% <div><table><tr><td><a href="#Path###%A_Loopfield%" style="width:80`%; margin-left:4.2em; border-radius:1em; white-space:nowrap; overflow:hidden; border-radius:1em; text-overflow:ellipsis" onmouseover="this.href=this.href.replace('###', '##'+selected+'#')">%fname%</a></td></tr></table></div>`r`n`r`n
             }
         if subs
@@ -865,9 +867,9 @@ sleep 1000
               else start := 4 * dur / 200
             }
         FileRead, skinny, %inca%\cache\widths\%media%.txt
-        if (skinny)
-            transform = transform:scaleX(%skinny%);
-        else skinny := 1
+        if !skinny
+          skinny := 1
+        transform = transform:scaleX(%skinny%);
         FileRead, cap, %inca%\cache\captions\%media%.srt
         caption := StrSplit(cap, "|").1
         caption = <a href="#EditCap#%media%##"><p style="color:#826858; font-size:%cap_size%em">%caption%</p></a>
@@ -901,7 +903,7 @@ sleep 1000
 
         if !view							; list view
             {
-            entry = <div><table><tr><td id="thumb%j%" style="position:absolute; margin-left:3.5em">`r`n<a href="#Media#%j%##" id="sel%j%"><video id="media%j%" class='thumblist' style="width:10em; %transform%" onwheel="wheelEvents(event, 'Thumb', this)" onmouseover="overThumb(%j%, %skinny%, '%type%', %start%, '%cap%', event)" onmouseout='over_media=false' %poster% src="file:///%src%" type="video/mp4" preload='none' muted></video></a></tr></table><table style="table-layout:fixed; width:100`%; font-size:0.9em"><tr><td style="width:4em; text-align:center"><span style="border-radius:9px; color:#777777">%sort_name%</span></td><td style="width:4em; text-align:center">%dur%</td><td style="width:3em; text-align:center">%size%</td><td style="width:4em; text-align:center">%ext%</td>%fold%<td><div id="title%j%" onclick="select(%j%)" style="width:80`%; border-radius:1em; padding-left:0.5em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis">%media%</div></td></tr></table></div>`r`n`r`n
+            entry = <div><table><tr><td id="thumb%j%" style="position:absolute; margin-left:3.5em">`r`n<a href="#Media#%j%##" id="sel%j%"><video id="media%j%" class='thumblist' style="width:10em; %transform%" onmouseover="overThumb(%j%, %skinny%, '%type%', %start%, '%cap%', event)" onmouseout='over_media=false' %poster% src="file:///%src%" type="video/mp4" preload='none' muted></video></a></tr></table><table style="table-layout:fixed; width:100`%; font-size:0.9em"><tr><td style="width:4em; text-align:center"><span style="border-radius:9px; color:#777777">%sort_name%</span></td><td style="width:4em; text-align:center">%dur%</td><td style="width:3em; text-align:center">%size%</td><td style="width:4em; text-align:center">%ext%</td>%fold%<td><div id="title%j%" onclick="select(%j%)" style="width:80`%; border-radius:1em; padding-left:0.5em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis">%media%</div></td></tr></table></div>`r`n`r`n
             }
         else								; thumbnail view
             {
@@ -917,7 +919,7 @@ sleep 1000
                     }
 	        entry = <a href="#Media#%j%##"><div style="display:inline-block; width:88`%; color:#555351; transition:color 1.4s; margin-left:8`%; text-align:center; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; %highlight%;">%sort_name% &nbsp;&nbsp;%media%</div></a><textarea rows=%rows% style="display:inline-block; overflow:hidden; margin-left:8`%; width:88`%; background-color:inherit; color:#826858; font-size:1.2em; font-family:inherit; border:none; outline:none;">%str2%</textarea>`r`n`r`n
                 }
-            else entry = <div id="thumb%j%" class="thumb_container" style="width:%view%em; margin-right:3em">`r`n<div id="title%j%" onclick="select(%j%)" style="display:grid; align-content:end; text-align:center; padding:0.3em; color:#555351; border-radius:1.5em; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; font-size:0.85em; height:2em">%media%</div>`r`n<a href="#Media#%j%##" id="sel%j%">`r`n<video class="media" id="media%j%" style="position:inherit; %transform% width:%view%em; max-height:%max_height%em" onmouseover="overThumb(%j%, %skinny%, '%type%', %start%, '%cap%', event)" onmouseout='over_media=false' onwheel="wheelEvents(event, 'Thumb', this)" src="file:///%src%" %poster% preload='none' muted type="video/mp4"></video>`r`n</a>%caption%<div style='height:4em'></div></div>`r`n`r`n
+            else entry = <div id="thumb%j%" class="thumb_container" style="width:%view%em; margin-right:3em">`r`n<div id="title%j%" onclick="select(%j%)" style="display:grid; align-content:end; text-align:center; padding:0.3em; color:#555351; border-radius:1.5em; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; font-size:0.85em; height:2em">%media%</div>`r`n<a href="#Media#%j%##" id="sel%j%">`r`n<video class="media" id="media%j%" style="position:inherit; %transform% width:%view%em; max-height:%max_height%em" onmouseover="overThumb(%j%, %skinny%, '%type%', %start%, '%cap%', event)" onmouseout='over_media=false; this.pause()' src="file:///%src%" %poster% preload='none' muted type="video/mp4"></video>`r`n</a>%caption%<div style='height:4em'></div></div>`r`n`r`n
             }
         return entry
         }
@@ -1105,7 +1107,6 @@ sleep 1000
         Loop, Parse, selected, `/
             {
             list_id := A_LoopField
-            GetMedia(0)
             if timer
               popup = Move - %media%
             else popup = Copy - %media%
