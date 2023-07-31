@@ -113,7 +113,7 @@
     nav2.style.display=null
     if (e.button==1 && !long_click) {mouseBack()}			// inca.exe replaces mouse back button with MClick Up
     if (!e.button && !gesture) {					
-      if (type == 'thumbsheet') {thumbSheet()}				// play at thumbsheet click coordinate
+      if (type == 'thumbsheet') {playThumb()}				// play at thumbsheet click coordinate
       else if (type == 'video' && ym>0.8 && ym<1 && seek.style.opacity>0.3 && !nav2.matches(":hover")) {media.currentTime=start}
       else if (cap.value != cap.innerHTML) {editCap()}			// caption in edit mode
       else if (over_media && !type) {playMedia('Click')}
@@ -173,9 +173,7 @@
     if (e == 'Mclick' && !type && !over_media) {index=last_index; start=last_start; e='Thumb'; scaleY=2} // play last media
     getParameters(e)
     if (type == 'document' || type == 'm3u') {type=''; return}
-    if (e == 'Mclick' && type == 'video' && ym < 1) {type = 'thumbsheet'}
-    else if (e == 'Mclick' && type == 'thumbsheet' && !over_media) {type = 'video'}
-    if (type == 'thumbsheet') {Thumbsheet()}				// get start time
+    if (e == 'Mclick' && type == 'video' && yw<0.9) {thumbSheet()}
     if (mpv_player) {return}
     modal.style.zIndex = Zindex+=1
     modal.style.display='flex'
@@ -315,6 +313,7 @@
     else {seek_active=false}}
 
 
+
   function positionMedia() {						// also every ~84mS while media/modal layer active
     xw =  xpos / innerWidth
     yw =  ypos / innerHeight
@@ -367,7 +366,7 @@
     showCaption()}
 
 
-  function thumbSheet() {
+  function playThumb() {
     var row = Math.floor(ym * 6)					// derive media seek time from mouse xy
     var col = Math.ceil(xm * 6)
     var offset = 0
@@ -401,14 +400,15 @@
     seek.src = thumb.src}
 
 
-  function Thumbsheet() {
+  function thumbSheet() {
       x = thumb.poster.replace("/posters/", "/thumbs/")
       p = x.split('%20')						// see if embedded start time in poster filename
       p = p.pop()
       p = p.replace('.jpg', '')
       if (!isNaN(p) && p.length > 2 && p.includes('.')) {		// very likely a suffix timestamp
         x = x.replace('%20' + p, '')}					// remove timestamp from filename
-      media.poster = x}							// 6x6 thumbsheet file
+      media.poster = x							// 6x6 thumbsheet file
+      type = 'thumbsheet'}
 
 
   function media_ended() {
