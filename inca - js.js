@@ -179,7 +179,7 @@
     modal.style.display='flex'
     if (type == 'video' || type == 'audio') {media.currentTime = start}
     if (cap_list && type != 'thumbsheet') {media.currentTime = start-1}	// start at first caption
-    if (thumb.currentTime > start+10) {media.currentTime = thumb.currentTime}
+    if (type != 'thumbsheet' && thumb.currentTime > start+10) {media.currentTime = thumb.currentTime}
     if (e != 'Mclick' && long_click) {media.currentTime = 0}
     else {media.playbackRate = rate}
     document.getElementById('title'+index).style.color='lightsalmon'	// highlight played media in tab
