@@ -4,9 +4,7 @@
 // revert software version option
 // wmv/nonplay warning
 // put menu in panel?
-// music delay
 // maybe, if media over screen size, scroll up/down instead of magnify until end, then back to magnify
-// highlight media after view change
 
 
   var thumb = document.getElementById('media1')				// first media element
@@ -27,12 +25,12 @@
   var Loop = document.getElementById('myLoop')				// loop video or play next
   var Mute = document.getElementById('myMute')
   var last_id = sessionStorage.getItem('last_id')			// last top panel menu eg 'music'
-  var pos = 1*(sessionStorage.getItem('pos'))				// last top panel position
+  var pos = 1*(sessionStorage.getItem('pos'))				// last top panel column position
+  var last_index = 1*(sessionStorage.getItem('last_index'))
   var ini								// .ini folders, models, etc.
   var wheel = 0
   var block = 10							// block wheel input
   var index = 1								// media index (e.g. media14)
-  var last_index = 0
   var time = 0								// media time
   var start = 0								// video start time
   var interval = 0							// wheel seeking interval
@@ -67,6 +65,7 @@
   var Zindex = 1
   var xpos								// cursor coordinate in pixels
   var ypos
+  var last_xpos
   var xw = 0.5								// cursor over window ratio
   var yw = 0.5
   var xm = 0								// cursor over media ratio
@@ -81,6 +80,11 @@
   var Yref
 
 
+  if (last_index) {							// highlight last played media
+    document.getElementById('title'+last_index).style.color='lightsalmon'
+    setTimeout(function() {
+      document.getElementById('media'+last_index).scrollIntoView()
+      scrollBy(0,-300)},900)}
   document.addEventListener('mousedown', mouseDown)
   document.addEventListener('mouseup', mouseUp)				// mouseUp alone = mouse back button
   document.addEventListener('mousemove', Gesture)
@@ -127,7 +131,6 @@
 
   function mouseBack() {						// quit media
     var top = document.body.getBoundingClientRect().top
-    modal.style.cursor='crosshair'					// !!! important resets inca.exe messaging flag
     if (!type) {
       if (top < -90) {setTimeout(function() {scrollTo(0,0)},100)}
       else {setTimeout(function() {location.reload()},200)}}		// just reset htm tab (clear selected etc.)
@@ -164,12 +167,12 @@
 
   function playMedia(e) {
     if (selected && path.href.slice(27).match('/inca/')) {return}	// moving thumb position within a playlist
+sessionStorage.setItem("last_index",0)
     if (type) {close_media()}						// no type if no media playing
     scroll_Y = scrollY
-    modal.style.cursor='crosshair'					// ! important - wheel zoom close
-    if (e == 'Loop') {index+=1; start=0}
+    if (e == 'Next') {index+=1; start=0}
     if (e == 'Mclick' && long_click) {index-=3}
-    if (e == 'Mclick' && type && (type != 'video' || !over_media)) {index+=1; start=0}
+    if (e == 'Mclick' && type && (type != 'video' || yw>0.9)) {index+=1; start=0}
     if (e == 'Mclick' && !type && !over_media) {index=last_index; start=last_start; e='Thumb'; scaleY=2} // play last media
     if (e == 'Mclick' && !type) {scaleY=0.7/thumb_ratio}
     getParameters(e)
@@ -180,7 +183,7 @@
     modal.style.display='flex'
     if (type == 'video' || type == 'audio') {media.currentTime = start}
     if (cap_list && type != 'thumbsheet') {media.currentTime = start-1}	// start at first caption
-    if (type != 'thumbsheet' && thumb.currentTime > start+10) {media.currentTime = thumb.currentTime}
+    if (e == 'Click' && thumb.currentTime > start+10) {media.currentTime = thumb.currentTime}
     if (e != 'Mclick' && long_click) {media.currentTime = 0}
     else {media.playbackRate = rate}
     document.getElementById('title'+index).style.color='lightsalmon'	// highlight played media in tab
@@ -188,12 +191,13 @@
     else if (fullscreen) {modal.requestFullscreen()}
     if (type != 'thumbsheet') {media.play()}
     if (e=='Click') {
-      if (media.offsetHeight/media.offsetWidth < 1 && type != 'thumbsheet') {scaleY=0.4/thumb_ratio}
-      else {scaleY=0.5/thumb_ratio}}					// 'Click' thumb sets media size
+      if (media.offsetHeight/media.offsetWidth < 1 && type != 'thumbsheet') {
+        scaleY=0.4/thumb_ratio} else {scaleY=0.5/thumb_ratio}}
     skinny = 1*thumb.style.transform.slice(7,-1)
     newSkinny=skinny
     scaleX = scaleY
     scaleX *= skinny
+    last_xpos = xpos								// for 'zoom at cursor'
     mediaX = localStorage.getItem('mediaX')*1				// last media position
     mediaY = localStorage.getItem('mediaY')*1
     if (!mediaX || mediaX < 0 || mediaX > innerHeight || mediaY < 0 || mediaY > innerWidth) {
@@ -235,7 +239,7 @@
     block = 120
     seek_active=false
     seek.style.opacity=0
-    if (e.deltaY > 0) {wheelUp=true; pos+=4} else if (pos) {pos-=4}
+    if (e.deltaY > 0) {wheelUp=true}
     if (id == 'myPage') {						// page
       if (wheelUp && page<pages) {page++} else if (page>1) {page--}
       el.href = '#Page#' + page + '##'
@@ -279,9 +283,12 @@
       if (wheelUp) {media.currentTime += interval}
       else  {media.currentTime -= interval}}
     else if (id == 'myModal' || id == 'Thumb') {			// zoom
+      x = (mediaX-xpos)/24; y = (mediaY-ypos)/24
       if (wheelUp) {scaleX *= 1.03; scaleY *= 1.03}
-      else {scaleX *= 0.95; scaleY *= 0.95}
-      if (media_ratio < 0.15) {modal.style.cursor='help'}		// triggers inca.exe to close media
+      else if (media_ratio > 0.2) {scaleX *= 0.95; scaleY *= 0.95; x*=-1; y*=-1}
+      if (Math.abs(xpos-last_xpos) > 50 && media_ratio > 0.2) {		// cursor moved, so zoom at cursor
+        media.style.marginLeft = 1*media.style.marginLeft.slice(0,-2) +x +'px'
+        media.style.marginTop = 1*media.style.marginTop.slice(0,-2) +y +'px'}
       positionMedia()
       block = 24}
     else {spool(e, id)} 						// scroll top panel
@@ -386,8 +393,7 @@
     if (!thumb) {index=1; thumb = document.getElementById('media1')}
     x = thumb['onmouseover'].toString().split(","); x.pop()		// get media arguments
     cap_list = x.pop().slice(0, -1).slice(2) 				// captions list
-    if (e != 'Thumb') {start=x.pop().trim()} else {x.pop()}	// start time
-    start*=1
+    start = 1*x.pop().trim()						// start time
     type = x.pop().replaceAll('\'', '').trim()				// eg video, image
     skinny = 1*thumb.style.transform.slice(7,-1)			// media width
     newSkinny = skinny
@@ -395,6 +401,7 @@
     xm = (xpos - rect.left) / (thumb.offsetWidth*skinny)
     ym = (ypos - rect.top) / thumb.offsetHeight
     media.style.width = thumb.style.width
+    media.style.marginLeft = 0; media.style.marginTop = 0    
     thumb_ratio = thumb.offsetHeight/innerHeight			// original thumb/screen ratio
     media.poster = thumb.poster
     media.src = thumb.src
@@ -413,7 +420,9 @@
 
 
   function media_ended() {
-    if (!looping || type == 'audio') {playMedia('Loop'); return}	// loop or next media
+    if (!looping || type == 'audio') {
+      setTimeout(function() {playMedia('Next')},2000)			// next media
+      return}
     if (type == 'thumbsheet') {type = 'video'}
     media.currentTime = 0
     media.play()
@@ -460,7 +469,7 @@
     if (id) {last_id = id} else {id = last_id}
     sessionStorage.setItem("last_id",last_id)
     if (id != 'Search' && !e.deltaY) {pos = 0}
-    if (pos < 0 || pos > 25) {pos = 0}
+    if (e.deltaY > 0) {pos+=4} else if (pos) {pos-=4}
     var count = -pos
     var htm = ''
     filter()
@@ -469,7 +478,7 @@
     if (id == 'Search') {						// alpha search
       for (x of z) {
         count++								// count initialised -ve by last pos
-        if (count > 0 && count < 25) {					// within panel display capacity
+        if (count > 0 && count < 25) {					// within panel display range
           if (id != x.substring(0, 1)) {
             id = x.substring(0, 1)
             htm = htm + "<a style='grid-row-start:1;grid-row-end:5;color:red;font-size:2em'>"+id+"</a>"}
