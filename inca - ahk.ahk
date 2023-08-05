@@ -338,6 +338,15 @@
           value := array[ptr+=1]
           select := array[ptr+=1]
           address := array[ptr+=1]
+          if (command == "Rename")
+            {
+            value =
+            x := array.MaxIndex()-1
+            select := array[x]
+            StringTrimRight, value, input, 4
+            pos := InStr(value, "#Rename#")
+            value := SubStr(value,pos+8)
+            }
           select := StrReplace(select, ",", "/")
           if (StrLen(select) > 1)
             {
@@ -757,7 +766,7 @@
         if !path
             return
         title := folder
-        title_s := SubStr(title, 1, 16)
+        title_s := SubStr(title, 1, 20)
         speed := Setting("Default Speed")
         FileRead, style, %inca%\inca - css.css
         FileRead, java, %inca%\inca - js.js
@@ -897,7 +906,7 @@
 
         if !view							; list view
             {
-            entry = <div><table><tr><td id="thumb%j%" style="position:absolute; margin-left:3.5em">`r`n<a href="#Media#%j%##" id="sel%j%"><video id="media%j%" class='thumblist' style="width:10em; %transform%" onmouseover="overThumb(%j%, %skinny%, '%type%', %start%, '%cap%', event)" onmouseout='over_media=false' %poster% src="file:///%src%" type="video/mp4" preload='none' muted></video></a></tr></table><table style="table-layout:fixed; width:100`%; font-size:0.9em"><tr><td style="width:4em; text-align:center"><span style="border-radius:9px; color:#777777">%sort_name%</span></td><td style="width:4em; text-align:center">%dur%</td><td style="width:3em; text-align:center">%size%</td><td style="width:4em; text-align:center">%ext%</td>%fold%<td><div id="title%j%" onclick="select(%j%)" style="width:80`%; border-radius:1em; padding-left:0.5em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis">%media%</div></td></tr></table></div>`r`n`r`n
+            entry = <div><table><tr><td id="thumb%j%" style="position:absolute; margin-left:3.5em">`r`n<a href="#Media#%j%##" id="sel%j%"><video id="media%j%" class='thumblist' style="width:10em; %transform%" onmouseover="overThumb(%j%, %skinny%, '%type%', %start%, '%cap%', event)" onmouseout='over_media=false; this.load()' %poster% src="file:///%src%" type="video/mp4" preload='none' muted></video></a></tr></table><table style="table-layout:fixed; width:100`%; font-size:0.9em"><tr><td style="width:4em; text-align:center"><span style="border-radius:9px; color:#777777">%sort_name%</span></td><td style="width:4em; text-align:center">%dur%</td><td style="width:3em; text-align:center">%size%</td><td style="width:4em; text-align:center">%ext%</td>%fold%<td><div id="title%j%" onclick="select(%j%)" style="width:80`%; border-radius:1em; padding-left:0.5em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis">%media%</div></td></tr></table></div>`r`n`r`n
             }
         else								; thumbnail view
             {
@@ -1110,9 +1119,28 @@
             if GetMedia(0)
               if (InStr(address, "inca\fav") || InStr(address, "inca\music"))
                 FileAppend, %target%`r`n, %address%, UTF-8		; add media entry to playlist
-              else if timer						; not long click
-                FileMove, %src%, %address%				; move file to new folder
-              else FileCopy, %src%, %address%
+              else 
+                {
+                SplitPath, src,,media_path,ext,media
+                FileGetSize, x, %address%%media%.%ext%
+                FileGetSize, y, %src%
+                z=
+                if (x && x == y)
+                  continue
+                if (x && x !=y)
+                Loop 100
+                  {
+                  z = \%media% - Copy (%A_Index%).%ext%
+                  FileGetSize, x,  %address%%z%
+                  if !x
+                    break
+                  if (x == y)
+                    break 2
+                  }
+                if timer						; not long click
+                  FileMove, %src%, %address%%z%				; move file to new folder
+                else FileCopy, %src%, %address%%z%
+                }
             }
         if timer
           if (InStr(address, "inca\fav") || InStr(address, "inca\music"))

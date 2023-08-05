@@ -84,7 +84,7 @@
     document.getElementById('title'+last_index).style.color='lightsalmon'
     setTimeout(function() {
       document.getElementById('media'+last_index).scrollIntoView()
-      scrollBy(0,-300)},900)}
+      scrollBy(0,-300)},760)}
   document.addEventListener('mousedown', mouseDown)
   document.addEventListener('mouseup', mouseUp)				// mouseUp alone = mouse back button
   document.addEventListener('mousemove', Gesture)
@@ -167,17 +167,16 @@
 
   function playMedia(e) {
     if (selected && path.href.slice(27).match('/inca/')) {return}	// moving thumb position within a playlist
-sessionStorage.setItem("last_index",0)
     if (type) {close_media()}						// no type if no media playing
     scroll_Y = scrollY
     if (e == 'Next') {index+=1; start=0}
     if (e == 'Mclick' && long_click) {index-=3}
-    if (e == 'Mclick' && type && (type != 'video' || yw>0.9)) {index+=1; start=0}
+    if (e == 'Mclick' && type && (type != 'video' || !over_media || yw>0.9)) {index+=1; start=0}
     if (e == 'Mclick' && !type && !over_media) {index=last_index; start=last_start; e='Thumb'; scaleY=2} // play last media
     if (e == 'Mclick' && !type) {scaleY=0.7/thumb_ratio}
     getParameters(e)
     if (type == 'document' || type == 'm3u') {type=''; return}
-    if (e == 'Mclick' && type == 'video' && yw<0.9) {thumbSheet()}
+    if (e == 'Mclick' && type == 'video' && over_media && yw<0.9) {thumbSheet()}
     if (mpv_player) {return}
     modal.style.zIndex = Zindex+=1
     modal.style.display='flex'
@@ -185,28 +184,33 @@ sessionStorage.setItem("last_index",0)
     if (cap_list && type != 'thumbsheet') {media.currentTime = start-1}	// start at first caption
     if (e == 'Click' && thumb.currentTime > start+10) {media.currentTime = thumb.currentTime}
     if (e != 'Mclick' && long_click) {media.currentTime = 0}
-    else {media.playbackRate = rate}
     document.getElementById('title'+index).style.color='lightsalmon'	// highlight played media in tab
-    if (path.href.slice(27).match('/inca/music/') || type=='audio') {looping=false}
-    else if (fullscreen) {modal.requestFullscreen()}
+    if (path.href.slice(27).match('/inca/music/')) {looping=false; scaleY=0.2/thumb_ratio}
+    else {
+      if (fullscreen) {modal.requestFullscreen()}
+      if (e=='Click') {
+        if (media.offsetHeight/media.offsetWidth < 1 && type != 'thumbsheet') {
+          scaleY=0.4/thumb_ratio} else {scaleY=0.5/thumb_ratio}}}
     if (type != 'thumbsheet') {media.play()}
-    if (e=='Click') {
-      if (media.offsetHeight/media.offsetWidth < 1 && type != 'thumbsheet') {
-        scaleY=0.4/thumb_ratio} else {scaleY=0.5/thumb_ratio}}
     skinny = 1*thumb.style.transform.slice(7,-1)
     newSkinny=skinny
     scaleX = scaleY
     scaleX *= skinny
-    last_xpos = xpos								// for 'zoom at cursor'
+    last_xpos = xpos							// for 'zoom at cursor'
     mediaX = localStorage.getItem('mediaX')*1				// last media position
     mediaY = localStorage.getItem('mediaY')*1
     if (!mediaX || mediaX < 0 || mediaX > innerHeight || mediaY < 0 || mediaY > innerWidth) {
       mediaX=innerWidth/2; mediaY=innerHeight/2}
-    if (type == 'audio') {media.controls=true; media.muted=false; media.volume=1; scaleY=1; scaleX=1; media.style.width='25%'}
+    if (type == 'audio') {
+      looping=false; media.controls=true; media.muted=false; 
+      scaleY=1; scaleX=1; media.style.width='25%'}
     thumbX = 1*media.style.left.slice(0,-2)				// originating thumb position
     thumbY = 1*media.style.top.slice(0,-2)
     mediaTimer = setInterval(positionMedia,84)
     media.addEventListener('ended', media_ended)
+    sessionStorage.setItem("last_index",0)
+    media.playbackRate = rate
+    media.volume = 0
     positionMedia()}
 
 
@@ -283,14 +287,18 @@ sessionStorage.setItem("last_index",0)
       if (wheelUp) {media.currentTime += interval}
       else  {media.currentTime -= interval}}
     else if (id == 'myModal' || id == 'Thumb') {			// zoom
+      block = 24
       x = (mediaX-xpos)/24; y = (mediaY-ypos)/24
       if (wheelUp) {scaleX *= 1.03; scaleY *= 1.03}
       else if (media_ratio > 0.2) {scaleX *= 0.95; scaleY *= 0.95; x*=-1; y*=-1}
-      if (Math.abs(xpos-last_xpos) > 50 && media_ratio > 0.2) {		// cursor moved, so zoom at cursor
+      if (Math.abs(xpos-last_xpos) > 50) {				// cursor moved, so zoom at cursor
         media.style.marginLeft = 1*media.style.marginLeft.slice(0,-2) +x +'px'
         media.style.marginTop = 1*media.style.marginTop.slice(0,-2) +y +'px'}
-      positionMedia()
-      block = 24}
+      if (yw > 0.9 && rect.bottom > innerHeight) {
+        media.style.marginTop = 1*media.style.marginTop.slice(0,-2) -rect.bottom +innerHeight -5 +'px'}
+      if (rect.top < 0 && yw < 0.1) {
+        media.style.marginTop = 1*media.style.marginTop.slice(0,-2) -rect.top +5 +'px'}
+      positionMedia()}
     else {spool(e, id)} 						// scroll top panel
     wheel = 0}
 
@@ -368,6 +376,7 @@ sessionStorage.setItem("last_index",0)
     if (xm>0 && xm<1 && ym>0 && ym<1) {over_media=true} else {over_media=false}
     if (looping) {Loop.style.color='red'} else {Loop.style.color=null}
     if (media.muted) {Mute.style.color='red'} else {Mute.style.color=null}
+    if (media.volume <= 0.8) {media.volume += 0.05}			// fade sound up
     if (media.duration > 120) {interval = 5} 				// set seek interval
     else {interval = 1}
     if (media.paused) {interval = 0.04}
@@ -421,7 +430,7 @@ sessionStorage.setItem("last_index",0)
 
   function media_ended() {
     if (!looping || type == 'audio') {
-      setTimeout(function() {playMedia('Next')},2000)			// next media
+setTimeout(function() {playMedia('Next')},18)			// next media
       return}
     if (type == 'thumbsheet') {type = 'video'}
     media.currentTime = 0
@@ -505,7 +514,7 @@ sessionStorage.setItem("last_index",0)
   function createMp3() {messages = messages + '#mp3#' + time + '#' + index + ',#' + cue}
   function createMp4() {messages = messages + '#mp4#' + time + '#' + index + ',#' + cue}
   function loop() {if (looping) {looping = false} else {looping = true}}
-  function mute() {if (type == 'video') {media.muted=!media.muted; media.play()}}
+  function mute() {if (type == 'video') {media.volume=0; media.muted=!media.muted; media.play()}}
   function selectAll() {for (i=1; i <= 600; i++) {select(i)}}
   function join() {document.getElementById('myJoin').href='#Join##' + selected + '#'}
 
