@@ -74,7 +74,6 @@
         Global target
         Global reload
         Global browser
-        Global mpv_player
 
 
     main:
@@ -131,7 +130,7 @@
         If (!Setting("Full Screen") && w == A_ScreenWidth)
           send, {F11}
         sleep 24
-        If (!Setting("Mpv Player"))
+        If (!Setting("External Player"))
           { 
           send, {MButton up}			; close java modal (media player)
           sleep 100				; wait for java messages
@@ -338,15 +337,6 @@
           value := array[ptr+=1]
           select := array[ptr+=1]
           address := array[ptr+=1]
-          if (command == "Rename")
-            {
-            value =
-            x := array.MaxIndex()-1
-            select := array[x]
-            StringTrimRight, value, input, 4
-            pos := InStr(value, "#Rename#")
-            value := SubStr(value,pos+8)
-            }
           select := StrReplace(select, ",", "/")
           if (StrLen(select) > 1)
             {
@@ -356,7 +346,32 @@
             }
           if !command
             continue
-          ProcessMessage()
+          if (command == "Rename")
+            {
+            value =
+            pos := InStr(input, "#",,-1)
+            list_id := SubStr(input,pos+1)
+            StringTrimRight, list_id, list_id, 2
+            GetMedia(0)
+            pos := InStr(input, "#Rename#")
+            value := SubStr(input, pos+8)
+            pos := InStr(value, "#",,-1)
+            value := SubStr(value,1,pos-1)
+            if (StrLen(value) < 4)
+                popup = too small
+            if !GetMedia(0)
+                popup = no media
+            if !popup
+               {
+               RenameFiles(value)
+               popup = Renamed
+               }
+            Popup(popup,600,0,0)
+            sleep 555
+            reload := 3
+            break
+            }
+          else ProcessMessage()
           }
         if (reload == 1)
           CreateList(1)
@@ -453,12 +468,8 @@
               {
               if playlist
                 {
-                IfExist, %inca%\fav\%value%.m3u
-                  run, %inca%\fav\%value%.m3u
-                else IfExist, %inca%\music\%value%.m3u
-                  run, %inca%\music\%value%.m3u
-                else IfExist, %inca%\%value%\
-                  run, %inca%\%value%\
+                IfExist, %address%%value%.m3u
+                  run, %address%%value%.m3u
                 }
               else IfExist, %path%
                 run, %path%
@@ -539,30 +550,22 @@
               }
             reload := 3
             }
-        if (command == "Rename")
-            {
-            list_id := StrSplit(selected, "/").1
-            if (StrLen(value) < 4)
-                popup = too small
-            if !GetMedia(0)
-                popup = no media
-            if !popup
-               {
-               RenameFiles(value)
-               popup = Renamed
-               }
-            Popup(popup,600,0,0)
-            sleep 555
-            reload := 3
-            }
         if (command == "Media")
             {
             list_id := value
             if GetMedia(0)
-              if mpv_player
-                 Run %inca%\apps\mpv "%src%"
-              else if (type=="document" || type=="m3u")
-                 Run, % "notepad.exe " . src
+              {
+              popup = %browser% cannot play %ext%
+              if (type=="document" || type=="m3u")
+                Run, % "notepad.exe " . src
+              else if Setting("External Player")
+                Run %inca%\apps\mpv "%src%"
+              else if ((browser == "mozilla firefox" && type == "video" && ext != "mp4") || (browser == "google chrome" && type == "video" && ext != "mp4" && ext != "mkv"))
+                {
+                Run %inca%\apps\mpv "%src%"
+                Popup(popup,1000,0.34,0.8)
+                }
+              }
             }
         if (command == "Page" || command == "View")
             {
@@ -781,7 +784,7 @@
         page_w := Setting("Page Width")
         size := Setting("Page Size")
         fs := Setting("Full Screen")
-        mpv_player := Setting("Mpv Player")
+        mpv_player := Setting("External Player")
         if search_term
           size = 1000
         page_media = /							; cannot use | as seperator because this_search uses |
@@ -959,7 +962,7 @@
               {
               StringGetPos, pos, input, \, R, 1
               StringMid, 1st_char, input, % pos + 2, 1
-              if (filt && sort == "Alpha" && 1st_char < Chr(filt+64))
+              if (filt && sort == "Alpha" && 1st_char < Chr(filt+65))
                 return
               }
             else if (sort == "Date")
