@@ -290,9 +290,9 @@
             }
         if vol_popup							; show volume popup bar
             vol_popup -= 1
-        if (volume > 0.1 && !vol_popup && Setting("Sleep Timer") > 10 && A_TimeIdlePhysical > 600000)
+        if (volume > 0.1 && !vol_popup && Setting("Volume Fade") > 10 && A_TimeIdlePhysical > 600000)
             {
-            volume -= vol_ref / (Setting("Sleep Timer") * 6)		; sleep timer
+            volume -= vol_ref / (Setting("Volume Fade") * 6)		; sleep timer
             SoundSet, volume						; slowly reduce volume
             vol_popup := 100						; check every 10 seconds
             }
@@ -464,16 +464,13 @@
             }
         if (command == "Orphan")					; open in notepad if playlist
             {
-            if !timer							; long click
+            if playlist
               {
-              if playlist
-                {
-                IfExist, %address%%value%.m3u
+              IfExist, %address%%value%.m3u
+                if !timer						; long click
                   run, %address%%value%.m3u
+                else reload := 3
                 }
-              else IfExist, %path%
-                run, %path%
-              }
             else IfExist, %inca%\%value%\
               run, %inca%\%value%\
             else command = Path
@@ -830,11 +827,11 @@
         header_html = <!--`r`n%view%>%last_view%>%page%>%filt%>%sort%>%toggles%>%this_search%>%search_term%>%path%>%folder%>%playlist%>%last_media%>`r`n%page_media%`r`n-->`r`n<!doctype html>`r`n<html>`r`n<head>`r`n<meta charset="UTF-8">`r`n<title>Inca - %title%</title>`r`n<meta name="viewport" content="width=device-width, initial-scale=1">`r`n<link rel="icon" type="image/x-icon" href="file:///%inca%\apps\icons\inca.ico">`r`n</head>`r`n
 
         panel_html = <body id='myBody' class='container' onload="spool(event, '', '%ini%', '%toggles%', '%sort%', %filt%, %page%, %pages%, %view%, %speed%, %fs%, %mpv_player%)">`r`n<div oncontextmenu='context(event)' style='padding-bottom:40em'
->`r`n`r`n<span id="myContext" class='context'>`r`n<a href=#myThumbs#%view%## id='myThumbs' onclick='sessionStorage.setItem("last_index",last_index)' onwheel="wheelEvents(event, id, this)">Thumbs</a>`r`n<a id="myFav" onmouseover='createFav()'>Fav</a>`r`n<a onclick='selectAll()'>Select</a>`r`n<a id='myDelete' onmouseover='del()'>Delete</a>`r`n<a id='myRename' onmouseover='rename()'>Rename</a>`r`n<a onmouseover='join()'>Join</a>`r`n</span>`r`n`r`n<span id="myContext2" class='context'>`r`n<a id='myMute' onclick="mute()" onwheel="wheelEvents(event, id, this)">Mute</a>`r`n<a id="Seek" onclick='if(media.paused){media.play()} else {media.pause()} context(event)' onwheel="wheelEvents(event, id, this)">Seek</a>`r`n<a id="mySpeed" class='stat' onwheel="wheelEvents(event, id, this)"></a>`r`n<a id="mySkinny" onwheel="wheelEvents(event, id, this)">1</a>`r`n<a id='myLoop' onclick="loop()">Loop</a>`r`n<a id='myFav2' onmouseover='createFav()'>Fav</a>`r`n<a id="myCapnav" onclick="editCap()">Cap</a>`r`n<a onclick="cue = Math.round(media.currentTime*10)/10">Cue</a>`r`n<a id="myMp4" onclick='createMp4()'>mp4</a>`r`n<a id="myMp3" onclick='createMp3()'>mp3</a>`r`n</span>`r`n`r`n<div id="myModal" class="modal" onwheel="wheelEvents(event, id, this)">`r`n<div><video id="myMedia" class="media" type="video/mp4" muted></video>`r`n<span id="mySeekBar" class='seekbar'></span>`r`n<textarea id="myCap" class="caption" onmouseenter="over_cap=true" onmouseleave="over_cap=false"></textarea>`r`n<span><video id='mySeek' class='seek' type="video/mp4"></video></span></div></div>`r`n`r`n
+>`r`n`r`n<span id="myContext" class='context'>`r`n<a href=#myThumbs#%view%## id='myThumbs' onclick='sessionStorage.setItem("last_index",last_index)' onwheel="wheelEvents(event, id, this)">Thumbs</a>`r`n<a id="myFav" onmouseover='createFav()'>Fav</a>`r`n<a onclick='selectAll()'>Select</a>`r`n<a id='myDelete' onmouseover='del()'>Delete</a>`r`n<a id='myRename' onmouseover='rename()'>Rename</a>`r`n<a onmouseover='join()'>Join</a>`r`n<a href='#Settings###'>Menu</a>`r`n</span>`r`n`r`n<span id="myContext2" class='context'>`r`n<a id='myMute' onclick="mute()" onwheel="wheelEvents(event, id, this)">Mute</a>`r`n<a id="Seek" onclick='if(media.paused){media.play()} else {media.pause()} context(event)' onwheel="wheelEvents(event, id, this)">Seek</a>`r`n<a id="mySpeed" class='stat' onwheel="wheelEvents(event, id, this)"></a>`r`n<a id="mySkinny" onwheel="wheelEvents(event, id, this)">1</a>`r`n<a id='myLoop' onclick="loop()">Loop</a>`r`n<a id='myFav2' onmouseover='createFav()'>Fav</a>`r`n<a id="myCapnav" onclick="editCap()">Cap</a>`r`n<a onclick="cue = Math.round(media.currentTime*10)/10">Cue</a>`r`n<a id="myMp4" onclick='createMp4()'>mp4</a>`r`n<a id="myMp3" onclick='createMp3()'>mp3</a>`r`n</span>`r`n`r`n<div id="myModal" class="modal" onwheel="wheelEvents(event, id, this)">`r`n<div><video id="myMedia" class="media" type="video/mp4" muted></video>`r`n<span id="mySeekBar" class='seekbar'></span>`r`n<textarea id="myCap" class="caption" onmouseenter="over_cap=true" onmouseleave="over_cap=false"></textarea>`r`n<span><video id='mySeek' class='seek' type="video/mp4"></video></span></div></div>`r`n`r`n
 
 <div style="width:%page_w%`%; margin:auto">`r`n
 <div class='panel' id='myPanel' onwheel="wheelEvents(event, '', this)"></div>`r`n`r`n
-<div id='myRibbon' class='ribbon'>`r`n<a href='#Settings###'>Menu</a>`r`n<a onmouseover="spool(event, 'Fol')">Fol</a>`r`n<a href='#Path###%inca%\fav\' onmouseover="spool(event, 'Fav')">Fav</a>`r`n<a href='#Path###%inca%\music\' onmouseover="spool(event, 'Music')">Music</a>`r`n<a onmouseover="spool(event, 'Search')" onwheel="wheelEvents(event, 'Search', this)">Search</a>`r`n<a href='#Images###' %y%>Pics</a>`r`n<a href='#Videos###' %z%>Vids</a>`r`n<a href='#Recurse###' %x%>Recurse</a>`r`n</div>`r`n`r`n
+<div id='myRibbon' class='ribbon'>`r`n<a onmouseover="spool(event, 'Fol')">Fol</a>`r`n<a onmouseover="spool(event, 'Fav')">Fav</a>`r`n<a onmouseover="spool(event, 'Music')">Music</a>`r`n<a onmouseover="spool(event, 'Search')" onwheel="wheelEvents(event, 'Search', this)">Search</a>`r`n<a href='#Images###' %y%>Pics</a>`r`n<a href='#Videos###' %z%>Vids</a>`r`n<a href='#Recurse###' %x%>Recurse</a>`r`n</div>`r`n`r`n
 
 <div style='display:flex'>`r`n<input id='myInput' onmouseover='panel.style.opacity=null' class='searchbox' type='search' value='%search_term%'>`r`n<a class='searchbox' onmouseover="this.href='#SearchAdd#'+inputbox.value+'#'+selected+'#'" style='width:4`%; border-radius:0 1em 1em 0'>+</a></div>`r`n`r`n
 
