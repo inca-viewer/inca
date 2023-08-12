@@ -831,7 +831,7 @@
 
 <div style="width:%page_w%`%; margin:auto">`r`n
 <div class='panel' id='myPanel' onwheel="wheelEvents(event, '', this)"></div>`r`n`r`n
-<div id='myRibbon' class='ribbon'>`r`n<a onmouseover="spool(event, 'Fol')">Fol</a>`r`n<a onmouseover="spool(event, 'Fav')">Fav</a>`r`n<a onmouseover="spool(event, 'Music')">Music</a>`r`n<a onmouseover="spool(event, 'Search')" onwheel="wheelEvents(event, 'Search', this)">Search</a>`r`n<a href='#Images###' %y%>Pics</a>`r`n<a href='#Videos###' %z%>Vids</a>`r`n<a href='#Recurse###' %x%>Recurse</a>`r`n</div>`r`n`r`n
+<div id='myRibbon' class='ribbon'>`r`n<a href='#Recurse###' %x%>Recurse</a>`r`n<a onmouseover="spool(event, 'Fol')">Fol</a>`r`n<a onmouseover="spool(event, 'Fav')">Fav</a>`r`n<a onmouseover="spool(event, 'Music')">Music</a>`r`n<a onmouseover="spool(event, 'Search')" onwheel="wheelEvents(event, 'Search', this)">Search</a>`r`n<a href='#Images###' %y%>Pics</a>`r`n<a href='#Videos###' %z%>Vids</a>`r`n</div>`r`n`r`n
 
 <div style='display:flex'>`r`n<input id='myInput' onmouseover='panel.style.opacity=null' class='searchbox' type='search' value='%search_term%'>`r`n<a class='searchbox' onmouseover="this.href='#SearchAdd#'+inputbox.value+'#'+selected+'#'" style='width:4`%; border-radius:0 1em 1em 0'>+</a></div>`r`n`r`n
 
@@ -922,7 +922,7 @@
                     }
 	        entry = <a href="#Media#%j%##"><div style="display:inline-block; width:88`%; color:#555351; transition:color 1.4s; margin-left:8`%; text-align:center; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; %highlight%;">%sort_name% &nbsp;&nbsp;%media%</div></a><textarea rows=%rows% style="display:inline-block; overflow:hidden; margin-left:8`%; width:88`%; background-color:inherit; color:#826858; font-size:1.2em; font-family:inherit; border:none; outline:none;">%str2%</textarea>`r`n`r`n
                 }
-            else entry = <div id="thumb%j%" class="thumb_container" style="width:%view%em; margin-right:3em">`r`n<div id="title%j%" onclick="select(%j%)" style="display:grid; align-content:end; text-align:center; padding:0.3em; color:#555351; border-radius:1.5em; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; font-size:0.85em; height:2em">%media%</div>`r`n<a href="#Media#%j%##" id="sel%j%">`r`n<video class="media" id="media%j%" style="position:inherit; %transform% width:%view%em; max-height:%max_height%em" onmouseover="overThumb(%j%, %skinny%, '%type%', %start%, '%cap%', event)" onmouseout='over_media=false; this.pause()' src="file:///%src%" %poster% preload='none' muted type="video/mp4"></video>`r`n</a>%caption%<div style='height:4em'></div></div>`r`n`r`n
+            else entry = <div id="thumb%j%" class="thumb_container" style="width:%view%em; margin-right:3em">`r`n<div id="title%j%" onclick="select(%j%)" style="display:grid; align-content:end; text-align:center; padding:0.3em; color:#555351; border-radius:1.5em; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; font-size:0.85em; height:2em">%media%</div>`r`n<a href="#Media#%j%##" id="sel%j%">`r`n<video class="media" id="media%j%" style="position:inherit; %transform% width:%view%em; max-height:%max_height%em" onmouseover="overThumb(%j%, %skinny%, '%type%', %start%, '%cap%', event)" onmouseout='over_media=false; this.pause()' onmousemove='over_media=true; index=%j%' src="file:///%src%" %poster% preload='none' muted type="video/mp4"></video>`r`n</a>%caption%<div style='height:4em'></div></div>`r`n`r`n
             }
         return entry
         }

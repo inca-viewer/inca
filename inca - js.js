@@ -1,7 +1,6 @@
 <script>
 
 // panel.style.opacity=1; panel.innerHTML= x; or alert(x)		// debugging
-// overthmb not detect on refresh tab
 
   var thumb = document.getElementById('media1')				// first media element
   var modal = document.getElementById('myModal')			// media player window
@@ -86,7 +85,7 @@
 
 
   function mouseDown(e) {
-    if (e.button==2) {context(e)}					// sets href !
+    if (e.button==2) {context(e)}					// set href !
     if (e.button==1) {							// middle click
       e.preventDefault()
       clickTimer = setTimeout(function() {if(long_click) {
@@ -207,7 +206,7 @@
       if (!mediaX || rect.left < 0 || rect.right > innerWidth) {mediaX=innerWidth/2}
       if (!mediaY || rect.top < 0 || rect.bottom > innerHeight) {mediaY=innerHeight/2}
       if (scaleY > 1/thumb_ratio) {mediaY=innerHeight/2; scaleY=1/thumb_ratio; scaleX = scaleY*skinny}
-      localStorage.setItem("mediaX",mediaX); localStorage.setItem("mediaY",mediaY)},334)
+      localStorage.setItem("mediaX",mediaX); localStorage.setItem("mediaY",mediaY)},224)
     positionMedia()}
 
 
@@ -416,7 +415,7 @@
 
 
   function media_ended() {
-    if (!looping || type == 'audio') {
+    if (! long_click && (!looping || type == 'audio')) {
       if (path.href.slice(27).match('/inca/music/')) {setTimeout(function() {playMedia('Next')},1800)}	// next media
       else {playMedia('Next')}
       return}
