@@ -21,7 +21,8 @@
   var Mute = document.getElementById('myMute')
   var last_id = sessionStorage.getItem('last_id')			// last top panel menu eg 'music'
   var pos = 1*(sessionStorage.getItem('pos'))				// last top panel column position
-  var last_index = 1*(sessionStorage.getItem('last_index'))
+  var scroll_Y = 1*(sessionStorage.getItem('scroll_Y'))			// last index
+  var last_index = scroll_Y
   var ini								// .ini folders, models, etc.
   var wheel = 0
   var block = 10							// block wheel input
@@ -85,8 +86,8 @@
 
 
   function mouseDown(e) {
-    if (e.button==2) {context(e)}					// set href !
-    if (e.button==1) {							// middle click
+    if (e.button == 2) {context(e)}					// set href !
+    if (e.button == 1) {						// middle click
       e.preventDefault()
       clickTimer = setTimeout(function() {if(long_click) {
         playMedia('Mclick')}},240) 					// goto previous media
@@ -105,7 +106,7 @@
   function mouseUp(e) {							// !! inca triggers mouseUp event after every Click
     nav.style.display=null
     nav2.style.display=null
-    if (e.button==1 && !long_click) {mouseBack()}			// inca.exe replaces mouse back button with MClick Up
+    if (e.button == 1 && !long_click) {mouseBack()}			// inca.exe replaces mouse back button with MClick Up
     if (!e.button && !gesture) {					
       if (type == 'thumbsheet') {playThumb()}				// play at thumbsheet click coordinate
       else if (type == 'video' && ym>0.8 && ym<1 && seek.style.opacity>0.3 && !nav2.matches(":hover")) {media.currentTime=start}
@@ -121,6 +122,7 @@
 
   function mouseBack() {						// quit media
     var top = document.body.getBoundingClientRect().top
+    sessionStorage.setItem("scroll_Y",0)
     if (!type) {
       if (top < -90) {setTimeout(function() {scrollTo(0,0)},100)}
       else {setTimeout(function() {location.reload()},200)}}		// just reset htm tab (clear selected etc.)
@@ -129,12 +131,9 @@
       scaleX=newSkinny; scaleY=1
       setTimeout(function() {
         close_media()
-        type = ''
-        setTimeout(function() {modal.style.display='none'; scrolltoIndex()},224)
-        if (messages) {stat.href=messages; messages=''; stat.click()}},150) // send messages to inca.exe
-      if (fullscreen) {
-        setTimeout(function() {document.exitFullscreen()},100)
-        setTimeout(function() {window.scrollTo(0, scroll_Y)},400)}}}
+        setTimeout(function() {modal.style.display='none'; scrolltoIndex()},250)
+        if (messages) {stat.href=messages; messages=''; stat.click()}	// send messages to inca.exe
+        if (fullscreen) {document.exitFullscreen()}},150)}}
 
 
   function togglePause() {
@@ -143,8 +142,8 @@
 
 
   function overThumb(id) {						// mouse over thumbnail in browser tab
+    over_media = true
     index = id
-    over_media=true
     getParameters('')
     type = ''
     var sel = document.getElementById('sel' + id)
@@ -157,22 +156,21 @@
 
   function playMedia(e) {
     if (selected && path.href.slice(27).match('/inca/')) {return}	// moving thumb position within a playlist
+    var last_type = type
     if (type) {close_media()}						// no type if no media playing
-    scroll_Y = scrollY
     if (e == 'Next') {index+=1; start=0}
     if (e == 'Mclick') {
       if (long_click) {index-=3}
-      if (type && (type != 'video' || !over_media || yw>0.9)) {index+=1; start=0}
-      if (!type && !over_media) {index=last_index; start=last_start; e='Thumb'; scaleY=2} // play last media
-      if (!type) {scaleY=0.7/thumb_ratio}
-      last_index = index}
-    else {last_index = 0}
+      if (last_type && (last_type != 'video' || !over_media || yw>0.9)) {index+=1; start=0}
+      if (!last_type) {scaleY=0.7/thumb_ratio}
+      if (!last_type && !over_media) {index = last_index; scaleY=0.4/thumb_ratio}}
     getParameters(e)
+    if (e == 'Mclick' && !last_type && !over_media) {start = last_start}
     if (type == 'document' || type == 'm3u') {type=''; return}
     if (e == 'Mclick' && type == 'video' && over_media && yw<0.9) {thumbSheet()}
     if (mpv_player) {return}
     modal.style.zIndex = Zindex+=1
-    modal.style.display='flex'
+    modal.style.display = 'flex'
     if (type == 'video' || type == 'audio') {media.currentTime = start}
     if (cap_list && type != 'thumbsheet') {media.currentTime = start-1}	// start at first caption
     if (e == 'Click' && thumb.currentTime > start+10) {media.currentTime = thumb.currentTime}
@@ -199,18 +197,18 @@
     media.addEventListener('ended', media_ended)
     media.playbackRate = rate
     media.volume = 0
-    sessionStorage.setItem("last_index",0)
     mediaX = localStorage.getItem('mediaX')*1				// last media position
     mediaY = localStorage.getItem('mediaY')*1
-    setTimeout(function() {
-      if (!mediaX || rect.left < 0 || rect.right > innerWidth) {mediaX=innerWidth/2}
-      if (!mediaY || rect.top < 0 || rect.bottom > innerHeight) {mediaY=innerHeight/2}
-      if (scaleY > 1/thumb_ratio) {mediaY=innerHeight/2; scaleY=1/thumb_ratio; scaleX = scaleY*skinny}
-      localStorage.setItem("mediaX",mediaX); localStorage.setItem("mediaY",mediaY)},224)
+    if (!mediaX || mediaX < 0 || mediaX > innerWidth) {mediaX=innerWidth/2}
+    if (!mediaY || mediaY < 0 || mediaY > innerHeight) {mediaY=innerHeight/2}
+    localStorage.setItem("mediaX",mediaX)
+    localStorage.setItem("mediaY",mediaY)
     positionMedia()}
 
 
   function close_media() {
+    scroll_Y = index
+    last_index = index
     last_start = time
     if (skinny != newSkinny) {
       messages = messages+'#Skinny#'+newSkinny+'#'+index+',#'}		// width changes
@@ -226,6 +224,7 @@
     cap_time = 0
     media.poster=''
     media.src=''
+    type = ''
     cue = 0}
 
 
@@ -296,15 +295,15 @@
     if (!nav.matches(":hover")) {nav.style.display = null}
     if (!nav2.matches(":hover")) {nav2.style.display = null}
     if (!type) return
-    if (mouse_down && Math.abs(Xref - xpos) + Math.abs(Yref - ypos) > 5) {	// gesture detection (mousedown + slide)
+    if (mouse_down && Math.abs(Xref-xpos) + Math.abs(Yref-ypos) > 5) {	// gesture detection (mousedown + slide)
       gesture = true
       mediaX += xpos - Xref
       mediaY += ypos - Yref
-      Xref = xpos
-      Yref = ypos
       if (type != 'thumbsheet') {
         localStorage.setItem("mediaX",mediaX)
         localStorage.setItem("mediaY",mediaY)}
+      Xref = xpos
+      Yref = ypos
       positionMedia()}
     if (!nav.matches(":hover")) {nav.style.display = null}
     modal.style.cursor = "crosshair"
@@ -458,12 +457,12 @@
     return}
 
 
-  function scrolltoIndex() {						// to last media played
-    if (last_index) {
-      var el = document.getElementById('title'+last_index)
+  function scrolltoIndex() {						// to last media if not visible
+    if (scroll_Y) {
+      var el = document.getElementById('title'+scroll_Y)
       el.style.color = 'lightsalmon'
-      var y = el.getBoundingClientRect().top + pageYOffset -360
-      scrollTo({top:y, behavior:'smooth'})}}
+      var y = el.getBoundingClientRect().top + scrollY
+      if (y < scrollY+20|| y > scrollY+innerHeight-150) {y-=360; scrollTo({top:y, behavior:'smooth'})}}}
 
 
   function spool(e, id, input, to, so, fi, pa, ps, ts, rt, fs, mpv) {	// spool lists into top htm panel
