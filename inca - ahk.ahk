@@ -803,7 +803,9 @@
             }
         if ((pages := ceil(list_size/size)) > 1)
             pg = Page %page% of %pages%
-        rec:=img:=vid:=
+        rev:=rec:=img:=vid:=
+        if InStr(toggles, "Reverse")
+          rev = style='color:red'
         if InStr(toggles, "Recurse")
           rec = style='color:red'
         if InStr(toggles, "Images")
@@ -832,7 +834,7 @@
 
 <div style='display:flex'>`r`n<input id='myInput' onmouseover='panel.style.opacity=null' class='searchbox' type='search' value='%search_term%'>`r`n<a class='searchbox' onmouseover="this.href='#SearchAdd#'+inputbox.value+'#'+selected+'#'" style='width:4`%; border-radius:0 1em 1em 0'>+</a></div>`r`n`r`n
 
-<div class='ribbon'>`r`n<a href='#Up###%path%' id='myPath' style='font-size:1.4em'>&#8678<a href="#Orphan#%folder%##%path%" style='font-size:1.7em; transform:none'>%title_s%</a>`r`n<a style='font-size:1.3em; transform:none'>%list_size%</a>`r`n<a href='#%sort%#%sort%#' id='mySort' %w% style='width:7em' onwheel="wheelEvents(event, id, this)">%sort%</a>`r`n<a id='myFilt' onwheel="wheelEvents(event, id, this)">All</a>`r`n<a href="%title%.htm#Page" id="myPage" onwheel="wheelEvents(event, id, this)">%pg%</a></div>`r`n`r`n
+<div class='ribbon'>`r`n<a href='#Up###%path%' id='myPath' style='font-size:1.4em'>&#8678<a href="#Orphan#%folder%##%path%" style='font-size:1.7em; transform:none'>%title_s%</a>`r`n<a style='font-size:1.3em; transform:none'>%list_size%</a>`r`n<a href='#%sort%#%sort%#' id='mySort' %rev% style='width:7em' onwheel="wheelEvents(event, id, this)">%sort%</a>`r`n<a id='myFilt' onwheel="wheelEvents(event, id, this)">All</a>`r`n<a href="%title%.htm#Page" id="myPage" onwheel="wheelEvents(event, id, this)">%pg%</a></div>`r`n`r`n
 
         FileDelete, %inca%\cache\html\%folder%.htm
         html = %header_html%%style%%panel_html%%subs%%html%</div></div>`r`n
@@ -872,7 +874,8 @@
         transform = transform:scaleX(%skinny%);
         FileRead, cap, %inca%\cache\captions\%media%.srt
         caption := StrSplit(cap, "|").1
-        caption = <a href="#EditCap#%media%##"><p style="color:#826858; font-size:%cap_size%em">%caption%</p></a>
+        if caption
+          caption = <a href="#EditCap#%media%##"><p style="color:#826858; font-size:%cap_size%em">%caption%</p></a>
         cap := StrReplace(cap, "`r`n", "|")
         cap := StrReplace(cap, ",", "§")
         cap := StrReplace(cap, "'", "±")
@@ -893,7 +896,7 @@
         stringlower, thumb, thumb
         poster = poster="file:///%thumb%"
         start := Round(start+0.1,2)
-        max_height := view*1.4
+        max_height := view
 
 
 ; FileRead, dur, %inca%\cache\durations\%media%.txt
@@ -919,7 +922,7 @@
                     }
 	        entry = <a href="#Media#%j%##"><div style="display:inline-block; width:88`%; color:#555351; transition:color 1.4s; margin-left:8`%; text-align:center; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; %highlight%;">%sort_name% &nbsp;&nbsp;%media%</div></a><textarea rows=%rows% style="display:inline-block; overflow:hidden; margin-left:8`%; width:88`%; background-color:inherit; color:#826858; font-size:1.2em; font-family:inherit; border:none; outline:none;">%str2%</textarea>`r`n`r`n
                 }
-            else entry = <div id="thumb%j%" class="thumb_container" style="width:%view%em; margin-right:3em">`r`n<div id="title%j%" onclick="select(%j%)" style="display:grid; align-content:end; text-align:center; padding:0.3em; color:#555351; border-radius:1.5em; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; font-size:0.85em; height:2em">%media%</div>`r`n<a href="#Media#%j%##" id="sel%j%">`r`n<video class="media" id="media%j%" style="position:inherit; %transform% width:%view%em; max-height:%max_height%em" onmouseover="overThumb(%j%, %skinny%, '%type%', %start%, '%cap%', event)" onmouseout='over_media=false; this.pause()' onmousemove='over_media=true; index=%j%' src="file:///%src%" %poster% preload='none' muted type="video/mp4"></video>`r`n</a>%caption%<div style='height:4em'></div></div>`r`n`r`n
+            else entry = <div id="thumb%j%" class="thumb_container" style="width:%view%em; height:%max_height%em; margin-right:3em; margin-bottom:4em">`r`n<div id="title%j%" onclick="select(%j%)" style="display:grid; align-content:end; text-align:center; padding:0.3em; color:#555351; border-radius:1.5em; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; font-size:0.85em; height:2em">%media%</div>`r`n<a href="#Media#%j%##" id="sel%j%">`r`n<video class="media" id="media%j%" style="position:inherit; %transform%; object-fit:contain; max-width:100`%; max-height:100`%" onmouseover="overThumb(%j%, %skinny%, '%type%', %start%, '%cap%', event)" onmouseout='over_media=false; this.pause()' onmousemove='over_media=true; index=%j%' src="file:///%src%" %poster% preload='none' muted type="video/mp4"></video>`r`n</a>%caption%<div></div></div>`r`n`r`n
             }
         return entry
         }
@@ -1119,8 +1122,8 @@
               else 
                 {
                 SplitPath, src,,media_path,ext,media
-                FileGetSize, x, %address%%media%.%ext%
-                FileGetSize, y, %src%
+                FileGetSize, x, %address%%media%.%ext%			; target
+                FileGetSize, y, %src%					; source
                 z=
                 if (x && x == y)
                   continue
