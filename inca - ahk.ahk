@@ -551,12 +551,12 @@
             list_id := value
             if GetMedia(0)
               {
-              popup = %browser% cannot play %ext%
+              popup = %browser% Cannot Play %ext%
               if (type=="document" || type=="m3u")
                 Run, % "notepad.exe " . src
               else if Setting("External Player")
                 Run %inca%\apps\mpv "%src%"
-              else if (timer && ((browser == "mozilla firefox" && type == "video" && ext != "mp4") || (browser == "google chrome" && type == "video" && ext != "mp4" && ext != "mkv")))
+              else if (timer && ((browser == "mozilla firefox" && type == "video" && ext != "mp4" && ext != "m4v") || (browser == "google chrome" && type == "video" && ext != "mp4" && ext != "mkv" && ext != "m4v")))
                 {
                 Run %inca%\apps\mpv "%src%"
                 Popup(popup,1000,0.34,0.8)
@@ -1068,25 +1068,28 @@
 
     MoveEntry()						; within playlist 
         {
-        if (!playlist || !selected)
+        if (!playlist || !selected || timer)
           return
         if (sort != "Alpha")
           {
           sort = Alpha
           CreateList(0)
+          PopUp("Cannot be Moved if List Sorted",900,0,0)
           return
           }
         select := list_id
         source = %target%
         list_id := value
         GetMedia(0)
+        if (source == target)
+          return
         plist = %path%%folder%.m3u
         FileRead, str, %plist%
         FileDelete, %plist%
         Loop, Parse, str, `n, `r
           if A_LoopField
             {
-            if (A_LoopField == source && !flag2 && (!timer || source != target)) ; 
+            if (A_LoopField == source && !flag2) ; 
                 {
                 flag2 := 1
                 continue
@@ -1107,13 +1110,18 @@
 
     FileTransfer()
         {
+        if (playlist && !InStr(address, "\inca\"))
+          {
+          PopUp("Cannot Move Shortcuts",1000,0.34,0.2)
+          return
+          }
         Loop, Parse, selected, `/
             {
             list_id := A_LoopField
             if timer
               popup = Move - %media%
             else popup = Copy - %media%
-            if (InStr(address, "inca\fav") || InStr(address, "inca\music"))
+            if (InStr(address, "\inca\"))
               popup = Added - %media%
             PopUp(popup,0,0,0)
             if GetMedia(0)

@@ -2,7 +2,6 @@
 
 // panel.style.opacity=1; panel.innerHTML= x; or alert(x)		// debugging
 
-
   var thumb = document.getElementById('media1')				// first media element
   var modal = document.getElementById('myModal')			// media player window
   var media = document.getElementById('myMedia')			// modal overlay player
@@ -44,6 +43,7 @@
   var cap_list = ''							// full caption text file
   var cap_time = 0
   var looping = true							// play next or loop media
+  var can_play								// browser can play media
   var mpv_player = false						// use external media player
   var fullscreen = false
   var mouse_down = false
@@ -72,7 +72,6 @@
   var Xref								// click cursor coordinate
   var Yref
 
-
   scrolltoIndex()							// to last played media
   document.addEventListener('mousedown', mouseDown)
   document.addEventListener('mouseup', mouseUp)				// mouseUp alone = mouse back button
@@ -84,7 +83,7 @@
 
 
   function mouseDown(e) {
-    if (e.button == 2) {context(e)}					// force context focus
+    if (e.button == 2) {context(e)}					// force context menu focus
     if (e.button == 1) {						// middle click
       e.preventDefault()
       clickTimer = setTimeout(function() {if(long_click) {
@@ -126,6 +125,7 @@
     else {								// quit media
       if (cap.value != cap.innerHTML) {editCap()}
       modal.style.display='none'
+      over_media = false
       close_media()
       if (messages) {stat.href=messages; messages=''; stat.click()}	// send messages to inca.exe
       if (fullscreen) {document.exitFullscreen()}
@@ -133,7 +133,7 @@
 
 
   function togglePause() {
-    if (!type||!mouse_down||gesture||long_click||over_cap||nav2.matches(":hover")) {return}
+    if (!type||!mouse_down||gesture||long_click||over_cap||nav2.matches(":hover")||nav.matches(":hover")) {return}
     if (media.paused) {media.play()} else {media.pause()}}
 
 
@@ -179,9 +179,9 @@
 
 
   function playMedia(e) {
-    if (selected && path.href.slice(27).match('/inca/')) {return}	// moving thumb position within a playlist
     var last_type = type
     if (type) {close_media()}						// no type if no media playing
+    if (long_click && selected && path.href.slice(27).match('/inca/')) {return}	// moving thumb position within a playlist
     if (e == 'Next') {index+=1; start=0}
     if (e == 'Mclick') {
       if (long_click) {index-=3}
@@ -193,7 +193,7 @@
     if (mpv_player) {return}
     modal.style.zIndex = Zindex+=1
     modal.style.display = 'flex'
-    if (scaleY > 1.42) {scaleY = 1.42}
+    if (scaleY > 1.42 && type != 'thumbsheet') {scaleY = 1.42}
     scaleX = scaleY*skinny
     if (type == 'video' || type == 'audio') {media.currentTime = start}
     if (cap_list && type != 'thumbsheet') {media.currentTime = start-1}	// start at first caption
@@ -204,6 +204,8 @@
     if (path.href.slice(27).match('/inca/music/')) {looping=false}
     else if (fullscreen) {modal.requestFullscreen()}
     if (type != 'thumbsheet') {media.play()}
+    can_play = false
+    media.oncanplay = function() {can_play=true}
     media.playbackRate = rate
     media.volume = 0
     mediaTimer = setInterval(positionMedia,84)
@@ -211,9 +213,9 @@
 
 
   function close_media() {
-    scroll_Y = index
     last_index = index
     last_start = time
+    scroll_Y = index
     if (!mediaX || mediaX < 0 || mediaX > innerWidth) {mediaX=innerWidth/2}
     if (!mediaY || mediaY < 0 || mediaY > innerHeight) {mediaY=innerHeight/2}
     if (type != 'thumbsheet') {
@@ -272,7 +274,7 @@
       document.getElementById(id).href = '#myThumbs#'+thumb_size+'##'
       for (i=1; i<33 ;i++) {
         el = document.getElementById("thumb" + i)
-        if (el) {el.style.width=thumb_size+'em'}}}
+        if (el) {el.style.width=thumb_size+'em'; el.style.height=thumb_size+'em'}}}
     else if (id == 'mySkinny') {					// width - media
       if (wheelUp) {scaleX -= 0.002}
       else {scaleX += 0.002}
@@ -289,8 +291,8 @@
       if (wheelUp) {media.currentTime += interval}
       else  {media.currentTime -= interval}}
     else if (id == 'myModal') {						// zoom
-      if (wheelUp) {scaleX *= 1.03; scaleY *= 1.03}
-      else if (media_ratio > 0.2) {scaleX *= 0.95; scaleY *= 0.95}
+      if (wheelUp) {scaleX *= 1.02; scaleY *= 1.02}
+      else if (media_ratio > 0.2) {scaleX *= 0.97; scaleY *= 0.97}
       positionMedia()
       block = 24}
     else {spool(e, id)} 						// scroll top panel
@@ -386,6 +388,7 @@
     if (media.duration > 60) {offset = 20}
     if (!over_media) {start = last_start}
     else {start = offset - (ps * offset) + media.duration * ps}
+    if (!can_play) {alert("browser cannot play"); return}
     media.currentTime=start
     type='video'
     media.play()}
@@ -506,9 +509,10 @@
     document.getElementById('myFav').href='#Favorite#' + time + '#' + index + ',#'
     document.getElementById('myFav2').href='#Favorite#' + time + '#' + index + ',#'}
 
-  function del() { release()
-    if (selected) {document.getElementById('myDelete').href='#Delete##'+selected+'#'}
-    else {document.getElementById('myDelete').href='#Delete##'+index+',#'}}
+  function del() {
+    release(); el=document.getElementById('myDelete')
+    if (selected) {el.href='#Delete##'+selected+'#'}
+    else {el.href='#Delete##'+index+',#'}}
 
   function rename() {release(); document.getElementById('myRename').href='#Rename#'+inputbox.value.replace(/ /g, "%20")+'#'+selected+'#'}
 
