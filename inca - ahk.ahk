@@ -116,6 +116,7 @@
       else send, !{F4}				; or close app
       return
     Xbutton1 up::
+      sleep 24					; time for mpv to close
       if (A_TickCount > timer)
         return
       SetTimer, Timer_up, Off
@@ -132,7 +133,7 @@
         If (w == A_ScreenWidth)
           send, {F11}
         sleep 100				; wait for java messages
-        GetAddressBar()			; read address bar message
+        GetAddressBar()				; read address bar message
         }
       else send, {Xbutton1}
       return
