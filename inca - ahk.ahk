@@ -122,20 +122,17 @@
       IfWinExist, ahk_class OSKMainClass
         send, !0				; close onscreen keyboard
       else if WinActive("ahk_class Notepad")
-        Send,  {Esc}^s^w
-      else if inca_tab
+        Send, {Esc}^s^w
+      else if (inca_tab && !Setting("External Player"))
         {
         send, {Alt up}{Ctrl up}{Shift up}
+        send, {MButton up}			; close java modal (media player)
         WinGetPos,,,w,,a
-        If (!Setting("Full Screen") && w == A_ScreenWidth)
-          send, {F11}
         sleep 24
-        If (!Setting("External Player"))
-          { 
-          send, {MButton up}			; close java modal (media player)
-          sleep 100				; wait for java messages
-          GetAddressBar()			; read address bar message
-          }
+        If (w == A_ScreenWidth)
+          send, {F11}
+        sleep 100				; wait for java messages
+        GetAddressBar()			; read address bar message
         }
       else send, {Xbutton1}
       return

@@ -2,6 +2,10 @@
 
 // panel.style.opacity=1; panel.innerHTML= x; or alert(x)		// debugging
 
+// cache missing folder effects
+
+
+
   var thumb = document.getElementById('media1')				// first media element
   var modal = document.getElementById('myModal')			// media player window
   var media = document.getElementById('myMedia')			// modal overlay player
@@ -70,8 +74,11 @@
   var scaleY = 1
   var Xref								// click cursor coordinate
   var Yref
+  var Xoff = 0
+  var Yoff = 0
 
-  setTimeout(function() {scrolltoIndex()},200)				// to last played media
+
+  setTimeout(function() {scrolltoIndex()},300)				// to last played media
   document.addEventListener('mousedown', mouseDown)
   document.addEventListener('mouseup', mouseUp)				// mouseUp alone = mouse back button
   document.addEventListener('mousemove', Gesture)
@@ -126,8 +133,7 @@
       modal.style.display='none'
       over_media = false
       close_media()
-      if (messages) {stat.href=messages; messages=''; stat.click()}	// send messages to inca.exe
-      if (fullscreen) {document.exitFullscreen()}}}
+      if (messages) {stat.href=messages; messages=''; stat.click()}}}	// send messages to inca.exe
 
 
   function togglePause() {
@@ -162,8 +168,6 @@
     newSkinny = skinny
     mediaX = localStorage.getItem('mediaX')*1				// last media position
     mediaY = localStorage.getItem('mediaY')*1
-    if (e == 'Click') {media.style.transform='scale(0,0)'; media.style.transition='0.12s'}  // so media to zoom in
-    else {media.style.transition = 'none'}
     var ratio = thumb.offsetWidth/thumb.offsetHeight
     if (ratio > 1) {x = innerWidth*0.5; y = x/ratio}			// landscape
     else {y = innerHeight*0.7; x = y*ratio}				// portrait
@@ -331,8 +335,7 @@
     ym = (ypos - rect.top) / (media.offsetHeight*scaleY)
     media_ratio = media.offsetHeight*scaleY/innerHeight
     if (!type) {seek_active = false; return}
-    x=0; y=0
-    if (screenLeft) {Xoff=screenLeft; Yoff=outerHeight-innerHeight} else {x=Xoff; y=Yoff}	// fullscreen
+    if (screenLeft) {x=0; y=0; Xoff=screenLeft; Yoff=outerHeight-innerHeight} else {x=Xoff; y=Yoff}	// fullscreen
     media.style.top = (mediaY-media.offsetHeight/2) +y +"px"
     media.style.left = (mediaX-media.offsetWidth/2) +x +"px"
     media.style.transform = "scale("+scaleX+","+scaleY+")"
@@ -429,7 +432,8 @@
     else {
       el.style.border = "0.1px solid lightsalmon"
       if (!x.match("," + i + ",")) {selected = selected + i + ","}
-      inputbox.value = document.getElementById("title" + i).innerHTML}}
+      inputbox.value = document.getElementById("title" + i).innerHTML}
+      panel.style.opacity=1; panel.innerHTML = selected}
 
 
   function filter() {							// eg 30 minutes, 2 months, alpha 'A'
