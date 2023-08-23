@@ -212,6 +212,7 @@
     media.oncanplay = function() {can_play=true}
     media.playbackRate = rate
     media.volume = 0
+    positionMedia()
     mediaTimer = setInterval(positionMedia,84)
     media.addEventListener('ended', media_ended)}
 
