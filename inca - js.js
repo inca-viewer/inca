@@ -4,8 +4,6 @@
 
 // cache missing folder effects
 
-
-
   var thumb = document.getElementById('media1')				// first media element
   var modal = document.getElementById('myModal')			// media player window
   var media = document.getElementById('myMedia')			// modal overlay player
@@ -99,7 +97,9 @@
       block = 200}							// block accidental middle click + wheel
     if (!e.button) {
       clickTimer = setTimeout(function() {if(mouse_down && !gesture) {
-        long_click=true; if(type && !over_cap) {media_ended()}}},240)
+        long_click=true
+        if(type && !over_cap) {
+          media.currentTime=0; media_ended()}}},240)
       long_click=false
       mouse_down = true
       Xref = e.clientX							// for when moving thumb or media position
@@ -112,7 +112,8 @@
     if (e.button == 1 && !long_click) {mouseBack()}			// inca.exe replaces mouse back button with MClick Up
     if (!e.button && !gesture) {					
       if (type == 'thumbsheet') {playThumb()}				// play at thumbsheet click coordinate
-      else if (type == 'video' && ym>0.8 && ym<1 && seek.style.opacity>0.3 && !nav2.matches(":hover")) {media.currentTime=start}
+      else if (type == 'video' && ym>0.8 && ym<1 && seek.style.opacity>0.3 && !nav2.matches(":hover")) {
+        media.currentTime = seek.currentTime}
       else if (cap.value != cap.innerHTML) {editCap()}			// caption in edit mode
       else if (over_media && !type) {playMedia('Click')}
       else if (type) {togglePause()}}
@@ -323,8 +324,7 @@
     if (type != 'thumbsheet') {setTimeout(function() {modal.style.cursor = 'none'},244)}
     if (xm>0&&xm<1&&ym>0.8&&ym<1) {					// seek thumbnail
       if (type == 'video') {seek_active = true}
-      start = media.duration*xm
-      seek.currentTime = start}
+      seek.currentTime = media.duration*xm}
     else {seek_active=false; seek.style.opacity=0}}
 
 
@@ -406,20 +406,20 @@
 
 
   function media_ended() {
-    if (! long_click && (!looping || type == 'audio')) {
+    if (!long_click && (!looping || type == 'audio')) {
       if (path.href.slice(27).match('/inca/music/')) {setTimeout(function() {playMedia('Next')},1800)}	// next media
       else {playMedia('Next')}
       return}
     if (type == 'thumbsheet') {type = 'video'}
-    media.currentTime = 0
+    media.currentTime = start
     media.play()
     if (long_click || media_ratio > 3) {return}
     if (media.playbackRate > 0.40) {media.playbackRate -= 0.05}		// magnify and slow each loop
-    media.style.transition = '1.46s'
+    media.style.transition = '1.4s'
     stat.innerHTML = Math.round(media.playbackRate *100)
     scaleX*=1.1; scaleY*=1.1
     media.style.transform = "scale("+scaleX+","+scaleY+")"
-    setTimeout(function() {media.style.transition='0.2s'},500)}
+    setTimeout(function() {media.style.transition=null},1400)}
 
 
   function select(i) {							// highlight selected media
