@@ -3,6 +3,9 @@
 // panel.style.opacity=1; panel.innerHTML= x; or alert(x)		// debugging
 
 // cache missing folder effects
+// use cursor change and clipboard instead of location bar
+// permissions in manifest:   "permissions": [ "clipboardRead" ],
+
 
   var thumb = document.getElementById('media1')				// first media element
   var modal = document.getElementById('myModal')			// media player window
@@ -227,7 +230,6 @@
       localStorage.setItem("mediaY",mediaY)}
     if (skinny != newSkinny) {
       messages = messages+'#Skinny#'+newSkinny+'#'+index+',#'}		// width changes
-    if (type == 'video') {messages = messages+'#History##'+index+',#'}	// play history
     if (!mpv_player) {
       media.removeEventListener('ended', media_ended)
       clearInterval(mediaTimer)}
@@ -275,6 +277,7 @@
       else {thumb_size -= thumb_size/40}
       thumb_size = thumb_size.toFixed(1)
       if (thumb_size < 4) {thumb_size = 4}
+      if (thumb_size > 84) {thumb_size = 84}
       document.getElementById(id).href = '#myThumbs#'+thumb_size+'##'
       for (i=1; i<33 ;i++) {
         el = document.getElementById("thumb" + i)
@@ -506,6 +509,8 @@
   function mute() {if (type == 'video') {media.volume=0; media.muted=!media.muted; media.play()}}
   function selectAll() {for (i=1; i <= 600; i++) {select(i)}}
   function join() {document.getElementById('myJoin').href='#Join##' + selected + '#'}
+  function cut() {txt=getSelection().toString(); navigator.clipboard.writeText(txt); inputbox.value=inputbox.value.replace(txt,'')}
+  function paste() {x=navigator.clipboard.readText().toString(); alert(x); el=document.activeElement; el.setRangeText(txt, el.selectionStart, el.selectionEnd, 'select')}
 
   function createFav() {
     document.getElementById('myFav').href='#Favorite#' + time + '#' + index + ',#'
@@ -522,7 +527,7 @@
     e.preventDefault()
     Gesture(e)
     nav2.style.left=xpos-32+'px'; nav2.style.top=ypos-40+'px'
-    nav.style.left=e.clientX-40+'px'; nav.style.top=e.clientY-18+'px'
+    nav.style.left=e.clientX-40+'px'; nav.style.top=e.clientY-40+'px'
     if (type) {nav2.style.display='block'} else {nav.style.display='block'}}
 
   function editCap() {							// edit caption
