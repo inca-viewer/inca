@@ -382,55 +382,9 @@
 
     ReadAddressBar(new_html)
         {
-sleep 24
-input := Clipboard
-Clipboard =
-return input
-
-        clip := clipboard
-        clipboard =
-        loop 10
-          {
-          if !inca_tab
-            return
-          IfWinNotActive, ahk_group Browsers
-            return
-          sleep 24
-          send, ^l
-          sleep 24
-          send, ^c
-          sleep 24
-          input := clipboard
-          if input
-          break
-          }
-        if new_html
-            {
-            clipboard := new_html
-            send ^v
-            sleep 34
-            send, {Enter}
-            }
-        else 
-          {
-          if InStr(input, "#")
-            send, !{Left}						; reset location bar to last address
-          send, +{F6}							; focus back to page
-          if (browser == "Profile 1 - Microsoft")
-            send, +{F6}
-          }
-        clipboard := clip
-        Pos := 1
-        While Pos := RegExMatch(input, "i)(%[\da-f]{2})+", Code, Pos)	; convert url to utf-8
-	    {
-            VarSetCapacity(Var, StrLen(Code) // 3, 0), Code := SubStr(Code,2)
-            Loop, Parse, Code, `%
-                NumPut("0x" A_LoopField, Var, A_Index-1, "UChar")
-            decoded := StrGet(&Var, "UTF-8")
-            input := SubStr(input, 1, Pos-1) . decoded . SubStr(input, Pos+StrLen(Code)+1)
-            Pos += StrLen(decoded)+1
-            }
-        sleep 34							; release location bar
+        sleep 24
+        input := Clipboard
+        Clipboard =
         return input
         }
 
@@ -936,7 +890,7 @@ return input
 
         if !view							; list view
             {
-            entry = <div><table><tr><td id="thumb%j%" style="position:absolute; margin-left:3.5em">`r`n<a id="sel%j%"><video id="media%j%" class='thumblist' style="width:10em; %transform%" onmousedown='navigator.clipboard.writeText("#Media#%j%##")' onmouseover="overThumb(%j%, %skinny%, '%type%', %start%, '%cap%', event)" onmouseout='over_media=false; this.load()' %poster% src="file:///%src%" type="video/mp4" preload='none' muted></video></a></tr></table><table style="table-layout:fixed; width:100`%; font-size:0.9em"><tr><td style="width:4em; text-align:center"><span style="border-radius:9px; color:#777777">%sort_name%</span></td><td style="width:4em; text-align:center">%dur%</td><td style="width:3em; text-align:center">%size%</td><td style="width:4em; text-align:center">%ext%</td>%fold%<td><div id="title%j%" onclick="select(%j%)" style="width:80`%; border-radius:1em; padding-left:0.5em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis">%media%</div></td></tr></table></div>`r`n`r`n
+            entry = <div><table><tr><td id="thumb%j%" style="position:absolute; margin-left:3.5em">`r`n<a id="sel%j%"><video id="media%j%" class='thumblist' style="width:10em; %transform%" onmousedown='navigator.clipboard.writeText("#Media#%j%##%start%")' onmouseover="overThumb(%j%, %skinny%, '%type%', %start%, '%cap%', event)" onmouseout='over_media=false; this.load()' %poster% src="file:///%src%" type="video/mp4" preload='none' muted></video></a></tr></table><table style="table-layout:fixed; width:100`%; font-size:0.9em"><tr><td style="width:4em; text-align:center"><span style="border-radius:9px; color:#777777">%sort_name%</span></td><td style="width:4em; text-align:center">%dur%</td><td style="width:3em; text-align:center">%size%</td><td style="width:4em; text-align:center">%ext%</td>%fold%<td><div id="title%j%" onclick="select(%j%)" style="width:80`%; border-radius:1em; padding-left:0.5em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis">%media%</div></td></tr></table></div>`r`n`r`n
             }
         else								; thumbnail view
             {
@@ -952,7 +906,7 @@ return input
                     }
 	        entry = <a onmousedown='navigator.clipboard.writeText("#Media#%j%##")'><div style="display:inline-block; width:88`%; color:#555351; transition:color 1.4s; margin-left:8`%; text-align:center; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; %highlight%;">%sort_name% &nbsp;&nbsp;%media%</div></a><textarea rows=%rows% style="display:inline-block; overflow:hidden; margin-left:8`%; width:88`%; background-color:inherit; color:#826858; font-size:1.2em; font-family:inherit; border:none; outline:none;">%str2%</textarea>`r`n`r`n
                 }
-            else entry = <div id="thumb%j%" class="thumb_container" style="width:%view%em; height:%max_height%em; margin-right:3em; margin-bottom:6em">`r`n<div id="title%j%" onclick="select(%j%)" style="display:grid; align-content:end; text-align:center; padding:0.3em; color:#555351; border-radius:1.5em; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; font-size:0.85em; height:2em">%media%</div>`r`n<a id="sel%j%">`r`n<video class="media" id="media%j%" style="position:inherit; %transform%; object-fit:contain; max-width:100`%; max-height:100`%" onmousedown='navigator.clipboard.writeText("#Media#%j%##")' onmouseover="overThumb(%j%, %skinny%, '%type%', %start%, '%cap%', event)" onmouseout='over_media=false; this.pause()' onmousemove='over_media=true; index=%j%' src="file:///%src%" %poster% preload='none' muted type="video/mp4"></video>`r`n</a>%caption%<div></div></div>`r`n`r`n
+            else entry = <div id="thumb%j%" class="thumb_container" style="width:%view%em; height:%max_height%em; margin-right:3em; margin-bottom:6em">`r`n<div id="title%j%" onclick="select(%j%)" style="display:grid; align-content:end; text-align:center; padding:0.3em; color:#555351; border-radius:1.5em; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; font-size:0.85em; height:2em">%media%</div>`r`n<a id="sel%j%">`r`n<video class="media" id="media%j%" style="position:inherit; %transform%; object-fit:contain; max-width:100`%; max-height:100`%" onmousedown='navigator.clipboard.writeText("#Media#%j%##%start%")' onmouseover="overThumb(%j%, %skinny%, '%type%', %start%, '%cap%', event)" onmouseout='over_media=false; this.pause()' onmousemove='over_media=true; index=%j%' src="file:///%src%" %poster% preload='none' muted type="video/mp4"></video>`r`n</a>%caption%<div></div></div>`r`n`r`n
             }
         return entry
         }
