@@ -629,7 +629,10 @@
                 filt := 0
                 }
             if (command == "Filt")					; alpha letter
+                {
                 filt := value
+                StringReplace, toggles, toggles, Reverse
+                }
             page := 1
             if (InStr(sort_list, command))				; sort filter
                 {
@@ -818,7 +821,7 @@
 <a style='font-size:1.3em; transform:none'>%list_size%</a>`r`n
 <a id='mySort' onmousedown="navigator.clipboard.writeText('#'+sort+'#'+sort+'##')" %rev% style='width:7em' onwheel="wheelEvents(event, id, this)">%sort%</a>`r`n
 <a id='myFilt' onmousedown="navigator.clipboard.writeText('#Filt#'+filt+'##')" onwheel="wheelEvents(event, id, this)">All</a>`r`n
-<a href="%title%.htm#Page" id="myPage" onwheel="wheelEvents(event, id, this)">%pg%</a></div>`r`n`r`n
+<a href="%title%.htm#Page" id="myPage" onmousedown="navigator.clipboard.writeText('#Page#'+page+'##')" onwheel="wheelEvents(event, id, this)">%pg%</a></div>`r`n`r`n
 
         FileDelete, %inca%\cache\html\%folder%.htm
         html = %header_html%%style%%panel_html%%subs%%html%</div></div>`r`n
@@ -942,7 +945,7 @@
               {
               StringGetPos, pos, input, \, R, 1
               StringMid, 1st_char, input, % pos + 2, 1
-              if (filt && sort == "Alpha" && 1st_char < Chr(filt+65))
+              if (filt && sort == "Alpha" && 1st_char < Chr(filt+66))
                 return
               }
             else if (sort == "Date")

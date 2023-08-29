@@ -10,6 +10,7 @@
 // edit caption file when # in filename
 // auto mute off ideas
 
+
   var thumb = document.getElementById('media1')				// first media element
   var modal = document.getElementById('myModal')			// media player window
   var media = document.getElementById('myMedia')			// modal overlay player
@@ -258,7 +259,6 @@
     if (e.deltaY > 0) {wheelUp=true}
     if (id == 'myPage') {						// page
       if (wheelUp && page<pages) {page++} else if (page>1) {page--}
-      el.href = '#Page#' + page + '##'
       el.innerHTML = 'Page '+page+' of '+pages}
     else if (id=='mySort') {						// sort filter
       if (wheelUp) {filt++} else if (filt) {filt--}
