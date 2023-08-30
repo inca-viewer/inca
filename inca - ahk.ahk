@@ -130,8 +130,8 @@
         send, {MButton up}			; close java modal (media player)
         WinGetPos,,,w,,a
         sleep 24
-        If (w == A_ScreenWidth)
-          send, {F11}
+;        If (w == A_ScreenWidth)
+;          send, {F11}
         sleep 100				; wait for java messages
         GetAddressBar()				; read address bar message
         }
@@ -567,6 +567,14 @@
         if (command=="Filt"||command=="Path"||command=="Search"||command=="SearchBox"||command=="SearchAdd"||InStr(sort_list, command))
             {
             reload = 1
+        WinGetPos,,,w,,a
+        If (w == A_ScreenWidth)
+{
+          send, {F11}
+sleep 400
+}
+
+
             if (command == "Path") 
               if InStr(address, ".m3u")
                 {

@@ -5,11 +5,10 @@
 // cache missing folder effects
 // use cursor change and clipboard instead of location bar
 // permissions in manifest:   "permissions": [ "clipboardRead" ],
-// image zoom, when full width begins scroll
 // thumb position change in playlist - stop playing media
 // edit caption file when # in filename
-// auto mute off ideas
-
+// image zoom, when full width begins scroll
+// preserve clipb
 
   var thumb = document.getElementById('media1')				// first media element
   var modal = document.getElementById('myModal')			// media player window
@@ -83,7 +82,7 @@
   var Yoff = 0
 
 
-  setTimeout(function() {scrolltoIndex()},300)				// to last played media
+  setTimeout(function() {scrolltoIndex()},300)				// scroll to last played media
   document.addEventListener('mousedown', mouseDown)
   document.addEventListener('mouseup', mouseUp)				// mouseUp alone = mouse back button
   document.addEventListener('mousemove', Gesture)
@@ -97,8 +96,7 @@
     if (e.button == 2) {context(e)}					// force context menu focus
     if (e.button == 1) {						// middle click
       e.preventDefault()
-      clickTimer = setTimeout(function() {if(long_click) {
-        playMedia('Mclick')}},240) 					// goto previous media
+      clickTimer = setTimeout(function() {if(long_click) {playMedia('Mclick')}},240) // previous media
       nextCap()								// next caption (or next media)
       long_click = true
       block = 200}							// block accidental middle click + wheel
@@ -106,7 +104,7 @@
       if (!type && over_media && selected) {navigator.clipboard.writeText('#Media#'+index+'#'+selected+'#')}
       clickTimer = setTimeout(function() {if(mouse_down && !gesture) {
         long_click=true
-        if (type && !over_cap) {media.currentTime=0; media_ended()}}},240)
+        if (type && !over_cap) {media_ended()}}},240)
       long_click=false
       mouse_down = true
       Xref = e.clientX							// for when moving thumb or media position
@@ -163,7 +161,7 @@
     thumb.play()}
 
 
-  function getParameters(e) {						// get embedded media arguments
+  function getParameters(e) {						// get media arguments
     thumb = document.getElementById('media' + index)
     if (!thumb) {index=1; thumb = document.getElementById('media1')}
     x = thumb['onmouseover'].toString().split(","); x.pop()
@@ -201,7 +199,9 @@
     if (mpv_player) {return}
     modal.style.zIndex = Zindex+=1
     modal.style.display = 'flex'
-    if (type == 'audio') {looping=false; media.controls=true; media.muted=false; scaleY=0.4}
+    media.muted = 1*sessionStorage.getItem('muted')
+    if (type == 'audio' || path.match('/inca/music/')) {looping=false; media.muted=false; scaleY=0.4}
+    else if (fullscreen) {modal.requestFullscreen()}
     if (scaleY > 1.42 && type != 'thumbsheet') {scaleY = 1.42}
     scaleX = scaleY*skinny
     if (type == 'video' || type == 'audio') {media.currentTime = start}
@@ -211,8 +211,6 @@
     document.getElementById('title'+index).style.color='lightsalmon'	// highlight played media in tab
     last_index = index
     scrolltoIndex()
-    if (path.match('/inca/music/')) {looping=false}
-    else if (fullscreen) {modal.requestFullscreen()}
     if (type != 'thumbsheet') {media.play()}
     can_play = false
     media.oncanplay = function() {can_play=true}
@@ -413,7 +411,8 @@
       else {playMedia('Next')}
       return}
     if (type == 'thumbsheet') {type = 'video'}
-    media.currentTime = start
+    if (over_media) {media.currentTime = start}
+    else {media.currentTime = 0}
     media.play()
     if (long_click || media_ratio > 3) {return}
     if (media.playbackRate > 0.40) {media.playbackRate -= 0.05}		// magnify and slow each loop
@@ -503,7 +502,7 @@
 
   function thumbs() {sessionStorage.setItem("last_index",last_index); navigator.clipboard.writeText('#myThumbs#'+view+'##')}
   function loop() {if (looping) {looping = false} else {looping = true}}
-  function mute() {if (type == 'video') {media.volume=0; media.muted=!media.muted; media.play()}}
+  function mute() {media.volume=0; media.muted=!media.muted; sessionStorage.setItem("muted",1*media.muted); media.play()}
   function selectAll() {for (i=1; i <= 600; i++) {select(i)}}
   function cut() {txt=getSelection().toString(); navigator.clipboard.writeText(txt); inputbox.value=inputbox.value.replace(txt,'')}
   function paste() {x=navigator.clipboard.readText().toString(); alert(x); el=document.activeElement; el.setRangeText(txt, el.selectionStart, el.selectionEnd, 'select')}
