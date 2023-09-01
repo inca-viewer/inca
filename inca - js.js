@@ -10,6 +10,14 @@
 // image zoom, when full width begins scroll
 // preserve clipb
 
+// play delay
+// cap cycling
+
+
+// rem. long click text or search, +adds extra search term
+// use mpv
+
+
   var thumb = document.getElementById('media1')				// first media element
   var modal = document.getElementById('myModal')			// media player window
   var media = document.getElementById('myMedia')			// modal overlay player
@@ -66,8 +74,6 @@
   var messages = ''							// skinny and caption changes
   var cue = 0								// start time for mp3/4 conversion
   var Zindex = 1
-  var xpos								// cursor coordinate in pixels
-  var ypos
   var xw = 0.5								// cursor over window ratio
   var yw = 0.5
   var xm = 0								// cursor over media ratio
@@ -76,6 +82,8 @@
   var mediaY
   var scaleX = 1							// skinny & magnify factor
   var scaleY = 1
+  var xpos								// cursor coordinate in pixels
+  var ypos
   var Xref								// click cursor coordinate
   var Yref
   var Xoff = 0
@@ -94,27 +102,31 @@
 
   function mouseDown(e) {
     if (e.button == 2) {context(e)}					// force context menu focus
-    if (e.button == 1) {						// middle click
+    else {mouse_down = true; Xref = xpos; Yref = ypos}
+    if (e.button == 1) {
       e.preventDefault()
-      clickTimer = setTimeout(function() {if(long_click) {playMedia('Mclick')}},240) // previous media
-      nextCap()								// next caption (or next media)
-      long_click = true
-      block = 200}							// block accidental middle click + wheel
+      clickTimer = setTimeout(function() {
+        if (mouse_down) {long_click = true; playMedia('Mclick')}	// previous media
+        block=200},240)}						// middle click
     if (!e.button) {
-      if (!type && over_media && selected) {navigator.clipboard.writeText('#Media#'+index+'#'+selected+'#')}
-      clickTimer = setTimeout(function() {if(mouse_down && !gesture) {
-        long_click=true
-        if (type && !over_cap) {media_ended()}}},240)
-      long_click=false
-      mouse_down = true
-      Xref = e.clientX							// for when moving thumb or media position
-      Yref = e.clientY}}
+      if (!type && over_media && selected) {
+        navigator.clipboard.writeText('#Media#'+index+'#'+selected+'#')}
+      clickTimer = setTimeout(function() {
+        if (!gesture) {long_click = true
+          if (!type && over_media) {playMedia('Click')}
+          else if (type && !over_cap) {media_ended()}}},240)}}
 
 
-  function mouseUp(e) {							// !! inca triggers mouseUp event after every Click
+  function mouseUp(e) {
     nav.style.display=null
     nav2.style.display=null
-    if (e.button == 1 && !long_click) {mouseBack()}			// inca.exe replaces mouse back button with MClick Up
+    if (e.button == 1 && !mouse_down) {mouseBack()}			// inca.exe replaces mouse back button with MClick Up
+    else if (e.button == 1 && !long_click) {
+      if (type == 'video' && cap_list && (ym>1 || yw>0.9)) {		// seek to next caption in movie
+        var z = cap_list.split('|')
+        for (x of z) {if (!isNaN(x) && x>(media.currentTime+0.2)) {media.currentTime=x-1; media.play()}}}
+      else if (type || over_media) {playMedia('Mclick')}
+      else {thumbs()}}
     if (!e.button && !gesture) {					
       if (type == 'thumbsheet') {playThumb()}				// play at thumbsheet click coordinate
       else if (type == 'video' && ym>0.8 && ym<1 && seek.style.opacity>0.3 && !nav2.matches(":hover")) {
@@ -122,10 +134,9 @@
       else if (cap.value != cap.innerHTML) {editCap()}			// caption in edit mode
       else if (!type && over_media) {playMedia('Click')}
       else if (type) {togglePause()}}
-    if (!e.button || e.button == 1) {
-      if (xm<0||xm>1||ym<0.8||ym>1) {seek.style.opacity=0; seek_active=false}
-      gesture=false; mouse_down=false; long_click=false
-      clearTimeout(clickTimer)}}
+    if (e.button != 111) {clearTimeout(clickTimer)}
+    if (xm<0||xm>1||ym<0.8||ym>1) {seek.style.opacity=0; seek_active=false}
+    gesture=false; mouse_down=false; long_click=false}
 
 
   function mouseBack() {
@@ -139,7 +150,7 @@
       modal.style.display='none'
       over_media = false
       close_media()
-      if (messages) {navigator.clipboard.writeText(messages);stat.click()}}}		// send messages to inca.exe
+      if (messages) {navigator.clipboard.writeText(messages)}}}		// send messages to inca.exe
 
 
   function togglePause() {
@@ -190,7 +201,7 @@
     if (type) {close_media()}						// no type if no media playing
     if (e == 'Next') {index+=1; start=0}
     if (e == 'Mclick') {
-      if (long_click) {index-=3}
+      if (long_click) {index-=2}
       if (last_type && (last_type != 'video' || !over_media || yw>0.9)) {index+=1; start=0}
       if (!last_type && !over_media) {index=last_index; start=last_start; e=''}}
     getParameters(e)
@@ -207,7 +218,7 @@
     if (type == 'video' || type == 'audio') {media.currentTime = start}
     if (cap_list && type != 'thumbsheet') {media.currentTime = start-1}	// start at first caption
     if (e == 'Click' && thumb.currentTime > start+5) {media.currentTime = thumb.currentTime}
-    if (e != 'Mclick' && long_click) {media.currentTime = 0}
+    if (e == 'Click' && long_click) {media.currentTime = 0}
     document.getElementById('title'+index).style.color='lightsalmon'	// highlight played media in tab
     last_index = index
     scrolltoIndex()
@@ -505,13 +516,13 @@
   function mute() {media.volume=0; media.muted=!media.muted; sessionStorage.setItem("muted",1*media.muted); media.play()}
   function selectAll() {for (i=1; i <= 600; i++) {select(i)}}
   function cut() {txt=getSelection().toString(); navigator.clipboard.writeText(txt); inputbox.value=inputbox.value.replace(txt,'')}
-  function paste() {x=navigator.clipboard.readText().toString(); alert(x); el=document.activeElement; el.setRangeText(txt, el.selectionStart, el.selectionEnd, 'select')}
+  function paste() {x=navigator.clipboard.readText().toString(); el=document.activeElement; el.setRangeText(txt, el.selectionStart, el.selectionEnd, 'select')}
 
   function context(e) { 
     e.preventDefault()
     Gesture(e)
     nav2.style.left=xpos-32+'px'; nav2.style.top=ypos-40+'px'
-    nav.style.left=e.clientX-40+'px'; nav.style.top=e.clientY-40+'px'
+    nav.style.left=e.clientX-40+'px'; nav.style.top=e.clientY-18+'px'
     if (type) {nav2.style.display='block'} else {nav.style.display='block'}}
 
   function editCap() {							// edit caption
@@ -527,12 +538,6 @@
       cap.style.opacity=0.6
       cap.style.display='block'
       cap.focus()}}
-
-  function nextCap() {							// seek to next caption in movie
-    if (type == 'video' && cap_list && (ym>1 || yw>0.9)) {
-      var z = cap_list.split('|')
-      for (x of z) {if (!isNaN(x) && x>(media.currentTime+0.2)) {media.currentTime = x-1; media.play(); return}}}
-    playMedia('Mclick')}
 
   function showCaption() {						// display captions
     if (document.activeElement.id == 'myCap') {cap.style.color='red'; return}

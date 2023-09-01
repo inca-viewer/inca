@@ -96,13 +96,15 @@
     Esc up::
       ExitApp
 
-
     ~LButton::					; click events
      RButton::
       MouseDown()
       Gui PopUp:Cancel
       return
 
+    ~MButton::
+       Clipboard()
+       return
 
     Xbutton1::					; mouse "back" button
       Critical
@@ -116,28 +118,30 @@
       else send, !{F4}				; or close app
       return
     Xbutton1 up::
-      sleep 24					; time for mpv to close
+      SetTimer, Timer_up, Off
       if (A_TickCount > timer)
         return
-      SetTimer, Timer_up, Off
+      sleep 24					; time for mpv to close
+      GUI, settings:+LastFoundExist		; is menu window open
       IfWinExist, ahk_class OSKMainClass
         send, !0				; close onscreen keyboard
+      else IfWinExist, ahk_class mpv
+        Process, Close, mpv.exe			; mpv player
       else if WinActive("ahk_class Notepad")
         Send, {Esc}^s^w
       else if (inca_tab && !Setting("External Player"))
         {
-        send, {Alt up}{Ctrl up}{Shift up}
-        send, {MButton up}			; close java modal (media player)
         WinGetPos,,,w,,a
         sleep 24
-;        If (w == A_ScreenWidth)
-;          send, {F11}
-        sleep 100				; wait for java messages
-        GetAddressBar()				; read address bar message
+        If (w == A_ScreenWidth)
+          send, {F11}
+        send, {MButton up}			; close java modal (media player)
+        Clipboard()				; read address bar message
         }
+      else if WinExist()			; menu settings window
+        WinClose
       else send, {Xbutton1}
       return
-
 
     ~WheelUp::
        wheel = up
@@ -177,13 +181,12 @@
       wheel =
       return
 
-
     ~Enter::					; search request from htm input box
       if inca_tab
         {
         sleep 250				; wait for java inputbox text in 'messages'
         timer := 1				; not long click
-        GetAddressBar()				; process address bar messages
+        Clipboard()				; process address bar messages
         }
       return
 
@@ -245,7 +248,7 @@
           }
         }
       if (!gesture && click == "LButton" && inca_tab && A_Cursor != "IBeam") ; && A_Cursor != "Arrow")
-        GetAddressBar()
+        Clipboard()
       if (!inca_tab && !timer && WinActive("ahk_group Browsers" && A_Cursor != "IBeam"))
           send, f
       if (!gesture && click == "RButton")
@@ -305,10 +308,16 @@
         return
 
 
-    GetAddressBar()							; messages from browser address bar
+    Clipboard()								; check for messages from browser
         {
+Loop 24
+  {
+  sleep 24
+  if Clipboard
+    break
+  }
         IfWinExist, ahk_class OSKMainClass
-        send, !0							; close onscreen keyboard
+          send, !0							; close onscreen keyboard
         selected =
         select =
         command =
@@ -319,13 +328,9 @@
         ptr := 1
         if !inca_tab
           return
-        send, {Alt up}{Ctrl up}{Shift up}
-        if (GetKeyState("LButton", "P"))
-          send, {Lbutton up}
-        input := ReadAddressBar(0)
-        input := StrReplace(input, "/", "\")
-;        if !InStr(input, "file:\\\")
-;          return
+        sleep 24
+        input := StrReplace(Clipboard, "/", "\")
+        Clipboard =
         array := StrSplit(input,"#")
         if (array.MaxIndex() < 3)
           return
@@ -380,15 +385,6 @@
         }
 
 
-    ReadAddressBar(new_html)
-        {
-        sleep 24
-        input := Clipboard
-        Clipboard =
-        return input
-        }
-
-
     ProcessMessage()
         {
         if (command == "Up")
@@ -411,7 +407,12 @@
                 if !timer						; long click
                   run, %address%%value%.m3u
                 else reload := 3
-                }
+              }
+            else if search_term
+              {
+              address =
+              command = Search
+              }
             else IfExist, %inca%\%value%\
               run, %inca%\%value%\
             else command = Path
@@ -567,14 +568,12 @@
         if (command=="Filt"||command=="Path"||command=="Search"||command=="SearchBox"||command=="SearchAdd"||InStr(sort_list, command))
             {
             reload = 1
-        WinGetPos,,,w,,a
-        If (w == A_ScreenWidth)
-{
-          send, {F11}
-sleep 400
-}
-
-
+            WinGetPos,,,w,,a
+            If (w == A_ScreenWidth)
+              {
+              send, {F11}
+              sleep 400
+              }
             if (command == "Path") 
               if InStr(address, ".m3u")
                 {
@@ -788,7 +787,6 @@ sleep 400
 <div oncontextmenu='context(event)' style='padding-bottom:40em'>`r`n`r`n
 <span id="myContext" class='context'>`r`n
 <a onmousedown='navigator.clipboard.writeText("#Settings###"+selected+"#")'>. . .</a>`r`n
-<a id='myThumbs' onmousedown='thumbs()' onwheel="wheelEvents(event, id, this)">Thumbs</a>`r`n
 <a id="myFav" onmousedown='navigator.clipboard.writeText("#Favorite#" + time + "#" + index + ",#")'>Fav</a>`r`n
 <a onclick='selectAll()'>Select</a>`r`n
 <a id='myDelete' onmousedown='release(); if (selected) {navigator.clipboard.writeText("#Delete##"+selected+"#")} else {navigator.clipboard.writeText("#Delete##"+index+",#")}'>Delete</a>`r`n
@@ -825,11 +823,12 @@ sleep 400
 <a class='searchbox' onmousedown="navigator.clipboard.writeText('#SearchAdd#'+inputbox.value+'#'+selected+'#')" style='width:4`%; border-radius:0 1em 1em 0'>+</a></div>`r`n`r`n
 <div class='ribbon'>`r`n
 <a id='myPath' onmousedown="navigator.clipboard.writeText('#Up###%path%')" style='font-size:1.4em'>&#8678`r`n
+<a id='myThumbs' onmousedown='thumbs()' onwheel="wheelEvents(event, id, this)">Thumbs</a>`r`n
 <a onmousedown="navigator.clipboard.writeText('#Orphan#%folder%##%path%')" style='font-size:1.7em; transform:none'>%title_s%</a>`r`n
 <a style='font-size:1.3em; transform:none'>%list_size%</a>`r`n
 <a id='mySort' onmousedown="navigator.clipboard.writeText('#'+sort+'#'+sort+'##')" %rev% style='width:7em' onwheel="wheelEvents(event, id, this)">%sort%</a>`r`n
 <a id='myFilt' onmousedown="navigator.clipboard.writeText('#Filt#'+filt+'##')" onwheel="wheelEvents(event, id, this)">All</a>`r`n
-<a href="%title%.htm#Page" id="myPage" onmousedown="navigator.clipboard.writeText('#Page#'+page+'##')" onwheel="wheelEvents(event, id, this)">%pg%</a></div>`r`n`r`n
+<a id="myPage" onmousedown="navigator.clipboard.writeText('#Page#'+page+'##')" onwheel="wheelEvents(event, id, this)">%pg%</a></div>`r`n`r`n
 
         FileDelete, %inca%\cache\html\%folder%.htm
         html = %header_html%%style%%panel_html%%subs%%html%</div></div>`r`n
@@ -1009,10 +1008,9 @@ sleep 400
             send ^l
             send ^v
             sleep 34
-Clipboard = 
+            Clipboard =
             send, {Enter}
             }
-; ReadAddressBar(new_html)					; re-load tab
         }
 
 
@@ -1328,17 +1326,14 @@ Clipboard =
         return
 
         settingsButtoncss:
-;        WinClose
         run, notepad %inca%\inca - css.css
         return
 
         settingsButtonahk:
-;        WinClose
         run, notepad %inca%\inca - ahk.ahk
         return
 
         settingsButtonJava:
-;        WinClose
         run, notepad %inca%\inca - js.js
         return
 
@@ -1454,7 +1449,6 @@ Clipboard =
         FileRead, dur, %inca%\cache\durations\%filen%.txt
         if !dur
             {
-            clip := clipboard
             clipboard =
             RunWait %COMSPEC% /c %inca%\apps\ffmpeg.exe -i "%source%" 2>&1 | find "Duration" | Clip, , hide && exit
             ClipWait, 3
@@ -1462,7 +1456,6 @@ Clipboard =
             StringLeft, aTime, aTime, 8
             aTime := StrSplit(aTime, ":")
             dur := aTime.1 * 3600 + aTime.2 * 60 + aTime.3
-            clipboard := clip
             FileDelete, %inca%\cache\durations\%filen%.txt
             FileAppend, %dur%, %inca%\cache\durations\%filen%.txt
             }

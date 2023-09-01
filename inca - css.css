@@ -148,8 +148,8 @@ table {						/* list view formatting */
 .context a {
   display:block;
   height:1em;
-  padding-left:0.6em;
-  padding-right:0.6em;
+  padding-left:1.2em;
+  padding-right:1.2em;
   padding-bottom:0.6em;
   color:lightsalmon}
 
