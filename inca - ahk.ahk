@@ -795,9 +795,7 @@ Loop 24
 <a onclick='cut()'>Cut</a>`r`n<a onmousedown='paste()'>Paste</a>`r`n</span>`r`n`r`n
 <span id="myContext2" class='context'>`r`n
 <a id='myMute' onclick='mute()' onwheel="wheelEvents(event, id, this)">Mute</a>`r`n
-<a id="Seek" onclick='if(media.paused){media.play()} else {media.pause()} context(event)' onwheel="wheelEvents(event, id, this)">Seek</a>`r`n
 <a id="mySpeed" class='stat' onwheel="wheelEvents(event, id, this)"></a>`r`n
-<a id="mySkinny" onwheel="wheelEvents(event, id, this)">1</a>`r`n
 <a id='myLoop' onclick="loop()">Loop</a>`r`n
 <a id='myFav2' onmousedown='navigator.clipboard.writeText("#Favorite#" + time + "#" + index + ",#")'>Fav</a>`r`n
 <a id="myCapnav" onclick="editCap()">Cap</a>`r`n<a onclick="cue = Math.round(media.currentTime*10)/10">Cue</a>`r`n
