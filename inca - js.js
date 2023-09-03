@@ -1,21 +1,15 @@
 <script>
 
 // panel.style.opacity=1; panel.innerHTML= x; or alert(x)		// debugging
-
+// rem. long click text or search, +adds extra search term
 // cache missing folder effects
 // use cursor change and clipboard instead of location bar
 // permissions in manifest:   "permissions": [ "clipboardRead" ],
 // thumb position change in playlist - stop playing media
 // edit caption file when # in filename
-// image zoom, when full width begins scroll
 // preserve clipboard
-
-// cap cycling
-
-
-// rem. long click text or search, +adds extra search term
 // use mpv
-// cannot clear history 
+// cap cycling
 
 
   var thumb = document.getElementById('media1')				// first media element
@@ -113,7 +107,7 @@
         if (!gesture) {
           long_click = true
           if (!type && over_media) {playMedia('Click')}
-          else if (type && !over_media && !over_cap) {media_ended()}}},240)}}
+          else if (type && !over_cap) {media_ended()}}},240)}}
 
 
   function mouseUp(e) {
@@ -294,9 +288,10 @@
       else {x = 0.01}
       if (type != 'image') {media.playbackRate += x}
       if (media.playbackRate == 1) {block = 999}}
-    else if (id == 'myModal') {						// seek
-      if (wheelUp) {media.currentTime += interval}
-      else  {media.currentTime -= interval}}
+    else if (id == 'myModal' && type != 'thumbsheet') {			// seek
+       block = 40
+       if (wheelUp) {media.currentTime += interval}
+         else  {media.currentTime -= interval}}
     else {spool(e, id)} 						// scroll top panel
     wheel = 0}
 
@@ -311,19 +306,20 @@
     y = Math.abs(Yref-ypos)
     if (mouse_down && x + y > 5) {					// gesture detection (mousedown + slide)
       gesture = true
-      if (long_click) {
+      if ((ym>1 || yw>0.9) && x>y) {
+        scaleX -= (xpos-Xref)/1000
+        newSkinny = Math.round(1000*scaleX/scaleY)/1000
+        thumb.style.transform = "scaleX("+newSkinny+")"}
+      else if (x < y && mouse_down != 2) {
+        scaleX += (ypos-Yref)/200
+        scaleY += (ypos-Yref)/200}
+      else {
+        mouse_down = 2
         mediaX += xpos - Xref
         mediaY += ypos - Yref
         if (type != 'thumbsheet') {
           localStorage.setItem("mediaX",mediaX)
           localStorage.setItem("mediaY",mediaY)}}
-      else if (x < y) {
-        scaleX += (ypos-Yref)/200
-        scaleY += (ypos-Yref)/200}
-      else {
-        scaleX -= (xpos-Xref)/1000
-        newSkinny = Math.round(1000*scaleX/scaleY)/1000
-        thumb.style.transform = "scaleX("+newSkinny+")"}
       Xref = xpos
       Yref = ypos
       positionMedia()}
@@ -473,7 +469,7 @@
     if (id) {last_id = id} else {id = last_id}
     sessionStorage.setItem("last_id",last_id)
     if (id != 'Search' && !e.deltaY) {pos = 0}
-    if (e.deltaY > 0) {pos+=4} else if (pos) {pos-=4}
+    if (e.deltaY > 0) {pos+=4} else if (pos && e.deltaY < 0) {pos-=4}
     var count = -pos
     var htm = ''
     filter()
@@ -517,8 +513,8 @@
   function context(e) { 
     e.preventDefault()
     Gesture(e)
-    nav2.style.left=xpos-70+'px'; nav2.style.top=ypos-14+'px'
-    nav.style.left=e.clientX-80+'px'; nav.style.top=e.clientY-14+'px'
+    nav2.style.left=xpos-75+'px'; nav2.style.top=ypos-14+'px'
+    nav.style.left=e.clientX-85+'px'; nav.style.top=e.clientY-14+'px'
     if (type) {nav2.style.display='block'} else {nav.style.display='block'}}
 
   function editCap() {							// edit caption

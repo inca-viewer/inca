@@ -330,10 +330,10 @@ Loop 24
           return
         sleep 24
         input := StrReplace(Clipboard, "/", "\")
-        Clipboard =
         array := StrSplit(input,"#")
         if (array.MaxIndex() < 3)
           return
+        Clipboard =
         Loop % array.MaxIndex()/4
           {
           command := array[ptr+=1]
@@ -887,7 +887,7 @@ Loop 24
         StringReplace, src, src, #, `%23, All				; html cannot have # in filename
         stringlower, thumb, thumb
         poster = poster="file:///%thumb%"
-        start := Round(start+0.1,2)
+        start := Round(start+0.1,1)
         max_height := view
 
 
@@ -1003,9 +1003,11 @@ Loop 24
         else 
             {
             Clipboard := new_html
+            sleep 24
             send ^l
+            sleep 24
             send ^v
-            sleep 34
+            sleep 24
             Clipboard =
             send, {Enter}
             }
