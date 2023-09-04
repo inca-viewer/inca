@@ -9,7 +9,9 @@
 // edit caption file when # in filename
 // preserve clipboard
 // use mpv
-// cap cycling
+// show seekbar on wheel
+// zoom when reversed -ve
+// rename disappear if box empty if inputbox, set innerhtml
 
 
   var thumb = document.getElementById('media1')				// first media element
@@ -87,9 +89,7 @@
   document.addEventListener('mouseup', mouseUp)				// mouseUp alone = mouse back button
   document.addEventListener('mousemove', Gesture)
   document.addEventListener('keypress', (e) => {
-    if (e.key=='Enter' && inputbox.value) {
-    messages = messages+'#SearchBox#'+inputbox.value+'##'
-    navigator.clipboard.writeText(messages); messages=''}}, false)
+    if (e.key=='Enter' && inputbox.value) {searchbox()}}, false)
 
 
   function mouseDown(e) {
@@ -117,7 +117,7 @@
     else if (e.button == 1 && !long_click) {
       if (type == 'video' && cap_list && (ym>1 || yw>0.9)) {		// seek to next caption in movie
         var z = cap_list.split('|')
-        for (x of z) {if (!isNaN(x) && x>(media.currentTime+0.2)) {media.currentTime=x-1; media.play()}}}
+        for (x of z) {if (!isNaN(x) && x>(media.currentTime+0.2)) {media.currentTime=x-1; media.play(); break}}}
       else if (type || over_media) {playMedia('Mclick')}
       else {thumbs()}}
     if (!e.button && !gesture) {					
@@ -127,9 +127,9 @@
       else if (cap.value != cap.innerHTML) {editCap()}			// caption in edit mode
       else if (!type && over_media) {playMedia('Click')}
       else if (type) {togglePause()}}
-    if (e.button != 111) {clearTimeout(clickTimer)}
     if (xm<0||xm>1||ym<0.8||ym>1) {seek.style.opacity=0; seek_active=false}
-    gesture=false; mouse_down=false; long_click=false}
+    gesture=false; mouse_down=false; long_click=false
+    clearTimeout(clickTimer)}
 
 
   function mouseBack() {
@@ -302,8 +302,8 @@
     if (!nav.matches(":hover")) {nav.style.display = null}
     if (!nav2.matches(":hover")) {nav2.style.display = null}
     if (!type) return
-    x = Math.abs(Xref-xpos)
-    y = Math.abs(Yref-ypos)
+    var x = Math.abs(Xref-xpos)
+    var y = Math.abs(Yref-ypos)
     if (mouse_down && x + y > 5) {					// gesture detection (mousedown + slide)
       gesture = true
       if ((ym>1 || yw>0.9) && x>y) {
@@ -352,9 +352,7 @@
     cap.style.top = rect.bottom +10 +'px'
     cap.style.left = rect.left +10 +'px'
     if (cap_list) {cap.style.display='block'}
-    time = media.currentTime.toFixed(1)
-    t1 = media.currentTime
-    if ((t2=Math.round(t1%60))<10) {t2=':0'+t2} else {t2=':'+t2}	// convert seconds to MMM:SS format
+    showCaption()
     if (type == 'image') {stat.innerHTML=''}
     else {stat.innerHTML = media.playbackRate.toFixed(2)}
     if (type != 'audio') {modal.style.backgroundColor = 'rgba(0,0,0,'+media_ratio*3+')'}
@@ -379,7 +377,7 @@
     if (media.duration > 120) {interval = 5} 				// set seek interval
     else {interval = 1}
     if (media.paused) {interval = 0.04}
-    showCaption()}
+}
 
 
   function playThumb() {
@@ -398,14 +396,14 @@
 
 
   function thumbSheet() {
-      x = thumb.poster.replace("/posters/", "/thumbs/")
-      p = x.split('%20')						// see if embedded start time in poster filename
-      p = p.pop()
-      p = p.replace('.jpg', '')
-      if (!isNaN(p) && p.length > 2 && p.includes('.')) {		// very likely a suffix timestamp
-        x = x.replace('%20' + p, '')}					// remove timestamp from filename
-      media.poster = x							// 6x6 thumbsheet file
-      type = 'thumbsheet'}
+    x = thumb.poster.replace("/posters/", "/thumbs/")
+    p = x.split('%20')							// see if embedded start time in poster filename
+    p = p.pop()
+    p = p.replace('.jpg', '')
+    if (!isNaN(p) && p.length > 2 && p.includes('.')) {			// very likely a suffix timestamp
+      x = x.replace('%20' + p, '')}					// remove timestamp from filename
+    media.poster = x							// 6x6 thumbsheet file
+    type = 'thumbsheet'}
 
 
   function media_ended() {
@@ -502,7 +500,8 @@
     var x = selected.split(',')
     for (var i = 0; i < (x.length-1); i++) {document.getElementById('media' + x[i]).load()}}
 
-
+  function searchbox() {navigator.clipboard.writeText('#SearchBox#'+inputbox.value+'##')}
+  function rename() {release(); navigator.clipboard.writeText("#Rename#"+inputbox.value+"#"+selected+"#")}
   function thumbs() {sessionStorage.setItem("last_index",last_index); navigator.clipboard.writeText('#myThumbs#'+view+'##')}
   function loop() {if (looping) {looping = false} else {looping = true}}
   function mute() {media.volume=0; media.muted=!media.muted; sessionStorage.setItem("muted",1*media.muted); media.play()}
@@ -535,6 +534,7 @@
     if (document.activeElement.id == 'myCap') {cap.style.color='red'; return}
     else {cap.style.color=null}
     if (type == 'image') {time='0.0'}
+    var time = media.currentTime.toFixed(1)
     var ptr = cap_list.indexOf('|'+ time + '|')
     if (ptr < 1) {ptr = cap_list.indexOf('|'+ time - 0.1 + '|')}
     if ((ptr > 0 && cap_time != time) || type == 'image') {

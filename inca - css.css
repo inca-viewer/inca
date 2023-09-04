@@ -11,7 +11,7 @@
   margin-left:1em;
   font-size:1em;
   justify-content:space-between;
-  width:75%}
+  width:85%}
 
 .ribbon a {transition:0.8s; border-radius:1em}
 .ribbon a:hover {
@@ -33,7 +33,7 @@
   outline:none;
   transition:color 1.4s;
   white-space:nowrap;
-  width:550px}
+  width:475px}
 
 .panel {					/* top panel element showing folders etc.*/
   display:grid;
@@ -49,7 +49,7 @@
   font-size:0.85em;
   height:6em;
   opacity:0;
-  width:580px;
+  width:620px;
   background-color:inherit}
 
 .panel:hover {opacity:1}

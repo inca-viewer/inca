@@ -595,7 +595,7 @@ Loop 24
               if (command == "Search")
                 subfolders =
               if !timer
-                search_term = %search_term%+%value%			; long click adds new search term
+                search_term = %search_term% %value%			; long click adds new search term
               else search_term = %value%
               }
             if address
@@ -788,11 +788,11 @@ Loop 24
 <span id="myContext" class='context'>`r`n
 <a onmousedown='navigator.clipboard.writeText("#Settings###"+selected+"#")'>. . .</a>`r`n
 <a id="myFav" onmousedown='navigator.clipboard.writeText("#Favorite#" + time + "#" + index + ",#")'>Fav</a>`r`n
+<a onclick='cut()'>Cut</a>`r`n
+<a onmousedown='paste()'>Paste</a>`r`n
 <a onclick='selectAll()'>Select</a>`r`n
 <a id='myDelete' onmousedown='release(); if (selected) {navigator.clipboard.writeText("#Delete##"+selected+"#")} else {navigator.clipboard.writeText("#Delete##"+index+",#")}'>Delete</a>`r`n
-<a id='myRename' onmouseover='rename()' onmousedown='release(); navigator.clipboard.writeText("#Rename#"+inputbox.value+"#"+selected+"#")'>Rename</a>`r`n
-<a onmousedown='navigator.clipboard.writeText("#Join##" + selected + "#")'>Join</a>`r`n
-<a onclick='cut()'>Cut</a>`r`n<a onmousedown='paste()'>Paste</a>`r`n</span>`r`n`r`n
+<a onmousedown='navigator.clipboard.writeText("#Join##" + selected + "#")'>Join</a>`r`n</span>`r`n`r`n
 <span id="myContext2" class='context'>`r`n
 <a id='myMute' onclick='mute()' onwheel="wheelEvents(event, id, this)">Mute</a>`r`n
 <a id="mySpeed" class='stat' onwheel="wheelEvents(event, id, this)"></a>`r`n
@@ -818,7 +818,9 @@ Loop 24
 <a onmousedown="navigator.clipboard.writeText('#Videos###')" %vid%>Vids</a>`r`n</div>`r`n`r`n
 <div style='display:flex'>`r`n
 <input id='myInput' onmouseover='panel.style.opacity=null' class='searchbox' type='search' value='%search_term%'>`r`n
-<a class='searchbox' onmousedown="navigator.clipboard.writeText('#SearchAdd#'+inputbox.value+'#'+selected+'#')" style='width:4`%; border-radius:0 1em 1em 0'>+</a></div>`r`n`r`n
+<a class='searchbox' onmousedown='searchbox()' style='width:8`%; border-radius:0'>Search</a>`r`n
+<a class='searchbox' onmousedown="navigator.clipboard.writeText('#Rename#'+inputbox.value+'#'+selected+'#')" style='width:8`%; border-radius:0'>Rename</a>`r`n
+<a class='searchbox' onmousedown="navigator.clipboard.writeText('#SearchAdd#'+inputbox.value+'#'+selected+'#')" style='width:6`%; border-radius:0 1em 1em 0'>Add</a></div>`r`n`r`n
 <div class='ribbon'>`r`n
 <a id='myPath' onmousedown="navigator.clipboard.writeText('#Up###%path%')" style='font-size:1.4em'>&#8678`r`n
 <a id='myThumbs' onmousedown='thumbs()' onwheel="wheelEvents(event, id, this)">Thumbs</a>`r`n
@@ -939,7 +941,7 @@ Loop 24
                 PopUp(count,0,0,0)
             if search_term
               {
-              array := StrSplit(search_term,"+")
+              array := StrSplit(search_term," ")
               Loop, % array.MaxIndex()
                 if (!InStr(filen, array[A_Index]))
                   return
