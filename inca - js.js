@@ -7,17 +7,16 @@
 // permissions in manifest:   "permissions": [ "clipboardRead" ],
 // thumb position change in playlist - stop playing media
 // edit caption file when # in filename
-// preserve clipboard
-// use mpv
-// show seekbar on wheel
-// zoom when reversed -ve
-// rename disappear if box empty if inputbox, set innerhtml
+// mpv as default ?
 
 
   var thumb = document.getElementById('media1')				// first media element
   var modal = document.getElementById('myModal')			// media player window
   var media = document.getElementById('myMedia')			// modal overlay player
   var inputbox = document.getElementById('myInput')			// search/editing bar
+  var search = document.getElementById('mySearch')			// inputbox search button
+  var rename = document.getElementById('myRename')			// inputbox rename button
+  var add = document.getElementById('myAdd')				// inputbox add button
   var panel = document.getElementById('myPanel')			// list of folders, playlists etc
   var nav = document.getElementById('myContext')			// context menu during media play
   var nav2 = document.getElementById('myContext2')			// context menu over thumbs
@@ -33,7 +32,7 @@
   var last_index = 1*sessionStorage.getItem('last_index')		// last index
   var ini								// .ini folders, models, etc.
   var wheel = 0
-  var block = 10							// block wheel input
+  var block = 0								// block wheel/gesture input
   var index = 1								// media index (e.g. media14)
   var time = 0								// media time
   var start = 0								// video start time
@@ -53,7 +52,6 @@
   var cap_time = 0
   var looping = true							// play next or loop media
   var can_play								// browser can play media
-  var mpv_player = false						// use external media player
   var fullscreen = false
   var mouse_down = false
   var long_click = false
@@ -95,11 +93,11 @@
   function mouseDown(e) {
     if (e.button == 2) {context(e)}					// force context menu focus
     else {mouse_down = true; Xref = xpos; Yref = ypos}
-    if (e.button == 1) {
+    if (e.button == 1) {						// middle click
       e.preventDefault()
       clickTimer = setTimeout(function() {
         if (mouse_down) {long_click = true; playMedia('Mclick')}	// previous media
-        block=200},240)}						// middle click
+        block=200},240)}						// block accidental wheel
     if (!e.button) {
       if (!type && over_media && selected) {
         navigator.clipboard.writeText('#Media#'+index+'#'+selected+'#')}
@@ -200,7 +198,6 @@
     getParameters(e)
     if (type == 'document' || type == 'm3u') {type=''; return}
     if (e == 'Mclick' && type == 'video' && over_media && yw<0.9) {thumbSheet()}
-    if (mpv_player) {return}
     modal.style.zIndex = Zindex+=1
     modal.style.display = 'flex'
     media.muted = 1*sessionStorage.getItem('muted')
@@ -220,6 +217,7 @@
     media.oncanplay = function() {can_play=true}
     media.playbackRate = rate
     media.volume = 0
+    block = 0
     positionMedia()
     mediaTimer = setInterval(positionMedia,84)
     media.addEventListener('ended', media_ended)}
@@ -234,9 +232,8 @@
       localStorage.setItem("mediaY",mediaY)}
     if (skinny != newSkinny) {
       messages = messages+'#Skinny#'+newSkinny+'#'+index+',#'}		// width changes
-    if (!mpv_player) {
-      media.removeEventListener('ended', media_ended)
-      clearInterval(mediaTimer)}
+    clearInterval(mediaTimer)
+    media.removeEventListener('ended', media_ended)
     cap.style.display = 'none'
     cap.style.color = null
     cap.style.opacity = 0
@@ -289,9 +286,13 @@
       if (type != 'image') {media.playbackRate += x}
       if (media.playbackRate == 1) {block = 999}}
     else if (id == 'myModal' && type != 'thumbsheet') {			// seek
-       block = 40
-       if (wheelUp) {media.currentTime += interval}
-         else  {media.currentTime -= interval}}
+       if (!media.paused) {seekbar.style.opacity = 0.6}
+       if (type == 'image' && media.offsetHeight*scaleY > innerHeight) {
+         if (wheelUp) {mediaY -= 50}
+         else {mediaY += 50}}
+       else if (wheelUp) {media.currentTime += interval}
+         else  {media.currentTime -= interval}
+       block = 40}
     else {spool(e, id)} 						// scroll top panel
     wheel = 0}
 
@@ -301,20 +302,23 @@
     ypos = e.clientY
     if (!nav.matches(":hover")) {nav.style.display = null}
     if (!nav2.matches(":hover")) {nav2.style.display = null}
+    if (inputbox.value) {mySearch.innerHTML='Search'; myRename.innerHTML='Rename'; myAdd.innerHTML='Add'}
     if (!type) return
     var x = Math.abs(Xref-xpos)
     var y = Math.abs(Yref-ypos)
     if (mouse_down && x + y > 5) {					// gesture detection (mousedown + slide)
       gesture = true
       if ((ym>1 || yw>0.9) && x>y) {
-        scaleX -= (xpos-Xref)/1000
-        newSkinny = Math.round(1000*scaleX/scaleY)/1000
-        thumb.style.transform = "scaleX("+newSkinny+")"}
+        if (!block) {scaleX -= (xpos-Xref)/1000}
+        newSkinny = (scaleX/scaleY).toFixed(2)
+        thumb.style.transform = "scaleX("+newSkinny+")"
+        if (newSkinny == 1 && !block) {block = 20}}			// pause gesture when skinny crosses 1:1
       else if (x < y && mouse_down != 2) {
-        scaleX += (ypos-Yref)/200
+        if (scaleX < 0) {scaleX -= (ypos-Yref)/200}			// in case media fipped left/right
+        else {scaleX += (ypos-Yref)/200}
         scaleY += (ypos-Yref)/200}
       else {
-        mouse_down = 2
+        mouse_down = 2							// block scale zoom
         mediaX += xpos - Xref
         mediaY += ypos - Yref
         if (type != 'thumbsheet') {
@@ -334,6 +338,8 @@
 
 
   function positionMedia() {						// also every ~84mS while media/modal layer active
+    if (block) {block--}						// remove block delay
+    seekbar.style.opacity=null
     xw =  xpos / innerWidth
     yw =  ypos / innerHeight
     rect = media.getBoundingClientRect()
@@ -345,8 +351,6 @@
     media.style.top = (mediaY-media.offsetHeight/2) +y +"px"
     media.style.left = (mediaX-media.offsetWidth/2) +x +"px"
     media.style.transform = "scale("+scaleX+","+scaleY+")"
-    if ((type=='video' || type=='audio') && (over_media || nav2.matches(":hover"))) {seekbar.style.opacity = 0.6}
-    else {seekbar.style.opacity = null}
     seek.style.left = xpos - seek.offsetWidth/2 +'px'
     seek.style.top = rect.bottom -90 +'px'
     cap.style.top = rect.bottom +10 +'px'
@@ -376,8 +380,7 @@
     if (media.volume <= 0.8) {media.volume += 0.05}			// fade sound up
     if (media.duration > 120) {interval = 5} 				// set seek interval
     else {interval = 1}
-    if (media.paused) {interval = 0.04}
-}
+    if (media.paused) {interval = 0.04}}
 
 
   function playThumb() {
@@ -459,10 +462,10 @@
       if (y < scrollY+20 || y > scrollY+innerHeight-100) {scrollTo(0,y-300)}}}
 
 
-  function spool(e, id, input, to, so, fi, pa, ps, ts, rt, fs, mpv, pt) {  // spool lists into top htm panel
+  function spool(e, id, input, to, so, fi, pa, ps, ts, rt, fs, pt) {  // spool lists into top htm panel
     if (id) {panel.style.opacity = 1}
     if (input) {ini=input; toggles=to; sort=so; filt=fi; page=pa; 
-      pages=ps; view=ts; rate=rt; fullscreen=fs; mpv_player=mpv; path=pt}
+      pages=ps; view=ts; rate=rt; fullscreen=fs; path=pt}
     if (!last_id) {last_id = 'Fol'}
     if (id) {last_id = id} else {id = last_id}
     sessionStorage.setItem("last_id",last_id)

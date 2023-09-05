@@ -74,6 +74,7 @@
         Global target
         Global reload
         Global browser
+        Global clip
 
 
     main:
@@ -108,7 +109,6 @@
 
     Xbutton1::					; mouse "back" button
       Critical
-      Process, Close, mpv.exe
       timer := A_TickCount + 350
       SetTimer, Timer_up, -350
       return
@@ -121,15 +121,13 @@
       SetTimer, Timer_up, Off
       if (A_TickCount > timer)
         return
-      sleep 24					; time for mpv to close
-      GUI, settings:+LastFoundExist		; is menu window open
       IfWinExist, ahk_class OSKMainClass
         send, !0				; close onscreen keyboard
-      else IfWinExist, ahk_class mpv
-        Process, Close, mpv.exe			; mpv player
       else if WinActive("ahk_class Notepad")
         Send, {Esc}^s^w
-      else if (inca_tab && !Setting("External Player"))
+      else IfWinExist, ahk_class mpv
+        Process, Close, mpv.exe			; mpv player
+      else if inca_tab
         {
         WinGetPos,,,w,,a
         sleep 24
@@ -138,8 +136,6 @@
         send, {MButton up}			; close java modal (media player)
         Clipboard()				; read address bar message
         }
-      else if WinExist()			; menu settings window
-        WinClose
       else send, {Xbutton1}
       return
 
@@ -149,17 +145,14 @@
        MouseGetPos, xpos, ypos
        IfWinActive, ahk_class ahk_class mpv	; mpv player controls
          {
-         if (xpos < 100 && type != "image")
-           if (wheel == "up")			; speed
-             send, b
-           else send, a
-         else if(ypos < A_ScreenHeight*0.9 || type == "image")
-             if (wheel == "up")			; magnify
-               send, 9
-             else send, 0
-         else if (wheel == "up")		; seek
-           send, e
-         else send, f
+         if (type != "image")
+           if (xpos < 100)
+             if (wheel == "up")			; speed
+               send, b
+             else send, a
+           else if (wheel == "up")		; seek
+             send, e
+           else send, f
          }
        else					; browser magnify
          {
@@ -174,7 +167,7 @@
                if (wheel == "up")
                  send, ^0
                else send, ^{+}
-               sleep 64
+               sleep 84
                }
              }
          }
@@ -216,6 +209,10 @@
           MouseMove, % xpos, % ypos, 0
           if GetKeyState("RButton", "P")
               SetVolume(1.4 * x)
+          if (inca_tab && GetKeyState("LButton", "P"))
+             if (y < 0)				; magnify
+               send, 9
+             else send, 0
           }
         if (!gesture && A_TickCount > timer && !GetKeyState("RButton", "P"))
           {
@@ -258,6 +255,8 @@
 
     TimedEvents:
         title =
+        if (clipboard && !InStr(clipboard, "#"))			; preserve clipboard
+        clip := clipboard
         Gui, background:+LastFound
         WinGet, state, MinMax, ahk_group Browsers
         if (state > -1)
@@ -310,12 +309,12 @@
 
     Clipboard()								; check for messages from browser
         {
-Loop 24
-  {
-  sleep 24
-  if Clipboard
-    break
-  }
+        Loop 24
+          {
+          sleep 24
+          if Clipboard
+          break
+          }
         IfWinExist, ahk_class OSKMainClass
           send, !0							; close onscreen keyboard
         selected =
@@ -326,14 +325,12 @@ Loop 24
         reload =
         type =
         ptr := 1
-        if !inca_tab
-          return
         sleep 24
         input := StrReplace(Clipboard, "/", "\")
         array := StrSplit(input,"#")
-        if (array.MaxIndex() < 3)
+        if (!inca_tab || array.MaxIndex() < 3)
           return
-        Clipboard =
+        Clipboard := clip						; restore clipboard contents
         Loop % array.MaxIndex()/4
           {
           command := array[ptr+=1]
@@ -454,7 +451,7 @@ Loop 24
         if (command == "Skinny" && value)
             {
             FileDelete, %inca%\cache\widths\%media%.txt
-            if (value < 0.5) 
+            if (value < -1.2) 
               value = 0.5
             if (value > 1.5)
               value = 1.5
@@ -504,11 +501,17 @@ Loop 24
               if (type=="document" || type=="m3u")
                 Run, % "notepad.exe " . src
               else if Setting("External Player")
+                {
+                sleep 200
+                send, {MButton up}							; close java modal (media player) 
                 Run %inca%\apps\mpv "%src%"
+                }
               else if (timer && ((browser == "mozilla firefox" && type == "video" && ext != "mp4" && ext != "m4v") || (browser == "google chrome" && type == "video" && ext != "mp4" && ext != "mkv" && ext != "m4v")))
                 {
+                sleep 200
+                send, {MButton up}							; close java modal (media player) 
                 Run %inca%\apps\mpv "%src%"
-                Popup(popup,1000,0.34,0.8)
+                Popup(popup,1500,0.34,0.8)
                 }
               }
             }
@@ -738,7 +741,6 @@ Loop 24
         page_w := Setting("Page Width")
         size := Setting("Page Size")
         fs := Setting("Full Screen")
-        mpv_player := Setting("External Player")
         if search_term
           size = 1000
         page_media = /							; cannot use | as seperator because this_search uses |
@@ -783,7 +785,7 @@ Loop 24
 
         header_html = <!--`r`n%view%>%last_view%>%page%>%filt%>%sort%>%toggles%>%this_search%>%search_term%>%path%>%folder%>%playlist%>%last_media%>`r`n%page_media%`r`n-->`r`n<!doctype html>`r`n<html>`r`n<head>`r`n<meta charset="UTF-8">`r`n<title>Inca - %title%</title>`r`n<meta name="viewport" content="width=device-width, initial-scale=1">`r`n<link rel="icon" type="image/x-icon" href="file:///%inca%\apps\icons\inca.ico">`r`n</head>`r`n
 
-        panel_html = <body id='myBody' class='container' onload="spool(event, '', '%ini%', '%toggles%', '%sort%', %filt%, %page%, %pages%, %view%, %speed%, %fs%, %mpv_player%, '%path%')">`r`n
+        panel_html = <body id='myBody' class='container' onload="spool(event, '', '%ini%', '%toggles%', '%sort%', %filt%, %page%, %pages%, %view%, %speed%, %fs%, '%path%')">`r`n
 <div oncontextmenu='context(event)' style='padding-bottom:40em'>`r`n`r`n
 <span id="myContext" class='context'>`r`n
 <a onmousedown='navigator.clipboard.writeText("#Settings###"+selected+"#")'>. . .</a>`r`n
@@ -818,9 +820,9 @@ Loop 24
 <a onmousedown="navigator.clipboard.writeText('#Videos###')" %vid%>Vids</a>`r`n</div>`r`n`r`n
 <div style='display:flex'>`r`n
 <input id='myInput' onmouseover='panel.style.opacity=null' class='searchbox' type='search' value='%search_term%'>`r`n
-<a class='searchbox' onmousedown='searchbox()' style='width:8`%; border-radius:0'>Search</a>`r`n
-<a class='searchbox' onmousedown="navigator.clipboard.writeText('#Rename#'+inputbox.value+'#'+selected+'#')" style='width:8`%; border-radius:0'>Rename</a>`r`n
-<a class='searchbox' onmousedown="navigator.clipboard.writeText('#SearchAdd#'+inputbox.value+'#'+selected+'#')" style='width:6`%; border-radius:0 1em 1em 0'>Add</a></div>`r`n`r`n
+<a id='mySearch' class='searchbox' onmousedown='searchbox()' style='width:8`%; border-radius:0'></a>`r`n
+<a id='myRename' class='searchbox' onmousedown="navigator.clipboard.writeText('#Rename#'+inputbox.value+'#'+selected+'#')" style='width:8`%; border-radius:0'></a>`r`n
+<a id='myAdd' class='searchbox' onmousedown="navigator.clipboard.writeText('#SearchAdd#'+inputbox.value+'#'+selected+'#')" style='width:6`%; border-radius:0 1em 1em 0'></a></div>`r`n`r`n
 <div class='ribbon'>`r`n
 <a id='myPath' onmousedown="navigator.clipboard.writeText('#Up###%path%')" style='font-size:1.4em'>&#8678`r`n
 <a id='myThumbs' onmousedown='thumbs()' onwheel="wheelEvents(event, id, this)">Thumbs</a>`r`n

@@ -68,7 +68,7 @@
   color:lightsalmon;
   font-size:2em;
   border-top:2px solid lightsalmon;
-  transition:0.1s}
+  transition:0.2s}
 
 .seek {						/* moving seek thumbnail under video */
   position:absolute;
