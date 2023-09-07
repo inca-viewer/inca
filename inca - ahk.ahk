@@ -100,7 +100,6 @@
     ~LButton::					; click events
      RButton::
       MouseDown()
-      Gui PopUp:Cancel
       return
 
     ~MButton::
@@ -210,9 +209,10 @@
           if GetKeyState("RButton", "P")
               SetVolume(1.4 * x)
           if (inca_tab && GetKeyState("LButton", "P"))
-             if (y < 0)				; magnify
-               send, 9
-             else send, 0
+              IfWinActive, ahk_class ahk_class mpv	; mpv player controls
+                if (y < 0)				; magnify
+                  send, 9
+                else send, 0
           }
         if (!gesture && A_TickCount > timer && !GetKeyState("RButton", "P"))
           {
@@ -246,17 +246,16 @@
         }
       if (!gesture && click == "LButton" && inca_tab && A_Cursor != "IBeam") ; && A_Cursor != "Arrow")
         Clipboard()
-      if (!inca_tab && !timer && WinActive("ahk_group Browsers" && A_Cursor != "IBeam"))
-          send, f
       if (!gesture && click == "RButton")
           send {RButton}
+      Gui PopUp:Cancel
       }
 
 
     TimedEvents:
         title =
         if (clipboard && !InStr(clipboard, "#"))			; preserve clipboard
-        clip := clipboard
+          clip := clipboard
         Gui, background:+LastFound
         WinGet, state, MinMax, ahk_group Browsers
         if (state > -1)
@@ -309,7 +308,7 @@
 
     Clipboard()								; check for messages from browser
         {
-        Loop 24
+        Loop 14
           {
           sleep 24
           if Clipboard
@@ -445,7 +444,7 @@
                 value := seek
             if (InStr(path, "\inca\fav\") && !search_term)
                 FileAppend, %src%|%value%`r`n, %path%%folder%.m3u, UTF-8
-            FileAppend, %src%|%value%`r`n, %inca%\fav\new.m3u, UTF-8
+            else FileAppend, %src%|%value%`r`n, %inca%\fav\new.m3u, UTF-8
             Runwait, %inca%\apps\ffmpeg.exe -ss %value% -i "%src%" -y -vf scale=480:480/dar -vframes 1 "%inca%\cache\posters\%media%%A_Space%%value%.jpg",, Hide
             }
         if (command == "Skinny" && value)
@@ -598,7 +597,7 @@
               if (command == "Search")
                 subfolders =
               if !timer
-                search_term = %search_term% %value%			; long click adds new search term
+                search_term = %search_term%+%value%			; long click adds new search term
               else search_term = %value%
               }
             if address
@@ -789,7 +788,7 @@
 <div oncontextmenu='context(event)' style='padding-bottom:40em'>`r`n`r`n
 <span id="myContext" class='context'>`r`n
 <a onmousedown='navigator.clipboard.writeText("#Settings###"+selected+"#")'>. . .</a>`r`n
-<a id="myFav" onmousedown='navigator.clipboard.writeText("#Favorite#" + time + "#" + index + ",#")'>Fav</a>`r`n
+<a id="myFav" onmousedown='navigator.clipboard.writeText("#Favorite#" + media.currentTime.toFixed(1) + "#" + index + ",#")'>Fav</a>`r`n
 <a onclick='cut()'>Cut</a>`r`n
 <a onmousedown='paste()'>Paste</a>`r`n
 <a onclick='selectAll()'>Select</a>`r`n
@@ -799,10 +798,10 @@
 <a id='myMute' onclick='mute()' onwheel="wheelEvents(event, id, this)">Mute</a>`r`n
 <a id="mySpeed" class='stat' onwheel="wheelEvents(event, id, this)"></a>`r`n
 <a id='myLoop' onclick="loop()">Loop</a>`r`n
-<a id='myFav2' onmousedown='navigator.clipboard.writeText("#Favorite#" + time + "#" + index + ",#")'>Fav</a>`r`n
+<a id='myFav2' onmousedown='navigator.clipboard.writeText("#Favorite#" + media.currentTime.toFixed(1) + "#" + index + ",#")'>Fav</a>`r`n
 <a id="myCapnav" onclick="editCap()">Cap</a>`r`n<a onclick="cue = Math.round(media.currentTime*10)/10">Cue</a>`r`n
-<a id="myMp4" onmousedown="navigator.clipboard.writeText('#mp4#' + time + '#' + index + ',#' + cue)">mp4</a>`r`n
-<a id="myMp3" onmousedown="navigator.clipboard.writeText('#mp3#' + time + '#' + index + ',#' + cue)">mp3</a>`r`n</span>`r`n`r`n
+<a id="myMp4" onmousedown="navigator.clipboard.writeText('#mp4#' + media.currentTime.toFixed(1) + '#' + index + ',#' + cue)">mp4</a>`r`n
+<a id="myMp3" onmousedown="navigator.clipboard.writeText('#mp3#' + media.currentTime.toFixed(1) + '#' + index + ',#' + cue)">mp3</a>`r`n</span>`r`n`r`n
 <div id="myModal" class="modal" onwheel="wheelEvents(event, id, this)">`r`n
 <div><video id="myMedia" class="media" type="video/mp4" muted></video>`r`n
 <span id="mySeekBar" class='seekbar'></span>`r`n
@@ -822,7 +821,7 @@
 <input id='myInput' onmouseover='panel.style.opacity=null' class='searchbox' type='search' value='%search_term%'>`r`n
 <a id='mySearch' class='searchbox' onmousedown='searchbox()' style='width:8`%; border-radius:0'></a>`r`n
 <a id='myRename' class='searchbox' onmousedown="navigator.clipboard.writeText('#Rename#'+inputbox.value+'#'+selected+'#')" style='width:8`%; border-radius:0'></a>`r`n
-<a id='myAdd' class='searchbox' onmousedown="navigator.clipboard.writeText('#SearchAdd#'+inputbox.value+'#'+selected+'#')" style='width:6`%; border-radius:0 1em 1em 0'></a></div>`r`n`r`n
+<a id='myAdd' class='searchbox' onclick="navigator.clipboard.writeText('#SearchAdd#'+inputbox.value+'#'+selected+'#')" style='width:6`%; border-radius:0 1em 1em 0'></a></div>`r`n`r`n
 <div class='ribbon'>`r`n
 <a id='myPath' onmousedown="navigator.clipboard.writeText('#Up###%path%')" style='font-size:1.4em'>&#8678`r`n
 <a id='myThumbs' onmousedown='thumbs()' onwheel="wheelEvents(event, id, this)">Thumbs</a>`r`n
@@ -943,7 +942,7 @@
                 PopUp(count,0,0,0)
             if search_term
               {
-              array := StrSplit(search_term," ")
+              array := StrSplit(search_term,"+")
               Loop, % array.MaxIndex()
                 if (!InStr(filen, array[A_Index]))
                   return
@@ -1155,6 +1154,9 @@
         if timer
           if (InStr(address, "inca\fav") || InStr(address, "inca\music"))
             DeleteEntries(0)
+        Loop, Files, %media_path%/*.*, FD
+          return
+        FileRecycle, %media_path%					; delete folder if empty
         }  
 
 

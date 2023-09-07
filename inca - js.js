@@ -8,6 +8,14 @@
 // thumb position change in playlist - stop playing media
 // edit caption file when # in filename
 // mpv as default ?
+// view change during indexing
+// seekbar overmedia only
+//       modal.style.cursor = 'none'}
+		// seek thumbnail
+// list view mclick fails?
+// cursor timer
+
+
 
 
   var thumb = document.getElementById('media1')				// first media element
@@ -34,7 +42,6 @@
   var wheel = 0
   var block = 0								// block wheel/gesture input
   var index = 1								// media index (e.g. media14)
-  var time = 0								// media time
   var start = 0								// video start time
   var interval = 0							// wheel seeking interval
   var last_start = 0
@@ -224,7 +231,7 @@
 
 
   function close_media() {
-    last_start = time
+    last_start = media.currentTime
     if (!mediaX || mediaX < 0 || mediaX > innerWidth) {mediaX=innerWidth/2}
     if (!mediaY || mediaY < 0 || mediaY > innerHeight) {mediaY=innerHeight/2}
     if (type != 'thumbsheet') {
@@ -285,8 +292,7 @@
       else {x = 0.01}
       if (type != 'image') {media.playbackRate += x}
       if (media.playbackRate == 1) {block = 999}}
-    else if (id == 'myModal' && type != 'thumbsheet') {			// seek
-       if (!media.paused) {seekbar.style.opacity = 0.6}
+    else if (id == 'myModal' && type != 'thumbsheet') 		{	// seek
        if (type == 'image' && media.offsetHeight*scaleY > innerHeight) {
          if (wheelUp) {mediaY -= 50}
          else {mediaY += 50}}
@@ -328,9 +334,8 @@
       Yref = ypos
       positionMedia()}
     if (!nav.matches(":hover")) {nav.style.display = null}
-    modal.style.cursor = "crosshair"
-    if (type != 'thumbsheet') {
-      setTimeout(function() {modal.style.cursor = 'none'},244)}		// seek thumbnail
+    modal.style.cursor = 'crosshair'
+    if (type != 'thumbsheet') {setTimeout(function() {modal.style.cursor = 'none'},400)}
     if (xm>0&&xm<1&&ym>0.8&&ym<1) {
       if (type == 'video') {seek_active = true}
       seek.currentTime = media.duration*xm}
@@ -339,7 +344,8 @@
 
   function positionMedia() {						// also every ~84mS while media/modal layer active
     if (block) {block--}						// remove block delay
-    seekbar.style.opacity=null
+    if (over_media) {seekbar.style.opacity = 0.6}
+    else {seekbar.style.opacity=null}
     xw =  xpos / innerWidth
     yw =  ypos / innerHeight
     rect = media.getBoundingClientRect()
@@ -505,7 +511,7 @@
 
   function searchbox() {navigator.clipboard.writeText('#SearchBox#'+inputbox.value+'##')}
   function rename() {release(); navigator.clipboard.writeText("#Rename#"+inputbox.value+"#"+selected+"#")}
-  function thumbs() {sessionStorage.setItem("last_index",last_index); navigator.clipboard.writeText('#myThumbs#'+view+'##')}
+  function thumbs() {navigator.clipboard.writeText('#myThumbs#'+view+'##'); sessionStorage.setItem("last_index",last_index)}
   function loop() {if (looping) {looping = false} else {looping = true}}
   function mute() {media.volume=0; media.muted=!media.muted; sessionStorage.setItem("muted",1*media.muted); media.play()}
   function selectAll() {for (i=1; i <= 600; i++) {select(i)}}
@@ -520,6 +526,7 @@
     if (type) {nav2.style.display='block'} else {nav.style.display='block'}}
 
   function editCap() {							// edit caption
+    var time = media.currentTime.toFixed(1)
     if (!time) {time = '0.0'}
     if (cap.value != cap.innerHTML && cap.value.length > 1) {
       newcap = cap.value + "|" + time + "|"
@@ -536,8 +543,8 @@
   function showCaption() {						// display captions
     if (document.activeElement.id == 'myCap') {cap.style.color='red'; return}
     else {cap.style.color=null}
-    if (type == 'image') {time='0.0'}
     var time = media.currentTime.toFixed(1)
+    if (!time || type == 'image') {time='0.0'}
     var ptr = cap_list.indexOf('|'+ time + '|')
     if (ptr < 1) {ptr = cap_list.indexOf('|'+ time - 0.1 + '|')}
     if ((ptr > 0 && cap_time != time) || type == 'image') {
