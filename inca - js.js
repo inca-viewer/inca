@@ -9,14 +9,6 @@
 // edit caption file when # in filename
 // mpv as default ?
 // view change during indexing
-// seekbar overmedia only
-//       modal.style.cursor = 'none'}
-		// seek thumbnail
-// list view mclick fails?
-// cursor timer
-
-
-
 
   var thumb = document.getElementById('media1')				// first media element
   var modal = document.getElementById('myModal')			// media player window
@@ -127,7 +119,7 @@
       else {thumbs()}}
     if (!e.button && !gesture) {					
       if (type == 'thumbsheet') {playThumb()}				// play at thumbsheet click coordinate
-      else if (type == 'video' && ym>0.8 && ym<1 && seek.style.opacity>0.3 && !nav2.matches(":hover")) {
+      else if (seek.style.opacity>0.3 && !nav2.matches(":hover")) {
         media.currentTime = seek.currentTime}
       else if (cap.value != cap.innerHTML) {editCap()}			// caption in edit mode
       else if (!type && over_media) {playMedia('Click')}
@@ -207,7 +199,7 @@
     if (e == 'Mclick' && type == 'video' && over_media && yw<0.9) {thumbSheet()}
     modal.style.zIndex = Zindex+=1
     modal.style.display = 'flex'
-    media.muted = 1*sessionStorage.getItem('muted')
+    media.muted = 1*localStorage.getItem('muted')
     if (type == 'audio' || path.match('/inca/music/')) {looping=false; media.muted=false; scaleY=0.4}
     else if (fullscreen) {modal.requestFullscreen()}
     if (scaleY > 1.42 && type != 'thumbsheet') {scaleY = 1.42}
@@ -327,18 +319,15 @@
         mouse_down = 2							// block scale zoom
         mediaX += xpos - Xref
         mediaY += ypos - Yref
-        if (type != 'thumbsheet') {
-          localStorage.setItem("mediaX",mediaX)
-          localStorage.setItem("mediaY",mediaY)}}
+        localStorage.setItem("mediaX",mediaX)
+        localStorage.setItem("mediaY",mediaY)}
       Xref = xpos
       Yref = ypos
       positionMedia()}
     if (!nav.matches(":hover")) {nav.style.display = null}
     modal.style.cursor = 'crosshair'
     if (type != 'thumbsheet') {setTimeout(function() {modal.style.cursor = 'none'},400)}
-    if (xm>0&&xm<1&&ym>0.8&&ym<1) {
-      if (type == 'video') {seek_active = true}
-      seek.currentTime = media.duration*xm}
+    if (yw>0.9 && type == 'video') {seek_active = true; seek.currentTime = media.duration*xm}
     else {seek_active=false; seek.style.opacity=0}}
 
 
@@ -358,7 +347,8 @@
     media.style.left = (mediaX-media.offsetWidth/2) +x +"px"
     media.style.transform = "scale("+scaleX+","+scaleY+")"
     seek.style.left = xpos - seek.offsetWidth/2 +'px'
-    seek.style.top = rect.bottom -90 +'px'
+    seek.style.top = innerHeight -90 +'px'
+//    seek.style.top = rect.bottom -90 +'px'
     cap.style.top = rect.bottom +10 +'px'
     cap.style.left = rect.left +10 +'px'
     if (cap_list) {cap.style.display='block'}
@@ -513,7 +503,7 @@
   function rename() {release(); navigator.clipboard.writeText("#Rename#"+inputbox.value+"#"+selected+"#")}
   function thumbs() {navigator.clipboard.writeText('#myThumbs#'+view+'##'); sessionStorage.setItem("last_index",last_index)}
   function loop() {if (looping) {looping = false} else {looping = true}}
-  function mute() {media.volume=0; media.muted=!media.muted; sessionStorage.setItem("muted",1*media.muted); media.play()}
+  function mute() {media.volume=0; media.muted=!media.muted; localStorage.setItem("muted",1*media.muted); media.play()}
   function selectAll() {for (i=1; i <= 600; i++) {select(i)}}
   function cut() {txt=getSelection().toString(); navigator.clipboard.writeText(txt); inputbox.value=inputbox.value.replace(txt,'')}
   function paste() {x=navigator.clipboard.readText().toString(); el=document.activeElement; el.setRangeText(txt, el.selectionStart, el.selectionEnd, 'select')}

@@ -442,9 +442,7 @@
             {
             if !value
                 value := seek
-            if (InStr(path, "\inca\fav\") && !search_term)
-                FileAppend, %src%|%value%`r`n, %path%%folder%.m3u, UTF-8
-            else FileAppend, %src%|%value%`r`n, %inca%\fav\new.m3u, UTF-8
+            FileAppend, %src%|%value%`r`n, %inca%\fav\new.m3u, UTF-8
             Runwait, %inca%\apps\ffmpeg.exe -ss %value% -i "%src%" -y -vf scale=480:480/dar -vframes 1 "%inca%\cache\posters\%media%%A_Space%%value%.jpg",, Hide
             }
         if (command == "Skinny" && value)
