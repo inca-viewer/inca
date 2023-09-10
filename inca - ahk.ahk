@@ -103,6 +103,7 @@
       return
 
     ~MButton::
+       sleep 64
        Clipboard()
        return
 
@@ -153,23 +154,6 @@
              send, e
            else send, f
          }
-       else					; browser magnify
-         {
-         wheel_count += 1
-         if (wheel_count > 10 && ypos < 50 && xpos < 50)
-             {
-             wheel_count = 0
-             WinGet, state, MinMax, ahk_group Browsers
-             if (state > -1)
-               {
-               WinActivate, ahk_group Browsers
-               if (wheel == "up")
-                 send, ^0
-               else send, ^{+}
-               sleep 84
-               }
-             }
-         }
       wheel =
       return
 
@@ -208,11 +192,22 @@
           MouseMove, % xpos, % ypos, 0
           if GetKeyState("RButton", "P")
               SetVolume(1.4 * x)
-          if (inca_tab && GetKeyState("LButton", "P"))
-              IfWinActive, ahk_class ahk_class mpv	; mpv player controls
-                if (y < 0)				; magnify
-                  send, 9
-                else send, 0
+          if (inca_tab && GetKeyState("LButton", "P") && WinActive, ahk_class ahk_class mpv)
+              if (y < 0)				; mpv player controls
+                send, 9					; magnify
+              else send, 0
+          else if (GetKeyState("LButton", "P") && xpos < 50)
+             {
+             WinGet, state, MinMax, ahk_group Browsers	; browser magnify
+             if (state > -1)
+               {
+               WinActivate, ahk_group Browsers
+               if (y < 0)
+                 send, ^0
+               else send, ^{+}
+               sleep 84
+               }
+             }
           }
         if (!gesture && A_TickCount > timer && !GetKeyState("RButton", "P"))
           {
@@ -383,11 +378,16 @@
 
     ProcessMessage()
         {
+        if (command == "Subs")
+            {
+            x := StrSplit(subfolders,"|")
+            address := x[value]
+            command = Path
+            }
         if (command == "Up")
             {
-            StringTrimRight, address, address, 1
-            SplitPath, address,,path
-            address = %path%\
+            path := SubStr(path, 1, InStr(path, "\", False, -1))
+            address = %path%
             command = Path
             }
         if (command == "EditCap")					; open in notepad if caption
@@ -397,20 +397,20 @@
             }
         if (command == "Orphan")					; open in notepad if playlist
             {
+            address := path
             if playlist
               {
-              IfExist, %address%%value%.m3u
-                if !timer						; long click
-                  run, %address%%value%.m3u
-                else reload := 3
+              if !timer							; long click
+                run, %playlist%
+              else reload := 3
               }
             else if search_term
               {
               address =
               command = Search
               }
-            else IfExist, %inca%\%value%\
-              run, %inca%\%value%\
+            else if !timer
+              run, %path%
             else command = Path
             }
         if (command == "mp3" || command == "mp4")		; address = cue, value = current time
@@ -775,14 +775,14 @@
             array := StrSplit(x,"\")
             x := array.MaxIndex()
             fname := array[x]
-            subs = %subs% <div><table><tr><td><a onmousedown='navigator.clipboard.writeText("#Path##"+selected+"#%A_Loopfield%")' style="width:80`%; margin-left:4.2em; border-radius:1em; white-space:nowrap; overflow:hidden; border-radius:1em; text-overflow:ellipsis">%fname%</a></td></tr></table></div>`r`n`r`n
+            subs = %subs% <div><table><tr><td><a onmousedown='navigator.clipboard.writeText("#Subs#%A_Index%#"+selected+"#")' style="width:80`%; margin-left:4.2em; border-radius:1em; white-space:nowrap; overflow:hidden; border-radius:1em; text-overflow:ellipsis">%fname%</a></td></tr></table></div>`r`n`r`n
             }
         if subs
             subs = %subs%<hr style='height:1em; width:77`%; margin-left:0; outline:none; border:0 none; border-top:0.1px solid #826858'></hr>`r`n`r`n
 
         header_html = <!--`r`n%view%>%last_view%>%page%>%filt%>%sort%>%toggles%>%this_search%>%search_term%>%path%>%folder%>%playlist%>%last_media%>`r`n%page_media%`r`n-->`r`n<!doctype html>`r`n<html>`r`n<head>`r`n<meta charset="UTF-8">`r`n<title>Inca - %title%</title>`r`n<meta name="viewport" content="width=device-width, initial-scale=1">`r`n<link rel="icon" type="image/x-icon" href="file:///%inca%\apps\icons\inca.ico">`r`n</head>`r`n
 
-        panel_html = <body id='myBody' class='container' onload="spool(event, '', '%ini%', '%toggles%', '%sort%', %filt%, %page%, %pages%, %view%, %speed%, %fs%, '%path%')">`r`n
+        panel_html = <body id='myBody' class='container' onload="spool(event, '', '%ini%', '%toggles%', '%sort%', %filt%, %page%, %pages%, %view%, %speed%, %fs%, '%playlist%')">`r`n
 <div oncontextmenu='context(event)' style='padding-bottom:40em'>`r`n`r`n
 <span id="myContext" class='context'>`r`n
 <a onmousedown='navigator.clipboard.writeText("#Settings###"+selected+"#")'>. . .</a>`r`n
@@ -821,9 +821,9 @@
 <a id='myRename' class='searchbox' onmousedown="navigator.clipboard.writeText('#Rename#'+inputbox.value+'#'+selected+'#')" style='width:8`%; border-radius:0'></a>`r`n
 <a id='myAdd' class='searchbox' onclick="navigator.clipboard.writeText('#SearchAdd#'+inputbox.value+'#'+selected+'#')" style='width:6`%; border-radius:0 1em 1em 0'></a></div>`r`n`r`n
 <div class='ribbon'>`r`n
-<a id='myPath' onmousedown="navigator.clipboard.writeText('#Up###%path%')" style='font-size:1.4em'>&#8678`r`n
+<a id='myPath' onmousedown="navigator.clipboard.writeText('#Up###')" style='font-size:1.4em'>&#8678`r`n
 <a id='myThumbs' onmousedown='thumbs()' onwheel="wheelEvents(event, id, this)">Thumbs</a>`r`n
-<a onmousedown="navigator.clipboard.writeText('#Orphan#%folder%##%path%')" style='font-size:1.7em; transform:none'>%title_s%</a>`r`n
+<a onmousedown="navigator.clipboard.writeText('#Orphan###')" style='font-size:1.7em; transform:none'>%title_s%</a>`r`n
 <a style='font-size:1.3em; transform:none'>%list_size%</a>`r`n
 <a id='mySort' onmousedown="navigator.clipboard.writeText('#'+sort+'#'+sort+'##')" %rev% style='width:7em' onwheel="wheelEvents(event, id, this)">%sort%</a>`r`n
 <a id='myFilt' onmousedown="navigator.clipboard.writeText('#Filt#'+filt+'##')" onwheel="wheelEvents(event, id, this)">All</a>`r`n

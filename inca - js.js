@@ -8,7 +8,7 @@
 // thumb position change in playlist - stop playing media
 // edit caption file when # in filename
 // mpv as default ?
-// view change during indexing
+// view change intermittent 
 
   var thumb = document.getElementById('media1')				// first media element
   var modal = document.getElementById('myModal')			// media player window
@@ -45,7 +45,7 @@
   var page = 1
   var pages = 1								// how many htm pages of media
   var filt = 1								// filter or sort 
-  var path								// media filepath
+  var playlist								// full filepath
   var type = ''								// audio, video, image, document
   var cap_list = ''							// full caption text file
   var cap_time = 0
@@ -80,7 +80,6 @@
   var Xoff = 0
   var Yoff = 0
 
-
   setTimeout(function() {scrolltoIndex()},300)				// scroll to last played media
   document.addEventListener('mousedown', mouseDown)
   document.addEventListener('mouseup', mouseUp)				// mouseUp alone = mouse back button
@@ -98,6 +97,7 @@
         if (mouse_down) {long_click = true; playMedia('Mclick')}	// previous media
         block=200},240)}						// block accidental wheel
     if (!e.button) {
+      block = 0
       if (!type && over_media && selected) {
         navigator.clipboard.writeText('#Media#'+index+'#'+selected+'#')}
       clickTimer = setTimeout(function() {
@@ -186,7 +186,7 @@
 
 
   function playMedia(e) {
-    if (long_click && selected && path.match('/inca/')) {return}	// moving thumb position within a playlist
+    if (long_click && selected && playlist) {return}			// moving thumb position within a playlist
     var last_type = type
     if (type) {close_media()}						// no type if no media playing
     if (e == 'Next') {index+=1; start=0}
@@ -200,7 +200,7 @@
     modal.style.zIndex = Zindex+=1
     modal.style.display = 'flex'
     media.muted = 1*localStorage.getItem('muted')
-    if (type == 'audio' || path.match('/inca/music/')) {looping=false; media.muted=false; scaleY=0.4}
+    if (type == 'audio' || playlist.match('/inca/music/')) {looping=false; media.muted=false; scaleY=0.4}
     else if (fullscreen) {modal.requestFullscreen()}
     if (scaleY > 1.42 && type != 'thumbsheet') {scaleY = 1.42}
     scaleX = scaleY*skinny
@@ -216,7 +216,6 @@
     media.oncanplay = function() {can_play=true}
     media.playbackRate = rate
     media.volume = 0
-    block = 0
     positionMedia()
     mediaTimer = setInterval(positionMedia,84)
     media.addEventListener('ended', media_ended)}
@@ -306,7 +305,7 @@
     var y = Math.abs(Yref-ypos)
     if (mouse_down && x + y > 5) {					// gesture detection (mousedown + slide)
       gesture = true
-      if ((ym>1 || yw>0.9) && x>y) {
+      if ((ym>1 || yw>0.9) && x>y) {					// media width
         if (!block) {scaleX -= (xpos-Xref)/1000}
         newSkinny = (scaleX/scaleY).toFixed(2)
         thumb.style.transform = "scaleX("+newSkinny+")"
@@ -348,7 +347,6 @@
     media.style.transform = "scale("+scaleX+","+scaleY+")"
     seek.style.left = xpos - seek.offsetWidth/2 +'px'
     seek.style.top = innerHeight -90 +'px'
-//    seek.style.top = rect.bottom -90 +'px'
     cap.style.top = rect.bottom +10 +'px'
     cap.style.left = rect.left +10 +'px'
     if (cap_list) {cap.style.display='block'}
@@ -407,7 +405,7 @@
 
   function media_ended() {
     if (!long_click && (!looping || type == 'audio')) {
-      if (path.match('/inca/music/')) {setTimeout(function() {playMedia('Next')},1800)}	// next media
+      if (playlist.match('/inca/music/')) {setTimeout(function() {playMedia('Next')},1800)}	// next media
       else {playMedia('Next')}
       return}
     if (type == 'thumbsheet') {type = 'video'}
@@ -425,7 +423,7 @@
 
   function select(i) {							// highlight selected media
     index = i
-    if (!(el = document.getElementById("title" + i))) {return}
+    if (!(el = document.getElementById('title' + i))) {return}
     x = ',' + selected
     if (el.style.border == "0.1px solid lightsalmon") {
       el.style.border = "none"
@@ -458,10 +456,10 @@
       if (y < scrollY+20 || y > scrollY+innerHeight-100) {scrollTo(0,y-300)}}}
 
 
-  function spool(e, id, input, to, so, fi, pa, ps, ts, rt, fs, pt) {  // spool lists into top htm panel
+  function spool(e, id, input, to, so, fi, pa, ps, ts, rt, fs, pl) {  // spool lists into top htm panel
     if (id) {panel.style.opacity = 1}
     if (input) {ini=input; toggles=to; sort=so; filt=fi; page=pa; 
-      pages=ps; view=ts; rate=rt; fullscreen=fs; path=pt}
+      pages=ps; view=ts; rate=rt; fullscreen=fs; playlist=pl}
     if (!last_id) {last_id = 'Fol'}
     if (id) {last_id = id} else {id = last_id}
     sessionStorage.setItem("last_id",last_id)
