@@ -1,4 +1,4 @@
-<script>
+ <script>
 
 // panel.style.opacity=1; panel.innerHTML= x; or alert(x)		// debugging
 // rem. long click text or search, +adds extra search term
@@ -8,19 +8,24 @@
 // thumb position change in playlist - stop playing media
 // edit caption file when # in filename
 // mpv as default ?
-// view change intermittent 
+// view change intermittent
+// firefox start time flicker
+// long mbutt start
+
+
 
   var thumb = document.getElementById('media1')				// first media element
   var modal = document.getElementById('myModal')			// media player window
   var media = document.getElementById('myMedia')			// modal overlay player
   var inputbox = document.getElementById('myInput')			// search/editing bar
+  var Select = document.getElementById('mySelected')			// selected following cursor
   var search = document.getElementById('mySearch')			// inputbox search button
   var rename = document.getElementById('myRename')			// inputbox rename button
   var add = document.getElementById('myAdd')				// inputbox add button
   var panel = document.getElementById('myPanel')			// list of folders, playlists etc
   var nav = document.getElementById('myContext')			// context menu during media play
   var nav2 = document.getElementById('myContext2')			// context menu over thumbs
-  var stat = document.getElementById('mySpeed')				// media rate
+  var Speed = document.getElementById('mySpeed')			// media rate
   var cap = document.getElementById('myCap')				// caption textarea element
   var capnav = document.getElementById('myCapnav')			// caption save button
   var seekbar = document.getElementById('mySeekBar')			// media seekbar
@@ -58,7 +63,7 @@
   var over_cap = false							// cursor over caption
   var over_media = false
   var seek_active = false						// seek thumb under video
-  var media_ratio							// media/screen ratio
+  var ratio								// media width to height ratio
   var skinny = 1							// media width
   var newSkinny = 1
   var selected = ''							// list of selected media in page
@@ -97,7 +102,6 @@
         if (mouse_down) {long_click = true; playMedia('Mclick')}	// previous media
         block=200},240)}						// block accidental wheel
     if (!e.button) {
-      block = 0
       if (!type && over_media && selected) {
         navigator.clipboard.writeText('#Media#'+index+'#'+selected+'#')}
       clickTimer = setTimeout(function() {
@@ -173,7 +177,7 @@
     newSkinny = skinny
     mediaX = localStorage.getItem('mediaX')*1				// last media position
     mediaY = localStorage.getItem('mediaY')*1
-    var ratio = thumb.offsetWidth/thumb.offsetHeight
+    ratio = thumb.offsetWidth/thumb.offsetHeight
     if (ratio > 1) {x = innerWidth*0.5; y = x/ratio}			// landscape
     else {y = innerHeight*0.7; x = y*ratio}				// portrait
     media.style.width = x +'px'						// position media in modal
@@ -202,7 +206,8 @@
     media.muted = 1*localStorage.getItem('muted')
     if (type == 'audio' || playlist.match('/inca/music/')) {looping=false; media.muted=false; scaleY=0.4}
     else if (fullscreen) {modal.requestFullscreen()}
-    if (scaleY > 1.42 && type != 'thumbsheet') {scaleY = 1.42}
+    if (ratio < 1 && scaleY > 1.42) {scaleY = 1.42}
+    if (ratio > 1 && scaleY > 2) {scaleY = 2}    
     scaleX = scaleY*skinny
     if (type == 'video' || type == 'audio') {media.currentTime = start}
     if (cap_list && type != 'thumbsheet') {media.currentTime = start-1}	// start at first caption
@@ -274,7 +279,7 @@
       else {view -= view /40}
       view = view .toFixed(1)
       if (view < 4) {view = 4}
-      if (view > 84) {view = 84}
+      if (view > 99) {view = 99}
       for (i=1; i<33 ;i++) {
         el = document.getElementById("thumb" + i)
         if (el) {el.style.width=view+'em'; el.style.height=view+'em'}}}
@@ -283,7 +288,7 @@
       else {x = 0.01}
       if (type != 'image') {media.playbackRate += x}
       if (media.playbackRate == 1) {block = 999}}
-    else if (id == 'myModal' && type != 'thumbsheet') 		{	// seek
+    else if (id == 'myModal' && type != 'thumbsheet' && over_media) {	// seek
        if (type == 'image' && media.offsetHeight*scaleY > innerHeight) {
          if (wheelUp) {mediaY -= 50}
          else {mediaY += 50}}
@@ -297,14 +302,18 @@
   function Gesture(e) {							// mouse move over window
     xpos = e.clientX
     ypos = e.clientY
+    Select.style.top = ypos -4 +'px'
+    Select.style.left = xpos +16 +'px'
+    if (selected) {Select.innerHTML = selected.split(',').length -1}
+    else {Select.innerHTML = ''}
     if (!nav.matches(":hover")) {nav.style.display = null}
     if (!nav2.matches(":hover")) {nav2.style.display = null}
     if (inputbox.value) {mySearch.innerHTML='Search'; myRename.innerHTML='Rename'; myAdd.innerHTML='Add'}
-    if (!type) return
+    if (!type) {return}
     var x = Math.abs(Xref-xpos)
     var y = Math.abs(Yref-ypos)
     if (mouse_down && x + y > 5) {					// gesture detection (mousedown + slide)
-      gesture = true
+      if (!gesture) {block=0; gesture=true}
       if ((ym>1 || yw>0.9) && x>y) {					// media width
         if (!block) {scaleX -= (xpos-Xref)/1000}
         newSkinny = (scaleX/scaleY).toFixed(2)
@@ -332,14 +341,13 @@
 
   function positionMedia() {						// also every ~84mS while media/modal layer active
     if (block) {block--}						// remove block delay
-    if (over_media) {seekbar.style.opacity = 0.6}
+    if (over_media || ym > 1) {seekbar.style.opacity = 0.6}
     else {seekbar.style.opacity=null}
     xw =  xpos / innerWidth
     yw =  ypos / innerHeight
     rect = media.getBoundingClientRect()
     xm = (xpos - rect.left) / (media.offsetWidth*scaleX)
     ym = (ypos - rect.top) / (media.offsetHeight*scaleY)
-    media_ratio = media.offsetHeight*scaleY/innerHeight
     if (!type) {seek_active = false; return}
     if (screenLeft) {x=0; y=0; Xoff=screenLeft; Yoff=outerHeight-innerHeight} else {x=Xoff; y=Yoff}	// fullscreen
     media.style.top = (mediaY-media.offsetHeight/2) +y +"px"
@@ -351,9 +359,9 @@
     cap.style.left = rect.left +10 +'px'
     if (cap_list) {cap.style.display='block'}
     showCaption()
-    if (type == 'image') {stat.innerHTML=''}
-    else {stat.innerHTML = media.playbackRate.toFixed(2)}
-    if (type != 'audio') {modal.style.backgroundColor = 'rgba(0,0,0,'+media_ratio*3+')'}
+    if (type == 'image') {Speed.innerHTML=''}
+    else {Speed.innerHTML = media.playbackRate.toFixed(2)}
+    if (type != 'audio') {modal.style.backgroundColor = 'rgba(0,0,0,'+scaleY*1.5+')'}
     if (type == 'video' && seek.style.opacity == 1) {seek_active = false}
     if (seek_active && seek.style.opacity < 1) {seek.style.opacity -= '-0.05'}
     if (!seek_active && seek.style.opacity > 0) {seek.style.opacity -= '0.05'}
@@ -412,10 +420,9 @@
     if (over_media) {media.currentTime = start}
     else {media.currentTime = 0}
     media.play()
-    if (long_click || media_ratio > 3) {return}
+    if (long_click || scaleY > 3) {return}
     if (media.playbackRate > 0.40) {media.playbackRate -= 0.05}		// magnify and slow each loop
     media.style.transition = '1.4s'
-    stat.innerHTML = Math.round(media.playbackRate *100)
     scaleX*=1.1; scaleY*=1.1
     media.style.transform = "scale("+scaleX+","+scaleY+")"
     setTimeout(function() {media.style.transition=null},1400)}
@@ -432,8 +439,7 @@
     else {
       el.style.border = "0.1px solid lightsalmon"
       if (!x.match("," + i + ",")) {selected = selected + i + ","}
-      inputbox.value = document.getElementById("title" + i).innerHTML}
-      panel.style.opacity=1; panel.innerHTML = selected}
+      inputbox.value = document.getElementById("title" + i).innerHTML}}
 
 
   function filter() {							// eg 30 minutes, 2 months, alpha 'A'
@@ -486,7 +492,7 @@
       count++
       if (id == 'Fol') {q = y.pop()}
       q = q.replace('.m3u', '').substring(0, 12)
-      if (selected || q == "New") {q = "<span style='color:lightsalmon'</span>" + q}
+      if (q == "New") {q = "<span style='color:lightsalmon'</span>" + q}
       if (count > 0 && count < 29) {
         htm = htm + '<a onmousedown=\'navigator.clipboard.writeText("#Path##' + selected + '#' + x + '")\'>' + q + '</a>'}}
     if (id) {panel.innerHTML = htm}

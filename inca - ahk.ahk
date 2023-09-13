@@ -386,7 +386,7 @@
             }
         if (command == "Up")
             {
-            path := SubStr(path, 1, InStr(path, "\", False, -1))
+            path := SubStr(path, 1, InStr(path, "\", False, -1))	; one folder back
             address = %path%
             command = Path
             }
@@ -503,7 +503,7 @@
                 send, {MButton up}							; close java modal (media player) 
                 Run %inca%\apps\mpv "%src%"
                 }
-              else if (timer && ((browser == "mozilla firefox" && type == "video" && ext != "mp4" && ext != "m4v") || (browser == "google chrome" && type == "video" && ext != "mp4" && ext != "mkv" && ext != "m4v")))
+              else if (timer && ((browser == "mozilla firefox" && type == "video" && ext != "mp4" && ext != "m4v" && ext != "webm") || (browser == "google chrome" && type == "video" && ext != "mp4" && ext != "mkv" && ext != "m4v" && ext != "webm")))
                 {
                 sleep 200
                 send, {MButton up}							; close java modal (media player) 
@@ -780,9 +780,10 @@
         if subs
             subs = %subs%<hr style='height:1em; width:77`%; margin-left:0; outline:none; border:0 none; border-top:0.1px solid #826858'></hr>`r`n`r`n
 
-        header_html = <!--`r`n%view%>%last_view%>%page%>%filt%>%sort%>%toggles%>%this_search%>%search_term%>%path%>%folder%>%playlist%>%last_media%>`r`n%page_media%`r`n-->`r`n<!doctype html>`r`n<html>`r`n<head>`r`n<meta charset="UTF-8">`r`n<title>Inca - %title%</title>`r`n<meta name="viewport" content="width=device-width, initial-scale=1">`r`n<link rel="icon" type="image/x-icon" href="file:///%inca%\apps\icons\inca.ico">`r`n</head>`r`n
+        header_html = <!--`r`n%view%>%last_view%>%page%>%filt%>%sort%>%toggles%>%this_search%>%search_term%>%path%>%folder%>%playlist%>%last_media%>`r`n%page_media%`r`n-->`r`n<!doctype html>`r`n<html>`r`n<head>`r`n<meta charset="UTF-8">`r`n<title>Inca - %title%</title>`r`n<meta name="viewport" content="width=device-width, initial-scale=1">`r`n<link rel="icon" type="image/x-icon" href="file:///%inca%\apps\icons\inca.ico">`r`n</head>
 
         panel_html = <body id='myBody' class='container' onload="spool(event, '', '%ini%', '%toggles%', '%sort%', %filt%, %page%, %pages%, %view%, %speed%, %fs%, '%playlist%')">`r`n
+<div id='mySelected' class='selected'></div>`r`n
 <div oncontextmenu='context(event)' style='padding-bottom:40em'>`r`n`r`n
 <span id="myContext" class='context'>`r`n
 <a onmousedown='navigator.clipboard.writeText("#Settings###"+selected+"#")'>. . .</a>`r`n
@@ -794,7 +795,7 @@
 <a onmousedown='navigator.clipboard.writeText("#Join##" + selected + "#")'>Join</a>`r`n</span>`r`n`r`n
 <span id="myContext2" class='context'>`r`n
 <a id='myMute' onclick='mute()' onwheel="wheelEvents(event, id, this)">Mute</a>`r`n
-<a id="mySpeed" class='stat' onwheel="wheelEvents(event, id, this)"></a>`r`n
+<a id="mySpeed" onwheel="wheelEvents(event, id, this)"></a>`r`n
 <a id='myLoop' onclick="loop()">Loop</a>`r`n
 <a id='myFav2' onmousedown='navigator.clipboard.writeText("#Favorite#" + media.currentTime.toFixed(1) + "#" + index + ",#")'>Fav</a>`r`n
 <a id="myCapnav" onclick="editCap()">Cap</a>`r`n<a onclick="cue = Math.round(media.currentTime*10)/10">Cue</a>`r`n
@@ -821,7 +822,7 @@
 <a id='myRename' class='searchbox' onmousedown="navigator.clipboard.writeText('#Rename#'+inputbox.value+'#'+selected+'#')" style='width:8`%; border-radius:0'></a>`r`n
 <a id='myAdd' class='searchbox' onclick="navigator.clipboard.writeText('#SearchAdd#'+inputbox.value+'#'+selected+'#')" style='width:6`%; border-radius:0 1em 1em 0'></a></div>`r`n`r`n
 <div class='ribbon'>`r`n
-<a id='myPath' onmousedown="navigator.clipboard.writeText('#Up###')" style='font-size:1.4em'>&#8678`r`n
+<a id='myPath' onmousedown="navigator.clipboard.writeText('#Up##'+selected+'#')" style='font-size:1.4em'>&#8678`r`n
 <a id='myThumbs' onmousedown='thumbs()' onwheel="wheelEvents(event, id, this)">Thumbs</a>`r`n
 <a onmousedown="navigator.clipboard.writeText('#Orphan###')" style='font-size:1.7em; transform:none'>%title_s%</a>`r`n
 <a style='font-size:1.3em; transform:none'>%list_size%</a>`r`n
@@ -853,7 +854,7 @@
         if (type == "video")
             {
             thumb =  %inca%\cache\posters\%media%.jpg
-            if start
+            if (start || playlist)
               IfExist, %inca%\cache\posters\%media% %start%.jpg
                 thumb = %inca%\cache\posters\%media% %start%.jpg
             if (!start && !playlist)
@@ -888,8 +889,7 @@
         StringReplace, src, src, #, `%23, All				; html cannot have # in filename
         stringlower, thumb, thumb
         poster = poster="file:///%thumb%"
-        start := Round(start+0.1,1)
-        max_height := view
+        start := Round(start+0.1,1)					; smooth start for thumb play
 
 
 ; FileRead, dur, %inca%\cache\durations\%media%.txt
@@ -899,7 +899,7 @@
 
         if !view							; list view
             {
-            entry = <div><table><tr><td id="thumb%j%" style="position:absolute; margin-left:3.5em">`r`n<a id="sel%j%"><video id="media%j%" class='thumblist' style="width:10em; %transform%" onmousedown='navigator.clipboard.writeText("#Media#%j%##%start%")' onmouseover="overThumb(%j%, %skinny%, '%type%', %start%, '%cap%', event)" onmouseout='over_media=false; this.load()' %poster% src="file:///%src%" type="video/mp4" preload='none' muted></video></a></tr></table><table style="table-layout:fixed; width:100`%; font-size:0.9em"><tr><td style="width:4em; text-align:center"><span style="border-radius:9px; color:#777777">%sort_name%</span></td><td style="width:4em; text-align:center">%dur%</td><td style="width:3em; text-align:center">%size%</td><td style="width:4em; text-align:center">%ext%</td>%fold%<td><div id="title%j%" onclick="select(%j%)" style="width:80`%; border-radius:1em; padding-left:0.5em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis">%media%</div></td></tr></table></div>`r`n`r`n
+            entry = <div><table><tr><td id="thumb%j%" style="position:absolute; margin-left:3.5em">`r`n<video id="media%j%" class='thumblist' style="width:10em; %transform%" onmousedown='navigator.clipboard.writeText("#Media#%j%##%start%")' onmouseover="overThumb(%j%, %skinny%, '%type%', %start%, '%cap%', event)" onmouseout='over_media=false; this.load()' %poster% src="file:///%src%" type="video/mp4" preload='none' muted></video></tr></table><table style="table-layout:fixed; width:100`%; font-size:0.9em"><tr><td style="width:4em; text-align:center"><span style="border-radius:9px; color:#777777">%sort_name%</span></td><td style="width:4em; text-align:center">%dur%</td><td style="width:3em; text-align:center">%size%</td><td style="width:4em; text-align:center">%ext%</td>%fold%<td><div id="title%j%" onclick="select(%j%)" style="width:80`%; border-radius:1em; padding-left:0.5em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis">%media%</div></td></tr></table></div>`r`n`r`n
             }
         else								; thumbnail view
             {
@@ -915,7 +915,7 @@
                     }
 	        entry = <a onmousedown='navigator.clipboard.writeText("#Media#%j%##")'><div style="display:inline-block; width:88`%; color:#555351; transition:color 1.4s; margin-left:8`%; text-align:center; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; %highlight%;">%sort_name% &nbsp;&nbsp;%media%</div></a><textarea rows=%rows% style="display:inline-block; overflow:hidden; margin-left:8`%; width:88`%; background-color:inherit; color:#826858; font-size:1.2em; font-family:inherit; border:none; outline:none;">%str2%</textarea>`r`n`r`n
                 }
-            else entry = <div id="thumb%j%" class="thumb_container" style="width:%view%em; height:%max_height%em; margin-right:3em; margin-bottom:6em">`r`n<div id="title%j%" onclick="select(%j%)" style="display:grid; align-content:end; text-align:center; padding:0.3em; color:#555351; border-radius:1.5em; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; font-size:0.85em; height:2em">%media%</div>`r`n<a id="sel%j%">`r`n<video class="media" id="media%j%" style="position:inherit; %transform%; object-fit:contain; max-width:100`%; max-height:100`%" onmousedown='navigator.clipboard.writeText("#Media#%j%##%start%")' onmouseover="overThumb(%j%, %skinny%, '%type%', %start%, '%cap%', event)" onmouseout='over_media=false; this.pause()' onmousemove='over_media=true; index=%j%' src="file:///%src%" %poster% preload='none' muted type="video/mp4"></video>`r`n</a>%caption%<div></div></div>`r`n`r`n
+            else entry = <div id="thumb%j%" class="thumb_container" style="width:%view%em; height:%view%em; margin-right:3em; margin-bottom:6em">`r`n<div id="title%j%" onclick="select(%j%)" style="display:grid; align-content:end; text-align:center; padding:0.3em; color:#555351; border-radius:1.5em; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; font-size:0.85em; height:2em">`r`n%media%</div>`r`n<video class="media" id="media%j%" style="position:inherit; %transform%" `r`nonmousedown='navigator.clipboard.writeText("#Media#%j%##%start%")' `r`nonmouseover="overThumb(%j%, %skinny%, '%type%', %start%, '%cap%', event)" `r`nonmouseout='over_media=false; this.pause()' `r`nonmousemove='over_media=true; index=%j%' `r`nsrc="file:///%src%" `r`n%poster% `r`npreload='none' muted type="video/mp4"></video>%caption%<div></div></div>`r`n`r`n
             }
         return entry
         }
@@ -1397,7 +1397,7 @@
             vol := Round(volume,1)
         if (volume <= 0)
             vol =
-        status = %time%    %vol% 
+        status = %time%    %vol%
         if (status != last_status)					; to stop flickering
             {
             Gui, Status:+lastfound
@@ -1544,11 +1544,11 @@
                 }
             if (med == "audio")
                 continue
-            create =
+            create := 0
             IfNotExist, %inca%\cache\posters\%filen%.jpg
-              create = 1
+              create := 1
             IfNotExist, %inca%\cache\thumbs\%filen%.jpg
-              create = 1
+              create += 2
             if create
                 {
                 GuiControl, Indexer:, GuiInd, indexing - %filen%
@@ -1562,12 +1562,13 @@
                 loop 180						; 36 video frames in thumb preview
                     {
                     y := Round(A_Index / 5)
-                    if !Mod(A_Index,5)
+                    if (create & 1 && A_Index == 5)
+                        runwait, %inca%\apps\ffmpeg.exe -ss %t% -i "%source%" -y -vf scale=1280:1280/dar -vframes 1 "%inca%\cache\posters\%filen%.jpg",, Hide
+                    if (create & 2 && !Mod(A_Index,5))
                         runwait, %inca%\apps\ffmpeg.exe -ss %t% -i "%source%" -y -vf scale=480:480/dar -vframes 1 "%inca%\cache\temp1\%y%.jpg",, Hide
                     t += (dur / 200)
                     }
-                FileCopy, %inca%\cache\temp1\1.jpg, %inca%\cache\posters\%filen%.jpg, 1
-                IfNotExist, %inca%\cache\thumbs\%filen%.jpg
+                if (create & 2)
                     Runwait %inca%\apps\ffmpeg -i %inca%\cache\temp1\`%d.jpg -filter_complex "tile=6x6" -y "%inca%\cache\thumbs\%filen%.jpg",, Hide
                 }
             }

@@ -3,6 +3,15 @@
 
 ::-webkit-scrollbar {width:0}			/* hide bright white scrollbar */
 
+.selected {
+  display:block; 
+  position:absolute;
+  z-index:999;
+  color:red;
+  width:2em;
+  height:2em;
+  font-size:1.4em}
+
 .ribbon {					/* menu, fol, fav, search ... */
   display:flex;
   position:relative;
@@ -11,7 +20,7 @@
   margin-left:1em;
   font-size:1em;
   justify-content:space-between;
-  width:85%}
+  width:80%}
 
 .ribbon a {transition:0.8s; border-radius:1em}
 .ribbon a:hover {
@@ -92,9 +101,13 @@
   cursor:crosshair}
 
 .media {					/* player in modal overlay */
+  display:inline-block;
   position:absolute;
+  object-fit:contain;
+  max-width:100%;
+  max-height:100%;
   border-radius:3%;
-  user-select:none}
+  user-select:none}474778
 
 .caption {
   display:none;
