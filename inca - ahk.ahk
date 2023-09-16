@@ -94,6 +94,7 @@
       return					; wait for mouse/key events
 
 
+
     Esc up::
       ExitApp
 
@@ -443,7 +444,7 @@
             if !value
                 value := seek
             FileAppend, %src%|%value%`r`n, %inca%\fav\new.m3u, UTF-8
-            Runwait, %inca%\apps\ffmpeg.exe -ss %value% -i "%src%" -y -vf scale=480:480/dar -vframes 1 "%inca%\cache\posters\%media%%A_Space%%value%.jpg",, Hide
+            Runwait, %inca%\apps\ffmpeg.exe -ss %value% -i "%src%" -y -vf scale=1280:1280/dar -vframes 1 "%inca%\cache\posters\%media%%A_Space%%value%.jpg",, Hide
             }
         if (command == "Skinny" && value)
             {
@@ -470,15 +471,24 @@
             }
         if (command == "Delete")
             {
+            reload := 3
             if (InStr(path, "\inca\fav\") || InStr(path, "\inca\music\"))
               DeleteEntries(1)
-            else Loop, Parse, selected, `/
+            else 
               {
-              list_id := A_LoopField
-              if GetMedia(0)
-                FileRecycle, %src%
+              Loop, Parse, selected, `/
+                {
+                list_id := A_LoopField
+                if GetMedia(0)
+                  FileRecycle, %src%
+                }
+              Loop, Files, %media_path%/*.*, FD
+                return
+              address := SubStr(path, 1, InStr(path, "\", False, -1))	; one folder back
+              command = Path
+              selected =
+              FileRecycle, %media_path%							; delete folder if empty
               }
-            reload := 3
             }
         if (command == "Media")
             {
@@ -523,9 +533,16 @@
             }
         if (command == "Path" && selected)
             {
-            FileTransfer()						; between folders or fav
             reload := 3
-            return
+            FileTransfer()						; between folders or fav
+            if (playlist || InStr(address, "\inca\"))
+              return
+            Loop, Files, %media_path%/*.*, FD
+              return							; files still exist in folder
+            FileRecycle, %media_path%					; delete folder if empty
+            path := SubStr(path, 1, InStr(media_path, "\", False, -1))	; go one folder back
+            address = %path%
+            selected =
             }
         if (command == "Join")
             {
@@ -775,65 +792,65 @@
             array := StrSplit(x,"\")
             x := array.MaxIndex()
             fname := array[x]
-            subs = %subs% <div><table><tr><td><a onmousedown='navigator.clipboard.writeText("#Subs#%A_Index%#"+selected+"#")' style="width:80`%; margin-left:4.2em; border-radius:1em; white-space:nowrap; overflow:hidden; border-radius:1em; text-overflow:ellipsis">%fname%</a></td></tr></table></div>`r`n`r`n
+            subs = %subs% <div><table><tr><td><a onmousedown='navigator.clipboard.writeText("#Subs#%A_Index%#"+selected+"#")' style="width:80`%; margin-left:4.2em; border-radius:1em; white-space:nowrap; overflow:hidden; border-radius:1em; text-overflow:ellipsis">%fname%</a></td></tr></table></div>`n`n
             }
         if subs
-            subs = %subs%<hr style='height:1em; width:77`%; margin-left:0; outline:none; border:0 none; border-top:0.1px solid #826858'></hr>`r`n`r`n
+            subs = %subs%<hr style='height:1em; width:77`%; margin-left:0; outline:none; border:0 none; border-top:0.1px solid #826858'></hr>`n`n
 
-        header_html = <!--`r`n%view%>%last_view%>%page%>%filt%>%sort%>%toggles%>%this_search%>%search_term%>%path%>%folder%>%playlist%>%last_media%>`r`n%page_media%`r`n-->`r`n<!doctype html>`r`n<html>`r`n<head>`r`n<meta charset="UTF-8">`r`n<title>Inca - %title%</title>`r`n<meta name="viewport" content="width=device-width, initial-scale=1">`r`n<link rel="icon" type="image/x-icon" href="file:///%inca%\apps\icons\inca.ico">`r`n</head>
+        header_html = <!--`n%view%>%last_view%>%page%>%filt%>%sort%>%toggles%>%this_search%>%search_term%>%path%>%folder%>%playlist%>%last_media%>`n%page_media%`n-->`n<!doctype html>`n<html>`n<head>`n<meta charset="UTF-8">`n<title>Inca - %title%</title>`n<meta name="viewport" content="width=device-width, initial-scale=1">`n<link rel="icon" type="image/x-icon" href="file:///%inca%\apps\icons\inca.ico">`n</head>
 
-        panel_html = <body id='myBody' class='container' onload="spool(event, '', '%ini%', '%toggles%', '%sort%', %filt%, %page%, %pages%, %view%, %speed%, %fs%, '%playlist%')">`r`n
-<div id='mySelected' class='selected'></div>`r`n
-<div oncontextmenu='context(event)' style='padding-bottom:40em'>`r`n`r`n
-<span id="myContext" class='context'>`r`n
-<a onmousedown='navigator.clipboard.writeText("#Settings###"+selected+"#")'>. . .</a>`r`n
-<a id="myFav" onmousedown='navigator.clipboard.writeText("#Favorite#" + media.currentTime.toFixed(1) + "#" + index + ",#")'>Fav</a>`r`n
-<a onclick='cut()'>Cut</a>`r`n
-<a onmousedown='paste()'>Paste</a>`r`n
-<a onclick='selectAll()'>Select</a>`r`n
-<a id='myDelete' onmousedown='release(); if (selected) {navigator.clipboard.writeText("#Delete##"+selected+"#")} else {navigator.clipboard.writeText("#Delete##"+index+",#")}'>Delete</a>`r`n
-<a onmousedown='navigator.clipboard.writeText("#Join##" + selected + "#")'>Join</a>`r`n</span>`r`n`r`n
-<span id="myContext2" class='context'>`r`n
-<a id='myMute' onclick='mute()' onwheel="wheelEvents(event, id, this)">Mute</a>`r`n
-<a id="mySpeed" onwheel="wheelEvents(event, id, this)"></a>`r`n
-<a id='myLoop' onclick="loop()">Loop</a>`r`n
-<a id='myFav2' onmousedown='navigator.clipboard.writeText("#Favorite#" + media.currentTime.toFixed(1) + "#" + index + ",#")'>Fav</a>`r`n
-<a id="myCapnav" onclick="editCap()">Cap</a>`r`n<a onclick="cue = Math.round(media.currentTime*10)/10">Cue</a>`r`n
-<a id="myMp4" onmousedown="navigator.clipboard.writeText('#mp4#' + media.currentTime.toFixed(1) + '#' + index + ',#' + cue)">mp4</a>`r`n
-<a id="myMp3" onmousedown="navigator.clipboard.writeText('#mp3#' + media.currentTime.toFixed(1) + '#' + index + ',#' + cue)">mp3</a>`r`n</span>`r`n`r`n
-<div id="myModal" class="modal" onwheel="wheelEvents(event, id, this)">`r`n
-<div><video id="myMedia" class="media" type="video/mp4" muted></video>`r`n
-<span id="mySeekBar" class='seekbar'></span>`r`n
-<textarea id="myCap" class="caption" onmouseenter="over_cap=true" onmouseleave="over_cap=false"></textarea>`r`n
-<span><video id='mySeek' class='seek' type="video/mp4"></video></span></div></div>`r`n`r`n
-<div style="width:%page_w%`%; margin:auto">`r`n
-<div class='panel' id='myPanel' onwheel="wheelEvents(event, '', this)"></div>`r`n`r`n
-<div id='myRibbon' class='ribbon'>`r`n
-<a onmousedown="navigator.clipboard.writeText('#Recurse###')" %rec%>Recurse</a>`r`n
-<a onmouseover="spool(event, 'Fol')">Fol</a>`r`n
-<a onmouseover="spool(event, 'Fav')">Fav</a>`r`n
-<a onmouseover="spool(event, 'Music')">Music</a>`r`n
-<a onmouseover="spool(event, 'Search')" onwheel="wheelEvents(event, 'Search', this)">Search</a>`r`n
-<a onmousedown="navigator.clipboard.writeText('#Images###')" %img%>Pics</a>`r`n
-<a onmousedown="navigator.clipboard.writeText('#Videos###')" %vid%>Vids</a>`r`n</div>`r`n`r`n
-<div style='display:flex'>`r`n
-<input id='myInput' onmouseover='panel.style.opacity=null' class='searchbox' type='search' value='%search_term%'>`r`n
-<a id='mySearch' class='searchbox' onmousedown='searchbox()' style='width:8`%; border-radius:0'></a>`r`n
-<a id='myRename' class='searchbox' onmousedown="navigator.clipboard.writeText('#Rename#'+inputbox.value+'#'+selected+'#')" style='width:8`%; border-radius:0'></a>`r`n
-<a id='myAdd' class='searchbox' onclick="navigator.clipboard.writeText('#SearchAdd#'+inputbox.value+'#'+selected+'#')" style='width:6`%; border-radius:0 1em 1em 0'></a></div>`r`n`r`n
-<div class='ribbon'>`r`n
-<a id='myPath' onmousedown="navigator.clipboard.writeText('#Up##'+selected+'#')" style='font-size:1.4em'>&#8678`r`n
-<a id='myThumbs' onmousedown='thumbs()' onwheel="wheelEvents(event, id, this)">Thumbs</a>`r`n
-<a onmousedown="navigator.clipboard.writeText('#Orphan###')" style='font-size:1.7em; transform:none'>%title_s%</a>`r`n
-<a style='font-size:1.3em; transform:none'>%list_size%</a>`r`n
-<a id='mySort' onmousedown="navigator.clipboard.writeText('#'+sort+'#'+sort+'##')" %rev% style='width:7em' onwheel="wheelEvents(event, id, this)">%sort%</a>`r`n
-<a id='myFilt' onmousedown="navigator.clipboard.writeText('#Filt#'+filt+'##')" onwheel="wheelEvents(event, id, this)">All</a>`r`n
-<a id="myPage" onmousedown="navigator.clipboard.writeText('#Page#'+page+'##')" onwheel="wheelEvents(event, id, this)">%pg%</a></div>`r`n`r`n
+        panel_html = <body id='myBody' class='container' onload="spool(event, '', '%ini%', '%toggles%', '%sort%', %filt%, %page%, %pages%, %view%, %speed%, %fs%, '%playlist%')">`n
+<div id='mySelected' class='selected'></div>`n
+<div oncontextmenu='context(event)' style='padding-bottom:40em'>`n`n
+<span id="myContext" class='context'>`n
+<a onmousedown='navigator.clipboard.writeText("#Settings###"+selected+"#")'>. . .</a>`n
+<a id="myFav" onmousedown='navigator.clipboard.writeText("#Favorite#" + media.currentTime.toFixed(1) + "#" + index + ",#")'>Fav</a>`n
+<a onclick='cut()'>Cut</a>`n
+<a onmousedown='paste()'>Paste</a>`n
+<a onclick='selectAll()'>Select</a>`n
+<a id='myDelete' onmousedown='release(); if (selected) {navigator.clipboard.writeText("#Delete##"+selected+"#")} else {navigator.clipboard.writeText("#Delete##"+index+",#")}'>Delete</a>`n
+<a onmousedown='navigator.clipboard.writeText("#Join##" + selected + "#")'>Join</a></span>`n`n
+<span id="myContext2" class='context'>`n
+<a id='myMute' onclick='mute()' onwheel="wheelEvents(event, id, this)">Mute</a>`n
+<a id="mySpeed" onwheel="wheelEvents(event, id, this)"></a>`n
+<a id='myLoop' onclick="loop()">Loop</a>`n
+<a id='myFav2' onmousedown='navigator.clipboard.writeText("#Favorite#" + media.currentTime.toFixed(1) + "#" + index + ",#")'>Fav</a>`n
+<a id="myCapnav" onclick="editCap()">Cap</a>`n
+<a onclick="cue = Math.round(media.currentTime*10)/10">Cue</a>`n
+<a id="myMp4" onmousedown="navigator.clipboard.writeText('#mp4#' + media.currentTime.toFixed(1) + '#' + index + ',#' + cue)">mp4</a>`n
+<a id="myMp3" onmousedown="navigator.clipboard.writeText('#mp3#' + media.currentTime.toFixed(1) + '#' + index + ',#' + cue)">mp3</a></span>`n`n
+<div id="myModal" class="modal" onwheel="wheelEvents(event, id, this)">`n
+<div><video id="myMedia" class="media" type="video/mp4" muted></video>`n
+<span id="mySeekBar" class='seekbar'></span>`n
+<textarea id="myCap" class="caption" onmouseenter="over_cap=true" onmouseleave="over_cap=false"></textarea>`n
+<span><video id='mySeek' class='seek' type="video/mp4"></video></span></div></div>`n`n
+<div style="width:%page_w%`%; margin:auto">`n`n
+<div class='panel' id='myPanel' onwheel="wheelEvents(event, '', this)"></div>`n`n
+<div id='myRibbon' class='ribbon'>`n
+<a onmousedown="navigator.clipboard.writeText('#Recurse###')" %rec%>Recurse</a>`n
+<a onmouseover="spool(event, 'Fol')">Fol</a>`n
+<a onmouseover="spool(event, 'Fav')">Fav</a>`n
+<a onmouseover="spool(event, 'Music')">Music</a>`n
+<a onmouseover="spool(event, 'Search')" onwheel="wheelEvents(event, 'Search', this)">Search</a>`n
+<a onmousedown="navigator.clipboard.writeText('#Images###')" %img%>Pics</a>`n
+<a onmousedown="navigator.clipboard.writeText('#Videos###')" %vid%>Vids</a></div>`n`n
+<div style='display:flex'>`n
+<input id='myInput' onmouseover='panel.style.opacity=null' class='searchbox' type='search' value='%search_term%'>`n
+<a id='mySearch' class='searchbox' onmousedown='searchbox()' style='width:8`%; border-radius:0'></a>`n
+<a id='myRename' class='searchbox' onmousedown="navigator.clipboard.writeText('#Rename#'+inputbox.value+'#'+selected+'#')" style='width:8`%; border-radius:0'></a>`n
+<a id='myAdd' class='searchbox' onclick="navigator.clipboard.writeText('#SearchAdd#'+inputbox.value+'#'+selected+'#')" style='width:6`%; border-radius:0 1em 1em 0'></a></div>`n`n
+<div class='ribbon'>`n
+<a id='myPath' onmousedown="navigator.clipboard.writeText('#Up##'+selected+'#')" style='font-size:1.4em'>&#8678`n
+<a onmousedown="navigator.clipboard.writeText('#Orphan###')" style='font-size:1.7em; transform:none'>%title_s%</a>`n
+<a style='font-size:1.3em; transform:none'>%list_size%</a>`n
+<a id='mySort' onmouseover='wheel=0' onmousedown="navigator.clipboard.writeText('#'+sort+'#'+sort+'##')" %rev% style='width:7em' onwheel="wheelEvents(event, id, this)">%sort%</a>`n
+<a id='myFilt' onmousedown="navigator.clipboard.writeText('#Filt#'+filt+'##')" onwheel="wheelEvents(event, id, this)">All</a>`n
+<a id="myPage" onmousedown="navigator.clipboard.writeText('#Page#'+page+'##')" onwheel="wheelEvents(event, id, this)">%pg%</a></div>`n`n`n
 
         FileDelete, %inca%\cache\html\%folder%.htm
-        html = %header_html%%style%%panel_html%%subs%%html%</div></div>`r`n
+        html = %header_html%%style%%panel_html%%subs%%html%</div></div>`n
         StringReplace, html, html, \, /, All
-        FileAppend, %html%%java%</body>`r`n</html>`r`n, %inca%\cache\html\%folder%.htm, UTF-8
+        FileAppend, %html%%java%</body>`n</html>`n, %inca%\cache\html\%folder%.htm, UTF-8
         LoadHtml()
         PopUp("",0,0,0)
         }
@@ -899,7 +916,7 @@
 
         if !view							; list view
             {
-            entry = <div><table><tr><td id="thumb%j%" style="position:absolute; margin-left:3.5em">`r`n<video id="media%j%" class='thumblist' style="width:10em; %transform%" onmousedown='navigator.clipboard.writeText("#Media#%j%##%start%")' onmouseover="overThumb(%j%, %skinny%, '%type%', %start%, '%cap%', event)" onmouseout='over_media=false; this.load()' %poster% src="file:///%src%" type="video/mp4" preload='none' muted></video></tr></table><table style="table-layout:fixed; width:100`%; font-size:0.9em"><tr><td style="width:4em; text-align:center"><span style="border-radius:9px; color:#777777">%sort_name%</span></td><td style="width:4em; text-align:center">%dur%</td><td style="width:3em; text-align:center">%size%</td><td style="width:4em; text-align:center">%ext%</td>%fold%<td><div id="title%j%" onclick="select(%j%)" style="width:80`%; border-radius:1em; padding-left:0.5em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis">%media%</div></td></tr></table></div>`r`n`r`n
+            entry = <div><table><tr><td id="thumb%j%" style="position:absolute; margin-left:3.5em">`n <video id="media%j%" class='thumblist' style="width:10em; %transform%"`n onmousedown='navigator.clipboard.writeText("#Media#%j%##%start%")'`n onmouseover="overThumb(%j%, %skinny%, '%type%', %start%, '%cap%', event)"`n onmouseout='over_media=false; this.load()'`n %poster%`n src="file:///%src%"`n type="video/mp4" preload='none' muted></video></tr></table>`n <table style="table-layout:fixed; width:100`%; font-size:0.9em"><tr><td style="width:4em; text-align:center">`n <span style="border-radius:9px; color:#777777">%sort_name%</span></td>`n <td style="width:4em; text-align:center">%dur%</td>`n <td style="width:3em; text-align:center">%size%</td>`n <td style="width:4em; text-align:center">%ext%</td>%fold%`n <td><div id="title%j%" onclick="select(%j%)" class='title0'>`n %media%</div></td></tr></table></div>`n`n
             }
         else								; thumbnail view
             {
@@ -913,9 +930,9 @@
                         str2 = %str2%%str1%`r`n
                     else break
                     }
-	        entry = <a onmousedown='navigator.clipboard.writeText("#Media#%j%##")'><div style="display:inline-block; width:88`%; color:#555351; transition:color 1.4s; margin-left:8`%; text-align:center; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; %highlight%;">%sort_name% &nbsp;&nbsp;%media%</div></a><textarea rows=%rows% style="display:inline-block; overflow:hidden; margin-left:8`%; width:88`%; background-color:inherit; color:#826858; font-size:1.2em; font-family:inherit; border:none; outline:none;">%str2%</textarea>`r`n`r`n
+	        entry = <a onmousedown='navigator.clipboard.writeText("#Media#%j%##")'><div style="display:inline-block; width:88`%; color:#555351; transition:color 1.4s; margin-left:8`%; text-align:center; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; %highlight%;">%sort_name% &nbsp;&nbsp;%media%</div></a><textarea rows=%rows% style="display:inline-block; overflow:hidden; margin-left:8`%; width:88`%; background-color:inherit; color:#826858; font-size:1.2em; font-family:inherit; border:none; outline:none;">%str2%</textarea>`n`n
                 }
-            else entry = <div id="thumb%j%" class="thumb_container" style="width:%view%em; height:%view%em; margin-right:3em; margin-bottom:6em">`r`n<div id="title%j%" onclick="select(%j%)" style="display:grid; align-content:end; text-align:center; padding:0.3em; color:#555351; border-radius:1.5em; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; font-size:0.85em; height:2em">`r`n%media%</div>`r`n<video class="media" id="media%j%" style="position:inherit; %transform%" `r`nonmousedown='navigator.clipboard.writeText("#Media#%j%##%start%")' `r`nonmouseover="overThumb(%j%, %skinny%, '%type%', %start%, '%cap%', event)" `r`nonmouseout='over_media=false; this.pause()' `r`nonmousemove='over_media=true; index=%j%' `r`nsrc="file:///%src%" `r`n%poster% `r`npreload='none' muted type="video/mp4"></video>%caption%<div></div></div>`r`n`r`n
+            else entry = <div id="thumb%j%" class="thumb_container" style="width:%view%em; height:%view%em">`n <div id="title%j%" class='title' onclick="select(%j%)">%media%</div>`n <video class="media" id="media%j%" style="position:inherit; %transform%"`n onmousedown='navigator.clipboard.writeText("#Media#%j%##%start%")'`n onmouseover="overThumb(%j%, %skinny%, '%type%', %start%, '%cap%', event)"`n onmouseout='over_media=false; this.pause()'`n src="file:///%src%"`n %poster%`n preload='none' muted type="video/mp4"></video>%caption%</div>`n`n
             }
         return entry
         }
@@ -1152,9 +1169,6 @@
         if timer
           if (InStr(address, "inca\fav") || InStr(address, "inca\music"))
             DeleteEntries(0)
-        Loop, Files, %media_path%/*.*, FD
-          return
-        FileRecycle, %media_path%					; delete folder if empty
         }  
 
 
@@ -1462,6 +1476,7 @@
             dur := aTime.1 * 3600 + aTime.2 * 60 + aTime.3
             FileDelete, %inca%\cache\durations\%filen%.txt
             FileAppend, %dur%, %inca%\cache\durations\%filen%.txt
+            clipboard := clip
             }
         return dur
         }

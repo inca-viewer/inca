@@ -8,9 +8,13 @@
 // thumb position change in playlist - stop playing media
 // edit caption file when # in filename
 // mpv as default ?
-// view change intermittent
 // firefox start time flicker
-// long mbutt start
+// caption issues
+// better continuity between htm video and modal video viewing
+
+// make selected survive view change
+// could list view html be same as thumb view?
+
 
 
 
@@ -33,15 +37,15 @@
   var Loop = document.getElementById('myLoop')				// loop video or play next
   var Mute = document.getElementById('myMute')
   var last_id = sessionStorage.getItem('last_id')			// last top panel menu eg 'music'
-  var pos = 1*sessionStorage.getItem('pos')				// last top panel column position
   var last_index = 1*sessionStorage.getItem('last_index')		// last index
+  var last_start = 1*sessionStorage.getItem('last_start')		// last media start time
+  var pos = 1*sessionStorage.getItem('pos')				// last top panel column position
   var ini								// .ini folders, models, etc.
   var wheel = 0
   var block = 0								// block wheel/gesture input
   var index = 1								// media index (e.g. media14)
   var start = 0								// video start time
   var interval = 0							// wheel seeking interval
-  var last_start = 0
   var toggles = ''							// eg reverse, recurse
   var sort = 'Alpha'
   var units = ''							// minutes, months, MB etc.
@@ -98,6 +102,7 @@
     else {mouse_down = true; Xref = xpos; Yref = ypos}
     if (e.button == 1) {						// middle click
       e.preventDefault()
+      if (!type && !over_media) {thumbs()}
       clickTimer = setTimeout(function() {
         if (mouse_down) {long_click = true; playMedia('Mclick')}	// previous media
         block=200},240)}						// block accidental wheel
@@ -116,11 +121,11 @@
     nav2.style.display=null
     if (e.button == 1 && !mouse_down) {mouseBack()}			// inca.exe replaces mouse back button with MClick Up
     else if (e.button == 1 && !long_click) {
-      if (type == 'video' && cap_list && (ym>1 || yw>0.9)) {		// seek to next caption in movie
+      if (type == 'video' && cap_list && (ym>1 || yw>0.9)) {	// seek to next caption in movie
         var z = cap_list.split('|')
         for (x of z) {if (!isNaN(x) && x>(media.currentTime+0.2)) {media.currentTime=x-1; media.play(); break}}}
-      else if (type || over_media) {playMedia('Mclick')}
-      else {thumbs()}}
+      else if (type || over_media) {playMedia('Mclick')}}
+    if (!type && !e.button && gesture) {thumbs()}				
     if (!e.button && !gesture) {					
       if (type == 'thumbsheet') {playThumb()}				// play at thumbsheet click coordinate
       else if (seek.style.opacity>0.3 && !nav2.matches(":hover")) {
@@ -160,7 +165,7 @@
     rect = thumb.getBoundingClientRect()
     xm = (xpos - rect.left) / (thumb.offsetWidth*skinny)
     ym = (ypos - rect.top) / thumb.offsetHeight
-    if (thumb.duration && ym>0.9 && ym<1.1) {thumb.currentTime = thumb.duration * xm}
+    if (thumb.duration && ym>0.7 && ym<1.1) {thumb.currentTime = thumb.duration * xm}
     else if (thumb.currentTime <= start || ym<0.1) {thumb.currentTime = start+0.1}
     thumb.playbackRate = 0.9
     thumb.play()}
@@ -228,6 +233,7 @@
 
   function close_media() {
     last_start = media.currentTime
+    sessionStorage.setItem("last_start",last_start)
     if (!mediaX || mediaX < 0 || mediaX > innerWidth) {mediaX=innerWidth/2}
     if (!mediaY || mediaY < 0 || mediaY > innerHeight) {mediaY=innerHeight/2}
     if (type != 'thumbsheet') {
@@ -272,23 +278,12 @@
     else if (id == 'myFilt') {						// search filter
       if (wheelUp) {filt++} else if (filt) {filt--}
       filter()}
-    else if (id == 'myThumbs') {					// size - all thumbs
-      el = document.getElementById("thumb" + index)
-      view = 1*el.style.width.slice(0,-2)
-      if (wheelUp) {view += view/40}
-      else {view -= view /40}
-      view = view .toFixed(1)
-      if (view < 4) {view = 4}
-      if (view > 99) {view = 99}
-      for (i=1; i<33 ;i++) {
-        el = document.getElementById("thumb" + i)
-        if (el) {el.style.width=view+'em'; el.style.height=view+'em'}}}
     else if (id=='mySpeed' || id=='myMute') {				// speed
       if (wheelUp) {x = -0.01}
       else {x = 0.01}
       if (type != 'image') {media.playbackRate += x}
       if (media.playbackRate == 1) {block = 999}}
-    else if (id == 'myModal' && type != 'thumbsheet' && over_media) {	// seek
+    else if (id == 'myModal' && type != 'thumbsheet' && (over_media || (xm>0 && xm<1))) {  // seek
        if (type == 'image' && media.offsetHeight*scaleY > innerHeight) {
          if (wheelUp) {mediaY -= 50}
          else {mediaY += 50}}
@@ -309,33 +304,45 @@
     if (!nav.matches(":hover")) {nav.style.display = null}
     if (!nav2.matches(":hover")) {nav2.style.display = null}
     if (inputbox.value) {mySearch.innerHTML='Search'; myRename.innerHTML='Rename'; myAdd.innerHTML='Add'}
-    if (!type) {return}
     var x = Math.abs(Xref-xpos)
     var y = Math.abs(Yref-ypos)
-    if (mouse_down && x + y > 5) {					// gesture detection (mousedown + slide)
+    if (type && mouse_down && (gesture || x + y > 5)) {			// gesture detection (mousedown + slide)
       if (!gesture) {block=0; gesture=true}
       if ((ym>1 || yw>0.9) && x>y) {					// media width
         if (!block) {scaleX -= (xpos-Xref)/1000}
         newSkinny = (scaleX/scaleY).toFixed(2)
         thumb.style.transform = "scaleX("+newSkinny+")"
         if (newSkinny == 1 && !block) {block = 20}}			// pause gesture when skinny crosses 1:1
-      else if (x < y && mouse_down != 2) {
+      else if (x < y+0.1 && mouse_down != 2) {
         if (scaleX < 0) {scaleX -= (ypos-Yref)/200}			// in case media fipped left/right
         else {scaleX += (ypos-Yref)/200}
         scaleY += (ypos-Yref)/200}
       else {
-        mouse_down = 2							// block scale zoom
+        mouse_down = 2							// block zoom
         mediaX += xpos - Xref
         mediaY += ypos - Yref
         localStorage.setItem("mediaX",mediaX)
         localStorage.setItem("mediaY",mediaY)}
-      Xref = xpos
-      Yref = ypos
       positionMedia()}
+    if (!type && y>0.2 && (gesture || (mouse_down && x + y > 3 && x < y))) {	// not playing
+      if (!gesture) {block=0; gesture=true}
+      el = document.getElementById("thumb" + index)
+      view = 1*el.style.width.slice(0,-2)
+      if (Yref < ypos) {view += view/80}
+      else {view -= view /80}
+      view = view .toFixed(1)
+      if (view < 4) {view = 4}
+      if (view > 99) {view = 99}
+      for (i=1; i<33 ;i++) {
+        el = document.getElementById("thumb" + i)
+        if (el) {el.style.width=view+'em'; el.style.height=view+'em'}}}
+    Xref = xpos
+    Yref = ypos
+    if (!type) {return}
     if (!nav.matches(":hover")) {nav.style.display = null}
     modal.style.cursor = 'crosshair'
-    if (type != 'thumbsheet') {setTimeout(function() {modal.style.cursor = 'none'},400)}
-    if (yw>0.9 && type == 'video') {seek_active = true; seek.currentTime = media.duration*xm}
+    if (type != 'thumbsheet') {setTimeout(function() {modal.style.cursor='none'},400)}
+    if (yw>0.81 && type == 'video') {seek_active=true; seek.currentTime=media.duration*xm}
     else {seek_active=false; seek.style.opacity=0}}
 
 
@@ -346,15 +353,15 @@
     xw =  xpos / innerWidth
     yw =  ypos / innerHeight
     rect = media.getBoundingClientRect()
-    xm = (xpos - rect.left) / (media.offsetWidth*scaleX)
-    ym = (ypos - rect.top) / (media.offsetHeight*scaleY)
+    xm = (xpos - rect.left) / Math.abs((media.offsetWidth*scaleX))
+    ym = (ypos - rect.top) / Math.abs((media.offsetHeight*scaleY))
     if (!type) {seek_active = false; return}
     if (screenLeft) {x=0; y=0; Xoff=screenLeft; Yoff=outerHeight-innerHeight} else {x=Xoff; y=Yoff}	// fullscreen
     media.style.top = (mediaY-media.offsetHeight/2) +y +"px"
     media.style.left = (mediaX-media.offsetWidth/2) +x +"px"
     media.style.transform = "scale("+scaleX+","+scaleY+")"
     seek.style.left = xpos - seek.offsetWidth/2 +'px'
-    seek.style.top = innerHeight -90 +'px'
+    seek.style.top = innerHeight -140 +'px'
     cap.style.top = rect.bottom +10 +'px'
     cap.style.left = rect.left +10 +'px'
     if (cap_list) {cap.style.display='block'}
@@ -362,11 +369,11 @@
     if (type == 'image') {Speed.innerHTML=''}
     else {Speed.innerHTML = media.playbackRate.toFixed(2)}
     if (type != 'audio') {modal.style.backgroundColor = 'rgba(0,0,0,'+scaleY*1.5+')'}
-    if (type == 'video' && seek.style.opacity == 1) {seek_active = false}
-    if (seek_active && seek.style.opacity < 1) {seek.style.opacity -= '-0.05'}
-    if (!seek_active && seek.style.opacity > 0) {seek.style.opacity -= '0.05'}
+    if (type == 'video' && seek.style.opacity == 1.4) {seek_active = false}
+    if (seek_active && seek.style.opacity < 1.4) {seek.style.opacity -= '-0.1'}
+    if (!seek_active && seek.style.opacity > 0) {seek.style.opacity -= '0.1'}
     var cueX = rect.left + 'px'
-    var cueW = scaleX * media.offsetWidth * media.currentTime / media.duration + 'px'
+    var cueW = Math.abs(scaleX) * media.offsetWidth * media.currentTime / media.duration + 'px'
     if (cue && cue <= media.currentTime.toFixed(1)) {
       cueX = mediaX - media.offsetWidth*scaleX/2 + scaleX * media.offsetWidth * cue/media.duration + 'px'
       if (cue < media.currentTime.toFixed(1)) {
