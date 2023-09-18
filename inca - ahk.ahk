@@ -1,10 +1,8 @@
 
 
-	; Browser File Explorer - Windows
-
-	; this back end AutoHotKey script manages keystrokes and generates web pages of your media
-	; messages to and from the browser are through the address bar
-	; web page styling is from vanilla Java script
+	; Browser Based File Explorer - Windows
+	; AutoHotKey script generates web pages of your media
+	; browser javascript communicates via the clipboard
 
 
 	#NoEnv
@@ -57,7 +55,7 @@
         Global click			; mouse click type
         Global timer			; click down timer
         Global view := 9		; thumb view (em size)
-        Global last_view := 0
+        Global list_view := 0
         Global wheel_count := 0
         Global vol_ref := 2
         Global wheel
@@ -75,6 +73,7 @@
         Global reload
         Global browser
         Global clip
+        Global long_click
 
 
     main:
@@ -94,22 +93,18 @@
       return					; wait for mouse/key events
 
 
-
     Esc up::
       ExitApp
 
     ~LButton::					; click events
+    ~MButton::
      RButton::
       MouseDown()
       return
 
-    ~MButton::
-       sleep 64
-       Clipboard()
-       return
-
     Xbutton1::					; mouse "back" button
       Critical
+      long_click =
       timer := A_TickCount + 350
       SetTimer, Timer_up, -350
       return
@@ -135,7 +130,6 @@
         If (w == A_ScreenWidth)
           send, {F11}
         send, {MButton up}			; close java modal (media player)
-        Clipboard()				; read address bar message
         }
       else send, {Xbutton1}
       return
@@ -158,19 +152,12 @@
       wheel =
       return
 
-    ~Enter::					; search request from htm input box
-      if inca_tab
-        {
-        sleep 250				; wait for java inputbox text in 'messages'
-        timer := 1				; not long click
-        Clipboard()				; process address bar messages
-        }
-      return
-
 
     MouseDown()
       {
+      Critical					; stop timed events
       gesture =
+      long_click =
       timer := A_TickCount + 300
       MouseGetPos, xpos, ypos
       StringReplace, click, A_ThisHotkey, ~,, All
@@ -180,8 +167,13 @@
         x -= xpos
         y -= ypos
         xy := Abs(x + y)
-        if (!GetKeyState("LButton", "P") && !GetKeyState("RButton", "P"))
+        if (!GetKeyState("LButton", "P") && !GetKeyState("RButton", "P") && !GetKeyState("MButton", "P"))
+          {
+          if (!gesture && click == "RButton")
+            send {RButton}
+          Gui PopUp:Cancel
           break
+          }
         if (xy > 6)				; gesture started
           {
           MouseGetPos, xpos, ypos
@@ -210,7 +202,7 @@
                }
              }
           }
-        if (!gesture && A_TickCount > timer && !GetKeyState("RButton", "P"))
+        if (!gesture && A_TickCount > timer && !GetKeyState("RButton", "P"))	; click timout
           {
           if (A_Cursor == "IBeam")
             {
@@ -236,22 +228,20 @@
               }
             else send, !+0			; trigger osk keyboard
             }
-          timer =
+          else long_click = true
           break
           }
         }
-      if (!gesture && click == "LButton" && inca_tab && A_Cursor != "IBeam") ; && A_Cursor != "Arrow")
-        Clipboard()
-      if (!gesture && click == "RButton")
-          send {RButton}
-      Gui PopUp:Cancel
       }
 
 
     TimedEvents:
         title =
-        if (clipboard && !InStr(clipboard, "#"))			; preserve clipboard
-          clip := clipboard
+        array := StrSplit(clipboard,"#")
+        if (inca_tab && array.MaxIndex() > 4)				; likely is a java message
+          Clipboard()
+        if (Clipboard && Clipboard != clip && !InStr(Clipboard, "#"))	; preserve clipboard
+          clip := Clipboard
         Gui, background:+LastFound
         WinGet, state, MinMax, ahk_group Browsers
         if (state > -1)
@@ -304,12 +294,6 @@
 
     Clipboard()								; check for messages from browser
         {
-        Loop 14
-          {
-          sleep 24
-          if Clipboard
-          break
-          }
         IfWinExist, ahk_class OSKMainClass
           send, !0							; close onscreen keyboard
         selected =
@@ -323,9 +307,7 @@
         sleep 24
         input := StrReplace(Clipboard, "/", "\")
         array := StrSplit(input,"#")
-        if (!inca_tab || array.MaxIndex() < 3)
-          return
-        Clipboard := clip						; restore clipboard contents
+        Clipboard := clip
         Loop % array.MaxIndex()/4
           {
           command := array[ptr+=1]
@@ -374,6 +356,7 @@
           RenderPage()
         if (reload == 3)
           CreateList(0)
+        long_click =
         }
 
 
@@ -401,22 +384,23 @@
             address := path
             if playlist
               {
-              if !timer							; long click
+              if long_click
                 run, %playlist%
               else reload := 3
               }
             else if search_term
               {
               address =
+              value := search_term
               command = Search
               }
-            else if !timer
+            else if long_click
               run, %path%
             else command = Path
             }
-        if (command == "mp3" || command == "mp4")		; address = cue, value = current time
+        if (command == "mp3" || command == "mp4")			; address = cue, value = current time
             {
-            x = %value%						; convert number to string
+            x = %value%							; convert number to string
             if !address
               run, %inca%\apps\ffmpeg.exe -i "%src%" "%media_path%\%media% %x%.%command%",,Hide
             else if (address == value)
@@ -429,7 +413,7 @@
             ShowSettings()
         if (command == "Caption")
             {
-            if (SubStr(value,1,1) == "|")			; no text before time
+            if (SubStr(value,1,1) == "|")				; no text before time
               value = 
             FileRead, str, %inca%\cache\captions\%media%.srt
             FileDelete, %inca%\cache\captions\%media%.srt
@@ -455,18 +439,17 @@
               value = 1.5
             FileAppend, %value%, %inca%\cache\widths\%media%.txt
             }
-        if (command == "myThumbs")
+        if (command == "myThumbs" && !long_click)
             {
-            if (!view || view == value)
+            if !value
+              list_view ^= 1 
+            else
               {
-              if !view
-                 view := last_view
-              else view := 0
+              view := value
+              list_view := 0
               }
-            else view := value
-            last_view := value
-            if (last_view == 0 && view == 0)
-                view := 9
+            if (view < 5)
+              view := 9
             reload := 2
             }
         if (command == "Delete")
@@ -492,7 +475,7 @@
             }
         if (command == "Media")
             {
-            if (playlist && selected && !timer)
+            if (playlist && selected && long_click)
               {
               MoveEntry()								; move entry within playlist
               reload := 3
@@ -513,7 +496,7 @@
                 send, {MButton up}							; close java modal (media player) 
                 Run %inca%\apps\mpv "%src%"
                 }
-              else if (timer && ((browser == "mozilla firefox" && type == "video" && ext != "mp4" && ext != "m4v" && ext != "webm") || (browser == "google chrome" && type == "video" && ext != "mp4" && ext != "mkv" && ext != "m4v" && ext != "webm")))
+              else if (!long_click && ((browser == "mozilla firefox" && type == "video" && ext != "mp4" && ext != "m4v" && ext != "webm") || (browser == "google chrome" && type == "video" && ext != "mp4" && ext != "mkv" && ext != "m4v" && ext != "webm")))
                 {
                 sleep 200
                 send, {MButton up}							; close java modal (media player) 
@@ -611,7 +594,7 @@
               {
               if (command == "Search")
                 subfolders =
-              if !timer
+              if long_click
                 search_term = %search_term%+%value%			; long click adds new search term
               else search_term = %value%
               }
@@ -646,7 +629,7 @@
                     this_search = %path%|%this_search%			; search this folder only
                 if (search_term && !InStr(sort_list, command))
                     {
-                    view := 0
+                    list_view := 0
                     toggles =
                     sort = Duration
                    }
@@ -777,15 +760,15 @@
             }
         if ((pages := ceil(list_size/size)) > 1)
             pg = Page %page% of %pages%
-        rev:=rec:=img:=vid:=
-        if InStr(toggles, "Reverse")
-          rev = style='color:red'
-        if InStr(toggles, "Recurse")
-          rec = style='color:red'
-        if InStr(toggles, "Images")
-          img = style='color:red'
-        if InStr(toggles, "Videos")
-          vid = style='color:red'
+        Loop, Parse, sort_list, `|
+          {
+          if InStr(A_LoopField, sort)
+            if InStr(toggles, "Reverse")
+              x%A_Index% = style='color:red'
+            else x%A_Index% = style='color:lightsalmon'
+          if InStr(toggles, A_LoopField)
+            x%A_Index% = style='color:red'
+          }
         Loop, Parse, subfolders, `|
             {
             StringTrimRight, x, A_Loopfield, 1
@@ -797,7 +780,7 @@
         if subs
             subs = %subs%<hr style='height:1em; width:77`%; margin-left:0; outline:none; border:0 none; border-top:0.1px solid #826858'></hr>`n`n
 
-        header_html = <!--`n%view%>%last_view%>%page%>%filt%>%sort%>%toggles%>%this_search%>%search_term%>%path%>%folder%>%playlist%>%last_media%>`n%page_media%`n-->`n<!doctype html>`n<html>`n<head>`n<meta charset="UTF-8">`n<title>Inca - %title%</title>`n<meta name="viewport" content="width=device-width, initial-scale=1">`n<link rel="icon" type="image/x-icon" href="file:///%inca%\apps\icons\inca.ico">`n</head>
+        header_html = <!--`n%view%>%list_view%>%page%>%filt%>%sort%>%toggles%>%this_search%>%search_term%>%path%>%folder%>%playlist%>%last_media%>`n%page_media%`n-->`n<!doctype html>`n<html>`n<head>`n<meta charset="UTF-8">`n<title>Inca - %title%</title>`n<meta name="viewport" content="width=device-width, initial-scale=1">`n<link rel="icon" type="image/x-icon" href="file:///%inca%\apps\icons\inca.ico">`n</head>
 
         panel_html = <body id='myBody' class='container' onload="spool(event, '', '%ini%', '%toggles%', '%sort%', %filt%, %page%, %pages%, %view%, %speed%, %fs%, '%playlist%')">`n
 <div id='mySelected' class='selected'></div>`n
@@ -827,24 +810,29 @@
 <div style="width:%page_w%`%; margin:auto">`n`n
 <div class='panel' id='myPanel' onwheel="wheelEvents(event, '', this)"></div>`n`n
 <div id='myRibbon' class='ribbon'>`n
-<a onmousedown="navigator.clipboard.writeText('#Recurse###')" %rec%>Recurse</a>`n
+<a id='myPath' onmousedown="navigator.clipboard.writeText('#Up##'+selected+'#')" style='font-size:1.4em'>&#8678`n
 <a onmouseover="spool(event, 'Fol')">Fol</a>`n
 <a onmouseover="spool(event, 'Fav')">Fav</a>`n
 <a onmouseover="spool(event, 'Music')">Music</a>`n
 <a onmouseover="spool(event, 'Search')" onwheel="wheelEvents(event, 'Search', this)">Search</a>`n
-<a onmousedown="navigator.clipboard.writeText('#Images###')" %img%>Pics</a>`n
-<a onmousedown="navigator.clipboard.writeText('#Videos###')" %vid%>Vids</a></div>`n`n
+<a onmousedown="navigator.clipboard.writeText('#Images###')" %x10%>Pics</a>`n
+<a onmousedown="navigator.clipboard.writeText('#Videos###')" %x9%>Vids</a>`n
+<a onmousedown="navigator.clipboard.writeText('#Recurse###')" %x8%>Recurse</a></div>`n`n
 <div style='display:flex'>`n
 <input id='myInput' onmouseover='panel.style.opacity=null' class='searchbox' type='search' value='%search_term%'>`n
 <a id='mySearch' class='searchbox' onmousedown='searchbox()' style='width:8`%; border-radius:0'></a>`n
 <a id='myRename' class='searchbox' onmousedown="navigator.clipboard.writeText('#Rename#'+inputbox.value+'#'+selected+'#')" style='width:8`%; border-radius:0'></a>`n
 <a id='myAdd' class='searchbox' onclick="navigator.clipboard.writeText('#SearchAdd#'+inputbox.value+'#'+selected+'#')" style='width:6`%; border-radius:0 1em 1em 0'></a></div>`n`n
 <div class='ribbon'>`n
-<a id='myPath' onmousedown="navigator.clipboard.writeText('#Up##'+selected+'#')" style='font-size:1.4em'>&#8678`n
 <a onmousedown="navigator.clipboard.writeText('#Orphan###')" style='font-size:1.7em; transform:none'>%title_s%</a>`n
 <a style='font-size:1.3em; transform:none'>%list_size%</a>`n
-<a id='mySort' onmouseover='wheel=0' onmousedown="navigator.clipboard.writeText('#'+sort+'#'+sort+'##')" %rev% style='width:7em' onwheel="wheelEvents(event, id, this)">%sort%</a>`n
-<a id='myFilt' onmousedown="navigator.clipboard.writeText('#Filt#'+filt+'##')" onwheel="wheelEvents(event, id, this)">All</a>`n
+<a onmousedown="navigator.clipboard.writeText('#Shuffle###')" %x1%)">Shuffle</a>`n
+<a onmousedown="navigator.clipboard.writeText('#Date###')" %x4%">Date</a>`n
+<a onmousedown="navigator.clipboard.writeText('#Duration###')" %x3%">Duration</a>`n
+<a onmousedown="navigator.clipboard.writeText('#Alpha###')" %x2%">Alpha</a>`n
+<a onmousedown="navigator.clipboard.writeText('#Size###')" %x5%">Size</a>`n
+<a onmousedown="navigator.clipboard.writeText('#Ext###')" %x6%">Ext</a>`n
+<a id='myFilt' onmousedown="navigator.clipboard.writeText('#Filt#'+filt+'##')" onwheel="wheelEvents(event, id, this)" style='min-width:6`%'>All</a>`n
 <a id="myPage" onmousedown="navigator.clipboard.writeText('#Page#'+page+'##')" onwheel="wheelEvents(event, id, this)">%pg%</a></div>`n`n`n
 
         FileDelete, %inca%\cache\html\%folder%.htm
@@ -852,6 +840,7 @@
         StringReplace, html, html, \, /, All
         FileAppend, %html%%java%</body>`n</html>`n, %inca%\cache\html\%folder%.htm, UTF-8
         LoadHtml()
+        sleep 200							; time for page to load
         PopUp("",0,0,0)
         }
 
@@ -886,7 +875,7 @@
         FileRead, cap, %inca%\cache\captions\%media%.srt
         caption := StrSplit(cap, "|").1
         if caption
-          caption = <a onmousedown='navigator.clipboard.writeText("#EditCap#%media%##")' style="color:#826858; display:block; font-size:%cap_size%em">%caption%</a>
+          caption = <a onmousedown='navigator.clipboard.writeText("#EditCap#%media%##")' style="color:#826858; display:block; font-size:%cap_size%em; width:110`%; margin-left:-0.7em">%caption%</a>
         cap := StrReplace(cap, "`r`n", "|")
         cap := StrReplace(cap, ",", "§")
         cap := StrReplace(cap, "'", "±")
@@ -907,14 +896,14 @@
         stringlower, thumb, thumb
         poster = poster="file:///%thumb%"
         start := Round(start+0.1,1)					; smooth start for thumb play
-
+view2 := view*1.2
 
 ; FileRead, dur, %inca%\cache\durations\%media%.txt
 ; random, start, 0, dur-5
 ; start := Round(start,2)
 ; poster = #t=%start%
 
-        if !view							; list view
+        if list_view							; list view
             {
             entry = <div><table><tr><td id="thumb%j%" style="position:absolute; margin-left:3.5em">`n <video id="media%j%" class='thumblist' style="width:10em; %transform%"`n onmousedown='navigator.clipboard.writeText("#Media#%j%##%start%")'`n onmouseover="overThumb(%j%, %skinny%, '%type%', %start%, '%cap%', event)"`n onmouseout='over_media=false; this.load()'`n %poster%`n src="file:///%src%"`n type="video/mp4" preload='none' muted></video></tr></table>`n <table style="table-layout:fixed; width:100`%; font-size:0.9em"><tr><td style="width:4em; text-align:center">`n <span style="border-radius:9px; color:#777777">%sort_name%</span></td>`n <td style="width:4em; text-align:center">%dur%</td>`n <td style="width:3em; text-align:center">%size%</td>`n <td style="width:4em; text-align:center">%ext%</td>%fold%`n <td><div id="title%j%" onclick="select(%j%)" class='title0'>`n %media%</div></td></tr></table></div>`n`n
             }
@@ -932,7 +921,7 @@
                     }
 	        entry = <a onmousedown='navigator.clipboard.writeText("#Media#%j%##")'><div style="display:inline-block; width:88`%; color:#555351; transition:color 1.4s; margin-left:8`%; text-align:center; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; %highlight%;">%sort_name% &nbsp;&nbsp;%media%</div></a><textarea rows=%rows% style="display:inline-block; overflow:hidden; margin-left:8`%; width:88`%; background-color:inherit; color:#826858; font-size:1.2em; font-family:inherit; border:none; outline:none;">%str2%</textarea>`n`n
                 }
-            else entry = <div id="thumb%j%" class="thumb_container" style="width:%view%em; height:%view%em">`n <div id="title%j%" class='title' onclick="select(%j%)">%media%</div>`n <video class="media" id="media%j%" style="position:inherit; %transform%"`n onmousedown='navigator.clipboard.writeText("#Media#%j%##%start%")'`n onmouseover="overThumb(%j%, %skinny%, '%type%', %start%, '%cap%', event)"`n onmouseout='over_media=false; this.pause()'`n src="file:///%src%"`n %poster%`n preload='none' muted type="video/mp4"></video>%caption%</div>`n`n
+            else entry = <div id="thumb%j%" class="thumb_container" style="width:%view%em; height:%view2%em">`n <div id="title%j%" class='title' onclick="select(%j%)">%media%</div>`n <video class="media" id="media%j%" style="position:inherit; %transform%"`n onmousedown='navigator.clipboard.writeText("#Media#%j%##%start%")'`n onmouseover="overThumb(%j%, %skinny%, '%type%', %start%, '%cap%', event)"`n onmouseout='over_media=false; this.pause()'`n src="file:///%src%"`n %poster%`n preload='none' muted type="video/mp4"></video>%caption%</div>`n`n
             }
         return entry
         }
@@ -1026,7 +1015,7 @@
             sleep 24
             send ^v
             sleep 24
-            Clipboard =
+            Clipboard := clip
             send, {Enter}
             }
         }
@@ -1048,9 +1037,9 @@
             StringReplace, array, array, /, \, All
             array := StrSplit(array,">")
             view := array.1
-            last_view := array.2
-            if (!view && view == last_view)
-              view := 10
+            if (view < 5)
+              view := 9
+            list_view := array.2
             page := array.3
             filt := array.4
             sort := array.5
@@ -1134,7 +1123,7 @@
         Loop, Parse, selected, `/
             {
             list_id := A_LoopField
-            if timer
+            if !long_click
               popup = Move - %media%
             else popup = Copy - %media%
             if (InStr(address, "\inca\"))
@@ -1161,12 +1150,12 @@
                   if (x == y)
                     break 2
                   }
-                if timer						; not long click
+                if !long_click
                   FileMove, %src%, %address%%z%				; move file to new folder
                 else FileCopy, %src%, %address%%z%
                 }
             }
-        if timer
+        if !long_click
           if (InStr(address, "inca\fav") || InStr(address, "inca\music"))
             DeleteEntries(0)
         }  
@@ -1467,6 +1456,7 @@
         FileRead, dur, %inca%\cache\durations\%filen%.txt
         if !dur
             {
+            clp := clipboard
             clipboard =
             RunWait %COMSPEC% /c %inca%\apps\ffmpeg.exe -i "%source%" 2>&1 | find "Duration" | Clip, , hide && exit
             ClipWait, 3
@@ -1476,7 +1466,7 @@
             dur := aTime.1 * 3600 + aTime.2 * 60 + aTime.3
             FileDelete, %inca%\cache\durations\%filen%.txt
             FileAppend, %dur%, %inca%\cache\durations\%filen%.txt
-            clipboard := clip
+            clipboard := clp
             }
         return dur
         }

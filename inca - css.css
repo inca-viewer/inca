@@ -39,6 +39,7 @@
   text-align:center;
   align-items:center;
   margin-left:1em;
+  margin-bottom:0.3em;
   font-size:1em;
   justify-content:space-between;
   width:80%}
@@ -52,7 +53,7 @@
   text-overflow:ellipsis;
   overflow:hidden;
   margin-top:0.4em;
-  margin-bottom:1em;
+  margin-bottom:0.5em;
   border-radius:1em 0 0 1em;
   text-align:center;
   background-color:#1b1814;
@@ -114,7 +115,7 @@
   vertical-align:top;
   text-align: center;
   margin-right:3em;
-  margin-bottom:80px;
+  margin-bottom:3em;
   position:relative}
 
 .thumb {					/* media thumbnail in htm tab */
@@ -152,7 +153,9 @@
   transition:0.2s}
 
 .modal {					/* media player overlay htm tab */
-  display:none;
+  display:flex;
+  z-index:-1;
+  opacity:0;
   user-select:none;
   position:fixed;
   justify-content:center;
