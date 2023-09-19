@@ -82,7 +82,6 @@
       SetTimer, TimedEvents, 100		; every 100mS
       sleep 350					; wait for browser page to identify
       folder := inca_tab			; align current folder to browser
-      send, {F5}				; refresh browser tab
       if !inca_tab				; inca tab not exist
         {
         path = %profile%\Pictures\		; use pictures as default
@@ -439,7 +438,7 @@
               value = 1.5
             FileAppend, %value%, %inca%\cache\widths\%media%.txt
             }
-        if (command == "myThumbs" && !long_click)
+        if (command == "myThumbs")
             {
             if !value
               list_view ^= 1 
@@ -570,10 +569,7 @@
             reload = 1
             WinGetPos,,,w,,a
             If (w == A_ScreenWidth)
-              {
               send, {F11}
-              sleep 400
-              }
             if (command == "Path") 
               if InStr(address, ".m3u")
                 {
@@ -778,7 +774,7 @@
             subs = %subs% <div><table><tr><td><a onmousedown='navigator.clipboard.writeText("#Subs#%A_Index%#"+selected+"#")' style="width:80`%; margin-left:4.2em; border-radius:1em; white-space:nowrap; overflow:hidden; border-radius:1em; text-overflow:ellipsis">%fname%</a></td></tr></table></div>`n`n
             }
         if subs
-            subs = %subs%<hr style='height:1em; width:77`%; margin-left:0; outline:none; border:0 none; border-top:0.1px solid #826858'></hr>`n`n
+            subs = %subs%<hr style='height:1em; width:80`%; margin-left:0; outline:none; border:0 none; border-top:0.1px solid #826858'></hr>`n`n
 
         header_html = <!--`n%view%>%list_view%>%page%>%filt%>%sort%>%toggles%>%this_search%>%search_term%>%path%>%folder%>%playlist%>%last_media%>`n%page_media%`n-->`n<!doctype html>`n<html>`n<head>`n<meta charset="UTF-8">`n<title>Inca - %title%</title>`n<meta name="viewport" content="width=device-width, initial-scale=1">`n<link rel="icon" type="image/x-icon" href="file:///%inca%\apps\icons\inca.ico">`n</head>
 
@@ -825,7 +821,7 @@
 <a id='myAdd' class='searchbox' onclick="navigator.clipboard.writeText('#SearchAdd#'+inputbox.value+'#'+selected+'#')" style='width:6`%; border-radius:0 1em 1em 0'></a></div>`n`n
 <div class='ribbon'>`n
 <a onmousedown="navigator.clipboard.writeText('#Orphan###')" style='font-size:1.7em; transform:none'>%title_s%</a>`n
-<a style='font-size:1.3em; transform:none'>%list_size%</a>`n
+<a style='font-size:1.3em; color:red; transform:none'>%list_size%</a>`n
 <a onmousedown="navigator.clipboard.writeText('#Shuffle###')" %x1%)">Shuffle</a>`n
 <a onmousedown="navigator.clipboard.writeText('#Date###')" %x4%">Date</a>`n
 <a onmousedown="navigator.clipboard.writeText('#Duration###')" %x3%">Duration</a>`n
@@ -840,7 +836,7 @@
         StringReplace, html, html, \, /, All
         FileAppend, %html%%java%</body>`n</html>`n, %inca%\cache\html\%folder%.htm, UTF-8
         LoadHtml()
-        sleep 200							; time for page to load
+        sleep 400							; time for page to load
         PopUp("",0,0,0)
         }
 
@@ -921,7 +917,7 @@ view2 := view*1.2
                     }
 	        entry = <a onmousedown='navigator.clipboard.writeText("#Media#%j%##")'><div style="display:inline-block; width:88`%; color:#555351; transition:color 1.4s; margin-left:8`%; text-align:center; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; %highlight%;">%sort_name% &nbsp;&nbsp;%media%</div></a><textarea rows=%rows% style="display:inline-block; overflow:hidden; margin-left:8`%; width:88`%; background-color:inherit; color:#826858; font-size:1.2em; font-family:inherit; border:none; outline:none;">%str2%</textarea>`n`n
                 }
-            else entry = <div id="thumb%j%" class="thumb_container" style="width:%view%em; height:%view2%em">`n <div id="title%j%" class='title' onclick="select(%j%)">%media%</div>`n <video class="media" id="media%j%" style="position:inherit; %transform%"`n onmousedown='navigator.clipboard.writeText("#Media#%j%##%start%")'`n onmouseover="overThumb(%j%, %skinny%, '%type%', %start%, '%cap%', event)"`n onmouseout='over_media=false; this.pause()'`n src="file:///%src%"`n %poster%`n preload='none' muted type="video/mp4"></video>%caption%</div>`n`n
+            else entry = <div id="thumb%j%" class="thumb_container" style="width:%view%em; height:%view%em">`n <div id="title%j%" class='title' onclick="select(%j%)">%media%</div>`n <video class="media" id="media%j%" style="position:inherit; %transform%"`n onmousedown='navigator.clipboard.writeText("#Media#%j%##%start%")'`n onmouseover="overThumb(%j%, %skinny%, '%type%', %start%, '%cap%', event)"`n onmouseout='over_media=false; this.pause()'`n src="file:///%src%"`n %poster%`n preload='none' muted type="video/mp4"></video>%caption%</div>`n`n
             }
         return entry
         }

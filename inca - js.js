@@ -16,7 +16,8 @@
 // rename from title not inputbox
 // `r`n within captions
 
-
+// zoom align to edges?
+// clip clears files being copied 
 
   var thumb = document.getElementById('media1')				// first media element
   var modal = document.getElementById('myModal')			// media player window
@@ -98,14 +99,12 @@
 
 
   function mouseDown(e) {
-    if (e.button == 2) {context(e)}					// force context menu focus
-    else {mouse_down = e.button+1; Xref = xpos; Yref = ypos}
+    Xref=xpos; Yref=ypos
+    mouse_down=e.button+1
     if (e.button == 1) {						// middle click
       e.preventDefault()
       clickTimer = setTimeout(function() {
-        wheel=0; block=100
-        long_click=true
-        if (mouse_down && !gesture && !type) {thumbs(0)}		// toggle list/thumb view
+        wheel=0; block=100; long_click=true
         if (type && !gesture) {playMedia('Mclick')}},240)}		// previous thumbsheet
     if (!e.button) {
       if (!type && over_media && selected) {
@@ -113,21 +112,22 @@
       clickTimer = setTimeout(function() {
         if (!gesture) {
           long_click = true
-          if (!type && over_media) {playMedia('Click')}			// play media at 0:00
+          if (!type && !over_media) {playMedia('Mclick')}		// previous media				
+          else if (!type && over_media) {playMedia('Click')}		// play media at 0:00
           else if (type && !over_cap) {media_ended()}}},240)}}		// re-start media
 
 
   function mouseUp(e) {
     nav.style.display=null
     nav2.style.display=null
-    if (e.button == 1 && !mouse_down) {mouseBack(); return}		// inca.exe replaces mouse back button with MClick Up
+    if (e.button == 1 && !mouse_down) {mouseBack()}			// inca.exe replaces MouseBack with MClick Up
     else if (!type && gesture) {thumbs(view)} 				// update thumb width	
-    else if (!type && e.button==1) {playMedia('Mclick')}		// previous media				
     else if (e.button == 1 && !long_click && !gesture) {
-      if (type == 'video' && cap_list && (ym>1 || yw>0.9)) {		// seek to next caption in movie
+      if (!type && !over_media) {thumbs(0)}				// toggle list/thumb view
+      else if (type == 'video' && cap_list && (ym>1 || yw>0.9)) {	// seek to next caption in movie
         var z = cap_list.split('|')
         for (x of z) {if (!isNaN(x) && x>(media.currentTime+0.2)) {media.currentTime=x-1; media.play(); break}}}
-      else if (type) {playMedia('Mclick')}}
+      else {playMedia('Mclick')}}
     else if (!e.button && !gesture) {					
       if (type == 'thumbsheet') {playThumb()}				// play at thumbsheet click coordinate
       else if (seek.style.opacity>0.3 && !nav2.matches(":hover")) {
@@ -201,7 +201,7 @@
     if (e == 'Mclick') {
       if (last_type && long_click) {index-=2}
       if (last_type && (last_type != 'video' || !over_media || yw>0.9)) {index+=1; start=0}
-      if (!last_type && !over_media) {index=last_index; start=last_start; e=''}}
+      if (!last_type && !over_media && long_click) {index=last_index; start=last_start; e=''}}
     getParameters(e)
     if (type == 'document' || type == 'm3u') {type=''; return}
     if (e == 'Mclick' && type == 'video' && over_media && yw<0.9) {thumbSheet()}
@@ -300,7 +300,7 @@
     var y = Math.abs(Yref-ypos)
     if (type && mouse_down && (gesture || x+y > 5)) {			// gesture detection (mousedown + slide)
       if (!gesture) {block=0; gesture=true}
-      if (mouse_down == 1 && x>y) {					// media width (click gesture)
+      if (mouse_down == 1 && x>y && type != 'thumbsheet') {		// media width (click gesture)
         if (!block) {scaleX -= (xpos-Xref)/1000}
         newSkinny = (scaleX/scaleY).toFixed(2)
         thumb.style.transform = "scaleX("+newSkinny+")"
@@ -341,7 +341,7 @@
 
   function positionMedia() {						// also every ~84mS while media/modal layer active
     if (block) {block--}						// remove block delay
-    if (over_media || ym > 1) {seekbar.style.opacity = 0.6}
+    if (type != 'image' && (over_media || ym > 1)) {seekbar.style.opacity = 0.6}
     else {seekbar.style.opacity=null}
     xw =  xpos / innerWidth
     yw =  ypos / innerHeight
