@@ -92,7 +92,7 @@
       return					; wait for mouse/key events
 
 
-    Esc up::
+    ~*Esc up::
       ExitApp
 
     ~LButton::					; click events
@@ -101,7 +101,7 @@
       MouseDown()
       return
 
-    Xbutton1::					; mouse "back" button
+    *Xbutton1::					; mouse "back" button
       Critical
       long_click =
       timer := A_TickCount + 350
@@ -133,9 +133,9 @@
       else send, {Xbutton1}
       return
 
-    ~WheelUp::
+    ~*WheelUp::
        wheel = up
-    ~WheelDown::
+    ~*WheelDown::
        MouseGetPos, xpos, ypos
        IfWinActive, ahk_class ahk_class mpv	; mpv player controls
          {
@@ -274,9 +274,9 @@
             }
         if vol_popup							; show volume popup bar
             vol_popup -= 1
-        if (volume > 0.1 && !vol_popup && Setting("Volume Fade") > 10 && A_TimeIdlePhysical > 600000)
+        if (volume > 0.1 && !vol_popup && Setting("Sleep Timer") > 10 && A_TimeIdlePhysical > 600000)
             {
-            volume -= vol_ref / (Setting("Volume Fade") * 6)		; sleep timer
+            volume -= vol_ref / (Setting("Sleep Timer") * 6)		; sleep timer
             SoundSet, volume						; slowly reduce volume
             vol_popup := 100						; check every 10 seconds
             }
@@ -732,6 +732,7 @@
         list_size := 0
         type = video							; prime for list parsing
         page_w := Setting("Page Width")
+        page_o := Setting("Page Offset")
         size := Setting("Page Size")
         fs := Setting("Full Screen")
         if search_term
@@ -771,10 +772,11 @@
             array := StrSplit(x,"\")
             x := array.MaxIndex()
             fname := array[x]
-            subs = %subs% <div><table><tr><td><a onmousedown='navigator.clipboard.writeText("#Subs#%A_Index%#"+selected+"#")' style="width:80`%; margin-left:4.2em; border-radius:1em; white-space:nowrap; overflow:hidden; border-radius:1em; text-overflow:ellipsis">%fname%</a></td></tr></table></div>`n`n
+            subs = %subs% <div><table><tr><td><a onmousedown='navigator.clipboard.writeText("#Subs#%A_Index%#"+selected+"#")' style="width:80`%; margin-left:4.2em; border-radius:1em; white-space:nowrap; overflow:hidden; border-radius:1em; text-overflow:ellipsis">%fname%</a></td></tr></table></div>`n
             }
         if subs
-            subs = %subs%<hr style='height:1em; width:80`%; margin-left:0; outline:none; border:0 none; border-top:0.1px solid #826858'></hr>`n`n
+            subs = %subs%<hr style='height:1em; width:88`%; margin:auto; outline:none; border:0 none; border-top:0.1px solid #826858'></hr>`n
+        subs = %subs%`n`n<div class='thumbs'>`n`n
 
         header_html = <!--`n%view%>%list_view%>%page%>%filt%>%sort%>%toggles%>%this_search%>%search_term%>%path%>%folder%>%playlist%>%last_media%>`n%page_media%`n-->`n<!doctype html>`n<html>`n<head>`n<meta charset="UTF-8">`n<title>Inca - %title%</title>`n<meta name="viewport" content="width=device-width, initial-scale=1">`n<link rel="icon" type="image/x-icon" href="file:///%inca%\apps\icons\inca.ico">`n</head>
 
@@ -802,10 +804,10 @@
 <div><video id="myMedia" class="media" type="video/mp4" muted></video>`n
 <span id="mySeekBar" class='seekbar'></span>`n
 <textarea id="myCap" class="caption" onmouseenter="over_cap=true" onmouseleave="over_cap=false"></textarea>`n
-<span><video id='mySeek' class='seek' type="video/mp4"></video></span></div></div>`n`n
-<div style="width:%page_w%`%; margin:auto">`n`n
+<span><video id='mySeek' class='seek' type="video/mp4"></video></span></div></div>`n`n`n
+<div style="width:%page_w%`%; margin:auto; padding-right:%page_o%`%">`n`n
 <div class='panel' id='myPanel' onwheel="wheelEvents(event, '', this)"></div>`n`n
-<div id='myRibbon' class='ribbon'>`n
+<div class='ribbon'>`n
 <a id='myPath' onmousedown="navigator.clipboard.writeText('#Up##'+selected+'#')" style='font-size:1.4em'>&#8678`n
 <a onmouseover="spool(event, 'Fol')">Fol</a>`n
 <a onmouseover="spool(event, 'Fav')">Fav</a>`n
@@ -814,12 +816,13 @@
 <a onmousedown="navigator.clipboard.writeText('#Images###')" %x10%>Pics</a>`n
 <a onmousedown="navigator.clipboard.writeText('#Videos###')" %x9%>Vids</a>`n
 <a onmousedown="navigator.clipboard.writeText('#Recurse###')" %x8%>Recurse</a></div>`n`n
-<div style='display:flex'>`n
+<div style='display:flex; width:90`%; margin:auto'>`n
 <input id='myInput' onmouseover='panel.style.opacity=null' class='searchbox' type='search' value='%search_term%'>`n
 <a id='mySearch' class='searchbox' onmousedown='searchbox()' style='width:8`%; border-radius:0'></a>`n
 <a id='myRename' class='searchbox' onmousedown="navigator.clipboard.writeText('#Rename#'+inputbox.value+'#'+selected+'#')" style='width:8`%; border-radius:0'></a>`n
 <a id='myAdd' class='searchbox' onclick="navigator.clipboard.writeText('#SearchAdd#'+inputbox.value+'#'+selected+'#')" style='width:6`%; border-radius:0 1em 1em 0'></a></div>`n`n
 <div class='ribbon'>`n
+<a></a>`n
 <a onmousedown="navigator.clipboard.writeText('#Orphan###')" style='font-size:1.7em; transform:none'>%title_s%</a>`n
 <a style='font-size:1.3em; color:red; transform:none'>%list_size%</a>`n
 <a onmousedown="navigator.clipboard.writeText('#Shuffle###')" %x1%)">Shuffle</a>`n
@@ -829,7 +832,7 @@
 <a onmousedown="navigator.clipboard.writeText('#Size###')" %x5%">Size</a>`n
 <a onmousedown="navigator.clipboard.writeText('#Ext###')" %x6%">Ext</a>`n
 <a id='myFilt' onmousedown="navigator.clipboard.writeText('#Filt#'+filt+'##')" onwheel="wheelEvents(event, id, this)" style='min-width:6`%'>All</a>`n
-<a id="myPage" onmousedown="navigator.clipboard.writeText('#Page#'+page+'##')" onwheel="wheelEvents(event, id, this)">%pg%</a></div>`n`n`n
+<a id="myPage" onmousedown="navigator.clipboard.writeText('#Page#'+page+'##')" onwheel="wheelEvents(event, id, this)">%pg%</a></div>`n
 
         FileDelete, %inca%\cache\html\%folder%.htm
         html = %header_html%%style%%panel_html%%subs%%html%</div></div>`n
@@ -901,7 +904,7 @@ view2 := view*1.2
 
         if list_view							; list view
             {
-            entry = <div><table><tr><td id="thumb%j%" style="position:absolute; margin-left:3.5em">`n <video id="media%j%" class='thumblist' style="width:10em; %transform%"`n onmousedown='navigator.clipboard.writeText("#Media#%j%##%start%")'`n onmouseover="overThumb(%j%, %skinny%, '%type%', %start%, '%cap%', event)"`n onmouseout='over_media=false; this.load()'`n %poster%`n src="file:///%src%"`n type="video/mp4" preload='none' muted></video></tr></table>`n <table style="table-layout:fixed; width:100`%; font-size:0.9em"><tr><td style="width:4em; text-align:center">`n <span style="border-radius:9px; color:#777777">%sort_name%</span></td>`n <td style="width:4em; text-align:center">%dur%</td>`n <td style="width:3em; text-align:center">%size%</td>`n <td style="width:4em; text-align:center">%ext%</td>%fold%`n <td><div id="title%j%" onclick="select(%j%)" class='title0'>`n %media%</div></td></tr></table></div>`n`n
+            entry = <div><table><tr><td id="thumb%j%" style="position:absolute; margin-left:8`%">`n <video id="media%j%" class='thumblist' style="width:10em; %transform%"`n onmousedown='navigator.clipboard.writeText("#Media#%j%##%start%")'`n onmouseover="overThumb(%j%, %skinny%, '%type%', %start%, '%cap%', event)"`n onmouseout='over_media=false; this.load()'`n %poster%`n src="file:///%src%"`n type="video/mp4" preload='none' muted></video></tr></table>`n <table style="table-layout:fixed; width:90`%; font-size:0.9em; margin:auto"><tr><td style="width:4em; text-align:center">`n <span style="border-radius:9px; color:#777777">%sort_name%</span></td>`n <td style="width:4em; text-align:center">%dur%</td>`n <td style="width:3em; text-align:center">%size%</td>`n <td style="width:4em; text-align:center">%ext%</td>%fold%`n <td><div id="title%j%" onclick="select(%j%)" class='title0'>`n %media%</div></td></tr></table></div>`n`n
             }
         else								; thumbnail view
             {
@@ -917,7 +920,7 @@ view2 := view*1.2
                     }
 	        entry = <a onmousedown='navigator.clipboard.writeText("#Media#%j%##")'><div style="display:inline-block; width:88`%; color:#555351; transition:color 1.4s; margin-left:8`%; text-align:center; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; %highlight%;">%sort_name% &nbsp;&nbsp;%media%</div></a><textarea rows=%rows% style="display:inline-block; overflow:hidden; margin-left:8`%; width:88`%; background-color:inherit; color:#826858; font-size:1.2em; font-family:inherit; border:none; outline:none;">%str2%</textarea>`n`n
                 }
-            else entry = <div id="thumb%j%" class="thumb_container" style="width:%view%em; height:%view%em">`n <div id="title%j%" class='title' onclick="select(%j%)">%media%</div>`n <video class="media" id="media%j%" style="position:inherit; %transform%"`n onmousedown='navigator.clipboard.writeText("#Media#%j%##%start%")'`n onmouseover="overThumb(%j%, %skinny%, '%type%', %start%, '%cap%', event)"`n onmouseout='over_media=false; this.pause()'`n src="file:///%src%"`n %poster%`n preload='none' muted type="video/mp4"></video>%caption%</div>`n`n
+            else entry = <div id="thumb%j%" class="thumb_container" style="width:%view%em; height:%view2%em">`n <div id="title%j%" class='title' onclick="select(%j%)">`n %media%</div>`n <video class="media" id="media%j%" style="position:inherit; %transform%"`n onmousedown='navigator.clipboard.writeText("#Media#%j%##%start%")'`n onmouseover="overThumb(%j%, %skinny%, '%type%', %start%, '%cap%', event)"`n onmouseout='over_media=false; this.pause()'`n src="file:///%src%"`n %poster%`n preload='none' muted type="video/mp4"></video>%caption%</div>`n`n
             }
         return entry
         }
@@ -997,11 +1000,9 @@ view2 := view*1.2
         Critical
         new_html = file:///%inca%\cache\html\%folder%.htm
         StringReplace, new_html, new_html, \,/, All
-        IfWinNotExist, ahk_group Browsers
-            run, %new_html%						; open a new web tab
-        else if !inca_tab
-            run, %new_html%						; open a new web tab
-        else if (folder == previous_tab)				; just refresh existing tab
+        If (!inca_tab || WinNotExist, ahk_group Browsers)
+            runWait, %new_html%						; open a new web tab
+        if (folder == previous_tab)					; just refresh existing tab
             send, {F5}
         else 
             {
@@ -1014,6 +1015,7 @@ view2 := view*1.2
             Clipboard := clip
             send, {Enter}
             }
+        previous_tab := folder
         }
 
 

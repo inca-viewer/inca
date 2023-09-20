@@ -3,6 +3,11 @@
 
 ::-webkit-scrollbar {width:0}			/* hide bright white scrollbar */
 
+.thumbs {
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:space-evenly}
+
 .thumb_container {				/* around thumbnail in htm tab */
   display:inline-block;
   vertical-align:top;
@@ -13,7 +18,7 @@
 .media {					/* player in modal overlay */
   display:inline-block;
   position:absolute;
-  max-width:84%;
+  max-width:80%;
   max-height:80%;
   border-radius:3%;
   user-select:none}
@@ -30,7 +35,9 @@
   display:grid;
   align-content:end;
   text-align:center;
+  width:80%;
   padding:0.3em;
+  margin-left:1.4em;
   color:#555351;
   border-radius:1.5em;
   overflow:hidden;
@@ -52,12 +59,12 @@
   display:flex;
   position:relative;
   text-align:center;
+  margin:auto;
   align-items:center;
-  margin-left:1em;
   margin-bottom:0.3em;
   font-size:1em;
-  justify-content:space-between;
-  width:80%}
+  justify-content:space-evenly;
+  width:100%}
 
 .ribbon a {transition:0.8s; border-radius:1em}
 .ribbon a:hover {
@@ -79,7 +86,7 @@
   outline:none;
   transition:color 1.4s;
   white-space:nowrap;
-  width:475px}
+  width:100%}
 
 .panel {					/* top panel element showing folders etc.*/
   display:grid;
@@ -87,6 +94,8 @@
   grid-template-rows: auto auto auto auto;
   grid-auto-flow: column;
   padding:2em;
+  padding-left:8%;
+  margin:auto;
   color:#826858;
   overflow-wrap:break-word;
   white-space:nowrap;
@@ -95,7 +104,6 @@
   font-size:0.85em;
   height:6em;
   opacity:0;
-  width:620px;
   background-color:inherit}
 
 .panel:hover {opacity:1}
