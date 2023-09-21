@@ -92,7 +92,7 @@
       return					; wait for mouse/key events
 
 
-    ~*Esc up::
+    ~Esc up::
       ExitApp
 
     ~LButton::					; click events
@@ -101,7 +101,7 @@
       MouseDown()
       return
 
-    *Xbutton1::					; mouse "back" button
+    Xbutton1::					; mouse "back" button
       Critical
       long_click =
       timer := A_TickCount + 350
@@ -126,16 +126,16 @@
         {
         WinGetPos,,,w,,a
         sleep 24
-        If (w == A_ScreenWidth)
+        if (w == A_ScreenWidth)
           send, {F11}
         send, {MButton up}			; close java modal (media player)
         }
       else send, {Xbutton1}
       return
 
-    ~*WheelUp::
+    ~WheelUp::
        wheel = up
-    ~*WheelDown::
+    ~WheelDown::
        MouseGetPos, xpos, ypos
        IfWinActive, ahk_class ahk_class mpv	; mpv player controls
          {
@@ -466,10 +466,12 @@
                 }
               Loop, Files, %media_path%/*.*, FD
                 return
-              address := SubStr(path, 1, InStr(path, "\", False, -1))	; one folder back
               command = Path
               selected =
-              FileRecycle, %media_path%							; delete folder if empty
+              SplitPath, media_path,,address,,folder
+              address = %address%\
+              if (InStr(address, "\Downloads") && folder != "Downloads")
+                FileRecycle, %media_path%				; delete folder if empty
               }
             }
         if (command == "Media")
@@ -521,9 +523,10 @@
               return
             Loop, Files, %media_path%/*.*, FD
               return							; files still exist in folder
-            FileRecycle, %media_path%					; delete folder if empty
-            path := SubStr(path, 1, InStr(media_path, "\", False, -1))	; go one folder back
-            address = %path%
+            SplitPath, media_path,,address,,folder
+            address = %address%\
+            if (InStr(address, "\Downloads") && folder != "Downloads")
+              FileRecycle, %media_path%					; delete folder if empty
             selected =
             }
         if (command == "Join")
@@ -588,6 +591,8 @@
                 }
             if (command == "Search" || command == "SearchBox")
               {
+              if (strlen(value) < 3)
+                reload = 0
               if (command == "Search")
                 subfolders =
               if long_click
@@ -625,7 +630,7 @@
                     this_search = %path%|%this_search%			; search this folder only
                 if (search_term && !InStr(sort_list, command))
                     {
-                    list_view := 0
+                    list_view := 1
                     toggles =
                     sort = Duration
                    }
@@ -817,10 +822,10 @@
 <a onmousedown="navigator.clipboard.writeText('#Videos###')" %x9%>Vids</a>`n
 <a onmousedown="navigator.clipboard.writeText('#Recurse###')" %x8%>Recurse</a></div>`n`n
 <div style='display:flex; width:90`%; margin:auto'>`n
-<input id='myInput' onmouseover='panel.style.opacity=null' class='searchbox' type='search' value='%search_term%'>`n
-<a id='mySearch' class='searchbox' onmousedown='searchbox()' style='width:8`%; border-radius:0'></a>`n
-<a id='myRename' class='searchbox' onmousedown="navigator.clipboard.writeText('#Rename#'+inputbox.value+'#'+selected+'#')" style='width:8`%; border-radius:0'></a>`n
-<a id='myAdd' class='searchbox' onclick="navigator.clipboard.writeText('#SearchAdd#'+inputbox.value+'#'+selected+'#')" style='width:6`%; border-radius:0 1em 1em 0'></a></div>`n`n
+<input id='myInput' onmouseover='panel.style.opacity=null' class='searchbox' style='margin-left:2`%' type='search' value='%search_term%'>`n
+<a id='mySearch' class='searchbox' onmousedown='searchbox()' style='width:10`%; border-radius:0'></a>`n
+<a id='myRename' class='searchbox' onmousedown="navigator.clipboard.writeText('#Rename#'+inputbox.value+'#'+selected+'#')" style='width:12`%; border-radius:0'></a>`n
+<a id='myAdd' class='searchbox' onclick="navigator.clipboard.writeText('#SearchAdd#'+inputbox.value+'#'+selected+'#')" style='width:6`%; margin-right:2`%; border-radius:0 1em 1em 0'></a></div>`n`n
 <div class='ribbon'>`n
 <a></a>`n
 <a onmousedown="navigator.clipboard.writeText('#Orphan###')" style='font-size:1.7em; transform:none'>%title_s%</a>`n
@@ -895,7 +900,6 @@
         stringlower, thumb, thumb
         poster = poster="file:///%thumb%"
         start := Round(start+0.1,1)					; smooth start for thumb play
-view2 := view*1.2
 
 ; FileRead, dur, %inca%\cache\durations\%media%.txt
 ; random, start, 0, dur-5
@@ -920,7 +924,7 @@ view2 := view*1.2
                     }
 	        entry = <a onmousedown='navigator.clipboard.writeText("#Media#%j%##")'><div style="display:inline-block; width:88`%; color:#555351; transition:color 1.4s; margin-left:8`%; text-align:center; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; %highlight%;">%sort_name% &nbsp;&nbsp;%media%</div></a><textarea rows=%rows% style="display:inline-block; overflow:hidden; margin-left:8`%; width:88`%; background-color:inherit; color:#826858; font-size:1.2em; font-family:inherit; border:none; outline:none;">%str2%</textarea>`n`n
                 }
-            else entry = <div id="thumb%j%" class="thumb_container" style="width:%view%em; height:%view2%em">`n <div id="title%j%" class='title' onclick="select(%j%)">`n %media%</div>`n <video class="media" id="media%j%" style="position:inherit; %transform%"`n onmousedown='navigator.clipboard.writeText("#Media#%j%##%start%")'`n onmouseover="overThumb(%j%, %skinny%, '%type%', %start%, '%cap%', event)"`n onmouseout='over_media=false; this.pause()'`n src="file:///%src%"`n %poster%`n preload='none' muted type="video/mp4"></video>%caption%</div>`n`n
+            else entry = <div id="thumb%j%" class="thumb_container" style="">`n <div id="title%j%" class='title' style='width:%view%em' onclick="select(%j%)">`n %media%</div>`n <video class="media" id="media%j%" style="width:%view%em; max-height:%view%em; position:inherit; %transform%"`n onmousedown='navigator.clipboard.writeText("#Media#%j%##%start%")'`n onmouseover="overThumb(%j%, %skinny%, '%type%', %start%, '%cap%', event)"`n onmouseout='over_media=false; this.pause()'`n src="file:///%src%"`n %poster%`n preload='none' muted type="video/mp4"></video>%caption%</div>`n`n
             }
         return entry
         }
@@ -1000,8 +1004,10 @@ view2 := view*1.2
         Critical
         new_html = file:///%inca%\cache\html\%folder%.htm
         StringReplace, new_html, new_html, \,/, All
-        If (!inca_tab || WinNotExist, ahk_group Browsers)
-            runWait, %new_html%						; open a new web tab
+        IfWinNotExist, ahk_group Browsers
+            run, %new_html%						; open a new web tab
+        else if !inca_tab
+            run, %new_html%						; open a new web tab
         if (folder == previous_tab)					; just refresh existing tab
             send, {F5}
         else 

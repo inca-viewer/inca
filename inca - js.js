@@ -9,16 +9,12 @@
 // edit caption file when # in filename
 // caption issues
 // better continuity between htm video and modal video viewing
-
 // make selected survive view change
-// could list view html be same as thumb view?
-// must not delete pic folder etc
 // rename from title not inputbox
 // `r`n within captions
-
-// size of bottom margin, especially when view large
-// force low res media to scale properly
 // start show cap -1 sec
+
+// cap width issue
 
 
   var thumb = document.getElementById('media1')				// first media element
@@ -301,27 +297,27 @@
     var y = Math.abs(Yref-ypos)
     if (type && mouse_down && (gesture || x+y > 5)) {			// gesture detection (mousedown + slide)
       if (!gesture) {block=0; gesture=true}
-      if (mouse_down == 1 && x>y && type != 'thumbsheet') {		// media width (click gesture)
+      if (x>y && type != 'thumbsheet' && ym < 1) {			// media width (click gesture)
         if (!block) {scaleX -= (xpos-Xref)/1000}
         newSkinny = (scaleX/scaleY).toFixed(2)
         thumb.style.transform = "scaleX("+newSkinny+")"
         if (newSkinny == 1 && !block) {block = 20}}			// pause gesture when skinny crosses 1:1
-      else if (mouse_down == 1 && y+0.1 > x) {				// zoom media
+      else if (y+0.1 > x && ym < 1) {					// zoom media
         if (scaleY > 0.3 || Yref < ypos) {
           if (scaleX < 0) {scaleX -= (ypos-Yref)/200}			// in case media fipped left/right
           else {scaleX += (ypos-Yref)/200}
           scaleY += (ypos-Yref)/200}}
-      else if (mouse_down == 2) {					// move media (middle click gesture)
+      else if (ym > 1) {						// move media (middle click gesture)
         mediaX += xpos - Xref
         mediaY += ypos - Yref
         localStorage.setItem("mediaX",mediaX)
         localStorage.setItem("mediaY",mediaY)}
       Xref=xpos; Yref=ypos
       positionMedia()}
-    if (!type && y>0.2 && (gesture || (mouse_down==1 && x+y>5 && x<y))) { // zoom thumbs
+    if (!type && y>0.2 && (gesture || (mouse_down && x+y>5 && x<y))) { // zoom thumbs
       last_index=0							// prevent scroll to index
       if (!gesture) {block=0; gesture=true}
-      el = document.getElementById("thumb" + index)
+      el = document.getElementById("media" + index)
       view = 1*el.style.width.slice(0,-2)
       if (Yref < ypos) {view += view/60}
       else {view -= view /60}
@@ -329,8 +325,9 @@
       if (view < 5) {view = 5}
       if (view > 99) {view = 99}
       for (i=1; i<37 ;i++) {
-        el = document.getElementById("thumb" + i)
-        if (el) {el.style.width=view+'em'; el.style.height=view*1.2+'em'}}
+        el = document.getElementById("media" + i)
+        el2 = document.getElementById("title" + i)
+        if (el) {el2.style.width=view+'em'; el.style.width=view+'em'; el.style.maxHeight=view+'em'}}
       Xref=xpos; Yref=ypos}
     if (!type) {return}
     if (!nav.matches(":hover")) {nav.style.display = null}

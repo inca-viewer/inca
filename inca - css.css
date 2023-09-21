@@ -11,15 +11,13 @@
 .thumb_container {				/* around thumbnail in htm tab */
   display:inline-block;
   vertical-align:top;
+  margin:0.5em;
   text-align: center;
-  margin-bottom:20px;
   position:relative}
 
 .media {					/* player in modal overlay */
   display:inline-block;
   position:absolute;
-  max-width:80%;
-  max-height:80%;
   border-radius:3%;
   user-select:none}
 
@@ -35,7 +33,7 @@
   display:grid;
   align-content:end;
   text-align:center;
-  width:80%;
+  height:1.5em;
   padding:0.3em;
   margin-left:1.4em;
   color:#555351;
@@ -43,8 +41,7 @@
   overflow:hidden;
   white-space:nowrap;
   text-overflow:ellipsis;
-  font-size:0.85em;
-  height:2em}
+  font-size:0.9em}
 
 .selected {
   display:block; 
@@ -75,7 +72,7 @@
   text-overflow:ellipsis;
   overflow:hidden;
   margin-top:0.4em;
-  margin-bottom:0.5em;
+  margin-bottom:0.4em;
   border-radius:1em 0 0 1em;
   text-align:center;
   background-color:#1b1814;
@@ -178,7 +175,7 @@ table {						/* list view formatting */
 
 .context {					/* right click menu */
   display:none;
-  z-index:999;
+  z-index:888;
   position:fixed;
   font-size:1.4em;
   transition:0.14s;
