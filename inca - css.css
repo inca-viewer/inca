@@ -6,12 +6,15 @@
 .thumbs {
   display:flex;
   flex-wrap:wrap;
-  justify-content:space-evenly}
+  width:90%;
+  margin-left:5%;
+  justify-content:space-around}
 
 .thumb_container {				/* around thumbnail in htm tab */
   display:inline-block;
   vertical-align:top;
-  margin:0.5em;
+  padding:0.7em;
+  padding-bottom:2em;
   text-align: center;
   position:relative}
 
@@ -19,29 +22,33 @@
   display:inline-block;
   position:absolute;
   border-radius:3%;
-  user-select:none}
+  max-width:100%;
+  max-height:100%}
 
-.title0 {
-  width:80`%;
-  border-radius:1em;
-  padding-left:0.5em;
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis}
+.thumblist {					/* media list view	*/
+  opacity:0;
+  max-width:12em;
+  border-radius:5%;
+  margin-left:6em;
+  transition:0.2s}
+.thumblist:hover {opacity:1}			/* show thumbnail on hover	*/
 
 .title {
   display:grid;
-  align-content:end;
-  text-align:center;
-  height:1.5em;
-  padding:0.3em;
-  margin-left:1.4em;
-  color:#555351;
-  border-radius:1.5em;
   overflow:hidden;
-  white-space:nowrap;
+  text-align: center;
   text-overflow:ellipsis;
-  font-size:0.9em}
+  border-radius:1em;
+  background-color:inherit;
+  border:none;
+  height:1em;
+  color:#826858;
+  font-family:inherit;
+  outline:none;
+  font-size:1em;
+  transition:color 1.4s;
+  white-space:nowrap;
+  width:100%}
 
 .selected {
   display:block; 
@@ -79,7 +86,7 @@
   color:#826858;
   font-family:inherit;
   border:none;
-  height:1.1em;
+  height:1.2em;
   outline:none;
   transition:color 1.4s;
   white-space:nowrap;
@@ -102,15 +109,7 @@
   height:6em;
   opacity:0;
   background-color:inherit}
-
 .panel:hover {opacity:1}
-
-.thumblist {					/* media list, when view = 0	*/
-  opacity:0;
-  transition:0.2s;
-  border-radius:5%}
-
-.thumblist:hover {opacity:1}			/* show thumbnail on hover	*/
 
 .seekbar {					/* video progress bar	*/
   position:absolute;
@@ -163,15 +162,10 @@
   width:100vw;
   background-color:rgba(0,0,0,0.4)}
 
-a {text-decoration:none; color:#826858}
-a:hover {color:tomato;transition:color 0.46s}
-table:hover {color:tomato;transition:color 0.46s}
-
 table {						/* list view formatting */
-  color:#826858;
+  color:#555351;
   transition:color 1.4s;
-  table-layout:fixed;
-  border-collapse: collapse}
+  border-collapse:collapse}
 
 .context {					/* right click menu */
   display:none;
@@ -188,7 +182,6 @@ table {						/* list view formatting */
   padding-right:1.2em;
   padding-bottom:0.6em;
   color:lightsalmon}
-
 .context a:hover {background-color:#222222}
 
 .container {					/* whole body element */
@@ -202,6 +195,9 @@ table {						/* list view formatting */
   animation-name:fadePage;
   animation-duration:0.6s}
 
+  a {text-decoration:none; color:#826858}
+  a:hover {color:tomato;transition:color 0.46s}
+  table:hover {color:tomato;transition:color 0.46s}
   @keyframes fadePage {from {opacity:0} to {opacity:1}}
 
 </style>
