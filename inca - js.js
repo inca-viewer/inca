@@ -16,7 +16,10 @@
 
 // power up location bar selected?
 // title with single ' in text, gets cut off in htm page (betsy's hair)
-
+// auto select on move over context
+// title hard to read when selected 
+// create caps
+// thumbasheet sel
 
   var thumb = document.getElementById('media1')				// first media element
   var modal = document.getElementById('myModal')			// media player window
@@ -201,11 +204,11 @@
     if (e == 'Next') {index+=1; start=0}
     if (e == 'Mclick') {
       if (last_type && long_click) {index-=1}
-      else if (last_type && (last_type != 'video' || !over_media || yw>0.9)) {index+=1; start=0}
+      else if (last_type && (last_type != 'video' || ym>1)) {index+=1; start=0}
       if (!last_type && !over_media && long_click) {index=last_index; start=last_start; e=''}}
     getParameters(e)
     if (type == 'document' || type == 'm3u') {type=''; return}
-    if (e == 'Mclick' && type == 'video' && over_media && yw<0.9) {thumbSheet()}
+    if (e == 'Mclick' && type == 'video' && ym<1) {thumbSheet()}
     modal.style.zIndex = Zindex+=1
     modal.style.opacity = 1
     media.muted = 1*localStorage.getItem('muted')
@@ -278,7 +281,7 @@
       else {x = 0.01}
       if (type != 'image') {media.playbackRate += x}
       if (media.playbackRate == 1) {block = 999}}
-    else if (id=='myMute') {
+    else if (id=='myMute'|| ym>1) {
        if (type == 'image' && media.offsetHeight*scaleY > innerHeight) {
          if (wheelUp) {mediaY -= 50}					// scroll image
          else {mediaY += 50}}
@@ -341,7 +344,7 @@
     if (!nav.matches(":hover")) {nav.style.display = null}
     modal.style.cursor = 'crosshair'
     if (type != 'thumbsheet') {setTimeout(function() {modal.style.cursor='none'},400)}
-    if (yw>0.9 && type == 'video') {seek_active=true; seek.currentTime=media.duration*xm}
+    if (ym>1 && type == 'video') {seek_active=true; seek.currentTime=media.duration*xm}
     else {seek_active=false; seek.style.opacity=0}}
 
 
@@ -553,6 +556,7 @@
     e.preventDefault()
     myMute.innerHTML = 'Mute'
     was_over_thumb = over_thumb
+if (!type && over_thumb) {sel(over_thumb)}
     Gesture(e)
     nav2.style.left=xpos-75+'px'; nav2.style.top=ypos-14+'px'
     nav.style.left=e.clientX-85+'px'; nav.style.top=e.clientY-44+'px'
