@@ -1,30 +1,25 @@
-<script>
 
 // panel.style.opacity=1; panel.innerHTML= x; or alert(x)		// debugging
 // rem. long click text or search, +adds extra search term
 // cache missing folder effects
 // use cursor change and clipboard instead of location bar
 // permissions in manifest:   "permissions": [ "clipboardRead" ],
-// after thumb position change in playlist - not playing media
 // edit caption file when # in filename
 // caption issues
 // better continuity between htm video and modal video viewing
 // make selected survive view change
-// rename from title not inputbox
 // `r`n within captions
 // start show cap -1 sec
 
-// power up location bar selected?
 // title with single ' in text, gets cut off in htm page
-// seek usability
-// need to remember last scale from htm page
-// button to flip media
-// click to select
-// scale artifects
+// auto clear htm list cache after use
 
-// mymute
+// use new messages scaleY mechanism for other system variables
+// next media issues usability
 
-
+// use spool for selected and last index etc.
+// power up location bar selected?
+// transition during fullscreen switch
 
 
 
@@ -90,6 +85,7 @@
   var mediaX								// media position
   var mediaY
   var scaleX = 1							// skinny & magnify factor
+  var last_scaleY = 1							// zoom level
   var xpos								// cursor coordinate in pixels
   var ypos
   var Xref								// click cursor coordinate
@@ -122,7 +118,7 @@
       clickTimer = setTimeout(function() {
         if (!gesture) {
           long_click = true
-          if (!type && over_media) {playMedia('Click')}			// play media at 0:00
+          if (!type && over_media && !selected) {playMedia('Click')}	// play media at 0:00
           else if (type && !over_cap) {media_ended()}}},240)}}		// re-start media
 
 
@@ -142,7 +138,7 @@
       else if (seek.style.opacity>0.3 && !over_cap && !nav2.matches(":hover")) {
         media.currentTime = seek.currentTime}
       else if (!over_cap && cap.value != cap.innerHTML) {editCap()}	// caption in edit mode
-      else if (!type && over_media) {playMedia('Click')}
+      else if (!type && over_media && mouse_down) {playMedia('Click')}
       else if (type) {togglePause()}}
     gesture=false; mouse_down=0; long_click=false
     seek_active=false; seek.style.opacity=0
@@ -205,7 +201,6 @@
 
 
   function playMedia(e) {
-    if (long_click && selected && playlist) {return}			// moving thumb position within a playlist
     var last_type = type
     if (type) {close_media()}						// no type if no media playing
     if (e == 'Next') {index+=1; start=0}
@@ -219,7 +214,7 @@
     modal.style.zIndex = Zindex+=1
     modal.style.opacity = 1
     media.muted = 1*localStorage.getItem('muted')
-    if (type == 'audio' || playlist.match('/inca/music/')) {looping=false; media.muted=false; scaleY=0.3}
+    if (type == 'audio' || playlist.match('/inca/music/')) {looping=false; media.muted=false}
     else if (fullscreen) {modal.requestFullscreen()}
     if (!sheetY) {sheetY=1.5}
     if (!scaleX || !scaleY) {scaleX=scaleY=1}
@@ -238,7 +233,8 @@
     media.oncanplay = function() {can_play=true}
     media.playbackRate = rate
     media.volume = 0
-    positionMedia(0.2)
+    if (type == 'thumbsheet') {positionMedia(0.2)}
+    else {positionMedia(0)}
     modal.style.opacity = 1
     intervalTimer = setInterval(mediaTimer,84)
     media.addEventListener('ended', media_ended)}
@@ -252,6 +248,8 @@
     if (type != 'thumbsheet') {
       localStorage.setItem("mediaX",mediaX)
       localStorage.setItem("mediaY",mediaY)}
+    if (scaleY != last_scaleY)
+      messages = messages+'#ScaleY#'+scaleY+'##'
     if (skinny != newSkinny) {
       messages = messages+'#Skinny#'+newSkinny+'#'+index+',#'}		// width changes
     clearInterval(intervalTimer)
@@ -279,7 +277,7 @@
     seek.style.opacity=0
     if (e.deltaY > 0) {wheelUp=true}
     if (id == 'myPage') {						// page
-      if (wheelUp && page<pages) {page++} else if (page>1) {page--}
+      if (wheelUp && page<pages) {page++} else if (!wheelUp && page>1) {page--}
       el.innerHTML = 'Page '+page+' of '+pages}
     else if (id == 'myFilt') {						// search filter
       if (wheelUp) {filt++} else if (filt) {filt--}
@@ -296,8 +294,9 @@
       if (type == 'image' && media.offsetHeight*scaleY > innerHeight) {
         if (wheelUp) {mediaY -= 50}					// scroll image
         else {mediaY += 50}}
-      else if (wheelUp) {media.currentTime += interval}
-        else  {media.currentTime -= interval}
+      else if (type == 'video' || type == 'audio') {
+        if (wheelUp) {media.currentTime += interval}
+        else  {media.currentTime -= interval}}
       block = 160}
     else {spool(e, id)} 						// scroll top panel
     wheel = 0}
@@ -318,10 +317,11 @@
     if (type && mouse_down && !over_cap && (gesture || x+y > 5)) {	// gesture detection (mousedown + slide)
       if (!gesture) {block=0; gesture=true}
       if (type!='thumbsheet' && mouse_down==2) {			// media width - middle click gesture
-        if (!block) {scaleX -= (xpos-Xref)/1000}
+        if (!block && scaleX>0) {scaleX -= (xpos-Xref)/1000}
+        else if (!block) {scaleX += (xpos-Xref)/1000}
         newSkinny = (scaleX/scaleY).toFixed(2)
         thumb.style.transform = "scaleX("+newSkinny+")"
-        if (newSkinny == 1 && !block) {block = 24}}			// pause gesture when skinny crosses 1:1
+        if (!block && (newSkinny == 1||newSkinny==-1)) {block = 24}}	// pause gesture when skinny crosses 1:1
       else if (y+2>x && !block && mouse_down==1) {			// zoom media - up/down gesture
         if (scaleY > 0.3 || Yref < ypos) {
           if (type == 'thumbsheet') {sheetY+=(ypos-Yref)/200}		// zoom thumbsheet
@@ -364,11 +364,11 @@
     media.style.left = (mediaX-media.offsetWidth/2) +x +"px"
     media.style.top = (mediaY-media.offsetHeight/2) +y +"px"
     if (!mouse_down && (mediaY > 0.7*((innerHeight/2)-y) && mediaY < 1.3*((innerHeight/2)-y))
-      && (mediaX > 0.7*((innerWidth/2)-x) && mediaX < 1.3*((innerWidth/2)-x))) {
+      && (mediaX > 0.7*((innerWidth/2)-x) && mediaX < 1.3*((innerWidth/2)-x))) {rate=0.16
       if (Math.abs((media.offsetHeight*scaleY)) > 0.92*(innerHeight) && Math.abs((media.offsetHeight*scaleY)) < 1.15*(innerHeight)) {
-        mediaY=(innerHeight/2)-y; scaleY=(innerHeight)/media.offsetHeight; scaleX=skinny*scaleY}
+        mediaY=(innerHeight/2)-y; scaleY=(innerHeight)/media.offsetHeight; scaleX=skinny*scaleY; rate=1}
       if (Math.abs((media.offsetWidth*scaleX)) > 0.92*innerWidth && Math.abs((media.offsetWidth*scaleX)) < 1.15*innerWidth) {
-        mediaX=(innerWidth/2)-x; scaleX=(innerWidth)/media.offsetWidth; scaleY=scaleX/skinny}}
+        mediaX=(innerWidth/2)-x; scaleX=(innerWidth)/media.offsetWidth; scaleY=scaleX/skinny; rate=1}}
     media.style.transition = rate+'s'
     if (type == 'thumbsheet') {media.style.transform="scale("+skinny*sheetY+","+sheetY+")"}
     else  {media.style.transform = "scale("+scaleX+","+scaleY+")"}}
@@ -410,7 +410,7 @@
     if (looping) {myLoop.style.color='red'} else {myLoop.style.color=null}
     if (media.muted) {myMute.style.color='red'} else {myMute.style.color=null}
     if (media.volume <= 0.8) {media.volume += 0.05}			// fade sound up
-    positionMedia(0.2)}
+    positionMedia(0)}
 
 
   function playThumb() {
@@ -475,10 +475,10 @@
       if (y < scrollY+20 || y > scrollY+innerHeight-100) {scrollTo(0,y-300)}}}
 
 
-  function spool(e, id, input, to, so, fi, pa, ps, vw, rt, fs, pl) {  // spool lists into top htm panel
+  function spool(e, id, ii, sc, vi, pg, ps, fi, so, fo, pa, pl, rt, fs) { // spool lists into top htm panel
     if (id) {panel.style.opacity = 1}
-    if (input) {ini=input; toggles=to; sort=so; filt=fi; page=pa; 
-      pages=ps; view=vw; rate=rt; fullscreen=fs; playlist=pl}
+    if (ii) {ini=ii; scaleY=sc; last_scaleY = sc; view=vi; page=pg; pages=ps;
+            filt=fi; sort=so; folder=fo; path=pa; playlist=pl; rate=rt; fullscreen=fs}
     if (!last_id) {last_id = 'Fol'}
     if (id) {last_id = id} else {id = last_id}
     sessionStorage.setItem("last_id",last_id)
@@ -571,13 +571,13 @@
     if (type) {nav2.style.display='block'} else {nav.style.display='block'}}
 
   function selectAll() {if (was_over_thumb) {sel(was_over_thumb)} else {for (i=1; i <= 600; i++) {sel(i)}}}
-  function del() {release(); if (selected) {navigator.clipboard.writeText('#Delete##'+selected+'#')} else if (was_over_thumb) {navigator.clipboard.writeText('#Delete##'+was_over_thumb+',#')}}
-  function rename() {index=1*sessionStorage.getItem('last_index'); release(); navigator.clipboard.writeText('#Rename#'+document.getElementById('title'+index).value+'#'+index+',#')}
+  function del() {release(); if (selected) {navigator.clipboard.writeText('#Delete##'+selected+'#')} else if (was_over_thumb) {navigator.clipboard.writeText('#Delete##'+was_over_thumb+',#')}sessionStorage.setItem("last_index",was_over_thumb)}
+  function rename() {index=1*sessionStorage.getItem('last_index'); release(); navigator.clipboard.writeText('#Rename#'+document.getElementById('title'+index).value+'#'+index+',#'); sessionStorage.setItem("last_index",index)}
   function fav() {navigator.clipboard.writeText("#Favorite#" + media.currentTime.toFixed(1) + "#" + index + ",#")}
   function thumbs(x) {navigator.clipboard.writeText('#myThumbs#'+x+'##'); sessionStorage.setItem("last_index",last_index)}
   function loop() {if (looping) {looping = false} else {looping = true}}
+  function flip() {newSkinny*=-1; scaleX*=-1; thumb.style.transform='scaleX('+newSkinny+')'}
   function mute() {if(!long_click) {media.volume=0; media.muted=!media.muted; localStorage.setItem("muted",1*media.muted); media.play()}}
   function cut() {clip=getSelection().toString(); navigator.clipboard.writeText(clip); inputbox.value=inputbox.value.replace(clip,'')}
   function paste() {inputbox.setRangeText(clip, inputbox.selectionStart, inputbox.selectionEnd, 'select')}
 
-</script>
