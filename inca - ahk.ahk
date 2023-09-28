@@ -1160,6 +1160,8 @@
         if !long_click
           if (InStr(address, "inca\fav") || InStr(address, "inca\music"))
             DeleteEntries(0)
+        if (InStr(address, "Downloads")) 
+            SetTimer, indexer, -1000, -1
         }  
 
 

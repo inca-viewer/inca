@@ -20,6 +20,7 @@
 // use spool for selected and last index etc.
 // power up location bar selected?
 // transition during fullscreen switch
+// not opening after compile
 
 
 
