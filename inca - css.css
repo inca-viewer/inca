@@ -13,7 +13,7 @@
 .thumb_container {				/* around thumbnail in htm tab */
   display:inline-block;
   vertical-align:top;
-  padding:0.7em;
+  padding:0.3em;
   padding-bottom:2em;
   text-align: center;
   position:relative}
@@ -41,7 +41,7 @@
   border-radius:1em;
   background-color:inherit;
   border:none;
-  height:1em;
+  height:1.5em;
   color:#826858;
   font-family:inherit;
   outline:none;
@@ -197,6 +197,7 @@ table {						/* list view formatting */
 
   a {text-decoration:none; color:#826858}
   a:hover {color:tomato;transition:color 0.46s}
+  input:hover {color:tomato;transition:color 0.46s}
   table:hover {color:tomato;transition:color 0.46s}
   @keyframes fadePage {from {opacity:0} to {opacity:1}}
 

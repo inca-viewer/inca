@@ -78,17 +78,13 @@
 
     main:
       initialize()				; set environment
+      path = %profile%\Pictures\		; use pictures as default
+      this_search := path
+      folder = pictures
       WinActivate, ahk_group Browsers
-      SetTimer, TimedEvents, 100		; every 100mS
-      sleep 350					; wait for browser page to identify
-      folder := inca_tab			; align current folder to browser
-      if !inca_tab				; inca tab not exist
-        {
-        path = %profile%\Pictures\		; use pictures as default
-        this_search := path
-        folder = pictures
+      IfWinNotExist, ahk_group Browsers
         CreateList(0)				; construct web page
-        }
+      SetTimer, TimedEvents, 100		; every 100mS
       return					; wait for mouse/key events
 
 
@@ -592,7 +588,10 @@
             if (command == "Search" || command == "SearchBox")
               {
               if (strlen(value) < 3)
+                {
                 reload = 0
+                return
+                }
               if (command == "Search")
                 subfolders =
               if long_click
@@ -799,7 +798,7 @@
 <a onmousedown='navigator.clipboard.writeText("#Join##" + selected + "#")'>Join</a></span>`n`n
 
 <span id="myContext2" class='context'>`n
-<a id='myMute' onclick='mute()' onwheel="wheelEvents(event, id, this)">Mute</a>`n
+<a id='myMute' onmouseup='mute()' onwheel="wheelEvents(event, id, this)">Mute</a>`n
 <a id="mySpeed" onwheel="wheelEvents(event, id, this)"></a>`n
 <a id='myLoop' onclick="loop()">Loop</a>`n
 <a id='myFav2' onmousedown='navigator.clipboard.writeText("#Favorite#" + media.currentTime.toFixed(1) + "#" + index + ",#")'>Fav</a>`n
@@ -913,7 +912,7 @@
 
         if list_view 							; list view
             {
-            entry = <div onmouseover='over_thumb=%j%' onmouseout='over_thumb=0'><table><tr><td id="thumb%j%" style="position:absolute; padding:0">`n <video id="media%j%" class='thumblist' style="%transform%"`n onmousedown='navigator.clipboard.writeText("#Media#%j%##%start%")'`n onmouseover="overThumb(%j%, %skinny%, '%type%', %start%, '%cap%', event)"`n onmouseout='over_media=false; this.load()'`n %poster%`n src="file:///%src%"`n type="video/mp4" preload='none' muted></video></tr></table>`n <table style="table-layout:fixed; width:86.5`%; font-size:0.9em; margin:auto"><tr><td style="width:4em">`n <span style="border-radius:9px; color:#826858">%sort_name%</span></td>`n <td style="width:4em; text-align:center">%dur%</td>`n <td style="width:3em; text-align:center">%size%</td>`n <td style="width:4em; text-align:center">%ext%</td>%fold%`n <td><input id="title%j%" class='title' style='text-align:left; margin-left:1em' type='search' value='%media%' onmousedown='if(!event.button) {inputbox=this; last_index=%j%}'></td></tr></table></div>`n`n
+            entry = <div onmouseover='over_thumb=%j%' onmouseout='over_thumb=0'><table><tr><td id="thumb%j%" style="position:absolute; padding:0">`n <video id="media%j%" class='thumblist' style="%transform%"`n onmousedown='navigator.clipboard.writeText("#Media#%j%##%start%")'`n onmouseover="overThumb(%j%, %skinny%, '%type%', %start%, '%cap%', event)"`n onmouseout='over_media=false; this.load()'`n %poster%`n src="file:///%src%"`n type="video/mp4" preload='none' muted></video></tr></table>`n <table style="table-layout:fixed; width:86.5`%; font-size:0.9em; margin:auto"><tr><td style="width:4em">`n <span style="border-radius:9px; color:#826858">%sort_name%</span></td>`n <td style="width:4em; text-align:center">%dur%</td>`n <td style="width:3em; text-align:center">%size%</td>`n <td style="width:4em; text-align:center">%ext%</td>%fold%`n <td><input id="title%j%" class='title' style='text-align:left; margin-left:1em' type='search' value='%media%' onmousedown='if(!event.button) {inputbox=this; sessionStorage.setItem("last_index",%j%)}'></td></tr></table></div>`n`n
             }
         else								; thumbnail view
             {
@@ -929,7 +928,7 @@
                     }
 	        entry = <a onmousedown='navigator.clipboard.writeText("#Media#%j%##")'><div style="display:inline-block; width:88`%; color:#555351; transition:color 1.4s; margin-left:8`%; text-align:center; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; %highlight%;">%sort_name% &nbsp;&nbsp;%media%</div></a><textarea rows=%rows% style="display:inline-block; overflow:hidden; margin-left:8`%; width:88`%; background-color:inherit; color:#826858; font-size:1.2em; font-family:inherit; border:none; outline:none;">%str2%</textarea>`n`n
                 }
-            else entry = <div id="thumb%j%" class="thumb_container" style="width:%view%em; max-height:%view%em" onmouseover='over_thumb=%j%' onmouseout='over_thumb=0'>`n <input id="title%j%" class='title' text-align:center' onmousedown='if(!event.button) {inputbox=this; last_index=%j%}' type='search' value='%media%'>`n <video class="media" id="media%j%" style="position:inherit; %transform%"`n onmousedown='navigator.clipboard.writeText("#Media#%j%##%start%")'`n onmouseover="overThumb(%j%, %skinny%, '%type%', %start%, '%cap%', event)"`n onmouseout='over_media=false; this.pause()'`n src="file:///%src%"`n %poster%`n preload='none' muted type="video/mp4"></video>%caption%</div>`n`n
+            else entry = <div id="thumb%j%" class="thumb_container" style="width:%view%em; max-height:%view%em" onmouseover='over_thumb=%j%' onmouseout='over_thumb=0' onclick='sel(%j%)'>`n <input id="title%j%" class='title' text-align:center' onmousedown='if(!event.button) {inputbox=this; sessionStorage.setItem("last_index",%j%)}' type='search' value='%media%'>`n <video class="media" id="media%j%" style="position:inherit; %transform%"`n onmousedown='navigator.clipboard.writeText("#Media#%j%##%start%")'`n onmouseover="overThumb(%j%, %skinny%, '%type%', %start%, '%cap%', event)"`n onmouseout='over_media=false; this.pause()'`n src="file:///%src%"`n %poster%`n preload='none' muted type="video/mp4"></video>%caption%</div>`n`n
             }
         return entry
         }
@@ -1013,7 +1012,7 @@
             run, %new_html%						; open a new web tab
         else if !inca_tab
             run, %new_html%						; open a new web tab
-        if (folder == previous_tab)					; just refresh existing tab
+        else if (folder == previous_tab)				; just refresh existing tab
             send, {F5}
         else 
             {
