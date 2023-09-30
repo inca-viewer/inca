@@ -30,7 +30,7 @@
         Global search			; list of search words
         Global search_folders		; default search locations
         Global index_folders		; to index thumb sheets
-        Global this_search		; current search folders
+        Global search_path		; current search paths
         Global inca			; default folder path
         Global list			; sorted media file list
 	Global list_id			; pointer to media file
@@ -80,12 +80,14 @@
 
     main:
       initialize()				; set environment
-      path = %profile%\Pictures\		; use pictures as default
-      this_search := path
-      folder = pictures
       WinActivate, ahk_group Browsers
-      IfWinNotExist, ahk_group Browsers
+      if !GetBrowser()
+        {
+        path = %profile%\Pictures\		; use pictures as default
+        search_path := path
+        folder = pictures
         CreateList(0)				; construct web page
+        }
       SetTimer, TimedEvents, 100		; every 100mS
       return					; wait for mouse/key events
 
@@ -232,14 +234,8 @@
       }
 
 
-    TimedEvents:
+    GetBrowser() {
         title =
-        array := StrSplit(clipboard,"#")
-        if (inca_tab && array.MaxIndex() > 4)				; likely is a java message
-          Clipboard()
-        if (Clipboard && Clipboard != clip && !InStr(Clipboard, "#"))	; preserve clipboard
-          clip := Clipboard
-        Gui, background:+LastFound
         WinGet, state, MinMax, ahk_group Browsers
         if (state > -1)
           WinGetTitle title, A
@@ -258,9 +254,6 @@
           browser = Profile 1 - Microsoft
         StringGetPos, pos, inca_tab, %browser%, R
         StringLeft, inca_tab, inca_tab, % pos - 3
-        if inca_tab
-            WinSet, Transparent, % Setting("Dim Desktop")
-        else WinSet, Transparent, 0
         if (inca_tab && inca_tab != previous_tab)			; has inca tab changed
             {
             folder := inca_tab
@@ -270,6 +263,21 @@
             else CreateList(0)						; media list to match html page
             previous_tab := inca_tab
             }
+        return inca_tab
+        }
+
+
+    TimedEvents:
+        GetBrowser()
+        array := StrSplit(clipboard,"#")
+        if (inca_tab && array.MaxIndex() > 4)				; likely is a java message
+          Clipboard()
+        if (Clipboard && Clipboard != clip && !InStr(Clipboard, "#"))	; preserve clipboard
+          clip := Clipboard
+        Gui, background:+LastFound
+        if inca_tab
+            WinSet, Transparent, % Setting("Dim Desktop")
+        else WinSet, Transparent, 0
         if vol_popup							; show volume popup bar
             vol_popup -= 1
         if (volume > 0.1 && !vol_popup && Setting("Sleep Timer") > 10 && A_TimeIdlePhysical > 600000)
@@ -430,16 +438,17 @@
             {
             FileDelete, %inca%\cache\widths\%media%.txt
             if (value < -1.2) 
-              value = 0.5
+              value = -1.2
             if (value > 1.5)
               value = 1.5
-            FileAppend, %value%, %inca%\cache\widths\%media%.txt
+            if (value < 0.98 || value > 1.02)
+              FileAppend, %value%, %inca%\cache\widths\%media%.txt
             }
-        if (command == "myThumbs")
+        if (command == "myThumbs" && !(value && list_view))
             {
             if !value
               list_view ^= 1 
-            else
+            else 
               {
               view := value
               list_view := 0
@@ -599,10 +608,12 @@
             if address
                 {
                 search_term =
-                this_search := path
+                search_path := path
                 x := playlist
+                y := path
                 GetTabSettings()					; load previous tab settings from cache
                 playlist := x
+                path := y
                 subfolders =
                 if playlist
                    Loop, Files, %inca%\%folder%\*.m3u, FR
@@ -622,10 +633,11 @@
                 {
                 folder := search_term
                 GetTabSettings()					; load cached tab settings
-                this_search := search_folders
-                if (search_term && !InStr(this_search, path))		; search this folder, then search paths
-                    this_search = %path%|%this_search%			; search this folder only
+                search_path := search_folders
+                if (search_term && !InStr(search_path, path))		; search this folder, then search paths
+                    search_path = %path%|%search_path%			; search this folder only
                 if (search_term && !InStr(sort_list, command))
+                  if (command == "SearchBox")
                     {
                     list_view := 1
                     toggles =
@@ -665,8 +677,8 @@
     CreateList(show)							; list of files in path
         {
         Critical
-        if !this_search
-            return
+        if !search_path
+            search_path := path
         IfNotExist, %path%
             path = %search_term%\
         list =
@@ -684,7 +696,7 @@
                  break
              }
            }
-        else Loop, Parse, this_search, `|
+        else Loop, Parse, search_path, `|
            Loop, Files, %A_LoopField%*.*, F%recurse%
              if A_LoopFileAttrib not contains H,S
                if spool(A_LoopFileFullPath, A_Index, 0)
@@ -833,6 +845,7 @@
 <a onmousedown='flip()'>Flip</a></span>`n`n
 
 <span id="myContext2" class='context'>`n
+<a onmousedown="playMedia('Back')">Back</a>`n
 <a id='myMute' onmouseup='mute()' onwheel="wheelEvents(event, id, this)">Mute</a>`n
 <a id="mySpeed" onwheel="wheelEvents(event, id, this)"></a>`n
 <a id='myLoop' onclick="loop()">Loop</a>`n
@@ -943,7 +956,7 @@
         FileRead, cap, %inca%\cache\captions\%media%.srt
         caption := StrSplit(cap, "|").1
         if caption
-          caption = <a onmousedown='if(!event.button) {navigator.clipboard.writeText("#EditCap#%media%##")}' style="color:#826858; display:block; font-size:%cap_size%em; margin-left:1em">%caption%</a>
+          caption = <a onmousedown='if(!event.button) {navigator.clipboard.writeText("#EditCap#%media%##")}' style="color:#ffa07a66; line-height:1em; display:block; font-size:%cap_size%em; margin-left:1em; text-align:left">%caption%</a>
         cap := StrReplace(cap, "`r`n", "|")
         cap := StrReplace(cap, ",", "§")
         cap := StrReplace(cap, "'", "±")
@@ -972,7 +985,7 @@
 
         if list_view 							; list view
             {
-            entry = <div onmouseover='over_thumb=%j%' onmouseout='over_thumb=0'><table><tr><td id="thumb%j%" style="position:absolute; padding:0">`n <video id="media%j%" class='thumblist' style="%transform%"`n onmousedown="navigator.clipboard.writeText('#Media#%j%##%start%')"`n onmouseover="overThumb(%j%, %skinny%, '%type%', %start%, '%cap%', event)"`n onmouseout='over_media=false; this.load()'`n %poster%`n src="file:///%src%"`n type="video/mp4" preload='none' muted></video></tr></table>`n <table style="table-layout:fixed; width:86.5`%; font-size:0.9em; margin:auto"><tr>`n <td style="width:4em; color:#826858" onclick='sel(%j%)'>%sort_name%</td>`n <td style="width:4em; text-align:center">%dur%</td>`n <td style="width:3em; text-align:center">%size%</td>`n <td style="width:4em; text-align:center">%ext%</td>%fold%`n <td><input id="title%j%" class='title' style='text-align:left; margin-left:1em' type='search' value='%media%' onmousedown='if(!event.button) {inputbox=this; sessionStorage.setItem("last_index",%j%)}'></td></tr></table></div>`n`n
+            entry = <div onmouseover='over_thumb=%j%' onmouseout='over_thumb=0'><table><tr><td id="thumb%j%" style="position:absolute; padding:0">`n <video id="media%j%" class='thumblist' style="%transform%"`n onmousedown="navigator.clipboard.writeText('#Media#%j%##%start%')"`n onmouseover="overThumb(%j%, %skinny%, '%type%', %start%, '%cap%', event)"`n onmouseout='over_media=false; this.load()'`n %poster%`n src="file:///%src%"`n preload='none' muted type="video/mp4"></video></tr></table>`n <table style="table-layout:fixed; width:86.5`%; font-size:0.9em; margin:auto"><tr>`n <td style="width:4em; color:#826858" onclick='sel(%j%)'>%sort_name%</td>`n <td style="width:4em; text-align:center">%dur%</td>`n <td style="width:3em; text-align:center">%size%</td>`n <td style="width:4em; text-align:center">%ext%</td>%fold%`n <td><input id="title%j%" class='title' style='text-align:left; margin-left:1em' type='search' value='%media%' onmousedown='if(!event.button) {inputbox=this; sessionStorage.setItem("last_index",%j%)}'></td></tr></table></div>`n`n
             }
         else								; thumbnail view
             {
@@ -988,7 +1001,7 @@
                     }
 	        entry = <a onmousedown='navigator.clipboard.writeText("#Media#%j%##")'><div style="display:inline-block; width:88`%; color:#555351; transition:color 1.4s; margin-left:8`%; text-align:center; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; %highlight%;">%sort_name% &nbsp;&nbsp;%media%</div></a><textarea rows=%rows% style="display:inline-block; overflow:hidden; margin-left:8`%; width:88`%; background-color:inherit; color:#826858; font-size:1.2em; font-family:inherit; border:none; outline:none;">%str2%</textarea>`n`n
                 }
-            else entry = <div id="thumb%j%" class="thumb_container" style="width:%view%em; max-height:%view%em" onmouseover='over_thumb=%j%' onmouseout='over_thumb=0' onclick='sel(%j%)'>`n <input id="title%j%" class='title' text-align:center' onmousedown='if(!event.button) {inputbox=this; sessionStorage.setItem("last_index",%j%)}' type='search' value='%media%'>`n <video class="media" id="media%j%" style="position:inherit; %transform%"`n onmousedown="navigator.clipboard.writeText('#Media#%j%##%start%')"`n onmouseover="overThumb(%j%, %skinny%, '%type%', %start%, '%cap%', event)"`n onmouseout='over_media=false; this.pause()'`n src="file:///%src%"`n %poster%`n preload='none' muted type="video/mp4"></video>%caption%</div>`n`n
+            else entry = <div id="thumb%j%" class="thumb_container" style="width:%view%em; max-height:%view%em" onmouseover='over_thumb=%j%' onmouseout='over_thumb=0' onclick='sel(%j%)'>`n <input id="title%j%" class='title' onmousedown='if(!event.button) {inputbox=this; sessionStorage.setItem("last_index",%j%)}' type='search' value='%media%'>`n <video class="media" id="media%j%" style="position:inherit; %transform%"`n onmousedown="navigator.clipboard.writeText('#Media#%j%##%start%')"`n onmouseover="overThumb(%j%, %skinny%, '%type%', %start%, '%cap%', event)"`n onmouseout='over_media=false; this.pause()'`n src="file:///%src%"`n %poster%`n preload='none' muted type="video/mp4"></video>%caption%</div>`n`n
             }
         return entry
         }
