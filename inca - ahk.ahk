@@ -845,8 +845,8 @@
 <a onmousedown='flip()'>Flip</a></span>`n`n
 
 <span id="myContext2" class='context'>`n
-<a onmousedown="playMedia('Back')">Back</a>`n
-<a id='myMute' onmouseup='mute()' onwheel="wheelEvents(event, id, this)">Mute</a>`n
+<a id='myMute' onmouseup='mute()'>Mute</a>`n
+<a onmousedown="playMedia('Back')" onwheel="wheelEvents(event, id, this)">&#8678</a>`n
 <a id="mySpeed" onwheel="wheelEvents(event, id, this)"></a>`n
 <a id='myLoop' onclick="loop()">Loop</a>`n
 <a id='myFav2' onmousedown='navigator.clipboard.writeText("#Favorite#" + media.currentTime.toFixed(1) + "#" + index + ",#")'>Fav</a>`n

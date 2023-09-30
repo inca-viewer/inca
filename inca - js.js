@@ -216,10 +216,10 @@
     if (e == 'Back') {index-=1}
     if (e == 'Mclick') {
       if ((last_type && !long_click) || last_type == 'thumbsheet') {index+=1}
-      if (!last_type && !over_media && long_click) {index=last_index; start=last_start}}
+      if (!last_type && long_click) {index=last_index; start=last_start}}
     getParameters()
     if (type == 'document' || type == 'm3u') {type=''; return}
-    if (e == 'Mclick' && long_click && type == 'video' && over_media) {thumbSheet()}
+    if (e == 'Mclick' && long_click && type == 'video') {thumbSheet()}
     if (e == 'Mclick' && last_type == 'thumbsheet') {thumbSheet()}
     if (e == 'Back' && last_type == 'thumbsheet') {thumbSheet()}
     modal.style.zIndex = Zindex+=1
@@ -245,6 +245,7 @@
     media.playbackRate = rate
     media.volume = 0
     if (type == 'thumbsheet') {positionMedia(0.2)}
+    else if (skinny != 1) {positionMedia(0.8)}
     else {positionMedia(0)}
     modal.style.opacity = 1
     intervalTimer = setInterval(mediaTimer,84)
