@@ -217,7 +217,7 @@
                 path =
                 address =
                 search_term =
-                command = Search		; search from selected text
+                command = SearchBox		; search from selected text
                 value := Clipboard
                 ProcessMessage()
                 CreateList(1)
@@ -386,6 +386,7 @@
         if (command == "Orphan")					; open in notepad if playlist
             {
             address := path
+            send, {LButton up}
             if playlist
               {
               if long_click
@@ -646,14 +647,11 @@
                 filt := 0
                 }
             if (command == "Filt")					; alpha letter
-                {
                 filt := value
-                StringReplace, toggles, toggles, Reverse
-                }
             page := 1
             if (InStr(sort_list, command))				; sort filter
                 {
-                filt := 0
+;                filt := 0
                 toggle_list = Reverse Recurse Videos Images
                 if (sort != command)					; new sort
                     {
@@ -681,6 +679,8 @@
             search_path := path
         IfNotExist, %path%
             path = %search_term%\
+        if show
+            Popup(folder,0,0,0)
         list =
         list_size := 1
         if (InStr(toggles, "Recurse") || search_term)
@@ -846,7 +846,7 @@
 
 <span id="myContext2" class='context'>`n
 <a id='myMute' onmouseup='mute()'>Mute</a>`n
-<a onmousedown="playMedia('Back')" onwheel="wheelEvents(event, id, this)">&#8678</a>`n
+<a id='myBack' onmousedown="playMedia('Back')" onwheel="wheelEvents(event, id, this)">&#8678</a>`n
 <a id="mySpeed" onwheel="wheelEvents(event, id, this)"></a>`n
 <a id='myLoop' onclick="loop()">Loop</a>`n
 <a id='myFav2' onmousedown='navigator.clipboard.writeText("#Favorite#" + media.currentTime.toFixed(1) + "#" + index + ",#")'>Fav</a>`n
@@ -1035,7 +1035,9 @@
               {
               StringGetPos, pos, input, \, R, 1
               StringMid, 1st_char, input, % pos + 2, 1
-              if (filt && sort == "Alpha" && 1st_char < Chr(filt+66))
+              if (!InStr(toggles, "Reverse") && filt && sort == "Alpha" && 1st_char < Chr(filt+66))
+                return
+              else if (InStr(toggles, "Reverse") && filt && sort == "Alpha" && 1st_char > Chr(filt+66))
                 return
               }
             else if (sort == "Date")
@@ -1049,7 +1051,9 @@
                 sort_name = %years% y
               else if sort_date 
                 sort_name = %sort_date% d
-              if (filt && sort_date/30 < filt)
+              if (!InStr(toggles, "Reverse") && filt && sort_date/30 < filt)
+                return
+              else if (InStr(toggles, "Reverse") && filt && sort_date/30 > filt)
                 return
               }
             else if (sort == "Size")
@@ -1058,13 +1062,17 @@
                 FileGetSize, list_id, %input%, M
               else FileGetSize, list_id, %input%, K
               sort_name := Round(list_id)
-              if (filt && list_id < filt*10)
+              if (!InStr(toggles, "Reverse") && filt && list_id < filt*10)
+                return
+              else if (InStr(toggles, "Reverse") && filt && list_id > filt*10)
                 return
               }
             else if (sort == "Duration")
               {
               FileRead, list_id, %inca%\cache\durations\%filen%.txt
-              if (filt && list_id/60 < filt)
+              if (!InStr(toggles, "Reverse") && filt && list_id/60 < filt)
+                return
+              else if (InStr(toggles, "Reverse") && filt && list_id/60 > filt)
                 return
               sort_name := Time(list_id)
               }
@@ -1142,7 +1150,7 @@
               popup = Move - %media%
             else popup = Copy - %media%
             if (InStr(address, "\inca\"))
-              popup = Added - %media%
+              popup = Added
             PopUp(popup,0,0,0)
             if GetMedia(list_id)
               if (InStr(address, "inca\fav") || InStr(address, "inca\music"))
@@ -1441,13 +1449,11 @@
         Gui PopUp:Font, s20 cRed, Segoe UI
         Gui PopUp:Add, Text,, %message%
         Gui PopUp:Show, x%xp% y%yp% NA
-
         WinSet, TransColor, 0 255
         loop %time%
             {
             sleep 10
-            mask := 55 + (A_Index * 200/ time)
-            mask2 := 255 - mask
+            mask := 255 - (55 + (A_Index * 200/time))
             WinSet, TransColor, 0 %mask2%
             }
         }
