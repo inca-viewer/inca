@@ -46,7 +46,7 @@
         Global path
         Global ext			; file extension
         Global inca_tab			; browser tab title (usually folder name)
-	Global previous_tab
+	Global previous_tab:=""
         Global vol_popup		; volume bar popup 
         Global volume
         Global page := 1		; current page within list
@@ -73,7 +73,6 @@
         Global browser
         Global clip
         Global long_click
-        Global scaleY := 1
         Global fullscreen
         Global pages
 
@@ -258,9 +257,9 @@
             {
             folder := inca_tab
             GetTabSettings()						; get last tab settings
-            if (previous_tab && FileExist(inca "\cache\lists\" inca_tab ".txt"))
-              FileRead, list, %inca%\cache\lists\%inca_tab%.txt
-            else CreateList(0)						; media list to match html page
+            if (previous_tab && FileExist(inca "\cache\temp\" inca_tab ".txt"))
+              FileRead, list, %inca%\cache\temp\%inca_tab%.txt
+            else CreateList(0)
             previous_tab := inca_tab
             }
         return inca_tab
@@ -361,11 +360,6 @@
 
     ProcessMessage()
         {
-        if (command == "ScaleY")
-            {
-            scaleY := value
-            reload := 4
-            }
         if (command == "Subs")
             {
             x := StrSplit(subfolders,"|")
@@ -494,7 +488,9 @@
               if (!playlist && type == "video" && !InStr(str, src))
                 FileAppend, %src%|%address%`r`n, %inca%\fav\History.m3u, UTF-8		; add media entry to playlist
               popup = %browser% Cannot Play %ext%
-              if (type=="document" || type=="m3u")
+              if (ext=="pdf")
+                Run, %src%
+              else if (type=="document" || type=="m3u")
                 Run, % "notepad.exe " . src
               else if Setting("External Player")
                 {
@@ -548,11 +544,9 @@
                 {
                 Popup("Join Media",0,0,0)
                 str = file '%media_path%\%media2%.%ext%'`r`nfile '%media_path%\%media%.%ext%'`r`n
-                FileAppend,  %str%, %inca%\apps\temp1.txt, utf-8
-                runwait, %inca%\apps\Utf-WithoutBOM.bat %inca%\apps\temp1.txt > %inca%\apps\temp.txt,,Hide
-                runwait, %inca%\apps\ffmpeg.exe -f concat -safe 0 -i "%inca%\apps\temp.txt" -c copy "%media_path%\%media%- join.mp4",,Hide
-                FileDelete, %inca%\apps\temp.txt
-                FileDelete, %inca%\apps\temp1.txt
+                FileAppend,  %str%, %inca%\cache\temp\temp1.txt, utf-8
+                runwait, %inca%\apps\Utf-WithoutBOM.bat %inca%\cache\temp\temp1.txt > %inca%\cache\temp\temp.txt,,Hide
+                runwait, %inca%\apps\ffmpeg.exe -f concat -safe 0 -i "%inca%\cache\temp\temp.txt" -c copy "%media_path%\%media%- join.mp4",,Hide
                 }
               sleep 1000
               reload := 3
@@ -721,8 +715,8 @@
             Sort, list, %reverse% Z N					; numeric sort
         if (sort == "Shuffle")
             Sort, list, Random Z
-        FileDelete, %inca%\cache\lists\%folder%.txt
-        FileAppend, %list%, %inca%\cache\lists\%folder%.txt, UTF-8
+        FileDelete, %inca%\cache\temp\%folder%.txt
+        FileAppend, %list%, %inca%\cache\temp\%folder%.txt, UTF-8
         RenderPage(1)
         if (folder == "Downloads") 
             SetTimer, indexer, -1000, -1
@@ -744,22 +738,21 @@
             StringReplace, array, array, /, \, All
             StringReplace, array, array, ',, All
             array := StrSplit(array,", ")
-            scaleY := array.4
-            view := array.5
+            view := array.4
             if (view < 5)
               view := 9
-            page := array.6
-            pages := array.7
-            filt := array.8
-            sort := array.9
-            folder := array.10
-            path := array.11
-            playlist := array.12
-            rt := array.13
-            fs := array.14
-            toggles := array.15
-            list_view := array.16
-            search_term := array.17
+            page := array.5
+            pages := array.6
+            filt := array.7
+            sort := array.8
+            folder := array.9
+            path := array.10
+            playlist := array.11
+            rt := array.12
+            fs := array.13
+            toggles := array.14
+            list_view := array.15
+            search_term := array.16
             if search_term
               folder := search_term
             }
@@ -830,7 +823,7 @@
 
         header_html = <!doctype html>`n<html>`n<head>`n<meta charset="UTF-8">`n<title>Inca - %title%</title>`n<meta name="viewport" content="width=device-width, initial-scale=1">`n<link rel="icon" type="image/x-icon" href="file:///%inca%\apps\icons\inca.ico">`n<link rel="stylesheet" type="text/css" href="file:///%inca%/inca - css.css">`n</head>`n`n
 
-        panel_html = <body id='myBody' class='container' onload="spool(event, '', '%ini%', %scaleY%, %view%, %page%, %pages%, %filt%, '%sort%', '%folder%', '%path%', '%playlist%', %rate%, %fullscreen%, '%toggles%', %list_view%, '%search_term%', '')">`n
+        panel_html = <body id='myBody' class='container' onload="spool(event, '', '%ini%', %view%, %page%, %pages%, %filt%, '%sort%', '%folder%', '%path%', '%playlist%', %rate%, %fullscreen%, '%toggles%', %list_view%, '%search_term%', '')">`n
 <div id='mySelected' class='selected'></div>`n
 <div oncontextmenu="context(event)" style='padding-bottom:40em'>`n`n
 <span id="myContext" class='context'>`n
@@ -1270,7 +1263,7 @@
     GetMedia(index)
         {
         index := index + Setting("Page Size") * (page - 1)
-        FileReadLine, str, %inca%\cache\lists\%folder%.txt, index
+        FileReadLine, str, %inca%\cache\temp\%folder%.txt, index
         src := StrSplit(str, "/").2
         seek := StrSplit(str, "/").5
         if !seek
@@ -1503,6 +1496,7 @@
         {
         Global
         LoadSettings()
+        FileDelete, %inca%\cache\temp\*.*
         CoordMode, Mouse, Screen
         gui, vol: +lastfound -Caption +ToolWindow +AlwaysOnTop -DPIScale
         gui, vol: color, db9062
@@ -1568,7 +1562,6 @@
             if create
                 {
                 GuiControl, Indexer:, GuiInd, indexing - %filen%
-                FileCreateDir, %inca%\cache\temp1
                 t := 0
                 if (dur > 60)
                     {
@@ -1581,14 +1574,13 @@
                     if (create & 1 && A_Index == 5)
                         runwait, %inca%\apps\ffmpeg.exe -ss %t% -i "%source%" -y -vf scale=1280:1280/dar -vframes 1 "%inca%\cache\posters\%filen%.jpg",, Hide
                     if (create & 2 && !Mod(A_Index,5))
-                        runwait, %inca%\apps\ffmpeg.exe -ss %t% -i "%source%" -y -vf scale=480:480/dar -vframes 1 "%inca%\cache\temp1\%y%.jpg",, Hide
+                        runwait, %inca%\apps\ffmpeg.exe -ss %t% -i "%source%" -y -vf scale=480:480/dar -vframes 1 "%inca%\cache\temp\%y%.jpg",, Hide
                     t += (dur / 200)
                     }
                 if (create & 2)
-                    Runwait %inca%\apps\ffmpeg -i %inca%\cache\temp1\`%d.jpg -filter_complex "tile=6x6" -y "%inca%\cache\thumbs\%filen%.jpg",, Hide
+                    Runwait %inca%\apps\ffmpeg -i %inca%\cache\temp\`%d.jpg -filter_complex "tile=6x6" -y "%inca%\cache\thumbs\%filen%.jpg",, Hide
                 }
             }
-        FileRemoveDir, %inca%\cache\temp1, 1
         GuiControl, Indexer:, GuiInd
         return
 

@@ -17,17 +17,17 @@
 // use new messages scaleY mechanism for other system variables
 // next media issues usability
 
-// use spool for selected and last index etc.
+// use spool for selected and last index etc.??
+
 // power up location bar selected?
-// transition during fullscreen switch
 // undo?
 // max thumb size
-// list view slower to render?
 // fullscreen float adjust
+// see prev next media thumbs in modal
 
-// see prev next media in modal
-// on powerup clear list cache
-
+// create thumb ribbon html in inca.ahk similar to modal
+// then show under media when mouse over and wheel to scan horozontal
+// pos shifting in panel
 
 
   var thumb = document.getElementById('media1')				// first media element
@@ -44,8 +44,6 @@
   var last_id = 1*sessionStorage.getItem('last_id')			// last top panel menu eg 'music'
   var last_index = 1*sessionStorage.getItem('last_index')		// last index
   var last_start = 1*sessionStorage.getItem('last_start')		// last media start time
-  var scaleY = 1*localStorage.getItem('scaleY')				// media size
-  var sheetY = 1*localStorage.getItem('sheetY')				// thumbsheet size
   var pos = 1*sessionStorage.getItem('pos')				// last top panel column position
   var ini								// .ini folders, models, etc.
   var wheel = 0
@@ -92,7 +90,8 @@
   var mediaX								// media position
   var mediaY
   var scaleX = 1							// skinny & magnify factor
-  var last_scaleY = 1							// zoom level
+  var scaleY = 1.4							// media size
+  var sheetY = 2							// thumbsheet size
   var xpos								// cursor coordinate in pixels
   var ypos
   var Xref								// click cursor coordinate
@@ -156,15 +155,16 @@
   function mouseBack() {
     var top = document.body.getBoundingClientRect().top
     sessionStorage.setItem("last_index",0)
+// if (!modal.style.opacity) {
     if (!type) {
       if (top < -90) {setTimeout(function() {scrollTo(0,0)},100)}	// scroll to page top
       else {setTimeout(function() {location.reload()},200)}}		// just reset htm tab (clear selected etc.)
     else {								// quit media
       if (cap.value != cap.innerHTML) {editCap()}
-      localStorage.setItem("scaleY",scaleY)
-      localStorage.setItem("sheetY",sheetY)
       modal.style.opacity = 0
       modal.style.zIndex = -1
+      sheetY = 2 
+      scaleY = 1.4
       over_media = false
       close_media()
       if (messages) {navigator.clipboard.writeText(messages)}}}		// send messages to inca.exe
@@ -175,7 +175,8 @@
     index = id
     start = 0
     getParameters()
-    type = ''
+// if (!modal.style.opacity) {type = ''}
+type = ''
     rect = thumb.getBoundingClientRect()
     xm = (xpos - rect.left) / (thumb.offsetWidth*skinny)
     ym = (ypos - rect.top) / thumb.offsetHeight
@@ -183,6 +184,7 @@
     else if (thumb.currentTime <= start || ym<0.1) {thumb.currentTime = start+0.1}
     media.currentTime = thumb.currentTime
     thumb.playbackRate = 0.9
+// if (type) {media.play()}
     thumb.play()}
 
 
@@ -220,20 +222,19 @@
     getParameters()
     if (type == 'document' || type == 'm3u') {type=''; return}
     if (type == 'video' && (e == 'Mclick' || e == 'Back')) {
-      if (!last_type || last_type == 'thumbsheet' || (long_click && over_media)) {thumbSheet()}}
+      if (!last_type || last_type == 'thumbsheet' || long_click) {thumbSheet()}}
     modal.style.zIndex = Zindex+=1
     modal.style.opacity = 1
     media.muted = 1*localStorage.getItem('muted')
-    if (type == 'audio' || playlist.match('/inca/music/')) {looping=false; media.muted=false}
+    if (type == 'audio' || playlist.match('/inca/music/')) {looping=false; media.muted=false; scaleY=0.2}
     else if (fullscreen) {modal.requestFullscreen()}
-    if (!sheetY) {sheetY=1.5}
-    if (!scaleX || !scaleY) {scaleX=scaleY=1}
+    if (scaleY == 1.4 && ratio<1) {scaleY=1}
     if (ratio < 1 && scaleY > 1.42) {scaleY = 1.42}
     if (ratio > 1 && scaleY > 6) {scaleY = 2}    
     scaleX = scaleY * skinny
     if (cap_list && type != 'thumbsheet') {media.currentTime = start-1}	// start at first caption
     if (e == 'Click' && thumb.currentTime > start+2) {media.currentTime = thumb.currentTime}
-    if (e == 'Click' && long_click) {media.currentTime = 0}
+    if (e == 'Click' && long_click) {start = 0}
     if (type == 'video' || type == 'audio') {media.currentTime = start; media.play()}
     document.getElementById('title'+index).style.color='lightsalmon'	// highlight played media in tab
     last_index = index
@@ -260,8 +261,6 @@
     if (type != 'thumbsheet') {
       localStorage.setItem("mediaX",mediaX)
       localStorage.setItem("mediaY",mediaY)}
-    if (scaleY != last_scaleY)
-      messages = messages+'#ScaleY#'+scaleY+'##'
     if (skinny != newSkinny) {
       messages = messages+'#Skinny#'+newSkinny+'#'+index+',#'}		// width changes
     clearInterval(intervalTimer)
@@ -369,7 +368,7 @@
     if (!nav.matches(":hover")) {nav.style.display = null}
     modal.style.cursor = 'crosshair'
     if (type != 'thumbsheet') {setTimeout(function() {modal.style.cursor='none'},400)}
-    if (ym>1 && xm>0 && xm<1 && type == 'video') {seek_active=true; seek.currentTime=media.duration*xm}
+    if (ym>0.8 && ym<1 && xm>0 && xm<1 && type == 'video') {seek_active=true; seek.currentTime=media.duration*xm}
     else {seek_active=false; seek.style.opacity=0}}
 
 
@@ -391,7 +390,7 @@
 
   function mediaTimer() {						// every ~84mS while media/modal layer active
     if (block) {block--}						// slowly remove event blocking
-    if (type != 'image' && ym > 1) {seekbar.style.opacity = 0.6}
+    if (type != 'image' && over_media) {seekbar.style.opacity = 0.6}
     else {if (seekbar.style.opacity) {seekbar.style.opacity-=0.1}}
     xw =  xpos / innerWidth
     yw =  ypos / innerHeight
@@ -399,7 +398,7 @@
     xm = (xpos - rect.left) / Math.abs((media.offsetWidth*scaleX))
     ym = (ypos - rect.top) / Math.abs((media.offsetHeight*scaleY))
     seek.style.left = xpos - seek.offsetWidth/2 +'px'
-    seek.style.top = innerHeight -140 +'px'
+    seek.style.top = rect.bottom - seek.offsetHeight +'px'
     cap.style.top = rect.bottom +10 +'px'
     cap.style.left = rect.left +10 +'px'
     if (cap_list) {cap.style.display='block'}
@@ -418,8 +417,8 @@
         cueW = scaleX*media.offsetWidth*(media.currentTime-cue)/media.duration+'px'}
       else {cueW = scaleX * media.offsetWidth * (1-(cue/media.duration)) + 'px'}}
     seekbar.style.left = cueX
-    if (seek.style.opacity<0.6) {seekbar.style.width = cueW}
-    else {seekbar.style.width=xm*scaleX*media.offsetWidth +'px'}
+    if (seek.style.opacity<0.5) {seekbar.style.width = cueW}
+    else {seekbar.style.width=Math.abs(xm*scaleX*media.offsetWidth) +'px'; seekbar.style.opacity = 0.6}
     if (rect.bottom+6 > innerHeight) {seekbar.style.top = innerHeight -6 +'px'}
     else {seekbar.style.top = 3 + rect.bottom +'px'}
     if (xm>0 && xm<1 && ym>0 && ym<1) {over_media=true} else {over_media=false}
@@ -490,10 +489,10 @@
       if (y < scrollY+20 || y > scrollY+innerHeight-100) {scrollTo(0,y-300)}}}
 
 
-  function spool(e, id, ii, sc, vi, pg, ps, fi, so, fo, pa, pl, rt, fs) { // spool lists into top htm panel
+  function spool(e, id, ii, vi, pg, ps, fi, so, fo, pa, pl, rt, fs) { // spool lists into top htm panel
     if (id) {panel.style.opacity = 1}
-    if (ii) {ini=ii; scaleY=sc; last_scaleY = sc; view=vi; page=pg; pages=ps;
-            filt=fi; sort=so; folder=fo; path=pa; playlist=pl; rate=rt; fullscreen=fs}
+    if (ii) {ini=ii; view=vi; page=pg; pages=ps; filt=fi; sort=so;
+            folder=fo; path=pa; playlist=pl; rate=rt; fullscreen=fs}
     if (id) {last_id = id} else {id = last_id}
     sessionStorage.setItem("last_id",last_id)
     if (id && id != 'Search' && !e.deltaY) {pos = 0}
@@ -527,7 +526,7 @@
 
 
   function togglePause() {
-    if (!type||gesture||long_click||over_cap||nav2.matches(":hover")) {return}
+    if (!type||gesture||long_click||over_cap||seek.style.opacity>0.3||nav2.matches(":hover")) {return}
     if (media.paused) {media.play()} else {media.pause()}}
 
   function editCap() {							// edit caption
