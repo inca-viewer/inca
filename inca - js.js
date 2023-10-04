@@ -8,11 +8,9 @@
 // title with single ' in text, gets cut off in htm page
 // undo?
 // create thumb ribbon html in inca.ahk similar to modal
-
-// use in rect to slide select
-// thumb zoom on mbutton slide
-// back work if in subs folder
-
+// back work - not reset page
+// remove pages? contimuous scroll?
+// captions
 
 
   var thumb = document.getElementById('media1')				// first media element
@@ -120,19 +118,19 @@
   function mouseUp(e) {
     if (!e.button && !gesture && !nav2.matches(":hover")) {					
       if (type=='thumbsheet') {playThumb()}				// play at thumbsheet click coordinate
-      else if (type && seek.style.opacity>0.3 && !over_cap) {
+      else if (type && seek.style.opacity>0.3) {
         media.currentTime = seek.currentTime}}
     nav.style.display=null
     nav2.style.display=null
-    if (e.button == 1 && !mouse_down) {mouseBack()}			// inca.exe replaces MouseBack with MClick Up
-    else if (!type && gesture) {thumbs(view)} 				// update thumb width	
+    if (e.button == 1 && !type && gesture) {thumbs(view)} 		// update thumb width	
     else if (e.button == 1 && !long_click && !gesture) {
-      if (type == 'video' && cap_list && (ym>1 || yw>0.9)) {		// seek to next caption in movie
+      if (!mouse_down) {mouseBack()}					// inca.exe replaces MouseBack with MClick Up
+      else if (type == 'video' && cap_list && (ym>1 || yw>0.9)) {	// seek to next caption in movie
         var z = cap_list.split('|')
         for (x of z) {if (!isNaN(x) && x>(media.currentTime+0.2)) {media.currentTime=x-1; media.play(); break}}}
       else if (type || over_media) {playMedia('Mclick')}		// next media/thumbsheet
       else if (!type && !over_media) {thumbs(0)}}
-    else if (!e.button && !gesture) {					
+    else if (!e.button && !gesture) {			
       if (!over_cap && cap.value != cap.innerHTML) {editCap()}		// caption in edit mode
       else if (!type && over_media && mouse_down) {playMedia('Click')}
       else if (type) {togglePause()}}
@@ -149,13 +147,13 @@
       else {setTimeout(function() {location.reload()},200)}}		// just reset htm tab (clear selected etc.)
     else {								// quit media
       if (cap.value != cap.innerHTML) {editCap()}
+      close_media()
+      if (messages) {navigator.clipboard.writeText(messages)}}		// send messages to inca.exe
       modal.style.opacity = 0
       modal.style.zIndex = -1
       sheetY = 2 
       scaleY = 1.2
-      over_media = false
-      close_media()
-      if (messages) {navigator.clipboard.writeText(messages)}}}		// send messages to inca.exe
+      over_media = false}
 
 
   function overThumb(id) {						// cursor over thumbnail
@@ -164,12 +162,13 @@
     start = 0
     getParameters()
     type = ''
+    if (mouse_down && gesture) {sel(id)}
     rect = thumb.getBoundingClientRect()
     xm = (xpos - rect.left) / (thumb.offsetWidth*skinny)
     ym = (ypos - rect.top) / thumb.offsetHeight
     if (thumb.duration && ym>0.7 && ym<1.1) {thumb.currentTime = thumb.duration * xm}
     else if (thumb.currentTime <= start || ym<0.1) {thumb.currentTime = start+0.1}
-    media.currentTime = thumb.currentTime
+    start = media.currentTime = thumb.currentTime
     thumb.playbackRate = 0.9
     thumb.play()}
 
@@ -198,17 +197,18 @@
 
 
   function playMedia(e) {
-    var last_type = type
+    var playing = type
     if (type) {close_media()}						// no type if no media playing
     if (e == 'Next') {index+=1}
     if (e == 'Back') {index-=1}
     if (e == 'Mclick') {
-      if ((last_type && !long_click) || last_type == 'thumbsheet') {index+=1}
-      if (!last_type && long_click && !over_media) {index=last_index; start=last_start}}
+      if (playing && (playing!='video' || long_click)) {index+=1}
+      if (!playing && long_click && !over_media) {index=last_index; start=last_start}}
     getParameters()
     if (type == 'document' || type == 'm3u') {type=''; return}
-    if (type == 'video' && (e == 'Mclick' || e == 'Back')) {
-      if ((!last_type && over_media) || last_type == 'thumbsheet') {thumbSheet()}}
+    if (!long_click && type == 'video') {
+      if (e == 'Mclick' || (e == 'Back' && playing=='thumbsheet')) {thumbSheet()}
+      if (e == 'Mclick' && !playing && over_media) {thumbSheet()}}
     modal.style.zIndex = Zindex+=1
     modal.style.opacity = 1
     media.muted = 1*localStorage.getItem('muted')
@@ -231,7 +231,7 @@
     media.volume = 0
     media.style.transition = null
     if (skinny < 0) {x=-scaleY} else {x=scaleY}
-    if (type!='thumbsheet' && last_type!='thumbsheet') {
+    if (type!='thumbsheet' && playing!='thumbsheet') {
        media.style.transform = "scale("+x+","+scaleY+")"}
     positionMedia(0.2)
     modal.style.opacity = 1
@@ -314,8 +314,9 @@
     if (inputbox.value) {mySearch.innerHTML='Search'; myAdd.innerHTML='Add'}
     var x = Math.abs(Xref-xpos)
     var y = Math.abs(Yref-ypos)
-    if (type && mouse_down && !over_cap && (gesture || x+y > 5)) {	// gesture detection (mousedown + slide)
-      if (!gesture) {block=0; gesture=true}
+    if (mouse_down && !over_cap && x+y > 5) {				// gesture detection (mousedown + slide)
+      if (!gesture) {block=0; gesture=true}}
+    if (gesture && type) {
       if (!block && mouse_down==2) {					// media width - middle click gesture
         if (scaleX>0) {scaleX -= (xpos-Xref)/1000}
         else {scaleX += (xpos-Xref)/1000}
@@ -337,9 +338,8 @@
         localStorage.setItem("mediaY",mediaY)}
       Xref=xpos; Yref=ypos
       positionMedia(0)}
-    if (!type && mouse_down==2 && y>0.2 && (gesture || (y>5 && y>x))) {	// zoom thumbs
-      last_index=0							// prevent scroll to index
-      gesture=true
+    if (gesture && !type && mouse_down==2 && y>0.2 && y>x) {		// zoom thumbs
+      last_index=0							// prevent scroll to index	
       view = 1*document.getElementById("thumb" + index).style.width.slice(0,-2)
       if (Yref < ypos) {view += view/60}
       else {view -= view /60}
@@ -350,7 +350,7 @@
         el = document.getElementById("thumb" + i)
         el2 = document.getElementById("media" + i)
         if (el) {el.style.width=view+'em'; el.style.maxHeight=view+'em'}
-        if (el2) {el2.style.width=view+'em'; el2.style.maxHeight=view+'em'}}
+        if (el2) {el2.style.maxWidth=view+'em'; el2.style.maxHeight=view+'em'}}
       Xref=xpos; Yref=ypos}
     if (!type) {return}
     if (!nav.matches(":hover")) {nav.style.display = null}
@@ -549,7 +549,7 @@
 
   function sel(i) {							// highlight selected media
     if (!(el = document.getElementById('title' + i))) {return}
-    if (over_media) {return}
+    if (over_media && !gesture) {return}
     x = ',' + selected
     if (el.style.border == "0.1px solid lightsalmon") {
       el.style.border = "none"
@@ -559,7 +559,8 @@
       if (!x.match("," + i + ",")) {selected = selected + i + ","}}}
 
   function release() {							// release media from browser
-    var z = index+','+was_over_thumb+','
+    var z=index+','
+    if (!index) {z=was_over_thumb+','}
     if (selected) {z=selected}
     for (x of z.split(',')) {if (el = document.getElementById('media' + x)) {el.load()}}}
 
