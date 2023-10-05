@@ -8,9 +8,6 @@
 // title with single ' in text, gets cut off in htm page
 // undo?
 // create thumb ribbon html in inca.ahk similar to modal
-// back work - not reset page
-// remove pages? contimuous scroll?
-// captions
 
 
   var thumb = document.getElementById('media1')				// first media element
@@ -119,15 +116,16 @@
     if (!e.button && !gesture && !nav2.matches(":hover")) {					
       if (type=='thumbsheet') {playThumb()}				// play at thumbsheet click coordinate
       else if (type && seek.style.opacity>0.3) {
-        media.currentTime = seek.currentTime}}
+        media.currentTime=seek.currentTime; media.play()}}
     nav.style.display=null
     nav2.style.display=null
     if (e.button == 1 && !type && gesture) {thumbs(view)} 		// update thumb width	
     else if (e.button == 1 && !long_click && !gesture) {
       if (!mouse_down) {mouseBack()}					// inca.exe replaces MouseBack with MClick Up
       else if (type == 'video' && cap_list && (ym>1 || yw>0.9)) {	// seek to next caption in movie
-        var z = cap_list.split('|')
-        for (x of z) {if (!isNaN(x) && x>(media.currentTime+0.2)) {media.currentTime=x-1; media.play(); break}}}
+        for (var x of cap_list.split('|')) {
+          if (!isNaN(x) && x>(media.currentTime+0.2)) {
+            media.currentTime=x-1; media.play(); break}}}
       else if (type || over_media) {playMedia('Mclick')}		// next media/thumbsheet
       else if (!type && !over_media) {thumbs(0)}}
     else if (!e.button && !gesture) {			
@@ -218,7 +216,7 @@
     if (ratio < 1 && scaleY > 1.42) {scaleY = 1.42}
     if (ratio > 1 && scaleY > 6) {scaleY = 2}    
     scaleX = scaleY * skinny
-    if (cap_list && type != 'thumbsheet') {media.currentTime = start-1}	// start at first caption
+    if (cap_list && type != 'thumbsheet' && start>1) {start-=1}		// start at first caption
     if (e == 'Click' && thumb.currentTime > start+2) {media.currentTime = thumb.currentTime}
     if (e == 'Click' && long_click) {start = 0}
     if (type == 'video' || type == 'audio') {media.currentTime = start; media.play()}

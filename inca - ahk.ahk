@@ -420,6 +420,9 @@
               str := StrReplace(str, address, value)
             else str = %str%%value%
             FileAppend, %str%, %inca%\cache\captions\%media%.srt, UTF-8
+            GetMedia(StrSplit(selected, ",").1)
+            start := StrSplit(value, "|").2
+            Runwait, %inca%\apps\ffmpeg.exe -ss %start% -i "%src%" -y -vf scale=1280:1280/dar -vframes 1 "%inca%\cache\posters\%media%%A_Space%%start%.jpg",, Hide
             reload := 2
             }
         if (command == "Favorite")
@@ -944,13 +947,17 @@
           skinny := 1
         transform = transform:scaleX(%skinny%);
         FileRead, cap, %inca%\cache\captions\%media%.srt
-        caption := StrSplit(cap, "|").1
-        if caption
+        if cap {
+          caption := StrSplit(cap, "|").1
+          start := StrSplit(cap, "|").2
+          IfExist, %inca%\cache\posters\%media% %start%.jpg
+            thumb = %inca%\cache\posters\%media% %start%.jpg
           caption = <a onmousedown='if(!event.button) {navigator.clipboard.writeText("#EditCap#%media%##")}' style="color:#ffa07a66; line-height:1em; display:block; font-size:%cap_size%em; margin-left:1em; text-align:left">%caption%</a>
-        cap := StrReplace(cap, "`r`n", "|")
-        cap := StrReplace(cap, ",", "§")
-        cap := StrReplace(cap, "'", "±")
-        StringReplace, cap,cap,",±, All
+          cap := StrReplace(cap, "`r`n", "|")
+          cap := StrReplace(cap, ",", "§")
+          cap := StrReplace(cap, "'", "±")
+          StringReplace, cap,cap,",±, All
+          }
         if (dur && (type == "video" || type == "audio"))
             dur := Time(dur)
         else dur =
