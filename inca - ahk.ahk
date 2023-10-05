@@ -827,7 +827,7 @@
 <div id='mySelected' class='selected'></div>`n
 <div oncontextmenu="context(event)" style='padding-bottom:40em'>`n`n
 <span id="myContext" class='context'>`n
-<a onmousedown='navigator.clipboard.writeText("#Settings###"+selected+"#")'>. . .</a>`n
+<a onmousedown='navigator.clipboard.writeText("#Settings###")'>. . .</a>`n
 <a onmousedown=selectAll()>Select</a>`n
 <a onmousedown='del()'>Delete</a>`n
 <a onmousedown='rename()'>Rename</a>`n
