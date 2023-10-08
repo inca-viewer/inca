@@ -6,7 +6,7 @@
 // edit caption file when # in filename
 // `r`n within captions
 // title with single ' in text, gets cut off in htm page
-// undo?
+// undo delete etc?
 // create thumb ribbon html in inca.ahk similar to modal
 
 
@@ -112,6 +112,7 @@
           else if (type && !over_cap) {media_ended()}}},240)}}		// re-start media
 
 
+
   function mouseUp(e) {
     if (!e.button && !gesture && !nav2.matches(":hover")) {					
       if (type=='thumbsheet') {playThumb()}				// play at thumbsheet click coordinate
@@ -144,14 +145,13 @@
       if (top < -90) {setTimeout(function() {scrollTo(0,0)},100)}	// scroll to page top
       else {setTimeout(function() {location.reload()},200)}}		// just reset htm tab (clear selected etc.)
     else {								// quit media
-      if (cap.value != cap.innerHTML) {editCap()}
       close_media()
-      if (messages) {navigator.clipboard.writeText(messages)}}		// send messages to inca.exe
-      modal.style.opacity = 0
-      modal.style.zIndex = -1
       sheetY = 2 
       scaleY = 1.2
-      over_media = false}
+      if (cap.value != cap.innerHTML) {editCap()}
+      if (messages) {navigator.clipboard.writeText(messages)}		// send messages to inca.exe
+      setTimeout(function() {modal.style.opacity=0; modal.style.zIndex=-1},100)
+      over_media = false}}
 
 
   function overThumb(id) {						// cursor over thumbnail
@@ -200,13 +200,13 @@
     if (e == 'Next') {index+=1}
     if (e == 'Back') {index-=1}
     if (e == 'Mclick') {
-      if (playing && (playing!='video' || long_click)) {index+=1}
+      if (playing && !(playing == 'video' && long_click)) {index+=1}
       if (!playing && long_click && !over_media) {index=last_index; start=last_start}}
     getParameters()
     if (type == 'document' || type == 'm3u') {type=''; return}
-    if (!long_click && type == 'video') {
-      if (e == 'Mclick' || (e == 'Back' && playing=='thumbsheet')) {thumbSheet()}
-      if (e == 'Mclick' && !playing && over_media) {thumbSheet()}}
+    if (e == 'Back' && playing=='thumbsheet') {thumbSheet()}
+    if (e == 'Mclick' && playing && long_click && type == 'video') {thumbSheet()}
+    if (e == 'Mclick' && !playing && over_media && long_click) {thumbSheet()}
     modal.style.zIndex = Zindex+=1
     modal.style.opacity = 1
     media.muted = 1*localStorage.getItem('muted')
