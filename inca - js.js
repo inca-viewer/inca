@@ -1,13 +1,11 @@
 
 // panel.style.opacity=1; panel.innerHTML= x; or alert(x)		// debugging
 // rem. long click text or search, +adds extra search term
-// cache missing folder effects
-// permissions in manifest:   "permissions": [ "clipboardRead" ],
 // edit caption file when # in filename
 // `r`n within captions
-// title with single ' in text, gets cut off in htm page
 // undo delete etc?
 // create thumb ribbon html in inca.ahk similar to modal
+// title with single ' messes subfolders
 
 
   var thumb = document.getElementById('media1')				// first media element
@@ -104,7 +102,7 @@
         if (!gesture) {playMedia('Mclick')}},240)}			// thumbsheet or previous media
     if (!e.button) {
       if (!type && over_media && selected) {
-        navigator.clipboard.writeText('#Media#'+index+'#'+selected+'#')} // used for editing playlists
+        inca(e,'#Media#'+index+'#'+selected+'#')}			// used for editing playlists
       clickTimer = setTimeout(function() {
         if (!gesture) {
           long_click = true
@@ -120,7 +118,7 @@
         media.currentTime=seek.currentTime; media.play()}}
     nav.style.display=null
     nav2.style.display=null
-    if (e.button == 1 && !type && gesture) {thumbs(view)} 		// update thumb width	
+    if (e.button == 1 && !type && gesture) {thumbs(e,'#myThumbs#'+view+'##')} 	// update thumb width	
     else if (e.button == 1 && !long_click && !gesture) {
       if (!mouse_down) {mouseBack()}					// inca.exe replaces MouseBack with MClick Up
       else if (type == 'video' && cap_list && (ym>1 || yw>0.9)) {	// seek to next caption in movie
@@ -128,7 +126,7 @@
           if (!isNaN(x) && x>(media.currentTime+0.2)) {
             media.currentTime=x-1; media.play(); break}}}
       else if (type || over_media) {playMedia('Mclick')}		// next media/thumbsheet
-      else if (!type && !over_media) {thumbs(0)}}
+      else if (!type && !over_media) {thumbs(e,'#myThumbs#0##')}}
     else if (!e.button && !gesture) {			
       if (!over_cap && cap.value != cap.innerHTML) {editCap()}		// caption in edit mode
       else if (!type && over_media && mouse_down) {playMedia('Click')}
@@ -148,9 +146,9 @@
       close_media()
       sheetY = 2 
       scaleY = 1.2
+      modal.style.opacity=0
+      modal.style.zIndex=-1
       if (cap.value != cap.innerHTML) {editCap()}
-      if (messages) {navigator.clipboard.writeText(messages)}		// send messages to inca.exe
-      setTimeout(function() {modal.style.opacity=0; modal.style.zIndex=-1},100)
       over_media = false}}
 
 
@@ -209,6 +207,7 @@
     if (e == 'Mclick' && !playing && over_media && long_click) {thumbSheet()}
     modal.style.zIndex = Zindex+=1
     modal.style.opacity = 1
+    media.style.opacity = 0
     media.muted = 1*localStorage.getItem('muted')
     if (type == 'audio' || playlist.match('/inca/music/')) {looping=false; media.muted=false; scaleY=0.2}
     else if (fullscreen) {modal.requestFullscreen()}
@@ -231,8 +230,11 @@
     if (skinny < 0) {x=-scaleY} else {x=scaleY}
     if (type!='thumbsheet' && playing!='thumbsheet') {
        media.style.transform = "scale("+x+","+scaleY+")"}
-    positionMedia(0.2)
+    positionMedia(0)
     modal.style.opacity = 1
+    media.style.transition = '0.5s'
+    media.style.opacity = 1
+    navigator.clipboard.writeText('#Media#'+index+'##'+start)
     intervalTimer = setInterval(mediaTimer,84)
     media.addEventListener('ended', media_ended)}
 
@@ -293,7 +295,7 @@
         if (wheelUp) {media.currentTime += interval}
         else {media.currentTime -= interval}
         block = 160}}
-    else if (type && rect.bottom-rect.top>innerHeight) {
+    else if (type && rect.bottom-rect.top>innerHeight*1.4) {
       if (wheelUp) {mediaY -= 50}					// scroll image
       else {mediaY += 50}}
     else {spool(e, id)} 						// scroll top panel
@@ -364,10 +366,10 @@
     media.style.left = (mediaX-media.offsetWidth/2) +x +"px"
     media.style.top = (mediaY-media.offsetHeight/2) +y +"px"
     if (!mouse_down && (mediaY > 0.7*((innerHeight/2)-y) && mediaY < 1.3*((innerHeight/2)-y))
-      && (mediaX > 0.7*((innerWidth/2)-x) && mediaX < 1.3*((innerWidth/2)-x))) {fade=0.16
-      if (Math.abs((media.offsetHeight*scaleY)) > 0.92*(innerHeight) && Math.abs((media.offsetHeight*scaleY)) < 1.15*(innerHeight)) {
+      && (mediaX > 0.7*((innerWidth/2)-x) && mediaX < 1.3*((innerWidth/2)-x))) {
+      if (Math.abs((media.offsetHeight*scaleY)) > 0.91*(innerHeight) && Math.abs((media.offsetHeight*scaleY)) < 1.1*(innerHeight)) {
         mediaY=(innerHeight/2)-y; scaleY=(innerHeight)/media.offsetHeight; scaleX=newSkinny*scaleY; fade=1}
-      if (Math.abs((media.offsetWidth*scaleX)) > 0.92*innerWidth && Math.abs((media.offsetWidth*scaleX)) < 1.15*innerWidth) {
+      if (Math.abs((media.offsetWidth*scaleX)) > 0.9*innerWidth && Math.abs((media.offsetWidth*scaleX)) < 1.1*innerWidth) {
         mediaX=(innerWidth/2)-x; scaleX=(innerWidth)/media.offsetWidth; scaleY=scaleX/newSkinny; fade=1}}
     media.style.transition = fade+'s'
     if (type == 'thumbsheet') {media.style.transform="scale("+newSkinny*sheetY+","+sheetY+")"}
@@ -495,7 +497,7 @@
           if (id != x.substring(0, 1)) {
             id = x.substring(0, 1)
             htm = htm + "<a style='grid-row-start:1;grid-row-end:5;color:red;font-size:2em'>"+id+"</a>"}
-          htm = htm + '<a onmousedown=\'navigator.clipboard.writeText("#Search#'+x+'##")\'>' + x.substring(0, 15) + '</a>'}}
+          htm = htm + '<a onmousedown=\'inca(event,"#Search#'+x+'##")\'>' + x.substring(0, 15) + '</a>'}}
       if (count < 25) {pos-=4}						// end of .ini search list
       sessionStorage.setItem("pos",pos)}
     else for (x of z) {							// folders, fav, music
@@ -506,7 +508,7 @@
       q = q.replace('.m3u', '').substring(0, 12)
       if (q == "New") {q = "<span style='color:lightsalmon'</span>" + q}
       if (count > 0 && count < 29) {
-        htm = htm + '<a onmousedown=\'navigator.clipboard.writeText("#Path##' + selected + '#' + x + '")\'>' + q + '</a>'}}
+        htm = htm + '<a onmousedown=\'inca(event,"#Path##'+selected+'#'+x+'")\'>'+q+'</a>'}}
     if (id) {panel.innerHTML = htm}
     release()}
 
@@ -571,12 +573,13 @@
     if (type) {nav2.style.display='block'} else {nav.style.display='block'}}
 
   function selectAll() {if (was_over_thumb) {sel(was_over_thumb)} else {for (i=1; i <= 600; i++) {sel(i)}}}
-  function del() {release(); if (selected) {navigator.clipboard.writeText('#Delete##'+selected+'#')} else if (was_over_thumb) {navigator.clipboard.writeText('#Delete##'+was_over_thumb+',#')}sessionStorage.setItem("last_index",was_over_thumb)}
-  function rename() {index=1*sessionStorage.getItem('last_index'); release(); navigator.clipboard.writeText('#Rename#'+document.getElementById('title'+index).value+'#'+index+',#'); sessionStorage.setItem("last_index",index)}
-  function fav() {navigator.clipboard.writeText("#Favorite#" + media.currentTime.toFixed(1) + "#" + index + ",#")}
-  function thumbs(x) {sessionStorage.setItem('selected',selected); navigator.clipboard.writeText('#myThumbs#'+x+'##'); sessionStorage.setItem("last_index",last_index)}
+  function del(e) {release(); if (selected) {inca(e,'#Delete##'+selected+'#')} else if (was_over_thumb) {inca(e,'#Delete##'+was_over_thumb+',#')}sessionStorage.setItem("last_index",was_over_thumb)}
+  function rename(e) {index=1*sessionStorage.getItem('last_index'); release(); inca(e,'#Rename#'+document.getElementById('title'+index).value+'#'+index+',#'); sessionStorage.setItem("last_index",index)}
+  function fav(e) {inca(e,"#Favorite#"+media.currentTime.toFixed(1)+"#"+index+",#")}
+  function thumbs(e,x) {sessionStorage.setItem('selected',selected); inca(e,x); sessionStorage.setItem("last_index",last_index)}
+  function inca(e,x) {if(e.button<2) {messages=messages+x; navigator.clipboard.writeText(messages); messages=''}}
   function loop() {if (looping) {looping = false} else {looping = true}}
-  function flip() {newSkinny*=-1; scaleX*=-1; thumb.style.transform='scaleX('+newSkinny+')'; navigator.clipboard.writeText('#Skinny#'+newSkinny+'#'+index+',#')}
+  function flip(e) {newSkinny*=-1; scaleX*=-1; thumb.style.transform='scaleX('+newSkinny+')'; inca(e,'#Skinny#'+newSkinny+'#'+index+',#')}
   function mute() {if(!long_click) {media.volume=0; media.muted=!media.muted; localStorage.setItem("muted",1*media.muted); media.play()}}
   function cut() {clip=getSelection().toString(); navigator.clipboard.writeText(clip); inputbox.value=inputbox.value.replace(clip,'')}
   function paste() {inputbox.setRangeText(clip, inputbox.selectionStart, inputbox.selectionEnd, 'select')}
