@@ -1,6 +1,18 @@
 
 ::-webkit-scrollbar {width:0}			/* hide bright white scrollbar */
 
+
+.preview {
+  position:fixed; 
+  bottom:0;
+  opacity:0;
+  z-index:300; 
+  width:100%;
+  background:#15110a;
+  transition:0.5s;
+  max-height:120px}
+.preview:hover {opacity:1}
+
 .thumbs {
   display:flex;
   flex-wrap:wrap;
