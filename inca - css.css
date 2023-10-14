@@ -2,6 +2,19 @@
 ::-webkit-scrollbar {width:0}			/* hide bright white scrollbar */
 
 
+
+
+.prev {
+  max-height:150px;
+  max-width:150px;
+  margin:22%;
+  scale:1 1;
+  transform:rotate(90deg);
+  border-radius:9%;
+  transition:1s;
+  opacity:0.5}
+.prev:hover {scale:1.2 1.2; opacity:1}
+
 .preview {
   position:fixed; 
   bottom:0;
@@ -12,6 +25,24 @@
   transition:0.5s;
   max-height:120px}
 .preview:hover {opacity:1}
+
+.thumb {
+  position:absolute;
+  scale:1 1;
+  opacity:0.8;
+  transition:0.3s;
+  border-radius:9%}
+.thumb:hover {scale:1.5 1.5; opacity:1; transition:1s}
+
+.thumblist {					/* media list view	*/
+  position:absolute;
+  opacity:0;
+  scale:1 1;
+  left:6.2em;
+  max-width:12em;
+  border-radius:9%;
+  transition:0.3s}
+.thumblist:hover {scale:1.1 1.1; opacity:1; transition:1s}
 
 .thumbs {
   display:flex;
@@ -26,20 +57,6 @@
   padding-bottom:2em;
   text-align: center;
   position:relative}
-
-.media {					/* player in modal overlay */
-  display:inline-block;
-  position:absolute;
-  border-radius:3%}
-
-.thumblist {					/* media list view	*/
-  position:absolute;
-  opacity:0;
-  left:6.2em;
-  max-width:12em;
-  border-radius:5%;
-  transition:0.2s}
-.thumblist:hover {opacity:1}			/* show thumbnail on hover	*/
 
 .title {
   display:grid;

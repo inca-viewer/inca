@@ -192,16 +192,15 @@ Global html
 <a onmousedown='flip()'>Flip</a></span>`n`n
 
 <div id="myModal" class="modal" onwheel="wheelEvents(event, id, this)">`n
-<div><video id="myMedia" class="media" type="video/mp4" muted></video>`n
+<div><video id="myMedia" style='position:absolute; border-radius:3`%' type="video/mp4" muted></video>`n
 <span id="mySeekBar" class='seekbar'></span>`n
-<textarea id="myCap" class="caption" onmouseenter="over_cap=true" onmouseleave="over_cap=false"></textarea>`n
-<span><video id='mySeek' class='seek' type="video/mp4"></video></span></div></div>`n`n
+<textarea id="myCap" class="caption" onmouseenter="over_cap=true" onmouseleave="over_cap=false"></textarea>`n</div></div>`n`n
 
 
 
 
 <div id='myPreview' onmouseover='myPreview.style.opacity=null' class='preview'>
-<div style='position:relative; max-width:160px; height:1100px; overflow-y:scroll; transform:rotate(-90deg); transform-origin:right top; background:inherit; left:-120px'>%preview%</div></div>`n`n`n
+<div style='position:relative; max-width:180px; height:1100px; overflow-y:scroll; transform:rotate(-90deg); transform-origin:right top; background:inherit; left:-120px'>%preview%</div></div>`n`n`n
 
 
 
@@ -369,10 +368,10 @@ poster =
                     }
 	        entry = <a onmousedown='inca(event, "#Media#%j%##")'><div style="display:inline-block; width:88`%; color:#555351; transition:color 1.4s; margin-left:8`%; text-align:center; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; %highlight%;">%sort_name% &nbsp;&nbsp;%media%</div></a><textarea rows=%rows% style="display:inline-block; overflow:hidden; margin-left:8`%; width:88`%; background-color:inherit; color:#826858; font-size:1.2em; font-family:inherit; border:none; outline:none;">%str2%</textarea>`n`n
                 }
-            else entry = <div id="thumb%j%" class="thumb_container" style="width:%view%em; max-height:%view%em" onmouseover='over_thumb=%j%' onmouseout='over_thumb=0' onclick='sel(%j%)'>`n <input id="title%j%" class='title' onmousedown='if(!event.button) {inputbox=this; sessionStorage.setItem("last_index",%j%)}' type='search' value='%media_s%'>`n <video class="media" id="media%j%" style="max-width:%view%em; max-height:%view%em; position:inherit; %transform%"`n onmouseover="overThumb(%j%, %skinny%, '%type%', %start%, '%cap%', %rate%, event)"`n onmouseout='over_media=false; this.pause()'`n src="file:///%src%"`n %poster%`n preload='none' muted type="video/mp4"></video>%caption%</div>`n`n
+            else entry = <div id="thumb%j%" class="thumb_container" style="width:%view%em; max-height:%view%em" onmouseover='over_thumb=%j%; thumb.style.zIndex=Zindex+=1' onmouseout='over_thumb=0' onclick='sel(%j%)'>`n <input id="title%j%" class='title' onmousedown='if(!event.button) {inputbox=this; sessionStorage.setItem("last_index",%j%)}' type='search' value='%media_s%'>`n <video class='thumb' id="media%j%" style="max-width:%view%em; max-height:%view%em; position:inherit; %transform%"`n onmouseover="overThumb(%j%, %skinny%, '%type%', %start%, '%cap%', %rate%, event)"`n onmouseout='over_media=false; this.pause()'`n src="file:///%src%"`n %poster%`n preload='none' muted type="video/mp4"></video>%caption%</div>`n`n
             }
         html = %html%%entry%						; spool preview media entries
-        preview = %preview%<video id="preview%j%" onmouseover='index=%j%; start=0;' onmouseout='over_media=false' onmousedown="playMedia('Click'); setTimeout(function() {myPreview.style.opacity=0},100)" style="max-height:120px; max-width:120px; margin:22`%; transform:rotate(90deg); border-radius:12`%; opacity:0.7" %poster% preload='none' muted type="video/mp4"></video>`n
+        preview = %preview%<video id="preview%j%" onmouseover='index=%j%; start=0' onmousedown="playMedia('Click')" class='prev' %poster% preload='none' muted type="video/mp4"></video>`n
         }
 
 
@@ -970,7 +969,7 @@ poster =
         if (InStr(toggles, "Recurse") || search_term)
             recurse = R
         FileRead, str, %playlist%
-        if playlist
+        if (playlist && !search_term)
            {
            Loop, Parse, str, `n, `r
              {
