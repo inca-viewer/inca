@@ -12,16 +12,15 @@
 
 // random thumb start option feature
 
-// preview opacity based on ypos
 // no need for rename button
 // history and back to show last play time point
 
-// ribbon changes index for thumbsheet trigger error
-// Skinny Blonde Bitch Gets It Rough - downloaded - new
-
 // thumblist in ribbon option, lower half of thumb or timer
 // ribbon play()
+// show indexer when make mp4
+// thumb ribbon under thumb after hover
 
+// test if canplay can trigger mpv
 
 
 

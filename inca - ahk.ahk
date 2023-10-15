@@ -124,6 +124,7 @@ Global html
         ini := StrReplace(ini, "'", ">")				; java cannot accept ' in strings
         max_height := Floor(A_ScreenHeight * 0.34)			; max image height in web page
         menu_item =
+        count:=0
         list_size := 0
         type = video							; prime for list parsing
         page_w := Setting("Page Width")
@@ -132,14 +133,14 @@ Global html
         fullscreen := Setting("Fullscreen")
         Loop, Parse, list, `n, `r 					; split list into smaller web pages
             {
-            item := StrSplit(A_LoopField, "/")				;  sort filter \ src \ media type \ ext
+            item := StrSplit(A_LoopField, "/")				; sort filter \ src \ media type \ ext
             source := item.2
             type := item.3
             sort_name := item.4
             start := item.5
             list_size += 1
             if ((list_size > (page-1) * size) && (list_size <= page * size))
-                SpoolList(A_Index, source, sort_name, start)
+                SpoolList(count+=1, source, sort_name, start)
             }
         if ((pages := ceil(list_size/size)) > 1)
             pg = Page %page% of %pages%
@@ -267,6 +268,7 @@ Global html
           previous_tab := folder
           sleep 400							; time for page to load
           }
+        GuiControl, Indexer:, GuiInd
         PopUp("",0,0,0)
         }
 
@@ -281,7 +283,7 @@ Global html
 
     SpoolList(j, input, sort_name, start)				; spool sorted media files into web page
         {
-poster =
+        poster =
         if ((cap_size := view / 12) > 1.6)
           cap_size := 1.6
         if DetectMedia(input)
@@ -371,7 +373,7 @@ poster =
             else entry = <div id="thumb%j%" class="thumb_container" style="width:%view%em; max-height:%view%em" onmouseover='over_thumb=%j%; thumb.style.zIndex=Zindex+=1' onmouseout='over_thumb=0' onclick='sel(%j%)'>`n <input id="title%j%" class='title' onmousedown='if(!event.button) {inputbox=this; sessionStorage.setItem("last_index",%j%)}' type='search' value='%media_s%'>`n <video class='thumb' id="media%j%" style="max-width:%view%em; max-height:%view%em; position:inherit; %transform%"`n onmouseover="overThumb(%j%, %skinny%, '%type%', %start%, '%cap%', %rate%, event)"`n onmouseout='over_media=false; this.pause()'`n src="file:///%src%"`n %poster%`n preload='none' muted type="video/mp4"></video>%caption%</div>`n`n
             }
         html = %html%%entry%						; spool preview media entries
-        preview = %preview%<video id="preview%j%" onmouseover='index=%j%; start=0' onmousedown="playMedia('Click')" class='prev' %poster% preload='none' muted type="video/mp4"></video>`n
+        preview = %preview%<video id="preview%j%" onmousedown="if (!event.button) {index=%j%; start=0; playMedia('Click')}" class='prev' %poster% preload='none' muted type="video/mp4"></video>`n
         }
 
 
@@ -670,6 +672,7 @@ poster =
             }
         if (command == "mp3" || command == "mp4")			; address = cue, value = current time
             {
+            GuiControl, Indexer:, GuiInd, %src%
             x = %value%							; convert number to string
             if !address
               run, %inca%\apps\ffmpeg.exe -i "%src%" "%media_path%\%media% %x%.%command%",,Hide
@@ -777,7 +780,7 @@ poster =
               {
               playing = 1
               FileRead, str, %inca%\fav\History.m3u
-              if (!playlist && type == "video" && !InStr(str, src))
+              if (!playlist && (type == "video" || type == "audio") && !InStr(str, src))
                 FileAppend, %src%|%address%`r`n, %inca%\fav\History.m3u, UTF-8		; add media entry to playlist
               popup = %browser% Cannot Play %ext%
               if (ext=="pdf")
@@ -1495,7 +1498,8 @@ poster =
         loop %time%
             {
             sleep 10
-            mask := 255 - (55 + (A_Index * 200/time))
+            mask := 55 + (A_Index * 200/ time)
+            mask2 := 255 - mask
             WinSet, TransColor, 0 %mask2%
             }
         }
