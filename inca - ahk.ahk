@@ -178,11 +178,11 @@ if search_term
 view_t := view*0.8
 k := j+1
 
-media_list = %media_list%<table style="width:100`%; font-size:0.9em; margin:auto"><tr>`n <td style="width:9em" onmouseover='over_media=true; index=%j%' onmouseout='over_media=false'><video class='thumblist' id="list%j%" style="%transform%" %poster% type="video/mp4"></video></td><td><input class='title' onmouseover='list%j%.style.opacity=1' onmouseout='list%j%.style.opacity=null' style='position:relative; text-align:left' type='search' value='%media_s%' onmousedown='if(!event.button) {inputbox=this; sessionStorage.setItem("last_index",%j%)}'></td>`n <td style="width:2em">%j%</div>`n <td style="width:4em; text-align:center">%date%</div>`n <td style="width:4em; text-align:center">%dur%</div>`n <td style="width:3em; text-align:center">%size%</div>`n <td id="title%j%" onclick='sel(%j%)' style="width:2em; text-align:center">%ext%</td></tr></table>`n`n
+media_list = %media_list%<table style="width:100`%; font-size:0.9em; margin:auto"><tr onmouseover='over_thumb=%j%; index=%j%' onmouseout='over_thumb=0'>`n <td><input id="title%j%" onmouseup='if(!event.button) {sel(%j%)}' class='title' onmouseover='list%j%.style.opacity=1' onmouseout='list%j%.style.opacity=null' style='position:relative; text-align:left' type='search' value='%media_s%' onmousedown='if(!event.button) {inputbox=this; sessionStorage.setItem("last_index",%j%)}'></td>`n <td style="width:9em"><video class='thumblist' id="list%j%" onmouseover="overThumb(%j%, %skinny%, '%type%', %start%, '%cap%', %rate%, event)" onmouseout="over_media=false"`n style="%transform%" %poster% type="video/mp4"></video></td>`n <td style="width:2em">%j%</div>`n <td style="width:4em; text-align:center">%date%</div>`n <td style="width:4em; text-align:center">%dur%</div>`n <td style="width:4em; text-align:center">%size%</div>`n <tdstyle="width:2em; text-align:center">%ext%</td></tr></table>`n`n
 
 if (type == "document" || type == "audio")
   poster =
-media_thumbs = %media_thumbs%<div id="thumb%j%" style="display:flex; height:%view%em; width%view%em; transform:rotate(90deg)"`n onmouseover="over_thumb=%j%"`n onmouseout="over_thumb=0" onmouseup='if(!event.button) {sel(%j%)}'>`n <video class='thumb' id="media%j%" style="max-width:%view_t%em; max-height:%view_t%em; %transform%"`n onmouseover="overThumb(%j%, %skinny%, '%type%', %start%, '%cap%', %rate%, event)"`n onmouseout="over_media=false; this.pause()"`n src="file:///%src%"`n %poster%`n preload='none' muted loop type="video/mp4"></video>%caption%</div>`n`n
+media_thumbs = %media_thumbs%<div id="thumb%j%" style="display:flex; height:%view%em; width%view%em; transform:rotate(90deg)"`n onmouseover="over_thumb=%j%"`n onmouseout="over_thumb=0" onmouseup='if(!event.button) {sel(%j%)}'>`n <video class='thumb' id="media%j%" style="max-width:%view_t%em; max-height:%view_t%em; %transform%"`n onmouseover="overThumb(%j%, %skinny%, '%type%', %start%, '%cap%', %rate%, event); thumb.play()"`n onmouseout="over_media=false; this.pause()"`n src="file:///%src%"`n %poster%`n preload='none' muted loop type="video/mp4"></video>%caption%</div>`n`n
 }
 
 
@@ -252,7 +252,7 @@ media_thumbs = %media_thumbs%<div id="thumb%j%" style="display:flex; height:%vie
             array := StrSplit(x,"\")
             x := array.MaxIndex()
             fname := array[x]
-            subs = %subs%<table style='width:80`%; margin-left:5em'><tr><td style='line-height:1.4em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis' onmousedown='inca(event, "#Subs#%A_Index%#"+selected+"#")'>%fname%</td></tr></table>`n
+            subs = %subs%<table style='width:80`%; margin-left:9em'><tr><td style='line-height:1.4em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis' onmousedown='inca(event, "#Subs#%A_Index%#"+selected+"#")'>%fname%</td></tr></table>`n
             }
 
 header = <!--, %view%, %page%, %pages%, %filt%, %sort%, %toggles%, %list_view%, %playlist%, %path%, %search_path%, %search_term%, , -->`n<!doctype html>`n<html>`n<head>`n<meta charset="UTF-8">`n<title>Inca - %title%</title>`n<meta name="viewport" content="width=device-width, initial-scale=1">`n<link rel="icon" type="image/x-icon" href="file:///%inca%\apps\icons\inca.ico">`n<link rel="stylesheet" type="text/css" href="file:///%inca%/inca - css.css">`n</head>`n`n
@@ -290,7 +290,7 @@ body = <body id='myBody' class='container' onload="spool(event, '', '%ini%', %vi
 
 
 
-<div id='myMenu' myPanel.style.zIndex=-1' style='position:fixed; z-index:2; width:70`%'>
+<div id='myMenu' style='position:fixed; z-index:2; width:70`%'>
 <div class='ribbon'>`n
 <a id='myPath' onmousedown="inca(event, '#Up##'+selected+'#')" style='font-size:1.4em'>&#8678`n
 <a onmouseover="spool(event, 'Fol')" onwheel="wheelEvents(event, 'Fol', this)">Fol</a>`n
@@ -309,7 +309,7 @@ body = <body id='myBody' class='container' onload="spool(event, '', '%ini%', %vi
 <a id='myAll' onclick="inca(event, '#SearchAll#'+myInput.value+'##')" class='searchbox' style='width:8`%; border-radius:0'></a>`n
 <a id='myAdd' onclick="inca(event, '#SearchAdd#'+myInput.value+'##')" class='searchbox' style='width:8`%; margin-right:2`%; border-radius:0 1em 1em 0'></a></div>`n`n
 
-<div id='myThumbs' onmouseover='myPanel.style.opacity=null' style='top:1em; overflow:hidden;'>`n<div id='View' style='position:absolute; width:%view%em; height:900px; overflow-y:scroll; transform:rotate(-90deg); transform-origin:right top; background:inherit; left:-%view%em'>`n`n`n<div style='height:9em'></div>%media_thumbs%<div style='height:36em'></div></div></div>`n`n
+<div id='myThumbs' onmouseover='myPanel.style.opacity=null; myPanel.style.zIndex=-1' style='top:1em; overflow:hidden;'>`n<div id='View' style='position:absolute; width:%view%em; height:900px; overflow-y:scroll; transform:rotate(-90deg); transform-origin:right top; background:inherit; left:-%view%em'>`n`n`n<div style='height:9em'></div>%media_thumbs%<div style='height:36em'></div></div></div>`n`n
 
 <div id='myRibbon' class='ribbon' style='top:%view%em'>`n
 <a></a>`n
@@ -554,6 +554,7 @@ body = <body id='myBody' class='container' onload="spool(event, '', '%ini%', %vi
         ptr := 1
         sleep 24
         input := StrReplace(Clipboard, "/", "\")
+; tooltip %input%
         array := StrSplit(input,"#")
         Clipboard := clip
         Loop % array.MaxIndex()/4
@@ -672,6 +673,10 @@ body = <body id='myBody' class='container' onload="spool(event, '', '%ini%', %vi
               }
             else
               {
+;value := list_size
+address := path
+
+command = Path
               send, {LButton up}
               if playlist
                 if long_click

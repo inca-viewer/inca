@@ -206,7 +206,7 @@
     type = ''
     thumb.currentTime = start
     thumb.rate = rate
-    thumb.play()
+//    thumb.play()
     if (mouse_down && gesture) {sel(id)}}
 
 
@@ -252,7 +252,7 @@
     modal.style.opacity = 1
     media.style.opacity = 0
     media.muted = 1*localStorage.getItem('muted')
-    if (type == 'audio' || playlist.match('/inca/music/')) {looping=false; media.muted=false; scaleY=0.5}
+    if (type == 'audio' || playlist.match('/inca/music/')) {looping=false; media.muted=false}
     else if (fullscreen) {setTimeout(function() {modal.requestFullscreen()},140)}
     if (scaleY == 1.2 && ratio < 1) {scaleY=1}
     if (ratio < 1 && scaleY > 1.42) {scaleY=1.42}
