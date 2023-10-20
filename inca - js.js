@@ -1,5 +1,5 @@
 
-// panel.style.opacity=1; panel.innerHTML= x or alert(x)		// debugging
+// Debugging - use mySelected.innerHTML = x in Gesture(e) or use alert(x)
 // rem. long click text or search, +adds extra search term
 // edit caption file when # in filename
 // `r`n within captions
@@ -20,7 +20,6 @@
 // skinny adjust option over thumb
 // edit size of ribbon
 // delete history 
-// use #start on video
 // no more overthumb or getparameters
 // new float horizontal, vertical scroll + slide to mediaX or Y pos
 // multiple rows, columns
@@ -47,6 +46,13 @@
 // replace clipboard with first htm 'tab' being an inputbox read every time click/back
 
 // panel should smooth scroll 
+// is scrolltoindex needed
+
+// panel fixed under menu, med floating anywhere
+// vertical horiz in same postions same panel shape, just diff scroll behaviour 
+// date and alpha colum in list
+// sheet mclick
+// need wheel below thumbs
 
 
 
@@ -63,10 +69,6 @@
   var seekbar = document.getElementById('mySeekBar')			// media seekbar
   var menuX = localStorage.getItem('menuX')*1				// last menu position
   var menuY = localStorage.getItem('menuY')*1
-  var listX = localStorage.getItem('listX')*1				// last menu position
-  var listY = localStorage.getItem('listY')*1
-  var medX = localStorage.getItem('medX')*1				// last menu position
-  var medY = localStorage.getItem('medY')*1
   var last_id = 1*sessionStorage.getItem('last_id')			// last top panel menu eg 'music'
   var last_index = 1*sessionStorage.getItem('last_index')		// last index
   var last_start = 1*sessionStorage.getItem('last_start')		// last media start time
@@ -106,7 +108,7 @@
   var skinny = 1							// media width
   var messages = ''							// skinny and caption changes
   var cue = 0								// start time for mp3/4 conversion
-  var Zindex = 2
+  var Zindex = 3
   var xw = 0.5								// cursor over window ratio
   var yw = 0.5
   var xm = 0								// cursor over media ratio
@@ -128,18 +130,10 @@
   sessionStorage.setItem('selected', '')
   if (selected) {for (x of selected.split(',')) {sel(x)}}
   else {selected=''}
-  if (!medX || medX < 0 || medX > innerWidth*0.9) {medX=innerWidth/3}
-  if (!medY || medY < 0 || medY > innerHeight*0.9) {medY=innerHeight/3}
   if (!menuX || menuX < 0 || menuX > innerWidth*0.9) {menuX=innerWidth/4}
   if (!menuY || menuY < 0 || menuY > innerHeight*0.9) {menuY=innerHeight/4}
-  if (!listX || listX < 0 || listX > innerWidth*0.9) {listX=innerWidth/2}
-  if (!listY || listY < 0 || listY > innerHeight*0.9) {listY=innerHeight/2}
   myMenu.style.left = menuX +'px'
   myMenu.style.top = menuY +'px'
-  myList.style.left = listX +'px'
-  myList.style.top = listY +'px'
-  myMed.style.left = medX +'px'
-  myMed.style.top = medY +'px'
   if (last_index) {setTimeout(function() {scrolltoIndex()},300)}	// scroll to last played media
   document.addEventListener('mousedown', mouseDown)
   document.addEventListener('mouseup', mouseUp)				// mouseUp alone = mouse back button
@@ -171,16 +165,13 @@
 
   function mouseUp(e) {
     if (!e.button && !gesture && !nav2.matches(":hover") && type=='thumbsheet') {playThumb()}
-    if (!e.button && !type && gesture && !selected && !myMenu.matches(":hover")
-    && !myList.matches(":hover") && !myMed.matches(":hover")) {
-      thumbs(e,'#myThumbs#'+view+'##')}
-    else if (e.button == 1 && !long_click && !gesture) {
+    if (e.button == 1 && !long_click && !gesture) {
       if (!mouse_down) {mouseBack()}					// inca.exe replaces MouseBack with MClick Up
       else if (type == 'video' && cap_list && (ym>1 || yw>0.9)) {	// seek to next caption in movie
         for (var x of cap_list.split('|')) {
           if (!isNaN(x) && x>(media.currentTime+0.2)) {
             media.currentTime=x-1; media.play(); break}}}
-      else if (over_media) {playMedia('Mclick')}}		// next media/thumbsheet
+      else {playMedia('Mclick')}}					// next media/thumbsheet
     else if (!e.button && !gesture ) {		
       if (!over_cap && cap.value != cap.innerHTML) {editCap()}		// caption in edit mode
       else if (!type && over_media && mouse_down) {playMedia('Click')}
@@ -192,11 +183,8 @@
 
 
   function mouseBack() {
-    var top = document.body.getBoundingClientRect().top
     sessionStorage.setItem("last_index",0)
-    if (!type) {
-      if (top < -90) {setTimeout(function() {scrollTo(0,0)},100)}	// scroll to page top
-      else {setTimeout(function() {location.reload()},200)}}		// just reset htm tab (clear selected etc.)
+    if (!type) {setTimeout(function() {location.reload()},200)}		// reset htm tab (clear selected etc.)
     else {								// quit media
       navigator.clipboard.writeText(messages)
       messages=''
@@ -216,9 +204,9 @@
     start = 0
     getParameters()
     type = ''
-thumb.currentTime = start
-thumb.rate = rate
-thumb.play()
+    thumb.currentTime = start
+    thumb.rate = rate
+    thumb.play()
     if (mouse_down && gesture) {sel(id)}}
 
 
@@ -240,7 +228,7 @@ thumb.play()
     media.style.height = y +'px'
     media.style.left = mediaX-x/2 +'px'
     media.style.top = mediaY-y/2 +'px'
-    if (mouse_down==2 || media.src != thumb.src) {media.src=thumb.src}	// so not to restart play
+    if (mouse_down==2 || media.src != thumb.src) {media.src=thumb.src}	// so not to restart play 
     media.poster = thumb.poster}
 
 
@@ -256,9 +244,10 @@ thumb.play()
     getParameters()
     navigator.clipboard.writeText('#Media#'+index+'##'+start)
     if (type == 'document' || type == 'm3u') {type=''; return}
-    if ((e == 'Back' || e == 'Mclick') && playing=='thumbsheet') {thumbSheet()}
-    if (e == 'Mclick' && playing && long_click && type == 'video') {thumbSheet()}
-    if (e == 'Mclick' && !playing) {thumbSheet()}
+    if (type == 'video') {
+      if ((e == 'Back' || e == 'Mclick') && playing=='thumbsheet') {thumbSheet()}
+      else if (e == 'Mclick' && playing && long_click) {thumbSheet()}
+      else if (e == 'Mclick' && !playing) {thumbSheet()}}
     modal.style.zIndex = Zindex+=1
     modal.style.opacity = 1
     media.style.opacity = 0
@@ -273,8 +262,7 @@ thumb.play()
     if (e == 'Click' && thumb.currentTime > start+2) {media.currentTime = thumb.currentTime}
     if (e == 'Click' && long_click) {start = 0}
     if (type == 'video' || type == 'audio') {media.currentTime = start; media.play()}
-    document.getElementById('title'+index).style.color='lightsalmon'	// highlight played media in tab
-    document.getElementById('title2'+index).style.color='lightsalmon'	// highlight played media in tab
+    document.getElementById('title'+index).style.color='lightsalmon'	// highlight played media
     last_index = index
     scrolltoIndex()
     can_play = false
@@ -347,6 +335,15 @@ thumb.play()
     else if (type && rect.bottom-rect.top>innerHeight*1.4) {
       if (wheelUp) {mediaY -= 50}					// scroll image
       else {mediaY += 50}}
+    else if (id=='myView') {						// zoom thumbs
+      view = 1*View.style.width.slice(0,-2)
+      if (wheelUp) {view += view/50}
+      else {view -= view /50}
+      view = view .toFixed(1)
+      if (view < 5) {view = 5}
+      if (view > 99) {view = 99}
+      View.style.width=view+'em'
+      Xref=xpos; Yref=ypos; block=10}
     else {spool(e, id)} 						// scroll top panel
     wheel = 0}
 
@@ -365,7 +362,7 @@ thumb.play()
     var y = Math.abs(Yref-ypos)
     if (mouse_down && !over_cap && x+y > 8) {				// gesture detection (mousedown + slide)
       if (!gesture) {block=0; gesture=true}}
-    if (gesture && myMenu.matches(":hover")) {				// move menu
+    if (gesture && myThumbs.matches(":hover")) {			// move menu
       rect = myMenu.getBoundingClientRect()
       menuX = rect.left + xpos - Xref
       menuY = rect.top + ypos - Yref
@@ -373,24 +370,6 @@ thumb.play()
       localStorage.setItem("menuY",menuY)
       myMenu.style.left = menuX +'px'
       myMenu.style.top = menuY +'px'
-      Xref=xpos; Yref=ypos}
-    else if (gesture && myMed.matches(":hover")) {			// move med
-      rect = myMed.getBoundingClientRect()
-      medX = rect.left + xpos - Xref
-      medY = rect.top + ypos - Yref
-      localStorage.setItem("medX",medX)
-      localStorage.setItem("medY",medY)
-      myMed.style.left = medX +'px'
-      myMed.style.top = medY +'px'
-      Xref=xpos; Yref=ypos}
-    else if (gesture && myList.matches(":hover")) {			// move list
-      rect = myList.getBoundingClientRect()
-      listX = rect.left + xpos - Xref
-      listY = rect.top + ypos - Yref
-      localStorage.setItem("listX",listX)
-      localStorage.setItem("listY",listY)
-      myList.style.left = listX +'px'
-      myList.style.top = listY +'px'
       Xref=xpos; Yref=ypos}
     else if (gesture && type) {
       if (!block && mouse_down==2) {					// media width - middle click gesture
@@ -414,33 +393,19 @@ thumb.play()
         localStorage.setItem("mediaY",mediaY)}
       Xref=xpos; Yref=ypos
       positionMedia(0)}
-    else if (gesture && !type && !selected && mouse_down==1 && y>0.2 && y>x) { // zoom thumbs
-      last_index=0							// prevent scroll to index	
-      view = 1*document.getElementById("thumb" + index).style.width.slice(0,-2)
-      if (Yref < ypos) {view += view/60}
-      else {view -= view /60}
-      view = view .toFixed(1)
-      if (view < 5) {view = 5}
-      if (view > 99) {view = 99}
-      for (i=1; i<37 ;i++) {
-        el = document.getElementById("thumb" + i)
-        el2 = document.getElementById("media" + i)
-        if (el) {el.style.width=view+'em'; el.style.maxHeight=view+'em'}
-        if (el2) {el2.style.maxWidth=view+'em'; el2.style.maxHeight=view+'em'}}
-      Xref=xpos; Yref=ypos}
     if (!type) {return}
     if (!nav.matches(":hover")) {nav.style.display = null}
     modal.style.cursor = 'crosshair'
     if (type != 'thumbsheet') {setTimeout(function() {modal.style.cursor='none'},400)}}
 
 
-  function positionMedia(fade) {					// align media within window boundaries
+function positionMedia(fade) {					// align media within window boundaries
     var x=0; var y=0
     if (screenLeft) {Xoff=screenLeft; Yoff=outerHeight-innerHeight} else {x=Xoff; y=Yoff}	// fullscreen offsets
     media.style.left = (mediaX-media.offsetWidth/2) +x +"px"
     media.style.top = (mediaY-media.offsetHeight/2) +y +"px"
     if (!mouse_down && (mediaY > 0.7*((innerHeight/2)-y) && mediaY < 1.3*((innerHeight/2)-y))
-      && (mediaX > 0.7*((innerWidth/2)-x) && mediaX < 1.3*((innerWidth/2)-x))) {
+      && (mediaX > 0.3*(innerWidth-x) && mediaX < 0.7*(innerWidth-x))) {
       if (Math.abs((media.offsetHeight*scaleY)) > 0.89*(innerHeight) && Math.abs((media.offsetHeight*scaleY)) < 1.12*(innerHeight)) {
         mediaY=(innerHeight/2)-y; scaleY=(innerHeight)/media.offsetHeight; scaleX=skinny*scaleY; fade=1}
       if (Math.abs((media.offsetWidth*scaleX)) > 0.89*innerWidth && Math.abs((media.offsetWidth*scaleX)) < 1.12*innerWidth) {
@@ -542,7 +507,6 @@ thumb.play()
   function scrolltoIndex() {						// to last media if not visible
     sessionStorage.setItem("last_index",0)
     var el = document.getElementById('title'+last_index)
-    var el = document.getElementById('title2'+last_index)
     el.style.color = 'lightsalmon'
     var y = el.getBoundingClientRect().top + scrollY
     if (y < scrollY+20 || y > scrollY+innerHeight-100) {scrollTo(0,y-300)}}
@@ -618,8 +582,8 @@ thumb.play()
     else if (cap.innerHTML != '-' && (!cap.value || ptr <= 0)) {cap.style.opacity=0}}
 
   function sel(i) {							// highlight selected media
-    if (!(el = document.getElementById('title' + i))) {return}
-    el2 = document.getElementById('title2' + i)
+    if (gesture || !(el = document.getElementById('title' + i))) {return}
+    el2 = document.getElementById('media' + i)
     if (over_media && !gesture) {return}
     x = ',' + selected
     if (el.style.border == "0.1px solid lightsalmon") {
@@ -628,7 +592,7 @@ thumb.play()
       selected = x.replace("," + i + ",", ",").slice(1)}
     else {
       el.style.border = "0.1px solid lightsalmon"
-      el2.style.border = "0.1px solid lightsalmon"
+      el2.style.border = "1px solid lightsalmon"
       if (!x.match("," + i + ",")) {selected = selected + i + ","}}}
 
   function release() {							// release media from browser

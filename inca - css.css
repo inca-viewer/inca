@@ -1,5 +1,43 @@
 
-::-webkit-scrollbar {width:0}			/* hide bright white scrollbar */
+ ::-webkit-scrollbar {width:0}			/* hide bright white scrollbar */
+
+
+.thumb {
+  margin:auto;
+  cursor:default;
+  opacity:0.7;
+  transition:1.8s;
+  border-radius:0.5em}
+.thumb:hover {scale:1.5; opacity:1}
+
+.ribbon {					/* menu, fol, fav, search ... */
+  display:flex;
+  position:relative;
+  text-align:center;
+  margin:auto;
+  align-items:center;
+  font-size:1em;
+  justify-content:space-evenly;
+  width:100%}
+
+.ribbon a {transition:0.8s; border-radius:1em}
+.ribbon a:hover {transition:0.2s; transform:scale(1.2,1.2); translate(0,-0.1em)}
+
+.myList {					/* media list view	*/
+  position:relative;
+  overflow:hidden;
+  overflow:scroll;
+  height:30em;
+  margin-left:2em}
+
+.thumblist {					/* media list view	*/
+  position:absolute;
+  opacity:0;
+  max-width:9em;
+  margin-top:-5px;
+  border-radius:9%;
+  transition:0.8s}
+.thumblist:hover {opacity:1}
 
 .panel {					/* top panel element showing folders etc.*/
   display:grid;
@@ -7,7 +45,7 @@
   grid-template-columns: auto auto auto auto auto auto auto;
   grid-template-rows: auto auto auto auto;
   grid-auto-flow: column;
-  padding-left:8.4%;
+  padding-left:8em;
   margin:auto;
   color:#826858;
   overflow-wrap:break-word;
@@ -19,64 +57,20 @@
   width:90%;
   z-index:-1;
   opacity:0;
-  background:inherit}
-
-.ribbon {					/* menu, fol, fav, search ... */
-  display:flex;
-  position:relative;
-  text-align:center;
-  margin:auto;
-  align-items:center;
-  font-size:1em;
-  justify-content:space-evenly;
-  width:90%}
-
-.ribbon a {transition:0.8s; border-radius:1em}
-.ribbon a:hover {
-  transition:0.2s;
-  transform:scale(1.2,1.2) translate(0,-0.1em)}
-
-.thumb {
-  position:absolute;
-  cursor:default;
-  scale:1 1;
-  opacity:0.8;
-  transition:0.3s;
-  border-radius:0.5em}
-.thumb:hover {scale:1.6 1.6; opacity:1; transition:1.8s; cursor:none}
-
-.thumblist {					/* media list view	*/
-  position:absolute;
-  opacity:0;
-  scale:1 1;
-  left:7em;
-  max-width:10em;
-  max-height:10em;
-  border-radius:1em;
-  transition:0.3s}
-.thumblist:hover {scale:1.1 1.1; opacity:1; transition:1s}
-
-.thumb_container {				/* around thumbnail in htm tab */
-  display:inline-block;
-  padding:0.3em;
-  padding-bottom:2em;
-  text-align: center;
-  position:relative}
+  background:#15110a}
 
 .title {
-  display:grid;
+  position:absolute;
+  display:flex;
   overflow:hidden;
   text-align: center;
-  text-overflow:ellipsis;
   border-radius:1em;
   background-color:inherit;
   border:none;
   color:#826858;
-  height:1em;
   font-family:inherit;
   outline:none;
-  font-size:1em;
-  transition:color 1.4s;
+  transition:1s;
   white-space:nowrap;
   width:100%}
 
@@ -104,7 +98,7 @@
   outline:none;
   transition:color 1.4s;
   white-space:nowrap;
-  width:100%}
+  width:90%}
 
 .seekbar {					/* video progress bar	*/
   position:absolute;
