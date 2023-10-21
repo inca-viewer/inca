@@ -178,12 +178,12 @@ if search_term
 view_t := view*0.8
 k := j+1
 
-media_list = %media_list%<table>`n <tr id="title%j%" onmouseup='if(!event.button) {sel(%j%)}' onmouseover='list%j%.style.opacity=1; over_thumb=%j%; index=%j%' onmouseout='list%j%.style.opacity=null; over_thumb=0'>`n <td><input class='title' style='position:relative; text-align:left; width:30em' type='search' value='%media_s%'`n onmousedown='if(!event.button) {inputbox=this; sessionStorage.setItem("last_index",%j%)}'></td>`n <td style="width:9em"><video id="list%j%" class='thumblist' style="%transform%"`n onmouseover="overThumb(%j%, %skinny%, '%type%', %start%, '%cap%', %rate%, event)"`n onmouseout="over_media=false"`n %poster% type="video/mp4"></video></td>`n <td>%j%</td>`n <td>%date%</td>`n <td>%dur%</td>`n <td>%size%</td>`n <td>%ext%</td></tr></table>`n`n
+media_list = %media_list%<table>`n <tr onmouseup='if(!event.button&&!over_media) {sel(%j%)}' onmouseover='list%j%.style.opacity=1; over_thumb=%j%; index=%j%; if(mouse_down && gesture) {sel(%j%)}' onmouseout='list%j%.style.opacity=null; over_thumb=0'>`n <td><input id="title%j%" class='title' style='position:relative; text-align:left; width:30em' type='search' value='%media_s%'`n onmousedown='if(!event.button) {inputbox=this; sessionStorage.setItem("last_index",%j%)}'></td>`n <td style="width:9em"><video id="list%j%" class='thumblist' style="%transform%"`n onmouseover="overThumb(%j%, %skinny%, '%type%', %start%, '%cap%', %rate%, event)"`n onmouseout="over_media=false"`n %poster% type="video/mp4"></video></td>`n <td>%j%</td>`n <td>%date%</td>`n <td>%dur%</td>`n <td>%size%</td>`n <td>%ext%</td></tr></table>`n`n
 
 ;if (type == "document" || type == "audio")
 ;  poster =
 
-media_thumbs = %media_thumbs%<div id="thumb%j%" style="display:flex; height:%view%em; width%view%em; transform:rotate(90deg)"`n onmouseover="over_thumb=%j%"`n onmouseout="over_thumb=0"`n onmouseup='if(!event.button) {sel(%j%)}'>`n <video class='thumb' id="media%j%" style="max-width:%view_t%em; max-height:%view_t%em; %transform%"`n onmouseover="overThumb(%j%, %skinny%, '%type%', %start%, '%cap%', %rate%, event); thumb.play()"`n onmouseout="over_media=false; this.pause()"`n src="file:///%src%"`n %poster%`n preload='none' muted loop type="video/mp4"></video>%caption%</div>`n`n
+media_thumbs = %media_thumbs%<div id="thumb%j%" style="display:flex; height:%view%em; width%view%em; transform:rotate(90deg)"`n onmouseover="over_thumb=%j%"`n onmouseout="over_thumb=0"`n onmouseup='if(!event.button&&!over_media) {sel(%j%)}'>`n <video class='thumb' id="media%j%" style="max-width:%view_t%em; max-height:%view_t%em; %transform%"`n onmouseover="overThumb(%j%, %skinny%, '%type%', %start%, '%cap%', %rate%, event); thumb.play()"`n onmouseout="over_media=false; this.pause(); if(mouse_down && gesture) {sel(%j%)}"`n src="file:///%src%"`n %poster%`n preload='none' muted loop type="video/mp4"></video>%caption%</div>`n`n
 }
 
 
@@ -291,10 +291,11 @@ body = <body id='myBody' class='container' onload="spool(event, '', '%ini%', %vi
 
 
 
-<div id='myMenu' style='position:fixed; z-index:2; width:70`%'>
+<div id='myMenu' style='position:fixed; z-index:2; width:%page_w%`%'>
 
-<div><a id='Orphan' onmousedown="inca(event, '#Orphan###')" style='margin-left:2.7em; font-size:2em'>%title_s%</a>`n 
-<a style='margin-left:1.5em; font-size:1.3em; color:red'> %list_size%</a>`n</div>`n`n
+<div id='Menu'>
+<a onmousedown="inca(event, '#Menu###')" style='margin-left:2.7em; font-size:2em'>%title_s%</a>`n 
+<a style='margin-left:1.5em; font-size:1.3em; color:red'> %list_size%</a></div>`n`n
 
 <div class='ribbon'>`n
 <a onmousedown="inca(event, '#Recurse###')" %x8%>Recurse</a>`n
@@ -315,7 +316,7 @@ body = <body id='myBody' class='container' onload="spool(event, '', '%ini%', %vi
 
 <div id='myThumbs' onmouseover='myPanel.style.opacity=null; myPanel.style.zIndex=-1' style='top:1em; overflow:hidden;'>`n<div id='View' style='position:absolute; width:%view%em; height:900px; overflow-y:scroll; transform:rotate(-90deg); transform-origin:right top; background:inherit; left:-%view%em'>`n`n`n<div style='height:9em'></div>%media_thumbs%<div style='height:36em'></div></div></div>`n`n
 
-<div id='myRibbon' class='ribbon' style='top:%view%em'>`n
+<div class='ribbon' style='top:%view%em'>`n
 <a></a>`n
 <a id='myPath' onmousedown="inca(event, '#Up##'+selected+'#')" style='font-size:1.4em'>&#8678`n
 <a id='myView' onmousedown="inca(event, '#View#'+view+'##')" onwheel="wheelEvents(event, id, this)">Thumbs</a>`n 
@@ -666,7 +667,7 @@ body = <body id='myBody' class='container' onload="spool(event, '', '%ini%', %vi
             FileAppend, %src%|%value%`r`n, %inca%\fav\new.m3u, UTF-8
             Runwait, %inca%\apps\ffmpeg.exe -ss %value% -i "%src%" -y -vf scale=1280:1280/dar -vframes 1 "%inca%\cache\posters\%media%%A_Space%%value%.jpg",, Hide
             }
-        if (command == "Orphan")
+        if (command == "Menu")
             {
             command = Path
             address := path

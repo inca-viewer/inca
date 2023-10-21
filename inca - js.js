@@ -200,8 +200,7 @@
     getParameters()
     type = ''
     thumb.currentTime = start
-    thumb.rate = rate
-    if (mouse_down && gesture) {alert(); sel(id)}}
+    thumb.rate = rate}
 
 
   function getParameters() {						// get media arguments
@@ -356,7 +355,7 @@
     var y = Math.abs(Yref-ypos)
     if (mouse_down && !over_cap && x+y > 8) {				// gesture detection (mousedown + slide)
       if (!gesture) {block=0; gesture=true}}
-    if (gesture && myThumbs.matches(":hover")) {			// move menu
+    if (gesture && Menu.matches(":hover")) {			// move menu
       rect = myMenu.getBoundingClientRect()
       menuX = rect.left + xpos - Xref
       menuY = rect.top + ypos - Yref
@@ -396,8 +395,8 @@
 function positionMedia(fade) {					// align media within window boundaries
     var x=0; var y=0
     if (screenLeft) {Xoff=screenLeft; Yoff=outerHeight-innerHeight} else {x=Xoff; y=Yoff}	// fullscreen offsets
-    media.style.left = (mediaX-media.offsetWidth/2) +x +"px"
-    media.style.top = (mediaY-media.offsetHeight/2) +y +"px"
+    media.style.left = mediaX-(media.offsetWidth/2) +x +"px"
+    media.style.top = mediaY-(media.offsetHeight/2) +y +"px"
     if (!mouse_down && (mediaY > 0.7*((innerHeight/2)-y) && mediaY < 1.3*((innerHeight/2)-y))
       && (mediaX > 0.3*(innerWidth-x) && mediaX < 0.7*(innerWidth-x))) {
       if (Math.abs((media.offsetHeight*scaleY)) > 0.89*(innerHeight) && Math.abs((media.offsetHeight*scaleY)) < 1.12*(innerHeight)) {
@@ -576,18 +575,17 @@ function positionMedia(fade) {					// align media within window boundaries
     else if (cap.innerHTML != '-' && (!cap.value || ptr <= 0)) {cap.style.opacity=0}}
 
   function sel(i) {							// highlight selected media
-    if (gesture || !(el = document.getElementById('media' + i))) {return}
+    if (!(el = document.getElementById('thumb' + i))) {return}
     el2 = document.getElementById('title' + i)
-    if (over_media && !gesture) {return}
-    x = ',' + selected
-    if (el.style.border == '1px solid lightsalmon') {
-      el.style.border = 'none'
-      el2.style.background = 'none'
-      selected = x.replace("," + i + ",", ",").slice(1)}
+    x = ','+selected
+    if (x.match(","+i+",")) {
+      el.style.background = null
+      el2.style.background = null
+      selected = x.replace(","+i+",",",").slice(1)}
     else {
-      el.style.border = '1px solid lightsalmon'
+      el.style.background = '#1b1814'
       el2.style.background = '#1b1814'
-      if (!x.match("," + i + ",")) {selected = selected + i + ","}}}
+      if (!x.match(","+i+",")) {selected = selected+i+","}}}
 
   function release() {							// release media from browser
     var z=index+','

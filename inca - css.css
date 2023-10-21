@@ -26,9 +26,9 @@
 .thumblist {					/* list thumbs	*/
   position:absolute;
   opacity:0;
-  max-width:7em;
+  max-width:8em;
   margin-top:-1em;
-  margin-left:-3.5em;
+  margin-left:-4em;
   border-radius:9%}
 .thumblist:hover {opacity:1}
 
