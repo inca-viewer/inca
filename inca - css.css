@@ -5,7 +5,7 @@
 .thumb {
   margin:auto;
   cursor:default;
-  opacity:0.7;
+  opacity:0.8;
   transition:1.8s;
   border-radius:0.5em}
 .thumb:hover {scale:1.5; opacity:1}
@@ -23,23 +23,21 @@
 .ribbon a {transition:0.8s; border-radius:1em}
 .ribbon a:hover {transition:0.2s; transform:scale(1.2,1.2); translate(0,-0.1em)}
 
-.thumblist {					/* media list view	*/
+.thumblist {					/* list thumbs	*/
   position:absolute;
   opacity:0;
-  max-width:9em;
-  margin-top:-5px;
-//margin-left:44em;
-  border-radius:9%;
-  transition:0.8s}
+  max-width:7em;
+  margin-top:-1em;
+  margin-left:-3.5em;
+  border-radius:9%}
 .thumblist:hover {opacity:1}
 
-.myList {					/* media list view	*/
+.myList {					/* list view	*/
   position:relative;
   overflow:hidden;
   overflow:scroll;
   height:30em;
-//margin-left:-7em
-}
+  margin-left:3em}
 
 .panel {					/* top panel element showing folders etc.*/
   display:grid;
@@ -48,13 +46,14 @@
   grid-template-rows: auto auto auto auto;
   grid-auto-flow: column;
   padding-left:8em;
+  padding-bottom:2em;
   margin:auto;
-  color:#826858;
   overflow-wrap:break-word;
   white-space:nowrap;
   overflow:hidden;
   transition: 0.8s;
-  font-size:0.85em;
+  font-size:0.9em;
+  color:#555351; 
   height:6em;
   width:90%;
   z-index:-1;
@@ -66,15 +65,15 @@
   display:flex;
   overflow:hidden;
   text-align: center;
-  border-radius:1em;
+  text-overflow:ellipsis; 
   background-color:inherit;
-  border:none;
-  color:#826858;
+  font-size:inherit;
   font-family:inherit;
+  color:inherit;
   outline:none;
-  transition:1s;
-  white-space:nowrap;
-  width:100%}
+  border:none;
+  height:0.8em;
+  white-space:nowrap}
 
 .selected {
   display:block; 
@@ -144,11 +143,6 @@
   width:100vw;
   background-color:rgba(0,0,0,0.4)}
 
-table {						/* list view formatting */
-  color:#555351;
-  transition:color 1.4s;
-  border-collapse:collapse}
-
 .context {					/* right click menu */
   display:none;
   z-index:888;
@@ -169,17 +163,19 @@ table {						/* list view formatting */
 .container {					/* whole body element */
   font-family:'Yu Gothic', 'Calibri Light';
   cursor:default;
-  padding-top:14em;
+  padding-top:5em;
   background:#15110a;
   user-select:none;
-  color:#666666;
+  color:#826858;
   font-size:0.8em;
   animation-name:fadePage;
   animation-duration:0.6s}
 
+  td {border-radius:1em; outline:none; text-align:center; width:6em; overflow:hidden; white-space:nowrap}
+  table {color:#555351; font-size:0.9em; border-collapse: collapse}
+  table:hover {color:tomato;transition:color 0.2s}
   a {text-decoration:none; color:#826858}
-  a:hover {color:tomato;transition:color 0.46s}
-  input:hover {color:tomato;transition:color 0.46s}
-  table:hover {color:tomato;transition:color 0.46s}
+  a:hover {color:tomato;transition:color 0.2s}
+  input:hover {color:tomato;transition:color 0.2s}
   @keyframes fadePage {from {opacity:0} to {opacity:1}}
 

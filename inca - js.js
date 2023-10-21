@@ -47,14 +47,9 @@
 
 // panel should smooth scroll 
 // is scrolltoindex needed
-
-// panel fixed under menu, med floating anywhere
 // vertical horiz in same postions same panel shape, just diff scroll behaviour 
-// date and alpha colum in list
-// sheet mclick
 // need wheel below thumbs
-
-
+// set page width
 
 
   var thumb = document.getElementById('media1')				// first media element
@@ -206,8 +201,7 @@
     type = ''
     thumb.currentTime = start
     thumb.rate = rate
-//    thumb.play()
-    if (mouse_down && gesture) {sel(id)}}
+    if (mouse_down && gesture) {alert(); sel(id)}}
 
 
   function getParameters() {						// get media arguments
@@ -582,17 +576,17 @@ function positionMedia(fade) {					// align media within window boundaries
     else if (cap.innerHTML != '-' && (!cap.value || ptr <= 0)) {cap.style.opacity=0}}
 
   function sel(i) {							// highlight selected media
-    if (gesture || !(el = document.getElementById('title' + i))) {return}
-    el2 = document.getElementById('media' + i)
+    if (gesture || !(el = document.getElementById('media' + i))) {return}
+    el2 = document.getElementById('title' + i)
     if (over_media && !gesture) {return}
     x = ',' + selected
-    if (el.style.border == "0.1px solid lightsalmon") {
-      el.style.border = "none"
-      el2.style.border = "none"
+    if (el.style.border == '1px solid lightsalmon') {
+      el.style.border = 'none'
+      el2.style.background = 'none'
       selected = x.replace("," + i + ",", ",").slice(1)}
     else {
-      el.style.border = "0.1px solid lightsalmon"
-      el2.style.border = "1px solid lightsalmon"
+      el.style.border = '1px solid lightsalmon'
+      el2.style.background = '#1b1814'
       if (!x.match("," + i + ",")) {selected = selected + i + ","}}}
 
   function release() {							// release media from browser
