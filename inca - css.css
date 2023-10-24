@@ -6,9 +6,9 @@
   margin:auto;
   cursor:default;
   opacity:0.8;
-  transition:1.8s;
+  transition:1s;
   border-radius:0.5em}
-.thumb:hover {scale:1.5; opacity:1}
+.thumb:hover {transition:1.8s; scale:1.5; opacity:1}
 
 .ribbon {					/* menu, fol, fav, search ... */
   display:flex;
@@ -17,58 +17,70 @@
   margin:auto;
   align-items:center;
   font-size:1em;
-  justify-content:space-evenly;
-  width:100%}
+  justify-content:space-evenly}
 
 .ribbon a {transition:0.8s; border-radius:1em}
 .ribbon a:hover {transition:0.2s; transform:scale(1.2,1.2); translate(0,-0.1em)}
 
-.thumblist {					/* list thumbs	*/
-  position:absolute;
-  opacity:0;
-  max-width:8em;
-  margin-top:-1em;
-  margin-left:-4em;
-  border-radius:9%}
+.thumblist {opacity:0; transition:0.2s}		/* list thumbs	*/
 .thumblist:hover {opacity:1}
 
 .myList {					/* list view	*/
   position:relative;
   overflow:hidden;
   overflow:scroll;
-  height:30em;
-  margin-left:3em}
+  margin-left:1em;
+  height:43em}
 
 .panel {					/* top panel element showing folders etc.*/
   display:grid;
   position:absolute;
   grid-template-columns: auto auto auto auto auto auto auto;
-  grid-template-rows: auto auto auto auto;
+  grid-template-rows: auto auto auto auto auto auto;
   grid-auto-flow: column;
-  padding-left:8em;
-  padding-bottom:2em;
+  padding:1.5em;
   margin:auto;
+align-content:center;
+align-items:center;
   overflow-wrap:break-word;
   white-space:nowrap;
   overflow:hidden;
-  transition: 0.8s;
-  font-size:0.9em;
+  transition: 0.4s;
+  font-size:0.85em;
   color:#555351; 
-  height:6em;
-  width:90%;
+  height:10em;
+  width:100%;
   z-index:-1;
   opacity:0;
   background:#15110a}
 
+.searchbox {					/* input searchbox in htm tab	*/
+  text-overflow:ellipsis;
+  overflow:hidden;
+  margin-top:0.4em;
+  margin-bottom:0.4em;
+  border-radius:1em 0 0 1em;
+  text-align:center;
+  background-color:#1b1814;
+  color:#826858;
+  font-family:inherit;
+  border:none;
+  height:1.2em;
+  width:100%;
+  outline:none;
+  transition:color 1.4s;
+  white-space:nowrap}
+
 .title {
-  position:absolute;
+  position:relative;
   display:flex;
   overflow:hidden;
-  text-align: center;
   text-overflow:ellipsis; 
   background-color:inherit;
   font-size:inherit;
   font-family:inherit;
+  text-align:left;
+  width:30em;
   color:inherit;
   outline:none;
   border:none;
@@ -83,23 +95,6 @@
   width:2em;
   height:2em;
   font-size:1.4em}
-
-.searchbox {					/* input searchbox in htm tab	*/
-  text-overflow:ellipsis;
-  overflow:hidden;
-  margin-top:0.4em;
-  margin-bottom:0.4em;
-  border-radius:1em 0 0 1em;
-  text-align:center;
-  background-color:#1b1814;
-  color:#826858;
-  font-family:inherit;
-  border:none;
-  height:1.2em;
-  outline:none;
-  transition:color 1.4s;
-  white-space:nowrap;
-  width:90%}
 
 .seekbar {					/* video progress bar	*/
   position:absolute;
@@ -160,7 +155,7 @@
   color:lightsalmon}
 .context a:hover {background-color:#222222}
 
-.container {					/* whole body element */
+.container {					/* whole body element*/
   font-family:'Yu Gothic', 'Calibri Light';
   cursor:default;
   padding-top:5em;
@@ -171,7 +166,7 @@
   animation-name:fadePage;
   animation-duration:0.6s}
 
-  td {border-radius:1em; outline:none; text-align:center; width:6em; overflow:hidden; white-space:nowrap}
+  td {outline:none; text-align:center; width:4em; overflow:hidden; white-space:nowrap}
   table {color:#555351; font-size:0.9em; border-collapse: collapse}
   table:hover {color:tomato;transition:color 0.2s}
   a {text-decoration:none; color:#826858}
