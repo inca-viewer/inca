@@ -10,8 +10,8 @@
 .vid:hover {transition:3s; scale:2; opacity:1}
 
 .seek {
+display:none;
   position:absolute;
-  display:block;
   left:24em;
   border-radius:1em;
   opacity:0} 
@@ -20,6 +20,9 @@
   margin:auto;
   opacity:0.8;
   transition:1.5s;
+  outline:1em;
+  outline-color:#15110a;
+  outline-style:solid; 
   border-radius:0.5em}
 .thumb:hover {transition:3s; scale:2; opacity:1}
 
@@ -43,11 +46,15 @@
 
 .myList {					/* list view	*/
   position:relative;
+display:flex;
+flex-wrap:wrap;
+justify-content:space-around;
   overflow:hidden;
-  overflow:scroll;
-  margin-left:1em;
+//  overflow:scroll;
+//  margin-left:1em;
   scroll-behavior:smooth;
-  height:50em}
+//  height:50em
+}
 
 .panel {					/* top panel element showing folders etc.*/
   display:grid;
@@ -57,7 +64,7 @@
   grid-auto-flow: column;
   padding:1.5em;
   margin:auto;
-padding-left:6em;
+  padding-left:16em;
 align-content:center;
 align-items:center;
   overflow-wrap:break-word;
@@ -67,7 +74,7 @@ align-items:center;
   font-size:0.85em;
   color:#555351; 
   height:6em;
-  width:100%;
+  width:80%;
   z-index:-1;
   opacity:0;
   background:#15110a}
