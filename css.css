@@ -16,15 +16,36 @@ display:none;
   border-radius:1em;
   opacity:0} 
 
+.View {
+  height:900px;
+  position:absolute;
+  overflow-y:scroll;
+  transform:rotate(-90deg);
+  scroll-behavior:smooth;
+  transform-origin:right top;
+  background:inherit} 
+
+.myList {					/* list view	*/
+  position:relative;
+  display:flex;
+  padding-left:17%; 
+  flex-wrap:wrap;
+  justify-content:space-around;
+  overflow:hidden;
+  overflow:scroll;
+  height:38em;
+  scroll-behavior:smooth}
+
 .thumb {
+  cursor:null;
   margin:auto;
   opacity:0.8;
-  transition:1.5s;
-  outline:1em;
+  transition:1s;
+  outline:0.5em;
+  border-radius:0.8em;
   outline-color:#15110a;
-  outline-style:solid; 
-  border-radius:0.5em}
-.thumb:hover {transition:3s; scale:2; opacity:1}
+  outline-style:solid;}
+.thumb:hover {transition:2s; scale:1.4; opacity:1; cursor:none}
 
 .ribbon {					/* menu, fol, fav, search ... */
   display:flex;
@@ -44,37 +65,22 @@ display:none;
   transition:1.5s}
 .thumblist:hover {opacity:1}
 
-.myList {					/* list view	*/
-  position:relative;
-display:flex;
-flex-wrap:wrap;
-justify-content:space-around;
-  overflow:hidden;
-//  overflow:scroll;
-//  margin-left:1em;
-  scroll-behavior:smooth;
-//  height:50em
-}
-
 .panel {					/* top panel element showing folders etc.*/
   display:grid;
   position:absolute;
   grid-template-columns: auto auto auto auto auto auto auto;
-  grid-template-rows: auto auto auto auto;
+  grid-template-rows: auto auto auto auto auto auto;
   grid-auto-flow: column;
-  padding:1.5em;
+  padding:2.6em;
   margin:auto;
-  padding-left:16em;
-align-content:center;
-align-items:center;
+  padding-left:24em; 
   overflow-wrap:break-word;
   white-space:nowrap;
   overflow:hidden;
   transition: 0.4s;
   font-size:0.85em;
   color:#555351; 
-  height:6em;
-  width:80%;
+  height:8em;
   z-index:-1;
   opacity:0;
   background:#15110a}
@@ -102,12 +108,13 @@ align-items:center;
   background-color:inherit;
   font-size:inherit;
   font-family:inherit;
+  border-radius:1em;
   text-align:left;
-  width:20em;
+  width:100%;
   color:inherit;
   outline:none;
   border:none;
-  height:0.8em;
+  height:1.4em;
   white-space:nowrap}
 
 .selected {
@@ -125,7 +132,7 @@ align-items:center;
   border-radius:1px;
   color:lightsalmon;
   font-size:2em;
-  border-top:2px solid lightsalmon;
+  border-top:2px solid red;
   transition:0.2s}
 
 .caption {
@@ -178,9 +185,11 @@ align-items:center;
   color:lightsalmon}
 .context a:hover {background-color:#222222}
 
-.container {					/* whole body element*/
+.container {					/* whole body element #555351*/
   font-family:'Yu Gothic', 'Calibri Light';
   cursor:default;
+  overflow-x:hidden; 
+overflow-y:hidden; 
   padding-top:5em;
   background:#15110a;
   user-select:none;
@@ -189,11 +198,11 @@ align-items:center;
   animation-name:fadePage;
   animation-duration:0.6s}
 
-  td {outline:none; text-align:center; width:4em; overflow:hidden; white-space:nowrap}
-  table {color:#555351; font-size:0.9em; border-collapse: collapse}
-  table:hover {color:tomato;transition:color 0.2s}
-  a {text-decoration:none; color:#826858}
-  a:hover {color:tomato;transition:color 0.2s}
-  input:hover {color:tomato;transition:color 0.2s}
+  td {outline:none; text-align:center; width:7.7%; overflow:hidden; white-space:nowrap}
+  table {color:#826858; font-size:0.9em; border-collapse:collapse; width:96%; margin:auto}
+  table:hover {color:lightsalmon;transition:color 1.2s}
+  a {text-decoration:none; color:#b28878}
+  a:hover {color:lightsalmon;transition:color 0.2s}
+  input:hover {color:lightsalmon;transition:color 1.2s}
   @keyframes fadePage {from {opacity:0} to {opacity:1}}
 
