@@ -2,6 +2,25 @@
  ::-webkit-scrollbar {width:0}			/* hide bright white scrollbar */
 
 
+.panel {					/* top panel element showing folders etc.*/
+  display:grid;
+  position:absolute;
+  grid-template-columns: auto auto auto auto auto auto auto;
+  grid-template-rows: auto auto auto auto auto auto;
+  grid-auto-flow: column;
+  margin:auto;
+  padding-left:23em; 
+  overflow-wrap:break-word;
+  white-space:nowrap;
+  overflow:hidden;
+  transition:0.4s;
+  font-size:0.85em;
+  color:#555351;
+  z-index:-1;
+  height:10em;
+  opacity:0;
+  background:#15110a}
+
 .vid {
   margin:auto;
   opacity:0.8;
@@ -33,24 +52,25 @@ display:none;
   justify-content:space-around;
   overflow:hidden;
   overflow:scroll;
-  height:38em;
+  height:50em;
   scroll-behavior:smooth}
 
 .thumb {
   cursor:null;
   margin:auto;
   opacity:0.8;
-  transition:1s;
-  outline:0.5em;
+  transition:1.2s;
+  outline:0.8em;
   border-radius:0.8em;
   outline-color:#15110a;
   outline-style:solid;}
-.thumb:hover {transition:2s; scale:1.4; opacity:1; cursor:none}
+.thumb:hover {transition:2.5s; scale:1.6; opacity:1; cursor:none}
 
 .ribbon {					/* menu, fol, fav, search ... */
   display:flex;
   position:relative;
   text-align:center;
+  padding-bottom:0.7em; 
   margin:auto;
   align-items:center;
   font-size:1em;
@@ -65,30 +85,10 @@ display:none;
   transition:1.5s}
 .thumblist:hover {opacity:1}
 
-.panel {					/* top panel element showing folders etc.*/
-  display:grid;
-  position:absolute;
-  grid-template-columns: auto auto auto auto auto auto auto;
-  grid-template-rows: auto auto auto auto auto auto;
-  grid-auto-flow: column;
-  padding:2.6em;
-  margin:auto;
-  padding-left:24em; 
-  overflow-wrap:break-word;
-  white-space:nowrap;
-  overflow:hidden;
-  transition: 0.4s;
-  font-size:0.85em;
-  color:#555351; 
-  height:8em;
-  z-index:-1;
-  opacity:0;
-  background:#15110a}
-
 .searchbox {					/* input searchbox in htm tab	*/
   text-overflow:ellipsis;
   overflow:hidden;
-  margin-bottom:1em;
+  margin-bottom:0.2em;
   border-radius:1em 0 0 1em;
   text-align:center;
   background-color:#1b1814;
@@ -130,7 +130,7 @@ display:none;
   position:absolute;
   opacity:0;
   border-radius:1px;
-  color:lightsalmon;
+  color:red;
   font-size:2em;
   border-top:2px solid red;
   transition:0.2s}
