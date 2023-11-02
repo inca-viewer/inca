@@ -54,8 +54,8 @@
 	Global filt := 0		; secondary search filter eg. date, duration, Alpha letter
         Global click			; mouse click type
         Global timer			; click down timer
-        Global view := 12		; thumb view (em size)
-        Global list_view := 0
+        Global view := 15		; thumb view (em size)
+        Global list_view := 1
         Global wheel_count := 0
         Global vol_ref := 2
         Global wheel
@@ -173,8 +173,9 @@
             }
 
 
- view1 := view*1.3
+ view1 := view*1.5
  view2 := view*0.8
+ view3 := view/10
  page_w2 := page_w*0.9
 
 
@@ -197,8 +198,8 @@ body = <body id='myBody' class='container' onload="spool(event, 'Fol', '%ini%', 
 
 <span id="myContext2" class='context'>`n
 <a id='myMute' onmouseup='mute()'>Mute</a>`n
+<a id='mySel2' onmousedown="sel(0)" onwheel="wheelEvents(event, id, this)">Sel.</a>`n
 <a id="mySpeed" onwheel="wheelEvents(event, id, this)"></a>`n
-<a id='mySel2' onmousedown="sel(0)">Sel.</a>`n
 <a id='myLoop' onclick="loop()">Loop</a>`n
 <a id='myFav2' onmousedown='inca(event, "#Favorite#" + media.currentTime.toFixed(1) + "#" + index + ",#")'>Fav</a>`n
 <a id="myCapnav" onclick="editCap()">Cap</a>`n
@@ -218,7 +219,7 @@ body = <body id='myBody' class='container' onload="spool(event, 'Fol', '%ini%', 
 <a onmousedown="inca(event, '#Menu###')" style='font-size:2em; color:lightsalmon; transform:none'>%title_s%</a>`n
 <a style='font-size:1.3em; color:red'> %list_size%</a><a style='width:30`%'></a></div>`n`n
 
-<div id='myFiles' class='ribbon' style='width:%page_w%`%' onmouseover='panel.style.opacity=1; panel.style.zIndex=99'>`n`n
+<div id='myFiles' class='ribbon' style='width:40`%' onmouseover='panel.style.opacity=1; panel.style.zIndex=99'>`n`n
 <a onmouseover="spool(event, 'Fol'); panel.style.opacity=1; panel.style.zIndex=99" onwheel="wheelEvents(event, 'Fol', this)">Fol</a>`n
 <a onmouseover="spool(event, 'Fav'); panel.style.opacity=1; panel.style.zIndex=99" onwheel="wheelEvents(event, 'Fav', this)">Fav</a>`n
 <a onmouseover="spool(event, 'Search'); panel.style.opacity=1; panel.style.zIndex=99" onwheel="wheelEvents(event, 'Search', this)">Search</a>`n
@@ -238,24 +239,24 @@ body = <body id='myBody' class='container' onload="spool(event, 'Fol', '%ini%', 
 <a id='Duration' onmousedown="inca(event, '#Duration#'+filt+'##')" onwheel="wheelEvents(event, id, this)" %x3%>Duration</a>`n
 <a id='Date' onmousedown="inca(event, '#Date#'+filt+'##')" onwheel="wheelEvents(event, id, this)" %x4%>Date</a>`n
 <a id='Alpha' onmousedown="inca(event,'#Alpha#'+filt+'##')" onwheel="wheelEvents(event,id,this)" %x2%>Alpha</a>`n
-<a id='Shuffle' onmousedown="inca(event, '#Shuffle###')" %x1%>Shuffle</a>`n
+<a id='Shuffle' onmousedown="inca(event, '#Shuffle###')" onwheel="wheelEvents(event,id,this)" %x1%>Shuffle</a>`n
 <a id='myFilt' style='color:%fi%; width:4em; transition:1s'>%filtered%</a>`n
 <a id='View' onmousedown="inca(event, '#View#'+view+'##')" onwheel="wheelEvents(event, id, this)">View</a>`n 
 <a id="myPage" onmousedown="inca(event, '#Page#'+page+'##')" onwheel="wheelEvents(event, id, this)" style='width:8em'>%pg%</a>`n
-<a onmousedown="inca(event, '#Recurse###')" %x8%>Subs</a>`n
+<a onmousedown="inca(event, '#Recurse###')" %x8%>+Subs</a>`n
 <a onmousedown="inca(event, '#Images###')" %x10%>Pics</a>`n
 <a onmousedown="inca(event, '#Videos###')" %x9%>Vids</a>`n</div>`n`n
 
 <video id="mySeek" class='seek' style='width:%view2%em' type="video/mp4" muted></video>`n`n
 
 if subs
-   body = %body%`n`n<div style='width:%page_w2%`%; margin:auto; padding:0.5em; border:1px solid #82685833; border-radius:1em'>%subs%</div>`r`n`r`n
+   body = %body%`n`n<div style='width:%page_w2%`%; margin:auto; padding:0.5em; margin-bottom:1em; border:1px solid #82685833; border-radius:1em'>%subs%</div>`r`n`r`n
 
 if !list_view
-  body =%body%<div style='position:relative; margin:auto; width:%page_w%`%; overflow:hidden; height:%view1%em' onmouseover='panel.style.zIndex=null; panel.style.opacity=null'>`n <div id='myView' class='View' style='width:%view1%em; left:-%view%em'>`n`n%media_list%`n<div style='height:38em'></div></div></div>`n`n
+  body =%body%<div style='position:relative; margin:auto; width:%page_w%`%; overflow:hidden; height:%view1%em' onmouseover='panel.style.zIndex=null; panel.style.opacity=null'>`n <div id='myView' class='View' style='width:%view1%em; left:-%view1%em'>`n`n%media_list%`n<div style='height:38em'></div></div></div>`n`n
 
 if (list_view == 1)
-  body =%body%<div id='myView' class='myList'`n style='width:%page_w%`%' onmouseover='panel.style.zIndex=null; panel.style.opacity=null'>`n`n%media_list%<table style='height:39em'></table></div>`n`n</div>`n
+  body =%body%<div id='myView' class='myList'`n style='width:%page_w%`%' onmouseover='panel.style.zIndex=null; panel.style.opacity=null'>`n<table style='height:%view3%em'></table>`n%media_list%<table style='height:39em'></table></div>`n`n</div>`n
 
 if (list_view == 2)
   body =%body%<div id='myView' class='myList'`n style='width:%page_w%`%' onmouseover='panel.style.zIndex=null; panel.style.opacity=null'>`n`n%media_list%<table style='height:50em'></table></div>`n`n</div>`n
@@ -378,6 +379,7 @@ if !dur2
 view_t := view*0.8
 view_k := view*1.3
 view_j := view/20
+view_i := view/4
 
         if (type == "audio" || type == "m3u")
             thumb = %inca%\apps\icons\music.png
@@ -394,6 +396,11 @@ view_j := view/20
 ; start := Round(start,2)
 ; poster = #t=%start%
 
+icon = %thumb%
+ if (list_view == 2 && type!="image" && type!="video")
+  icon = %inca%\apps\icons\play.ico
+icon = <img src="%icon%" width='10' height='10'>
+
 
 if !list_view
   media_list = %media_list%<div id="entry%j%" style="display:flex; height:%view%em; width%view%em; transform:rotate(90deg); border-radius:1em"`n onmouseup="if(!event.button&&!over_media){sel(%j%); myInput.value='%media%'}" onmouseover="this.style.position='relative'; this.style.zIndex=Zindex+=1">`n 
@@ -405,10 +412,8 @@ if (list_view == 1)
 
 
 if (list_view == 2)
-  media_list = %media_list% <table><tr id="entry%j%" onmouseup='if(!event.button&&!over_media){sel(%j%)}'`n onmouseover='if(mouse_down && gesture) {sel(%j%)}'>`n <td>%ext%</td><td>%size%</td><td id='dur%j%'>%dur%</td><td>%date%</td><td>%j%`n <div class='thumblist'`n onmouseover="over_thumb=%j%; myFilt.style.opacity=1; myFilt.innerHTML='%dur%'"`n onmouseout="over_thumb=0; over_media=false; myFilt.style.opacity=0">`n 
-<video id='media%j%' class='thumb' style="position:absolute; translate:-2em -2em; max-width:%view_t%em; max-height:%view_t%em; %transform%"`n src="file:///%src%"`n %poster%`n preload='none' muted loop`n onmouseover="overThumb(%j%, %skinny%, '%type%', %start%, '%cap%', %rate%, %dur2%, event); this.currentTime=start; this.play()" onmouseout='this.pause(); over_thumb=0; over_media=0'`n type="video/mp4"></video></div>
-</td>`n 
-<td style='width:60`%'><input id="title%j%" class='title' type='search' value='%media_s%'`n onmousedown='if(!event.button) {inputbox=this; sessionStorage.setItem("last_index",%j%)}' onmouseup="myInput.value='%media%'"></td>`n 
+  media_list = %media_list% <table><tr id="entry%j%" onmouseup='if(!event.button&&!over_media){sel(%j%)}'`n onmouseover='if(mouse_down && gesture) {sel(%j%)}'>`n <td>%ext%</td><td>%size%</td><td id='dur%j%'>%dur%</td><td>%date%</td><td>%j%</td>`n<td onmouseover="overThumb(%j%, %skinny%, '%type%', %start%, '%cap%', %rate%, %dur2%, event); media%j%.style.opacity=1; media%j%.currentTime=start; this.play(); myFilt.style.opacity=1; myFilt.innerHTML='%dur%'"`n onmouseout="media%j%.style.opacity=0; over_thumb=0; over_media=false; myFilt.style.opacity=0">`n%icon%<video id='media%j%' class='thumb2' style="max-width:%view_t%em; max-height:%view_t%em; %transform%"`n src="file:///%src%"`n %poster%`n preload='none' muted loop`n onmouseover="overThumb(%j%, %skinny%, '%type%', %start%, '%cap%', %rate%, %dur2%, event); this.currentTime=start; this.play()" onmouseout='this.pause(); over_thumb=0; over_media=0'`n type="video/mp4"></video></td>`n 
+<td style='width:60`%; padding-left:2em'><input id="title%j%" class='title' type='search' value='%media_s%'`n onmousedown='if(!event.button) {inputbox=this; sessionStorage.setItem("last_index",%j%)}' onmouseup="myInput.value='%media%'"></td>`n 
 </tr></table>`n`n
 
 
@@ -417,7 +422,7 @@ if (list_view == 2)
 
 
 
-
+; 
 
 
 
@@ -459,8 +464,8 @@ if (list_view == 2)
         sleep 24
         if (w == A_ScreenWidth)
           send, {F11}
-        if playing
-          send, {LButton}			; stop browser clipboard error message
+;        if playing
+;          send, {LButton}			; stop browser clipboard error message but causes sound burst
         send, {MButton up}			; close java modal (media player)
         }
       else send, {Xbutton1}
@@ -1051,7 +1056,7 @@ if (list_view > 2)
 
     GetTabSettings(all)							; from .htm cache file
         {
-        list_view = 0
+        list_view = 1
         page := 1							; default view settings if no html data
         filt := 0
         toggles =

@@ -8,18 +8,15 @@
 // random thumb start option feature
 // no need for rename button
 // history and back to show last play time point
-// thumblist in ribbon option, lower half of thumb or timer
 // test if canplay can trigger mpv
 // click through modal if music folder / mp3
-// maybe use message to find if speed changed so no need page refresh
 // move gifs fail -check?
 // no seek in music?
-// skinny adjust option over thumb
-// delete history
+// delete history issues
 // myinput cannot fill if media title has single '
 // search tigris ride - error with #
 
-// no more overthumb or getparameters
+// no more overthumb or getparameters?
 // no modal or nav2 context
 
 // wheel over buttons at modal bottom for speed width zoom seek slow seek - no gesture except moveXY
@@ -36,7 +33,6 @@
 // panel pos resetting 
 // if subs exist, panel should load them after fol selection
 // use list size and view size to calc scroll
-// check messaging system
 // skinny edit not middle slide - difficult
 // add setting disable transitions
 // select and delete media within modal
@@ -55,10 +51,30 @@
 // remove spool, generate panel.htm in ahk subs back in panel
 // use ratio for list padding calc.
 
-// https://fonts.google.com/share?selection.family=IBM+Plex+Sans:wght@100
+// alpha search fail on shorts?
+// filt not clear on reset
 
+// dont send media message, inca can work out
+// small vids in fav .m3u
+// normalise scale in playmedia again see parameters/zoom
+// add to queue/watch later feature
+// media xy artifacts
+// check messaging system
 
+// maybe scan messages to find if speed changed so no need page refresh
+// maybe stop using back use close key for player
+// maybe always close media even if no type
+// if no zoom setting, scales to last scaleY 
 
+// long press on white space open last media
+// middle click progresses to next index in htm
+
+// zoom start 
+// false filtered also should show more
+// wmv content
+// scroll to return to top id 1
+// scaley issues skinny
+// skinny on new scrollindex wheel feature 
 
   var thumb = document.getElementById('media1')				// first media element
   var modal = document.getElementById('myModal')			// media player window
@@ -143,16 +159,17 @@
   document.addEventListener('dragend', mouseUp)
   document.addEventListener('mousemove', Gesture)
   document.addEventListener('keypress', (e) => {
+    if (e.key=='k') {mouseBack()}
     if (e.key=='Enter' && inputbox.value) {
       navigator.clipboard.writeText('#SearchBox#'+inputbox.value+'##')}}, false)
 
 
-  function scrolltoIndex() {						// to last media played
-      View.scrollTo(0, ((last_index*view*12.8)-420))
-      var el = document.getElementById('media'+last_index)
+  function scrolltoIndex() {
+      var el = document.getElementById('media'+index)
       var x = el.getBoundingClientRect().top + myView.scrollTop -menuY
-      if (list_view) {myView.scrollTo(0, x -100 -menuY -(14*view))}
-      else {myView.scrollTo(0, x -100 -menuY -(14*view))}}
+      if (!list_view) {myView.scrollTo(0, ((index*view*12.8) -330 -8*view))}
+      else if (list_view == 1) {myView.scrollTo(0, x -menuY -(8*view))}
+      else {myView.scrollTo(0, x -135 -menuY)}}
 
 
   function mouseDown(e) {
@@ -165,7 +182,7 @@
         if (!gesture) {playMedia('Next')}},240)}			// thumbsheet or previous media
     if (!e.button) {
       if (!type && over_media && selected) {
-        inca(e,'#PlaylistEdit#'+index+'#'+selected+'#')}		// used for editing playlists
+        inca(e,'#Media#'+index+'#'+selected+'#')}		// used for editing playlists
       clickTimer = setTimeout(function() {
         if (!gesture) {
           long_click = true
@@ -197,11 +214,6 @@
     sessionStorage.setItem("last_index",0)
     if (!type) {setTimeout(function() {location.reload()},200)}		// reset htm tab (clear selected etc.)
     else {								// quit media
-      navigator.clipboard.writeText(messages)
-// block=200
-      media.volume=0							// stop sound burst on close
-      media.muted=true
-      messages=''
       media.style.transition='0.25s'
       media.style.opacity=0
       setTimeout(function() {
@@ -210,7 +222,7 @@
         modal.style.opacity=0
         modal.style.zIndex=-1
         if (cap.value != cap.innerHTML) {editCap()}
-        over_media = false},300)}}
+        over_media = false},250)}}
 
 
   function overThumb(id) {						// cursor over thumbnail
@@ -237,9 +249,11 @@
     mediaY = localStorage.getItem('mediaY')*1
     if (ratio > 1) {
       x = innerWidth*0.8; y = x/ratio					// landscape
+      scaleY = innerWidth/x
       sheetY = innerWidth/x}
     else {
       y = innerHeight; x = y*ratio					// portrait
+      scaleY = innerHeight/y
       sheetY = innerHeight/y}
     media.style.width = x +'px'						// media size normalised to screen
     media.style.height = y +'px'
@@ -257,31 +271,34 @@
     else if (e == 'Next') {
       if (playing && !(playing=='video' && duration>120 && !playlist) && !long_click) {index+=1}
       if (playing && long_click) {index-=1}
-      if (!playing && long_click && !over_media) {index=last_index; start=last_start}}
+      if (!playing && long_click && !over_media) {index=last_index; start=last_start}}	// last media
     if (!(thumb = document.getElementById('media' + index))) {		// end of media list
-      if (!looping) {index=1}
-      else {close_media(); modal.style.opacity=0; modal.style.zIndex=-1; return}}
+      if (!looping) {index=1; thumb=document.getElementById('media1')}
+else {type='video'; mouseBack(); return}}
+//      else {close_media(); modal.style.opacity=0; modal.style.zIndex=-1; return}}
     getParameters()
-    navigator.clipboard.writeText('#Media#'+index+'##'+start)
+    messages = messages + '#Media#'+index+'##'+start
+    navigator.clipboard.writeText(messages)
+    messages=''
     if (type == 'document' || type == 'm3u') {type=''; return}
-    if (e=='Next' && type=='video' && duration>120 && !(!playing && !over_media)) {thumbSheet()}
+    if (e=='Next' && type=='video' && duration>120 
+      && !(!playing && !over_media) && !playlist.match('/inca/music/')) {thumbSheet()}
     modal.style.zIndex = Zindex+=1					// because htm thumbs use Z-index
     modal.style.opacity = 1
     media.style.opacity = 0
     media.muted = 1*localStorage.getItem('muted')
     if (type == 'audio' || playlist.match('/inca/music/')) {looping=false; media.muted=false; scaleY=0.2}
     else if (fullscreen) {setTimeout(function() {modal.requestFullscreen()},140)}
-    if (e != 'Next') {
-      if (ratio > 1 && scaleY > 2) {scaleY=2}
-      if (ratio < 1 && scaleY > 1.8) {scaleY=1.8}
+    if (e != 'Next' || type == 'video') {
+      if (scaleY > 1) {scaleY=1}
       if (!mediaX || mediaX < 0 || mediaX > innerWidth) {mediaX=innerWidth/2}
       if (!mediaY || mediaY < 0 || mediaY > innerHeight) {mediaY=innerHeight/2}}
     scaleX = scaleY * skinny
     if (cap_list && type != 'thumbsheet' && start>1) {start-=1}		// start at first caption
-    if (e == 'Click' && thumb.currentTime > start+2) {start = thumb.currentTime}
+    if (e == 'Click' && thumb.currentTime > start+3) {start = thumb.currentTime}
     if (e == 'Click' && long_click) {start = 0}
     if (type == 'video' || type == 'audio') {media.currentTime = start; media.play()}
-x = ','+selected
+    x = ','+selected
     if ((!x.match(","+index+",")) && (!x.match(","+last_index+","))) {
     if (el=document.getElementById('title'+last_index)) {el.style.background='#1b1814'}
     if (el=document.getElementById('title'+index)) {el.style.background='#2b2824'} // highlight played media in tab
@@ -332,8 +349,37 @@ x = ','+selected
     wheel += Math.abs(e.deltaY)
     if (mouse_down || wheel < block) {return}
     var wheelUp = false
-    block = 100
+    block = 120
     if (e.deltaY > 0) {wheelUp=true}
+
+
+if (id=='Shuffle') {
+start=0
+if (!index) {index=1}
+//mySelected.innerHTML = index
+if (!(el=document.getElementById('media'+index))) {index=1}
+if (wheelUp) {index+=1}
+else {index-=1}
+if (!(thumb=document.getElementById('media'+index))) {index=1}
+thumb=document.getElementById('media'+index)
+getParameters()
+type = ''
+thumb.currentTime=start
+thumb.playbackRate=rate
+scrolltoIndex()
+el.style.transform = null       // 'scale(1,1)'
+if (list_view == 2) {el.style.opacity=null}
+el.pause()
+thumb.style.transform = 'scale(1.4,1.4)'
+thumb.style.opacity=1
+thumb.style.zIndex=Zindex+=1
+//thumb.play()
+setTimeout(function() {thumb.play()},100)
+
+block=150
+
+}
+
     if (id == 'myPage') {						// page
       if (wheelUp && page<pages) {page++} 
       else if (!wheelUp && page>1) {page--}
@@ -341,7 +387,7 @@ x = ','+selected
     else if (id=='Alpha'||id=='Date'||id=='Duration'||id=='Size') {	// search filter
       if (wheelUp) {filt++} else if (filt) {filt--}
       spool(e,id)}
-    else if (id=='mySpeed') {						// speed
+    else if (id=='mySpeed' || id=='mySel2') {				// speed
       if (wheelUp) {rate -= 0.01}
       else {rate += 0.01}
       rate = Math.round(100*rate)/100
@@ -553,7 +599,7 @@ positionMedia(0)}
         if (count > 0 && count < 25) {					// within panel display range
           if (id != x.substring(0, 1)) {
             id = x.substring(0, 1)
-            htm = htm + "<a style='grid-row-start:1;grid-row-end:7;color:red;font-size:2em'>"+id+"</a>"}
+            htm = htm + "<a style='grid-row-start:1;grid-row-end:5;color:red;font-size:2em'>"+id+"</a>"}
           htm = htm + '<a onmousedown=\'inca(event,"#Search#'+x+'##")\'>' + x.substring(0, 15) + '</a>'}}
       if (count < 25) {pos-=4}						// end of .ini search list
       sessionStorage.setItem("pos",pos)}
@@ -607,7 +653,7 @@ positionMedia(0)}
     else if (cap.innerHTML != '-' && (!cap.value || ptr <= 0)) {cap.style.opacity=0}}
 
   function sel(i) {							// highlight selected media
-if (!i) {i=index}
+    if (!i) {i=index}
     el = document.getElementById('media' + i)
     if (list_view == 2) {el=document.getElementById('title'+i)}
     x = ','+selected

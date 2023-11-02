@@ -1,15 +1,15 @@
 
  ::-webkit-scrollbar {width:0}			/* hide bright white scrollbar */
-
+ ::selection {color:red; background:black}
 
 .panel {					/* top panel element showing folders etc.*/
   display:grid;
   position:absolute;
   grid-template-columns: auto auto auto auto auto auto auto;
-  grid-template-rows: auto auto auto auto auto auto;
+  grid-template-rows: auto auto auto auto;
   grid-auto-flow: column;
   margin:auto;
-  padding-left:23em; 
+  padding-left:20em; 
   overflow-wrap:break-word;
   white-space:nowrap;
   overflow:hidden;
@@ -17,16 +17,9 @@
   font-size:0.85em;
   color:#555351;
   z-index:-1;
-  height:10em;
+  height:6.5em;
   opacity:0;
   background:#15110a}
-
-.vid {
-  margin:auto;
-  opacity:0.8;
-  transition:1.5s;
-  border-radius:0.5em}
-.vid:hover {transition:3s; scale:2; opacity:1}
 
 .seek {
 display:none;
@@ -56,34 +49,40 @@ display:none;
   scroll-behavior:smooth}
 
 .thumb {
+position:relative;
   cursor:null;
   margin:auto;
-  opacity:0.8;
-  transition:1.2s;
+  transition:2.3s;
   outline:0.8em;
   border-radius:0.8em;
   outline-color:#15110a;
   outline-style:solid;}
-.thumb:hover {transition:2.5s; scale:1.6; opacity:1; cursor:none}
+.thumb:hover {scale:1.4; cursor:none}
+
+.thumb2 {
+  position:absolute;
+  transition:1.2s;
+  cursor:null;
+  margin:auto;
+  opacity:0;
+  outline:0.8em;
+  border-radius:0.8em;
+  outline-color:#15110a;
+  outline-style:solid}
+.thumb2:hover {cursor:none}
 
 .ribbon {					/* menu, fol, fav, search ... */
   display:flex;
   position:relative;
   text-align:center;
-  padding-bottom:0.7em; 
   margin:auto;
+  margin-bottom:0.7em; 
   align-items:center;
   font-size:1em;
   justify-content:space-evenly}
 
 .ribbon a {transition:0.8s; border-radius:1em}
 .ribbon a:hover {transition:0.2s; transform:scale(1.2,1.2); translate(0,-0.1em)}
-
-.thumblist {					/* list thumbs	*/
-  opacity:0;
-  background:transparent;
-  transition:1.5s}
-.thumblist:hover {opacity:1}
 
 .searchbox {					/* input searchbox in htm tab	*/
   text-overflow:ellipsis;
