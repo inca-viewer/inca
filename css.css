@@ -29,7 +29,7 @@ display:none;
   opacity:0} 
 
 .View {
-  height:900px;
+  height:84em;
   position:absolute;
   overflow-y:scroll;
   transform:rotate(-90deg);
@@ -40,12 +40,11 @@ display:none;
 .myList {					/* list view	*/
   position:relative;
   display:flex;
-  padding-left:17%; 
   flex-wrap:wrap;
   justify-content:space-around;
   overflow:hidden;
   overflow:scroll;
-  height:50em;
+  height:42em;
   scroll-behavior:smooth}
 
 .thumb {
@@ -62,6 +61,7 @@ position:relative;
 .thumb2 {
   position:absolute;
   transition:1.2s;
+translate:-10em;
   cursor:null;
   margin:auto;
   opacity:0;
@@ -188,7 +188,7 @@ position:relative;
   font-family:'Yu Gothic', 'Calibri Light';
   cursor:default;
   overflow-x:hidden; 
-overflow-y:hidden; 
+  overflow-y:hidden; 
   padding-top:5em;
   background:#15110a;
   user-select:none;
@@ -197,8 +197,8 @@ overflow-y:hidden;
   animation-name:fadePage;
   animation-duration:0.6s}
 
-  td {outline:none; text-align:center; width:7.7%; overflow:hidden; white-space:nowrap}
-  table {color:#826858; font-size:0.9em; border-collapse:collapse; width:96%; margin:auto}
+  td {outline:none; text-align:center; width:4.4em; overflow:hidden; white-space:nowrap; border:0.1px solid #222222}
+  table {color:#826858; font-size:0.9em; border-collapse:collapse; margin:auto}
   table:hover {color:lightsalmon;transition:color 1.2s}
   a {text-decoration:none; color:#b28878}
   a:hover {color:lightsalmon;transition:color 0.2s}
