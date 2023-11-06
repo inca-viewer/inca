@@ -2,33 +2,40 @@
  ::-webkit-scrollbar {width:0}			/* hide bright white scrollbar */
  ::selection {color:red; background:black}
 
-.panel {					/* top panel element showing folders etc.*/
-  display:grid;
+
+.cap {
+  display:block;
   position:absolute;
-  grid-template-columns: auto auto auto auto auto auto auto;
-  grid-template-rows: auto auto auto auto;
-  grid-auto-flow: column;
+  color:#ffa07a66;
+  overflow:wrap;
   margin:auto;
-  padding-left:20em; 
-  overflow-wrap:break-word;
-  white-space:nowrap;
-  overflow:hidden;
-  transition:0.4s;
-  font-size:0.85em;
-  color:#555351;
-  z-index:-1;
-  height:6.5em;
-  opacity:0;
-  background:#15110a}
+  line-height:1em;
+  margin-left:0.7em}
 
-.seek {
-display:none;
+.panel {					/* top panel element showing folders etc.*/
+  display:none;
   position:absolute;
-  left:24em;
-  border-radius:1em;
-  opacity:0} 
+  font-size:0.9em;
+  white-space:nowrap;
+  margin:auto;
+  overflow:hidden;
+  z-index:19;
+  height:10em;
+  top:2em;
+  left:18em}
 
-.View {
+.myPanel {
+  height:84em;
+  position:absolute;
+  overflow-y:scroll;
+  transform:rotate(-90deg);
+  scroll-behavior:smooth;
+  transform-origin:right top;
+  background:#15110a;
+  width:9em;
+  left:-9em}
+
+.view {
   height:84em;
   position:absolute;
   overflow-y:scroll;
@@ -42,33 +49,28 @@ display:none;
   display:flex;
   flex-wrap:wrap;
   justify-content:space-around;
+  scroll-behavior:smooth;
   overflow:hidden;
   overflow:scroll;
-  height:42em;
-  scroll-behavior:smooth}
+  height:48em}
 
 .thumb {
-position:relative;
+  position:relative;
   cursor:null;
   margin:auto;
   transition:2.3s;
-  outline:0.8em;
-  border-radius:0.8em;
-  outline-color:#15110a;
-  outline-style:solid;}
-.thumb:hover {scale:1.4; cursor:none}
+//  outline:0.8em solid #15110a;
+  border-radius:0.8em}
+.thumb:hover {scale:1.2; cursor:none}
 
 .thumb2 {
   position:absolute;
   transition:1.2s;
-translate:-10em;
+  translate:-10em -1.1em;
+  border-radius:0.8em;
   cursor:null;
   margin:auto;
-  opacity:0;
-  outline:0.8em;
-  border-radius:0.8em;
-  outline-color:#15110a;
-  outline-style:solid}
+  opacity:0}
 .thumb2:hover {cursor:none}
 
 .ribbon {					/* menu, fol, fav, search ... */
@@ -128,9 +130,9 @@ translate:-10em;
 .seekbar {					/* video progress bar	*/
   position:absolute;
   opacity:0;
-  border-radius:1px;
-  color:red;
-  font-size:2em;
+  border-radius:2px;
+  color:lightsalmon;
+  font-size:1em;
   border-top:2px solid red;
   transition:0.2s}
 
@@ -155,8 +157,7 @@ translate:-10em;
 
 .modal {					/* media player overlay htm tab */
   display:flex;
-  z-index:-1;
-  opacity:0;
+  z-index:3;
   user-select:none;
   position:fixed;
   justify-content:center;
@@ -165,7 +166,7 @@ translate:-10em;
   left:0;
   height:100vh;
   width:100vw;
-  background-color:rgba(0,0,0,0.4)}
+  background-color:black}
 
 .context {					/* right click menu */
   display:none;
@@ -181,7 +182,8 @@ translate:-10em;
   padding-left:1.2em;
   padding-right:1.2em;
   padding-bottom:0.6em;
-  color:lightsalmon}
+  color:lightsalmon;
+  opacity:0.6}
 .context a:hover {background-color:#222222}
 
 .container {					/* whole body element #555351*/
@@ -195,11 +197,11 @@ translate:-10em;
   color:#826858;
   font-size:0.8em;
   animation-name:fadePage;
-  animation-duration:0.6s}
+  animation-duration:1s}
 
-  td {outline:none; text-align:center; width:4.4em; overflow:hidden; white-space:nowrap; border:0.1px solid #222222}
+  td {outline:none; text-align:center; width:4.4em; overflow:hidden; white-space:nowrap}
   table {color:#826858; font-size:0.9em; border-collapse:collapse; margin:auto}
-  table:hover {color:lightsalmon;transition:color 1.2s}
+  table:hover {color:lightsalmon;transition:color 0.8s}
   a {text-decoration:none; color:#b28878}
   a:hover {color:lightsalmon;transition:color 0.2s}
   input:hover {color:lightsalmon;transition:color 1.2s}
