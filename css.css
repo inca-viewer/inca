@@ -20,17 +20,17 @@
   margin:auto;
   overflow:hidden;
   z-index:19;
-  height:10em;
-  top:2em;
-  left:18em}
+  height:8em;
+  left:17em;
+  top:-3em}
 
 .myPanel {
   height:84em;
   position:absolute;
   overflow-y:scroll;
   transform:rotate(-90deg);
-  scroll-behavior:smooth;
   transform-origin:right top;
+  border-radius:1em;
   background:#15110a;
   width:9em;
   left:-9em}
@@ -40,7 +40,6 @@
   position:absolute;
   overflow-y:scroll;
   transform:rotate(-90deg);
-  scroll-behavior:smooth;
   transform-origin:right top;
   background:inherit} 
 
@@ -49,7 +48,6 @@
   display:flex;
   flex-wrap:wrap;
   justify-content:space-around;
-  scroll-behavior:smooth;
   overflow:hidden;
   overflow:scroll;
   height:48em}
@@ -59,7 +57,7 @@
   cursor:null;
   margin:auto;
   transition:2.3s;
-//  outline:0.8em solid #15110a;
+  outline:0.8em solid #15110a;
   border-radius:0.8em}
 .thumb:hover {scale:1.2; cursor:none}
 
@@ -90,13 +88,12 @@
   text-overflow:ellipsis;
   overflow:hidden;
   margin-bottom:0.2em;
-  border-radius:1em 0 0 1em;
   text-align:center;
   background-color:#1b1814;
   color:#826858;
   font-family:inherit;
   border:none;
-  height:1.2em;
+  height:1.4em;
   width:100%;
   outline:none;
   transition:color 1.4s;
@@ -188,7 +185,6 @@
 
 .container {					/* whole body element #555351*/
   font-family:'Yu Gothic', 'Calibri Light';
-  cursor:default;
   overflow-x:hidden; 
   overflow-y:hidden; 
   padding-top:5em;
