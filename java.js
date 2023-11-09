@@ -28,7 +28,6 @@
 // rem. scrollTo 700 in htm needs changing - temp fix scrolltoview problem
 // visual artefacts
 // click through nav
-// what causes delay to renderpage??
 
 
   var thumb = document.getElementById('media1')				// first media element
@@ -40,13 +39,13 @@
   var capnav = document.getElementById('myCapnav')			// caption save button
   var menuX = 1*localStorage.getItem('menuX')				// last htm position
   var menuY = 1*localStorage.getItem('menuY')
-  var last_start = 1*sessionStorage.getItem('last_start')		// last media start time
   var intervalTimer
   var wheel = 0
   var block = 100							// block wheel/gesture events
-  var index = 1								// media index (e.g. media14)
+  var index = 0								// media index (e.g. media14)
   var last_index = 1
   var start = 0								// video start time
+  var last_start = 0							// last media start time
   var interval = 0							// wheel seeking interval
   var units = ''							// minutes, months, MB etc.
   var rate = 1
@@ -69,7 +68,6 @@
   var clip								// inputbox cut/paste text
   var over_cap = false							// cursor over caption
   var over_media = 0							// over thumb or media
-  var was_over_media = 0						// before context menu opened
   var ratio								// media width to height ratio
   var skinny = 1							// media width
   var messages = ''							// skinny and caption changes
@@ -94,7 +92,6 @@
   var list_view = 0
   var duration = 0
   var zoom = 1
-  var sheets = 0
 
   if (!thumb) {thumb=media}						// in case no media in htm
   if (!menuY || menuY < 5) {menuY=5}
@@ -157,13 +154,13 @@
       else if (!type && over_media && mouse_down) {playMedia('Click')}
       else if (type) {togglePause()}}
     nav.style.display=null
-    nav2.style.display=null
+    if (!myNext.matches(":hover")) {nav2.style.display=null}
     gesture=false; mouse_down=0; long_click=false
-    clearTimeout(clickTimer)}
+    clearTimeout(clickTimer); Gesture(e)}				// to show selected
 
 
   function mouseBack() {
-    if (!type) {for(x of (','+selected).split(',')) {sel(x)}}
+    if (!type) {for(x of selected.split(',')) {sel(x)}}
     else {
       if (cap.value != cap.innerHTML) {editCap()}
       scrolltoIndex()
@@ -171,7 +168,6 @@
       media.style.opacity=0
       setTimeout(function() {
         close_media()
-        sheets = false
         modal.style.opacity=0
         modal.style.zIndex=-1},250)}}
 
@@ -211,21 +207,20 @@
 
   function playMedia(e) {
     var playing = type
-    thumb.pause()							// close htm thumb down
-    thumb.style.transform='scale('+skinny+',1)'
+    var ls = last_start
     if (type) { 							// no type if no media playing
       close_media()
-      if (e == 'Back' || long_click) {if (index>1) {index--}}
-      else if (e == 'Next' && !(playing == 'video' && sheets)) {index++}}
-    if (e && !playing && !over_media) {index=last_index; start=last_start}	// play last media
+      if (e == 'Back' || long_click) {if (index>1) {index--; start=ls}}	// close htm thumb down
+      else if (e == 'Next' && (playing != 'video' || !over_media)) {index++}}
+    else {thumb.pause(); thumb.style.transform='scale('+skinny+',1)'}
+    if (e && !playing && !over_media) {index=last_index; start=last_start} // play last media
     if (!getParameters() && looping) {mouseBack(); return}		// end of media list
     type = getParameters()
     if (e == 'Click') {
       navigator.clipboard.writeText('#Media#'+index+'##'+start)
       scaleY = sheetY*zoom}
     if (type == 'document' || type == 'm3u') {type=''; return}
-    if (e!='Click' && !playing && over_media) {sheets = true}
-    if (e!='Click' && sheets && (!playing || type=='video' || playing=='video')) {thumbSheet()}
+    if (e!='Click' && !(playing && !over_media) && !(!playing && !over_media)) {thumbSheet()}
     modal.style.zIndex = Zindex+=1					// because htm thumbs use Z-index
     media.style.opacity = 0
     modal.style.opacity = 1
@@ -256,6 +251,7 @@
     media.style.outline='2em solid black'
     media.style.transition = 0
     positionMedia(0)
+//alert(index)
     setTimeout(function() {						// time for transitions to reset
       wheel=0; block=120
       media.style.transition = '0.5s'
@@ -267,13 +263,12 @@
 
   function close_media() {
     last_start = media.currentTime
-    sessionStorage.setItem("last_start",last_start)
+//last_index = index
     var x=skinny; var y=rate; getParameters()
     if (x!=skinny || y!=rate) {						// see if edited
       messages = messages + '#EditMedia#'+index+'#'+x+'#'+y}
     clearInterval(intervalTimer)
     media.removeEventListener('ended', media_ended)
-//    myNext.innerHTML = 'Next'
     mySpeed.innerHTML = 'Speed'
     cap.style.display = 'none'
     cap.style.color = null
@@ -370,8 +365,8 @@
           thumb.play()},100)
         }
       }
-    else if (xw < 0.1 && (type=='video' || type=='audio')) {
-        mySeekbar.style.opacity = 0.6
+    else if (xw<0.1 && (type=='video' || type=='audio')) {
+//        mySeekbar.style.opacity = 0.6
         if (media.duration > 120) {interval = 3}
         else {interval = 0.5}
         if (media.paused) {interval = 0.04}
@@ -383,7 +378,7 @@
       if (wheelUp) {x=0.005*wheel}
       else {x=-0.01*wheel}
       if (type == 'thumbsheet' && (sheetY>0.25 || x>0)) {sheetY+=x}	// zoom thumbsheet
-      else if (scaleY>0.25 || x>0) {scaleY+=x; scaleX=(scaleY+x)*skinny}
+      else if (scaleY>0.25 || x>0) {scaleY+=x; scaleX=scaleY*skinny}
       else {mouseBack()}}
     if (type) {positionMedia(0.28)}
     wheel = 0}
@@ -403,7 +398,7 @@
     mySelected.style.top = e.pageY +9 +'px'
     mySelected.style.left = e.pageX +12 +'px'
     if (selected) {mySelected.innerHTML = selected.split(',').length -1}
-    else {mySelected.innerHTML = ''}
+else {mySelected.innerHTML = ''}
     if (!nav.matches(":hover") && !over_media) {
       nav.style.display = null
       thumb.style.transform='scale('+skinny+',1)'
@@ -477,7 +472,7 @@
       else {cueW = scaleX * media.offsetWidth * (1-(cue/media.duration)) + 'px'}}
     mySeekbar.style.left = cueX
     mySeekbar.style.width = cueW
-    if (type == 'image' || (!over_media&&!nav2.matches(":hover"))) {mySeekbar.style.opacity -= 0.05}
+    if (type == 'image' || xw>0.1) {mySeekbar.style.opacity -= 0.05}
     else if (rect.bottom+6 > innerHeight) {mySeekbar.style.top = innerHeight -4 +'px'; mySeekbar.style.opacity=1}
     else {mySeekbar.style.top = 3 + rect.bottom +'px'; mySeekbar.style.opacity=0.6}
     if (xm>0 && xm<1 && ym>0 && ym<1) {over_media=index} else {over_media=0}
@@ -501,7 +496,6 @@
     media.currentTime = start
     if (long_click) {media.play()}					// return to previous position
     type='video'
-sheets=false
     positionMedia(0.2)}
 
 
@@ -565,35 +559,25 @@ sheets=false
     else if (cap.innerHTML != '-' && (!cap.value || ptr <= 0)) {cap.style.opacity=0}}
 
   function sel(i) {							// highlight selected media
-    if (!i) {i=index}
+    if (!i) {return}
     if (list_view) {el=document.getElementById('title'+i)}
     else {el=document.getElementById('media'+i)}
     var x = ','+selected
     if (x.match(","+i+",")) {
       el.style.borderBottom = null
+      myNext.style.color = null
       selected = x.replace(","+i+",",",").slice(1)}
     else {
       if (list_view) {el.style.borderBottom = '1px solid red'}
       else {el.style.borderBottom = '4px solid red'}
+      myNext.style.color = 'red'; myNext.innerHTML = 'Select'
       if (!x.match(","+i+",")) {selected = selected+i+","}}}
-
-  function release() {							// release media from browser
-    var z=index+','
-    if (!index) {z=was_over_media+','}					// make comma seperated format
-    if (selected) {z=selected}
-    for (x of z.split(',')) {if (el=document.getElementById('media' + x)) {el.load()}}}
 
   function context(e) {
     e.preventDefault()							// stop clicks passing through
-    was_over_media = over_media
     nav.style.left=e.clientX-60+'px'; nav.style.top=e.clientY-72+'px'
     nav2.style.left=xpos-60+'px'; nav2.style.top=ypos-45+'px'
     if (type) {nav2.style.display='block'} else {nav.style.display='block'}}
-
-  function del(e) {
-    release()
-    setTimeout(function() {						// allow time for media release
-      inca('Delete', '', was_over_media)},100)}	 			// inca.exe deletes selected files
 
   function globals(vi, pg, ps, fi, zo, lv, fs, pl) {			// import globals to java
     view=vi; page=pg; pages=ps; filt=fi; zoom=zo; scaleY=zo; list_view=lv; fullscreen=fs; playlist=pl}
@@ -603,12 +587,13 @@ sheets=false
     if (!value) {value=''}
     if (!address) {address=''}
     if (select && !selected) {selected=select+','}
+    if (selected) {for(x of selected.split(','))  {if (x) {document.getElementById('media'+x).load()}}}
     if (command == 'Settings' || command == 'Favorite') {
       navigator.clipboard.writeText('#'+command+'#'+value+'#'+selected+'#'+address)}
     else {messages = messages + '#'+command+'#'+value+'#'+selected+'#'+address
       navigator.clipboard.writeText(messages); messages=''}}		// only process edits if htm reset
 
-  function selectAll() {if (was_over_media) {sel(was_over_media)} else {for (i=1; i <= 600; i++) {sel(i)}}}
+  function selectAll() {for (i=1; i <= 600; i++) {sel(i)}}
   function fav(e) {inca('Favorite', media.currentTime.toFixed(1), index)}
   function loop() {if (looping) {looping = false} else {looping = true}}
   function flip(e) {skinny*=-1; scaleX*=-1; positionMedia(0.5); thumb.style.transform='scaleX('+skinny+')'}
