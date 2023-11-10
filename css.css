@@ -2,29 +2,27 @@
  ::-webkit-scrollbar {width:0}			/* hide bright white scrollbar */
  ::selection {color:red; background:black}
 
+.myList {					/* list view	*/
+  position:relative;
+top:-16em;
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:space-around;
+  overflow:hidden;
+  overflow:scroll;
+  padding-top:14em;
+  height:100vh}
 
-.cap {
-  display:block;
-  position:absolute;
-  color:#ffa07a66;
-  overflow:wrap;
-  margin:auto;
-  line-height:1em;
-  margin-left:0.7em}
-
-.panel {					/* top panel element showing folders etc.*/
-  display:none;
-  position:absolute;
+.myPanel {					/* top panel element showing folders etc.*/
+  position:relative;
   font-size:0.9em;
   white-space:nowrap;
   margin:auto;
   overflow:hidden;
-  z-index:3;
-  height:8em;
-  left:17em;
-  top:-3em}
+  z-index:300;
+  height:8em}
 
-.myPanel {
+.panel {
   height:84em;
   position:absolute;
   overflow-y:scroll;
@@ -43,15 +41,6 @@
   transform-origin:right top;
   background:inherit} 
 
-.myList {					/* list view	*/
-  position:relative;
-  display:flex;
-  flex-wrap:wrap;
-  justify-content:space-around;
-  overflow:hidden;
-  overflow:scroll;
-  height:48em}
-
 .thumb {
   position:relative;
   cursor:null;
@@ -64,7 +53,7 @@
 .thumb2 {
   position:absolute;
   transition:1.2s;
-  translate:-10em -1.1em;
+  translate:-10em 0;
   border-radius:0.8em;
   cursor:null;
   margin:auto;
@@ -76,6 +65,7 @@
   position:relative;
   text-align:center;
   margin:auto;
+z-index:300;
   margin-bottom:0.7em; 
   align-items:center;
   font-size:1em;
@@ -93,6 +83,7 @@
   color:#826858;
   font-family:inherit;
   border:none;
+z-index:300;
   height:1.4em;
   width:100%;
   outline:none;
@@ -132,6 +123,15 @@
   font-size:1em;
   border-top:2px solid red;
   transition:0.2s}
+
+.cap {
+  display:block;
+  position:absolute;
+  color:#ffa07a66;
+  overflow:wrap;
+  margin:auto;
+  line-height:1em;
+  margin-left:0.7em}
 
 .caption {
   display:none;

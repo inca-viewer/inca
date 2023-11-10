@@ -25,10 +25,10 @@
 // listview thumb positioning
 // pictures list format wide spacing anomoly
 // scroll marker in search bar
-// rem. scrollTo 700 in htm needs changing - temp fix scrolltoview problem
-// visual artefacts
-// click through nav
-
+// over_media held on block nav settings
+// selecting using next in modal
+// page formatting block ypos/menuy
+// menu moves in firefox
 
   var thumb = document.getElementById('media1')				// first media element
   var modal = document.getElementById('myModal')			// media player window
@@ -42,7 +42,7 @@
   var intervalTimer
   var wheel = 0
   var block = 100							// block wheel/gesture events
-  var index = 0								// media index (e.g. media14)
+  var index = 1								// media index (e.g. media14)
   var last_index = 1
   var start = 0								// video start time
   var last_start = 0							// last media start time
@@ -94,7 +94,9 @@
   var zoom = 1
 
   if (!thumb) {thumb=media}						// in case no media in htm
-  if (!menuY || menuY < 5) {menuY=5}
+  getParameters()
+  if (menuX>innerWidth/2 || menuX<-800) {menuX=0}
+  if (menuY>innerHeight/2 || menuY<0) {menuY=0}
   myMenu.style.left = menuX +'px'
   myMenu.style.top = menuY +'px'
   modal.style.opacity=0;						// stop page load flicker
@@ -116,7 +118,7 @@
         var x = el.getBoundingClientRect().top + myView.scrollTop -menuY
         if (Math.abs(myView.scrollTop - (x -menuY -(10*view))) < 100) {return} // ignore small scrolls
         if (el.getBoundingClientRect().top < 600) {return}
-        if (list_view) {myView.scrollTo(0, x -135 -menuY)}
+        if (list_view) {myView.scrollTo(0, x -250 -menuY)}
         else {myView.scrollTo(0, x -menuY -(10*view))}}}
 
 
@@ -160,16 +162,15 @@
 
 
   function mouseBack() {
-    if (!type) {for(x of selected.split(',')) {sel(x)}}
-    else {
-      if (cap.value != cap.innerHTML) {editCap()}
-      scrolltoIndex()
-      media.style.transition='0.25s'
-      media.style.opacity=0
-      setTimeout(function() {
-        close_media()
-        modal.style.opacity=0
-        modal.style.zIndex=-1},250)}}
+    if (!type) {for(x of selected.split(',')) {sel(x)}}			// de-select all
+    if (cap.value != cap.innerHTML) {editCap()}
+    scrolltoIndex()
+    media.style.transition='0.25s'
+    media.style.opacity=0
+    setTimeout(function() {
+      close_media()
+      modal.style.opacity=0
+      modal.style.zIndex=-1},250)}
 
 
   function overThumb(id) {						// cursor over thumbnail
@@ -193,7 +194,7 @@
     var z = messages.split('#EditMedia#')				// in case been edited
     for (x of z) {var y = x.split('#'); for (x of y) {if (1*y[0]==index) {rate=1*y[2]; skinny=1*y[1]}}}
     if (ratio > 1) {
-      x = innerWidth*0.7; y = x/ratio; sheetY = innerWidth/x}		// landscape
+      x = innerWidth*0.70; y = x/ratio; sheetY = innerWidth/x}		// landscape
     else {y = innerHeight; x = y*ratio; sheetY = innerHeight/y}		// portrait
     media.style.width = x +'px'						// media size normalised to screen
     media.style.height = y +'px'
@@ -214,13 +215,13 @@
       else if (e == 'Next' && (playing != 'video' || !over_media)) {index++}}
     else {thumb.pause(); thumb.style.transform='scale('+skinny+',1)'}
     if (e && !playing && !over_media) {index=last_index; start=last_start} // play last media
-    if (!getParameters() && looping) {mouseBack(); return}		// end of media list
     type = getParameters()
+    if (!type && looping) {mouseBack(); return}				// end of media list  
     if (e == 'Click') {
       navigator.clipboard.writeText('#Media#'+index+'##'+start)
       scaleY = sheetY*zoom}
     if (type == 'document' || type == 'm3u') {type=''; return}
-    if (e!='Click' && !(playing && !over_media) && !(!playing && !over_media)) {thumbSheet()}
+    if (e!='Click' && type=='video' && over_media && !(playing && !over_media)) {thumbSheet()}
     modal.style.zIndex = Zindex+=1					// because htm thumbs use Z-index
     media.style.opacity = 0
     modal.style.opacity = 1
@@ -251,7 +252,6 @@
     media.style.outline='2em solid black'
     media.style.transition = 0
     positionMedia(0)
-//alert(index)
     setTimeout(function() {						// time for transitions to reset
       wheel=0; block=120
       media.style.transition = '0.5s'
@@ -277,6 +277,7 @@
     cap.value = ''
     cap_time = 0
     media.poster=''
+//over_media=0
     media.src=''
     block = 160
     start = 0
@@ -384,11 +385,11 @@
     wheel = 0}
 
 
-  function Gesture(e) {							// mouse move over window
+  function Gesture(e) {						// mouse move over window
     xpos = e.clientX
     ypos = e.clientY
-    if (selected) {myPanel.style.color='red'}
-    else {myPanel.style.color=null}
+    if (selected) {panel.style.color='lightsalmon'}
+    else {panel.style.color=null}
     if (looping) {myLoop.style.color='red'} else {myLoop.style.color=null}
     if (media.muted) {myMute.style.color='red'} else {myMute.style.color=null}
     if (skinny<0) {myFlip.style.color='red'} else {myFlip.style.color=null}
@@ -413,7 +414,6 @@ else {mySelected.innerHTML = ''}
       rect = myMenu.getBoundingClientRect()
       menuX = rect.left + xpos - Xref
       menuY = rect.top + ypos - Yref
-      if (menuY<5 || menuY > innerHeight*0.5) {menuY=5}
       localStorage.setItem("menuX",menuX)
       localStorage.setItem("menuY",menuY)
       myMenu.style.left = menuX +'px'
@@ -437,10 +437,10 @@ else {mySelected.innerHTML = ''}
     if (screenLeft) {Xoff=screenLeft; Yoff=outerHeight-innerHeight} else {x=Xoff; y=Yoff}	// fullscreen offsets
     media.style.left = mediaX-(media.offsetWidth/2) +x +"px"
     media.style.top = mediaY-(media.offsetHeight/2) +y +"px"
-    if (block==20 && wheel>15 && !mouse_down && (mediaY > 0.7*((innerHeight/2)-y) && mediaY < 1.3*((innerHeight/2)-y))
+    if (block==20 && wheel<3 && !mouse_down && (mediaY > 0.7*((innerHeight/2)-y) && mediaY < 1.3*((innerHeight/2)-y))
       && (mediaX > 0.3*(innerWidth-x) && mediaX < 0.7*(innerWidth-x))) {
       media.style.transition = '1.6s'
-      if (Math.abs((media.offsetHeight*scaleY)) > 0.89*(innerHeight) && Math.abs((media.offsetHeight*scaleY)) < 1.12*(innerHeight)) {
+      if (Math.abs((media.offsetHeight*scaleY)) > 0.88*(innerHeight) && Math.abs((media.offsetHeight*scaleY)) < 1.12*(innerHeight)) {
         mediaY=(innerHeight/2)-y; scaleY=(innerHeight)/media.offsetHeight; scaleX=skinny*scaleY; fade=1}
       if (Math.abs((media.offsetWidth*scaleX)) > 0.89*innerWidth && Math.abs((media.offsetWidth*scaleX)) < 1.12*innerWidth) {
         mediaX=(innerWidth/2)-x; scaleX=innerWidth/media.offsetWidth; if(skinny<0) {scaleX*=-1}; scaleY=scaleX/skinny; fade=1}}
@@ -451,6 +451,7 @@ else {mySelected.innerHTML = ''}
 
   function mediaTimer() {						// every ~84mS while media/modal layer active
     if (block>25) {block-=5}						// slowly reduce event blocking
+    if (wheel) {wheel--}
     if (skinny != 1) {mySkinny.innerHTML = skinny.toFixed(2)}
     else {mySkinny.innerHTML = 'Skinny'}
     xw =  xpos / innerWidth
@@ -577,6 +578,7 @@ else {mySelected.innerHTML = ''}
     e.preventDefault()							// stop clicks passing through
     nav.style.left=e.clientX-60+'px'; nav.style.top=e.clientY-72+'px'
     nav2.style.left=xpos-60+'px'; nav2.style.top=ypos-45+'px'
+    was_media = over_media
     if (type) {nav2.style.display='block'} else {nav.style.display='block'}}
 
   function globals(vi, pg, ps, fi, zo, lv, fs, pl) {			// import globals to java
@@ -585,18 +587,19 @@ else {mySelected.innerHTML = ''}
   function inca(command,value,select,address) {
     if (gesture) {return}
     if (!value) {value=''}
+    if (!select) {select=''} else {select= select+','}
     if (!address) {address=''}
-    if (select && !selected) {selected=select+','}
-    if (selected) {for(x of selected.split(','))  {if (x) {document.getElementById('media'+x).load()}}}
-    if (command == 'Settings' || command == 'Favorite') {
-      navigator.clipboard.writeText('#'+command+'#'+value+'#'+selected+'#'+address)}
-    else {messages = messages + '#'+command+'#'+value+'#'+selected+'#'+address
-      navigator.clipboard.writeText(messages); messages=''}}		// only process edits if htm reset
+    if (selected) {select=selected} 
+    for(x of select.split(','))  {if (x) {document.getElementById('media'+x).load()}}
+    if (command == 'Settings' || command == 'Favorite') {		// click events, so ok to send now
+      navigator.clipboard.writeText('#'+command+'#'+value+'#'+select+'#'+address)}	// send now
+    else {messages = messages + '#'+command+'#'+value+'#'+select+'#'+address	// send on next 'Click' event
+      navigator.clipboard.writeText(messages); messages=''}}		// (only process edits if htm to be reset)
 
   function selectAll() {for (i=1; i <= 600; i++) {sel(i)}}
-  function fav(e) {inca('Favorite', media.currentTime.toFixed(1), index)}
+  function fav() {inca('Favorite', media.currentTime.toFixed(1), index)}
   function loop() {if (looping) {looping = false} else {looping = true}}
-  function flip(e) {skinny*=-1; scaleX*=-1; positionMedia(0.5); thumb.style.transform='scaleX('+skinny+')'}
+  function flip() {skinny*=-1; scaleX*=-1; positionMedia(0.5); thumb.style.transform='scaleX('+skinny+')'}
   function mute() {if(!long_click) {media.volume=0; media.muted=!media.muted; localStorage.setItem("muted",1*media.muted); media.play()}}
   function cut() {clip=getSelection().toString(); navigator.clipboard.writeText(clip); inputbox.value=inputbox.value.replace(clip,'')}
   function paste() {inputbox.setRangeText(clip, inputbox.selectionStart, inputbox.selectionEnd, 'select')}
