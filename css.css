@@ -1,28 +1,42 @@
 
- ::-webkit-scrollbar {width:0}			/* hide bright white scrollbar */
- ::selection {color:red; background:black}
 
-.myList {					/* list view	*/
-  position:relative;
-top:-16em;
+  ::-webkit-scrollbar {background-color:#15110a}
+  ::-webkit-scrollbar-thumb {background:#1b1814; border-radius:2px}
+  ::selection {color:red; background:black}
+  td {outline:none; text-align:center; width:4.4em; overflow:hidden; white-space:nowrap}
+  table {color:#826858; font-size:0.9em; border-collapse:collapse; margin:auto}
+  table:hover {color:lightsalmon;transition:color 0.8s}
+  a {text-decoration:none; color:#826858}
+  a:hover {color:lightsalmon;transition:color 0.2s}
+  input:hover {color:lightsalmon;transition:color 1.2s}
+  @keyframes fadePage {from {opacity:0} to {opacity:1}}
+  ::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+  background-color:#826858;
+  -webkit-mask-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23777'><path d='M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z'/></svg>");
+  background-size:14px 14px;
+  height:14px;
+  width:14px}
+
+.myList {					/* list view*/
+  position:absolute;
   display:flex;
   flex-wrap:wrap;
   justify-content:space-around;
   overflow:hidden;
   overflow:scroll;
-  padding-top:14em;
   height:100vh}
 
 .myPanel {					/* top panel element showing folders etc.*/
-  position:relative;
+  position:fixed;
+  top:4em;
+  left:0;
   font-size:0.9em;
   white-space:nowrap;
-  margin:auto;
   overflow:hidden;
-  z-index:300;
   height:8em}
 
-.panel {
+.panel {					/* inner panel list container */
   height:84em;
   position:absolute;
   overflow-y:scroll;
@@ -33,24 +47,16 @@ top:-16em;
   width:9em;
   left:-9em}
 
-.view {
-  height:84em;
-  position:absolute;
-  overflow-y:scroll;
-  transform:rotate(-90deg);
-  transform-origin:right top;
-  background:inherit} 
-
-.thumb {
+.thumb {					/* thumb view thumb */
   position:relative;
   cursor:null;
   margin:auto;
-  transition:2.3s;
+  transition:2.4s;
   outline:0.8em solid #15110a;
   border-radius:0.8em}
 .thumb:hover {scale:1.2; cursor:none}
 
-.thumb2 {
+.thumb2 {					/* list view thumb */
   position:absolute;
   transition:1.2s;
   translate:-10em 0;
@@ -61,12 +67,12 @@ top:-16em;
 .thumb2:hover {cursor:none}
 
 .ribbon {					/* menu, fol, fav, search ... */
+  position:fixed;
   display:flex;
-  position:relative;
+  top:13em;
+  left:0.8em; 
   text-align:center;
   margin:auto;
-z-index:300;
-  margin-bottom:0.7em; 
   align-items:center;
   font-size:1em;
   justify-content:space-evenly}
@@ -77,20 +83,19 @@ z-index:300;
 .searchbox {					/* input searchbox in htm tab	*/
   text-overflow:ellipsis;
   overflow:hidden;
-  margin-bottom:0.2em;
   text-align:center;
   background-color:#1b1814;
   color:#826858;
   font-family:inherit;
   border:none;
-z-index:300;
-  height:1.4em;
-  width:100%;
+  line-height:1.2em;
+  font-size:1.1em;
+  margin-top:0.2em;
   outline:none;
   transition:color 1.4s;
   white-space:nowrap}
 
-.title {
+.title {					/* file name element */
   display:flex;
   overflow:hidden;
   text-overflow:ellipsis; 
@@ -124,7 +129,7 @@ z-index:300;
   border-top:2px solid red;
   transition:0.2s}
 
-.cap {
+.cap {						/* htm caption element */
   display:block;
   position:absolute;
   color:#ffa07a66;
@@ -133,7 +138,7 @@ z-index:300;
   line-height:1em;
   margin-left:0.7em}
 
-.caption {
+.caption {					/* modal caption element */
   display:none;
   position:fixed;
   z-index:4;
@@ -152,7 +157,7 @@ z-index:300;
   font-size:1.4em;
   transition:0.6s}
 
-.modal {					/* media player overlay htm tab */
+.modal {					/* media player overlay of htm tab */
   display:flex;
   z-index:3;
   user-select:none;
@@ -183,7 +188,7 @@ z-index:300;
   opacity:0.6}
 .context a:hover {background-color:#222222}
 
-.container {					/* whole body element #555351*/
+.container {					/* whole body element */
   font-family:'Yu Gothic', 'Calibri Light';
   overflow-x:hidden; 
   overflow-y:hidden; 
@@ -195,11 +200,4 @@ z-index:300;
   animation-name:fadePage;
   animation-duration:1s}
 
-  td {outline:none; text-align:center; width:4.4em; overflow:hidden; white-space:nowrap}
-  table {color:#826858; font-size:0.9em; border-collapse:collapse; margin:auto}
-  table:hover {color:lightsalmon;transition:color 0.8s}
-  a {text-decoration:none; color:#b28878}
-  a:hover {color:lightsalmon;transition:color 0.2s}
-  input:hover {color:lightsalmon;transition:color 1.2s}
-  @keyframes fadePage {from {opacity:0} to {opacity:1}}
 
