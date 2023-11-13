@@ -3,7 +3,7 @@
   ::-webkit-scrollbar {background-color:#15110a}
   ::-webkit-scrollbar-thumb {background:#1b1814; border-radius:2px}
   ::selection {color:red; background:black}
-  td {outline:none; text-align:center; width:4.4em; overflow:hidden; white-space:nowrap}
+  td {outline:none; text-align:center; min-width:4.1em; overflow:hidden; white-space:nowrap}
   table {color:#826858; font-size:0.9em; border-collapse:collapse; margin:auto}
   table:hover {color:lightsalmon;transition:color 0.8s}
   a {text-decoration:none; color:#826858}
@@ -47,15 +47,6 @@
   width:9em;
   left:-9em}
 
-.thumb {					/* thumb view thumb */
-  position:relative;
-  cursor:null;
-  margin:auto;
-  transition:2.4s;
-  outline:0.8em solid #15110a;
-  border-radius:0.8em}
-.thumb:hover {scale:1.2; cursor:none}
-
 .thumb2 {					/* list view thumb */
   position:absolute;
   transition:1.2s;
@@ -65,6 +56,15 @@
   margin:auto;
   opacity:0}
 .thumb2:hover {cursor:none}
+
+.thumb {					/* thumb view thumb */
+  position:relative;
+  cursor:null;
+  margin:auto;
+  transition:2.4s;
+  outline:0.8em solid #15110a;
+  border-radius:0.8em}
+.thumb:hover {scale:1.2; cursor:none}
 
 .ribbon {					/* menu, fol, fav, search ... */
   position:fixed;
@@ -77,7 +77,7 @@
   font-size:1em;
   justify-content:space-evenly}
 
-.ribbon a {transition:0.8s; border-radius:1em}
+.ribbon a {transition:0.8s; border-radius:0.32em}
 .ribbon a:hover {transition:0.2s; transform:scale(1.2,1.2); translate(0,-0.1em)}
 
 .searchbox {					/* input searchbox in htm tab	*/
@@ -185,7 +185,7 @@
   padding-right:1.2em;
   padding-bottom:0.6em;
   color:lightsalmon;
-  opacity:0.6}
+  opacity:0.8}
 .context a:hover {background-color:#222222}
 
 .container {					/* whole body element */
