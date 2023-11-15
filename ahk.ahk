@@ -94,7 +94,6 @@
 
 
 
-
     RenderPage()							; construct web page from media list
         {
         Critical							; stop key interrupts
@@ -163,7 +162,7 @@
             SplitPath, A_Loopfield,,,,x
             if (x == "New")
               container = %container%<div style='color:salmon' onmousedown="inca('Path', '', '', '%A_Loopfield%')">%x%</div>`n
-            else container = %container%<div onmouseup="inca('Path', '', '', '%A_Loopfield%')">%x%</div>`n
+            else container = %container%<div onmousedown="inca('Path', '', '', '%A_Loopfield%')">%x%</div>`n
             if !Mod(A_Index,4)
               container := fill(container)
             }
@@ -182,7 +181,7 @@
             x := array.MaxIndex()
             fname := array[x]
             fname := SubStr(fname, 1, 14)
-            container = %container%<div onmouseup="inca('Subs', %A_Index%)">%fname%</div>`n
+            container = %container%<div onmousedown="inca('Subs', %A_Index%)">%fname%</div>`n
             if !Mod(A_Index,4)
               container := fill(container)
             }
@@ -195,7 +194,7 @@
             {
             StringTrimRight, y, A_Loopfield, 1
             SplitPath, y,,,,x
-            container = %container%<div onmouseup="inca('Path', '', '', '%A_Loopfield%')">%x%</div>`n
+            container = %container%<div onmousedown="inca('Path', '', '', '%A_Loopfield%')">%x%</div>`n
             if !Mod(A_Index,4)
               container := fill(container)
             }
@@ -207,7 +206,7 @@
         Loop, Parse, music, `|
             {
             SplitPath, A_Loopfield,,,,x
-            container = %container%<div onmouseup="inca('Path', '', '', '%A_Loopfield%')">%x%</div>`n
+            container = %container%<div onmousedown="inca('Path', '', '', '%A_Loopfield%')">%x%</div>`n
             if !Mod(A_Index,4)
               container := fill(container)
             }
@@ -228,7 +227,7 @@
               }
             ch := x
             count+=1
-            container = %container%<div onmouseup="inca('Search', '%A_Loopfield%')">%A_Loopfield%</div>`n
+            container = %container%<div onmousedown="inca('Search', '%A_Loopfield%')">%A_Loopfield%</div>`n
             if !Mod(count,4)
               container := fill(container)
             }
@@ -252,16 +251,16 @@ body = <body id='myBody' class='container' onload="globals(%view%, %page%, %page
 <div id='mySelected' class='selected'></div>`n
 <div oncontextmenu="context(event)" style='padding-bottom:40em'>`n`n
 <span id="myContext" class='context'>`n
-<a onmousedown="inca('Settings')"`n onmouseover="this.innerHTML=Math.round(duration/60)+' . . . '+document.getElementById('title'+index).value"`n onmouseout="this.innerHTML=' . . .'"> . . .</a>`n
-<a id='Next' onmousedown="if (was_media){sel(index)} else{selectAll()}"`n onwheel="wheelEvents(event, id, this)">Select</a>`n
-<a onmousedown="inca('Delete','',was_media)">Delete</a>`n
+<a onmousedown="inca('Settings')"`n onmouseover="x=''; if(thumb.duration){x=Math.round(thumb.duration/60)+'mins - '}; if(was_over_media){this.innerHTML=x+document.getElementById('title'+index).value}"`n onmouseout="this.innerHTML=' . . .'"> . . .</a>`n
+<a id='Next' onmousedown="if (was_over_media){sel(index)} else{selectAll()}"`n onwheel="wheelEvents(event, id, this)">Select</a>`n
+<a onmousedown="inca('Delete','',was_over_media)">Delete</a>`n
 <a onmousedown='fav()'>Fav</a>`n
 <a onclick='cut()'>Cut</a>`n
 <a onmousedown='paste()'>Paste</a>`n
 <a onmousedown="inca('Join')">Join</a></span>`n`n
 
 <span id="myContext2" class='context'>`n
-<a id='myMute' onmouseup='mute()'`n onmouseover="this.innerHTML='Mute - '+Math.round(duration/60)+' . . . '+document.getElementById('title'+index).value"`n onmouseout="this.innerHTML='Mute'">Mute</a>`n
+<a id='myMute' onmouseup='mute()'`n onmouseover="x=''; if(thumb.duration){x=Math.round(thumb.duration/60)+'mins - '}; this.innerHTML='Mute - '+x+document.getElementById('title'+index).value"`n onmouseout="this.innerHTML='Mute'">Mute</a>`n
 <a id="myNext" onmousedown="sel(index)"`n onwheel="wheelEvents(event, id, this)">Select</a>`n
 <a id="mySpeed" onwheel="wheelEvents(event, id, this)">Speed</a>`n
 <a id="mySkinny" onwheel="wheelEvents(event, id, this)">Skinny</a>`n
@@ -329,8 +328,8 @@ body = <body id='myBody' class='container' onload="globals(%view%, %page%, %page
         send ^v
         sleep 24
         send, {Enter}
-        Clipboard := clip
         }
+      Clipboard =
       previous_tab := folder
       sleep 400							; time for page to load
       GuiControl, Indexer:, GuiInd
@@ -432,11 +431,11 @@ body = <body id='myBody' class='container' onload="globals(%view%, %page%, %page
 
 
 if list_view
-  media_list = %media_list% <table><tr id="entry%j%" onmouseover='index=%j%; if(mouse_down && gesture) {sel(%j%)}'>`n <td onmouseup='if(!event.button&&!over_media){sel(%j%)}'`n >%ext%</td><td>%size%</td><td id='dur%j%'>%dur%</td><td>%date%</td><td>%j%</td>`n<td onmouseover="overThumb(%j%, %skinny%, '%type%', %start%, '%cap%', %rate%, %dur2%, event); media%j%.style.opacity=1; media%j%.currentTime=start; this.play()"`n onmouseout="media%j%.style.opacity=0; over_media=0">`n %icon%<video id='media%j%' class='thumb2' style="max-width:%view3%em; max-height:%view3%em; transform:scale(%skinny%, 1)"`n src="file:///%src%"`n %poster%`n preload='none' muted loop`n onmouseover="overThumb(%j%, %skinny%, '%type%', %start%, '%cap%', %rate%, %dur2%, event); this.currentTime=start; this.play()" onmouseout='this.pause(); over_media=0'`n type="video/mp4"></video></td>`n 
+  media_list = %media_list% <table><tr id="entry%j%" onmouseover='index=%j%; if(mouse_down && gesture) {sel(%j%)}'>`n <td onmousedown='if(!event.button){sel(%j%)}'>%ext%</td>`n <td>%size%</td><td id='dur%j%'>%dur%</td><td>%date%</td><td>%j%</td>`n<td onmouseover="overThumb(%j%, %skinny%, '%type%', %start%, '%cap%', %rate%, event); media%j%.style.opacity=1; media%j%.currentTime=start; this.play()"`n onmouseout="media%j%.style.opacity=0; over_media=0">`n %icon%<video id='media%j%' class='thumb2' style="max-width:%view3%em; max-height:%view3%em; transform:scale(%skinny%, 1)"`n src="file:///%src%"`n %poster%`n preload='none' muted loop`n onmouseover="overThumb(%j%, %skinny%, '%type%', %start%, '%cap%', %rate%, event); this.currentTime=start; this.play()" onmouseout='this.pause(); over_media=0'`n type="video/mp4"></video></td>`n 
 <td style='width:34em'><input id="title%j%" class='title' type='search' value='%media_s%'`n onmousedown='if(!event.button) {inputbox=this; sessionStorage.setItem("last_index",%j%)}' onmouseup="myInput.value='%media%'" oninput="ren%j%.style.display='block'"></td>`n<td id='ren%j%' style='display:none; color:#826858' onmousedown="media%j%.load(); inca('Rename', title%j%.value, %j%)">Rename</td></tr></table>`n`n
 
 else
-  media_list = %media_list%<div id="entry%j%" style="display:flex; width%view%em; height:%view3%em; padding:%view4%em"`n onmouseup="if(!event.button&&!over_media){sel(%j%); myInput.value='%media%'}">`n <video id="media%j%" class='thumb' style="max-width:%view3%em; max-height:%view3%em; transform:scale(%skinny%, 1)"`n onmouseover="overThumb(%j%, %skinny%, '%type%', %start%, '%cap%', %rate%, %dur2%, event); this.currentTime=start; this.play(); if(mouse_down && gesture) {sel(%j%)}; myDur%j%.style.opacity=0"`n onmouseout="this.pause(); over_media=0; myDur%j%.style.opacity=null"`n src="file:///%src%"`n %poster%`n preload='none' muted loop type="video/mp4"></video>`n%caption%`n <input id='title%j%' value='%media%' class='title' style='display:none'></div>`n`n
+  media_list = %media_list%<div id="entry%j%" style="display:flex; width%view%em; height:%view3%em; padding:%view4%em"`n onmouseup="if(!event.button&&!over_media){sel(%j%); myInput.value='%media%'}">`n <video id="media%j%" class='thumb' style="max-width:%view3%em; max-height:%view3%em; transform:scale(%skinny%, 1)"`n onmouseover="overThumb(%j%, %skinny%, '%type%', %start%, '%cap%', %rate%, event); this.currentTime=start; this.play(); if(mouse_down && gesture) {sel(%j%)}; myDur%j%.style.opacity=0"`n onmouseout="this.pause(); over_media=0; myDur%j%.style.opacity=null"`n src="file:///%src%"`n %poster%`n preload='none' muted loop type="video/mp4"></video>`n%caption%`n <input id='title%j%' value='%media%' class='title' style='display:none'></div>`n`n
 
 }
 
@@ -571,7 +570,6 @@ else
             {
             if WinActive("ahk_group Browsers")
               {
-              clip := Clipboard
               Clipboard =
               send, ^c
               ClipWait, 0
@@ -587,7 +585,6 @@ else
                 CreateList(1)
                 }
               else send, !+0
-              Clipboard := clip
               }
             else send, !+0			; trigger osk keyboard
             }
@@ -646,7 +643,6 @@ else
         input := StrReplace(Clipboard, "/", "\")
 ; tooltip %input%
         array := StrSplit(input,"#")
-        Clipboard := clip
         Loop % array.MaxIndex()/4
           {
           command := array[ptr+=1]
@@ -696,6 +692,7 @@ else
 
     ProcessMessage()
         {
+        Clipboard =
         if (command == "Reload")
             {
             if playlist
@@ -817,6 +814,13 @@ else
                 }
               }
             }
+        if (command == "History")
+            {
+            GetMedia(value)
+            FileRead, str, %inca%\fav\History.m3u
+            if (!playlist && (type == "video" || type == "audio") && !InStr(str, src))
+              FileAppend, %src%|%address%`r`n, %inca%\fav\History.m3u, UTF-8		; add media entry to playlist
+            }
         if (command == "Media")
             {
             if (playlist && selected && long_click)
@@ -827,9 +831,6 @@ else
             else if GetMedia(value)
               {
               playing = 1
-              FileRead, str, %inca%\fav\History.m3u
-              if (!playlist && (type == "video" || type == "audio") && !InStr(str, src))
-                FileAppend, %src%|%address%`r`n, %inca%\fav\History.m3u, UTF-8		; add media entry to playlist
               popup = %browser% Cannot Play %ext%
               if (ext=="pdf")
                 Run, %src%
@@ -1603,8 +1604,6 @@ else
         {
         Global
         LoadSettings()
-;        clip := clipboard
-clipboard =
         FileDelete, %inca%\cache\lists\*.*
         CoordMode, Mouse, Screen
         gui, vol: +lastfound -Caption +ToolWindow +AlwaysOnTop -DPIScale
@@ -1642,8 +1641,6 @@ clipboard =
         array := StrSplit(clipboard,"#")
         if (inca_tab && array.MaxIndex() > 4)				; likely is a java message
           Clipboard()
-        if (Clipboard && Clipboard != clip && !InStr(Clipboard, "#"))	; preserve clipboard
-          clip := Clipboard
         Gui, background:+LastFound
         if inca_tab
             WinSet, Transparent, % Setting("Dim Desktop")

@@ -13,8 +13,10 @@
 // delete history issues
 // alpha search fail in playlists because uses natural order ?
 // wmv content
-// clipboard corruption
-// capture auto captions to file
+// history limit 300, start time, crashed context after delete 
+// preserve last media between views
+// no transitions over panel?
+// radius on player
 
 
 
@@ -55,6 +57,7 @@
   var clip								// inputbox cut/paste text
   var over_cap = false							// cursor over caption
   var over_media = 0							// over thumb or media
+  var was_over_media
   var ratio								// media width to height ratio
   var skinny = 1							// media width
   var messages = ''							// skinny and caption changes
@@ -77,9 +80,7 @@
   var Yoff = 0
   var index_scroll
   var list_view = 0
-  var duration = 0
   var zoom = 1
-  var was_media
 
   if (!thumb) {thumb=media}						// in case no media in htm
   getParameters()							// initialise media1 attributes
@@ -159,7 +160,6 @@
     if (!(thumb = document.getElementById('media'+index))) {index=1; return}
     ratio = thumb.offsetWidth/thumb.offsetHeight			// before thumb changes to media id
     var x = thumb['onmouseover'].toString().split(","); x.pop()
-    duration = 1*x.pop().trim()
     rate = 1*x.pop().trim()
     cap_list = x.pop().slice(0, -1).slice(2) 				// captions list
     if (!start) {start = 1*x.pop().trim()} else {x.pop()}		// start time
@@ -174,7 +174,7 @@
     media.style.height = y +'px'
     media.style.left = mediaX-x/2 +'px'
     media.style.top = mediaY-y/2 +'px'
-    media.style.borderRadius = '2em'
+    media.style.borderRadius = '1.3em'
     if (mouse_down==2 || media.src != thumb.src) {media.src=thumb.src}	// so not to restart play 
     media.poster = thumb.poster
     return type_t}
@@ -240,6 +240,7 @@
     if (x!=skinny || y!=rate) {						// see if edited
       messages = messages + '#EditMedia#'+index+'#'+x+'#'+y}
     if (cap.value != cap.innerHTML) {editCap()}
+    messages = messages + '#History#'+index+'##'+last_start.toFixed(1)
     clearInterval(intervalTimer)
     media.removeEventListener('ended', media_ended)
     mySpeed.innerHTML = 'Speed'
@@ -319,7 +320,7 @@
           document.getElementById('title'+index).style.background=null}
         if (wheelUp) {index+=1}
         else {index-=1}
-        was_media = index
+        was_over_media = index
         start=0
         if (!getParameters()) {return}
         Next.innerHTML = index
@@ -552,8 +553,8 @@
     e.preventDefault()							// stop clicks passing through
     nav.style.left=e.clientX-60+'px'; nav.style.top=e.clientY-45+'px'
     nav2.style.left=xpos-60+'px'; nav2.style.top=ypos-45+'px'
-    was_media = over_media
-    over_media = 0
+    if (document.getElementById('entry'+index).matches(":hover")) {was_over_media = index}
+    else {was_over_media = 0}
     if (type) {nav2.style.display='block'} else {nav.style.display='block'}}
 
   function globals(vi, pg, ps, so, fi, zo, lv, fs, pl) {			// import globals to java
