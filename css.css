@@ -4,10 +4,13 @@
   ::-webkit-scrollbar-thumb {background:#1b1814; border-radius:2px}
   ::selection {color:red; background:black}
   td {outline:none; text-align:center; min-width:4.1em; overflow:hidden; white-space:nowrap}
-  table {color:#826858; font-size:0.9em; border-collapse:collapse; margin:auto}
-  table:hover {color:lightsalmon;transition:color 0.8s}
-  a {text-decoration:none; color:#826858}
-  a:hover {color:lightsalmon;transition:color 0.2s}
+  table {color:#826858; font-size:0.9em; border-collapse:collapse; margin:auto; transition:color 0.3s}
+  table:hover {color:lightsalmon}
+  a {text-decoration:none; color:#826858; transition:color 0.3s}
+  a:hover {color:lightsalmon}
+  div {text-decoration:none; color:#826858; transition:color 0.3s}
+  div:hover {color:lightsalmon}
+
   input:hover {color:lightsalmon;transition:color 1.2s}
   @keyframes fadePage {from {opacity:0} to {opacity:1}}
   ::-webkit-search-cancel-button {
@@ -17,6 +20,10 @@
   background-size:14px 14px;
   height:14px;
   width:14px}
+
+.player {					/* modal media player element */
+  position:absolute;
+  border-radius:16px}
 
 .myList {					/* list view*/
   position:absolute;
@@ -47,24 +54,20 @@
   width:9em;
   left:-9em}
 
-.thumb2 {					/* list view thumb */
+.media {					/* thumb view media */
+  position:relative;
+  margin:auto;
+  transition: transform 2.4s;
+  outline:0.3em solid #15110a;
+  border-radius:0.5em}
+
+.media2 {					/* list view media */
   position:absolute;
   transition:1.2s;
   translate:-10em 0;
   border-radius:0.5em;
-  cursor:null;
   margin:auto;
   opacity:0}
-.thumb2:hover {cursor:none}
-
-.thumb {					/* thumb view thumb */
-  position:relative;
-  cursor:null;
-  margin:auto;
-  transition:2.4s;
-  outline:0.3em solid #15110a;
-  border-radius:0.5em}
-.thumb:hover {scale:1.2; cursor:none}
 
 .ribbon {					/* menu, fol, fav, search ... */
   position:fixed;
