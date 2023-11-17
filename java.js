@@ -1,16 +1,14 @@
 
 // Debugging - use mySelected.innerHTML = x in Gesture(e) or use alert(x)
 // rem. long click text or search, +adds extra search term
+// rem. no alpha search in playlists because need natural order option
 // edit caption file when # in filename
 // search tigris ride - error with #
 // myinput cannot fill if media title has single '
 // `r`n within captions
 // undo delete etc?
 // test if canplay can trigger mpv
-// alpha search fail in playlists because uses natural order ?
-// cue time
-
-
+// use entry for onmouseover in parameters ?
 
 
   var media = document.getElementById('media1')				// first media element
@@ -118,6 +116,7 @@
           if (!isNaN(x) && x>(myPlayer.currentTime+0.2)) {
             myPlayer.currentTime=x-1; myPlayer.play(); break}}}
       else if (type || over_media) {playMedia('Next')}			// next media/thumbsheet
+      else if (nav.matches(':hover')) {over_media=index; playMedia('Click')}
       else if (!type) {inca('View', view)}}				// toggle thumb view / list view
     else if (!e.button && !gesture ) {		
       if (!over_cap && cap.value != cap.innerHTML) {editCap()}		// caption in edit mode
@@ -478,7 +477,7 @@
     if (!(el=document.getElementById('media'+index))) {return}
     var x = el.getBoundingClientRect().top + myView.scrollTop
     if (Math.abs(myView.scrollTop - (x -(14*view))) > 100) {	 	// ignore small scrolls
-      if (el.getBoundingClientRect().top > innerHeight*0.8) {		// near bottom of page
+      if (el.getBoundingClientRect().top > innerHeight*0.6) {		// near bottom of page
         if (list_view) {myView.scrollTo(0, x -300)}
         else {myView.scrollTo(0, x -(24*view))}}}
     x = ','+selected
@@ -536,7 +535,7 @@
 
   function sel(i) {							// highlight selected media
     if (!i) {return}
-    if (list_view) {el=document.getElementById('title'+i)}
+    if (list_view) {el=document.getElementById('entry'+i)}
     else {el=document.getElementById('media'+i)}
     var x = ','+selected
     if (x.match(","+i+",")) {
@@ -544,7 +543,7 @@
       myNext.style.color = null
       selected = x.replace(","+i+",",",").slice(1)}
     else {
-      if (list_view) {el.style.borderBottom = '1px solid red'}
+      if (list_view) {el.style.borderBottom = '0.1px solid salmon'}
       else {el.style.borderBottom = '4px solid red'}
       myNext.style.color = 'red'; myNext.innerHTML = 'Select'
       if (!x.match(","+i+",")) {selected = selected+i+","}}}
@@ -570,13 +569,13 @@
     for(x of select.split(','))  {if (x) {document.getElementById('media'+x).load()}}
     if (command == 'View') {sessionStorage.setItem("last_index",last_index)}
     else {sessionStorage.setItem("last_index",0)}
-    if (command == 'Settings' || command == 'Favorite') {		// click events, so ok to send now
-      navigator.clipboard.writeText('#'+command+'#'+value+'#'+select+'#'+address)}	// send now
-    else {messages = messages + '#'+command+'#'+value+'#'+select+'#'+address	// send on next 'Click' event
-      navigator.clipboard.writeText(messages); messages=''}}		// (only process edits if htm to be reset)
+    if (command == 'Settings' || command == 'Favorite') {				// 'Click' events, so ok to send now
+      navigator.clipboard.writeText('#'+command+'#'+value+'#'+select+'#'+address)
+      for (x of selected.split(',')) {sel(x)}}						// clear selected
+    else {messages = messages + '#'+command+'#'+value+'#'+select+'#'+address		// send on next 'Click' event
+      navigator.clipboard.writeText(messages); messages=''}}				// (only process edits if htm is reset)
 
   function selectAll() {for (i=1; i <= 600; i++) {sel(i)}}
-  function fav() {inca('Favorite', myPlayer.currentTime.toFixed(1), index)}
   function loop() {if (looping) {looping = false} else {looping = true}}
   function flip() {skinny*=-1; scaleX*=-1; positionMedia(0.5); media.style.transform='scaleX('+skinny+')'}
   function mute() {if(!long_click) {myPlayer.volume=0; myPlayer.muted=!myPlayer.muted; localStorage.setItem("muted",1*myPlayer.muted); myPlayer.play()}}

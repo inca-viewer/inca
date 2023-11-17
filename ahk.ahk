@@ -81,6 +81,7 @@
         Global poster
         Global media_list
         Global panel_list
+Global foldr
 
 
     main:
@@ -101,6 +102,7 @@
             return
         media_list =
         subfolders =
+foldr =
         if !search_term
           if playlist
              Loop, Files, %inca%\%folder%\*.m3u, FR
@@ -251,9 +253,9 @@ body = <body id='myBody' class='container' onload="globals(%view%, %page%, %page
 <div oncontextmenu="context(event)" style='padding-bottom:40em'>`n`n
 <span id="myContext" class='context'>`n
 <a onmousedown="inca('Settings')"`n onmouseover="el=document.getElementById('title'+index); x='';`n if(media.duration){x=Math.round(media.duration/60)+'mins - '};`n if (was_over_media) {this.innerHTML=x+el.value}"`n onmouseout="this.innerHTML=' . . .'"> . . .</a>`n
-<a id='Next' onmousedown="if (was_over_media) {sel(index)} else{selectAll()}"`n onwheel="wheelEvents(event, id, this)">Select</a>`n
+<a id='Next' onmousedown="if(!event.button){if (was_over_media) {sel(index)} else{selectAll()}}"`n onwheel="wheelEvents(event, id, this)">Select</a>`n
 <a onmousedown="inca('Delete','',was_over_media)">Delete</a>`n
-<a onmousedown='fav()'>Fav</a>`n
+<a onmousedown="inca('Favorite','',was_over_media)">Fav</a>`n
 <a onclick='cut()'>Cut</a>`n
 <a onmousedown='paste()'>Paste</a>`n
 <a onmousedown="inca('Join')">Join</a></span>`n`n
@@ -264,7 +266,7 @@ body = <body id='myBody' class='container' onload="globals(%view%, %page%, %page
 <a id="mySpeed" onwheel="wheelEvents(event, id, this)">Speed</a>`n
 <a id="mySkinny" onwheel="wheelEvents(event, id, this)">Skinny</a>`n
 <a id='myLoop' onclick="loop()">Loop</a>`n
-<a id='myFav2' onmousedown='fav()'>Fav</a>`n
+<a onmousedown="inca('Favorite',myPlayer.currentTime.toFixed(1),index)">Fav</a>`n
 <a id="myCapnav" onclick="editCap()">Cap</a>`n
 <a onclick="cue = Math.round(myPlayer.currentTime*10)/10">Cue</a>`n
 <a id="myMp4" onmousedown="inca('mp4', myPlayer.currentTime.toFixed(1), index, cue)">mp4</a>`n
@@ -291,7 +293,7 @@ body = <body id='myBody' class='container' onload="globals(%view%, %page%, %page
 <a id='SearchAll' onclick="inca('SearchAll', myInput.value)"></a>`n
 <a id='SearchAdd' onclick="inca('SearchAdd', myInput.value)" ></a></div>`n`n
 
-<div id='myRibbon' class='ribbon' style='width:64vw; margin-left:%page_l%`%; margin-right:%page_r%`%'>`n
+<div id='myRibbon' class='ribbon' style='width:61vw; margin-left:%page_l%`%; margin-right:%page_r%`%'>`n
 <a onmousedown="inca('Ext')" %x6%>Ext</a>`n
 <a id='Size' onmousedown="inca('Size', filt)" onwheel="wheelEvents(event, id, this)" %x5%>Size</a>`n
 <a id='Duration' onmousedown="inca('Duration', filt)" onwheel="wheelEvents(event, id, this)" %x3%>Duration</a>`n
@@ -341,7 +343,6 @@ body = <body id='myBody' class='container' onload="globals(%view%, %page%, %page
     SpoolList(i, j, input, sort_name, start)				; spool sorted media files into web page
         {
         poster =
-        view1 := view*0.95
         view2 := view*0.66
         view3 := view*0.8
         view4 := view/20
@@ -352,8 +353,11 @@ body = <body id='myBody' class='container' onload="globals(%view%, %page%, %page
         else thumb = %inca%\apps\icons\no link.png
         x := RTrim(media_path,"\")
         SplitPath, x,,,,y
-        if search_term
-          fold = <td style="width:4em; white-space:nowrap; text-overflow:ellipsis; overflow:hidden; padding-right:1em">%y%</td>
+        if (search_term && foldr != y && sort == "Alpha")
+          fold = <div style="font-size:1.4em; color:lightsalmon; width:100`%">%y%</div>`n
+        foldr := y
+        if (search_term || InStr(toggles, "Recurse"))
+          fo := y
         FileRead, dur, %inca%\cache\durations\%media%.txt
         if (type == "video")
             {
@@ -384,7 +388,7 @@ body = <body id='myBody' class='container' onload="globals(%view%, %page%, %page
           start := StrSplit(cap, "|").2
           IfExist, %inca%\cache\posters\%media% %start%.jpg
             thumb = %inca%\cache\posters\%media% %start%.jpg
-          caption = <div class='cap' style='font-size:%cap_size%em; width:%view1%em'`n onmousedown="inca('EditCap', '%media%')">%caption%</div>`n
+          caption = <div class='cap' style='font-size:%cap_size%em; width:%view3%em'`n onmousedown="sel(%j%); inca('EditCap', '%media%')">%caption%</div>`n
           cap := StrReplace(cap, "`r`n", "|")
           cap := StrReplace(cap, ",", "§")
           cap := StrReplace(cap, "'", "±")
@@ -423,15 +427,9 @@ body = <body id='myBody' class='container' onload="globals(%view%, %page%, %page
         start := Round(start+0.1,1)					; smooth start for thumb play
         StringReplace, media_s, media, `', &apos;, All
 
-        icon = %thumb%
-        if (list_view && type!="image" && type!="video")
-          icon = %inca%\apps\icons\play.ico
-        icon = <img src="file:///%icon%" width='10' height='10'>
-
-
 if list_view
-  media_list = %media_list% <table><tr id="entry%j%" onmouseover='index=%j%; if(mouse_down && gesture) {sel(%j%)}'>`n <td onmousedown='if(!event.button){sel(%j%)}'>%ext%</td>`n <td>%size%</td><td id='dur%j%'>%dur%</td><td>%date%</td><td>%j%</td>`n<td onmouseover="overThumb(%j%, %skinny%, '%type%', %start%, '%cap%', %rate%, event); media%j%.style.opacity=1"`n onmouseout="media%j%.style.opacity=0; over_media=0">`n %icon%<video id='media%j%' class='media2' style="max-width:%view3%em; max-height:%view3%em; transform:scale(%skinny%, 1)"`n src="file:///%src%"`n %poster%`n preload='none' muted loop`n onmouseover="overThumb(%j%, %skinny%, '%type%', %start%, '%cap%', %rate%, event)" onmouseout='this.pause(); over_media=0'`n type="video/mp4"></video></td>`n 
-<td style='width:34em'><input id="title%j%" class='title' type='search' value='%media_s%'`n onmousedown='if(!event.button) {inputbox=this; sessionStorage.setItem("last_index",%j%)}' onmouseup="myInput.value='%media%'" oninput="ren%j%.style.display='block'"></td>`n<td id='ren%j%' style='display:none; color:#826858' onmousedown="media%j%.load(); inca('Rename', title%j%.value, %j%)">Rename</td></tr></table>`n`n
+  media_list = %media_list% %fold%<table><tr id="entry%j%"`n onmouseover="index=%j%; if(mouse_down && gesture) {sel(%j%)}; overThumb(%j%, %skinny%, '%type%', %start%, '%cap%', %rate%, event); media%j%.style.opacity=1"`n onmouseout="media%j%.style.opacity=0; over_media=0; media%j%.pause()">`n <td onmousedown='over_media=0; if(!event.button){sel(%j%)}'>%ext%</td><td>%size%</td><td>%dur%</td><td>%date%</td><td>%j%`n <video id='media%j%' class='media2' style="max-width:%view3%em; max-height:%view3%em; transform:scale(%skinny%, 1)"`n src="file:///%src%"`n %poster%`n preload='none' muted loop`n onmouseover="overThumb(%j%, %skinny%, '%type%', %start%, '%cap%', %rate%, event)" onmouseout='this.pause(); over_media=0'`n type="video/mp4"></video></td>`n 
+<td style='width:34em'><input id="title%j%" class='title' type='search' value='%media_s%'`n onmousedown='over_media=0; if(!event.button) {inputbox=this; sessionStorage.setItem("last_index",%j%)}'`n onmouseup="myInput.value='%media%'" oninput="ren%j%.style.display='block'"></td>`n <td id='ren%j%' style='display:none; color:#826858'`n onmousedown="media%j%.load(); inca('Rename', title%j%.value, %j%)">Rename</td>`n <td style='text-align:right'>%fo%</td></tr></table>`n`n
 
 else
   media_list = %media_list%<div id="entry%j%" style="display:flex; width%view%em; height:%view3%em; padding:%view4%em"`n onmouseup="if(!event.button&&!over_media){sel(%j%); myInput.value='%media%'}">`n <video id="media%j%" class='media' style="max-width:%view3%em; max-height:%view3%em; transform:scale(%skinny%, 1)"`n onmouseover="overThumb(%j%, %skinny%, '%type%', %start%, '%cap%', %rate%, event); if(mouse_down && gesture) {sel(%j%)}"`n onmouseout="this.pause(); over_media=0"`n src="file:///%src%"`n %poster%`n preload='none' muted loop type="video/mp4"></video>`n %caption% <input id='title%j%' value='%media%' class='title' style='display:none'></div>`n`n
@@ -442,7 +440,6 @@ else
       panel_list = %panel_list%<div style="height:7em; padding:0.5em; transform:rotate(90deg)">`n%in%</div>`n
       }
 
-;  style='min-width:%view3%em'     style='min-width:2em'
 
 
 
@@ -745,10 +742,16 @@ else
             }
         if (command == "Favorite")
             {
-            if !value
-                value := seek
-            FileAppend, %src%|%value%`r`n, %inca%\fav\new.m3u, UTF-8
-            Runwait, %inca%\apps\ffmpeg.exe -ss %value% -i "%src%" -y -vf scale=1280:1280/dar -vframes 1 "%inca%\cache\posters\%media%%A_Space%%value%.jpg",, Hide
+            popup("Added",300,0,0)
+            if value							; new start time
+              Runwait, %inca%\apps\ffmpeg.exe -ss %value% -i "%src%" -y -vf scale=1280:1280/dar -vframes 1 "%inca%\cache\posters\%media%%A_Space%%value%.jpg",, Hide
+            Loop, Parse, selected, `,
+;              if A_Loopfield
+                if GetMedia(A_Loopfield)
+                  if value
+                    FileAppend, %src%|%value%`r`n, %inca%\fav\new.m3u, UTF-8	; from modal player with new start time
+                  else FileAppend, %target%`r`n, %inca%\fav\new.m3u, UTF-8	; from htm with no start times
+
             }
         if (command == "View")
             {
@@ -764,6 +767,7 @@ else
             }
         if (command == "Delete")
             {
+            popup("Deleted",0,0,0)
             sleep 50							; time for java to free media
             reload := 3
             if playlist
@@ -1181,6 +1185,8 @@ else
             else if (sort == "Duration")
               {
               FileRead, list_id, %inca%\cache\durations\%filen%.txt
+              if !list_id
+                list_id := 0
               if (!InStr(toggles, "Reverse") && filt && list_id/60 < filt)
                 return
               else if (InStr(toggles, "Reverse") && filt && list_id/60 > filt)
@@ -1377,6 +1383,8 @@ else
 
     GetMedia(index)
         {
+        if !index
+          return
         index := index + Setting("Page Size") * (page - 1)
         FileReadLine, str, %inca%\cache\lists\%folder%.txt, index
         src := StrSplit(str, "/").2

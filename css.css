@@ -15,13 +15,13 @@
   @keyframes fadePage {from {opacity:0} to {opacity:1}}
   ::-webkit-search-cancel-button {
   -webkit-appearance: none;
-  background-color:#826858;
   -webkit-mask-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23777'><path d='M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z'/></svg>");
-  background-size:14px 14px;
-  height:14px;
-  width:14px}
+  background-size:15px 15px;
+  background:#ff000080;
+  height:15px;
+  width:15px}
 
-.player {					/* modal media player element */
+.player {					/* modal media player element*/
   position:absolute;
   border-radius:16px}
 
@@ -63,8 +63,9 @@
 
 .media2 {					/* list view media */
   position:absolute;
+  pointer-events:none;
   transition:1.2s;
-  translate:-10em 0;
+  translate: 2em 2em;
   border-radius:0.5em;
   margin:auto;
   opacity:0}
@@ -139,7 +140,7 @@
   overflow:wrap;
   margin:auto;
   line-height:1em;
-  margin-left:0.7em}
+  margin-top:-1em}
 
 .caption {					/* modal caption element */
   display:none;
