@@ -87,9 +87,12 @@ Global index := 0
     main:
       initialize()							; set environment
       WinActivate, ahk_group Browsers
-      Clipboard = #Path###%profile%\Pictures\
+      sleep 333
+      send ^l{Right}
+      sleep 333
       if !GetBrowser()
-        Clipboard()
+        Clipboard = #Path###%profile%\Pictures\
+      Clipboard()
       SetTimer, TimedEvents, 100					; every 100mS
       return								; wait for mouse/key events
 
@@ -132,7 +135,6 @@ foldr =
         page_s := Setting("Page Size")
         page_w := 100 - page_l - page_r
         zoom := Setting("Default Zoom")
-        fullscreen := Setting("Fullscreen")
         Loop, Parse, list, `n, `r 					; split list into smaller web pages
             {
             item := StrSplit(A_LoopField, "/")				; sort filter \ src \ media type \ ext
@@ -254,18 +256,19 @@ body = <body id='myBody' class='container' onload="globals(%view%, %page%, %page
 <div id='myMenu' style='position:absolute; top:2em; width:100`%'>`n`n
 
 <div id='mySelected' class='selected'></div>`n
-<div oncontextmenu="context(event)" style='padding-bottom:40em'>`n`n
+<div oncontextmenu="event.preventDefault(); nav2.style.opacity=1; context()" style='padding-bottom:40em'>`n`n
 <span id="myContext" class='context'>`n
 <a onmousedown="inca('Settings')"`n onmouseover="el=document.getElementById('title'+index); x='';`n if(media.duration){x=Math.round(media.duration/60)+'mins - '};`n if (was_over_media) {this.innerHTML=x+el.value}"`n onmouseout="this.innerHTML=' . . .'"> . . .</a>`n
-<a id='Next' onmousedown="if(!event.button){if (was_over_media) {sel(index)} else{selectAll()}}"`n onwheel="wheelEvents(event, id, this)">Select</a>`n
+<a id='Next' onmousedown="if (was_over_media) {sel(index)} else{selectAll()}"`n onwheel="wheelEvents(event, id, this)">Select</a>`n
 <a onmousedown="inca('Delete','',was_over_media)">Delete</a>`n
 <a onmousedown="inca('Favorite','',was_over_media)">Fav</a>`n
 <a onmousedown="inca('Join')">Join</a></span>`n`n
 
-<span id="myContext2" class='context'>`n
-<a id='myMute' onmouseup='mute()'`n onmouseover="x='';`n if(myPlayer.duration){x=Math.round(myPlayer.duration/60)+'mins - '};`n this.innerHTML='Mute - '+x+document.getElementById('title'+index).value"`n onmouseout="this.innerHTML='Mute'">Mute</a>`n
-<a id="myNext" onmousedown="sel(index)"`n onwheel="wheelEvents(event, id, this)">Select</a>`n
-<a id="mySpeed" onwheel="wheelEvents(event, id, this)">Speed</a>`n
+<span id="myContext2" class='context' onmouseover='nav2.style.opacity=1'>`n
+<a id='myMute' onmouseup='mute()'`n onmouseover="x='';`n if(myPlayer.duration){x=Math.round(myPlayer.duration/60)+'mins - '};`n this.innerHTML='Mute - '+x+document.getElementById('title'+index).value"`n onmouseout="this.innerHTML='Mute'" onwheel="wheelEvents(event, id, this)">Mute</a>`n
+<a id="myNext" style='padding:0.6em; font-size:1.2em' onmouseup='sel(index)'`n onwheel="wheelEvents(event, id, this)">Select</a>`n
+<a id="mySeek" style='padding:0.6em; font-size:1.2em' onwheel="wheelEvents(event, id, this)" onclick='if (myPlayer.paused) {myPlayer.play()} else {myPlayer.pause()}'>Seek</a>`n
+<a id="mySpeed" onwheel="wheelEvents(event, id, this)" onclick='if (myPlayer.paused) {myPlayer.play()} else {myPlayer.pause()}'>Speed</a>`n
 <a id="mySkinny" onwheel="wheelEvents(event, id, this)">Skinny</a>`n
 <a id='myLoop' onclick="loop()">Loop</a>`n
 <a onmousedown="inca('Favorite',myPlayer.currentTime.toFixed(1),index)">Fav</a>`n
@@ -309,6 +312,10 @@ body = <body id='myBody' class='container' onload="globals(%view%, %page%, %page
 <a onmousedown="inca('Images')" %x10%>Pics</a>`n
 <a onmousedown="inca('Videos')" %x9%>Vids</a>`n</div>`n`n
 
+      WinActivate, ahk_group Browsers
+send, ^l
+        sleep 100
+send, {BS}
       FileDelete, %inca%\cache\html\%folder%.htm
       StringReplace, header, header, \, /, All
       StringReplace, body, body, \, /, All
@@ -323,20 +330,13 @@ body = <body id='myBody' class='container' onload="globals(%view%, %page%, %page
       else if (folder == previous_tab)				; just refresh existing tab
         send, {F5}
       else 
-        {
-        Clipboard := new_html
-        WinActivate, ahk_group Browsers
-        sleep 24
-        send ^l
-        sleep 24
-        send ^v
-        sleep 24
-        send, {Enter}
-        }
-      Clipboard =
+        send, %new_html%{Enter}
 index := 0
 selected =
       previous_tab := folder
+      if fullscreen
+        send, {F11}
+      fullscreen := 0
       sleep 400							; time for page to load
       GuiControl, Indexer:, GuiInd
       PopUp("",0,0,0)
@@ -434,10 +434,10 @@ selected =
 
 
 if list_view
-  media_list = %media_list% %fold%<table><tr id="entry%j%"`n onmouseover="index=%j%; title%j%.style.color='lightsalmon'; if(mouse_down && gesture) {sel(%j%)}" onmouseout="title%j%.style.color=null; media%j%.style.opacity=0; over_media=0; media%j%.pause()">`n <td onmouseover='media.play(); media%j%.style.opacity=1'`n onmousedown='if(!event.button){sel(%j%)}'`n>%ext%`n <video id='media%j%' class='media2' style="max-width:%view3%em; max-height:%view3%em; transform:scale(%skinny%, 1)"`n src="file:///%src%"`n %poster%`n preload='none' muted loop`n onmouseover="overThumb(%j%, %skinny%, '%type%', %start%, '%cap%', %rate%, event)" onmouseout='this.pause(); over_media=0'`n type="video/mp4"></video></td>`n <td onmouseover='over_media=1; media%j%.style.opacity=1'>%size%</td>`n <td onmouseover='over_media=1; media%j%.style.opacity=1'>%dur%</td>`n <td onmouseover='over_media=1; media%j%.style.opacity=1'>%date%</td>`n <td onmouseover='over_media=1; media%j%.style.opacity=1'>%j%</td>`n <td style='width:34em'><input id="title%j%" class='title' type='search' value='%media_s%'`n oninput="was_over_media=%j%; renamebox=this.value; ren%j%.style.display='block'"></td>`n <td id='ren%j%' style='display:none; color:#826858'`n onmousedown="media%j%.load(); inca('Rename', renamebox, %j%)">Rename</td>`n <td style='text-align:right'>%fo%</td></tr></table>`n`n
+  media_list = %media_list% %fold%<table><tr id="entry%j%"`n onmouseover="index=%j%; media%j%.currentTime=%start%; media%j%.play(); title%j%.style.color='lightsalmon'; if(mouse_down && gesture) {sel(%j%)}"`n onmouseout="title%j%.style.color=null; media%j%.style.opacity=0; over_media=0; media%j%.pause()">`n <td onmouseover='media%j%.style.opacity=1' onmousedown='sel(%j%)'>%ext%`n <video id='media%j%' class='media2' style="max-width:%view3%em; max-height:%view3%em; transform:scale(%skinny%, 1)"`n src="file:///%src%"`n %poster%`n preload='none' muted loop`n onmouseover="overThumb(%j%, %skinny%, '%type%', %start%, '%cap%', %rate%, event)" onmouseout='this.pause(); over_media=0'`n type="video/mp4"></video></td>`n <td onmouseover='over_media=1; media%j%.style.opacity=1'>%size%</td>`n <td onmouseover='over_media=1; media%j%.style.opacity=1'>%dur%</td>`n <td onmouseover='over_media=1; media%j%.style.opacity=1'>%date%</td>`n <td onmouseover='over_media=1; media%j%.style.opacity=1'>%j%</td>`n <td style='width:34em'><input id="title%j%" class='title' type='search' value='%media_s%'`n oninput="was_over_media=%j%; renamebox=this.value; ren%j%.style.display='block'"></td>`n <td id='ren%j%' style='display:none; color:#826858'`n onmousedown="media%j%.load(); inca('Rename', renamebox, %j%)">Rename</td>`n <td style='text-align:right'>%fo%</td></tr></table>`n`n
 
 else
-  media_list = %media_list%<div id="entry%j%" style="display:flex; width%view%em; height:%view3%em; padding:%view4%em"`n onmouseup="if(!event.button&&!over_media){sel(%j%)}">`n <video id="media%j%" class='media' style="max-width:%view3%em; max-height:%view3%em; transform:scale(%skinny%, 1)"`n onmouseover="overThumb(%j%, %skinny%, '%type%', %start%, '%cap%', %rate%, event); if(mouse_down && gesture) {sel(%j%)}"`n onmouseout="this.pause(); over_media=0"`n src="file:///%src%"`n %poster%`n preload='none' muted loop type="video/mp4"></video>`n %caption% <input id='title%j%' value='%media%' class='title' style='display:none'></div>`n`n
+  media_list = %media_list%<div id="entry%j%" style="display:flex; width%view%em; height:%view3%em; padding:%view4%em"`n onmouseup="if(!over_media){sel(%j%)}">`n <video id="media%j%" class='media' style="max-width:%view3%em; max-height:%view3%em; transform:scale(%skinny%, 1)"`n onmouseover="overThumb(%j%, %skinny%, '%type%', %start%, '%cap%', %rate%, event); if(mouse_down && gesture) {sel(%j%)}"`n onmouseout="this.pause(); over_media=0"`n src="file:///%src%"`n %poster%`n preload='none' muted loop type="video/mp4"></video>`n %caption% <input id='title%j%' value='%media%' class='title' style='display:none'></div>`n`n
 
 }
 
@@ -465,12 +465,9 @@ else
       SetTimer, Timer_up, -350
       return
     Timer_up:					; long back key press
-
-if inca_tab
-        send, !{MButton}			; close java modal (media player)
-else  IfWinActive, ahk_group Browsers
+      IfWinActive, ahk_group Browsers
         send, ^0^w 				; close tab
-;      else send, !{F4}				; or close app
+      else send, !{F4}				; or close app
       return
     Xbutton1 up::
       SetTimer, Timer_up, Off
@@ -483,12 +480,7 @@ else  IfWinActive, ahk_group Browsers
       else IfWinExist, ahk_class mpv
         Process, Close, mpv.exe			; mpv player
       else if inca_tab
-        {
-        WinGetPos,,,w,,a
         send, +{MButton}			; close java modal (media player)
-        if (w == A_ScreenWidth)
-          send, {F11}
-        }
       else if !inca_tab
         send, {Xbutton1}
       return
@@ -662,14 +654,14 @@ else  IfWinActive, ahk_group Browsers
             pos := InStr(input, "#",,-1)
             index := SubStr(input,pos+1)
             StringTrimRight, list_id, list_id, 2
-            GetMedia(index)
+            GetMedia(StrSplit(index, ",").1)
             pos := InStr(input, "#Rename#")
             value := SubStr(input, pos+8)
             pos := InStr(value, "#",,-1)
             value := SubStr(value,1,pos-1)
             if (StrLen(value) < 4)
                 popup = too small
-            if !GetMedia(index)
+            if !GetMedia(StrSplit(index, ",").1)
                 popup = no media
             if !popup
                {
@@ -748,6 +740,8 @@ else  IfWinActive, ahk_group Browsers
             }
         if (command == "Favorite")
             {
+            if !selected
+              return
             popup("Added",300,0,0)
             if value							; new start time
               Runwait, %inca%\apps\ffmpeg.exe -ss %value% -i "%src%" -y -vf scale=1280:1280/dar -vframes 1 "%inca%\cache\posters\%media%%A_Space%%value%.jpg",, Hide
@@ -774,6 +768,8 @@ else  IfWinActive, ahk_group Browsers
             }
         if (command == "Delete")
             {
+            if !selected
+              return
             popup("Deleted",0,0,0)
             reload := 3
             if playlist
@@ -824,7 +820,7 @@ else  IfWinActive, ahk_group Browsers
               }
 index := value
 selected =
-RenderPage()
+;RenderPage()
             }
         if (command == "History")
             {
@@ -832,14 +828,15 @@ RenderPage()
             if (!playlist && (type == "video" || type == "audio"))
               FileAppend, %src%|%address%`r`n, %inca%\fav\History.m3u, UTF-8
             }
+        if (command == "Move")
+            {
+            MoveEntry()								; move entry within playlist
+;            selected =
+            reload := 3
+            }
         if (command == "Media")
             {
-            if (playlist && selected && long_click)
-              {
-              MoveEntry()								; move entry within playlist
-              reload := 3
-              }
-            else if GetMedia(value)
+            if GetMedia(value)
               {
               popup = %browser% Cannot Play %ext%
               if (ext=="pdf")
@@ -931,9 +928,6 @@ RenderPage()
         if (command=="Filt"||command=="Path"||command=="Search"||command=="SearchBox"||command=="SearchAll"||InStr(sort_list, command))
             {
             reload := 1
-            WinGetPos,,,w,,a
-            If (w == A_ScreenWidth)
-              send, {F11}
             if (command == "Path") 
               {
               if InStr(address, ".m3u")
@@ -963,6 +957,13 @@ RenderPage()
                 else run, %path%					; open folder in windows file explorer
                 reload := 0
                 }
+            WinGetPos,,,w,,a
+            if (w == A_ScreenWidth && folder != previous_tab)
+              {
+              fullscreen := 1
+              send, {F11}
+              }
+            else fullscreen := 0
               }
             if (command == "Search" || command == "SearchBox" || command == "SearchAll")
               {
@@ -1254,6 +1255,11 @@ selected =
 
     FileTransfer()
         {
+        if (address == path || playlist == address)
+          {
+          PopUp("Reset",0,0,0)
+          return
+          }
         if (playlist && !InStr(address, "\inca\"))
           {
           PopUp("Cannot Move Shortcuts",1000,0.34,0.2)
@@ -1262,11 +1268,11 @@ selected =
         Loop, Parse, selected, `,
             {
             index := A_LoopField
-            if !long_click
-              popup = Move - %media%
-            else popup = Copy - %media%
+            if long_click
+              popup = Copy - %media%
+            else popup = Move - %media%
             if (InStr(address, "\inca\"))
-              popup = Moved
+              popup = Added
             PopUp(popup,0,0,0)
             if GetMedia(index)
               if (InStr(address, "inca\fav") || InStr(address, "inca\music"))
@@ -1738,27 +1744,4 @@ selected =
         return
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+
