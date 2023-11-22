@@ -259,17 +259,18 @@ body = <body id='myBody' class='container' onload="globals(%view%, %page%, %page
 <div oncontextmenu="event.preventDefault(); nav2.style.opacity=1; context()" style='padding-bottom:40em'>`n`n
 <span id="myContext" class='context'>`n
 <a onmousedown="inca('Settings')"`n onmouseover="el=document.getElementById('title'+index); x='';`n if(media.duration){x=Math.round(media.duration/60)+'mins - '};`n if (was_over_media) {this.innerHTML=x+el.value}"`n onmouseout="this.innerHTML=' . . .'"> . . .</a>`n
-<a id='Next' onmousedown="if (was_over_media) {sel(index)} else{selectAll()}"`n onwheel="wheelEvents(event, id, this)">Select</a>`n
+<a id='Next' onmouseup="if (!long_click && was_over_media) {sel(index)} else{selectAll()}"`n onwheel="wheelEvents(event, id, this)">Select</a>`n
 <a onmousedown="inca('Delete','',was_over_media)">Delete</a>`n
 <a onmousedown="inca('Favorite','',was_over_media)">Fav</a>`n
 <a onmousedown="inca('Join')">Join</a></span>`n`n
 
 <span id="myContext2" class='context' onmouseover='nav2.style.opacity=1'>`n
-<a id='myMute' onmouseup='mute()'`n onmouseover="x='';`n if(myPlayer.duration){x=Math.round(myPlayer.duration/60)+'mins - '};`n this.innerHTML='Mute - '+x+document.getElementById('title'+index).value"`n onmouseout="this.innerHTML='Mute'" onwheel="wheelEvents(event, id, this)">Mute</a>`n
-<a id="myNext" style='padding:0.6em; font-size:1.2em' onmouseup='sel(index)'`n onwheel="wheelEvents(event, id, this)">Select</a>`n
-<a id="mySeek" style='padding:0.6em; font-size:1.2em' onwheel="wheelEvents(event, id, this)" onclick='if (myPlayer.paused) {myPlayer.play()} else {myPlayer.pause()}'>Seek</a>`n
-<a id="mySpeed" onwheel="wheelEvents(event, id, this)" onclick='if (myPlayer.paused) {myPlayer.play()} else {myPlayer.pause()}'>Speed</a>`n
-<a id="mySkinny" onwheel="wheelEvents(event, id, this)">Skinny</a>`n
+<a id='mySelect' onmouseup='sel(index)'`n onwheel="wheelEvents(event, id, this)" onmouseover="nav2.style.opacity=1; wheelEvents(event, id, this)"`n onmouseout="this.innerHTML='Select'" >Select</a>`n
+<a id="myNext" style='padding:0.6em; font-size:1.2em' onwheel="wheelEvents(event, id, this)" onmouseover="wheelEvents(event, id, this)" onmouseup='togglePause()'></a>`n
+<a id="mySeek" style='padding:0.6em; font-size:1.2em' onwheel="wheelEvents(event, id, this)" onmouseup='togglePause()'>Seek</a>`n
+<a id="mySpeed" onwheel="wheelEvents(event, id, this)" onmouseup='togglePause()'>Speed</a>`n
+<a id="mySkinny" onwheel="wheelEvents(event, id, this)" onmouseup='togglePause()'>Skinny</a>`n
+<a id='myMute' onmouseup='mute()'>Mute</a>`n
 <a id='myLoop' onclick="loop()">Loop</a>`n
 <a onmousedown="inca('Favorite',myPlayer.currentTime.toFixed(1),index)">Fav</a>`n
 <a id="myCapnav" onclick="editCap()">Cap</a>`n
@@ -957,13 +958,6 @@ selected =
                 else run, %path%					; open folder in windows file explorer
                 reload := 0
                 }
-            WinGetPos,,,w,,a
-            if (w == A_ScreenWidth && folder != previous_tab)
-              {
-              fullscreen := 1
-              send, {F11}
-              }
-            else fullscreen := 0
               }
             if (command == "Search" || command == "SearchBox" || command == "SearchAll")
               {
@@ -997,6 +991,13 @@ selected =
                 if (!InStr(sort_list, command))
                   filt := 0
                 }
+            WinGetPos,,,w,,a
+            if (w == A_ScreenWidth && folder != previous_tab)
+              {
+              fullscreen := 1
+              send, {F11}
+              }
+            else fullscreen := 0
             page := 1
             if value is not number
               value := 0
