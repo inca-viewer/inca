@@ -4,7 +4,7 @@
   ::-webkit-scrollbar-thumb {background:#1b1814; border-radius:2px}
   ::selection {color:red; background:black}
   td {outline:none; text-align:center; min-width:4.1em; overflow:hidden; white-space:nowrap}
-  table {color:#826858; font-size:0.9em; border-collapse:collapse; margin:auto; border-radius:1.5em; transition:color 0.3s}
+  table {color:#826858; font-size:0.9em; border-collapse:collapse; margin:auto; border-radius:1em; transition:color 0.3s}
   table:hover {background:#1b1814}
   c {display:block; border-radius:1em; padding-left:1em; text-decoration:none; color:#826858}
   c:hover {background:#1b1814}
@@ -20,7 +20,7 @@
   width:15px}
 
 .player {					/* modal media player element*/
-  position:absolute;
+  position:absolute; 
   border-radius:16px}
 
 .myList {					/* list view*/
@@ -43,14 +43,14 @@
   height:8em}
 
 .panel {					/* inner panel list container */
-  height:84em;
+  height:100vh;
   position:absolute;
   overflow-y:scroll;
   transform:rotate(-90deg);
   transform-origin:right top;
   border-radius:1em;
   background:#15110a;
-  width:9em;
+  width:10em;
   left:-9em}
 
 .media {					/* thumb view media */
@@ -104,15 +104,15 @@
   overflow:hidden;
   text-overflow:ellipsis; 
   background-color:inherit;
+  color:inherit;
   font-size:inherit;
   font-family:inherit;
   border-radius:1em;
   text-align:left;
   width:100%;
-  color:inherit;
   outline:none;
   border:none;
-  height:1.4em;
+  height:100%;
   white-space:nowrap}
 
 .selected {
@@ -185,10 +185,10 @@
 .context a {
   display:block;
   height:1em;
-  padding-left:1.2em;
+  margin:auto;
+  padding:0.5em;
+  padding-top:0;
   border-radius:1em;
-  padding-right:1.2em;
-  padding-bottom:0.6em;
   color:lightsalmon}
 .context a:hover {background:#1b1814}
 
