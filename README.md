@@ -1,29 +1,29 @@
 
 # A browser based media file explorer<br>
 
-Windows - Chrome, Firefox, Edge, Opera, Brave compatible<br>
+Windows - Chrome, Firefox, Edge, Opera & Brave<br>
 YouTube like interface of your local media files<br><br>
 
-Around 500 lines of Java script and 50kB of AutoHotkey script<br>
-Is lightweight, portable (no installation)<br>
-and does not mess with any settings<br>
+Around 30k of Java and 60kB of AutoHotkey script<br>
+Is lightweight & portable (no installation)<br>
+Pure vanilla script. No IDE, no external calls<br> 
+Does not mess with any settings<br>
+Just run Compile.exe - browser will open in pictures folder<br>
+To 'uninstall', just exit from taskbar & delete folder
+Just scan over the Java and AHK scripts to see it's harmless
 
 # Features:
 
-6 x 6 Video thumbsheets. (middle click)<br>
-Randomize / shuffle folders, media, playlists<br>
-Speed, width, magnify & volume with mouse gestures<br><br>
+6 x 6 Video thumbsheets. (long click)<br>
+Shuffle folders & playlists<br>
+Speed, width, magnify, seek, next, volume<br><br>
 
 ><img src="screens/Screen 1.jpg" width="640"/></p><br>
 
 <p><img src="screens/Screen 2.jpg" width="640"/></p><br><br>
 
-Just run Ince.exe - browser will open in pictures folder<br>
-To 'uninstall', just close from taskbar tray and delete the inca folder<br><br>
-
 Search, organize, edit & view media files in browser<br>
-Create captions for images & video<br>
-Create Favorites, history, slideshows, storylines<br><br>
+Create captions, favorites, clips etc.<br>
 Music and playlists from browser tab<br>
 Sleep timer gradually lowers master volume when mouse quiet<br>
 
@@ -35,24 +35,22 @@ Thumbsheets index at about 50 videos per minute<br>
 
 Written in a simple scripting languages - Java & AutoHotkey<br>
 If it's not exactly what you want, change it. It re-compiles in under a second<br>
-You don't need to be a programmer and it's really easy to customize.<br>
-Just snip out the bits you don't like and write any features you want.<br>
-Edit and Compile the program within browser - no IDE needed<br>
+You don't need to be a programmer to experiment a bit.<br>
 
 # Usage
 
 Long click
-- on selected text - searches your media for matches
+- on selected text - finds media
 
 Right click slide gesture
 - volume control
 
 Middle click
-- show 6 x 6 thumb sheet
+- next media (long click - previous)
 
 Back click
-- in media - exit
-- in tab - clear selection, top of page
+- if playing - exit
+- else clear selection, page top
 
 <br><br>Supports rotated screen & osk onscreen keyboard<br>
 long press on any text for osk, back click or enter to close<br>
