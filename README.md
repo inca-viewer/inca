@@ -9,8 +9,7 @@ Is lightweight & portable (no installation)<br>
 Pure vanilla script. No IDE, no external calls<br> 
 Does not mess with any settings<br>
 Just run Compile.exe - browser will open in pictures folder<br>
-To 'uninstall', just exit from taskbar & delete folder
-Just scan over the Java and AHK scripts to see it's harmless
+To 'uninstall', just exit from taskbar & delete folder<br>
 
 # Features:
 
