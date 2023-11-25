@@ -23,6 +23,13 @@
   position:absolute; 
   border-radius:16px}
 
+.preview {					/* thumbsheet preview video */
+  position:absolute; 
+  display:none;
+  border-radius:8px;
+  transition:0.2s;
+  border:6px solid black}
+
 .myList {					/* list view*/
   position:absolute;
   display:flex;
@@ -120,16 +127,16 @@
   position:absolute;
   z-index:999;
   color:red;
-  width:2em;
+//  width:2em;
   height:2em;
-  font-size:1.4em}
+  font-size:2em}
 
 .seekbar {					/* video progress bar	*/
   position:absolute;
   opacity:0;
   border-radius:2px;
   color:lightsalmon;
-  font-size:1em;
+  font-size:1.4em;
   border-top:2px solid red;
   transition:0.2s}
 

@@ -136,7 +136,6 @@ foldr =
         page_r := Setting("Margin Right")
         page_s := Setting("Page Size")
         page_w := 100 - page_l - page_r
-        zoom := Setting("Transition")
         rate := Setting("Default Speed")
         Loop, Parse, list, `n, `r 					; split list into smaller web pages
             {
@@ -255,7 +254,7 @@ if playlist
 
 header = <!--, %view%, %page%, %pages%, %filt%, %sort%, %toggles%, %list_view%, %playlist%, %path%, %search_path%, %search_term%, , -->`n<!doctype html>`n<html>`n<head>`n<meta charset="UTF-8">`n<title>Inca - %title%</title>`n<meta name="viewport" content="width=device-width, initial-scale=1">`n<link rel="icon" type="image/x-icon" href="file:///%inca%\cache\icons\inca.ico">`n<link rel="stylesheet" type="text/css" href="file:///%inca%/css.css">`n</head>`n`n
 
-body = <body id='myBody' class='container' onload="globals(%view%, %page%, %pages%, '%sort%', %filt%, %zoom%, %rate%, %list_view%, '%selected%', '%playlist%', %index%); myFol.scrollIntoView()">`n`n
+body = <body id='myBody' class='container' onload="globals(%view%, %page%, %pages%, '%sort%', %filt%, %rate%, %list_view%, '%selected%', '%playlist%', %index%); myFol.scrollIntoView()">`n`n
 
 <div id='myMenu' style='position:absolute; top:2em; width:100`%'>`n`n
 <div id='mySelected' class='selected'></div>`n
@@ -267,8 +266,7 @@ body = <body id='myBody' class='container' onload="globals(%view%, %page%, %page
 <a onmouseup="if (!long_click && was_over_media) {sel(index)} else{selectAll()}">Select</a>`n
 <a onmousedown="inca('Delete','',was_over_media)">Delete</a>`n
 <a onmousedown="inca('Favorite','',was_over_media)">Fav</a>`n
-<a onmousedown="inca('Join')">Join</a>
-<a onmousedown="inca('About')">About</a>`n</span>`n`n
+<a onmousedown="inca('Join')">Join</a></span>`n`n
 
 <span id="myContext2" class='context' onmouseover='nav2.style.opacity=1'>`n
 <a id='mySelect' onmouseup='sel(index)'`n onwheel="wheelEvents(event, id, this)" onmouseover="nav2.style.opacity=1"`n onmouseout="this.innerHTML='Select'" >Select</a>`n
@@ -278,6 +276,8 @@ body = <body id='myBody' class='container' onload="globals(%view%, %page%, %page
 <a id="mySkinny" onwheel="wheelEvents(event, id, this)" onmouseup='togglePause()'>Skinny</a>`n
 <a id='myMute' onmouseup='mute()'>Mute</a>`n
 <a id='myLoop' onclick="loop()">Loop</a>`n
+<a id="myZoom" onwheel="wheelEvents(event, id, this)">Zoom/a>`n
+<a id="myFade" onwheel="wheelEvents(event, id, this)">Fade</a>`n
 <a id="myFav" onmousedown="inca('Favorite', myPlayer.currentTime.toFixed(1), index, cue)">Fav</a>`n
 <a id="myCapnav" onclick="editCap()">Cap</a>`n
 <a id="myCue" onclick="editing=true; myPlayer.pause(); nav2.style.display=null; cue=Math.round(myPlayer.currentTime*10)/10">Cue</a>`n
@@ -288,7 +288,8 @@ body = <body id='myBody' class='container' onload="globals(%view%, %page%, %page
 <div id="myModal" class="modal" onwheel="wheelEvents(event, id, this)">`n
 <div><video id="myPlayer" class='player' type="video/mp4" muted></video>`n
 <span id="mySeekbar" class='seekbar'></span>`n
-<textarea id="myCap" class="caption" onmouseenter="over_cap=true" onmouseleave="over_cap=false"></textarea></div></div>`n`n
+<textarea id="myCap" class="caption" onmouseenter="over_cap=true" onmouseleave="over_cap=false"></textarea></div>
+<span><video class='preview' id='myPreview' muted type="video/mp4"></video></span></div>`n`n
 
 <div id='myView' class='myList' style='padding-left:%page_l%`%; padding-right:%page_r%`%'>`n`n<div style='width:100`%; height:14em'></div>`n%media_list%<div style='width:100`%; height:50vh'></div>`n`n
 
@@ -642,7 +643,7 @@ else
         reload =
         type =
         ptr := 1
-        sleep 24
+        sleep 100							; time for browser to release media etc.
         messages := StrReplace(Clipboard, "/", "\")
         array := StrSplit(messages,"#")
         Loop % array.MaxIndex()/4
@@ -671,12 +672,6 @@ else
     ProcessMessage()
         {
         Clipboard =
-        if (command == "About")
-          {
-          if (browser == "google chrome")
-            Run, chrome.exe "https://github.com/inca-viewer/inca"
-          else Run, msedge.exe "https://github.com/inca-viewer/inca"
-          }
         if (command == "Rename")
             {
             if (StrLen(value) < 4)
@@ -727,7 +722,7 @@ else
             sleep 1000
             reload := 3
             }
-        if (command == "Settings") 
+        if (command == "Settings")
             run, %inca%\
         if (command == "Caption")
             {
@@ -784,7 +779,6 @@ else
             {
             if !selected
               return
-            sleep 100							; time for browser to release media
             popup("Deleted",0,0,0)
             reload := 3
             if playlist
@@ -855,24 +849,21 @@ selected =
               {
 FileRead, dur, %inca%\cache\durations\%media%.txt
               if !dur
-ttt(src)
-              popup = %browser% Cannot Play %ext%
+                index(src)
               if (ext=="pdf")
                 Run, %src%
               else if (type=="document" || type=="m3u")
                 Run, % "notepad.exe " . src
               else if Setting("External Player")
                 {
-                sleep 200
-                send, {MButton up}							; close java modal (media player) 
+                send, +{MButton}							; close java player
                 Run %inca%\cache\apps\mpv "%src%"
                 }
               else if (!long_click && ((browser == "mozilla firefox" && type == "video" && ext != "mp4" && ext != "m4v" && ext != "webm") || (browser == "google chrome" && type == "video" && ext != "mp4" && ext != "mkv" && ext != "m4v" && ext != "webm")))
                 {
-                sleep 200
-                send, {MButton up}							; close java modal (media player) 
+                send, +{MButton}							; close java player 
                 Run %inca%\cache\apps\mpv "%src%"
-                Popup(popup,1500,0.34,0.8)
+                Popup("Browser Cannot Play",1500,0.34,0.8)
                 }
               }
             }
@@ -1636,11 +1627,11 @@ selected =
     if index_folders
       Loop, Parse, index_folders, `|
         Loop, Files, %A_LoopField%*.*, R
-ttt(A_LoopFileFullPath)
+    index(A_LoopFileFullPath)
     return
 
 
-ttt(source)
+    index(source)
           {
           SplitPath, source,,fold,ex,filen
           med := DecodeExt(ex)
