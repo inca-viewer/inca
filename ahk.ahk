@@ -136,7 +136,7 @@ foldr =
         page_r := Setting("Margin Right")
         page_s := Setting("Page Size")
         page_w := 100 - page_l - page_r
-        zoom := Setting("Default Zoom")
+        zoom := Setting("Transition")
         rate := Setting("Default Speed")
         Loop, Parse, list, `n, `r 					; split list into smaller web pages
             {
@@ -253,24 +253,26 @@ if playlist
         view3 := view/10
         view4 := view-7
 
-header = <!--, %view%, %page%, %pages%, %filt%, %sort%, %toggles%, %list_view%, %playlist%, %path%, %search_path%, %search_term%, , -->`n<!doctype html>`n<html>`n<head>`n<meta charset="UTF-8">`n<title>Inca - %title%</title>`n<meta name="viewport" content="width=device-width, initial-scale=1">`n<link rel="icon" type="image/x-icon" href="file:///%inca%\apps\icons\inca.ico">`n<link rel="stylesheet" type="text/css" href="file:///%inca%/css.css">`n</head>`n`n
+header = <!--, %view%, %page%, %pages%, %filt%, %sort%, %toggles%, %list_view%, %playlist%, %path%, %search_path%, %search_term%, , -->`n<!doctype html>`n<html>`n<head>`n<meta charset="UTF-8">`n<title>Inca - %title%</title>`n<meta name="viewport" content="width=device-width, initial-scale=1">`n<link rel="icon" type="image/x-icon" href="file:///%inca%\cache\icons\inca.ico">`n<link rel="stylesheet" type="text/css" href="file:///%inca%/css.css">`n</head>`n`n
 
 body = <body id='myBody' class='container' onload="globals(%view%, %page%, %pages%, '%sort%', %filt%, %zoom%, %rate%, %list_view%, '%selected%', '%playlist%', %index%); myFol.scrollIntoView()">`n`n
 
 <div id='myMenu' style='position:absolute; top:2em; width:100`%'>`n`n
 <div id='mySelected' class='selected'></div>`n
 
-<div oncontextmenu="event.preventDefault(); nav.style.opacity=1; context()" style='padding-bottom:40em'>`n`n
+<div oncontextmenu="event.preventDefault(); context()" style='padding-bottom:40em'>`n`n
 <span id="myContext" class='context' onmouseout="media.style.zIndex=null; media.style.transform='scale('+skinny+',1)'; if(list_view) {media.style.opacity=0}; media.pause()">`n
-<a onmousedown="inca('Settings')"`n onmouseover="el=document.getElementById('title'+index); x='';`n if(media.duration){x=Math.round(media.duration/60)+'mins - '};`n if (was_over_media) {this.innerHTML=x+el.value}"`n onmouseout="this.innerHTML=' . . .'"> . . .</a>`n
-<a id='Next' onmouseup="if (!long_click && was_over_media) {sel(index)} else{selectAll()}"`n onwheel="wheelEvents(event, id, this)">Select</a>`n
+
+<a onmouseup="inca('Settings')"`n onmouseover="el=document.getElementById('title'+index); x='';`n if(media.duration){x=Math.round(media.duration/60)+'mins - '};`n if (was_over_media) {this.innerHTML=x+el.value}"`n onmouseout="this.innerHTML=' . . .'"> . . .</a>`n
+<a onmouseup="if (!long_click && was_over_media) {sel(index)} else{selectAll()}">Select</a>`n
 <a onmousedown="inca('Delete','',was_over_media)">Delete</a>`n
 <a onmousedown="inca('Favorite','',was_over_media)">Fav</a>`n
-<a onmousedown="inca('Join')">Join</a></span>`n`n
+<a onmousedown="inca('Join')">Join</a>
+<a onmousedown="inca('About')">About</a>`n</span>`n`n
 
 <span id="myContext2" class='context' onmouseover='nav2.style.opacity=1'>`n
-<a id='mySelect' onmouseup='sel(index)'`n onwheel="wheelEvents(event, id, this)" onmouseover="nav2.style.opacity=1; wheelEvents(event, id, this)"`n onmouseout="this.innerHTML='Select'" >Select</a>`n
-<a id="myNext" style='font-size:1.5em' onwheel="wheelEvents(event, id, this)" onmouseover="nav2.style.opacity=1; wheelEvents(event, id, this)" onmouseup='togglePause()'></a>`n
+<a id='mySelect' onmouseup='sel(index)'`n onwheel="wheelEvents(event, id, this)" onmouseover="nav2.style.opacity=1"`n onmouseout="this.innerHTML='Select'" >Select</a>`n
+<a id="myNext" style='font-size:1.5em' onwheel="wheelEvents(event, id, this)" onmouseover="nav2.style.opacity=1" onmouseup='togglePause()'></a>`n
 <a id="mySeek" style='font-size:1.5em' onwheel="wheelEvents(event, id, this)" onmouseup='togglePause()'>Seek</a>`n
 <a id="mySpeed" onwheel="wheelEvents(event, id, this)" onmouseup='togglePause()'>Speed</a>`n
 <a id="mySkinny" onwheel="wheelEvents(event, id, this)" onmouseup='togglePause()'>Skinny</a>`n
@@ -279,8 +281,8 @@ body = <body id='myBody' class='container' onload="globals(%view%, %page%, %page
 <a id="myFav" onmousedown="inca('Favorite', myPlayer.currentTime.toFixed(1), index, cue)">Fav</a>`n
 <a id="myCapnav" onclick="editCap()">Cap</a>`n
 <a id="myCue" onclick="editing=true; myPlayer.pause(); nav2.style.display=null; cue=Math.round(myPlayer.currentTime*10)/10">Cue</a>`n
-<a id="myMp4" onmousedown="inca('mp4', myPlayer.currentTime.toFixed(1), index, cue)">mp4</a>`n
-<a id="myMp3" onmousedown="inca('mp3', myPlayer.currentTime.toFixed(1), index, cue)">mp3</a>`n
+<a id="myMp4" onmousedown="inca('mp4', myPlayer.currentTime.toFixed(1), index, cue.toFixed(1))">mp4</a>`n
+<a id="myMp3" onmousedown="inca('mp3', myPlayer.currentTime.toFixed(1), index, cue.toFixed(1))">mp3</a>`n
 <a id='myFlip' onmousedown='flip()'>Flip</a></span>`n`n
 
 <div id="myModal" class="modal" onwheel="wheelEvents(event, id, this)">`n
@@ -362,7 +364,7 @@ selected =
           cap_size := 1.4
         if DetectMedia(input)
             thumb := src
-        else thumb = %inca%\apps\icons\no link.png
+        else thumb = %inca%\cache\icons\no link.png
         x := RTrim(media_path,"\")
         SplitPath, x,,,,y
         if (search_term && foldr != y && sort == "Alpha")
@@ -429,9 +431,9 @@ selected =
           date = %sort_date% d
 
         if (type == "audio" || type == "m3u")
-            thumb = %inca%\apps\icons\music.png
+            thumb = %inca%\cache\icons\music.png
         if (type == "document")
-            thumb = %inca%\apps\icons\ebook.png
+            thumb = %inca%\cache\icons\ebook.png
         StringReplace, thumb, thumb, #, `%23, All
         StringReplace, src, src, #, `%23, All				; html cannot have # in filename
         stringlower, thumb, thumb
@@ -669,6 +671,12 @@ else
     ProcessMessage()
         {
         Clipboard =
+        if (command == "About")
+          {
+          if (browser == "google chrome")
+            Run, chrome.exe "https://github.com/inca-viewer/inca"
+          else Run, msedge.exe "https://github.com/inca-viewer/inca"
+          }
         if (command == "Rename")
             {
             if (StrLen(value) < 4)
@@ -710,17 +718,17 @@ else
             GuiControl, Indexer:, GuiInd, %src%
             x = %value%							; converts number to string
             if !address
-              run, %inca%\apps\ffmpeg.exe -ss %value% -i "%src%" "%media_path%\%media% %x%.%command%",,Hide
+              run, %inca%\cache\apps\ffmpeg.exe -ss %value% -i "%src%" "%media_path%\%media% %x%.%command%",,Hide
             else if (address == value)
-              run, %inca%\apps\ffmpeg.exe -ss 0 -to %address% -i "%src%" "%media_path%\%media% %x%.%command%",,Hide
+              run, %inca%\cache\apps\ffmpeg.exe -ss 0 -to %address% -i "%src%" "%media_path%\%media% %x%.%command%",,Hide
             else if (address < value)
-              run, %inca%\apps\ffmpeg.exe -ss %address% -to %value% -i "%src%" "%media_path%\%media% %x%.%command%",,Hide
-            else   run, %inca%\apps\ffmpeg.exe -ss %value% -to %address% -i "%src%" "%media_path%\%media% %x%.%command%",,Hide
+              run, %inca%\cache\apps\ffmpeg.exe -ss %address% -to %value% -i "%src%" "%media_path%\%media% %x%.%command%",,Hide
+            else   run, %inca%\cache\apps\ffmpeg.exe -ss %value% -to %address% -i "%src%" "%media_path%\%media% %x%.%command%",,Hide
             sleep 1000
             reload := 3
             }
         if (command == "Settings") 
-            ShowSettings()
+            run, %inca%\
         if (command == "Caption")
             {
             if (SubStr(value,1,1) == "|")				; no text before time
@@ -733,14 +741,14 @@ else
             FileAppend, %str%, %inca%\cache\captions\%media%.srt, UTF-8
             GetMedia(StrSplit(selected, ",").1)
             start := StrSplit(value, "|").2
-            Runwait, %inca%\apps\ffmpeg.exe -ss %start% -i "%src%" -y -vf scale=1280:1280/dar -vframes 1 "%inca%\cache\posters\%media%%A_Space%%start%.jpg",, Hide
+            Runwait, %inca%\cache\apps\ffmpeg.exe -ss %start% -i "%src%" -y -vf scale=1280:1280/dar -vframes 1 "%inca%\cache\posters\%media%%A_Space%%start%.jpg",, Hide
             reload := 2
             }
         if (command == "Favorite")
             {
             if !selected
               return
-            popup("Added",300,0,0)
+            popup("Added",900,0,0)
             if !address
               address = 0.0
             else if (address < value)
@@ -750,7 +758,7 @@ else
               address:=x
               }
             if value							; new start time
-              Runwait, %inca%\apps\ffmpeg.exe -ss %value% -i "%src%" -y -vf scale=1280:1280/dar -vframes 1 "%inca%\cache\posters\%media%%A_Space%%value%.jpg",, Hide
+              Runwait, %inca%\cache\apps\ffmpeg.exe -ss %value% -i "%src%" -y -vf scale=1280:1280/dar -vframes 1 "%inca%\cache\posters\%media%%A_Space%%value%.jpg",, Hide
             Loop, Parse, selected, `,
 ;              if A_Loopfield
                 if GetMedia(A_Loopfield)
@@ -857,13 +865,13 @@ ttt(src)
                 {
                 sleep 200
                 send, {MButton up}							; close java modal (media player) 
-                Run %inca%\apps\mpv "%src%"
+                Run %inca%\cache\apps\mpv "%src%"
                 }
               else if (!long_click && ((browser == "mozilla firefox" && type == "video" && ext != "mp4" && ext != "m4v" && ext != "webm") || (browser == "google chrome" && type == "video" && ext != "mp4" && ext != "mkv" && ext != "m4v" && ext != "webm")))
                 {
                 sleep 200
                 send, {MButton up}							; close java modal (media player) 
-                Run %inca%\apps\mpv "%src%"
+                Run %inca%\cache\apps\mpv "%src%"
                 Popup(popup,1500,0.34,0.8)
                 }
               }
@@ -914,8 +922,8 @@ ttt(src)
                 Popup("Join Media",0,0,0)
                 str = file '%media_path%\%media2%.%ext%'`r`nfile '%media_path%\%media%.%ext%'`r`n
                 FileAppend,  %str%, %inca%\cache\lists\temp1.txt, utf-8
-                runwait, %inca%\apps\Utf-WithoutBOM.bat %inca%\cache\lists\temp1.txt > %inca%\cache\lists\temp.txt,,Hide
-                runwait, %inca%\apps\ffmpeg.exe -f concat -safe 0 -i "%inca%\cache\lists\temp.txt" -c copy "%media_path%\%media%- join.mp4",,Hide
+                runwait, %inca%\cache\apps\Utf-WithoutBOM.bat %inca%\cache\lists\temp1.txt > %inca%\cache\lists\temp.txt,,Hide
+                runwait, %inca%\cache\apps\ffmpeg.exe -f concat -safe 0 -i "%inca%\cache\lists\temp.txt" -c copy "%media_path%\%media%- join.mp4",,Hide
                 }
               sleep 1000
               reload := 3
@@ -1445,109 +1453,6 @@ selected =
         }
 
 
-    ShowSettings()
-        {
-        Global
-        gui, settings:Destroy
-        Gui, settings:+lastfound -Caption +ToolWindow
-	Gui, settings: Font, s8, Verdana
-        Loop, Parse, features, `|
-            {
-            array := StrSplit(A_LoopField, "/")
-            key := array.1
-            value := array.2
-            if key
-                gui, settings:add, edit, x18 h16 w40 vfeature%A_Index%, %value%
-            else gui, settings:add, text
-            gui, settings:add, text, x68 yp+2, %key%
-            }
-        gui, settings:add, text, x165 y10, Search Terms
-        gui, settings:add, edit, x160 yp+13 h60 w500 vSearch, %search%
-        gui, settings:add, text, x165 yp+66, Folders
-        gui, settings:add, edit, x160 yp+13 h60 w500 vFol, %fol%
-        gui, settings:add, text, x165 yp+66, Fav Playlists
-        gui, settings:add, edit, x160 yp+13 h60 w500 vFav, %fav%
-        gui, settings:add, text, x165 yp+66, Music Playlists
-        gui, settings:add, edit, x160 yp+13 h60 w500 vMusic, %music%
-        gui, settings:add, text, x165 yp+66, Folders to Search
-        gui, settings:add, edit, x160 yp+13 h18 w500 vsearch_folders, %search_folders%
-        gui, settings:add, text, x165 yp+23, Folders to Index
-        gui, settings:add, edit, x160 yp+13 h18 w500 vindex_folders, %index_folders%
-        gui, settings:add, button, x160 y410 w60, ahk
-        gui, settings:add, button, x230 y410 w60, java
-        gui, settings:add, button, x300 y410 w60, css
-        gui, settings:add, button, x370 y410 w60, Compile
-        gui, settings:add, button, x440 y410 w60, About
-        gui, settings:add, button, x510 y410 w60, Cancel
-        gui, settings:add, button, x580 y410 w60 default, Save
-        gui, settings:show
-        send, +{Tab}
-        }
-
-        settingsButtonCompile:
-        run %inca%\apps\Compile.exe
-        return
-
-        settingsButtoncss:
-        run, notepad %inca%\css.css
-        return
-
-        settingsButtonahk:
-        run, notepad %inca%\ahk.ahk
-        return
-
-        settingsButtonJava:
-        run, notepad %inca%\java.js
-        return
-
-        settingsButtonAbout:
-        WinClose
-        if (browser == "google chrome")
-          Run, chrome.exe "https://github.com/inca-viewer/inca"
-        else Run, msedge.exe "https://github.com/inca-viewer/inca"
-        return
-
-        settingsButtonCancel:
-        WinClose
-        return
-
-        settingsButtonSave:
-        gui, settings:submit
-        StringReplace, search, search, |, `n, All
-        Sort, search, u
-        StringReplace, search, search, `n, |, All
-        IniWrite,%search%,%inca%\ini.ini,Settings,Search
-        IniWrite,%fol%,%inca%\ini.ini,Settings,Fol
-        IniWrite,%fav%,%inca%\ini.ini,Settings,Fav
-        IniWrite,%music%,%inca%\ini.ini,Settings,Music
-        IniWrite,%search_folders%,%inca%\ini.ini,Settings,search_folders
-        IniWrite,%index_folders%,%inca%\ini.ini,Settings,index_folders
-        new =
-        Loop, Parse, features, `|
-            {
-            array := StrSplit(A_LoopField, "/")
-            key := array.1
-            value := feature%A_Index%
-            new = %new%%key%/%value%|         
-            }
-        StringTrimRight,new,new,1
-        IniWrite,%new%,%inca%\ini.ini,Settings,features
-        settingsFinished:
-        run %inca%\apps\Compile.exe
-        return
-
-
-    Setting(key)
-        {
-        Loop, Parse, features, `|
-            {
-            x := StrSplit(A_LoopField, "/").1
-            if InStr(x, key)
-                return StrSplit(A_LoopField, "/").2
-            }
-        }
-
-
     ShowStatus()
         {
         FormatTime, time,, h:mm
@@ -1613,7 +1518,7 @@ selected =
             {
             clp := clipboard
             clipboard =
-            RunWait %COMSPEC% /c %inca%\apps\ffmpeg.exe -i "%source%" 2>&1 | find "Duration" | Clip, , hide && exit
+            RunWait %COMSPEC% /c %inca%\cache\apps\ffmpeg.exe -i "%source%" 2>&1 | find "Duration" | Clip, , hide && exit
             ClipWait, 3
             StringTrimLeft, aTime, clipboard, 12
             StringLeft, aTime, aTime, 8
@@ -1631,6 +1536,9 @@ selected =
         {
         Global
         inca := A_ScriptDir
+        inca := SubStr(inca, 1, InStr(inca, "\", False, -1))	; one folders back
+        inca := SubStr(inca, 1, InStr(inca, "\", False, -1))
+        StringTrimRight, inca, inca, 1
         EnvGet, profile, UserProfile
         IniRead,features,%inca%\ini.ini,Settings,features
         IniRead,search_folders,%inca%\ini.ini,Settings,search_folders
@@ -1639,6 +1547,17 @@ selected =
         IniRead,search,%inca%\ini.ini,Settings,Search
         IniRead,fav,%inca%\ini.ini,Settings,Fav
         IniRead,music,%inca%\ini.ini,Settings,Music
+        }
+
+
+    Setting(key)
+        {
+        Loop, Parse, features, `|
+            {
+            x := StrSplit(A_LoopField, "/").1
+            if InStr(x, key)
+                return StrSplit(A_LoopField, "/").2
+            }
         }
 
 
@@ -1756,13 +1675,13 @@ ttt(source)
                 {
                 y := Round(A_Index / 5)
                 if (create & 1 && A_Index == 5)
-                    runwait, %inca%\apps\ffmpeg.exe -ss %t% -i "%source%" -y -vf scale=1280:1280/dar -vframes 1 "%inca%\cache\posters\%filen%.jpg",, Hide
+                    runwait, %inca%\cache\apps\ffmpeg.exe -ss %t% -i "%source%" -y -vf scale=1280:1280/dar -vframes 1 "%inca%\cache\posters\%filen%.jpg",, Hide
                 if (create & 2 && !Mod(A_Index,5))
-                    runwait, %inca%\apps\ffmpeg.exe -ss %t% -i "%source%" -y -vf scale=480:480/dar -vframes 1 "%inca%\cache\lists\%y%.jpg",, Hide
+                    runwait, %inca%\cache\apps\ffmpeg.exe -ss %t% -i "%source%" -y -vf scale=480:480/dar -vframes 1 "%inca%\cache\lists\%y%.jpg",, Hide
                 t += (dur / 200)
                 }
             if (create & 2)
-                Runwait %inca%\apps\ffmpeg -i %inca%\cache\lists\`%d.jpg -filter_complex "tile=6x6" -y "%inca%\cache\thumbs\%filen%.jpg",, Hide
+                Runwait %inca%\cache\apps\ffmpeg -i %inca%\cache\lists\`%d.jpg -filter_complex "tile=6x6" -y "%inca%\cache\thumbs\%filen%.jpg",, Hide
             GuiControl, Indexer:, GuiInd
             }
           }

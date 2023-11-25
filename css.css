@@ -56,14 +56,14 @@
 .media {					/* thumb view media */
   position:relative;
   margin:auto;
-  transition: transform 2.4s;
+//  transition: transform 2.4s;
   outline:0.3em solid #15110a;
   border-radius:0.5em}
 
 .media2 {					/* list view media */
   position:absolute;
   pointer-events:none;
-  transition:1.2s;
+//  transition:1.2s;
   translate: 18.5em 2em;
   border-radius:0.5em;
   margin:auto;

@@ -13,11 +13,12 @@
 // slide htm media to fixed position
 // new header for natural/reverse list order entry
 // consider index 0 instead of was over
-// simplify htm list entry
+// simplify media list htm
 // part nav2 hide
-// option to auto do slow zoom on modal media
-// use last_scaleY
-
+// use css variables to clean htm style code
+// no mbutt scroll if selected
+// sheet row to play on hover
+// cannot play wmv message during next...
 
   var media = document.getElementById('media1')				// first media element
   var modal = document.getElementById('myModal')			// media player window
@@ -25,7 +26,7 @@
   var nav2 = document.getElementById('myContext2')			// context menu over thumbs
   var cap = document.getElementById('myCap')				// caption textarea element
   var capnav = document.getElementById('myCapnav')			// caption save button
-  var zoom = 1*localStorage.getItem('zoom')
+  var last_scaleY = 1*localStorage.getItem('last_scaleY')
   var intervalTimer
   var wheel = 0
   var block = 100							// block wheel/gesture events
@@ -81,19 +82,20 @@
   var Yoff = 0
   var index_scroll
   var list_view = 0
-var zoom1
+  var zoom = 1
 
   getParameters()							// initialise to media1 attributes
-  Gesture(0)								// fill search bar
-  if (!zoom || zoom<=0.2) {zoom=0.64}
+  gestureEvents(0)							// fill search bar
+  if (!last_scaleY || last_scaleY<=0.2) {last_scaleY=0.64}
   modal.style.opacity=0;						// stop page load flicker
   modal.style.zIndex=-1;
   mediaX = 1*localStorage.getItem('mediaX')
   mediaY = 1*localStorage.getItem('mediaY')				// last media position
+  intervalTimer = setInterval(Timer,100)				// 100mS timer
   document.addEventListener('mousedown', mouseDown)
   document.addEventListener('mouseup', mouseUp)				// mouseUp alone = mouse back button
   document.addEventListener('dragend', mouseUp)
-  document.addEventListener('mousemove', Gesture)
+  document.addEventListener('mousemove', gestureEvents)
   document.addEventListener('keypress', (e) => {
     if (e.key=='Enter') {
       if (searchbox) {inca('SearchBox', searchbox.value)}		// search for media
@@ -102,8 +104,9 @@ var zoom1
 
   function mouseDown(e) {
     Xref=xpos; Yref=ypos
+    long_click=false
     mouse_down=e.button+1
-    if (e.button == 1) {						// Mclick - middle click
+    if (e.button == 1) {						// middle click
       if (over_media || type || selected || e.shiftKey || e.altKey) {e.preventDefault()}
       clickTimer = setTimeout(function() {
         wheel=0; long_click=true; block=0
@@ -140,8 +143,8 @@ var zoom1
         else if (type == 'thumbsheet') {playThumb()}
         else if (!type && over_media) {playMedia('Click')}
         else if (type) {togglePause()}}}
-    gesture=false; mouse_down=0; long_click=false
-    clearTimeout(clickTimer); Gesture(e)}				// to show selected
+    gesture=false; mouse_down=0
+    clearTimeout(clickTimer); gestureEvents(e)}				// to show selected
 
 
   function mouseBack() {
@@ -149,15 +152,19 @@ var zoom1
     myPlayer.style.opacity=0
     nav2.style.display=null
     nav2.style.opacity=1
-editing = false
-localStorage.setItem('zoom',zoom)
+    editing = false
+    localStorage.setItem('last_scaleY',last_scaleY)
     setTimeout(function() {
       if (type) {
         closeMedia()
+        myPlayer.removeEventListener('ended', media_ended)
         navigator.clipboard.writeText(messages)
-        cache = cache + messages; messages=''} 
+        messages=''
+        type=''} 
       start=0
       over_media=0
+      myPlayer.src=''
+      myPlayer.poster=''
       modal.style.opacity=0
       modal.style.zIndex=-1},250)}
 
@@ -198,29 +205,36 @@ localStorage.setItem('zoom',zoom)
     myPlayer.style.height = y +'px'
     myPlayer.style.left = mediaX-x/2 +'px'
     myPlayer.style.top = mediaY-y/2 +'px'
-    if (mouse_down==2 || myPlayer.src != media.src) {myPlayer.src=media.src}	// so not to restart play 
-    myPlayer.poster = media.poster
     myPlayer.playbackRate = rate
+    myPlayer.poster = media.poster
+    myPlayer.src=media.src
     return type_t}
 
 
   function playMedia(e) {
-    var playing = type
+    if (!type) {
+      myPlayer.addEventListener('ended', media_ended)
+      Play(e)}
+    else {								// transition to next
+      myPlayer.style.opacity=0
+      if (long_click) {}
+      else {scaleY*=0.8; scaleX*=0.8}
+      positionMedia(zoom*0.3)
+      setTimeout(function() {closeMedia(); Play(e)},zoom*200)}}
+
+
+  function Play(e) {
     cue = 0
-    if (type) {closeMedia()}						// no type if no media playing
-    else {media.pause(); media.style.transform='scale('+skinny+',1)'}	// close htm thumb down
-    if (e == 'Next' && playing) {index++; start=0}
+    if (e == 'Next' && type) {index++; start=0}
     if (e == 'Back' && index > 1) {index--}
-    type = getParameters()
-    if (!type) {mouseBack(); return}					// end of media list 
-    scaleY = zoom
+    var was_playing = type
+    type = getParameters() 
+    if (!type) {mouseBack(); return}					// end of media list
+    scaleY = last_scaleY
     if (e == 'Click') {navigator.clipboard.writeText('#Media#'+index+'##'+start)}
     if (type == 'document' || type == 'm3u') {type=''; return}
-    if ((e == 'Next' || e == 'Back') && playing == 'thumbsheet') {thumbSheet()}
-    if (long_click && mouse_down==1 && playing!='thumbsheet') {thumbSheet(); context()}
-    modal.style.zIndex = Zindex+=1					// because htm thumbs use Z-index
-    myPlayer.style.opacity = 0
-    modal.style.opacity = 1
+    if ((e == 'Next' || e == 'Back') && was_playing == 'thumbsheet') {thumbSheet()}
+    else if (e == 'Click' && long_click && was_playing!='thumbsheet') {thumbSheet(); context()}
     myPlayer.muted = 1*localStorage.getItem('muted')
     if (type == 'audio' || playlist.match('/inca/music/')) {looping=false; myPlayer.muted=false; scaleY=0.3}
     if (e != 'Next' || type == 'video') {
@@ -231,6 +245,8 @@ localStorage.setItem('zoom',zoom)
     if (cap_list && type != 'thumbsheet' && start>1) {start-=1}		// start at first caption
     if (type == 'video' || type == 'audio') {myPlayer.currentTime = start; myPlayer.play()}
     can_play = false
+    modal.style.opacity = 1
+    modal.style.zIndex = Zindex+=1					// because htm thumbs use Z-index
     myPlayer.oncanplay = function() {can_play=true}
     myPlayer.volume = 0
     over_media=0							// when entering modal player
@@ -239,15 +255,10 @@ localStorage.setItem('zoom',zoom)
     myPlayer.style.transition = 0
     positionMedia(0)
     scrolltoIndex(1)
-    setTimeout(function() {						// time for transitions to reset
-      wheel=0; block=120
-//      myPlayer.style.transition = '0.58s'
-      myPlayer.style.opacity = 1
-      modal.style.opacity = 1
- if (zoom1 && scaleY < 0.5) {scaleY = 0.5; scaleX=0.5*skinny; positionMedia(2.5)}
-else {positionMedia(0.58)}
-      intervalTimer = setInterval(mediaTimer,84)
-      myPlayer.addEventListener('ended', media_ended)},100)}
+    myPlayer.style.opacity = 1
+    if (zoom && scaleY < 1) {scaleY = 1; scaleX=1*skinny; positionMedia(zoom)}
+    else {positionMedia(0.5)}
+    wheel=0}
 
 
   function closeMedia() {
@@ -255,12 +266,11 @@ else {positionMedia(0.58)}
       last_start = myPlayer.currentTime}
     var x=skinny; var y=rate; getParameters()
     if (x!=skinny || y!=rate) {						// see if edited
-      messages = messages + '#EditMedia#'+index+'#'+x+'#'+y}
+      messages = messages + '#EditMedia#'+index+'#'+x+'#'+y
+      cache = cache + '#EditMedia#'+index+'#'+x+'#'+y}
     if (cap.value != cap.innerHTML) {editCap()}
     if (type != 'image' && index != last_index)
       messages = messages + '#History#'+index+'##'+last_start.toFixed(1)
-    clearInterval(intervalTimer)
-    myPlayer.removeEventListener('ended', media_ended)
     last_index = index
     mySpeed.innerHTML = 'Speed'
     cap.style.display = 'none'
@@ -269,10 +279,7 @@ else {positionMedia(0.58)}
     cap.innerHTML = ''
     cap.value = ''
     cap_time = 0
-    myPlayer.poster=''
-    myPlayer.src=''
-    block = 160
-    type = ''}
+    block = 160}
 
 
   function wheelEvents(e, id, el) {
@@ -290,7 +297,7 @@ else {positionMedia(0.58)}
       if (wheelUp && page<pages) {page++} 
       else if (!wheelUp && page>1) {page--}
       el.innerHTML = 'Page '+page+' of '+pages}
-    else if (id=='Alpha'||id=='Date'||id=='Duration'||id=='Size') {	// search filter
+    else if (id=='Alpha'||id=='Date'||id=='Duration'||id=='Size') {	// filter
       if (wheelUp) {filt++} else if (filt) {filt--}
       filter(id)}
     else if (id=='mySpeed') {						// speed
@@ -305,9 +312,9 @@ else {positionMedia(0.58)}
       if (wheelUp) {scaleX -= 0.004}
       else {scaleX += 0.004}
       skinny = Math.round((1000*scaleX/scaleY))/1000
-      if (Math.abs(skinny) == 1) {block=333}				// pause when skinny crosses 1:1
+      if (Math.abs(skinny) == 1) {block=333}
       media.style.transform = "scaleX("+skinny+")"}
-    else if (id=='View') {						// zoom thumbs
+    else if (id=='View') {						// thumbs
       if (wheelUp) {view += 1}
       else {view -= 1}
       if (view < 8) {view = 8}
@@ -319,63 +326,31 @@ else {positionMedia(0.58)}
       el.style.maxWidth=(view*0.8)+'em'
       el.style.maxHeight=(view*0.8)+'em'
       block=64}
-    else if (id=='myNext' || id=='mySelect') {				// next modal media
+    else if (id=='myNext' || id=='mySelect') {				// next
       if (wheelUp) {playMedia('Next')}
       else if (e.deltaY) {playMedia('Back')}
-      setTimeout(function() {
-        var x=''
-        if (myPlayer.duration) {x=Math.round(myPlayer.duration/60)+'mins - '}
-        if (mySelect.matches(':hover')) {
-          mySelect.innerHTML='Select - '+x+document.getElementById('title'+index).value}},250)
-      myNext.innerHTML = index
-      wheel=0; return}
-    else if (id=='Next') {						// next htm media
-      if (getParameters())
-        {
-        media.pause()
-        media.style.transform='scale('+skinny+',1)'
-        media.style.transition=null
-        media.style.zIndex=null
-        if (list_view) {
-          media.style.opacity=null
-          document.getElementById('title'+index).style.background=null}
-        if (wheelUp) {index+=1}
-        else {index-=1}
-        was_over_media = index
-        start=0
-        if (!getParameters()) {return}
-        Next.innerHTML = index
-        scrolltoIndex(0)
-        media.style.transform = 'scale('+(3*skinny)+',3)'
-        media.style.opacity=1
-        media.style.zIndex=Zindex+=1
-        if (list_view) {document.getElementById('title'+index).style.background='#2b2824'}
-        setTimeout(function() {
-          media.currentTime=start
-          media.playbackRate=rate
-          media.play()},100)
-        }
-      }
-    else if ((id=='mySeek' || editing) && (type=='video' || type=='audio')) {	// seek
+      block=180; wheel=0; return}
+    else if (id=='mySeek' || editing) {					// seek
+      if (type=='video' || type=='audio') {
         if (myPlayer.duration > 120) {interval = 3}
         else {interval = 0.5}
         if (myPlayer.paused) {interval = 0.04}
         if (wheelUp) {myPlayer.currentTime += interval}
         else {myPlayer.currentTime -= interval}
         mySeek.innerHTML = (myPlayer.currentTime/60).toFixed(1)
-        block = 160}
-    else if (type) {							// zoom media
+        block = 160}}
+    else if (type) {							// zoom
       block=20
       if (wheelUp) {x=0.004*wheel}
       else {x=-0.004*wheel}
-      if (type == 'thumbsheet' && (sheetY>0.25 || x>0)) {sheetY+=x}	// zoom thumbsheet
+      if (type == 'thumbsheet' && (sheetY>0.25 || x>0)) {sheetY+=x}
       else if (scaleY>0.25 || x>0) {scaleY+=x; scaleX=scaleY*skinny}
-      zoom = scaleY}
+      last_scaleY = scaleY}
     if (type) {positionMedia(0.28)}
-    wheel = 10}								// for positionMedia() sticky edgees
+    wheel = 10}
 
 
-  function Gesture(e) {							// mouse move over window
+  function gestureEvents(e) {
     xpos = e.clientX
     ypos = e.clientY
     if (filt) {filter(sort)}
@@ -426,9 +401,16 @@ else {positionMedia(0.58)}
     else  {myPlayer.style.transform = "scale("+scaleX+","+scaleY+")"}}
 
 
-  function mediaTimer() {						// every ~84mS while media/modal layer active
+  function Timer() {
+// mySelected.innerHTML = sheetY+' '+last_scaleY+' '+scaleY+' '+type     // block+' '+wheel.toFixed(0)
     if (block>=25) {block-=5}						// slowly reduce event blocking
     if (wheel>1) {wheel--}
+    myNext.innerHTML = index
+    if (!type) {return}
+    var x=''
+    if (myPlayer.duration) {x=Math.round(myPlayer.duration/60)+'mins - '}
+    if (mySelect.matches(':hover')) {
+      mySelect.innerHTML='Select - '+x+document.getElementById('title'+index).value}
     if (skinny == 1) {mySkinny.innerHTML = 'Skinny'}
     else {mySkinny.innerHTML = skinny.toFixed(2)}
     if (rate == d_rate) {mySpeed.innerHTML = 'Speed'}
@@ -448,7 +430,7 @@ else {positionMedia(0.58)}
     cap.style.left = rect.left +10 +'px'
     if (cap_list) {cap.style.display='block'}
     showCaption()
-    modal.style.backgroundColor = 'rgba(0,0,0,'+scaleY*2+')'
+    modal.style.backgroundColor = 'rgba(0,0,0,'+last_scaleY*2+')'
     var cueX = rect.left + 'px'
     var cueW = Math.abs(scaleX) * myPlayer.offsetWidth * myPlayer.currentTime / myPlayer.duration + 'px'
     if (cue && cue <= Math.round(myPlayer.currentTime*10)/10) {
@@ -495,6 +477,7 @@ else {positionMedia(0.58)}
     if (!isNaN(p) && p.length > 2 && p.includes('.')) {			// very likely a suffix timestamp
       x = x.replace('%20' + p, '')}					// so remove timestamp from filename
     myPlayer.poster = x							// use 6x6 thumbsheet file
+    myPlayer.load()
     type = 'thumbsheet'}
 
 
@@ -585,15 +568,15 @@ else {positionMedia(0.58)}
       if (!x.match(","+i+",")) {selected = selected+i+","}}}
 
   function context() {
-    nav.style.left=xpos-60+'px'; nav.style.top=ypos-45+'px'
-    nav2.style.left=xpos-60+'px'; nav2.style.top=ypos-45+'px'
+    nav.style.left=xpos-40+'px'; nav.style.top=ypos-45+'px'
+    nav2.style.left=xpos-40+'px'; nav2.style.top=ypos-45+'px'
     if (el=document.getElementById('entry'+index)) {
       if (el.matches(":hover")) {was_over_media = index}
       else {was_over_media = 0}}
     if (type) {nav2.style.display='block'} else {nav.style.display='block'}}
 
   function globals(vi, pg, ps, so, fi, zo, ra, lv, fs, pl, ix) {	// import globals to java
-    view=vi; page=pg; pages=ps; sort=so; filt=fi; zoom1=zo; d_rate=ra; scaleY=zo
+    view=vi; page=pg; pages=ps; sort=so; filt=fi; zoom=zo; d_rate=ra; scaleY=zo
     list_view=lv; selected=fs; playlist=pl; index=ix; was_over_media=ix; last_index=ix
     scrolltoIndex(1); for (x of selected.split(',')) {sel2(x)}}
 
