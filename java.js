@@ -208,8 +208,10 @@
     myPlayer.style.height = y +'px'
     myPlayer.style.left = mediaX-x/2 +'px'
     myPlayer.style.top = mediaY-y/2 +'px'
-    myPlayer.poster = media.poster
-    if (myPlayer.src != media.src) {myPlayer.src=media.src}		// stop reload jitter 
+    if (myPlayer.src != media.src) {
+      myPlayer.src=media.src
+      if (type == 'thumbsheet') {thumbSheet()}
+      else {myPlayer.poster = media.poster}}				// stop reload jitter 
     myPlayer.playbackRate = rate
     return type_t}
 
