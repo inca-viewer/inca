@@ -81,9 +81,11 @@
         Global media_list
         Global panel_list
 Global foldr
-Global index := 0
+Global index := 1
 Global cue := 0
 Global messages
+Global playing =
+Global gesture
 
 
     main:
@@ -252,20 +254,23 @@ if playlist
         view3 := view/10
         view4 := view-7
 
+
 header = <!--, %view%, %page%, %pages%, %filt%, %sort%, %toggles%, %list_view%, %playlist%, %path%, %search_path%, %search_term%, , -->`n<!doctype html>`n<html>`n<head>`n<meta charset="UTF-8">`n<title>Inca - %title%</title>`n<meta name="viewport" content="width=device-width, initial-scale=1">`n<link rel="icon" type="image/x-icon" href="file:///%inca%\cache\icons\inca.ico">`n<link rel="stylesheet" type="text/css" href="file:///%inca%/css.css">`n</head>`n`n
 
-body = <body id='myBody' class='container' onload="globals(%view%, %page%, %pages%, '%sort%', %filt%, %rate%, %list_view%, '%selected%', '%playlist%', %index%); myFol.scrollIntoView()">`n`n
+body = <body id='myBody' class='container' onload="myFol.scrollIntoView(); myView.scrollBy(0,-250); globals(%view%, %page%, %pages%, '%sort%', %filt%, %rate%, %list_view%, '%selected%', '%playlist%', %index%)">`n`n
 
-<div id='myMenu' style='position:absolute; top:2em; width:100`%'>`n`n
+<div id='myMenu' style='position:absolute; width:100`%'>`n`n
 <div id='mySelected' class='selected'></div>`n
 
-<div oncontextmenu="event.preventDefault(); context()" style='padding-bottom:40em'>`n`n
+<div oncontextmenu="if(yw>0.1 || type) {event.preventDefault(); if (!gesture) {context()}}" style='padding-bottom:40em'>`n`n
 <span id="myContext" class='context' onmouseout="media.style.zIndex=null; media.style.transform='scale('+skinny+',1)'; if(list_view) {media.style.opacity=0}; media.pause()">`n
 
 <a onmouseup="inca('Settings')"`n onmouseover="el=document.getElementById('title'+index); x='';`n if(media.duration){x=Math.round(media.duration/60)+'mins - '};`n if (was_over_media) {this.innerHTML=x+el.value}"`n onmouseout="this.innerHTML=' . . .'"> . . .</a>`n
 <a onmouseup="if (!long_click && was_over_media) {sel(index)} else{selectAll()}">Select</a>`n
 <a onmousedown="inca('Delete','',was_over_media)">Delete</a>`n
 <a onmousedown="inca('Favorite','',was_over_media)">Fav</a>`n
+<a id="myZoom" onwheel="wheelEvents(event, id, this)">Zoom/a>`n
+<a id="myFade" onwheel="wheelEvents(event, id, this)">Fade</a>`n
 <a onmousedown="inca('Join')">Join</a></span>`n`n
 
 <span id="myContext2" class='context' onmouseover='nav2.style.opacity=1'>`n
@@ -274,16 +279,14 @@ body = <body id='myBody' class='container' onload="globals(%view%, %page%, %page
 <a id="mySeek" style='font-size:1.5em' onwheel="wheelEvents(event, id, this)" onmouseup='togglePause()'>Seek</a>`n
 <a id="mySpeed" onwheel="wheelEvents(event, id, this)" onmouseup='togglePause()'>Speed</a>`n
 <a id="mySkinny" onwheel="wheelEvents(event, id, this)" onmouseup='togglePause()'>Skinny</a>`n
+<a id='myFlip' onmousedown='flip()'>Flip</a>`n
 <a id='myMute' onmouseup='mute()'>Mute</a>`n
 <a id='myLoop' onclick="loop()">Loop</a>`n
-<a id="myZoom" onwheel="wheelEvents(event, id, this)">Zoom/a>`n
-<a id="myFade" onwheel="wheelEvents(event, id, this)">Fade</a>`n
+<a id="myCue" onclick="editing=true; myPlayer.pause(); cue=Math.round(myPlayer.currentTime*10)/10">Cue</a>`n
 <a id="myFav" onmousedown="inca('Favorite', myPlayer.currentTime.toFixed(1), index, cue)">Fav</a>`n
-<a id="myCapnav" onclick="editCap()">Cap</a>`n
-<a id="myCue" onclick="editing=true; myPlayer.pause(); nav2.style.display=null; cue=Math.round(myPlayer.currentTime*10)/10">Cue</a>`n
 <a id="myMp4" onmousedown="inca('mp4', myPlayer.currentTime.toFixed(1), index, cue.toFixed(1))">mp4</a>`n
 <a id="myMp3" onmousedown="inca('mp3', myPlayer.currentTime.toFixed(1), index, cue.toFixed(1))">mp3</a>`n
-<a id='myFlip' onmousedown='flip()'>Flip</a></span>`n`n
+<a id="myCapnav" onclick="editCap()">Cap</a></span>`n`n
 
 <div id="myModal" class="modal" onwheel="wheelEvents(event, id, this)">`n
 <div><video id="myPlayer" class='player' type="video/mp4" muted></video>`n
@@ -291,13 +294,9 @@ body = <body id='myBody' class='container' onload="globals(%view%, %page%, %page
 <textarea id="myCap" class="caption" onmouseenter="over_cap=true" onmouseleave="over_cap=false"></textarea></div>
 <span><video class='preview' id='myPreview' muted type="video/mp4"></video></span></div>`n`n
 
-<div id='myView' class='myList' style='padding-left:%page_l%`%; padding-right:%page_r%`%'>`n`n<div style='width:100`%; height:14em'></div>`n%media_list%<div style='width:100`%; height:50vh'></div>`n`n
+<div id='myView' class='myList' style='padding-left:%page_l%`%; padding-right:%page_r%`%'>`n`n
 
-<div style='position:fixed; height:13em; width:%page_w%vw; background:#15110a'></div>`n`n
-
-<div id='myPanel' class='myPanel' onmouseover="if(selected) {this.style.border='1px solid salmon'}" onmouseout="this.style.border='none'" style='width:%page_w%vw; margin-left:%page_l%`%; margin-right:%page_r%`%'>`n <div id='panel' class='panel'>`n`n%panel_list%`n<div style='height:40em'></div></div></div>`n`n
-
-<div id='mySearch' class='searchbox' style='position:fixed; top:9.3em; width:%page_w%vw; border-radius:1.2em; left:%page_l%`%'>`n 
+<div id='mySearch' class='searchbox' style='position:relative; top:10em; width:100`%; border-radius:1.2em'>`n 
 <a style='color:lightsalmon; font-size:1.4em' onmousedown="inca('Reload')">%title_s%</a>
 <a style='color:#15110a00'>----</a>
 <a style='color:red'>%list_size%</a>
@@ -306,7 +305,9 @@ body = <body id='myBody' class='container' onload="globals(%view%, %page%, %page
 <a id='SearchAll' onclick="inca('SearchAll', myInput.value)"></a>`n
 <a id='SearchAdd' onclick="inca('SearchAdd', myInput.value)" ></a></div>`n`n
 
-<div id='myRibbon' class='ribbon' style='width:%page_w%vw; margin-left:%page_l%`%; margin-right:%page_r%`%'>`n
+<div id='myPanel' class='myPanel' onmouseover="if(selected) {this.style.border='1px solid salmon'}" onmouseout="this.style.border='none'">`n <div id='panel' class='panel'>`n`n%panel_list%`n<div style='height:40em'></div></div></div>`n`n
+
+<div id='myRibbon' class='ribbon'>`n
 <a id='Type' onmousedown="inca('Type')" %x6%>Type</a>`n
 <a id='Size' onmousedown="inca('Size', filt)" onwheel="wheelEvents(event, id, this)" %x5%>Size</a>`n
 <a id='Duration' onmousedown="inca('Duration', filt)" onwheel="wheelEvents(event, id, this)" %x3%> Duration</a>`n
@@ -314,11 +315,13 @@ body = <body id='myBody' class='container' onload="globals(%view%, %page%, %page
 <a id='List' onmousedown="inca('List', filt)" %x11% style='color:red'>%order%</a>`n
 <a id='Alpha' onmousedown="inca('Alpha', filt)" onwheel="wheelEvents(event,id,this)" %x2%>Alpha</a>`n
 <a id='Shuffle' onmousedown="inca('Shuffle')" %x1%>Shuffle</a>`n
-<a id='View' onmousedown="inca('View', view)" onwheel="wheelEvents(event, id, this)">View %view4%</a>`n 
+<a id='View' onmousedown="inca('View', view, '', index)" onwheel="wheelEvents(event, id, this)">View %view4%</a>`n 
 <a id="myPage" onmousedown="inca('Page', page)" onwheel="wheelEvents(event, id, this)" style='min-width:9em'>%pg%</a>`n
 <a onmousedown="inca('Recurse')" %x8%>+Subs</a>`n
 <a onmousedown="inca('Images')" %x10%>Pics</a>`n
 <a onmousedown="inca('Videos')" %x9%>Vids</a>`n</div>`n`n
+
+<div style='width:100`%; height:12em'></div>`n%media_list%<div style='width:100`%; height:50vh'></div>`n`n
 
       WinActivate, ahk_group Browsers
       send, ^l
@@ -463,12 +466,13 @@ else
 
     ~LButton::					; click events
     ~MButton::
-     RButton::
+    RButton::
       MouseDown()
       return
 
     Xbutton1::					; mouse "back" button
       Critical
+      playing =
       long_click =
       timer := A_TickCount + 350
       SetTimer, Timer_up, -350
@@ -509,23 +513,6 @@ else
              send, e
            else send, f
          }
-       else IfWinActive, ahk_group Browsers	; browser magnify
-         {
-         wheel_count += 1
-         if (wheel_count > 10 && ypos < 50 && xpos < 50)
-             {
-             wheel_count = 0
-             WinGet, state, MinMax, ahk_group Browsers
-             if (state > -1)
-               {
-               WinActivate, ahk_group Browsers
-               if (wheel == "up")
-                 send, ^0
-               else send, ^{+}
-               sleep 64
-               }
-             }
-         }
       wheel =
       return
 
@@ -533,7 +520,7 @@ else
     MouseDown()
       {
       Critical					; stop timed events
-      gesture =
+      gesture := 0
       long_click =
       timer := A_TickCount + 300
       MouseGetPos, xpos, ypos
@@ -543,25 +530,28 @@ else
         MouseGetPos, x, y
         x -= xpos
         y -= ypos
-        xy := Abs(x + y)
         if (!GetKeyState("LButton", "P") && !GetKeyState("RButton", "P") && !GetKeyState("MButton", "P"))
           {
-          if (!gesture && click == "RButton")
-            send {RButton}
+          if (click == "RButton")
+            if !gesture
+              send {RButton}
+            else if (gesture == 2)
+              send {RButton up}
           Gui PopUp:Cancel
           break
           }
-        if (xy > 6)				; gesture started
+        if (Abs(x)+Abs(y) > 6)			; gesture started
           {
           MouseGetPos, xpos, ypos
-          gesture = 1
+          if !gesture
+            gesture := 1
           if (xpos < 15)			; gesture at screen edges
               xpos := 15
           if (xpos > A_ScreenWidth - 15)
               xpos := A_ScreenWidth - 15
           MouseMove, % xpos, % ypos, 0
-          if GetKeyState("RButton", "P")
-              SetVolume(1.4 * x)
+          if (click == "RButton")
+              Gesture(x, y)
           if (inca_tab && GetKeyState("LButton", "P") && WinActive, ahk_class ahk_class mpv)
               if (y < 0)				; mpv player controls
                 send, 9					; magnify
@@ -772,7 +762,8 @@ else
             x := view - 7
             popup = View %x%
             popup(popup,0,0,0)
-            index := address
+            if address
+              index := address
             reload := 2
             }
         if (command == "Delete")
@@ -847,6 +838,8 @@ selected =
             {
             if GetMedia(value)
               {
+playing = true
+
 FileRead, dur, %inca%\cache\durations\%media%.txt
               if !dur
                 index(src)
@@ -1422,25 +1415,45 @@ selected =
         }
 
 
-    SetVolume(change)
+    Gesture(x, y)
         {
-        Static last_volume
-        last_volume := volume
-        if volume < 1
-            change /= 2
-        if volume < 10
-            change /= 2						; finer adj at low volume
-        if change < 100						; stop any big volume jumps
-            volume += change/20
-        SoundGet, current
-        if (volume < 0)
+        if (Abs(x) > Abs(y) )					; master volume
+          {
+          x*=1.4
+          Static last_volume
+          last_volume := volume
+          if volume < 10
+            x /= 2						; finer adj at low volume
+          if x < 100						; stop any big volume jumps
+            volume += x/20
+          SoundGet, current
+          if (volume < 0)
             volume := 0
-        if (volume > 100)
+          if (volume > 100)
             volume := 100
-        SoundSet, volume
-        vol_ref := volume
-        vol_popup := 4
-        ShowStatus()
+          SoundSet, volume
+          vol_ref := volume
+          vol_popup := 4
+          ShowStatus()
+          }
+        else if (!playing && WinActive("ahk_group Browsers"))	; browser magnify
+          {
+          gesture += Abs(y)
+          WinGet, state, MinMax, ahk_group Browsers
+          if (state > -1 && gesture > 50)
+            {
+            gesture := 3
+            WinActivate, ahk_group Browsers
+            if (y < 0)
+              send, ^0
+            else send, ^{+}
+            }
+          }
+        else if (gesture == 1 && WinActive("ahk_group Browsers"))
+          {
+          gesture := 2
+          send {RButton down}
+          }
         }
 
 
