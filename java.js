@@ -18,6 +18,23 @@
 // back zoom different to next zoom effect
 // zoom control useability
 // merge process mouseevents
+// go to index after delete
+// fade out before parameters next etc.
+
+
+//    if (!over_cap && cap.value != cap.innerHTML) {editCap()}		// caption in edit mode
+//      if (type == 'video' && cap_list && (ym>1 || yw>0.9)) {		// seek to next caption in movie
+//        for (var x of cap_list.split('|')) {
+//          if (!isNaN(x) && x>(myPlayer.currentTime+0.2)) {
+//            myPlayer.currentTime=x-1; myPlayer.play(); break}}}
+
+
+
+
+
+
+
+
 
   var media = document.getElementById('media1')				// first media element
   var modal = document.getElementById('myModal')			// media player window
@@ -50,9 +67,10 @@
   var cap_list = ''							// full caption text file
   var cap_time = 0
   var looping = true							// play next or loop media
-  var click = 0								// state is preserved
-  var long_click = false
-  var gesture = false
+  var button = 0							// state is preserved
+  var click = 0								// state cleared after mouseUp
+  var long_click = 0							// state is preserved
+  var gesture = 0							// state is preserved
   var searchbox = ''							// search input field
   var renamebox = ''							// media rename input field
   var selected = ''							// list of selected media in page
@@ -82,7 +100,6 @@
   var index_scroll
   var list_view = 0
   var sheet = 0
-var clk = 0
 
 
   getParameters()							// initialise to media1 attributes
@@ -90,7 +107,7 @@ var clk = 0
   if (!last_scaleY || last_scaleY<=0.2) {last_scaleY=0.64}
   modal.style.opacity=0;						// stop page load flicker
   modal.style.zIndex=-1;
-  if (!fade) {fade=0.1}
+  if (!fade) {fade=0.2}
   if (!zoom) {zoom=0.5}
   intervalTimer = setInterval(Timer,100)				// 100mS universal timer
   document.addEventListener('mousedown', mouseDown)
@@ -105,20 +122,19 @@ var clk = 0
 
   function mouseDown(e) {
     if (e.button == 1 && (over_media || type || e.shiftKey)) {e.preventDefault()} // middle click
-    clickTimer = setTimeout(function() {if (!gesture) {long_click=true; Process('Down')}},240)
-    click=e.button+1; clk=click; long_click=false; wheel=0; block=0; Xref=xpos; Yref=ypos}
+    clickTimer = setTimeout(function() {if (!gesture) {long_click=1; mouseEvent('Down')}},240)
+    button=e.button+1; click=button; long_click=0; gesture=0; wheel=0; block=0; Xref=xpos; Yref=ypos}
 
 
   function mouseUp(e) {
-    if (!clk) {return}						// page load while mouse down
+    if (!click) {return}							// page load while mouse down
     clearTimeout(clickTimer)
-    setTimeout(function() {click=0; gesture=false; long_click=false},500)	// time for process event
-    if (clk == 2 && !long_click && !gesture && e.shiftKey) {	// inca converts Back button to shift Mclick
+    if (click == 2 && !long_click && !gesture && e.shiftKey) {		// inca converts Back button to shift Mclick
       if (type) {mouseBack()}						// close modal player
       else if (myView.scrollTop > 50) {myView.scrollTo(0, 0)}
       else if (selected) {for(x of selected.split(',')) {sel(x)}}}	// clear any selected media
-    else if (!gesture && !long_click && (type || over_media)) {Process('Up')}
-    clk=0; wheel=0}
+    else if (!gesture) {mouseEvent('Up')}
+    click=0; wheel=0; gesture=0; long_click=0}
 
 
   function mouseBack() {
@@ -144,92 +160,51 @@ var clk = 0
       modal.style.zIndex=-1},fade*200)}
 
 
-  function overThumb(id) {						// cursor over thumbnail
-    over_media = id
-    index = id
-    start = 0
-    getParameters()
-    rect = media.getBoundingClientRect()
-    xm = (xpos - rect.left) / Math.abs(media.offsetWidth)
-    ym = (ypos - rect.top) / Math.abs(media.offsetHeight)
-    if (ym > 0.9 && media.duration) {
-      start=media.duration*xm
-      media.currentTime=media.duration*xm}
-    if (ym < 0.1 || !media.currentTime) {media.currentTime=start}
-    media.play()}
-
-
-  function getParameters() {						// media arguments
-    if (!(media = document.getElementById('media'+index))) {index=1; return}
-    var x = media.style.borderBottom; media.style.borderBottom=null	// preserve border-radius
-    ratio = media.offsetWidth/media.offsetHeight
-    media.style.borderBottom=x
-    x = media['onmouseover'].toString().split(","); x.pop()		// get media parameters
-    rate = 1*x.pop().trim()
-    cap_list = x.pop().slice(0, -1).slice(2) 				// captions list
-    cue = 1*x.pop().trim()
-    if (start<1) {start = 1*x.pop().trim()} else {x.pop()}		// start time
-    var type_t = x.pop().replaceAll('\'', '').trim()			// eg video, image
-    skinny = 1*x.pop().trim()
-    var z = cache.split('#EditMedia#')				// in case been edited
-    for (x of z) {var y = x.split('#'); for (x of y) {if (1*y[0]==index) {rate=1*y[2]; skinny=1*y[1]}}}
-    if (ratio > 1) {
-      x = innerWidth*0.70; y = x/ratio; sheetY = innerWidth/x}		// landscape
-    else {y = innerHeight; x = y*ratio; sheetY = innerHeight/y}		// portrait
-    myPlayer.style.width = x +'px'					// media size normalised to screen
-    myPlayer.style.height = y +'px'
-    myPlayer.style.left = mediaX-x/2 +'px'
-    myPlayer.style.top = mediaY-y/2 +'px'
-    if (myPlayer.src != media.src) {myPlayer.src=media.src}
-    myPlayer.poster = media.poster					// stop reload jitter 
-    myPlayer.playbackRate = rate
-    return type_t}
-
-
-  function Process(e) {
+  function mouseEvent(e) {
     if (click > 2) {return}
-    if (!type) {
-      if (e=='Down' && click==2) {inca('View', view, '', was_over_media)}	// + scrolls to index
-      else {myPlayer.addEventListener('ended', media_ended); Play(e)}}
-    else {									// transition to next
-      if (clk==1 && !sheet && !long_click && !gesture && type && !nav2.matches(':hover')) {
-        togglePause(); return}
-      if (click==1 && nav2.matches(':hover') && !myNext.matches(':hover')) {return} 
-      myPlayer.style.opacity=0
-      if (!long_click) {scaleY*=0.8; scaleX*=0.8}
-      positionMedia(fade*0.3)
-      setTimeout(function() {closeMedia(); Play(e)},fade*200)}}
+    if (e=='Down' && button==2) {
+      if (!type && !over_media) {
+        inca('View', view, '', was_over_media)}				// + scrolls to index
+      else if (type) {sheet=!sheet}
+      else if (over_media) {sheet=1}}
+    if (e=='Up' && !type && !over_media) {return}
+    if (e=='Up' && long_click) {return}
+    if (click==1 && !long_click && !sheet && type && !nav2.matches(':hover')) {togglePause(); return}
+    if (type && !long_click) {
+      if (e=='Next' || click==2) {index++; start=0}
+      if (e=='Back' && index > 1) {index--}}
+    var playing = type
+
+    positionMedia(fade)
+    myPlayer.style.opacity=0
+
+setTimeout(function() {
+
+    type = getParameters() 
+    if (!type) {mouseBack(); return}					// end of media list
+    if (e=='Up'||e=='Down') {navigator.clipboard.writeText('#Media#'+index+'##'+start)}
+    if (type == 'document' || type == 'm3u') {type=''; return}
+    if (e=='Up') {
+      if (button==1) {							// left click
+        if (sheet && myNext.matches(':hover')) {nav2.style.display=null; sheet=0; start=0; getParameters()}
+        else if (sheet) {playThumb()}
+        else if (!type && over_media) {if (selected) {inca('Move',index)}} // used for editing playlists
+        else if (playing && !over_cap && !sheet) {media_ended()}}}
+    if (button==1 && nav2.matches(':hover') && !myNext.matches(':hover')) {return} 
+    if (!playing) {myPlayer.addEventListener('ended', media_ended)}
+    scaleY=last_scaleY
+      if (playing) {closeMedia()}
+      if (e=='Down' && button==1) {
+        start=0
+        if (playing && over_media) {getParameters()}
+        if (!playing && !over_media) {index=last_index; getParameters(); start=last_start}}
+      if (sheet && playing != 'thumbsheet') {context()}
+      Play(e)},fade*500)}
 
 
   function Play(e) {
     cue = 0
-    if (e == 'Next' && type) {index++; start=0}
-    if (e == 'Back' && index > 1) {index--}
-    var playing = type
-    type = getParameters() 
-    if (!type) {mouseBack(); return}					// end of media list
-    scaleY = last_scaleY
-    if (e=='Up'||e=='Down') {navigator.clipboard.writeText('#Media#'+index+'##'+start)}
-    if (type == 'document' || type == 'm3u') {type=''; return}
-    if (e=='Down') {
-      if (click==1 && !playing && !over_media) {index=last_index; getParameters(); start=last_start}
-      else if (playing && over_media) {start=0; getParameters()}
-      else if (!playing || !over_media) {start=0}}
-    if (e=='Up') {
-      if (click==2) {							// middle click
-        if (playing) {sheet=!sheet} 
-        else if (over_media) {sheet=1}}
-      if (click==1) {							// left click
-        if (sheet && myNext.matches(':hover')) {nav2.style.display=null; sheet=0; start=0; getParameters()}
-        else if (sheet) {playThumb()}
-        else if (!type && over_media) {if (selected) {inca('Move',index)}}	// used for editing playlists
-        else if (playing && !over_cap && !sheet) {media_ended()}}}
-    if (sheet) {thumbSheet(); if (playing !='thumbsheet') {context()}}
-//    if (!over_cap && cap.value != cap.innerHTML) {editCap()}		// caption in edit mode
-//      if (type == 'video' && cap_list && (ym>1 || yw>0.9)) {		// seek to next caption in movie
-//        for (var x of cap_list.split('|')) {
-//          if (!isNaN(x) && x>(myPlayer.currentTime+0.2)) {
-//            myPlayer.currentTime=x-1; myPlayer.play(); break}}}
+    if (sheet) {thumbSheet()}
     myPlayer.muted = 1*localStorage.getItem('muted')
     if (type == 'audio' || playlist.match('/inca/music/')) {looping=false; myPlayer.muted=false; scaleY=0.25}
     if (e != 'Next' || type == 'video') {
@@ -245,14 +220,14 @@ var clk = 0
     over_media=0							// when entering modal player
     nav.style.display = null
     was_over_media = index
-    myPlayer.style.transition = 0
-    positionMedia(0)
     scrolltoIndex()
+    if (scaleY < zoom && type != 'audio' && !playlist.match('/inca/music/')) {
+      scaleY = zoom; scaleX = zoom*skinny}
+//    else {positionMedia(zoom)}
+
+positionMedia(fade)
     myPlayer.style.opacity = 1
-    if (fade && scaleY < zoom && type != 'audio' && !playlist.match('/inca/music/')) {
-      scaleY = zoom; scaleX = zoom*skinny
-      positionMedia(fade)}
-    else {positionMedia(0.5)}
+
     wheel=0}
 
 
@@ -282,7 +257,7 @@ var clk = 0
     e.preventDefault()
     e.stopPropagation()
     wheel += Math.abs(e.deltaY)
-    if (clk || wheel < block) {return}
+    if (click || wheel < block) {return}
     var wheelUp = false
     wheel -= block
     if (wheel>10) {wheel=10}
@@ -290,11 +265,11 @@ var clk = 0
     block = 120
     if (e.deltaY > 0) {wheelUp=true}
     if (id=='myZoom') {							// zoom control
-      if (wheelUp) {zoom+=0.1} else if (zoom>0.3) {zoom-=0.1}
+      if (wheelUp) {zoom+=0.1} else if (zoom>=0.2) {zoom-=0.1}
       localStorage.setItem("zoom",zoom)
       last_scaleY=0.25; scaleY=0.25; scaleX=skinny*0.25}
     else if (id=='myFade') {						// fade control
-      if (wheelUp) {fade+=0.1} else if (fade>0.3) {fade-=0.1}
+      if (wheelUp) {fade+=0.1} else if (fade>=0.2) {fade-=0.1}
       localStorage.setItem("fade",fade)}
     else if (id == 'myPage') {						// page
       if (wheelUp && page<pages) {page++} 
@@ -330,8 +305,8 @@ var clk = 0
       el.style.maxHeight=(view*0.8)+'em'
       block=64}
     else if (id=='myNext' || id=='mySelect') {				// next
-      if (wheelUp) {Process('Next')}
-      else if (e.deltaY) {Process('Back')}
+      if (wheelUp) {mouseEvent('Next')}
+      else if (e.deltaY) {mouseEvent('Back')}
       block=180; wheel=0; return}
     else if (id == 'mySeek' || xw < 0.1) {				// seek 
       if (myPlayer.duration > 120) {interval = 3}
@@ -368,13 +343,13 @@ var clk = 0
     if (!nav2.matches(":hover")) {nav2.style.display = null}
     var x = Math.abs(Xref-xpos)
     var y = Math.abs(Yref-ypos)
-    if (clk && !over_cap && x+y > 8) {gesture=true}			// gesture detection (mousedown + slide)
-    if (type && gesture && clk==1) {					// move media
+    if (click && !over_cap && x+y > 8) {gesture=1}			// gesture detection (mousedown + slide)
+    if (type && gesture && click==1) {					// move media
       mediaX += xpos - Xref
       mediaY += ypos - Yref
       localStorage.setItem("mediaX",mediaX)
       localStorage.setItem("mediaY",mediaY)}
-    else if (type && clk>1 && y+2 > x) {				// zoom media
+    else if (type && click>1 && y+2 > x) {				// zoom media
       if (scaleY > 0.25 || Yref < ypos) {
         if (type == 'thumbsheet') {sheetY+=(ypos-Yref)/300}		// zoom thumbsheet
         else {
@@ -449,6 +424,48 @@ var clk = 0
     seekBar()}
 
 
+  function overThumb(id) {						// cursor over thumbnail
+    over_media = id
+    index = id
+    start = 0
+    getParameters()
+    rect = media.getBoundingClientRect()
+    xm = (xpos - rect.left) / Math.abs(media.offsetWidth)
+    ym = (ypos - rect.top) / Math.abs(media.offsetHeight)
+    if (ym > 0.9 && media.duration) {
+      start=media.duration*xm
+      media.currentTime=media.duration*xm}
+    if (ym < 0.1 || !media.currentTime) {media.currentTime=start}
+    media.play()}
+
+
+  function getParameters() {						// media arguments
+    if (!(media = document.getElementById('media'+index))) {index=1; return}
+    var x = media.style.borderBottom; media.style.borderBottom=null	// preserve border-radius
+    ratio = media.offsetWidth/media.offsetHeight
+    media.style.borderBottom=x
+    x = media['onmouseover'].toString().split(","); x.pop()		// get media parameters
+    rate = 1*x.pop().trim()
+    cap_list = x.pop().slice(0, -1).slice(2) 				// captions list
+    cue = 1*x.pop().trim()
+    if (start<1) {start = 1*x.pop().trim()} else {x.pop()}		// start time
+    var type_t = x.pop().replaceAll('\'', '').trim()			// eg video, image
+    skinny = 1*x.pop().trim()
+    var z = cache.split('#EditMedia#')				// in case been edited
+    for (x of z) {var y = x.split('#'); for (x of y) {if (1*y[0]==index) {rate=1*y[2]; skinny=1*y[1]}}}
+    if (ratio > 1) {
+      x = innerWidth*0.70; y = x/ratio; sheetY = innerWidth/x}		// landscape
+    else {y = innerHeight; x = y*ratio; sheetY = innerHeight/y}		// portrait
+    myPlayer.style.width = x +'px'					// media size normalised to screen
+    myPlayer.style.height = y +'px'
+    myPlayer.style.left = mediaX-x/2 +'px'
+    myPlayer.style.top = mediaY-y/2 +'px'
+    if (myPlayer.src != media.src) {myPlayer.src=media.src}
+    myPlayer.poster = media.poster					// stop reload jitter 
+    myPlayer.playbackRate = rate
+    return type_t}
+
+
   function playThumb() {
     var row = Math.floor(ym * 6)					// media seek time from mouse xy
     var col = Math.ceil(xm * 6)
@@ -479,8 +496,8 @@ sheet=0
     if (!looping) {
       cue = 0
       if (playlist.match('/inca/music/')) {
-        setTimeout(function() {Process('Next')}, Math.random()*6000)}	// next media
-      else {Process('Next')}; return}
+        setTimeout(function() {mouseEvent('Next')}, Math.random()*6000)}	// next media
+      else {mouseEvent('Next')}; return}
     myPlayer.currentTime=start
     if (long_click && !over_media) {start=0}
     myPlayer.play()

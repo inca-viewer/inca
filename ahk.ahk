@@ -273,7 +273,7 @@ body = <body id='myBody' class='container' onload="myFol.scrollIntoView(); myVie
 
 <span id="myContext2" class='context' onmouseover='nav2.style.opacity=1'>`n
 <a id='mySelect' onmouseup='sel(index)'`n onwheel="wheelEvents(event, id, this)" onmouseover="nav2.style.opacity=1"`n onmouseout="this.innerHTML='Select'" >Select</a>`n
-<a id="myNext" style='font-size:1.5em' onwheel="wheelEvents(event, id, this)" onmouseover="nav2.style.opacity=1" onmouseup='togglePause()'></a>`n
+<a id="myNext" style='font-size:1.5em' onwheel="wheelEvents(event, id, this)" onmouseover="nav2.style.opacity=1" onmouseup='if(!sheet){togglePause()}'></a>`n
 <a id="mySeek" style='font-size:1.5em' onwheel="wheelEvents(event, id, this)" onmouseup='togglePause()'>Seek</a>`n
 <a id="mySpeed" onwheel="wheelEvents(event, id, this)" onmouseup='togglePause()'>Speed</a>`n
 <a id="mySkinny" onwheel="wheelEvents(event, id, this)" onmouseup='togglePause()'>Skinny</a>`n
@@ -447,10 +447,10 @@ selected =
 
 
 if list_view
-  media_list = %media_list% %fold%<table onmouseover="overThumb(%j%, %skinny%, '%type%', %start%, %cue%, '%cap%', %rate%, event);`n media%j%.style.opacity=1; media%j%.pause()" onmouseout="title%j%.style.color=null; over_media=0; media%j%.style.opacity=0"><tr id="entry%j%"`n onmouseover="title%j%.style.color='lightsalmon'; if(clk && gesture) {sel(%j%)}">`n <td onmouseenter='over_media=0' onmousedown='sel(%j%)'>%ext%`n <video id='media%j%' class='media2' style="max-width:%view3%em; max-height:%view3%em; transform:scale(%skinny%, 1)"`n src="file:///%src%"`n %poster%`n preload='none' muted loop`n onmouseover="overThumb(%j%, %skinny%, '%type%', %start%, %cue%,'%cap%', %rate%, event)" type="video/mp4"></video></td>`n <td>%size%</td>`n <td>%dur%</td>`n <td>%date%</td>`n <td>%j%</td>`n <td style='width:34em'><input id="title%j%" class='title' type='search' value='%media_s%'`n onmouseenter='over_media=0' oninput="was_over_media=%j%; renamebox=this.value; ren%j%.style.display='block'"></td>`n <td id='ren%j%' style='display:none; color:#826858'`n onmouseenter='over_media=0'; onmousedown="media%j%.load(); inca('Rename', renamebox, %j%)">Rename</td>`n <td style='text-align:right'>%fo%</td></tr></table>`n`n
+  media_list = %media_list% %fold%<table onmouseover="overThumb(%j%, %skinny%, '%type%', %start%, %cue%, '%cap%', %rate%, event);`n media%j%.style.opacity=1; media%j%.pause()" onmouseout="title%j%.style.color=null; over_media=0; media%j%.style.opacity=0"><tr id="entry%j%"`n onmouseover="title%j%.style.color='lightsalmon'; if(click && gesture) {sel(%j%)}">`n <td onmouseenter='over_media=0' onmousedown='sel(%j%)'>%ext%`n <video id='media%j%' class='media2' style="max-width:%view3%em; max-height:%view3%em; transform:scale(%skinny%, 1)"`n src="file:///%src%"`n %poster%`n preload='none' muted loop`n onmouseover="overThumb(%j%, %skinny%, '%type%', %start%, %cue%,'%cap%', %rate%, event)" type="video/mp4"></video></td>`n <td>%size%</td>`n <td>%dur%</td>`n <td>%date%</td>`n <td>%j%</td>`n <td style='width:34em'><input id="title%j%" class='title' type='search' value='%media_s%'`n onmouseenter='over_media=0' oninput="was_over_media=%j%; renamebox=this.value; ren%j%.style.display='block'"></td>`n <td id='ren%j%' style='display:none; color:#826858'`n onmouseenter='over_media=0'; onmousedown="media%j%.load(); inca('Rename', renamebox, %j%)">Rename</td>`n <td style='text-align:right'>%fo%</td></tr></table>`n`n
 
 else
-  media_list = %media_list%<div id="entry%j%" style="display:flex; width%view%em; height:%view3%em; padding:%view4%em"`n onmouseup="if(!over_media){sel(%j%)}">`n <video id="media%j%" class='media' style="max-width:%view3%em; max-height:%view3%em; transform:scale(%skinny%, 1)"`n onmouseover="overThumb(%j%, %skinny%, '%type%', %start%, %cue%, '%cap%', %rate%, event); if(clk && gesture) {sel(%j%)}"`n onmouseout="this.pause(); over_media=0"`n src="file:///%src%"`n %poster%`n preload='none' muted loop type="video/mp4"></video>`n %caption% <input id='title%j%' value='%media%' class='title' style='display:none'></div>`n`n
+  media_list = %media_list%<div id="entry%j%" style="display:flex; width%view%em; height:%view3%em; padding:%view4%em"`n onmouseup="if(!over_media){sel(%j%)}">`n <video id="media%j%" class='media' style="max-width:%view3%em; max-height:%view3%em; transform:scale(%skinny%, 1)"`n onmouseover="overThumb(%j%, %skinny%, '%type%', %start%, %cue%, '%cap%', %rate%, event); if(click && gesture) {sel(%j%)}"`n onmouseout="this.pause(); over_media=0"`n src="file:///%src%"`n %poster%`n preload='none' muted loop type="video/mp4"></video>`n %caption% <input id='title%j%' value='%media%' class='title' style='display:none'></div>`n`n
 
 }
 
@@ -745,11 +745,10 @@ else
             if value							; new start time
               Runwait, %inca%\cache\apps\ffmpeg.exe -ss %value% -i "%src%" -y -vf scale=1280:1280/dar -vframes 1 "%inca%\cache\posters\%media%%A_Space%%value%.jpg",, Hide
             Loop, Parse, selected, `,
-;              if A_Loopfield
                 if GetMedia(A_Loopfield)
                   if value
                     FileAppend, %src%|%value%|%address%`r`n, %inca%\fav\new.m3u, UTF-8	; from modal player with start & cue time
-                  else FileAppend, %target%|0.0|`r`n, %inca%\fav\new.m3u, UTF-8		; from htm with no start or cue times
+                  else FileAppend, %target%|0.0`r`n, %inca%\fav\new.m3u, UTF-8		; from htm with no start or cue times
 
             }
         if (command == "View")
@@ -1281,6 +1280,8 @@ selected =
             else popup = Move - %media%
             if (InStr(address, "\inca\"))
               popup = Added
+            if (playlist && InStr(address, "\inca\"))
+              popup = Moved
             PopUp(popup,0,0,0)
             if GetMedia(index)
               if (InStr(address, "inca\fav") || InStr(address, "inca\music"))
