@@ -267,21 +267,21 @@ body = <body id='myBody' class='container' onload="myFol.scrollIntoView(); myVie
 
 <a onmouseup="inca('Settings')"`n onmouseover="el=document.getElementById('title'+index); x='';`n if(media.duration){x=Math.round(media.duration/60)+'mins - '};`n if (was_over_media) {this.innerHTML=x+el.value}"`n onmouseout="this.innerHTML=' . . .'"> . . .</a>`n
 <a onmouseup="if (!long_click && was_over_media) {sel(index)} else{selectAll()}">Select</a>`n
-<a onmousedown="inca('Delete','',was_over_media)">Delete</a>`n
+<a onmousedown="inca('Delete','',was_over_media,was_over_media)">Delete</a>`n
 <a onmousedown="inca('Favorite','',was_over_media)">Fav</a>`n
+<a id="myZoom" onwheel="wheelEvents(event, id, this)">Zoom/a>`n
+<a id="myFade" onwheel="wheelEvents(event, id, this)">Fade</a>`n
 <a onmousedown="inca('Join')">Join</a></span>`n`n
 
 <span id="myContext2" class='context' onmouseover='nav2.style.opacity=1'>`n
 <a id='mySelect' onmouseup='sel(index)'`n onwheel="wheelEvents(event, id, this)" onmouseover="nav2.style.opacity=1"`n onmouseout="this.innerHTML='Select'" >Select</a>`n
-<a id="myNext" style='font-size:1.5em' onwheel="wheelEvents(event, id, this)" onmouseover="nav2.style.opacity=1" onmouseup='if(!sheet){togglePause()}'></a>`n
+<a id="myNext" style='font-size:1.5em' onwheel="wheelEvents(event, id, this)" onmouseover="nav2.style.opacity=1" onmouseup='togglePause()'></a>`n
 <a id="mySeek" style='font-size:1.5em' onwheel="wheelEvents(event, id, this)" onmouseup='togglePause()'>Seek</a>`n
 <a id="mySpeed" onwheel="wheelEvents(event, id, this)" onmouseup='togglePause()'>Speed</a>`n
 <a id="mySkinny" onwheel="wheelEvents(event, id, this)" onmouseup='togglePause()'>Skinny</a>`n
 <a id='myFlip' onmousedown='flip()'>Flip</a>`n
 <a id='myMute' onmouseup='mute()'>Mute</a>`n
 <a id='myLoop' onclick="loop()">Loop</a>`n
-<a id="myZoom" onwheel="wheelEvents(event, id, this)">Zoom/a>`n
-<a id="myFade" onwheel="wheelEvents(event, id, this)">Fade</a>`n
 <a id="myCue" onclick="editing=true; myPlayer.pause(); cue=Math.round(myPlayer.currentTime*10)/10">Cue</a>`n
 <a id="myFav" onmousedown="inca('Favorite', myPlayer.currentTime.toFixed(1), index, cue)">Fav</a>`n
 <a id="myMp4" onmousedown="inca('mp4', myPlayer.currentTime.toFixed(1), index, cue.toFixed(1))">mp4</a>`n
@@ -321,7 +321,7 @@ body = <body id='myBody' class='container' onload="myFol.scrollIntoView(); myVie
 <a onmousedown="inca('Images')" %x10%>Pics</a>`n
 <a onmousedown="inca('Videos')" %x9%>Vids</a>`n</div>`n`n
 
-<div style='width:100`%; height:12em'></div>`n%media_list%<div style='width:100`%; height:50vh'></div>`n`n
+<div style='width:100`%; height:12em'></div>`n%media_list%<div style='width:100`%; height:61.5vh'></div>`n`n
 
       WinActivate, ahk_group Browsers
       send, ^l
@@ -762,13 +762,15 @@ else
             popup = View %x%
             popup(popup,0,0,0)
             if address
-              index := address
+              index := address					; for scrollToIndex() in java
             reload := 2
             }
         if (command == "Delete")
             {
             if !selected
               return
+            if address
+              index := address					; for scrollToIndex() in java
             popup("Deleted",0,0,0)
             reload := 3
             if playlist
@@ -832,6 +834,13 @@ selected =
             MoveEntry()								; move entry within playlist
 ;            selected =
             reload := 3
+            }
+        if (command == "Source")
+            {
+            send, {LButton up}					; release Mclick auto scroll
+            if playlist
+              run, %playlist%					; open .m3u in notepad
+            else run, %path%					; open folder in windows file explorer
             }
         if (command == "Media")
             {
@@ -950,14 +959,6 @@ FileRead, dur, %inca%\cache\durations\%media%.txt
               search_term =
               search_path =
               filt := 0
-              if long_click
-                {
-                send, {LButton up}					; release click from new htm load
-                if playlist
-                  run, %playlist%					; open .m3u in notepad
-                else run, %path%					; open folder in windows file explorer
-                reload := 0
-                }
               }
             if (command == "Search" || command == "SearchBox" || command == "SearchAll")
               {
