@@ -73,7 +73,7 @@
         Global reload
         Global browser
         Global clip
-        Global long_click
+        Global longClick
         Global fullscreen
         Global pages
         Global poster
@@ -100,13 +100,13 @@ Global gesture
       return								; wait for mouse/key events
 
 
-
     RenderPage()							; construct web page from media list
         {
         Critical							; stop key interrupts
         if !path
             return
         media_list =
+if !InStr(path, inca_tab)
         subfolders =
 foldr =
         if !search_term
@@ -264,7 +264,7 @@ body = <body id='myBody' class='container' onload="myFol.scrollIntoView(); myVie
 <span id="myContext" class='context'`n onmouseout="media.style.zIndex=null; media.style.transform='scale('+skinny+',1)'; if(list_view) {media.style.opacity=0}; media.pause()">`n
 
 <a onmouseup="inca('Settings')"`n onmouseover="el=document.getElementById('title'+index); x='';`n if(media.duration){x=Math.round(media.duration/60)+'mins - '};`n if (was_over_media) {this.innerHTML=x+el.value}"`n onmouseout="this.innerHTML=' . . .'"> . . .</a>`n
-<a onmouseup="if (!long_click && was_over_media) {sel(index)} else{selectAll()}">Select</a>`n
+<a onmouseup="if (!longClick && was_over_media) {sel(index)} else{selectAll()}">Select</a>`n
 <a onmousedown="inca('Delete','',was_over_media,was_over_media)">Delete</a>`n
 <a onmousedown="inca('Favorite','',was_over_media)">Fav</a>`n
 <a id="myZoom" onwheel="wheelEvents(event, id, this)">Zoom/a>`n
@@ -448,10 +448,10 @@ selected =
 
 
 if list_view
-  media_list = %media_list% %fold%<table onmouseover="overThumb(%j%, %skinny%, '%type%', %start%, %cue%, '%cap%', %rate%, event);`n media%j%.style.opacity=1; media%j%.pause()" onmouseout="title%j%.style.color=null; over_media=0; media%j%.style.opacity=0"><tr id="entry%j%"`n onmouseover="title%j%.style.color='lightsalmon'; if(click && gesture) {sel(%j%)}">`n <td onmouseenter='over_media=0; media%j%.style.opacity=0' onmousedown='sel(%j%)'>%ext%`n <video id='media%j%' class='media2' style="max-width:%view3%em; max-height:%view3%em; transform:scale(%skinny%, 1)"`n src="file:///%src%"`n %poster%`n preload='none' muted loop`n onmouseover="overThumb(%j%, %skinny%, '%type%', %start%, %cue%,'%cap%', %rate%, event)" type="video/mp4"></video></td>`n <td>%size%</td>`n <td>%dur%</td>`n <td>%date%</td>`n <td>%j%</td>`n <td style='width:34em'><input id="title%j%" class='title' type='search' value='%media_s%'`n onmouseenter='over_media=0; media%j%.style.opacity=0' oninput="was_over_media=%j%; renamebox=this.value; ren%j%.style.display='block'"></td>`n <td id='ren%j%' style='display:none; color:#826858'`n onmouseenter='over_media=0' onmousedown="media%j%.load(); inca('Rename', renamebox, %j%)">Rename</td>`n <td style='text-align:right'>%fo%</td></tr></table>`n`n
+  media_list = %media_list% %fold%<table onmouseover="overThumb(%j%, %skinny%, '%type%', %start%, %cue%, '%cap%', %rate%, event);`n media%j%.style.opacity=1; media%j%.pause()" onmouseout="title%j%.style.color=null; over_media=0; media%j%.style.opacity=0"><tr id="entry%j%"`n onmouseover="title%j%.style.color='lightsalmon'; if(Click) {sel(%j%)}">`n <td onmouseenter='over_media=0; media%j%.style.opacity=0' onmousedown='sel(%j%)'>%ext%`n <video id='media%j%' class='media2' style="max-width:%view3%em; max-height:%view3%em; transform:scale(%skinny%, 1)"`n src="file:///%src%"`n %poster%`n preload='none' muted loop`n onmouseover="overThumb(%j%, %skinny%, '%type%', %start%, %cue%,'%cap%', %rate%, event)" type="video/mp4"></video></td>`n <td>%size%</td>`n <td>%dur%</td>`n <td>%date%</td>`n <td>%j%</td>`n <td style='width:34em'><input id="title%j%" class='title' type='search' value='%media_s%'`n onmouseenter='over_media=0; media%j%.style.opacity=0' oninput="was_over_media=%j%; renamebox=this.value; ren%j%.style.display='block'"></td>`n <td id='ren%j%' style='display:none; color:#826858'`n onmouseenter='over_media=0' onmousedown="media%j%.load(); inca('Rename', renamebox, %j%)">Rename</td>`n <td style='text-align:right'>%fo%</td></tr></table>`n`n
 
 else
-  media_list = %media_list%<div id="entry%j%" style="display:flex; width%view%em; height:%view3%em; padding:%view4%em"`n onmouseup="if(!over_media){sel(%j%)}">`n <video id="media%j%" class='media' style="max-width:%view3%em; max-height:%view3%em; transform:scale(%skinny%, 1)"`n onmouseover="overThumb(%j%, %skinny%, '%type%', %start%, %cue%, '%cap%', %rate%, event); if(click && gesture) {sel(%j%)}"`n onmouseout="this.pause(); over_media=0"`n src="file:///%src%"`n %poster%`n preload='none' muted loop type="video/mp4"></video>`n %caption% <input id='title%j%' value='%media%' class='title' style='display:none'></div>`n`n
+  media_list = %media_list%<div id="entry%j%" style="display:flex; width%view%em; height:%view3%em; padding:%view4%em"`n onmouseup="if(!over_media){sel(%j%)}">`n <video id="media%j%" class='media' style="max-width:%view3%em; max-height:%view3%em; transform:scale(%skinny%, 1)"`n onmouseover="overThumb(%j%, %skinny%, '%type%', %start%, %cue%, '%cap%', %rate%, event); if(Click) {sel(%j%)}"`n onmouseout="this.pause(); over_media=0"`n src="file:///%src%"`n %poster%`n preload='none' muted loop type="video/mp4"></video>`n %caption% <input id='title%j%' value='%media%' class='title' style='display:none'></div>`n`n
 
 }
 
@@ -474,7 +474,7 @@ else
     Xbutton1::					; mouse "back" button
       Critical
       playing =
-      long_click =
+      longClick =
       timer := A_TickCount + 350
       SetTimer, Timer_up, -350
       return
@@ -522,7 +522,7 @@ else
       {
       Critical					; stop timed events
       gesture := 0
-      long_click =
+      longClick =
       timer := A_TickCount + 300
       MouseGetPos, xpos, ypos
       StringReplace, click, A_ThisHotkey, ~,, All
@@ -582,7 +582,7 @@ else
               }
             else send, !+0			; trigger osk keyboard
             }
-          else long_click = true
+          else longClick = true
           break
           }
         }
@@ -637,6 +637,7 @@ else
         sleep 100							; time for browser to release media etc.
         messages := StrReplace(Clipboard, "/", "\")
         array := StrSplit(messages,"#")
+; tooltip %messages% -
         Loop % array.MaxIndex()/4
           {
           command := array[ptr+=1]
@@ -656,13 +657,19 @@ else
           RenderPage()
         if (reload == 3)
           CreateList(0)
-        long_click =
+        longClick =
         }
 
 
     ProcessMessage()
         {
         Clipboard =
+        if (command == "Move")
+            {
+            MoveEntry()								; move entry within playlist
+            selected =
+            reload := 3
+            }
         if (command == "Rename")
             {
             if (StrLen(value) < 4)
@@ -792,6 +799,7 @@ else
               if (InStr(address, "\Downloads") && folder != "Downloads")
                 FileRecycle, %media_path%				; delete folder if empty
               }
+            reload := 3
             }
         if (command == "EditMedia")
             {
@@ -843,9 +851,9 @@ selected =
               {
 playing = true
 
-FileRead, dur, %inca%\cache\durations\%media%.txt
-              if !dur
-                index(src)
+; FileRead, dur, %inca%\cache\durations\%media%.txt
+;              if !dur
+;                index(src)
               if (ext=="pdf")
                 Run, %src%
               else if (type=="document" || type=="m3u")
@@ -855,7 +863,7 @@ FileRead, dur, %inca%\cache\durations\%media%.txt
                 send, +{MButton}							; close java player
                 Run %inca%\cache\apps\mpv "%src%"
                 }
-              else if (!long_click && ((browser == "mozilla firefox" && type == "video" && ext != "mp4" && ext != "m4v" && ext != "webm") || (browser == "google chrome" && type == "video" && ext != "mp4" && ext != "mkv" && ext != "m4v" && ext != "webm")))
+              else if (!longClick && ((browser == "mozilla firefox" && type == "video" && ext != "mp4" && ext != "m4v" && ext != "webm") || (browser == "google chrome" && type == "video" && ext != "mp4" && ext != "mkv" && ext != "m4v" && ext != "webm")))
                 {
                 send, +{MButton}							; close java player 
                 Run %inca%\cache\apps\mpv "%src%"
@@ -966,7 +974,7 @@ FileRead, dur, %inca%\cache\durations\%media%.txt
                 reload := 0
                 return
                 }
-              if long_click
+              if longClick
                 search_term = %search_term%+%value%			; long click adds new search term
               else search_term = %value%
               }
@@ -1007,7 +1015,7 @@ FileRead, dur, %inca%\cache\durations\%media%.txt
                 sort := command
                 return
                 }
-            if (filt != value)						; new filter value only
+            if (filt != value && value != search_term)			; new filter value only
                 filt := value
             else if (InStr(sort_list, command))				; sort filter
                 {
@@ -1231,7 +1239,7 @@ selected =
         Loop, Parse, selected, `,
             {
             index := A_LoopField
-            if long_click
+            if longClick
               popup = Copy - %media%
             else popup = Move - %media%
             if (InStr(address, "\inca\"))
@@ -1260,12 +1268,12 @@ selected =
                   if (x == y)
                     break 2
                   }
-                if !long_click
+                if !longClick
                   FileMove, %src%, %address%%z%				; move file to new folder
                 else FileCopy, %src%, %address%%z%
                 }
             }
-        if !long_click
+        if !longClick
           if (InStr(address, "inca\fav") || InStr(address, "inca\music"))
             DeleteEntries(0)
         }  
@@ -1293,6 +1301,36 @@ selected =
             FileAppend, %x%, %inca%\fav\Trash.m3u, UTF-8
           }
         FileAppend, %str%, %plist%, UTF-8
+        }
+
+
+    MoveEntry()								; within playlist 
+        {
+        if (sort != "List")
+          {
+          sort = Alpha
+          CreateList(0)
+          PopUp("Cannot Move if List Sorted",900,0,0)
+          return
+          }
+        select := StrSplit(selected, ",").1
+        GetMedia(select)
+        source = %target%
+        GetMedia(value)
+        if (source == target)
+          return
+        plist = %path%%folder%.m3u
+        FileRead, str, %plist%
+        FileDelete, %plist%
+        Loop, Parse, str, `n, `r
+          if A_LoopField
+            {
+            if (A_LoopField == source)
+              continue
+            FileAppend, %A_LoopField%`r`n, %plist%, UTF-8
+            if (A_LoopField == target)
+               FileAppend, %source%`r`n, %plist%, UTF-8
+            }
         }
 
 

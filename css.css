@@ -127,7 +127,7 @@
   z-index:999;
   color:red;
   height:2em;
-  font-size:2em}
+  font-size:1.2em}
 
 .seekbar {					/* video progress bar	*/
   position:absolute;
@@ -135,7 +135,7 @@
   border-radius:2px;
   color:lightsalmon;
   font-size:1.4em;
-  border-top:2px solid red;
+  border-top:3px solid red;
   transition:0.2s}
 
 .cap {						/* htm caption element */
