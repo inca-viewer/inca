@@ -79,12 +79,12 @@
         Global poster
         Global media_list
         Global panel_list
-Global foldr
-Global index := 1
-Global cue := 0
-Global messages
-Global playing =
-Global gesture
+        Global foldr
+        Global index := 1
+        Global cue := 0
+        Global messages
+        Global playing =
+        Global gesture
 
 
     main:
@@ -270,14 +270,15 @@ body = <body id='myBody' class='container' onload="myFol.scrollIntoView(); myVie
 <a id="myZoom" onwheel="wheelEvents(event, id, this)">Zoom/a>`n
 <a id="myFade" onwheel="wheelEvents(event, id, this)">Fade</a>`n
 <a id="myRate" onwheel="wheelEvents(event, id, this)">Speed</a>`n
-<a onmousedown="inca('Join')">Join</a></span>`n`n
+<a onmousedown="inca('Join')">Join</a>
+<a onmousedown="inca('Index','',was_over_media)">Index</a></span>`n`n
 
 <span id="myContext2" class='context' onmouseover='nav2.style.opacity=1'>`n
 <a id='mySelect' onmouseup='sel(index)'`n onwheel="wheelEvents(event, id, this)" onmouseover="nav2.style.opacity=1"`n onmouseout="this.innerHTML='Select'" >Select</a>`n
-<a id="mySeek" style='font-size:1.5em' onwheel="wheelEvents(event, id, this)" onmouseup='togglePause()'>Seek</a>`n
+<a id="mySeek" style='font-size:1.5em' onwheel="wheelEvents(event, id, this); nav2.style.opacity=1" onmouseup='togglePause()'>Seek</a>`n
 <a id="myNext" style='font-size:1.5em' onwheel="wheelEvents(event, id, this)" onmouseover="nav2.style.opacity=1" onmouseup='togglePause()'></a>`n
-<a id="mySpeed" onwheel="wheelEvents(event, id, this)" onmouseup='togglePause()'>Speed</a>`n
-<a id="mySkinny" onwheel="wheelEvents(event, id, this)" onmouseup='togglePause()'>Skinny</a>`n
+<a id="mySpeed" onwheel="wheelEvents(event, id, this); nav2.style.opacity=1" onmouseup='togglePause()'>Speed</a>`n
+<a id="mySkinny" onwheel="wheelEvents(event, id, this); nav2.style.opacity=1" onmouseup='togglePause()'>Skinny</a>`n
 <a id='myFlip' onmousedown='flip()'>Flip</a>`n
 <a id='myMute' onmouseup='mute()'>Mute</a>`n
 <a id='myLoop' onclick="loop()">Loop</a>`n
@@ -448,7 +449,7 @@ selected =
 
 
 if list_view
-  media_list = %media_list% %fold%<table onmouseover="overThumb(%j%, %skinny%, '%type%', %start%, %cue%, '%cap%', %rate%, event);`n media%j%.style.opacity=1; media%j%.pause()" onmouseout="title%j%.style.color=null; over_media=0; media%j%.style.opacity=0"><tr id="entry%j%"`n onmouseover="title%j%.style.color='lightsalmon'; if(Click) {sel(%j%)}">`n <td onmouseenter='over_media=0; media%j%.style.opacity=0' onmousedown='sel(%j%)'>%ext%`n <video id='media%j%' class='media2' style="max-width:%view3%em; max-height:%view3%em; transform:scale(%skinny%, 1)"`n src="file:///%src%"`n %poster%`n preload='none' muted loop`n onmouseover="overThumb(%j%, %skinny%, '%type%', %start%, %cue%,'%cap%', %rate%, event)" type="video/mp4"></video></td>`n <td>%size%</td>`n <td>%dur%</td>`n <td>%date%</td>`n <td>%j%</td>`n <td style='width:34em'><input id="title%j%" class='title' type='search' value='%media_s%'`n onmouseenter='over_media=0; media%j%.style.opacity=0' oninput="was_over_media=%j%; renamebox=this.value; ren%j%.style.display='block'"></td>`n <td id='ren%j%' style='display:none; color:#826858'`n onmouseenter='over_media=0' onmousedown="media%j%.load(); inca('Rename', renamebox, %j%)">Rename</td>`n <td style='text-align:right'>%fo%</td></tr></table>`n`n
+  media_list = %media_list% %fold%<table onmouseover="overThumb(%j%, %skinny%, '%type%', %start%, %cue%, '%cap%', %rate%, event);`n media%j%.style.opacity=1; media%j%.pause()" onmouseout="title%j%.style.color=null; over_media=0; media%j%.style.opacity=0"><tr id="entry%j%"`n onmouseover="title%j%.style.color='lightsalmon'; if(Click) {sel(%j%)}">`n <td onmouseenter='over_media=0; media%j%.style.opacity=0' onmousedown='sel(%j%)'>%ext%`n <video id='media%j%' class='media2' style="max-width:%view3%em; max-height:%view3%em; transform:scale(%skinny%, 1)"`n src="file:///%src%"`n %poster%`n preload='none' muted loop onmouseover="overThumb(%j%, %skinny%, '%type%', %start%, %cue%,'%cap%', %rate%, event)" type="video/mp4"></video></td>`n <td>%size%</td>`n <td>%dur%</td>`n <td>%date%</td>`n <td>%j%</td>`n <td style='width:34em'><input id="title%j%" class='title' type='search' value='%media_s%'`n onmouseenter='over_media=0; media%j%.style.opacity=0' oninput="was_over_media=%j%; renamebox=this.value; ren%j%.style.display='block'"></td>`n <td id='ren%j%' style='display:none; color:#826858'`n onmouseenter='over_media=0' onmousedown="media%j%.load(); inca('Rename', renamebox, %j%)">Rename</td>`n <td style='text-align:right'>%fo%</td></tr></table>`n`n
 
 else
   media_list = %media_list%<div id="entry%j%" style="display:flex; width%view%em; height:%view3%em; padding:%view4%em"`n onmouseup="if(!over_media){sel(%j%)}">`n <video id="media%j%" class='media' style="max-width:%view3%em; max-height:%view3%em; transform:scale(%skinny%, 1)"`n onmouseover="overThumb(%j%, %skinny%, '%type%', %start%, %cue%, '%cap%', %rate%, event); if(Click) {sel(%j%)}"`n onmouseout="this.pause(); over_media=0"`n src="file:///%src%"`n %poster%`n preload='none' muted loop type="video/mp4"></video>`n %caption% <input id='title%j%' value='%media%' class='title' style='display:none'></div>`n`n
@@ -633,9 +634,11 @@ else
         address =
         reload =
         type =
+        src =
         ptr := 1
         sleep 100							; time for browser to release media etc.
         messages := StrReplace(Clipboard, "/", "\")
+        Clipboard =
         array := StrSplit(messages,"#")
 ; tooltip %messages% -
         Loop % array.MaxIndex()/4
@@ -663,10 +666,22 @@ else
 
     ProcessMessage()
         {
-        Clipboard =
-        if (command == "Move")
+        if (command == "Index")						; index folder or media under cursor
             {
-            MoveEntry()								; move entry within playlist
+            popup = index - %media%
+            if src
+              index(src)
+            else if !playlist
+              {
+              popup = index - %folder%             
+              index_folders = %index_folders%|%path%
+              SetTimer, indexer, -100, -2
+              }
+            Popup(popup,1500,0,0)
+            }
+        if (command == "Move")						; move entry within playlist
+            {
+            MoveEntry()
             selected =
             reload := 3
             }
@@ -1515,17 +1530,15 @@ selected =
         FileRead, dur, %inca%\cache\durations\%filen%.txt
         if !dur
             {
-            clp := clipboard
-            clipboard =
-            RunWait %COMSPEC% /c %inca%\cache\apps\ffmpeg.exe -i "%source%" 2>&1 | find "Duration" | Clip, , hide && exit
-            ClipWait, 3
-            StringTrimLeft, aTime, clipboard, 12
+            RunWait %COMSPEC% /c %inca%\cache\apps\ffmpeg.exe -y -i "%source%" 2>&1 | find "Duration" > "%inca%\meta.txt" , , hide && exit
+            FileRead, dur, %inca%\meta.txt
+            StringTrimLeft, aTime, dur, 12
             StringLeft, aTime, aTime, 8
             aTime := StrSplit(aTime, ":")
             dur := aTime.1 * 3600 + aTime.2 * 60 + aTime.3
+            FileDelete, %inca%\meta.txt
             FileDelete, %inca%\cache\durations\%filen%.txt
             FileAppend, %dur%, %inca%\cache\durations\%filen%.txt
-            clipboard := clp
             }
         return dur
         }
@@ -1609,9 +1622,6 @@ selected =
 
     TimedEvents:
         GetBrowser()
-        array := StrSplit(clipboard,"#")
-        if (inca_tab && array.MaxIndex() > 4)				; likely is a java message
-          Clipboard()
         Gui, background:+LastFound
         if inca_tab
             WinSet, Transparent, % Setting("Dim Desktop")
@@ -1626,12 +1636,19 @@ selected =
             }
         x = %A_Hour%:%A_Min%
         ShowStatus()							; show time & vol
+        if inca_tab
+          {
+          x := StrLen(Clipboard)
+          y := SubStr(Clipboard, 1, 1)
+          if (y=="#" && x>4 && x<5000 && StrSplit(clipboard,"#").MaxIndex()>4)	; likely is a java message
+            Clipboard()
+          }
         return
 
 
     Indexer:
     Critical Off
-    SetTimer, indexer, 60000, -2
+    SetTimer, indexer, 300000, -2					; 5 minute indexing interval
     if index_folders
       Loop, Parse, index_folders, `|
         Loop, Files, %A_LoopField%*.*, R
