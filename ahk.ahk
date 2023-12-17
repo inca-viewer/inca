@@ -259,8 +259,7 @@ body = <body id='myBody' class='container' onload="myFol.scrollIntoView(); myVie
 
 <div id='myMenu' style='position:absolute; width:100`%'>`n`n
 <div id='mySelected' class='selected'></div>`n
-
-<div oncontextmenu="if(yw>0.1 || type) {event.preventDefault(); if (!gesture) {context()}}" style='padding-bottom:40em'>`n`n
+<div oncontextmenu="if(yw>0.1 || type) {event.preventDefault()}">`n`n
 <span id="myContext" class='context'`n onmouseout="media.style.zIndex=null; media.style.transform='scale('+skinny+',1)'; if(list_view) {media.style.opacity=0}; media.pause()">`n
 
 <a onmouseup="inca('Settings')"`n onmouseover="el=document.getElementById('title'+index); x='';`n if(media.duration){x=Math.round(media.duration/60)+'mins - '};`n if (was_over_media) {this.innerHTML=x+el.value}"`n onmouseout="this.innerHTML=' . . .'"> . . .</a>`n
@@ -282,7 +281,7 @@ body = <body id='myBody' class='container' onload="myFol.scrollIntoView(); myVie
 <a id='myFlip' onmousedown='flip()'>Flip</a>`n
 <a id='myMute' onmouseup='mute()'>Mute</a>`n
 <a id='myLoop' onclick="loop()">Loop</a>`n
-<a id="myCue" onclick="editing=true; myPlayer.pause(); cue=Math.round(myPlayer.currentTime*10)/10">Cue</a>`n
+<a id="myCue" onwheel="wheelEvents(event, id, this)" onclick="editing=true; myPlayer.pause(); cue=Math.round(myPlayer.currentTime*10)/10">Cue</a>`n
 <a id="myFav" onmousedown="inca('Favorite', myPlayer.currentTime.toFixed(1), index, cue)">Fav</a>`n
 <a id="myMp4" onmousedown="inca('mp4', myPlayer.currentTime.toFixed(1), index, cue.toFixed(1))">mp4</a>`n
 <a id="myMp3" onmousedown="inca('mp3', myPlayer.currentTime.toFixed(1), index, cue.toFixed(1))">mp3</a>`n
@@ -449,18 +448,16 @@ selected =
 
 
 if list_view
-  media_list = %media_list% %fold%<table onmouseover="overThumb(%j%, %skinny%, '%type%', %start%, %cue%, '%cap%', %rate%, event);`n media%j%.style.opacity=1; media%j%.pause()" onmouseout="title%j%.style.color=null; over_media=0; media%j%.style.opacity=0"><tr id="entry%j%"`n onmouseover="title%j%.style.color='lightsalmon'; if(Click) {sel(%j%)}">`n <td onmouseenter='over_media=0; media%j%.style.opacity=0' onmousedown='sel(%j%)'>%ext%`n <video id='media%j%' class='media2' style="max-width:%view3%em; max-height:%view3%em; transform:scale(%skinny%, 1)"`n src="file:///%src%"`n %poster%`n preload='none' muted loop onmouseover="overThumb(%j%, %skinny%, '%type%', %start%, %cue%,'%cap%', %rate%, event)" type="video/mp4"></video></td>`n <td>%size%</td>`n <td>%dur%</td>`n <td>%date%</td>`n <td>%j%</td>`n <td style='width:34em'><input id="title%j%" class='title' type='search' value='%media_s%'`n onmouseenter='over_media=0; media%j%.style.opacity=0' oninput="was_over_media=%j%; renamebox=this.value; ren%j%.style.display='block'"></td>`n <td id='ren%j%' style='display:none; color:#826858'`n onmouseenter='over_media=0' onmousedown="media%j%.load(); inca('Rename', renamebox, %j%)">Rename</td>`n <td style='text-align:right'>%fo%</td></tr></table>`n`n
+  media_list = %media_list% %fold%<table onmouseover="overThumb(%j%, %skinny%, '%type%', %start%, %cue%, '%cap%', %rate%, event);`n media%j%.style.opacity=1; media%j%.pause()" onmouseout="title%j%.style.color=null; over_media=0; media%j%.style.opacity=0"><tr id="entry%j%"`n onmouseover="title%j%.style.color='lightsalmon'; if(Click) {sel(%j%)}">`n <td onmouseenter='over_media=0; media%j%.style.opacity=0' onmousedown='sel(%j%)'>%ext%`n <video id='media%j%' class='media2' style="max-width:%view3%em; max-height:%view3%em; transform:scale(%skinny%, 1)"`n src="file:///%src%"`n %poster%`n preload='none' muted loop onmouseover="overThumb(%j%, %skinny%, '%type%', %start%, %cue%,'%cap%', %rate%, event)" type="video/mp4"></video></td>`n <td>%size%</td>`n <td>%dur%</td>`n <td>%date%</td>`n <td>%j%</td>`n <td style='width:34em'><input id="title%j%" class='title' type='search' value='%media_s%'`n onmouseenter='over_media=0; media%j%.style.opacity=0' oninput="was_over_media=%j%; renamebox=this.value; ren%j%.style.display='block'"></td>`n <td id='ren%j%' style='display:none; color:#826858'`n onmouseenter='over_media=0' onmousedown="media%j%.load(); inca('Rename', renamebox, %j%, %j%)">Rename</td>`n <td style='text-align:right'>%fo%</td></tr></table>`n`n
 
 else
-  media_list = %media_list%<div id="entry%j%" style="display:flex; width%view%em; height:%view3%em; padding:%view4%em"`n onmouseup="if(!over_media){sel(%j%)}">`n <video id="media%j%" class='media' style="max-width:%view3%em; max-height:%view3%em; transform:scale(%skinny%, 1)"`n onmouseover="overThumb(%j%, %skinny%, '%type%', %start%, %cue%, '%cap%', %rate%, event); if(Click) {sel(%j%)}"`n onmouseout="this.pause(); over_media=0"`n src="file:///%src%"`n %poster%`n preload='none' muted loop type="video/mp4"></video>`n %caption% <input id='title%j%' value='%media%' class='title' style='display:none'></div>`n`n
+  media_list = %media_list%<div id="entry%j%" style="display:flex; width%view%em; height:%view3%em; padding:%view4%em">`n <video id="media%j%" class='media' style="max-width:%view3%em; max-height:%view3%em; transform:scale(%skinny%, 1)"`n onmouseover="overThumb(%j%, %skinny%, '%type%', %start%, %cue%, '%cap%', %rate%, event); if(Click) {sel(%j%)}"`n onmouseout="this.pause(); over_media=0"`n src="file:///%src%"`n %poster%`n preload='none' muted loop type="video/mp4"></video>`n %caption% <input id='title%j%' value='%media%' class='title' style='display:none'></div>`n`n
 
 }
 
     fill(in) {  
       panel_list = %panel_list%<div style="height:7em; padding:0.5em; transform:rotate(90deg)">`n%in%</div>`n
       }
-
-
 
 
     ~Esc up::
@@ -668,16 +665,14 @@ else
         {
         if (command == "Index")						; index folder or media under cursor
             {
-            popup = index - %media%
             if src
               index(src)
             else if !playlist
               {
-              popup = index - %folder%             
               index_folders = %index_folders%|%path%
               SetTimer, indexer, -100, -2
               }
-            Popup(popup,1500,0,0)
+            reload := 3
             }
         if (command == "Move")						; move entry within playlist
             {
@@ -697,6 +692,7 @@ else
                popup = Renamed
                }
             Popup(popup,0,0,0)
+            index := address						; for scrollToIndex() in java
             reload := 3
             }
         if (command == "Reload")
@@ -721,13 +717,13 @@ else
             IfExist, %inca%\cache\captions\%value%.srt
               run, %inca%\cache\captions\%value%.srt
             }
-        if (command == "mp3" || command == "mp4")			; address = cue = start
-            {								; value = current time = end
+        if (command == "mp3" || command == "mp4")			; address = cue
+            {								; value = current time
             GuiControl, Indexer:, GuiInd, %src%
             x = %value%							; converts number to string
-            if !address
+            if (!address) ;  || value-address<0.2
               run, %inca%\cache\apps\ffmpeg.exe -ss %value% -i "%src%" "%media_path%\%media% %x%.%command%",,Hide
-            else if (address == value)
+            else if (address-value>0.01 && address-value<0.2)
               run, %inca%\cache\apps\ffmpeg.exe -ss 0 -to %address% -i "%src%" "%media_path%\%media% %x%.%command%",,Hide
             else if (address < value)
               run, %inca%\cache\apps\ffmpeg.exe -ss %address% -to %value% -i "%src%" "%media_path%\%media% %x%.%command%",,Hide

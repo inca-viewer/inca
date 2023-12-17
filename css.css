@@ -132,10 +132,10 @@
 .seekbar {					/* video progress bar	*/
   position:absolute;
   opacity:0;
-  border-radius:4px;
+  border-radius:2px;
   color:lightsalmon;
   font-size:1.4em;
-  border-top:3px solid red;
+  border-top:2px solid red;
   transition:0.2s}
 
 .cap {						/* htm caption element */
