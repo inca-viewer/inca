@@ -190,7 +190,6 @@
           if (sheet && myNext.matches(':hover')) {nav2.style.display=null; sheet=0; start=0; getParameters()}
           else if (sheet) {playThumb()}
           else if (playing && !over_cap && !sheet) {media_ended()}}}
-      scrolltoIndex()
       if (playing) {closeMedia()}
       else {myPlayer.addEventListener('ended', media_ended)}
       if (e=='Up' && lastClick==1 && !over_media && !sheet) {start=0}
@@ -199,7 +198,8 @@
         if (playing && over_media) {getParameters()}
         if (!playing && !over_media) {index=last_index; getParameters(); start=last_start}}
       if (sheet && playing != 'thumbsheet') {context()}
-      Play(e)},fadeOut*200)}
+      Play(e); scrolltoIndex()
+      last_index = index},fadeOut*200)}
 
 
   function Play(e) {
@@ -226,13 +226,12 @@
     if (type == 'video' || type == 'audio') {
       last_start = myPlayer.currentTime}
     var x=skinny; var y=rate; getParameters()
-    if (x!=skinny || y!=rate) {						// see if edited
+    if (x!=skinny || y!=rate) {						// send speed/skinny changes to inca
       messages = messages + '#EditMedia#'+index+'#'+x+'#'+y
       cache = cache + '#EditMedia#'+index+'#'+x+'#'+y}
     if (cap.value != cap.innerHTML) {editCap()}
     if (type != 'image' && index != last_index)
       messages = messages + '#History#'+index+'##'+last_start.toFixed(1)
-    last_index = index
     cap.style.display = 'none'
     cap.style.color = null
     cap.style.opacity = 0
@@ -519,9 +518,10 @@
       if (el=document.getElementById('title'+index)) {el.style.background='#2b2824'}
       if (el=document.getElementById('media'+last_index)) {el.style.borderBottom=null}
       if (el=document.getElementById('media'+index)) {el.style.borderBottom='4px solid salmon'}}
-    x = el.getBoundingClientRect().top + myView.scrollTop
-    if (list_view) {if (el.getBoundingClientRect().top > 500) {setTimeout(function() {myView.scrollTo(0,x-260)},232)}}
-    else if (Math.abs(myView.scrollTop-(x-360)) > 300) {myView.scrollTo(0,x-360)}}	// ignore small scrolls
+    setTimeout(function() {
+      x = el.getBoundingClientRect().top + myView.scrollTop
+      if (list_view) {if (el.getBoundingClientRect().top > 500) {myView.scrollTo(0,x-260)}}
+      else if (Math.abs(myView.scrollTop-(x-360)) > 300) {myView.scrollTo(0,x-360)}},232)}	// ignore small scrolls
 
 
   function seekBar() {
@@ -612,7 +612,7 @@
     view=vi; page=pg; pages=ps; sort=so; filt=fi; list_view=lv; selected=fs; playlist=pl; 
     index=ix; was_over_media=ix; last_index=ix
     filter(sort)							// show filter heading in red
-    scrolltoIndex()
+    if (index>1) {scrolltoIndex()}
     for (x of selected.split(',')) { if (x && !isNaN(x)) {		// highlight selected media			
       if (lv) {document.getElementById('entry'+x).style.borderBottom = '0.1px solid red'}
       else {document.getElementById('media'+x).style.borderBottom = '4px solid red'}}}}

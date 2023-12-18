@@ -336,21 +336,21 @@ body = <body id='myBody' class='container' onload="myFol.scrollIntoView(); myVie
       IfWinNotExist, ahk_group Browsers
         run, %new_html%							; open a new web tab
       else if !inca_tab
-        run, %new_html%						; open a new web tab
-      else if (folder == previous_tab)				; just refresh existing tab
+        run, %new_html%							; open a new web tab
+      else if (folder == previous_tab)					; just refresh existing tab
         send, {F5}
       else
         {
         SendInput, {Raw}%new_html%
         Send, {Enter}
         }
-index := 0
+index := 1
 selected =
       previous_tab := folder
       if fullscreen
         send, {F11}
       fullscreen := 0
-      sleep 400							; time for page to load
+      sleep 400								; time for page to load
       GuiControl, Indexer:, GuiInd
       PopUp("",0,0,0)
       }
