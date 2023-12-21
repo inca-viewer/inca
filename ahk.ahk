@@ -281,8 +281,8 @@ body = <body id='myBody' class='container' onload="myFol.scrollIntoView(); myVie
 <a id='myFlip' onmousedown='flip()'>Flip</a>`n
 <a id='myMute' onmouseup='mute()'>Mute</a>`n
 <a id='myLoop' onclick="loop()">Loop</a>`n
-<a id="myCue" onwheel="wheelEvents(event, id, this)" onclick="editing=true; myPlayer.pause(); cue=Math.round(myPlayer.currentTime*10)/10">Cue</a>`n
 <a id="myFav" onmousedown="inca('Favorite', myPlayer.currentTime.toFixed(1), index, cue)">Fav</a>`n
+<a id="myCue" onwheel="wheelEvents(event, id, this)" onclick="editing=true; myPlayer.pause(); cue=Math.round(myPlayer.currentTime*10)/10">Cue</a>`n
 <a id="myMp4" onmousedown="inca('mp4', myPlayer.currentTime.toFixed(1), index, cue.toFixed(1))">mp4</a>`n
 <a id="myMp3" onmousedown="inca('mp3', myPlayer.currentTime.toFixed(1), index, cue.toFixed(1))">mp3</a>`n
 <a id="myCapnav" onclick="editCap()">Cap</a></span>`n`n
@@ -753,22 +753,18 @@ else
             if !selected
               return
             popup("Added",900,0,0)
-            if !address
-              address = 0.0
-            else if (address < value)
-              {
-              x:=value
-              value:=address
-              address:=x
-              }
-            if value							; new start time
-              Runwait, %inca%\cache\apps\ffmpeg.exe -ss %value% -i "%src%" -y -vf scale=1280:1280/dar -vframes 1 "%inca%\cache\posters\%media%%A_Space%%value%.jpg",, Hide
+            if !value
+              value = 0.0
+            if address
+              x := address
+            else x := value
+            if address
+              y = %address%|%value%
+            else y := value
+            Runwait, %inca%\cache\apps\ffmpeg.exe -ss %x% -i "%src%" -y -vf scale=1280:1280/dar -vframes 1 "%inca%\cache\posters\%media%%A_Space%%value%.jpg",, Hide
             Loop, Parse, selected, `,
-                if GetMedia(A_Loopfield)
-                  if value
-                    FileAppend, %src%|%value%|%address%`r`n, %inca%\fav\new.m3u, UTF-8	; from modal player with start & cue time
-                  else FileAppend, %target%|0.0`r`n, %inca%\fav\new.m3u, UTF-8		; from htm with no start or cue times
-
+              if GetMedia(A_Loopfield)
+                FileAppend, %src%|%y%`r`n, %inca%\fav\new.m3u, UTF-8	; from modal player with start & cue time
             }
         if (command == "View")
             {
@@ -931,7 +927,8 @@ playing = true
                 runwait, %inca%\cache\apps\Utf-WithoutBOM.bat %inca%\cache\lists\temp1.txt > %inca%\cache\lists\temp.txt,,Hide
                 runwait, %inca%\cache\apps\ffmpeg.exe -f concat -safe 0 -i "%inca%\cache\lists\temp.txt" -c copy "%media_path%\%media%- join.mp4",,Hide
                 }
-              sleep 1000
+              src = %media_path%\%media%- join.mp4
+              index(src)
               reload := 3
               }
             }
@@ -1303,10 +1300,8 @@ selected =
           GetMedia(A_LoopField)
           x = %target%`r`n
           y = %src%`r`n
-          z = %target%|%cue%`r`n
           str := StrReplace(str, x,,,1)					; fav with start time
           str := StrReplace(str, y,,,1)					; music with no start time
-          str := StrReplace(str, z,,,1)					; fav with cue
           if (trash && folder != "Trash" && folder != "History")
            if InStr(path, "\inca\")
             FileAppend, %x%, %inca%\fav\Trash.m3u, UTF-8
@@ -1416,8 +1411,10 @@ selected =
         if !seek
           seek = 0.0
         target = %src%|%seek%
+        if cue
+          target = %target%|%cue%
         if src
-            return DetectMedia(src)
+          return DetectMedia(src)
         }
 
 

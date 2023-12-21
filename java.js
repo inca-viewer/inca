@@ -6,10 +6,8 @@
 // rename with # in name
 // myinput cannot fill if media title has single '
 // undo delete etc?
-// consider index 0 instead of was over
 // simplify media list htm
 // part nav2 hide
-// moveentry fails if cue exists
 
   var media = document.getElementById('media1')				// first media element
   var modal = document.getElementById('myModal')			// media player window
