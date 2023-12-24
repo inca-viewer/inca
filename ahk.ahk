@@ -106,9 +106,9 @@
         if !path
             return
         media_list =
-if !InStr(path, inca_tab)
-        subfolders =
-foldr =
+        if !InStr(path, inca_tab)
+          subfolders =
+        foldr =
         if !search_term
           if playlist
              Loop, Files, %inca%\%folder%\*.m3u, FR
@@ -161,9 +161,8 @@ foldr =
           if InStr(toggles, A_LoopField)
             x%A_Index% = style='min-width:3em; color:red'
           }
-if playlist
-  order = List
-
+        if playlist
+          order = List
         panel_list =
         container = <div style='font-size:2em; color:red; margin:0.8em; text-align:center'>Fav</div>`n
         container := fill(container)
@@ -274,8 +273,8 @@ body = <body id='myBody' class='container' onload="myFol.scrollIntoView(); myVie
 
 <span id="myContext2" class='context' onmouseover='nav2.style.opacity=1'>`n
 <a id='mySelect' onmouseup='sel(index)'`n onwheel="wheelEvents(event, id, this)" onmouseover="nav2.style.opacity=1"`n onmouseout="this.innerHTML='Select'" >Select</a>`n
-<a id="mySeek" style='font-size:1.5em' onwheel="wheelEvents(event, id, this); nav2.style.opacity=1" onmouseup='togglePause()'>Seek</a>`n
 <a id="myNext" style='font-size:1.5em' onwheel="wheelEvents(event, id, this)" onmouseover="nav2.style.opacity=1" onmouseup='togglePause()'></a>`n
+<a id="mySeek" style='font-size:1.5em' onwheel="wheelEvents(event, id, this); nav2.style.opacity=1" onmouseup='togglePause()'>Seek</a>`n
 <a id="mySpeed" onwheel="wheelEvents(event, id, this); nav2.style.opacity=1" onmouseup='togglePause()'>Speed</a>`n
 <a id="mySkinny" onwheel="wheelEvents(event, id, this); nav2.style.opacity=1" onmouseup='togglePause()'>Skinny</a>`n
 <a id='myFlip' onmousedown='flip()'>Flip</a>`n
@@ -344,8 +343,8 @@ body = <body id='myBody' class='container' onload="myFol.scrollIntoView(); myVie
         SendInput, {Raw}%new_html%
         Send, {Enter}
         }
-index := 1
-selected =
+      index := 1
+      selected =
       previous_tab := folder
       if fullscreen
         send, {F11}
@@ -637,7 +636,7 @@ else
         messages := StrReplace(Clipboard, "/", "\")
         Clipboard =
         array := StrSplit(messages,"#")
-; tooltip %messages% -
+; tooltip %messages%
         Loop % array.MaxIndex()/4
           {
           command := array[ptr+=1]
@@ -835,9 +834,8 @@ else
                 FileAppend, %str%, %inca%\cache\widths\%media%.txt
                 }
               }
-index := value
-selected =
-;RenderPage()
+            index := value
+            selected =
             }
         if (command == "History")
             {
@@ -856,11 +854,8 @@ selected =
             {
             if GetMedia(value)
               {
-playing = true
-
-; FileRead, dur, %inca%\cache\durations\%media%.txt
-;              if !dur
-;                index(src)
+              playing = true
+              sleep 50
               if (ext=="pdf")
                 Run, %src%
               else if (type=="document" || type=="m3u")
@@ -1069,7 +1064,7 @@ playing = true
              {
              x := StrSplit(A_Loopfield, "|").1
              y := StrSplit(A_Loopfield, "|").2
-z := StrSplit(A_Loopfield, "|").3
+             z := StrSplit(A_Loopfield, "|").3
              if (x && spool(x, A_Index, y, z))
                  break
              }
@@ -1099,7 +1094,7 @@ z := StrSplit(A_Loopfield, "|").3
           Sort, list, %reverse% Z \					; filename alpha sort
         FileDelete, %inca%\cache\lists\%folder%.txt
         FileAppend, %list%, %inca%\cache\lists\%folder%.txt, UTF-8
-selected =
+        selected =
         RenderPage()
         }
 
