@@ -7,7 +7,6 @@
 // undo delete etc?
 // simplify media list htm
 // part nav2 hide
-// vol does context over link ytube
 
 
   var media = document.getElementById('media1')				// first media element
@@ -334,12 +333,12 @@
       localStorage.setItem("mediaY",mediaY)}
     else if (type && Click>1 && y>x) {					// zoom playing media
       if (scaleY>0.25 || Yref<ypos) {
-        if (Yref<ypos) {y=0.01} else {y=-0.01}
-        if (type == 'thumbsheet') {sheetY+=y}				// zoom thumbsheet
+        if (Yref<ypos) {y=1.02} else {y=0.98}
+        if (type == 'thumbsheet') {sheetY*=y}				// zoom thumbsheet
         else {
-          scaleY += y
+          scaleY *= y
           last_scaleY = scaleY
-          if (scaleX<0) {scaleX -= y} else {scaleX += y}}}}		// in case media fipped left/right
+          if (scaleX<0) {scaleX *= -y} else {scaleX *= y}}}}		// in case media fipped left/right
     if (gesture) {Xref=xpos; Yref=ypos; positionMedia(0.05)}
     if (type) {
       modal.style.cursor = 'crosshair'

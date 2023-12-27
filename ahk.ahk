@@ -855,11 +855,14 @@ else
             if GetMedia(value)
               {
               playing = true
-              sleep 50
               if (ext=="pdf")
                 Run, %src%
               else if (type=="document" || type=="m3u")
+                {
                 Run, % "notepad.exe " . src
+                sleep 50
+                WinActivate, Notepad
+                }
               else if Setting("External Player")
                 {
                 send, +{MButton}							; close java player
@@ -1434,7 +1437,7 @@ else
           vol_popup := 4
           ShowStatus()
           }
-        else if (!playing && WinActive("ahk_group Browsers"))	; browser magnify
+        else if (!(playing && inca_tab) && WinActive("ahk_group Browsers"))	; browser magnify
           {
           gesture += Abs(y)
           WinGet, state, MinMax, ahk_group Browsers
