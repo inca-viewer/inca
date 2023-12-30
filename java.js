@@ -1,12 +1,10 @@
 
-// Debugging - use mySelected.innerHTML = x in Gesture(e) or use alert(x)
-// rem. long click text or search, +adds extra search term
-// edit caption file when # in filename
-// search tigris ride - error with #
-// rename with # in name
-// undo delete etc?
-// simplify media list htm
-// part nav2 hide
+// Debugging - use mySelected.innerHTML = x in Timer() or use alert(x)
+// rem. long click text in search, +adds extra search term
+// edit caption, search or rename when # in filename errors
+// undo delete, move files
+// simplify media list htm entry
+// simplify nav2 list
 
 
   var media = document.getElementById('media1')				// first media element
@@ -53,7 +51,6 @@
   var ratio								// media width to height ratio
   var skinny = 1							// media width
   var messages = ''							// skinny and caption changes
-  var cache = ''							// width and speed edits during modal playing
   var cue = 0								// start/end time for looping & mp3/4 conversions
   var editing = false							// cue point for editing
   var Zindex = 3
@@ -70,6 +67,9 @@
   var ypos = 0
   var Xref = 0								// click cursor coordinate
   var Yref = 0
+  var Xoff = 0								// maintain player position in fullscreen
+  var Yoff = 0
+
 
   getParameters()							// initialise to media1 attributes
   gestureEvents(0)							// (fill search bar)
@@ -100,8 +100,8 @@
 
 
   function mouseUp(e) {
-    if (!Click) {return}						// page load while mouse still down
-    clearTimeout(clickTimer)
+    if (!Click) {return}						// page load while mouse still down - ignore
+    clearTimeout(clickTimer)						// longClick timer
     if (Click==3 && !gesture && yw>0.1) {context()}			// new context menu if below page top
     if (Click == 2 && !longClick && !gesture && e.shiftKey) {		// inca converts Back button to shift Mclick
       if (type) {mouseBack()}						// close modal player if media playing
@@ -110,9 +110,9 @@
     else if (!gesture) {mouseEvent('Up')}				// process click event
     else if (gesture==2 && playlist) {					// move position within playlist
       was_over_media = index						// preserve id
-      media.style.display='none'					// reveal media underneath dragged item
-      setTimeout(function() {
-        if (index == was_over_media) {media.style.display=null}		// restore visibility
+      media.style.display='none'					// to reveal media underneath dragged item
+      setTimeout(function() {						// time for browser to reveal/update
+        if (index == was_over_media) {media.style.display=null}		// restore thumb visibility
         else {inca('Move', index, was_over_media)}},50)}		// send move command to inca.exe
     Click=0; wheel=0; gesture=0; block=100; longClick=0}
 
@@ -124,10 +124,10 @@
     nav2.style.opacity=1
     editing = false
     setTimeout(function() {
-      if (type) {
-        closeMedia()
+      if (type) {							// close media player
+        Messages()							// add history, width, speed, caption edits
         myPlayer.removeEventListener('ended', media_ended)
-        navigator.clipboard.writeText(messages)				// history, width, speed, caption edits
+        navigator.clipboard.writeText(messages)				// send messages to inca
         messages=''
         type=''} 
       start=0
@@ -139,24 +139,25 @@
       modal.style.zIndex=-1},fade*200)}
 
 
-  function mouseEvent(e) {						// functionality logic (quite complicated)
+  function mouseEvent(e) {						// functionality logic
     if (Click > 2) {return}
     if (e=='Down' && lastClick==1) {
       if (over_cap) {return}
       else if (type) {sheet=!sheet}
       else if (over_media) {sheet=1}}
     if (e=='Down' && lastClick==2 && !type && !over_media) {
-      inca('View', view, '', was_over_media); return}			// + scrolls to last_index
+      inca('View', view, '', was_over_media); return}			// and scrolls to index
     if (e=='Down' && myPanel.matches(':hover')) {return}		// copy files instead of move
     if (e=='Down' && mySearch.matches(':hover')) {navigator.clipboard.writeText('#Source#'+index+'##'); return} // open source
     if (e=='Up' && !type && !over_media) {return}
     if (e=='Up' && longClick) {return}
     if (Click==1 && !longClick && !sheet && type && !nav2.matches(':hover')) {
-      if (ym>1 && ym<1.05) {myPlayer.currentTime=xm*myPlayer.duration}
-      else if (rect.bottom+6 > innerHeight && ym>0.98) {
-        myPlayer.currentTime=xm*myPlayer.duration}
-      else if (ym>0.96 && ym<1) {
-        if (xm<0.5) {myPlayer.currentTime=0} else {media_ended()}}
+      if (ym>1 && ym<1.05) {
+        start=0
+        if (xm>0 && xm<0.05) {getParameters()}
+        else if (xm>0.05) {start=xm*myPlayer.duration}
+        myPlayer.currentTime=start
+        myPlayer.play()}
       else if (!cap.matches(':hover')) {togglePause()}
       return}
     if (e=='Up' && lastClick==1 && nav2.matches(':hover')) {return}
@@ -164,6 +165,8 @@
       for (var x of cap_list.split('|')) {
         if (!isNaN(x) && x>(myPlayer.currentTime+1)) {
           myPlayer.currentTime=x-1; myPlayer.play(); return}}}
+    if (type) {Messages()}						// add history, width, speed, caption edits
+    else {myPlayer.addEventListener('ended', media_ended)}
     if (type && !longClick) {
       if (e=='Next' || lastClick==2) {index++; start=0}
       if (e=='Back' && index > 1) {index--}}
@@ -173,29 +176,21 @@
     scaleY=last_scaleY
     myPlayer.style.opacity=0
     var fadeOut = 0
-    if (type) {fadeOut=fade}						// fast start play
+    if (type) {fadeOut=fade}						// fadeout of last media
     positionMedia(fadeOut*0.3)
     setTimeout(function() {
       type = getParameters()
       if (document.getElementById('title'+index).matches(':hover')) {return}
       if (!type) {mouseBack(); return}								// end of media list
-      if (e=='Up'|| e=='Down') {navigator.clipboard.writeText('#Media#'+index+'##'+start)}	// history etc.
-      if (type == 'document' || type == 'm3u') {type=''; return}
-      if (e=='Up') {
-        if (lastClick==1) {									// left click
-          if (sheet && myNext.matches(':hover')) {nav2.style.display=null; sheet=0; start=0; getParameters()}
-          else if (sheet) {playThumb()}
-          else if (playing && !over_cap && !sheet) {media_ended()}}}
-      if (playing) {closeMedia()}
-      else {myPlayer.addEventListener('ended', media_ended)}
-      if (e=='Up' && lastClick==1 && !over_media && !sheet) {start=0}
+      if (e=='Up'|| e=='Down') {navigator.clipboard.writeText('#Media#'+index+'##'+start)}	// tell inca is playing
+      if (type == 'document' || type == 'm3u') {type=''; return}				// let inca open file
+      if (e=='Up' && lastClick==1 && sheet) {playThumb()}					// left click			
       if (e=='Down' && lastClick==1 && !sheet && !nav2.matches(':hover')) {
         start=0; sheet=0
         if (playing && over_media) {getParameters()}
         if (!playing && !over_media) {index=last_index; getParameters(); start=last_start}}
       if (sheet && playing != 'thumbsheet') {context()}
-      Play(e); scrolltoIndex()
-      last_index = index},fadeOut*200)}
+      Play(e); scrolltoIndex()},fadeOut*200)}
 
 
   function Play(e) {
@@ -218,16 +213,11 @@
     wheel=0; lastClick=0}
 
 
-  function closeMedia() {
-    if (type == 'video' || type == 'audio') {
-      last_start = myPlayer.currentTime}
-    var x=skinny; var y=rate; getParameters()
-    if (x!=skinny || y!=rate) {						// send speed/skinny changes to inca
-      messages = messages + '#EditMedia#'+index+'#'+x+'#'+y
-      cache = cache + '#EditMedia#'+index+'#'+x+'#'+y}
+  function Messages() {
+    last_index = index
+    if (myPlayer.currentTime) {last_start = myPlayer.currentTime}
     if (cap.value != cap.innerHTML) {editCap()}
-    if (type != 'image' && index != last_index)
-      messages = messages + '#History#'+index+'##'+last_start.toFixed(1)
+    messages = messages + '#History#'+index+'##'+last_start.toFixed(1)+'|'+skinny+'|'+rate+'|'+d_rate
     cap.style.display = 'none'
     cap.style.color = null
     cap.style.opacity = 0
@@ -276,6 +266,7 @@
       else {scaleX += 0.003}
       skinny = Math.round((1000*scaleX/scaleY))/1000
       if (Math.abs(skinny) == 1) {block=333}
+      media.style.transform = 'scale('+skinny+',1)'
       positionMedia(0)}
     else if (id=='View') {						// thumbs
       if (wheelUp) {view += 1}
@@ -419,16 +410,15 @@
     if (start<1) {start = 1*x.pop().trim()} else {x.pop()}		// start time
     var type_t = x.pop().replaceAll('\'', '').trim()			// eg video, image
     skinny = 1*x.pop().trim()
-    var z = cache.split('#EditMedia#')					// in case has been edited
-    for (x of z) {var y = x.split('#'); for (x of y) {if (1*y[0]==index) {rate=1*y[2]; skinny=1*y[1]}}}
+    x = 1*media.style.transform.slice(6,-4)
+    if (x && x != skinny) {skinny=x}					// in case has been edited
     if (ratio > 1) {
       x = innerWidth*0.70; y = x/ratio; sheetY = innerWidth/x}		// landscape
     else {y = innerHeight; x = y*ratio; sheetY = innerHeight/y}		// portrait
     myPlayer.style.width = x +'px'					// media size normalised to screen
     myPlayer.style.height = y +'px'
-    z=0; var zz=0
-    myPlayer.style.left = z+mediaX-x/2 +'px'
-    myPlayer.style.top = zz+mediaY-y/2 +'px'
+    myPlayer.style.left = mediaX-x/2 +'px'
+    myPlayer.style.top = mediaY-y/2 +'px'
     positionMedia(0)							// prepare modal player
     if (myPlayer.src != media.src) {
       myPlayer.src=media.src
@@ -470,27 +460,28 @@
       if (playlist.match('/inca/music/')) {
         setTimeout(function() {mouseEvent('Next')}, Math.random()*6000)} // next media
       else {mouseEvent('Next')}; return}
-    if (longClick && !over_media) {start=0}
     myPlayer.currentTime=start
     myPlayer.play()
     if (!longClick && myPlayer.playbackRate > 0.40) {myPlayer.playbackRate -= 0.05}}	// slower for each loop
 
 
-  function positionMedia(fade) {					// align media within modal window
+  function positionMedia(fade) {							// align media within modal window
     scaleX = skinny*scaleY
     if (looping) {myLoop.style.color='red'} else {myLoop.style.color=null}
     if (myPlayer.muted) {myMute.style.color='red'} else {myMute.style.color=null}
     if (skinny<0) {myFlip.style.color='red'} else {myFlip.style.color=null}
     myPlayer.style.transition = fade+'s'
-    myPlayer.style.left = mediaX-(myPlayer.offsetWidth/2) +"px"
-    myPlayer.style.top = mediaY-(myPlayer.offsetHeight/2) +"px"
+    var x=0; var y=0
+    if (screenLeft) {Xoff=screenLeft; Yoff=outerHeight-innerHeight} else {x=Xoff; y=Yoff}	// fullscreen offsets
+    myPlayer.style.left = x+mediaX-(myPlayer.offsetWidth/2) +"px"
+    myPlayer.style.top = y+mediaY-(myPlayer.offsetHeight/2) +"px"
     if (type == 'thumbsheet') {myPlayer.style.transform="scale("+skinny*sheetY+","+sheetY+")"}
     else  {myPlayer.style.transform = "scale("+scaleX+","+scaleY+")"}}
 
 
   function scrolltoIndex() {
     if (!(el=document.getElementById('media'+index))) {return}
-    var x = ','+selected									// highlight played media in htm
+    var x = ','+selected								// highlight played media in htm
     if (!x.match(","+index+",") && !x.match(","+last_index+",")) {
       if (el=document.getElementById('title'+last_index)) {el.style.background=null}
       if (el=document.getElementById('title'+index)) {el.style.background='#2b2824'}
@@ -517,10 +508,11 @@
         cueX=rect.left+'px'; cueW=Math.abs(scaleX*myPlayer.offsetWidth*myPlayer.currentTime/myPlayer.duration)+'px'}}
     mySeekbar.style.left = cueX
     mySeekbar.style.width = cueW
-    if (rect.bottom+6 > innerHeight) {mySeekbar.style.top = innerHeight -8 +'px'}
+    if (ym>1 && ym<1.05) {mySeekbar.style.borderTop='10px solid red'} else {mySeekbar.style.borderTop=null}
+    if (rect.bottom+6 > innerHeight) {mySeekbar.style.top = innerHeight -10 +'px'}
     else {mySeekbar.style.top = 3 + rect.bottom +'px'}
-    if (type == 'image' || (!nav2.matches(':hover') && !over_media)) {mySeekbar.style.opacity -= 0.05}
-    else {mySeekbar.style.opacity=1}}
+    if (type != 'image' && (nav2.matches(':hover') || over_media || (ym>0.96 && ym<1.05))) {mySeekbar.style.opacity=1}
+    else {mySeekbar.style.opacity-=0.05}}
 
 
   function editCap() {							// edit media caption

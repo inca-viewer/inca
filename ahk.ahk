@@ -221,9 +221,9 @@
             }
         if container
           fill(container)
-
         ch =
         count := 0
+        container =
         Loop, Parse, search, `|
             {
             x := SubStr(A_Loopfield, 1, 1)
@@ -807,41 +807,36 @@ else
               }
             reload := 3
             }
-        if (command == "EditMedia")
-            {
-            if GetMedia(value)
-              {
-              if (selected < -1.2) 
-                selected = -1.2
-              if (selected > 1.5)
-                selected = 1.5
-              if (selected >= 0.98 && selected <= 1.02)
-                selected := 1
-              FileRead, str, %inca%\cache\widths\%media%.txt
-              skinny := 1
-              rate := 1
-              if str
-                skinny := str
-              if InStr(str, ",")
-                {
-                skinny := StrSplit(str, ",").1
-                rate := StrSplit(str, ",").2
-                }
-              if (selected != skinny || address != rate)
-                {
-                str = %selected%,%address%
-                FileDelete, %inca%\cache\widths\%media%.txt
-                FileAppend, %str%, %inca%\cache\widths\%media%.txt
-                }
-              }
-            index := value
-            selected =
-            }
         if (command == "History")
             {
             GetMedia(value)
+            array := StrSplit(address,"|")
+            start:=array.1
+            skinny:= array.2
+            rate:=array.3
+            d_rate:=array.4
             if (!playlist && (type == "video" || type == "audio"))
-              FileAppend, %src%|%address%`r`n, %inca%\fav\History.m3u, UTF-8
+              FileAppend, %src%|%start%`r`n, %inca%\fav\History.m3u, UTF-8
+              if (skinny < -1.2) 
+                skinny = -1.2
+              if (skinny > 1.5)
+                skinny = 1.5
+              if (skinny >= 0.98 && skinny <= 1.02)
+                skinny := 1
+              FileRead, sk, %inca%\cache\widths\%media%.txt
+              if InStr(sk, ",")
+                {
+                ra := StrSplit(sk, ",").2
+                sk := StrSplit(sk, ",").1
+                }
+              if ((!sk && skinny!=1) || (sk && sk != skinny) || (!ra && rate != d_rate) || (ra && ra != rate))
+                {
+                str = %skinny%,%rate%
+                FileDelete, %inca%\cache\widths\%media%.txt
+                FileAppend, %str%, %inca%\cache\widths\%media%.txt
+                }
+            index := value
+            selected =
             }
         if (command == "Source")
             {
@@ -860,7 +855,7 @@ else
               else if (type=="document" || type=="m3u")
                 {
                 Run, % "notepad.exe " . src
-                sleep 50
+                sleep 150
                 WinActivate, Notepad
                 }
               else if Setting("External Player")
@@ -909,26 +904,21 @@ else
             }
         if (command == "Join")
             {
-            array := StrSplit(selected, ",")
-            x := array.MaxIndex() - 1
-            if (x == 2)
-              {
-              if !GetMedia(StrSplit(selected, ",").1)
-                return
-              src2 := src
-              media2 := media
-              if GetMedia(StrSplit(selected, ",").2)
-                {
-                Popup("Join Media",0,0,0)
-                str = file '%media_path%\%media2%.%ext%'`r`nfile '%media_path%\%media%.%ext%'`r`n
-                FileAppend,  %str%, %inca%\cache\lists\temp1.txt, utf-8
-                runwait, %inca%\cache\apps\Utf-WithoutBOM.bat %inca%\cache\lists\temp1.txt > %inca%\cache\lists\temp.txt,,Hide
-                runwait, %inca%\cache\apps\ffmpeg.exe -f concat -safe 0 -i "%inca%\cache\lists\temp.txt" -c copy "%media_path%\%media%- join.mp4",,Hide
-                }
-              src = %media_path%\%media%- join.mp4
-              index(src)
-              reload := 3
-              }
+            str=
+            Loop, Parse, selected, `,
+              if GetMedia(A_LoopField)
+                str = %str%file '%src%'`r`n
+            FileAppend,  %str%, %inca%\cache\lists\temp1.txt, utf-8
+            Popup("Joining Media",0,0,0)
+            runwait, %inca%\cache\apps\Utf-WithoutBOM.bat %inca%\cache\lists\temp1.txt > %inca%\cache\lists\temp.txt,,Hide
+            runwait, %inca%\cache\apps\ffmpeg.exe -f concat -safe 0 -i "%inca%\cache\lists\temp.txt" -c copy "%media_path%\%media%- join.%ext%",,Hide
+            if (ext != "mp4")
+              runwait, %inca%\cache\apps\ffmpeg.exe -i "%media_path%\%media%- join.%ext%" "%media_path%\%media%- join.mp4",,Hide
+            src = %media_path%\%media%- join.mp4
+            FileDelete, %inca%\cache\lists\temp.txt
+            FileDelete, %inca%\cache\lists\temp1.txt
+            index(src)
+            reload := 3
             }
         if (command == "SearchAdd" && value)
             {
@@ -1567,6 +1557,7 @@ else
     Initialize()
         {
         Global
+        Clipboard =
         LoadSettings()
         FileDelete, %inca%\cache\lists\*.*
         FileRead, str, %inca%\fav\History.m3u
