@@ -8,9 +8,7 @@
   table:hover {background:#1b1814}
   c {display:block; border-radius:1em; padding-left:1em; text-decoration:none; color:#826858}
   c:hover {background:#1b1814}
-
   input:hover {color:lightsalmon;transition:color 1.2s}
-  @keyframes fadePage {from {opacity:0} to {opacity:1}}
   ::-webkit-search-cancel-button {
   -webkit-appearance: none;
   -webkit-mask-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23777'><path d='M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z'/></svg>");
@@ -19,17 +17,20 @@
   height:15px;
   width:15px}
 
-.player {					/* modal media player element*/
+.player {					/* modal media player element */
   position:absolute; 
   border-radius:16px}
 
-.preview {					/* thumbsheet preview video */
+.preview {					/* small preview seeking video */
   position:absolute; 
-  display:none;
+  display:flex;
   opacity:0;
-  border-radius:8px;
-  transition: opacity 0;
-  border:6px solid black}
+  user-select:none;
+  border-radius:9%;
+  max-width:160px;
+  max-height:120px;
+  transition:opacity 1s;
+  border:3px solid black}
 
 .myList {					/* list view */
   position:absolute;
@@ -132,7 +133,7 @@
 .seekbar {					/* video progress bar	*/
   position:absolute;
   opacity:0;
-  border-radius:2px;
+  border-radius:4px;
   color:lightsalmon;
   font-size:1.4em;
   border-top:2px solid red;
@@ -199,12 +200,12 @@
 
 .container {					/* whole body element */
   font-family:'Yu Gothic', 'Calibri Light';
-  overflow:hidden;
   background:#15110a;
   user-select:none;
-  color:#826858;
   font-size:0.8em;
-  animation-name:fadePage;
-  animation-duration:1s}
+  overflow:hidden;
+  color:#826858;
+  opacity:0;
+  transition:0.5s}
 
 
