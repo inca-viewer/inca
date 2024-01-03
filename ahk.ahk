@@ -95,7 +95,7 @@
       sleep 333
       if !GetBrowser()
         Clipboard = #Path###%profile%\Pictures\
-      Clipboard()
+      Clipboard()							; process clipboard messages
       SetTimer, TimedEvents, 100					; every 100mS
       return								; wait for mouse/key events
 
@@ -660,7 +660,7 @@ else
         }
 
 
-    ProcessMessage()
+    ProcessMessage()							; messages from browser
         {
         if (command == "Index")						; index folder or media under cursor
             {
@@ -729,6 +729,7 @@ else
               runwait, %inca%\cache\apps\ffmpeg.exe -ss %address% -to %value% -i "%src%" "%y%",,Hide
             else   runwait, %inca%\cache\apps\ffmpeg.exe -ss %value% -to %address% -i "%src%" "%y%",,Hide
             index(y)
+            index := StrSplit(selected, ",").1
             reload := 3
             }
         if (command == "Settings")
@@ -777,7 +778,7 @@ else
             popup = View %x%
             popup(popup,0,0,0)
             if address
-              index := address					; for scrollToIndex() in java
+              index := address						; for scrollToIndex() in java
             reload := 2
             }
         if (command == "Delete")
@@ -785,7 +786,8 @@ else
             if !selected
               return
             if address
-              index := address					; for scrollToIndex() in java
+              index := address						; for scrollToIndex() in java
+            else index := StrSplit(selected, ",").1
             popup("Deleted",0,0,0)
             reload := 3
             if playlist
@@ -841,10 +843,10 @@ else
             }
         if (command == "Source")
             {
-            send, {LButton up}					; release Mclick auto scroll
+            send, {LButton up}						; release Mclick auto scroll
             if playlist
-              run, %playlist%					; open .m3u in notepad
-            else run, %path%					; open folder in windows file explorer
+              run, %playlist%						; open .m3u in notepad
+            else run, %path%						; open folder in windows file explorer
             }
         if (command == "Media")
             {
@@ -861,12 +863,12 @@ else
                 }
               else if (Setting("External Player") && type != "image")
                 {
-                send, +{MButton}							; close java player
+                send, +{MButton}					; close java player
                 Run %inca%\cache\apps\mpv "%src%"
                 }
               else if (!longClick && ((browser == "mozilla firefox" && type == "video" && ext != "mp4" && ext != "m4v" && ext != "webm") || (browser == "google chrome" && type == "video" && ext != "mp4" && ext != "mkv" && ext != "m4v" && ext != "webm")))
                 {
-                send, +{MButton}							; close java player 
+                send, +{MButton}					; close java player 
                 Run %inca%\cache\apps\mpv "%src%"
                 Popup("Browser Cannot Play",1500,0.34,0.8)
                 }
@@ -1128,7 +1130,7 @@ else
         }
 
 
-    Spool(input, count, start, cue)						; sorting and search filters
+    Spool(input, count, start, cue)					; sorting and search filters
         {
         SplitPath, input,,,ex, filen
         if (ex == "lnk")
@@ -1211,7 +1213,7 @@ else
         year = 2017
         x := in
         year += x, seconds
-        FormatTime, in, %year%, H:mm:ss			; show duration in hours:mins format
+        FormatTime, in, %year%, H:mm:ss					; show duration in hours:mins format
         if (x < 3600)
             FormatTime, in, %year%, mm:ss
         if (x < 600)
@@ -1411,14 +1413,14 @@ else
 
     Gesture(x, y)
         {
-        if (Abs(x) > Abs(y) )					; master volume
+        if (Abs(x) > Abs(y) )						; master volume
           {
           x*=1.4
           Static last_volume
           last_volume := volume
           if volume < 10
-            x /= 2						; finer adj at low volume
-          if x < 100						; stop any big volume jumps
+            x /= 2							; finer adj at low volume
+          if x < 100							; stop any big volume jumps
             volume += x/20
           SoundGet, current
           if (volume < 0)
@@ -1532,7 +1534,7 @@ else
         {
         Global
         inca := A_ScriptDir
-        inca := SubStr(inca, 1, InStr(inca, "\", False, -1))	; one folders back
+        inca := SubStr(inca, 1, InStr(inca, "\", False, -1))		; one folders back
         inca := SubStr(inca, 1, InStr(inca, "\", False, -1))
         StringTrimRight, inca, inca, 1
         EnvGet, profile, UserProfile
@@ -1570,7 +1572,7 @@ else
         if (count > 100)
           count -= 100
         else count = 0
-        Loop, Parse, str, `n, `r						; keep history below 100 entries
+        Loop, Parse, str, `n, `r					; keep history below 100 entries
           if (A_Loopfield && A_Index >= count)
             str2 = %str2%%A_Loopfield%`r`n
         FileAppend, %str2%, %inca%\fav\History.m3u, UTF-8
@@ -1605,7 +1607,7 @@ else
         }
 
 
-    TimedEvents:
+    TimedEvents:							; every 100mS
         GetBrowser()
         Gui, background:+LastFound
         if inca_tab
@@ -1641,7 +1643,7 @@ else
     return
 
 
-    index(source)
+    index(source)							; create thumbs, posters & durations
           {
           SplitPath, source,,fold,ex,filen
           med := DecodeExt(ex)

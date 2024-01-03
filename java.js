@@ -467,7 +467,7 @@
 
   function scrolltoIndex() {
     if (!(el=document.getElementById('media'+index))) {return}
-    var x = ','+selected								// highlight played media in htm
+    var x = ','+selected							// highlight played media in htm
     if (!x.match(","+index+",") && !x.match(","+last_index+",")) {
       if (el=document.getElementById('title'+last_index)) {el.style.background=null}
       if (el=document.getElementById('title'+index)) {el.style.background='#2b2824'}
@@ -479,7 +479,7 @@
       else if (Math.abs(myView.scrollTop-(x-360)) > 300) {myView.scrollTo(0,x-360)}},232)}	// ignore small scrolls
 
 
-  function seekBar() {							// red progress bar beneath media player
+  function seekBar() {								// red progress bar beneath media player
     var cueX = rect.left + 'px'
     var cueW = Math.abs(scaleX) * myPlayer.offsetWidth * myPlayer.currentTime / myPlayer.duration + 'px'
     if (cue && cue <= Math.round(myPlayer.currentTime*10)/10) {
@@ -590,7 +590,7 @@
       if (isNaN(value)) {value=value.replaceAll('#', '<')}		// cannot transport # over link
       navigator.clipboard.writeText('#'+command+'#'+value+'#'+select+'#'+address)},20)}
 
-  function Time(z) {if (z<0) return '0:00'; var y=Math.floor(z%60); var x=':'+y; if (y<10) {x=':0'+y}; return Math.floor(z/60)+x} // MMM:SS
+  function Time(z) {if (z<0) return '0:00'; var y=Math.floor(z%60); var x=':'+y; if (y<10) {x=':0'+y}; return Math.floor(z/60)+x}
   function togglePause() {if(!sheet && lastClick==1) {if (myPlayer.paused) {myPlayer.play()} else {myPlayer.pause()}}}
   function selectAll() {for (i=1; i <= 600; i++) {sel(i)}}
   function loop() {if (looping) {looping = false} else {looping = true}}
