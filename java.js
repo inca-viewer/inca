@@ -1,8 +1,8 @@
 
 // Debugging - mySelected.innerHTML or alert()
-// to do - undo delete, move files
-//       - simplify media list htm entries
-//       - duplicate filename thumbs issue
+// to do - undo delete & move files
+//       - simplify media list htm coding
+//       - duplicate thumbs filename issue
 
   var media = document.getElementById('media1')				// first media element
   var modal = document.getElementById('myModal')			// media player window
@@ -150,7 +150,7 @@
     if (e=='Up' && !type && !over_media) {return}
     if (e=='Up' && longClick) {return}
     if (Click==1 && !longClick && !sheet && type && type != 'image' && !nav2.matches(':hover')) {
-      if (ym>1 && ym<1.1) {myPlayer.currentTime=xm*myPlayer.duration; myPlayer.play()}
+      if (xm>-0.1 && (yw>0.98 || (ym>1 && ym<1.1))) {myPlayer.currentTime=xm*myPlayer.duration; myPlayer.play()}
       else if (!cap.matches(':hover')) {togglePause()}
       return}
     if (e=='Up' && lastClick==1 && nav2.matches(':hover')) {return}
@@ -494,7 +494,7 @@
         cueX=rect.left+'px'; cueW=Math.abs(scaleX*myPlayer.offsetWidth*myPlayer.currentTime/myPlayer.duration)+'px'}}
     mySeekbar.style.left = cueX
     mySeekbar.style.width = cueW
-    if (xm>-0.1 && ym>1 && ym<1.1 || cue_active) {
+    if (xm>-0.1 && ym>1 && ym<1.1 || cue_active || (xm>-0.1 && yw>0.98)) {
       mySelected.innerHTML = Time(myPlayer.duration*xm)
       mySeekbar.style.borderTop='10px solid red'
       myPreview.style.left = xpos - myPreview.offsetWidth/2 +'px'
@@ -587,7 +587,7 @@
       if (gesture || lastClick==3) {return}
       if (!value) {value=''}
       if (!address) {address=''}
-      if (isNaN(value)) {value=value.replaceAll('#', '<')}		// cannot transport # over link
+      if (isNaN(value)) {value=value.replaceAll('#', '<')}		// cannot transport '#' over link
       navigator.clipboard.writeText('#'+command+'#'+value+'#'+select+'#'+address)},20)}
 
   function Time(z) {if (z<0) return '0:00'; var y=Math.floor(z%60); var x=':'+y; if (y<10) {x=':0'+y}; return Math.floor(z/60)+x}

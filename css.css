@@ -84,8 +84,7 @@
   text-align:center;
   margin:auto;
   align-items:center;
-  font-size:1em;
-  justify-content:space-evenly}
+  font-size:1em}
 
 .ribbon a {transition:0.8s; border-radius:0.32em}
 .ribbon a:hover {transition:0.2s; transform:scale(1.2,1.2); color:salmon; translate(0,-0.1em)}

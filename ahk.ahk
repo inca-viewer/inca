@@ -154,12 +154,13 @@
           pg = Page %page% of %pages%
         Loop, Parse, sort_list, `|
           {
+          x%A_Index% = style='width:3.8em'
           if InStr(A_LoopField, sort)
             if InStr(toggles, "Reverse")
-              x%A_Index% = style='min-width:3em; border-top:0.1px solid lightsalmon'
-            else x%A_Index% = style='min-width:3em; border-bottom:0.1px solid lightsalmon'
+              x%A_Index% = style='width:3.8em; border-top:0.1px solid lightsalmon'
+            else x%A_Index% = style='width:3.8em; border-bottom:0.1px solid lightsalmon'
           if InStr(toggles, A_LoopField)
-            x%A_Index% = style='min-width:3em; color:red'
+            x%A_Index% = style='width:3.8em; color:red'
           }
         if playlist
           order = List
@@ -312,8 +313,8 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1; myFol
 <a id='List' onmousedown="inca('List', filt)" %x11% style='color:red'>%order%</a>`n
 <a id='Alpha' onmousedown="inca('Alpha', filt)" onwheel="wheelEvents(event,id,this)" %x2%>Alpha</a>`n
 <a id='Shuffle' onmousedown="inca('Shuffle')" %x1%>Shuffle</a>`n
-<a id='View' onmousedown="inca('View', view, '', index)" onwheel="wheelEvents(event, id, this)">View %view4%</a>`n 
-<a id="myPage" onmousedown="inca('Page', page)" onwheel="wheelEvents(event, id, this)" style='min-width:9em'>%pg%</a>`n
+<a id='View' style='width:7em' onmousedown="inca('View', view, '', index)" onwheel="wheelEvents(event, id, this)">View %view4%</a>`n 
+<a id="myPage" style='width:9em' onmousedown="inca('Page', page)" onwheel="wheelEvents(event, id, this)">%pg%</a>`n
 <a onmousedown="inca('Recurse')" %x8%>+Subs</a>`n
 <a onmousedown="inca('Images')" %x10%>Pics</a>`n
 <a onmousedown="inca('Videos')" %x9%>Vids</a>`n</div>`n`n
@@ -352,7 +353,6 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1; myFol
       GuiControl, Indexer:, GuiInd
       PopUp("",0,0,0)
       }
-
 
 
     SpoolList(i, j, input, sort_name, start)				; spool sorted media files into web page
@@ -446,7 +446,7 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1; myFol
 
 
 if list_view
-  media_list = %media_list% %fold%<table onmouseover="overThumb(%j%, %skinny%, '%type%', %start%, %cue%, '%cap%', %rate%, event);`n media%j%.style.opacity=1; media%j%.pause()" onmouseout="title%j%.style.color=null; over_media=0; media%j%.style.opacity=0"><tr id="entry%j%"`n onmouseover="title%j%.style.color='lightsalmon'; if(Click) {sel(%j%)}">`n <td onmouseenter='over_media=0; media%j%.style.opacity=0' onmousedown='sel(%j%)'>%ext%`n <video id='media%j%' class='media2' style="max-width:%view3%em; max-height:%view3%em; transform:scale(%skinny%, 1)"`n src="file:///%src%"`n %poster%`n preload='none' muted loop onmouseover="overThumb(%j%, %skinny%, '%type%', %start%, %cue%,'%cap%', %rate%, event)" type="video/mp4"></video></td>`n <td>%size%</td>`n <td>%dur%</td>`n <td>%date%</td>`n <td>%j%</td>`n <td style='width:34em'><input id="title%j%" class='title' type='search' value='%media_s%'`n onmouseenter='over_media=0; media%j%.style.opacity=0' oninput="was_over_media=%j%; renamebox=this.value; ren%j%.style.display='block'"></td>`n <td id='ren%j%' style='display:none; color:#826858'`n onmouseenter='over_media=0' onmousedown="inca('Rename', renamebox, %j%, %j%)">Rename</td>`n <td style='text-align:right'>%fo%</td></tr></table>`n`n
+  media_list = %media_list% %fold%<table onmouseover="overThumb(%j%, %skinny%, '%type%', %start%, %cue%, '%cap%', %rate%, event);`n media%j%.style.opacity=1; media%j%.pause()" onmouseout="title%j%.style.color=null; over_media=0; media%j%.style.opacity=0"><tr id="entry%j%"`n onmouseover="title%j%.style.color='lightsalmon'; if(Click) {sel(%j%)}">`n <td onmouseenter='over_media=0; media%j%.style.opacity=0' onmousedown='sel(%j%)'>%ext%`n <video id='media%j%' class='media2' style="max-width:%view3%em; max-height:%view3%em; transform:scale(%skinny%, 1)"`n src="file:///%src%"`n %poster%`n preload='none' muted loop onmouseover="overThumb(%j%, %skinny%, '%type%', %start%, %cue%,'%cap%', %rate%, event)" type="video/mp4"></video></td>`n <td>%size%</td>`n <td>%dur%</td>`n <td>%date%</td>`n <td>%j%</td>`n <td style='width:99em'><input id="title%j%" class='title' type='search' value='%media_s%'`n onmouseenter='over_media=0; media%j%.style.opacity=0' oninput="was_over_media=%j%; renamebox=this.value; ren%j%.style.display='block'"></td>`n <td id='ren%j%' style='display:none; color:#826858'`n onmouseenter='over_media=0' onmousedown="inca('Rename', renamebox, %j%, %j%)">Rename</td>`n <td style='text-align:right'>%fo%</td></tr></table>`n`n
 
 else
   media_list = %media_list%<div id="entry%j%" style="display:flex; width%view%em; height:%view3%em; padding:%view4%em">`n <video id="media%j%" class='media' style="max-width:%view3%em; max-height:%view3%em; transform:scale(%skinny%, 1)"`n onmouseover="overThumb(%j%, %skinny%, '%type%', %start%, %cue%, '%cap%', %rate%, event); if(Click) {sel(%j%)}"`n onmouseout="this.pause(); over_media=0"`n src="file:///%src%"`n %poster%`n preload='none' muted loop type="video/mp4"></video>`n %caption% <input id='title%j%' value='%media%' class='title' style='display:none'></div>`n`n
@@ -550,8 +550,8 @@ else
           if (click == "RButton")
               Gesture(x, y)
           if (inca_tab && GetKeyState("LButton", "P") && WinActive, ahk_class ahk_class mpv)
-              if (y < 0)				; mpv player controls
-                send, 9					; magnify
+              if (y < 0)			; mpv player controls
+                send, 9				; magnify
               else send, 0
           }
         if (!gesture && A_TickCount > timer && !GetKeyState("RButton", "P"))	; click timout
@@ -640,7 +640,7 @@ else
           {
           command := array[ptr+=1]
           value := array[ptr+=1]
-          value := StrReplace(value, "<", "#")			; java/html cannot accept ' in string
+          value := StrReplace(value, "<", "#")				; java/html cannot accept ' in string
           selected := array[ptr+=1]
           address := array[ptr+=1]
           address := StrReplace(address, ">", "'")
