@@ -150,7 +150,9 @@
     if (e=='Up' && !type && !over_media) {return}
     if (e=='Up' && longClick) {return}
     if (Click==1 && !longClick && !sheet && type && type != 'image' && !nav2.matches(':hover')) {
-      if (xm>-0.1 && (yw>0.98 || (ym>1 && ym<1.1))) {myPlayer.currentTime=xm*myPlayer.duration; myPlayer.play()}
+      if (xm>-0.1 && (yw>0.98 || (ym>1 && ym<1.1))) {
+        if (xm>0 && xm<0.05) {start=0; getParameters(); myPlayer.currentTime=start}
+        else {myPlayer.currentTime=xm*myPlayer.duration}}
       else if (!cap.matches(':hover')) {togglePause()}
       return}
     if (e=='Up' && lastClick==1 && nav2.matches(':hover')) {return}
@@ -172,9 +174,9 @@
     if (type) {fadeOut=fade}						// fadeout of last media
     positionMedia(fadeOut*0.3)
     setTimeout(function() {
-      if (document.getElementById('title'+index).matches(':hover')) {return}
       type = getParameters()
       if (!type) {mouseBack(); return}								// end of media list
+      if (document.getElementById('title'+index).matches(':hover')) {return}
       if (e=='Up'|| e=='Down') {navigator.clipboard.writeText('#Media#'+index+'##'+start)}	// tell inca is playing
       if (type == 'document' || type == 'm3u') {type=''; return}				// let inca open file
       if (e=='Up' && lastClick==1 && sheet) {playThumb()}					// left click			

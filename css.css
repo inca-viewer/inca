@@ -1,21 +1,15 @@
 
+  :: selection {color:red; background:black}
+  ::-webkit-search-cancel-button {appearance:none}
   ::-webkit-scrollbar {background:#15110a}
-  ::-webkit-scrollbar-thumb {background:#2b2824; border-radius:2px}
   ::-webkit-scrollbar-corner {background:#15110a}
-  ::selection {color:red; background:black}
-  td {outline:none; text-align:center; min-width:4.1em; overflow:hidden; white-space:nowrap}
+  ::-webkit-scrollbar-thumb {background:#2b2824; border-radius:2px}
+  td {outline:none; text-align:center; min-width:5em; overflow:hidden; white-space:nowrap}
   table {color:#826858; font-size:0.9em; border-collapse:collapse; margin:auto; border-radius:1em; transition:color 0.3s}
   table:hover {background:#1b1814}
   c {display:block; border-radius:1em; padding-left:1em; text-decoration:none; color:#826858}
   c:hover {background:#1b1814}
   input:hover {color:lightsalmon;transition:color 1.2s}
-  ::-webkit-search-cancel-button {
-  -webkit-appearance: none;
-  -webkit-mask-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23777'><path d='M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z'/></svg>");
-  background-size:15px 15px;
-  background:#ff000060;
-  height:15px;
-  width:15px}
 
 .player {					/* modal media player element */
   position:absolute; 
@@ -68,10 +62,10 @@
   outline:0.3em solid #15110a;
   border-radius:0.5em}
 
-.media2 {					/* list view media */
+.media2 {					/* list view pop up thumbs */
   position:absolute;
   pointer-events:none;
-  translate: 18.5em 2em;
+  translate: 8.5em 2em;
   border-radius:0.5em;
   margin:auto;
   opacity:0}
@@ -85,6 +79,7 @@
   margin:auto;
   align-items:center;
   font-size:1em}
+
 
 .ribbon a {transition:0.8s; border-radius:0.32em}
 .ribbon a:hover {transition:0.2s; transform:scale(1.2,1.2); color:salmon; translate(0,-0.1em)}

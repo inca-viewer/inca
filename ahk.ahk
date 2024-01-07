@@ -154,13 +154,12 @@
           pg = Page %page% of %pages%
         Loop, Parse, sort_list, `|
           {
-          x%A_Index% = style='width:3.8em'
           if InStr(A_LoopField, sort)
             if InStr(toggles, "Reverse")
-              x%A_Index% = style='width:3.8em; border-top:0.1px solid lightsalmon'
-            else x%A_Index% = style='width:3.8em; border-bottom:0.1px solid lightsalmon'
+              x%A_Index% = border-top:0.1px solid lightsalmon
+            else x%A_Index% = border-bottom:0.1px solid lightsalmon
           if InStr(toggles, A_LoopField)
-            x%A_Index% = style='width:3.8em; color:red'
+            x%A_Index% = color:red
           }
         if playlist
           order = List
@@ -306,18 +305,18 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1; myFol
 <div id='myPanel' class='myPanel' onmouseover="if(selected) {this.style.border='1px solid salmon'}" onmouseout="this.style.border='none'">`n <div id='panel' class='panel'>`n`n%panel_list%`n<div style='height:40em'></div></div></div>`n`n
 
 <div id='myRibbon' class='ribbon'>`n
-<a id='Type' onmousedown="inca('Type')" %x6%>Type</a>`n
-<a id='Size' onmousedown="inca('Size', filt)" onwheel="wheelEvents(event, id, this)" %x5%>Size</a>`n
-<a id='Duration' onmousedown="inca('Duration', filt)" onwheel="wheelEvents(event, id, this)" %x3%> Duration</a>`n
-<a id='Date' onmousedown="inca('Date', filt)" onwheel="wheelEvents(event, id, this)" %x4%>Date</a>`n
-<a id='List' onmousedown="inca('List', filt)" %x11% style='color:red'>%order%</a>`n
-<a id='Alpha' onmousedown="inca('Alpha', filt)" onwheel="wheelEvents(event,id,this)" %x2%>Alpha</a>`n
-<a id='Shuffle' onmousedown="inca('Shuffle')" %x1%>Shuffle</a>`n
-<a id='View' style='width:7em' onmousedown="inca('View', view, '', index)" onwheel="wheelEvents(event, id, this)">View %view4%</a>`n 
-<a id="myPage" style='width:9em' onmousedown="inca('Page', page)" onwheel="wheelEvents(event, id, this)">%pg%</a>`n
-<a onmousedown="inca('Recurse')" %x8%>+Subs</a>`n
-<a onmousedown="inca('Images')" %x10%>Pics</a>`n
-<a onmousedown="inca('Videos')" %x9%>Vids</a>`n</div>`n`n
+<a id='Type' style='min-width:4.4em; %x6%' onmousedown="inca('Type')">Type</a>`n
+<a id='Size' style='min-width:5em; %x5%' onmousedown="inca('Size', filt)" onwheel="wheelEvents(event, id, this)">Size</a>`n
+<a id='Duration' style='min-width:6em; %x3%' onmousedown="inca('Duration', filt)" onwheel="wheelEvents(event, id, this)"> Duration</a>`n
+<a id='Date' style='min-width:5.5em; %x4%' onmousedown="inca('Date', filt)" onwheel="wheelEvents(event, id, this)">Date</a>`n
+<a id='List' style='min-width:3.3em; %x11%' onmousedown="inca('List', filt)" style='color:red'>%order%</a>`n
+<a id='Alpha' style='min-width:5em; %x2%' onmousedown="inca('Alpha', filt)" onwheel="wheelEvents(event,id,this)">Alpha</a>`n
+<a id='Shuffle' style='min-width:4em; %x1%' onmousedown="inca('Shuffle')">Shuffle</a>`n
+<a id='View' style='min-width:5em' onmousedown="inca('View', view, '', index)" onwheel="wheelEvents(event, id, this)">View %view4%</a>`n 
+<a id="myPage" style='min-width:9em' onmousedown="inca('Page', page)" onwheel="wheelEvents(event, id, this)">%pg%</a>`n
+<a style='min-width:3em; %x8%' onmousedown="inca('Recurse')">+Subs</a>`n
+<a style='min-width:3em; %x10%' onmousedown="inca('Images')">Pics</a>`n
+<a style='min-width:3em; %x9%' onmousedown="inca('Videos')">Vids</a>`n</div>`n`n
 
 <div style='width:100`%; height:12em'></div>`n%media_list%<div style='width:100`%; height:61.5vh'></div>`n`n
 
@@ -446,10 +445,10 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1; myFol
 
 
 if list_view
-  media_list = %media_list% %fold%<table onmouseover="overThumb(%j%, %skinny%, '%type%', %start%, %cue%, '%cap%', %rate%, event);`n media%j%.style.opacity=1; media%j%.pause()" onmouseout="title%j%.style.color=null; over_media=0; media%j%.style.opacity=0"><tr id="entry%j%"`n onmouseover="title%j%.style.color='lightsalmon'; if(Click) {sel(%j%)}">`n <td onmouseenter='over_media=0; media%j%.style.opacity=0' onmousedown='sel(%j%)'>%ext%`n <video id='media%j%' class='media2' style="max-width:%view3%em; max-height:%view3%em; transform:scale(%skinny%, 1)"`n src="file:///%src%"`n %poster%`n preload='none' muted loop onmouseover="overThumb(%j%, %skinny%, '%type%', %start%, %cue%,'%cap%', %rate%, event)" type="video/mp4"></video></td>`n <td>%size%</td>`n <td>%dur%</td>`n <td>%date%</td>`n <td>%j%</td>`n <td style='width:99em'><input id="title%j%" class='title' type='search' value='%media_s%'`n onmouseenter='over_media=0; media%j%.style.opacity=0' oninput="was_over_media=%j%; renamebox=this.value; ren%j%.style.display='block'"></td>`n <td id='ren%j%' style='display:none; color:#826858'`n onmouseenter='over_media=0' onmousedown="inca('Rename', renamebox, %j%, %j%)">Rename</td>`n <td style='text-align:right'>%fo%</td></tr></table>`n`n
+  media_list = %media_list% %fold%<table onmouseover="overThumb(%j%, %skinny%, '%type%', %start%, %cue%, '%cap%', %rate%, event);`n media%j%.style.opacity=1; media%j%.pause()" onmouseout="title%j%.style.color=null; over_media=0; media%j%.style.opacity=0"><tr id="entry%j%"`n onmouseover="title%j%.style.color='lightsalmon'">`n <td onmouseenter='over_media=0; media%j%.style.opacity=0; if(Click) {sel(%j%)}' onmousedown='sel(%j%)'>%ext%`n <video id='media%j%' class='media2' style="max-width:%view3%em; max-height:%view3%em; transform:scale(%skinny%, 1)"`n src="file:///%src%"`n %poster%`n preload='none' muted loop onmouseover="overThumb(%j%, %skinny%, '%type%', %start%, %cue%,'%cap%', %rate%, event)" type="video/mp4"></video></td>`n <td>%size%</td>`n <td style='min-width:7em'>%dur%</td>`n <td>%date%</td>`n <td>%j%</td>`n <td style='width:99em'><input id="title%j%" class='title' type='search' value='%media_s%'`n onmouseenter='over_media=0; media%j%.style.opacity=0' oninput="was_over_media=%j%; renamebox=this.value; ren%j%.innerHTML='Rename'; ren%j%.style.color='red'"></td>`n <td id='ren%j%' onmouseenter='over_media=0' onmousedown="inca('Rename', renamebox, %j%, %j%)"></td>`n </tr></table>`n`n
 
 else
-  media_list = %media_list%<div id="entry%j%" style="display:flex; width%view%em; height:%view3%em; padding:%view4%em">`n <video id="media%j%" class='media' style="max-width:%view3%em; max-height:%view3%em; transform:scale(%skinny%, 1)"`n onmouseover="overThumb(%j%, %skinny%, '%type%', %start%, %cue%, '%cap%', %rate%, event); if(Click) {sel(%j%)}"`n onmouseout="this.pause(); over_media=0"`n src="file:///%src%"`n %poster%`n preload='none' muted loop type="video/mp4"></video>`n %caption% <input id='title%j%' value='%media%' class='title' style='display:none'></div>`n`n
+  media_list = %media_list%<div id="entry%j%" style="display:flex; width%view%em; height:%view3%em; padding:%view4%em">`n <video id="media%j%" class='media' style="max-width:%view3%em; max-height:%view3%em; transform:scale(%skinny%, 1)"`n onmouseover="overThumb(%j%, %skinny%, '%type%', %start%, %cue%, '%cap%', %rate%, event); if(Click) {sel(%j%)}"`n onmouseout="this.pause(); over_media=0"`n src="file:///%src%"`n %poster%`n preload='none' muted loop type="video/mp4"></video>`n %caption% <input id='title%j%' value='%media%' class='title' style='display:none'><td style='text-align:right'>%fo%</td></div>`n`n
 
 }
 
@@ -718,16 +717,16 @@ else
             }
         if (command == "mp3" || command == "mp4")			; address = cue
             {								; value = current time
-            Popup("Creating...",0,0,0)
+            Popup("Creating...",400,0,0)
             x = @%value%						; converts number to string
             y = %media_path%\%media% %x%.%command%
             if (!address) ;  || value-address<0.2
-              runwait, %inca%\cache\apps\ffmpeg.exe -ss %value% -i "%src%" "%y%",,Hide
+              run, %inca%\cache\apps\ffmpeg.exe -ss %value% -i "%src%" "%y%",,Hide
             else if (address-value>0.01 && address-value<0.2)
-              runwait, %inca%\cache\apps\ffmpeg.exe -ss 0 -to %address% -i "%src%" "%y%",,Hide
+              run, %inca%\cache\apps\ffmpeg.exe -ss 0 -to %address% -i "%src%" "%y%",,Hide
             else if (address < value)
-              runwait, %inca%\cache\apps\ffmpeg.exe -ss %address% -to %value% -i "%src%" "%y%",,Hide
-            else   runwait, %inca%\cache\apps\ffmpeg.exe -ss %value% -to %address% -i "%src%" "%y%",,Hide
+              run, %inca%\cache\apps\ffmpeg.exe -ss %address% -to %value% -i "%src%" "%y%",,Hide
+            else   run, %inca%\cache\apps\ffmpeg.exe -ss %value% -to %address% -i "%src%" "%y%",,Hide
             index(y)
             index := StrSplit(selected, ",").1
             reload := 3
