@@ -101,7 +101,6 @@
     clearTimeout(clickTimer)						// longClick timer
     if (Click==3 && !gesture && yw>0.1) {context()}			// new context menu if click below window top
     if (Click == 2 && !longClick && !gesture && e.shiftKey) {		// inca converts Back button to shift Mclick
-      mySelected.innerHTML = ''
       if (type) {mouseBack()}						// close modal player if media playing
       else if (myView.scrollTop > 50) {myView.scrollTo(0, 0)}		// else scroll to page top
       else if (selected) {for(x of selected.split(',')) {sel(x)}}}	// else clear any selected media
@@ -309,20 +308,21 @@
       media.style.zIndex = Zindex+=1
       media.style.left = xpos-70+"px"
       media.style.top = ypos-40+"px"}
-    if (type && gesture && Click==1) {					// move playing media position
-      mediaX += xpos - Xref
-      mediaY += ypos - Yref
-      localStorage.setItem("mediaX",mediaX)
-      localStorage.setItem("mediaY",mediaY)}
-    else if (type && Click>1 && y>x) {					// zoom playing media
-      if (scaleY>0.25 || Yref<ypos) {
+    if (type && gesture && Click==1) {
+      if (y<x-1 || gesture==3) {					// move playing media position
+        gesture = 3
+        mediaX += xpos - Xref
+        mediaY += ypos - Yref
+        localStorage.setItem("mediaX",mediaX)
+        localStorage.setItem("mediaY",mediaY)}
+      else if (y>x && (scaleY>0.25 || Yref<ypos)) {			// zoom playing media
         if (Yref<ypos) {y=1.015} else {y=0.985}
         if (type == 'thumbsheet') {sheetY*=y}				// zoom thumbsheet
         else {
           scaleY *= y
           last_scaleY = scaleY
-          if (scaleX<0) {scaleX *= -y} else {scaleX *= y}}}}		// in case media fipped left/right
-    if (gesture) {Xref=xpos; Yref=ypos; positionMedia(0.05)}
+          if (scaleX<0) {scaleX *= -y} else {scaleX *= y}}}		// in case media fipped left/right
+    if (gesture) {Xref=xpos; Yref=ypos; positionMedia(0.05)}}
     if (type) {
       modal.style.cursor = 'crosshair'
       if (type != 'thumbsheet') {setTimeout(function() {modal.style.cursor='none'},400)}}}
@@ -340,6 +340,7 @@
     myRate.innerHTML = 'Speed '+ d_rate.toFixed(2)
     if (rate==d_rate) {mySpeed.innerHTML = 'Speed'} else {mySpeed.innerHTML = rate.toFixed(1)}
     if (selected) {mySelected.innerHTML = selected.split(',').length -1}
+    else mySelected.innerHTML = ''
     if (!type) {return}
     if (myPlayer.duration) {x=Math.round(myPlayer.duration/60)+'mins - '}
     if (mySelect.matches(':hover')) {

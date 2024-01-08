@@ -1,5 +1,5 @@
 
-  :: selection {color:red; background:black}
+  ::selection {color:red; background:black}
   ::-webkit-search-cancel-button {appearance:none}
   ::-webkit-scrollbar {background:#15110a}
   ::-webkit-scrollbar-corner {background:#15110a}
@@ -76,10 +76,8 @@
   top:11.5em;
   width:100%;
   text-align:center;
-  margin:auto;
-  align-items:center;
+//  margin:auto;
   font-size:1em}
-
 
 .ribbon a {transition:0.8s; border-radius:0.32em}
 .ribbon a:hover {transition:0.2s; transform:scale(1.2,1.2); color:salmon; translate(0,-0.1em)}
