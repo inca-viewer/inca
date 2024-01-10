@@ -189,10 +189,11 @@
           if (xpos > A_ScreenWidth - 15)
               xpos := A_ScreenWidth - 15
           MouseMove, % xpos, % ypos, 0
-          Gesture(x, y)
+          if (click == "RButton")
+              Gesture(x, y)
           if (inca_tab && GetKeyState("LButton", "P") && WinActive, ahk_class ahk_class mpv)
-              if (y < 0)			; mpv player controls
-                send, 9				; magnify
+              if (y < 0)				; mpv player controls
+                send, 9					; magnify
               else send, 0
           }
         if (!gesture && A_TickCount > timer && !GetKeyState("RButton", "P"))	; click timout
@@ -369,7 +370,6 @@
             else if (address < value)
               run, %inca%\cache\apps\ffmpeg.exe -ss %address% -to %value% -i "%src%" "%y%",,Hide
             else   run, %inca%\cache\apps\ffmpeg.exe -ss %value% -to %address% -i "%src%" "%y%",,Hide
-            index(y)
             }
         if (command == "Settings")
             run, %inca%\
@@ -1060,7 +1060,7 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1; myFol
 <a id='Alpha' style='width:5em; %x2%' onmousedown="inca('Alpha', filt)" onwheel="wheelEvents(event,id,this)">Alpha</a>`n
 <a id='Shuffle' style='width:4em; %x1%' onmousedown="inca('Shuffle')">Shuffle</a>`n
 <a id='View' style='width:5em' onmousedown="inca('View', view, '', index)" onwheel="wheelEvents(event, id, this)">View %view4%</a>`n 
-<a style='width:3em; %x8%' onmousedown="inca('Recurse')">+Subs</a>`n
+<a style='width:4em; %x8%' onmousedown="inca('Recurse')">+Subs</a>`n
 <a style='width:3em; %x10%' onmousedown="inca('Images')">Pics</a>`n
 <a style='width:3em; %x9%' onmousedown="inca('Videos')">Vids</a>`n
 <a id="myPage" style='width:9em' onmousedown="inca('Page', page)" onwheel="wheelEvents(event, id, this)">%pg%</a>`n
@@ -1179,7 +1179,6 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1; myFol
           date = %years% y
         else if sort_date 
           date = %sort_date% d
-
         if (type == "audio" || type == "m3u")
             thumb = %inca%\cache\icons\music.png
         if (type == "document")
@@ -1410,14 +1409,14 @@ else
 
     Gesture(x, y)
         {
-        if (click == "RButton")						; master volume
+        if (Abs(x) > Abs(y) )					; master volume
           {
           x*=1.4
           Static last_volume
           last_volume := volume
           if volume < 10
-            x /= 2							; finer adj at low volume
-          if x < 100							; stop any big volume jumps
+            x /= 2						; finer adj at low volume
+          if x < 100						; stop any big volume jumps
             volume += x/20
           SoundGet, current
           if (volume < 0)
@@ -1429,7 +1428,7 @@ else
           vol_popup := 4
           ShowStatus()
           }
-        else if (!inca_tab && WinActive("ahk_group Browsers"))		; browser magnify
+        else if (!playing && WinActive("ahk_group Browsers"))	; browser magnify
           {
           gesture += Abs(y)
           WinGet, state, MinMax, ahk_group Browsers
@@ -1441,6 +1440,11 @@ else
               send, ^0
             else send, ^{+}
             }
+          }
+        else if (gesture == 1 && WinActive("ahk_group Browsers"))
+          {
+          gesture := 2
+          send {RButton down}
           }
         }
 

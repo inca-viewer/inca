@@ -171,7 +171,7 @@
     myPlayer.style.opacity=0
     var fadeOut = 0
     if (type) {fadeOut=fade}						// fadeout of last media
-    positionMedia(fadeOut*0.3)
+    positionMedia(fadeOut*0.35)
     setTimeout(function() {
       type = getParameters()
       if (!type) {mouseBack(); return}								// end of media list
@@ -184,7 +184,9 @@
         if (playing && over_media) {getParameters()}
         if (!playing && !over_media) {index=last_index; getParameters(); start=last_start}}
       if (sheet && playing != 'thumbsheet') {context()}
-      Play(e); scrolltoIndex()},fadeOut*200)}
+      positionMedia(fade)
+      scrolltoIndex()
+      Play(e); },fadeOut*200)}
 
 
   function Play(e) {
@@ -299,7 +301,7 @@
     if (!nav2.matches(":hover")) {nav2.style.display = null}
     var x = Math.abs(xpos-Xref)
     var y = Math.abs(ypos-Yref)
-    if (Click && !over_cap && x+y > 8 && !gesture) {			// gesture detection (mousedown + slide)
+    if (Click && !over_cap && x+y > 4 && !gesture) {			// gesture detection (mousedown + slide)
       if (over_media) {gesture=2}
       else {gesture=1}}
     if (gesture==2 && !type) {						// thumb position moved within browser tab
@@ -308,21 +310,20 @@
       media.style.zIndex = Zindex+=1
       media.style.left = xpos-70+"px"
       media.style.top = ypos-40+"px"}
-    if (type && gesture && Click==1) {
-      if (y<x-1 || gesture==3) {					// move playing media position
-        gesture = 3
-        mediaX += xpos - Xref
-        mediaY += ypos - Yref
-        localStorage.setItem("mediaX",mediaX)
-        localStorage.setItem("mediaY",mediaY)}
-      else if (y>x && (scaleY>0.25 || Yref<ypos)) {			// zoom playing media
-        if (Yref<ypos) {y=1.015} else {y=0.985}
+    if (type && gesture && Click==1) {					// move playing media position
+      mediaX += xpos - Xref
+      mediaY += ypos - Yref
+      localStorage.setItem("mediaX",mediaX)
+      localStorage.setItem("mediaY",mediaY)}
+    else if (type && Click>1 && y>x) {					// zoom playing media
+      if (scaleY>0.25 || Yref<ypos) {
+        if (Yref<ypos) {y=1.02} else {y=0.98}
         if (type == 'thumbsheet') {sheetY*=y}				// zoom thumbsheet
         else {
           scaleY *= y
           last_scaleY = scaleY
-          if (scaleX<0) {scaleX *= -y} else {scaleX *= y}}}		// in case media fipped left/right
-    if (gesture) {Xref=xpos; Yref=ypos; positionMedia(0.05)}}
+          if (scaleX<0) {scaleX *= -y} else {scaleX *= y}}}}		// in case media fipped left/right
+    if (gesture) {Xref=xpos; Yref=ypos; positionMedia(0.05)}
     if (type) {
       modal.style.cursor = 'crosshair'
       if (type != 'thumbsheet') {setTimeout(function() {modal.style.cursor='none'},400)}}}
@@ -405,8 +406,8 @@
     else {y = innerHeight; x = y*ratio; sheetY = innerHeight/y}		// portrait
     myPlayer.style.width = x +'px'					// media size normalised to screen
     myPlayer.style.height = y +'px'
-    myPlayer.style.left = mediaX-x/2 +'px'
     myPlayer.style.top = mediaY-y/2 +'px'
+    myPlayer.style.left = mediaX-x/2 +'px'
     myPreview.src = media.src						// small seeking preview image
     positionMedia(0)							// prepare modal player
     if (myPlayer.src != media.src) {
@@ -459,9 +460,11 @@
     if (looping) {myLoop.style.color='red'} else {myLoop.style.color=null}
     if (myPlayer.muted) {myMute.style.color='red'} else {myMute.style.color=null}
     if (skinny<0) {myFlip.style.color='red'} else {myFlip.style.color=null}
-    myPlayer.style.transition = fade+'s'
     var x=0; var y=0
     if (screenLeft) {Xoff=screenLeft; Yoff=outerHeight-innerHeight} else {x=Xoff; y=Yoff}	// fullscreen offsets
+    if (!Click && ratio<1 && mediaY > 0.7*((innerHeight/2)-y) && mediaY < 1.3*((innerHeight/2)-y)) {
+      if (Math.abs(myPlayer.offsetHeight*scaleY) > 0.88*(innerHeight-y) && Math.abs(myPlayer.offsetHeight*scaleY) < 1.12*(innerHeight-y)) {mediaY=(innerHeight/2)-y; scaleY=(innerHeight)/myPlayer.offsetHeight; scaleX=skinny*scaleY; fade=1.2}}
+    myPlayer.style.transition = fade+'s'
     myPlayer.style.left = x+mediaX-(myPlayer.offsetWidth/2) +"px"
     myPlayer.style.top = y+mediaY-(myPlayer.offsetHeight/2) +"px"
     if (type == 'thumbsheet') {myPlayer.style.transform="scale("+skinny*sheetY+","+sheetY+")"}
