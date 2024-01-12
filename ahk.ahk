@@ -1,4 +1,4 @@
-
+ 
 
 	; Browser Based File Explorer - Windows
 	; AutoHotKey script generates web pages of your media
@@ -196,9 +196,14 @@
                 send, 9					; magnify
               else send, 0
           }
-        if (!gesture && A_TickCount > timer && !GetKeyState("RButton", "P"))	; click timout
+        if (!gesture && A_TickCount > timer)	; click timout
           {
-          if (A_Cursor == "IBeam")
+          if (GetKeyState("RButton", "P") && !playing)
+              {
+              list_view ^=1
+              RenderPage()
+              }
+          if (GetKeyState("LButton", "P") && A_Cursor == "IBeam")
             {
             if WinActive("ahk_group Browsers")
               {
@@ -409,13 +414,11 @@
         if (command == "View")
             {
             if (view == value)
-            list_view ^=1
+              list_view ^=1
             view := value
             if (view < 8)
               view := 8
             x := view - 7
-            popup = View %x%
-            popup(popup,0,0,0)
             if address
               index := address						; for scrollToIndex() in java
             reload := 2
@@ -996,7 +999,6 @@
         view1 := view*1.2
         view2 := view*0.8
         view3 := view/10
-        view4 := view-7
 
 
 header = <!--, %view%, %page%, %pages%, %filt%, %sort%, %toggles%, %list_view%, %playlist%, %path%, %search_path%, %search_term%, , -->`n<!doctype html>`n<html>`n<head>`n<meta charset="UTF-8">`n<title>Inca - %title%</title>`n<meta name="viewport" content="width=device-width, initial-scale=1">`n<link rel="icon" type="image/x-icon" href="file:///%inca%\cache\icons\inca.ico">`n<link rel="stylesheet" type="text/css" href="file:///%inca%/css.css">`n</head>`n`n
@@ -1010,7 +1012,7 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1; myFol
 
 <a onmouseup="inca('Settings')"`n onmouseover="el=document.getElementById('title'+index); x='';`n if(media.duration){x=Math.round(media.duration/60)+'mins - '};`n if (was_over_media) {this.innerHTML=x+el.value}"`n onmouseout="this.innerHTML=' . . .'"> . . .</a>`n
 <a onmouseup="if (!longClick && was_over_media) {sel(index)} else{selectAll()}">Select</a>`n
-<a onmousedown="inca('Delete','',was_over_media,was_over_media)">Delete</a>`n
+<a onmousedown="if(!event.button) {inca('Delete','',was_over_media,was_over_media)}">Delete</a>`n
 <a onmousedown="inca('Favorite','',was_over_media)">Fav</a>`n
 <a id="myZoom" onwheel="wheelEvents(event, id, this)">Zoom/a>`n
 <a id="myFade" onwheel="wheelEvents(event, id, this)">Fade</a>`n
@@ -1056,14 +1058,13 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1; myFol
 <a id='Size' style='width:5em; %x5%' onmousedown="inca('Size', filt)" onwheel="wheelEvents(event, id, this)">Size</a>`n
 <a id='Duration' style='width:6em; %x3%' onmousedown="inca('Duration', filt)" onwheel="wheelEvents(event, id, this)"> Duration</a>`n
 <a id='Date' style='width:5.5em; %x4%' onmousedown="inca('Date', filt)" onwheel="wheelEvents(event, id, this)">Date</a>`n
-<a id='List' style='width:3.3em; %x11%' onmousedown="inca('List', filt)" style='color:red'>%order%</a>`n
-<a id='Alpha' style='width:5em; %x2%' onmousedown="inca('Alpha', filt)" onwheel="wheelEvents(event,id,this)">Alpha</a>`n
-<a id='Shuffle' style='width:4em; %x1%' onmousedown="inca('Shuffle')">Shuffle</a>`n
-<a id='View' style='width:5em' onmousedown="inca('View', view, '', index)" onwheel="wheelEvents(event, id, this)">View %view4%</a>`n 
-<a style='width:4em; %x8%' onmousedown="inca('Recurse')">+Subs</a>`n
-<a style='width:3em; %x10%' onmousedown="inca('Images')">Pics</a>`n
-<a style='width:3em; %x9%' onmousedown="inca('Videos')">Vids</a>`n
-<a id="myPage" style='width:9em' onmousedown="inca('Page', page)" onwheel="wheelEvents(event, id, this)">%pg%</a>`n
+<a id='List' style='width:3.5em; %x11%' onmousedown="inca('List', filt)" style='color:red'>%order%</a>`n
+<a id='Alpha' style='width:8`%; %x2%' onmousedown="inca('Alpha', filt)" onwheel="wheelEvents(event,id,this)">Alpha</a>`n
+<a id='Shuffle' style='width:8`%; %x1%' onmousedown="inca('Shuffle')">Shuffle</a>`n
+<a style='width:8`%; %x8%' onmousedown="inca('Recurse')">+Subs</a>`n
+<a style='width:7`%; %x10%' onmousedown="inca('Images')">Pics</a>`n
+<a style='width:7`%; %x9%' onmousedown="inca('Videos')">Vids</a>`n
+<a id="myPage" style='width:12`%' onmousedown="inca('Page', page)" onwheel="wheelEvents(event, id, this)">%pg%</a>`n
 </div>`n`n
 
 <div style='width:100`%; height:12em'></div>`n%media_list%<div style='width:100`%; height:61.5vh'></div>`n`n
@@ -1428,7 +1429,7 @@ else
           vol_popup := 4
           ShowStatus()
           }
-        else if (!playing && WinActive("ahk_group Browsers"))	; browser magnify
+        else if (!inca_tab && WinActive("ahk_group Browsers"))	; browser magnify
           {
           gesture += Abs(y)
           WinGet, state, MinMax, ahk_group Browsers
