@@ -149,7 +149,8 @@
     if (Click==1 && !longClick && !sheet && type && type != 'image' && !nav2.matches(':hover')) {
       if (xm>-0.1 && (yw>0.98 || (ym>1 && ym<1.1))) {
         if (xm>0 && xm<0.05) {start=0; getParameters(); myPlayer.currentTime=start}
-        else {myPlayer.currentTime=xm*myPlayer.duration}}
+        else {myPlayer.currentTime=xm*myPlayer.duration}
+        if (myPlayer.currentTime<10) {myPlayer.play()}}
       else if (!cap.matches(':hover')) {togglePause()}
       return}
     if (e=='Up' && lastClick==1 && nav2.matches(':hover')) {return}
@@ -229,10 +230,10 @@
     block = 120
     if (e.deltaY > 0) {wheelUp=true}
     if (id=='myZoom') {							// zoom control
-      if (!wheelUp) {zoom+=0.05} else if (zoom>0.26) {zoom-=0.05}
+      if (wheelUp) {zoom+=0.05} else if (zoom>0.26) {zoom-=0.05}
       localStorage.setItem("zoom",Math.round(10*zoom)/10)}
     else if (id=='myFade') {						// fade control
-      if (!wheelUp) {fade+=0.05} else if (fade>0.26) {fade-=0.05}
+      if (wheelUp) {fade+=0.05} else if (fade>0.26) {fade-=0.05}
       localStorage.setItem("fade",Math.round(10*fade)/10)}
     else if (id=='myRate') {						// default rate
       if (!wheelUp) {d_rate+=0.01} else if (d_rate>0.51) {d_rate-=0.01}
@@ -257,7 +258,6 @@
       else {scaleX += 0.003}
       skinny = Math.round((1000*scaleX/scaleY))/1000
       if (Math.abs(skinny) == 1) {block=333}
-      media.style.transform = 'scale('+skinny+',1)'
       positionMedia(0)}
     else if (id=='myNext' || id=='mySelect') {				// next
       block=180; wheel=0
@@ -294,7 +294,7 @@
     if (Click && !over_cap && x+y > 4 && !gesture) {			// gesture detection (mousedown + slide)
       if (over_media) {gesture=2}
       else {gesture=1}}
-    if (Click==3 && gesture && !type) {					// thumbs
+    if (Click==3 && gesture && !type) {					// zoom thumbs
       if (Yref<ypos) {view += view/40}
       else {view -= view/40}
       if (view < 8) {view = 8}
@@ -303,6 +303,7 @@
       el = document.getElementById('media1')
       el.style.opacity=1
       el.style.transition='0.2s'
+      el.style.zIndex = Zindex+=1
       el.style.maxWidth=(view*0.8)+'em'
       el.style.maxHeight=(view*0.8)+'em'}
     else if (gesture==2 && !type) {					// thumb position moved within browser tab
@@ -463,13 +464,13 @@
     var x=0; var y=0
     if (screenLeft) {Xoff=screenLeft; Yoff=outerHeight-innerHeight} else {x=Xoff; y=Yoff}	// fullscreen offsets
     if (!Click && mediaY > 0.7*((innerHeight/2)-y) && mediaY < 1.3*((innerHeight/2)-y)) {
-      if (Math.abs(myPlayer.offsetHeight*scaleY) > 0.88*(innerHeight-y) && Math.abs(myPlayer.offsetHeight*scaleY) < 1.12*(innerHeight-y)) {mediaY=(innerHeight/2)-y; scaleY=(innerHeight)/myPlayer.offsetHeight; fade=1.2}}
+      if (Math.abs(myPlayer.offsetHeight*scaleY) > 0.88*(innerHeight-y) && Math.abs(myPlayer.offsetHeight*scaleY) < 1.12*(innerHeight-y)) {mediaY=(innerHeight/2)-y; scaleY=(innerHeight)/myPlayer.offsetHeight}}
     if (!Click && mediaX > 0.7*((innerWidth/2)-x) && mediaX < 1.3*((innerWidth/2)-x)) {
-      if (Math.abs(myPlayer.offsetWidth*scaleX) > 0.88*(innerWidth-x) && Math.abs(myPlayer.offsetWidth*scaleX) < 1.12*(innerWidth-x)) {mediaX=(innerWidth/2)-x; scaleX=(innerWidth)/myPlayer.offsetWidth; scaleY = scaleX/skinny; fade=1.2}}
+      if (Math.abs(myPlayer.offsetWidth*scaleX) > 0.88*(innerWidth-x) && Math.abs(myPlayer.offsetWidth*scaleX) < 1.12*(innerWidth-x)) {mediaX=(innerWidth/2)-x; scaleX=(innerWidth)/myPlayer.offsetWidth; scaleY = scaleX/skinny}}
     scaleX = skinny*scaleY
-    myPlayer.style.transition = fade+'s'
     myPlayer.style.left = x+mediaX-(myPlayer.offsetWidth/2) +"px"
     myPlayer.style.top = y+mediaY-(myPlayer.offsetHeight/2) +"px"
+    myPlayer.style.transition = fade+'s'
     if (type == 'thumbsheet') {myPlayer.style.transform="scale("+skinny*sheetY+","+sheetY+")"}
     else  {myPlayer.style.transform = "scale("+scaleX+","+scaleY+")"}}
 

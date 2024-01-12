@@ -1067,7 +1067,7 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1; myFol
 <a id="myPage" style='width:12`%' onmousedown="inca('Page', page)" onwheel="wheelEvents(event, id, this)">%pg%</a>`n
 </div>`n`n
 
-<div style='width:100`%; height:12em'></div>`n%media_list%<div style='width:100`%; height:61.5vh'></div>`n`n
+<div style='width:100`%; height:12em'></div>`n%media_list%<div style='width:100`%; height:81.5vh'></div>`n`n
 
       WinActivate, ahk_group Browsers
       send, ^l
