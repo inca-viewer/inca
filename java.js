@@ -2,7 +2,7 @@
 // Debugging - mySelected.innerHTML or alert()
 // to do - undo delete & move files
 //       - simplify media list htm coding
-//       - duplicate thumbs filename issue
+//       - duplicate thumb filename issues
 
   var media = document.getElementById('media1')				// first media element
   var modal = document.getElementById('myModal')			// media player window
@@ -142,6 +142,8 @@
       if (over_cap) {return}
       else if (type) {sheet=!sheet}
       else if (over_media) {sheet=1}}
+    if (e=='Down' && lastClick==2 && !type) {
+      inca('View', view, '', was_over_media); return}			// change view and scrolls to index
     if (e=='Down' && myPanel.matches(':hover')) {return}		// copy files instead of move
     if (e=='Down' && mySearch.matches(':hover')) {navigator.clipboard.writeText('#Source#'+index+'##'); return} // open source
     if (e=='Up' && !type && !over_media) {return}
@@ -463,10 +465,8 @@
     if (skinny<0) {myFlip.style.color='red'} else {myFlip.style.color=null}
     var x=0; var y=0
     if (screenLeft) {Xoff=screenLeft; Yoff=outerHeight-innerHeight} else {x=Xoff; y=Yoff}	// fullscreen offsets
-    if (!Click && mediaY > 0.7*((innerHeight/2)-y) && mediaY < 1.3*((innerHeight/2)-y)) {
-      if (Math.abs(myPlayer.offsetHeight*scaleY) > 0.88*(innerHeight-y) && Math.abs(myPlayer.offsetHeight*scaleY) < 1.12*(innerHeight-y)) {mediaY=(innerHeight/2)-y; scaleY=(innerHeight)/myPlayer.offsetHeight}}
-    if (!Click && mediaX > 0.7*((innerWidth/2)-x) && mediaX < 1.3*((innerWidth/2)-x)) {
-      if (Math.abs(myPlayer.offsetWidth*scaleX) > 0.88*(innerWidth-x) && Math.abs(myPlayer.offsetWidth*scaleX) < 1.12*(innerWidth-x)) {mediaX=(innerWidth/2)-x; scaleX=(innerWidth)/myPlayer.offsetWidth; scaleY = scaleX/skinny}}
+    if (!Click && Math.abs(myPlayer.offsetWidth*scaleX) > 0.9*(innerWidth-x) && Math.abs(myPlayer.offsetWidth*scaleX) < 1.3*(innerWidth-x)) {mediaX=(innerWidth/2)-x; scaleX=(innerWidth)/myPlayer.offsetWidth; scaleY = scaleX/skinny}
+    else if (!Click && Math.abs(myPlayer.offsetHeight*scaleY) > 0.9*(innerHeight-y) && Math.abs(myPlayer.offsetHeight*scaleY) < 1.2*(innerHeight-y)) {mediaY=(innerHeight/2)-y; scaleY=(innerHeight)/myPlayer.offsetHeight}
     scaleX = skinny*scaleY
     myPlayer.style.left = x+mediaX-(myPlayer.offsetWidth/2) +"px"
     myPlayer.style.top = y+mediaY-(myPlayer.offsetHeight/2) +"px"

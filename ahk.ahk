@@ -914,19 +914,6 @@
         if playlist
           order = List
         panel_list =
-        container = <div style='font-size:2em; color:red; margin:0.8em; text-align:center'>Fav</div>`n
-        container := fill(container)
-        Loop, Parse, fav, `|
-            {
-            SplitPath, A_Loopfield,,,,x
-            if (x == "New")
-              container = %container%<c style='color:salmon' onmousedown="inca('Path', '', '', '%A_Loopfield%')">%x%</c>`n
-            else container = %container%<c onmousedown="inca('Path', '', '', '%A_Loopfield%')">%x%</c>`n
-            if !Mod(A_Index,4)
-              container := fill(container)
-            }
-        if container
-          fill(container)
 
         if subfolders
           {
@@ -954,6 +941,20 @@
             StringTrimRight, y, A_Loopfield, 1
             SplitPath, y,,,,x
             container = %container%<c onmousedown="inca('Path', '', '', '%A_Loopfield%')">%x%</c>`n
+            if !Mod(A_Index,4)
+              container := fill(container)
+            }
+        if container
+          fill(container)
+
+        container = <div style='font-size:2em; color:red; margin:0.8em; text-align:center'>Fav</div>`n
+        container := fill(container)
+        Loop, Parse, fav, `|
+            {
+            SplitPath, A_Loopfield,,,,x
+            if (x == "New")
+              container = %container%<c style='color:salmon' onmousedown="inca('Path', '', '', '%A_Loopfield%')">%x%</c>`n
+            else container = %container%<c onmousedown="inca('Path', '', '', '%A_Loopfield%')">%x%</c>`n
             if !Mod(A_Index,4)
               container := fill(container)
             }
@@ -998,8 +999,7 @@
           view := 8
         view1 := view*1.2
         view2 := view*0.8
-        view3 := view/10
-
+        view3 := view/10 
 
 header = <!--, %view%, %page%, %pages%, %filt%, %sort%, %toggles%, %list_view%, %playlist%, %path%, %search_path%, %search_term%, , -->`n<!doctype html>`n<html>`n<head>`n<meta charset="UTF-8">`n<title>Inca - %title%</title>`n<meta name="viewport" content="width=device-width, initial-scale=1">`n<link rel="icon" type="image/x-icon" href="file:///%inca%\cache\icons\inca.ico">`n<link rel="stylesheet" type="text/css" href="file:///%inca%/css.css">`n</head>`n`n
 
