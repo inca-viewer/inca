@@ -259,6 +259,7 @@
       if (wheelUp) {scaleX -= 0.003}
       else {scaleX += 0.003}
       skinny = Math.round((1000*scaleX/scaleY))/1000
+      media.style.transform = 'scale('+skinny+',1)'
       if (Math.abs(skinny) == 1) {block=333}
       positionMedia(0)}
     else if (id=='myNext' || id=='mySelect') {				// next
@@ -267,7 +268,7 @@
       else if (e.deltaY) {mouseEvent('Back')}}
     else if (type=='image') {						// scroll
       if (rect.top<0 || rect.bottom>innerHeight) {
-        if (wheelUp) {mediaY+=50} else {mediaY-=50}
+        if (wheelUp) {mediaY-=50} else {mediaY+=50}
         positionMedia(0.3)}}
     else if (type=='video' || type=='audio') {				// seek
       if (myPlayer.duration > 120) {interval = 3}

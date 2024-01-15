@@ -287,10 +287,10 @@
           {
           command := array[ptr+=1]
           value := array[ptr+=1]
-          value := StrReplace(value, "<", "#")				; java/html cannot accept ' in string
+          value := StrReplace(value, "|", "#")
           selected := array[ptr+=1]
           address := array[ptr+=1]
-          address := StrReplace(address, ">", "'")
+          address := StrReplace(address, ">", "'")			; java/html cannot accept ' in string
           if selected
             GetMedia(StrSplit(selected, ",").1)
           if !command
@@ -480,7 +480,6 @@
                 FileDelete, %inca%\cache\widths\%media%.txt
                 FileAppend, %str%, %inca%\cache\widths\%media%.txt
                 }
-;            index := value
             selected =
             }
         if (command == "Source")
