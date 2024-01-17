@@ -200,8 +200,8 @@
           {
           if (GetKeyState("RButton", "P") && !playing)
               {
-              list_view ^=1
-              RenderPage()
+;              list_view ^=1
+;              RenderPage()
               }
           if (GetKeyState("LButton", "P") && A_Cursor == "IBeam")
             {
@@ -365,7 +365,7 @@
             }
         if (command == "mp3" || command == "mp4")			; address = cue
             {								; value = current time
-            Popup("Creating...",400,0,0)
+            Popup("Creating...",600,0,0)
             x = @%value%						; converts number to string
             y = %media_path%\%media% %x%.%command%
             if (!address) ;  || value-address<0.2
@@ -462,24 +462,24 @@
             d_rate:=array.4
             if (!playlist && (type == "video" || type == "audio"))
               FileAppend, %src%|%start%`r`n, %inca%\fav\History.m3u, UTF-8
-              if (skinny < -1.2) 
-                skinny = -1.2
-              if (skinny > 1.5)
-                skinny = 1.5
-              if (skinny >= 0.98 && skinny <= 1.02)
-                skinny := 1
-              FileRead, sk, %inca%\cache\widths\%media%.txt
+            if (skinny < -1.2)
+              skinny = -1.2
+            if (skinny > 1.5)
+              skinny = 1.5
+            if (skinny >= 0.98 && skinny <= 1.02)
+              skinny := 1
+            FileRead, sk, %inca%\cache\widths\%media%.txt
               if InStr(sk, ",")
                 {
                 ra := StrSplit(sk, ",").2
                 sk := StrSplit(sk, ",").1
                 }
-              if ((!sk && skinny!=1) || (sk && sk != skinny) || (!ra && rate != d_rate) || (ra && ra != rate))
-                {
-                str = %skinny%,%rate%
-                FileDelete, %inca%\cache\widths\%media%.txt
-                FileAppend, %str%, %inca%\cache\widths\%media%.txt
-                }
+            if ((!sk && skinny!=1) || (sk && sk != skinny) || (!ra && rate != d_rate) || (ra && ra != rate))
+              {
+              str = %skinny%,%rate%
+              FileDelete, %inca%\cache\widths\%media%.txt
+              FileAppend, %str%, %inca%\cache\widths\%media%.txt
+              }
             selected =
             }
         if (command == "Source")
@@ -1591,7 +1591,7 @@ else
         Gui, Indexer:+lastfound +AlwaysOnTop -Caption +ToolWindow
         Gui, Indexer:Color, Black
         Gui, Indexer:Add, Text, vGuiInd h50 w1200
-        Gui, Indexer:Font, s11 c705a4c, Segoe UI
+        Gui, Indexer:Font, s11 cRed, Segoe UI
         GuiControl, Indexer:Font, GuiInd
         iy := A_ScreenHeight * 0.966
         Gui, Indexer:Show, x600 y%iy%, NA
@@ -1626,6 +1626,10 @@ else
           if (y=="#" && x>4 && x<5000 && StrSplit(clipboard,"#").MaxIndex()>4)	; likely is a java message
             Clipboard()
           }
+        Process, Exist, ffmpeg.exe
+        if ErrorLevel
+          GuiControl, Indexer:, GuiInd, indexing . . .
+        else GuiControl, Indexer:, GuiInd
         return
 
 
@@ -1663,7 +1667,6 @@ else
             create += 2
           if create
             {
-            GuiControl, Indexer:, GuiInd, indexing - %filen%
             t := 0
             if (dur > 60)
                 {
@@ -1681,7 +1684,6 @@ else
                 }
             if (create & 2)
                 Runwait %inca%\cache\apps\ffmpeg -i %inca%\cache\lists\`%d.jpg -filter_complex "tile=6x6" -y "%inca%\cache\thumbs\%filen%.jpg",, Hide
-            GuiControl, Indexer:, GuiInd
             }
           }
 

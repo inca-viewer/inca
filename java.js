@@ -138,13 +138,9 @@
 
   function mouseEvent(e) {						// functionality logic
     if (Click > 2) {return}
-    if (e=='Down' && lastClick==1) {
-      if (over_cap) {return}
-      else if (type) {sheet=!sheet}
-      else if (over_media) {sheet=1}}
-    if (e=='Down' && lastClick==2 && !type) {
-      inca('View', view, '', was_over_media); return}			// change view and scrolls to index
-    if (e=='Down' && myPanel.matches(':hover')) {return}		// copy files instead of move
+    if (e=='Down' && lastClick==1 && over_cap) {return}
+    if (e=='Down' && lastClick==2 && !type) {inca('View', view, '', was_over_media); return}	// change view list/thumbs
+    if (e=='Down' && myPanel.matches(':hover')) {return}					// copy files instead of move
     if (e=='Down' && mySearch.matches(':hover')) {navigator.clipboard.writeText('#Source#'+index+'##'); return} // open source
     if (e=='Up' && !type && !over_media) {return}
     if (e=='Up' && longClick) {return}
@@ -180,11 +176,12 @@
       if (document.getElementById('title'+index).matches(':hover')) {return}
       if (e=='Up'|| e=='Down') {navigator.clipboard.writeText('#Media#'+index+'##'+start)}	// tell inca is playing
       if (type == 'document' || type == 'm3u') {type=''; return}				// let inca open file
-      if (e=='Up' && lastClick==1 && sheet) {playThumb()}					// left click			
-      if (e=='Down' && lastClick==1 && !sheet && !nav2.matches(':hover')) {
-        start=0; sheet=0
-        if (playing && over_media) {getParameters()}
-        if (!playing && !over_media) {index=last_index; getParameters(); start=last_start}}
+      if (e=='Up' && lastClick==1 && sheet) {playThumb()}					// left click
+      if (e=='Down' && lastClick==1) {		
+        if (playing) {sheet=!sheet}
+        else if (over_media) {sheet=1; start=0}
+        if (playing && over_media) {getParameters()}						// default start time
+        if (!playing && !over_media) {index=last_index; getParameters(); start=last_start}}	// return to last media
       positionMedia(fade)
       scrolltoIndex()
       Play(e); },fadeOut*200)}
