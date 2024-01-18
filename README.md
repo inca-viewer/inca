@@ -39,8 +39,9 @@ The source code is tiny and re-compiles in under a second<br>
 # Usage
 
 Long click
-- on media - show thumbsheet
-- on selected text - finds media
+- on media - show 6 x 6 thumbsheet
+- on white space - return to last media
+- on selected text - finds media match
 - on folder - copies selected files (instead of move)
   
 Long middle click
