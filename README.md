@@ -11,16 +11,15 @@ Does not mess with any settings<br>
 Just run Compile.exe - browser will open in pictures folder<br>
 To 'uninstall', just exit from taskbar & delete folder<br>
 
-# Features:
-
-6 x 6 Video thumbsheets. (long click)<br>
-Shuffle folders & playlists<br>
-beautiful uncluttered interface<br><br>
-
 ><img src="screens/Screen 1.jpg" width="640"/></p><br>
 
 <p><img src="screens/Screen 2.jpg" width="640"/></p><br><br>
 
+# Features:
+
+beautiful uncluttered interface<br><br>
+6 x 6 Video thumbsheets. (long click)<br>
+Shuffle folders & playlists<br>
 Search, organize, edit & view media files in browser<br>
 Create captions, favorites, clips etc.<br>
 Music and playlists from browser tab<br>
