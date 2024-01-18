@@ -2,7 +2,7 @@
 # A browser based media file explorer<br>
 
 Windows - Chrome, Firefox, Edge, Opera & Brave<br>
-YouTube like interface of your local media files<br><br>
+YouTube style interface of your local media files<br><br>
 
 Around 30k of Java and 60kB of AutoHotkey script<br>
 Is lightweight & portable (no installation)<br>
@@ -15,7 +15,7 @@ To 'uninstall', just exit from taskbar & delete folder<br>
 
 6 x 6 Video thumbsheets. (long click)<br>
 Shuffle folders & playlists<br>
-Speed, width, magnify, seek, next, volume<br><br>
+beautiful uncluttered interface<br><br>
 
 ><img src="screens/Screen 1.jpg" width="640"/></p><br>
 
@@ -33,23 +33,35 @@ A tab will immediately open with all matching files from your computer<br>
 Thumbsheets index at about 50 videos per minute<br>
 
 Written in a simple scripting languages - Java & AutoHotkey<br>
-If it's not exactly what you want, change it. It re-compiles in under a second<br>
-You don't need to be a programmer to experiment a bit.<br>
+If it's not exactly what you want, change it.<br>
+The source code is tiny and re-compiles in under a second<br>
 
 # Usage
 
 Long click
+- on media - show thumbsheet
+- on thumbsheet - return to media
 - on selected text - finds media
+- on folder - copies selected files (instead of move)
+  
+Long middle click
+- list/thumb view
+- previous media
 
 Right click slide gesture
-- volume control
+- left/right - volume control
+- up/down - zoom in/out
+
+Left click slide gesture
+- re-position media x,y
 
 Middle click
 - next media (long click - previous)
 
 Back click
-- if playing - exit
-- else clear selection, page top
+- exit media
+- clear selection
+- page top
 
 <br><br>Supports rotated screen & osk onscreen keyboard<br>
 long press on any text for osk, back click or enter to close<br>
