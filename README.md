@@ -40,7 +40,6 @@ The source code is tiny and re-compiles in under a second<br>
 
 Long click
 - on media - show thumbsheet
-- on thumbsheet - return to media
 - on selected text - finds media
 - on folder - copies selected files (instead of move)
   
