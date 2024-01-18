@@ -54,6 +54,7 @@ Right click slide gesture
 
 Left click slide gesture
 - re-position media x,y
+- select media
 
 Middle click
 - next media (long click - previous)
