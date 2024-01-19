@@ -29,7 +29,7 @@ To see if you already have a video from an outside website,<br>
 Select part of the title text then 'long click' on it<br>
 A tab will immediately open with all matching files from your computer<br>
 
-Thumbsheets index at about 50 videos per minute<br>
+Thumbsheets index at about 40 videos per minute<br>
 
 Written in a simple scripting languages - Java & AutoHotkey<br>
 If it's not exactly what you want, change it.<br>
@@ -42,21 +42,18 @@ Long click
 - on white space - return to last media
 - on selected text - finds media match
 - on folder - copies selected files (instead of move)
-  
-Long middle click
-- list/thumb view
-- previous media
 
 Right click slide gesture
-- left/right - volume control
-- up/down - zoom in/out
+- left/right - volume
+- up/down - zoom
 
 Left click slide gesture
-- re-position media x,y
+- re-position media
 - select media
 
 Middle click
 - next media (long click - previous)
+- long click - list/thumb view
 
 Back click
 - exit media
