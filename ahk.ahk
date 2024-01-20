@@ -1013,7 +1013,6 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1; myFol
 <a onmouseup="if (!longClick && was_over_media) {sel(index)} else{selectAll()}">Select</a>`n
 <a onmousedown="if(!event.button) {inca('Delete','',was_over_media,was_over_media)}">Delete</a>`n
 <a onmousedown="inca('Favorite','',was_over_media)">Fav</a>`n
-<a id="myZoom" onwheel="wheelEvents(event, id, this)">Zoom/a>`n
 <a id="myFade" onwheel="wheelEvents(event, id, this)">Fade</a>`n
 <a id="myRate" onwheel="wheelEvents(event, id, this)">Speed</a>`n
 <a onmousedown="inca('Join')">Join</a>
@@ -1060,10 +1059,11 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1; myFol
 <a id='List' style='width:3.5em; %x11%' onmousedown="inca('List', filt)" style='color:red'>%order%</a>`n
 <a id='Alpha' style='width:8`%; %x2%' onmousedown="inca('Alpha', filt)" onwheel="wheelEvents(event,id,this)">Alpha</a>`n
 <a id='Shuffle' style='width:8`%; %x1%' onmousedown="inca('Shuffle')">Shuffle</a>`n
+<a id='View' style='width:8`%' onmousedown="inca('View', view, '', index)" onwheel="wheelEvents(event, id, this)">View %view4%</a>`n 
 <a style='width:8`%; %x8%' onmousedown="inca('Recurse')">+Subs</a>`n
 <a style='width:7`%; %x10%' onmousedown="inca('Images')">Pics</a>`n
 <a style='width:7`%; %x9%' onmousedown="inca('Videos')">Vids</a>`n
-<a id="myPage" style='width:12`%' onmousedown="inca('Page', page)" onwheel="wheelEvents(event, id, this)">%pg%</a>`n
+<a id="myPage" style='width:13`%' onmousedown="inca('Page', page)" onwheel="wheelEvents(event, id, this)">%pg%</a>`n
 </div>`n`n
 
 <div style='width:100`%; height:12em'></div>`n%media_list%<div style='width:100`%; height:81.5vh'></div>`n`n
@@ -1591,7 +1591,7 @@ else
         Gui, Indexer:+lastfound +AlwaysOnTop -Caption +ToolWindow
         Gui, Indexer:Color, Black
         Gui, Indexer:Add, Text, vGuiInd h50 w1200
-        Gui, Indexer:Font, s11 cRed, Segoe UI
+        Gui, Indexer:Font, s11 c705a4c, Segoe UI
         GuiControl, Indexer:Font, GuiInd
         iy := A_ScreenHeight * 0.966
         Gui, Indexer:Show, x600 y%iy%, NA
@@ -1626,10 +1626,6 @@ else
           if (y=="#" && x>4 && x<5000 && StrSplit(clipboard,"#").MaxIndex()>4)	; likely is a java message
             Clipboard()
           }
-        Process, Exist, ffmpeg.exe
-        if ErrorLevel
-          GuiControl, Indexer:, GuiInd, indexing . . .
-        else GuiControl, Indexer:, GuiInd
         return
 
 
@@ -1667,6 +1663,7 @@ else
             create += 2
           if create
             {
+            GuiControl, Indexer:, GuiInd, indexing - %filen%
             t := 0
             if (dur > 60)
                 {
@@ -1685,6 +1682,7 @@ else
             if (create & 2)
                 Runwait %inca%\cache\apps\ffmpeg -i %inca%\cache\lists\`%d.jpg -filter_complex "tile=6x6" -y "%inca%\cache\thumbs\%filen%.jpg",, Hide
             }
+          GuiControl, Indexer:, GuiInd
           }
 
     
