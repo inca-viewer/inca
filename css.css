@@ -36,7 +36,7 @@
 
 .myPanel {					/* top panel element showing folders etc.*/
   position:relative;
-  top:13em;
+  top:13.3em;
   width:100%;
   font-size:0.9em;
   border-radius:1.5em;
@@ -90,9 +90,8 @@
   color:#826858;
   font-family:inherit;
   border:none;
-  line-height:1.2em;
-  font-size:1.1em;
-  margin-top:0.2em;
+  height:1.5em;
+  margin-top:0.4em;
   outline:none;
   transition:color 1.4s;
   white-space:nowrap}

@@ -198,11 +198,6 @@
           }
         if (!gesture && A_TickCount > timer)	; click timout
           {
-          if (GetKeyState("RButton", "P") && !playing)
-              {
-;              list_view ^=1
-;              RenderPage()
-              }
           if (GetKeyState("LButton", "P") && A_Cursor == "IBeam")
             {
             if WinActive("ahk_group Browsers")
@@ -351,7 +346,7 @@
             else command = Path
             value := search_term
             }
-        if (command == "Subs")
+        if (command == "Subs")						; go to subfolder
             {
             x := StrSplit(subfolders,"|")
             address := x[value]
@@ -855,17 +850,18 @@
         if !path
             return
         media_list =
-        if !InStr(path, inca_tab)
+        if !InStr(subfolders, folder)
+          subfolders =
+        if !InStr(path, folder)
           subfolders =
         foldr =
-        if !search_term
-          if playlist
-             Loop, Files, %inca%\%folder%\*.m3u, FR
-               {
-               SplitPath, A_LoopFileName,,,ex,name
-               subfolders = %subfolders%|%name%
-               }
-          else Loop, Files,%path%*.*, D
+        if playlist
+           Loop, Files, %inca%\%folder%\*.m3u, FR
+             {
+             SplitPath, A_LoopFileName,,,ex,name
+             subfolders = %subfolders%|%name%
+             }
+        else Loop, Files,%path%*.*, D
             if A_LoopFileAttrib not contains H,S
               if !InStr(subfolders, A_LoopFileFullPath)
                 if subfolders
@@ -1002,7 +998,7 @@
 
 header = <!--, %view%, %page%, %pages%, %filt%, %sort%, %toggles%, %list_view%, %playlist%, %path%, %search_path%, %search_term%, , -->`n<!doctype html>`n<html>`n<head>`n<meta charset="UTF-8">`n<title>Inca - %title%</title>`n<meta name="viewport" content="width=device-width, initial-scale=1">`n<link rel="icon" type="image/x-icon" href="file:///%inca%\cache\icons\inca.ico">`n<link rel="stylesheet" type="text/css" href="file:///%inca%/css.css">`n</head>`n`n
 
-body = <body id='myBody' class='container' onload="myBody.style.opacity=1; myFol.scrollIntoView(); myView.scrollBy(0,-250); globals(%view%, %page%, %pages%, '%sort%', %filt%, %list_view%, '%selected%', '%playlist%', %index%)">`n`n
+body = <body id='myBody' class='container' onload="myBody.style.opacity=1; myPanel.scrollBy(10,30); globals(%view%, %page%, %pages%, '%sort%', %filt%, %list_view%, '%selected%', '%playlist%', %index%)">`n`n
 
 <div id='myMenu' style='position:absolute; width:100`%'>`n`n
 <div id='mySelected' class='selected'></div>`n
@@ -1040,14 +1036,13 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1; myFol
 
 <div id='myView' class='myList' style='padding-left:%page_l%`%; padding-right:%page_r%`%'>`n`n
 
-<div id='mySearch' class='searchbox' style='position:relative; top:10em; width:100`%; border-radius:1.2em'>`n 
-<a style='color:lightsalmon; font-size:1.4em' onmousedown="inca('Reload')">%title_s%</a>`n
-<a style='color:#15110a00'>----</a>
-<a style='color:red'>%list_size%</a>`n
-<input id='myInput' class='searchbox' style='width:50`%' type='search' value='%search_term%'`n onmouseover='searchbox=this'>`n 
-<a id='SearchBox' onclick="inca('SearchBox', myInput.value)"></a>`n
-<a id='SearchAll' onclick="inca('SearchAll', myInput.value)"></a>`n
-<a id='SearchAdd' onclick="inca('SearchAdd', myInput.value)" ></a></div>`n`n
+<div id='mySearch' style='position:relative; display:flex; justify-content:space-around; top:12em; width:100`%'>`n 
+<a style='color:lightsalmon; font-size:1.6em' onmousedown="inca('Reload')">%title_s%</a>`n
+<a style='color:red; font-size:1.2em; margin-top:0.4em'>%list_size%</a>`n
+<input id='myInput' class='searchbox' style='width:50`%; border-radius:1em' type='search' value='%search_term%'`n onmouseover='searchbox=this'>`n 
+<a id='SearchBox' style='margin-top:0.4em' onclick="inca('SearchBox', myInput.value)"></a>`n
+<a id='SearchAll' style='margin-top:0.4em' onclick="inca('SearchAll', myInput.value)"></a>`n
+<a id='SearchAdd' style='margin-top:0.4em' onclick="inca('SearchAdd', myInput.value)" ></a></div>`n`n
 
 <div id='myPanel' class='myPanel' onmouseover="if(selected) {this.style.border='1px solid salmon'}" onmouseout="this.style.border='none'">`n <div id='panel' class='panel'>`n`n%panel_list%`n<div style='height:40em'></div></div></div>`n`n
 
@@ -1233,6 +1228,7 @@ else
           }
         Loop, Parse, selected, `,
             {
+            GetMedia(A_LoopField)
             if longClick
               popup = Copy - %media%
             else popup = Move - %media%

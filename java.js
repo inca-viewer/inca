@@ -3,8 +3,6 @@
 // to do - undo delete & move files
 //       - simplify media list htm coding
 //       - duplicate thumb filename issues
-// search icon
-
 
   var media = document.getElementById('media1')				// first media element
   var modal = document.getElementById('myModal')			// media player window
@@ -167,7 +165,7 @@
     cue = 0
     var playing = type
     var fadein = fade										// media fadein time 
-    if (!type || (sheet&&Click==1) || (longClick&&!sheet)) {fadein=0}				// no fadeout next media
+    if (!type || (e=='Up' && sheet && Click==1) || (longClick && !sheet)) {fadein=0}		// no fadeout
     if (type) {positionMedia(fade)}								// fadeout last media
     else {positionMedia(0)}
     myPlayer.style.opacity=0
@@ -186,7 +184,7 @@
         if (!playing && !over_media) {index=last_index; getParameters(); start=last_start}}	// return to last media
       scrolltoIndex()
       positionMedia(fade)
-      Play(e)},fadein*400)}
+      Play(e)},fadein*500)}
 
 
   function Play(e) {
@@ -229,7 +227,7 @@
     block = 120
     if (e.deltaY > 0) {wheelUp=true}
     if (id=='myFade') {							// fade control
-      if (wheelUp) {fade+=0.05} else if (fade>0.26) {fade-=0.05}
+      if (!wheelUp) {fade+=0.05} else if (fade>0.26) {fade-=0.05}
       localStorage.setItem("fade",Math.round(10*fade)/10)}
     else if (id=='myRate') {						// default rate
       if (!wheelUp) {d_rate+=0.01} else if (d_rate>0.51) {d_rate-=0.01}
@@ -260,7 +258,7 @@
       block=180; wheel=0
       if (wheelUp) {mouseEvent('Next')}
       else if (e.deltaY) {mouseEvent('Back')}}
-    else if (type=='image') {						// scroll
+    else if (type=='image' || sheet) {					// scroll
       if (rect.top<0 || rect.bottom>innerHeight) {
         if (wheelUp) {mediaY-=50} else {mediaY+=50}
         positionMedia(0.3)}}
@@ -367,7 +365,7 @@
     if (myPlayer.muted) {myMute.style.color='red'} else {myMute.style.color=null}
     if (skinny<0) {myFlip.style.color='red'} else {myFlip.style.color=null}
     if (type != 'image') {seekBar()}
-    positionMedia(0)}							// in case flipped into fullscreen
+    if (!Click) {positionMedia(0.01)}}						// in case flipped into fullscreen
 
 
   function positionMedia(f) {						// align media in modal
