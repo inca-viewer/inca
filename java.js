@@ -91,7 +91,7 @@
   function mouseDown(e) {						// detect long click
     Click=e.button+1; lastClick=Click; longClick=0; gesture=0; wheel=0; block=0; Xref=xpos; Yref=ypos
     if (Click==2 && (over_media || type || e.shiftKey)) {e.preventDefault()} // middle click
-    clickTimer = setTimeout(function() {if (!gesture) {longClick=1; mouseEvent('Down')}},240)}
+    clickTimer = setTimeout(function() {if (!gesture && xw<0.95) {longClick=1; mouseEvent('Down')}},240)}
 
 
   function mouseUp(e) {
@@ -102,7 +102,7 @@
       if (type) {mouseBack()}						// close modal player if media playing
       else if (myView.scrollTop > 50) {myView.scrollTo(0, 0)}		// else scroll to page top
       else if (selected) {for(x of selected.split(',')) {sel(x)}}}	// else clear any selected media
-    else if (!gesture) {mouseEvent('Up')}				// process click event
+    else if (!gesture && !longClick) {mouseEvent('Up')}			// process click event
     else if (gesture==2 && playlist) {					// move media position within playlist
       was_over_media = index						// preserve media id
       media.style.display='none'					// to reveal media underneath dragged item
@@ -138,8 +138,8 @@
   function mouseEvent(e) {						// functionality logic
     if (Click > 2) {return}
     if (e=='Down' && lastClick==1 && over_cap) {return}
-    if (e=='Down' && lastClick==2 && !type) {inca('View', view, '', was_over_media); return}	// change view list/thumbs
     if (e=='Down' && myPanel.matches(':hover')) {return}					// copy files instead of move
+    if (e=='Down' && lastClick==2 && !type) {inca('View', view, '', was_over_media); return}	// change view list/thumbs
     if (e=='Down' && mySearch.matches(':hover')) {navigator.clipboard.writeText('#Source#'+index+'##'); return} // open source
     if (e=='Up' && !type && !over_media) {return}
     if (e=='Up' && longClick) {return}
@@ -259,9 +259,9 @@
       if (wheelUp) {mouseEvent('Next')}
       else if (e.deltaY) {mouseEvent('Back')}}
     else if (type=='image' || sheet) {					// scroll
-      if (rect.top<0 || rect.bottom>innerHeight) {
-        if (wheelUp) {mediaY-=50} else {mediaY+=50}
-        positionMedia(0.3)}}
+      if (rect.bottom>innerHeight/1.5 && wheelUp) {mediaY-=50} 
+      if (rect.top<innerHeight/3 && !wheelUp) {mediaY+=50}
+      positionMedia(0.3)}
     else if (id=='View') {						// thumbs
       if (wheelUp) {view += 1}
       else {view -= 1}
@@ -371,8 +371,9 @@
   function positionMedia(f) {						// align media in modal
     var x=0; var y=0
     if (screenLeft) {Xoff=screenLeft; Yoff=outerHeight-innerHeight} else {x=Xoff; y=Yoff}	// fullscreen offsets
-    if (f && Math.abs(myPlayer.offsetWidth*scaleX) > 0.9*(innerWidth-x) && Math.abs(myPlayer.offsetWidth*scaleX) < 1.3*(innerWidth-x)) {mediaX=(innerWidth/2)-x; scaleX=(innerWidth)/myPlayer.offsetWidth; scaleY = scaleX/skinny}
-    else if (f && Math.abs(myPlayer.offsetHeight*scaleY) > 0.9*(innerHeight-y) && Math.abs(myPlayer.offsetHeight*scaleY) < 1.2*(innerHeight-y)) {mediaY=(innerHeight/2)-y; scaleY=(innerHeight)/myPlayer.offsetHeight}
+    if (mediaY>0.9*(innerHeight/2)-y && mediaY<1.1*(innerHeight/2)-y && mediaX>0.9*(innerWidth/2-x) && mediaX<1.1*(innerWidth/2-x)) {
+    if (f && Math.abs(myPlayer.offsetHeight*scaleY) > 0.9*(innerHeight-y) && Math.abs(myPlayer.offsetHeight*scaleY) < 1.2*(innerHeight-y)) {mediaY=(innerHeight/2)-y; scaleY=(innerHeight)/myPlayer.offsetHeight}
+    else if (f && Math.abs(myPlayer.offsetWidth*scaleX) > 0.9*(innerWidth-x) && Math.abs(myPlayer.offsetWidth*scaleX) < 1.3*(innerWidth-x)) {mediaX=(innerWidth/2)-x; scaleX=(innerWidth)/myPlayer.offsetWidth; scaleY = scaleX/skinny}}
     scaleX = skinny*scaleY
     myPlayer.style.left = x+mediaX-(myPlayer.offsetWidth/2) +"px"
     myPlayer.style.top = y+mediaY-(myPlayer.offsetHeight/2) +"px"
@@ -429,11 +430,11 @@
     myPlayer.style.top = mediaY-y/2 +'px'
     myPlayer.style.left = mediaX-x/2 +'px'
     myPreview.src = media.src						// small seeking preview image
-    positionMedia(0)							// prepare modal player (for clean start)
-    if (myPlayer.src != media.src) {
+    positionMedia(0)							// prepare player for clean start
+    if (myPlayer.src != media.src) {					// stop reloading stutter
       myPlayer.src=media.src
       if (sheet) {thumbSheet()}						// convert poster to 6x6 thumbsheet src
-      else {myPlayer.poster = media.poster}}				// stop reload stutter
+      else {myPlayer.poster = media.poster}}
     myPlayer.playbackRate = rate					// set default speed
     return type_t}
 

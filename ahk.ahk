@@ -363,7 +363,7 @@
             Popup("Creating...",600,0,0)
             x = @%value%						; converts number to string
             y = %media_path%\%media% %x%.%command%
-            if (!address) ;  || value-address<0.2
+            if (!address || value == address)
               run, %inca%\cache\apps\ffmpeg.exe -ss %value% -i "%src%" "%y%",,Hide
             else if (address-value>0.01 && address-value<0.2)
               run, %inca%\cache\apps\ffmpeg.exe -ss 0 -to %address% -i "%src%" "%y%",,Hide
@@ -848,25 +848,16 @@
         {
         Critical							; stop key interrupts
         if !path
-            return
-        media_list =
-        if !InStr(subfolders, folder)
-          subfolders =
-        if !InStr(path, folder)
-          subfolders =
+          return
         foldr =
-        if playlist
-           Loop, Files, %inca%\%folder%\*.m3u, FR
-             {
-             SplitPath, A_LoopFileName,,,ex,name
-             subfolders = %subfolders%|%name%
-             }
-        else Loop, Files,%path%*.*, D
-            if A_LoopFileAttrib not contains H,S
-              if !InStr(subfolders, A_LoopFileFullPath)
-                if subfolders
-                  subfolders = %subfolders%|%A_LoopFileFullPath%\
-                else subfolders = %A_LoopFileFullPath%\
+        media_list =
+        subfolders =
+        Loop, Files,%path%*.*, D
+          if A_LoopFileAttrib not contains H,S
+            if !InStr(subfolders, A_LoopFileFullPath)
+              if subfolders
+                subfolders = %subfolders%|%A_LoopFileFullPath%\
+              else subfolders = %A_LoopFileFullPath%\
         title := folder
         title_s := SubStr(title, 1, 20)					; keep title under 20 chars for htm page
         FileRead, java, %inca%\java.js
@@ -883,17 +874,17 @@
         page_s := Setting("Page Size")
         page_w := 100 - page_l - page_r
         Loop, Parse, list, `n, `r 					; split list into smaller web pages
-            {
-            item := StrSplit(A_LoopField, "/")				; sort filter \ src \ media type \ ext
-            source := item.2
-            type := item.3
-            sort_name := item.4
-            start := item.5
-            cue := item.6
-            list_size += 1
-            if ((list_size > (page-1) * page_s) && (list_size <= page * page_s))
-                SpoolList(list_size, count+=1, source, sort_name, start)
-            }
+          {
+          item := StrSplit(A_LoopField, "/")				; sort filter \ src \ media type \ ext
+          source := item.2
+          type := item.3
+          sort_name := item.4
+          start := item.5
+          cue := item.6
+          list_size += 1
+          if ((list_size > (page-1) * page_s) && (list_size <= page * page_s))
+            SpoolList(list_size, count+=1, source, sort_name, start)
+          }
         pages := ceil(list_size/page_s)
         if (pages > 1)
           pg = Page %page% of %pages%
@@ -1037,7 +1028,7 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1; myPan
 <div id='myView' class='myList' style='padding-left:%page_l%`%; padding-right:%page_r%`%'>`n`n
 
 <div id='mySearch' style='position:relative; display:flex; justify-content:space-around; top:12em; width:100`%'>`n 
-<a style='color:lightsalmon; font-size:1.6em' onmousedown="inca('Reload')">%title_s%</a>`n
+<a style='min-width:6em; text-align:center; color:lightsalmon; font-size:1.6em' onmousedown="inca('Reload')">%title_s%</a>`n
 <a style='color:red; font-size:1.2em; margin-top:0.4em'>%list_size%</a>`n
 <input id='myInput' class='searchbox' style='width:50`%; border-radius:1em' type='search' value='%search_term%'`n onmouseover='searchbox=this'>`n 
 <a id='SearchBox' style='margin-top:0.4em' onclick="inca('SearchBox', myInput.value)"></a>`n
@@ -1187,7 +1178,7 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1; myPan
 
 
 if list_view
-  media_list = %media_list% %fold%<table onmouseover="overThumb(%j%, %skinny%, '%type%', %start%, %cue%, '%cap%', %rate%, event);`n media%j%.style.opacity=1; media%j%.pause()" onmouseout="title%j%.style.color=null; over_media=0; media%j%.style.opacity=0"><tr id="entry%j%"`n onmouseover="title%j%.style.color='lightsalmon'">`n <td onmouseenter='media%j%.style.opacity=0; if(Click) {sel(%j%)}'>%ext%`n <video id='media%j%' class='media2' style="max-width:%view3%em; max-height:%view3%em; transform:scale(%skinny%, 1)"`n src="file:///%src%"`n %poster%`n preload='none' muted loop onmouseover="overThumb(%j%, %skinny%, '%type%', %start%, %cue%,'%cap%', %rate%, event)" type="video/mp4"></video></td>`n <td>%size%</td>`n <td style='min-width:7em'>%dur%</td>`n <td>%date%</td>`n <td>%j%</td>`n <td style='width:99em'><input id="title%j%" class='title' type='search' value='%media_s%'`n onmouseenter='over_media=0; media%j%.style.opacity=0' oninput="was_over_media=%j%; renamebox=this.value; ren%j%.innerHTML='Rename'; ren%j%.style.color='red'"></td>`n <td id='ren%j%' onmouseenter='over_media=0' onmousedown="inca('Rename', renamebox, %j%, %j%)"></td>`n <td style='text-align:right'>%fo%</td></tr></table>`n`n
+  media_list = %media_list% %fold%<table onmouseover="overThumb(%j%, %skinny%, '%type%', %start%, %cue%, '%cap%', %rate%, event);`n media%j%.style.opacity=1; media%j%.pause()" onmouseout="title%j%.style.color=null; over_media=0; media%j%.style.opacity=0"><tr id="entry%j%"`n onmouseover="title%j%.style.color='lightsalmon'">`n <td onmouseenter='media%j%.style.opacity=0; if(Click) {sel(%j%)}'>%ext%`n <video id='media%j%' class='media2' style="max-width:%view3%em; max-height:%view3%em; transform:scale(%skinny%, 1)"`n src="file:///%src%"`n %poster%`n preload='none' muted loop onmouseover="overThumb(%j%, %skinny%, '%type%', %start%, %cue%,'%cap%', %rate%, event)" type="video/mp4"></video></td>`n <td>%size%</td>`n <td style='min-width:7em'>%dur%</td>`n <td>%date%</td>`n <td>%j%</td>`n <td style='width:99em'><input id="title%j%" class='title' type='search' value='%media_s%'`n onmouseenter='over_media=0; media%j%.style.opacity=0' oninput="was_over_media=%j%; renamebox=this.value"></td>`n<td style='text-align:right'>%fo%</td></tr></table>`n`n
 
 else
   media_list = %media_list%<div id="entry%j%" style="display:flex; width%view%em; height:%view3%em; padding:%view4%em">`n <video id="media%j%" class='media' style="max-width:%view3%em; max-height:%view3%em; transform:scale(%skinny%, 1)"`n onmouseover="overThumb(%j%, %skinny%, '%type%', %start%, %cue%, '%cap%', %rate%, event); if(Click) {sel(%j%)}"`n onmouseout="this.pause(); over_media=0"`n src="file:///%src%"`n %poster%`n preload='none' muted loop type="video/mp4"></video>`n %caption% <input id='title%j%' value='%media%' class='title' style='display:none'></div>`n`n
