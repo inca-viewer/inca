@@ -334,7 +334,7 @@
     myRate.innerHTML = 'Speed '+ d_rate.toFixed(2)
     if (rate==d_rate) {mySpeed.innerHTML = 'Speed'} else {mySpeed.innerHTML = rate.toFixed(1)}
     if (selected) {mySelected.innerHTML = selected.split(',').length -1}
-//    else mySelected.innerHTML = ''
+    else mySelected.innerHTML = ''
     if (!type) {return}
     if (myPlayer.duration) {x=Math.round(myPlayer.duration/60)+'mins - '}
     if (mySelect.matches(':hover')) {
