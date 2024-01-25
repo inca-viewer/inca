@@ -2,7 +2,7 @@
 // Debugging - mySelected.innerHTML or alert()
 // to do - undo delete & move files
 //       - simplify media list htm coding
-//       - duplicate thumb filename issues
+//       - duplicate filename issues for thumbs
 
   var media = document.getElementById('media1')				// first media element
   var modal = document.getElementById('myModal')			// media player window
@@ -334,7 +334,7 @@
     myRate.innerHTML = 'Speed '+ d_rate.toFixed(2)
     if (rate==d_rate) {mySpeed.innerHTML = 'Speed'} else {mySpeed.innerHTML = rate.toFixed(1)}
     if (selected) {mySelected.innerHTML = selected.split(',').length -1}
-    else mySelected.innerHTML = ''
+//    else mySelected.innerHTML = ''
     if (!type) {return}
     if (myPlayer.duration) {x=Math.round(myPlayer.duration/60)+'mins - '}
     if (mySelect.matches(':hover')) {
@@ -360,7 +360,7 @@
     if (!cue_active && cue && myPlayer.currentTime > cue) {media_ended()}	// cue is media end time
     if (nav2.matches(':hover') && nav2.style.opacity > 0.2 && !mySelect.matches(':hover')) {nav2.style.opacity -= 0.02}
     if (xm>0 && xm<1 && ym>0 && ym<1) {over_media=index} else {over_media=0}
-    if (myPlayer.volume <= 0.8) {myPlayer.volume += 0.05}		// fade sound up
+    if (myPlayer.volume <= 0.8) {myPlayer.volume += 0.05}			// fade sound up
     if (looping) {myLoop.style.color='red'} else {myLoop.style.color=null}
     if (myPlayer.muted) {myMute.style.color='red'} else {myMute.style.color=null}
     if (skinny<0) {myFlip.style.color='red'} else {myFlip.style.color=null}
@@ -368,12 +368,14 @@
     if (!Click) {positionMedia(0.01)}}						// in case flipped into fullscreen
 
 
-  function positionMedia(f) {						// align media in modal
+  function positionMedia(f) {							// align media in modal
     var x=0; var y=0
     if (screenLeft) {Xoff=screenLeft; Yoff=outerHeight-innerHeight} else {x=Xoff; y=Yoff}	// fullscreen offsets
-    if (mediaY>0.9*(innerHeight/2)-y && mediaY<1.1*(innerHeight/2)-y && mediaX>0.9*(innerWidth/2-x) && mediaX<1.1*(innerWidth/2-x)) {
-    if (f && Math.abs(myPlayer.offsetHeight*scaleY) > 0.9*(innerHeight-y) && Math.abs(myPlayer.offsetHeight*scaleY) < 1.2*(innerHeight-y)) {mediaY=(innerHeight/2)-y; scaleY=(innerHeight)/myPlayer.offsetHeight}
-    else if (f && Math.abs(myPlayer.offsetWidth*scaleX) > 0.9*(innerWidth-x) && Math.abs(myPlayer.offsetWidth*scaleX) < 1.3*(innerWidth-x)) {mediaX=(innerWidth/2)-x; scaleX=(innerWidth)/myPlayer.offsetWidth; scaleY = scaleX/skinny}}
+    if (f && mediaY>0.4*(innerHeight-y) && mediaY<0.6*(innerHeight-y) && mediaX>0.3*(innerWidth-x) && mediaX<0.6*(innerWidth-x)) {
+      if (Math.abs(myPlayer.offsetWidth*scaleX) > 0.9*(innerWidth-x) && Math.abs(myPlayer.offsetWidth*scaleX) < 1.3*(innerWidth-x)) {
+        mediaX=(innerWidth/2)-x; scaleX=(innerWidth)/myPlayer.offsetWidth; scaleY = scaleX/skinny}
+      else if (Math.abs(myPlayer.offsetHeight*scaleY) > 0.9*(innerHeight-y) && Math.abs(myPlayer.offsetHeight*scaleY) < 1.2*(innerHeight-y)) {
+        mediaY=(innerHeight/2)-y; scaleY=(innerHeight)/myPlayer.offsetHeight}}
     scaleX = skinny*scaleY
     myPlayer.style.left = x+mediaX-(myPlayer.offsetWidth/2) +"px"
     myPlayer.style.top = y+mediaY-(myPlayer.offsetHeight/2) +"px"
