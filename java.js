@@ -177,10 +177,10 @@
       if (e=='Up'|| e=='Down') {navigator.clipboard.writeText('#Media#'+index+'##'+start)}	// tell inca is playing
       if (type == 'document' || type == 'm3u') {type=''; return}				// let inca open file
       if (e=='Up' && lastClick==1 && sheet) {playThumb()}
-      if (e=='Down' && lastClick==1) {		
+      if (e=='Down' && lastClick==1) {	
         if (playing) {sheet=!sheet}
         else if (over_media) {sheet=1; start=0}
-        if (playing && over_media) {getParameters()}						// default start time
+        if (playing && over_media) {start=last_start}						// long click over sheet
         if (!playing && !over_media) {index=last_index; getParameters(); start=last_start}}	// return to last media
       scrolltoIndex()
       positionMedia(fade)
@@ -455,6 +455,7 @@
 
 
   function thumbSheet() {						// change poster jpg to 6x6 thumbsheet jpg
+    last_start=myPlayer.currentTime
     var x = media.poster.replace("/posters/", "/thumbs/")
     p = x.split('%20')							// see if embedded start time in poster filename
     p = p.pop()
