@@ -155,7 +155,7 @@
       for (var x of cap_list.split('|')) {
         if (!isNaN(x) && x>(myPlayer.currentTime+1)) {
           myPlayer.currentTime=x-1; myPlayer.play(); return}}}
-    if (type) {Messages()}						// add history, width, speed, caption edits
+    if (type) {if (!sheet) {Messages()}}				// add history, width, speed, caption edits
     else {myPlayer.addEventListener('ended', media_ended)}
     if (type && !longClick) {
       if (e=='Next' || lastClick==2) {index++; start=0}

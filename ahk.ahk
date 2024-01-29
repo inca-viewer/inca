@@ -393,8 +393,8 @@
             {
             if !selected
               return
-index := selected
-reload := 3
+; index := selected
+; reload := 3
             popup("Added - New",0,0,0)
             if !value
               value = 0.0
@@ -1046,9 +1046,9 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1; %scro
 <a style='min-width:6em; text-align:center; color:salmon; font-size:1.6em' onmousedown="inca('Reload')">%title_s%</a>`n
 <a style='color:red; font-size:1.2em; margin-top:0.4em'>%list_size%</a>`n
 <input id='myInput' class='searchbox' style='width:50`%; border-radius:1em' type='search' value='%search_term%'`n onmouseover='searchbox=this'>`n 
-<a id='SearchBox' style='margin-top:0.4em' onclick="inca('SearchBox', myInput.value)"></a>`n
-<a id='SearchAll' style='margin-top:0.4em' onclick="inca('SearchAll', myInput.value)"></a>`n
-<a id='SearchAdd' style='margin-top:0.4em' onclick="inca('SearchAdd', myInput.value)" ></a></div>`n`n
+<a id='SearchBox' class='searchbutton' onclick="inca('SearchBox', myInput.value)"></a>`n
+<a id='SearchAll' class='searchbutton' onclick="inca('SearchAll', myInput.value)"></a>`n
+<a id='SearchAdd' class='searchbutton' onclick="inca('SearchAdd', myInput.value)"></a></div>`n`n
 
 <div id='myPanel' class='myPanel' onmouseover="if(selected) {this.style.border='1px solid salmon'}" onmouseout="this.style.border='none'">`n <div id='panel' class='panel'>`n`n%panel_list%`n<div style='height:40em'></div></div></div>`n`n
 

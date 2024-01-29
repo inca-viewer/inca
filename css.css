@@ -7,8 +7,8 @@
   td {outline:none; text-align:center; min-width:5em; overflow:hidden; white-space:nowrap}
   table {color:#826858; font-size:0.9em; border-collapse:collapse; margin:auto; border-radius:1em; transition:color 0.3s}
   table:hover {background:#1b1814}
-  c {display:block; border-radius:1em; padding-left:1em; text-decoration:none; color:#826858}
-  c:hover {background:#1b1814}
+  c {display:block; padding-left:1em; text-decoration:none; color:#826858; transition:0.8s}
+  c:hover {transition:0.2s; transform:scale(1.1,1.1); color:lightsalmon}
   input:hover {color:lightsalmon;transition:color 1.2s}
 
 .player {					/* modal media player element */
@@ -95,6 +95,13 @@
   outline:none;
   transition:color 1.4s;
   white-space:nowrap}
+
+.searchbutton {
+  margin-top:0.5em;
+  height:1.4em;
+  border-radius:1em;
+  transition:0.8s}
+.searchbutton:hover {transition:0.2s; transform:scale(1.2,1.2); color:salmon; translate(0,-0.1em)}
 
 .title {					/* file name element */
   display:flex;
