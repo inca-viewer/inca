@@ -3,6 +3,8 @@
 // to do - undo delete & move files
 //       - simplify media list htm coding
 //       - duplicate filename issues for thumbs
+// panel headings
+
 
   var media = document.getElementById('media1')				// first media element
   var modal = document.getElementById('myModal')			// media player window
@@ -155,7 +157,7 @@
       for (var x of cap_list.split('|')) {
         if (!isNaN(x) && x>(myPlayer.currentTime+1)) {
           myPlayer.currentTime=x-1; myPlayer.play(); return}}}
-    if (type) {if (!sheet) {Messages()}}				// add history, width, speed, caption edits
+    if (type) {Messages()}						// add history, width, speed, caption edits
     else {myPlayer.addEventListener('ended', media_ended)}
     if (type && !longClick) {
       if (e=='Next' || lastClick==2) {index++; start=0}
@@ -209,7 +211,7 @@
     last_index = index
     if (myPlayer.currentTime) {last_start = myPlayer.currentTime}
     if (cap.value != cap.innerHTML) {editCap()}
-    messages = messages + '#History#'+index+'##'+last_start.toFixed(1)+'|'+skinny+'|'+rate+'|'+d_rate
+    if (!sheet) {messages = messages + '#History#'+index+'##'+last_start.toFixed(1)+'|'+skinny+'|'+rate+'|'+d_rate}
     mySeekbar.style.opacity = null
     myPreview.style.opacity = null
     cap.style.display = 'none'

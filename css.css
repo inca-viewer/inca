@@ -36,13 +36,13 @@
 
 .myPanel {					/* top panel element showing folders etc.*/
   position:relative;
-  top:13.3em;
+  top:11em;
   width:100%;
   font-size:0.9em;
   border-radius:1.5em;
   white-space:nowrap;
   overflow:hidden;
-  height:8em}
+  height:7.5em}
 
 .panel {					/* inner panel list container */
   height:100vh;
@@ -53,7 +53,7 @@
   transform-origin:right top;
   border-radius:1em;
   background:#15110a;
-  width:10em;
+  width:9em;
   left:-9em}
 
 .media {					/* thumb view media */
@@ -73,8 +73,9 @@
 .ribbon {					/* menu, fol, fav, search ... */
   position:relative;
   display:flex;
-  top:11.5em;
+  top:11.8em;
   width:100%;
+  border-radius:1em;
   text-align:center;
   font-size:1em}
 
@@ -101,6 +102,7 @@
   height:1.4em;
   border-radius:1em;
   transition:0.8s}
+
 .searchbutton:hover {transition:0.2s; transform:scale(1.2,1.2); color:salmon; translate(0,-0.1em)}
 
 .title {					/* file name element */

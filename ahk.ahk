@@ -209,7 +209,8 @@
               send, {Lbutton up}
               if ClipBoard
                 {
-                path =
+                if !inca_tab			; include current path in search 
+                  path =
                 address =
                 search_term =
                 command = SearchBox		; search from selected text
@@ -318,6 +319,7 @@
             }
         if (command == "Move")						; move entry within playlist
             {
+            index := value						; scroll to moved item
             MoveEntry()
             selected =
             reload := 3
@@ -395,7 +397,7 @@
               return
 ; index := selected
 ; reload := 3
-            popup("Added - New",0,0,0)
+            popup("Added - New",500,0,0)
             if !value
               value = 0.0
             if address
@@ -1042,7 +1044,14 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1; %scro
 
 <div id='myView' class='myList' style='padding-left:%page_l%`%; padding-right:%page_r%`%'>`n`n
 
-<div id='mySearch' style='position:relative; display:flex; justify-content:space-around; top:12em; width:100`%'>`n 
+<div class='ribbon' style='width:85`%; height:1.4em; justify-content:center; background:#1b1814'>`n
+<a></a><a style='width:8em' onmouseover="Subs.scrollIntoView(); myView.scrollBy(0,-250)">Subs</a>`n
+<a style='width:8em' onmouseover="Fol.scrollIntoView(); myView.scrollBy(0,-250)">Fol</a>`n
+<a style='width:8em' onmouseover="Fav.scrollIntoView(); myView.scrollBy(0,-250)">Fav</a>`n
+<a style='width:8em' onmouseover="Music.scrollIntoView(); myView.scrollBy(0,-250)">Music</a>`n
+<a style='width:8em' onmouseover="myM.scrollIntoView(); myView.scrollBy(0,-250)">Search</a><a></a></div>`n`n
+
+<div id='mySearch' style='position:relative; display:flex; justify-content:space-around; top:18.6em; width:100`%'>`n 
 <a style='min-width:6em; text-align:center; color:salmon; font-size:1.6em' onmousedown="inca('Reload')">%title_s%</a>`n
 <a style='color:red; font-size:1.2em; margin-top:0.4em'>%list_size%</a>`n
 <input id='myInput' class='searchbox' style='width:50`%; border-radius:1em' type='search' value='%search_term%'`n onmouseover='searchbox=this'>`n 
