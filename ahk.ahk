@@ -182,6 +182,8 @@
           }
         if (Abs(x)+Abs(y) > 6)			; gesture started
           {
+          if (!gesture && click == "LButton")
+            gesture := 1
           MouseGetPos, xpos, ypos
           if (xpos < 15)			; gesture at screen edges
               xpos := 15
