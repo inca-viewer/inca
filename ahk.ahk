@@ -86,6 +86,7 @@
         Global playing =
         Global gesture
         Global lastClip
+        Global lastMedia
 
 
     main:
@@ -460,8 +461,9 @@
             skinny:= array.2
             rate:=array.3
             d_rate:=array.4
-            if (type == "video" || type == "audio")
+            if ((type == "video" || type == "audio") && lastMedia != src)
               FileAppend, %src%|%start%`r`n, %inca%\fav\History.m3u, UTF-8
+            lastMedia := src
             if (skinny < -1.2)
               skinny = -1.2
             if (skinny > 1.5)
@@ -482,7 +484,7 @@
               }
             selected =
             }
-        if (command == "Source")
+        if (command == "Source") 
             {
             send, {LButton up}						; release Mclick auto scroll
             if playlist
