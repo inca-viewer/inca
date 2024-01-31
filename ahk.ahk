@@ -183,8 +183,6 @@
         if (Abs(x)+Abs(y) > 6)			; gesture started
           {
           MouseGetPos, xpos, ypos
-          if !gesture
-            gesture := 1
           if (xpos < 15)			; gesture at screen edges
               xpos := 15
           if (xpos > A_ScreenWidth - 15)
@@ -284,7 +282,7 @@
           {
           command := array[ptr+=1]
           value := array[ptr+=1]
-          value := StrReplace(value, "|", "#")
+          value := StrReplace(value, "<", "#")
           selected := array[ptr+=1]
           address := array[ptr+=1]
           address := StrReplace(address, ">", "'")			; java/html cannot accept ' in string
@@ -460,7 +458,7 @@
             skinny:= array.2
             rate:=array.3
             d_rate:=array.4
-            if (!playlist && (type == "video" || type == "audio"))
+            if (type == "video" || type == "audio")
               FileAppend, %src%|%start%`r`n, %inca%\fav\History.m3u, UTF-8
             if (skinny < -1.2)
               skinny = -1.2
@@ -1420,8 +1418,9 @@ else
 
     Gesture(x, y)
         {
-        if (Abs(x) > Abs(y) )					; master volume
+        if (gesture < 2 && Abs(x) > Abs(y))			; master volume
           {
+          gesture := 1
           x*=1.4
           Static last_volume
           last_volume := volume
@@ -1452,7 +1451,7 @@ else
             else send, ^{+}
             }
           }
-        else if (gesture == 1 && WinActive("ahk_group Browsers"))
+        else if (!gesture && WinActive("ahk_group Browsers"))
           {
           gesture := 2
           send {RButton down}

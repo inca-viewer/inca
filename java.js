@@ -3,8 +3,6 @@
 // to do - undo delete & move files
 //       - simplify media list htm coding
 //       - duplicate filename issues for thumbs
-// panel headings
-
 
   var media = document.getElementById('media1')				// first media element
   var modal = document.getElementById('myModal')			// media player window
@@ -161,8 +159,8 @@
     else {myPlayer.addEventListener('ended', media_ended)}
     if (type && !longClick) {
       if (e=='Next' || lastClick==2) {index++; start=0}
-      if (e=='Back' && index > 1) {index--}}
-    if (type && lastClick==2 && longClick && index > 1) {index--}
+      if (e=='Back' && index > 1) {index--; start=0}}
+    if (type && lastClick==2 && longClick && index > 1) {index--; start=0}
     scaleY = last_scaleY
     cue = 0
     var playing = type
@@ -208,6 +206,7 @@
 
 
   function Messages() {							// for inca.exe
+    cap_time = 0
     last_index = index
     if (myPlayer.currentTime) {last_start = myPlayer.currentTime}
     if (cap.value != cap.innerHTML) {editCap()}
