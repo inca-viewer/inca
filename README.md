@@ -68,5 +68,5 @@ long press on any text for osk, back click or enter to close<br>
 <img src="screens/computer arm 2.jpg" width="50%"/>
 <img src="screens/computer arm 3.jpg" width="50%"/>
 <img src="screens/computer arm 4.jpg" width="50%"/>
-<img src="inca overview.jpg" width="50%"/></p>
+<img src="screens/inca overview.jpg" width="50%"/></p>
 
