@@ -63,7 +63,10 @@ Back click
 
 <br><br>Supports rotated screen & osk onscreen keyboard<br>
 long press on any text for osk<br>
-(run osk as administrator for self close)<br>
+run osk as administrator for self close<br><br>
+
+Arm made from 12mm threaded rod, bolt & heatshrink<br>
+drill 12mm hole in wood to bend arm<br><br>
 
 <img src="screens/computer arm 3.jpg" width="25%"/>
 <img src="screens/computer arm 4.jpg" width="25%"/>
