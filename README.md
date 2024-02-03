@@ -69,5 +69,5 @@ long press on any text for osk<br>
 <img src="screens/computer arm 4.jpg" width="25%"/>
 <img src="screens/computer arm 1.jpg" width="25%"/>
 <img src="screens/computer arm 2.jpg" width="25%"/>
-
+<img src="screens/computer arm 5.jpg" width="25%"/>
 
