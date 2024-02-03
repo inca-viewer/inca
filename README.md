@@ -51,7 +51,8 @@ Middle click
 Back click
 - exit media
 - clear selection
-- page top<br><br>
+- page top
+
 Supports rotated screen & osk onscreen keyboard<br>
 long press on any text area for osk<br>
 run osk in 'task scheduler' as administrator for self close<br>
