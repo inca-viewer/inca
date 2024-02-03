@@ -11,9 +11,9 @@ Does not mess with any settings<br>
 Just run Compile.exe - browser will open in pictures folder<br>
 To 'uninstall', just exit from taskbar & delete folder<br>
 
-><img src="screens/Screen 1.jpg" width="640"/></p><br>
+><img src="screens/Screen 1.jpg" width="50%"/></p><br>
 
-<p><img src="screens/Screen 2.jpg" width="640"/></p><br><br>
+<p><img src="screens/Screen 2.jpg" width="50%"/></p><br><br>
 
 # Features:
 
@@ -64,7 +64,7 @@ Back click
 long press on any text for osk, back click or enter to close<br>
 (if osk keyboard script is set to run as administrator)<br>
 
-<img src="screens/swivel arm 3.jpg" width="400"/>
-<img src="screens/swivel arm 2.jpg" width="400"/></p>
-<img src="inca overview.jpg" width="100%"/></p>
+<img src="screens/swivel arm 3.jpg" width="50%"/>
+<img src="screens/swivel arm 2.jpg" width="50%"/></p>
+<img src="inca overview.jpg" width="50%"/></p>
 
