@@ -1,7 +1,7 @@
 
 # Browser based file explorer<br>
 
-Windows - Chrome, Firefox, Edge, Opera & Brave<br><br>
+Windows - Chrome, Firefox, Edge, Opera & Brave<br>
 
 YouTube style interface of your hard drive<br><br>
 
