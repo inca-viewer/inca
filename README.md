@@ -64,7 +64,9 @@ Back click
 long press on any text for osk, back click or enter to close<br>
 (if osk keyboard script is set to run as administrator)<br>
 
-<img src="screens/swivel arm 3.jpg" width="50%"/>
-<img src="screens/swivel arm 2.jpg" width="50%"/></p>
+<img src="screens/computer arm 1.jpg" width="50%"/>
+<img src="screens/computer arm 2.jpg" width="50%"/>
+<img src="screens/computer arm 3.jpg" width="50%"/>
+<img src="screens/computer arm 4.jpg" width="50%"/>
 <img src="inca overview.jpg" width="50%"/></p>
 
