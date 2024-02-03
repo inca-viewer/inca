@@ -62,9 +62,9 @@ run osk as administrator for self close<br><br>
 Arm made from 1m x 12mm threaded rod, 2 x nuts + heatshrink<br>
 drill 12mm hole in wood to bend arm<br><br>
 
-<img src="screens/computer arm 3.jpg" width="40%">
-<img src="screens/computer arm 4.jpg" width="40%">
+<img src="screens/computer arm 5.jpg" width="40%">
 <img src="screens/computer arm 1.jpg" width="40%">
 <img src="screens/computer arm 2.jpg" width="40%">
-<img src="screens/computer arm 5.jpg" width="40%"/>
+<img src="screens/computer arm 3.jpg" width="40%">
+<img src="screens/computer arm 4.jpg" width="40%"/>
 
