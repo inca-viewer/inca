@@ -13,9 +13,9 @@ Written in a simple scripting language - AutoHotkey + java<br>
 If it's not exactly what you want, change it in notepad.<br>
 The ducumented source code is tiny and re-compiles in seconds<br><br>
 
-<img src="screens/inca overview.jpg" width="50%"/>
-<img src="screens/Screen 1.jpg" width="50%"/>
-<img src="screens/Screen 2.jpg" width="50%"/><br><br>
+<img src="screens/inca overview.jpg" width="90%"/>
+<img src="screens/Screen 1.jpg" width="90%"/>
+<img src="screens/Screen 2.jpg" width="90%"/><br><br>
 
 # Features:
 
@@ -62,9 +62,9 @@ run osk as administrator for self close<br><br>
 Arm made from 1m x 12mm threaded rod, 2 x nuts + heatshrink<br>
 drill 12mm hole in wood to bend arm<br><br>
 
-<img src="screens/computer arm 3.jpg" width="25%">
-<img src="screens/computer arm 4.jpg" width="25%">
-<img src="screens/computer arm 1.jpg" width="25%">
-<img src="screens/computer arm 2.jpg" width="25%">
-<img src="screens/computer arm 5.jpg" width="25%"/>
+<img src="screens/computer arm 3.jpg" width="60%">
+<img src="screens/computer arm 4.jpg" width="60%">
+<img src="screens/computer arm 1.jpg" width="60%">
+<img src="screens/computer arm 2.jpg" width="60%">
+<img src="screens/computer arm 5.jpg" width="60%"/>
 
