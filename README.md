@@ -1,5 +1,5 @@
 
-# A browser based file explorer<br>
+# Browser based file explorer<br>
 
 Windows - Chrome, Firefox, Edge, Opera & Brave<br>
 YouTube style interface of your local media files<br><br>
