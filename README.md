@@ -66,5 +66,5 @@ long press on any text for osk, back click or enter to close<br>
 
 <img src="screens/swivel arm 3.jpg" width="200"/> <br>
 <img src="screens/swivel arm 2.jpg" width="200"/></p>
-
+<img src="inca overview.jpg" width="200"/></p>
 
