@@ -10,7 +10,7 @@ Just run Compile.exe - browser will open in pictures folder<br>
 To 'uninstall', just exit from taskbar & delete folder<br><br>
 Written in a simple scripting language - AutoHotkey + java<br>
 If it's not exactly what you want, change it in notepad.<br>
-The ducumented source code is tiny and re-compiles in seconds<br><br>
+The source code is tiny and re-compiles in seconds from browser<br><br>
 
 <img src="screens/inca overview.jpg" width="50%"/>
 <img src="screens/Screen 1.jpg" width="50%"/>
