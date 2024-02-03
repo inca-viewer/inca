@@ -10,11 +10,11 @@ Just run Compile.exe - browser will open in pictures folder<br>
 To 'uninstall', just exit from taskbar & delete folder<br><br>
 Written in a simple scripting language - AutoHotkey + java<br>
 If it's not exactly what you want, change it in notepad.<br>
-The ducumented source code is tiny and re-compiles in seconds<br>
+The ducumented source code is tiny and re-compiles in seconds<br><br>
 
 <img src="screens/inca overview.jpg" width="50%"/>
 <img src="screens/Screen 1.jpg" width="50%"/>
-<img src="screens/Screen 2.jpg" width="50%"/><br><br>
+<img src="screens/Screen 2.jpg" width="50%"/>
 
 # Features:<br>
 beautiful interface<br>
@@ -59,7 +59,7 @@ run osk in 'task scheduler' as administrator for self close<br>
 Remember to bookmark inca web page<br>
 If you like program, add compile.exe and keyboard.exe to task scheduler<br><br>
 Arm made from 1m x 12mm threaded rod, 2 x nuts + heatshrink<br>
-drill 12mm hole in wood to bend arm<br>
+drill 12mm hole in wood to bend arm<br><br>
 
 <img src="screens/computer arm 5.jpg" width="50%">
 <img src="screens/computer arm 2.jpg" width="50%">
