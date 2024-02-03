@@ -1,16 +1,20 @@
 
 # Browser based file explorer<br>
 
-Windows - Chrome, Firefox, Edge, Opera & Brave<br>
-YouTube style interface of your local media files<br><br>
+Windows - Chrome, Firefox, Edge, Opera & Brave<br><br>
 
-Around 30k of Java and 60kB of AutoHotkey script<br>
+YouTube style interface of your hard drive<br><br>
+
+Around 30k of Java and 60k of AutoHotkey script<br>
 Is lightweight & portable (no installation)<br>
 Pure vanilla script. No IDE, no external calls<br> 
 Does not mess with any settings<br>
 Just run Compile.exe - browser will open in pictures folder<br>
-To 'uninstall', just exit from taskbar & delete folder<br>
-Can edit & complie ahk & java script direct from browser<br>
+To 'uninstall', just exit from taskbar & delete folder<br><br>
+
+Written in a simple scripting language - AutoHotkey + java<br>
+If it's not exactly what you want, change it in notepad.<br>
+The ducumented source code is tiny and re-compiles in seconds<br><br>
 
 <img src="screens/inca overview.jpg" width="50%"/>
 <img src="screens/Screen 1.jpg" width="50%"/>
@@ -18,10 +22,10 @@ Can edit & complie ahk & java script direct from browser<br>
 
 # Features:
 
-beautiful uncluttered interface<br><br>
+beautiful interface<br><br>
 6 x 6 Video thumbsheets<br>
 Shuffle folders & playlists<br>
-Search, organize, edit & view media files in browser<br>
+Search, organize, edit & view media files in browser or external player<br>
 Create captions, favorites, clips, conversions etc.<br>
 Music and playlists from browser tab<br>
 Sleep timer gradually lowers master volume when mouse quiet<br>
@@ -30,11 +34,7 @@ To see if you already have a video from an outside website,<br>
 Select part of the title text then 'long click' on it<br>
 A new tab will show all matching files from your computer<br>
 
-Thumbsheets index at about 30 videos per minute<br>
-
-Written in a simple scripting language - AutoHotkey + java<br>
-If it's not exactly what you want, change it.<br>
-The source code is tiny and re-compiles in under a second<br>
+Thumbsheets index at about 30 videos per minute<br><br>
 
 # Usage
 
