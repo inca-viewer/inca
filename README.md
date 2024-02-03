@@ -10,7 +10,7 @@ Pure vanilla script. No IDE, no external calls<br>
 Does not mess with any settings<br>
 Just run Compile.exe - browser will open in pictures folder<br>
 To 'uninstall', just exit from taskbar & delete folder<br>
-Can see/edit ahk/java script and compile direct from browser<br>
+Can edit ahk - java script and compile direct from browser<br>
 
 <img src="screens/inca overview.jpg" width="50%"/>
 <img src="screens/Screen 1.jpg" width="50%"/>
