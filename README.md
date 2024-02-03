@@ -18,20 +18,20 @@ To 'uninstall', just exit from taskbar & delete folder<br>
 # Features:
 
 beautiful uncluttered interface<br><br>
-6 x 6 Video thumbsheets. (long click)<br>
+6 x 6 Video thumbsheets<br>
 Shuffle folders & playlists<br>
 Search, organize, edit & view media files in browser<br>
-Create captions, favorites, clips etc.<br>
+Create captions, favorites, clips, conversions etc.<br>
 Music and playlists from browser tab<br>
 Sleep timer gradually lowers master volume when mouse quiet<br>
 
 To see if you already have a video from an outside website,<br>
 Select part of the title text then 'long click' on it<br>
-A tab will immediately open with all matching files from your computer<br>
+A new tab will show all matching files from your computer<br>
 
-Thumbsheets index at about 40 videos per minute<br>
+Thumbsheets index at about 30 videos per minute<br>
 
-Written in a simple scripting languages - Java & AutoHotkey<br>
+Written in a simple scripting language - AutoHotkey + java<br>
 If it's not exactly what you want, change it.<br>
 The source code is tiny and re-compiles in under a second<br>
 
@@ -40,7 +40,7 @@ The source code is tiny and re-compiles in under a second<br>
 Long click
 - on media - show 6 x 6 thumbsheet
 - on white space - return to last media
-- on selected text - finds media match
+- on selected text - find media match
 - on folder - copies selected files (instead of move)
 
 Right click slide gesture
@@ -52,8 +52,8 @@ Left click slide gesture
 - select media
 
 Middle click
-- next media (long click - previous)
-- long click - list/thumb view
+- next media
+- long click - previous media - list/thumb view
 
 Back click
 - exit media
@@ -61,12 +61,12 @@ Back click
 - page top
 
 <br><br>Supports rotated screen & osk onscreen keyboard<br>
-long press on any text for osk, back click or enter to close<br>
-(if osk keyboard script is set to run as administrator)<br>
+long press on any text for osk<br>
+(run osk as administrator for self close)<br>
 
-<img src="screens/computer arm 3.jpg" width="50%"/>
-<img src="screens/computer arm 4.jpg" width="50%"/>
-<img src="screens/computer arm 1.jpg" width="50%"/>
-<img src="screens/computer arm 2.jpg" width="50%"/>
+<img src="screens/computer arm 3.jpg" width="25%"/>
+<img src="screens/computer arm 4.jpg" width="25%"/>
+<img src="screens/computer arm 1.jpg" width="25%"/>
+<img src="screens/computer arm 2.jpg" width="25%"/>
 
 
