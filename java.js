@@ -1,5 +1,5 @@
 
-// Debugging - mySelected.innerHTML or alert()
+// Debugging - use mySelected.innerHTML or alert()
 // to do - undo delete & move files
 //       - simplify media list htm coding
 //       - duplicate filename issues for thumbs
@@ -9,11 +9,11 @@
   var nav = document.getElementById('myContext')			// context menu during media play
   var nav2 = document.getElementById('myContext2')			// context menu over thumbs
   var cap = document.getElementById('myCap')				// caption textarea element
-  var mediaX = 1*localStorage.getItem('mediaX')
+  var mediaX = 1*localStorage.getItem('mediaX')				// caption strings
   var mediaY = 1*localStorage.getItem('mediaY')				// last media position
-  var fade = 1*localStorage.getItem('fade')
-  var d_rate = 1*localStorage.getItem('d_rate')
-  var intervalTimer
+  var fade = 1*localStorage.getItem('fade')				// media transition
+  var d_rate = 1*localStorage.getItem('d_rate')				// default playback speed
+  var intervalTimer							// Timer() every 100mS
   var wheel = 0
   var block = 100							// block wheel/gesture events
   var index = 1								// media index (e.g. media14)
@@ -24,15 +24,15 @@
   var units = ''							// minutes, months, MB etc.
   var rate = 1								// current rate
   var view = 14								// thumb size em
-  var list_view = 0
-  var page = 1
+  var list_view = 0							// list or thumbnail view
+  var page = 1								// current media page
   var pages = 1								// how many htm pages of media
   var sort = 0								// media list sort 
   var filt = 0								// media list filter
   var playlist								// full .m3u filepath
   var type = ''								// audio, video, image, document
   var cap_list = ''							// full caption text file
-  var cap_time = 0
+  var cap_time = 0							// caption start time
   var looping = true							// play next or loop media
   var lastClick = 0							// state is preserved
   var Click = 0								// state cleared after mouseUp
@@ -46,19 +46,19 @@
   var was_over_media = 0
   var ratio								// media width to height ratio
   var skinny = 1							// media width
-  var messages = ''							// skinny and caption changes
+  var messages = ''							// history, width, speed & caption edits
   var cue = 0								// start/end time for looping & mp3/4 conversions
   var cue_active = false						// setting cue point
-  var Zindex = 3
+  var Zindex = 3							// element layer
   var xw = 0.5								// cursor over window ratio
   var yw = 0.5
   var xm = 0								// cursor over media ratio
   var ym = 0
-  var scaleX = 0.7							// skinny & magnify factor
+  var scaleX = 0.7							// skinny & media size
   var scaleY = 0.7							// media size
   var last_scaleY = 0.7
   var sheetY = 1.2							// thumbsheet size
-  var sheet = 0								// thumbsheet mode
+  var sheet = 0								// 6x6 thumbsheet mode
   var xpos = 0								// cursor coordinate in pixels
   var ypos = 0
   var Xref = 0								// click cursor coordinate
@@ -69,28 +69,28 @@
 
   getParameters()							// initialise to media1 attributes
   gestureEvents(0)							// (fill search bar)
-  positionMedia(0)
+  positionMedia(0)							// initialise player
   modal.style.opacity=0;						// stop page load flicker
   modal.style.zIndex=-1;
   if (!fade) {fade=0.2}
-  if (!d_rate) {d_rate=1}
+  if (!d_rate) {d_rate=1}								// default speed
   if (!mediaX || mediaX < 0 || mediaX > innerWidth) {mediaX=innerWidth/2}
   if (!mediaY || mediaY < 0 || mediaY > innerHeight) {mediaY=innerHeight/2}
-  intervalTimer = setInterval(Timer,100)				// 100mS universal timer
+  intervalTimer = setInterval(Timer,100)						// 100mS universal timer
   document.addEventListener('mousedown', mouseDown)
   document.addEventListener('mouseup', mouseUp)
   document.addEventListener('dragend', mouseUp)
   document.addEventListener('mousemove', gestureEvents)
   document.addEventListener('keypress', (e) => {
     if (e.key=='Enter') {
-      if (renamebox) {inca('Rename', renamebox, was_over_media, was_over_media)}
-      else if (searchbox) {inca('SearchBox', searchbox.value)}		// search for media on pc
-      else if (cap.value != cap.innerHTML) {editCap()}}}, false)	// media caption
+      if (renamebox) {inca('Rename', renamebox, was_over_media, was_over_media)}	// rename media
+      else if (cap.value != cap.innerHTML) {editCap()}					// media caption
+      else if (myInput.value) {inca('SearchBox', myInput.value)}}}, false)		// search for media on pc
 
 
-  function mouseDown(e) {						// detect long click
+  function mouseDown(e) {								// detect long click
     Click=e.button+1; lastClick=Click; longClick=0; gesture=0; wheel=0; block=0; Xref=xpos; Yref=ypos
-    if (Click==2 && (over_media || type || e.shiftKey)) {e.preventDefault()} // middle click
+    if (Click==2 && (over_media || type || e.shiftKey)) {e.preventDefault()}		// middle click
     clickTimer = setTimeout(function() {if (!gesture && xw<0.95) {longClick=1; mouseEvent('Down')}},240)}
 
 
@@ -138,13 +138,13 @@
   function mouseEvent(e) {						// functionality logic
     if (Click > 2) {return}
     if (e=='Down' && lastClick==1 && over_cap) {return}
+    if (e=='Down' && myInput.matches(':hover')) {return}
     if (e=='Down' && myPanel.matches(':hover')) {return}					// copy files instead of move
     if (e=='Down' && lastClick==2 && !type) {inca('View', view, '', was_over_media); return}	// change view list/thumbs
-    if (e=='Down' && mySearch.matches(':hover')) {navigator.clipboard.writeText('#Source#'+index+'##'); return} // open source
     if (e=='Up' && !type && !over_media) {return}
     if (e=='Up' && longClick) {return}
     if (Click==1 && !longClick && !sheet && type && type != 'image' && !nav2.matches(':hover')) {
-      if (xm>-0.1 && (yw>0.98 || (ym>1 && ym<1.1))) {
+      if (xm>-0.1 && (yw>0.98 || (ym>0.95 && ym<1.1))) {
         if (xm>0 && xm<0.05) {start=0; getParameters(); myPlayer.currentTime=start}
         else {myPlayer.currentTime=xm*myPlayer.duration}
         if (myPlayer.currentTime<10) {myPlayer.play()}}
@@ -174,9 +174,10 @@
       type = getParameters()
       if (!type) {mouseBack(); return}								// end of media list
       if (document.getElementById('title'+index).matches(':hover')) {return}
-      if (e=='Up'|| e=='Down') {navigator.clipboard.writeText('#Media#'+index+'##'+start)}	// tell inca is playing
+      if (e=='Up'|| e=='Down') {navigator.clipboard.writeText('#Media#'+index+'##'+start)}	// tell inca new media is playing
       if (type == 'document' || type == 'm3u') {type=''; return}				// let inca open file
       if (e=='Up' && lastClick==1 && sheet) {playThumb()}
+      if (e=='Up' && lastClick==2 && !playing) {start=0}
       if (e=='Down' && lastClick==1) {	
         if (playing) {sheet=!sheet}
         else if (over_media) {sheet=1; start=0}
@@ -206,7 +207,6 @@
 
 
   function Messages() {							// for inca.exe
-    cap_time = 0
     last_index = index
     if (myPlayer.currentTime) {last_start = myPlayer.currentTime}
     if (cap.value != cap.innerHTML) {editCap()}
@@ -214,6 +214,8 @@
     mySeekbar.style.opacity = null
     myPreview.style.opacity = null
     cap.style.display = 'none'
+    cap.style.opacity = 0
+    cap_time = 0
     block = 160}
 
 
@@ -255,7 +257,7 @@
       media.style.transform = 'scale('+skinny+',1)'
       if (Math.abs(skinny) == 1) {block=333}
       positionMedia(0)}
-    else if (id=='myNext' || id=='mySelect2') {				// next
+    else if (id=='mySelect2') {						// next
       block=180; wheel=0
       if (wheelUp) {mouseEvent('Next')}
       else if (e.deltaY) {mouseEvent('Back')}}
@@ -283,7 +285,7 @@
     ypos = e.clientY
     if (selected) {panel.style.color='lightsalmon'}
     else {panel.style.color=null}
-    if (myInput.value) {
+    if (!myInput.value.includes('Search')) {
       SearchBox.innerHTML='Search'; SearchAll.innerHTML='All'; SearchAdd.innerHTML='Add'}
     mySelected.style.top = e.pageY +'px'
     mySelected.style.left = e.pageX +10 +'px'
@@ -434,7 +436,7 @@
     media.play()}
 
 
-  function thumbSize() {
+  function thumbSize() {						// change thumb size
     if (view < 8) {view = 8}
     if (view > 99) {view = 99}
     el = document.getElementById('media1')
@@ -513,7 +515,7 @@
         cueX=rect.left+'px'; cueW=Math.abs(scaleX*myPlayer.offsetWidth*myPlayer.currentTime/myPlayer.duration)+'px'}}
     mySeekbar.style.left = cueX
     mySeekbar.style.width = cueW
-    if (xm>-0.1 && ym>1 && ym<1.1 || cue_active || (xm>-0.1 && yw>0.98)) {
+    if (!sheet && !over_cap && xm>-0.1 && ym>0.95 && ym<1.1 || cue_active || (xm>-0.1 && yw>0.98)) {
       mySelected.innerHTML = Time(myPlayer.duration*xm)
       mySeekbar.style.borderTop='10px solid red'
       mySeekbar.style.opacity=1
@@ -553,9 +555,7 @@
       cap_time = time
       cap.innerHTML = cap_list.slice(0,ptr).split('|').pop().replaceAll("§", "\,").replaceAll("±", "\'")
       cap.value = cap.innerHTML
-      cap.style.opacity = 1
-      if (!myPlayer.paused) {myPlayer.pause()}}
-    else if (cap.innerHTML != '-' && (!cap.value || ptr <= 0)) {cap.style.opacity=0}}
+      cap.style.opacity = 1}}
 
   function filter(id) {
       var x = filt							// eg 30 minutes, 2 months, alpha 'A'
@@ -568,6 +568,14 @@
       if (id == 'Duration') {units = " minutes"}
       if (!x) {x=''}
       el.innerHTML = x+' '+units; el.style.color = 'red'}
+
+  function getAlpha(e, el) {						// get alpha search char
+      var x = String.fromCharCode(Math.floor(25 * (e.clientX - el.offsetLeft) / el.offsetWidth) + 47)
+      if (el.value.includes('Search')) {el.value='Search '+x}
+      el=document.getElementById('my'+x)
+      el.scrollIntoView()
+      panel.scrollBy(0,-300)
+      myView.scrollBy(0,-250)}
 
   function sel(i) {							// highlight selected media
     if (Click!=1 || !i || longClick || gesture==2) {return}
@@ -616,8 +624,8 @@
 
   function Time(z) {if (z<0) return '0:00'; var y=Math.floor(z%60); var x=':'+y; if (y<10) {x=':0'+y}; return Math.floor(z/60)+x}
   function togglePause() {if(!sheet && lastClick==1) {if (myPlayer.paused) {myPlayer.play()} else {myPlayer.pause()}}}
-  function selectAll() {for (i=1; i <= 600; i++) {sel(i)}}
-  function loop() {if (looping) {looping = false} else {looping = true}}
+  function selectAll() {for (i=1; document.getElementById('media'+i); i++) {sel(i)}}
+  function loop() {looping = !looping}
   function flip() {skinny*=-1; scaleX*=-1; positionMedia(0.5); media.style.transform='scaleX('+skinny+')'}
   function mute() {if(!longClick) {
     myPlayer.volume=0; myPlayer.muted=!myPlayer.muted; localStorage.setItem("muted",1*myPlayer.muted); myPlayer.play()}}

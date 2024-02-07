@@ -7,12 +7,12 @@
   td {outline:none; text-align:center; min-width:5em; overflow:hidden; white-space:nowrap}
   table {color:#826858; font-size:0.9em; border-collapse:collapse; margin:auto; border-radius:1em; transition:color 0.3s}
   table:hover {background:#1b1814}
-  c {display:block; padding-left:1em; text-decoration:none; color:#826858; transition:0.8s}
-  c:hover {transition:0.2s; transform:scale(1.1,1.1); color:lightsalmon}
+  c {display:block; padding-left:1em; text-decoration:none; color:#826858; transition:1s}
+  c:hover {overflow:visible; transition:0.2s; transform:scale(1.2,1.2); translate:0.4em; color:lightsalmon}
   input:hover {color:lightsalmon;transition:color 1.2s}
 
 .player {					/* modal media player element */
-  position:absolute; 
+  position:absolute;
   border-radius:16px}
 
 .preview {					/* small preview seeking video */
@@ -21,7 +21,7 @@
   opacity:0;
   user-select:none;
   border-radius:9%;
-  max-width:160px;
+  max-width:170px;
   max-height:120px;
   transition:opacity 1s;
   border:3px solid black}
@@ -53,8 +53,12 @@
   transform-origin:right top;
   border-radius:1em;
   background:#15110a;
-  width:9em;
+  width:10em;
   left:-9em}
+
+.p2 {						/* panel entries */
+  overflow:hidden;
+  white-space:nowrap}
 
 .media {					/* thumb view media */
   position:relative;
@@ -73,14 +77,14 @@
 .ribbon {					/* menu, fol, fav, search ... */
   position:relative;
   display:flex;
-  top:11.8em;
+  top:9em;
   width:100%;
   border-radius:1em;
   text-align:center;
   font-size:1em}
 
 .ribbon a {transition:0.8s; border-radius:0.32em}
-.ribbon a:hover {transition:0.2s; transform:scale(1.2,1.2); color:salmon; translate(0,-0.1em)}
+.ribbon a:hover {transition:0.2s; color:salmon}
 
 .searchbox {					/* input searchbox in htm tab	*/
   text-overflow:ellipsis;
@@ -91,19 +95,18 @@
   color:#826858;
   font-family:inherit;
   border:none;
-  height:1.5em;
-  margin-top:0.4em;
+  height:1.4em;
   outline:none;
   transition:color 1.4s;
   white-space:nowrap}
 
 .searchbutton {
-  margin-top:0.5em;
   height:1.4em;
+  width:4em;
   border-radius:1em;
   transition:0.8s}
 
-.searchbutton:hover {transition:0.2s; transform:scale(1.2,1.2); color:salmon; translate(0,-0.1em)}
+.searchbutton:hover {transition:0.2s; transform:scale(1.2,1.2); color:salmon}
 
 .title {					/* file name element */
   display:flex;
@@ -185,6 +188,7 @@
   position:fixed;
   font-size:1.3em;
   transition:0.14s;
+  white-space:nowrap;
   background:inherit}
 
 .context a {
@@ -193,6 +197,7 @@
   margin:auto;
   padding:0.5em;
   padding-top:0;
+  white-space:nowrap;
   border-radius:1em;
   color:lightsalmon}
 .context a:hover {background:#1b1814}
