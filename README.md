@@ -17,11 +17,11 @@ The source code is tiny and re-compiles in seconds from browser<br><br>
 <img src="screens/Screen 2.jpg" width="50%"/>
 
 # Features:<br>
-beautiful interface<br>
+beautiful fast interface<br>
 6 x 6 Video thumbsheets<br>
 Shuffle folders & playlists<br>
 Search, organize, edit & view media files in browser or external player<br>
-Create captions, favorites, clips, conversions etc.<br>
+Create captions, favorites, clips, joins, conversions etc.<br>
 Music and playlists from browser tab<br>
 Sleep timer gradually lowers master volume when mouse quiet<br>
 To see if you already have a video from an outside website,<br>
