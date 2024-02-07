@@ -8,7 +8,7 @@
   table {color:#826858; font-size:0.9em; border-collapse:collapse; margin:auto; border-radius:1em; transition:color 0.3s}
   table:hover {background:#1b1814}
   c {display:block; padding-left:1em; text-decoration:none; color:#826858; transition:1s}
-  c:hover {overflow:visible; transition:0.2s; transform:scale(1.2,1.2); translate:0.4em; color:lightsalmon}
+  c:hover {overflow:visible; transition:0.2s; transform:scale(1.1,1.1); translate:0.2em; color:lightsalmon}
   input:hover {color:lightsalmon;transition:color 1.2s}
 
 .player {					/* modal media player element */

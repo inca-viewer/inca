@@ -545,6 +545,7 @@
             }
         if (command=="Filt"||command=="Path"||command=="Search"||command=="SearchBox"||command=="SearchAll"||InStr(sort_list, command))
             {
+            reload := 1
             if (command == "Path") 
               {
               if value
@@ -554,10 +555,10 @@
                 }
               if longClick
                 {
+                reload := 0
                 run, %address%						; open source instead
                 return
                 }
-              reload := 1
               if selected						; move/copy files
                 {
                 reload := 3
@@ -862,8 +863,8 @@
                   subfolders = %subfolders%|%A_LoopFileFullPath%\
                 else subfolders = %A_LoopFileFullPath%\
           }
-if playlist
-  subfolders = 
+        if (playlist || search_term)
+          subfolders = 
         if subfolders
           sub = color:red
         else sub = color:#15110a
@@ -989,7 +990,7 @@ if playlist
             ch := x
             count+=1
             if (search_term == A_Loopfield)
-              container = %container%<c class='p2' style='color:salmon' onmousedown="inca('Path', event.button, '', '%A_Loopfield%')">%A_Loopfield%</c>`n
+              container = %container%<c class='p2' style='color:salmon' onmousedown="inca('Search', '%A_Loopfield%')">%A_Loopfield%</c>`n
             else container = %container%<c class='p2' onmousedown="inca('Search', '%A_Loopfield%')">%A_Loopfield%</c>`n
             if !Mod(count,4)
               container := fill(container)
