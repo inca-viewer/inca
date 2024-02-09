@@ -4,6 +4,10 @@
 //       - simplify media list htm coding
 //       - duplicate filename issues for thumbs
 
+// use deferred inca message on exit media play  to fix fav heart and speed edits
+// rename within thumb view
+// scroll to index wrong pos all fav
+
   var media = document.getElementById('media1')				// first media element
   var modal = document.getElementById('myModal')			// media player window
   var nav = document.getElementById('myContext')			// context menu during media play
@@ -43,7 +47,7 @@
   var selected = ''							// list of selected media in page
   var over_cap = false							// cursor over caption
   var over_media = 0							// over thumb or media
-  var was_over_media = 0
+  var was_over_media = 0						// before context menu
   var ratio								// media width to height ratio
   var skinny = 1							// media width
   var messages = ''							// history, width, speed & caption edits
@@ -85,7 +89,7 @@
     if (e.key=='Enter') {
       if (renamebox) {inca('Rename', renamebox, was_over_media, was_over_media)}	// rename media
       else if (cap.value != cap.innerHTML) {editCap()}					// media caption
-      else if (myInput.value) {inca('SearchBox', myInput.value)}}}, false)		// search for media on pc
+      else if (myInput.value) {inca('SearchBox','','',myInput.value)}}}, false)		// search for media on pc
 
 
   function mouseDown(e) {								// detect long click
@@ -97,7 +101,7 @@
   function mouseUp(e) {
     if (!Click) {return}						// page load while mouse still down - ignore
     clearTimeout(clickTimer)						// longClick timer
-    if (Click==3 && !gesture && yw>0.1) {context()}			// new context menu if click below window top
+    if (Click==3 && !gesture && yw>0.1) {context(e)}			// new context menu if click below window top
     if (Click == 2 && !longClick && !gesture && e.shiftKey) {		// inca converts Back button to shift Mclick
       if (type) {mouseBack()}						// close modal player if media playing
       else if (myView.scrollTop > 50) {myView.scrollTo(0, 0)}		// else scroll to page top
@@ -266,8 +270,8 @@
       if (rect.top<innerHeight/3 && !wheelUp) {mediaY+=50}
       positionMedia(0.3)}
     else if (id=='View') {						// thumbs
-      if (wheelUp) {view += 1}
-      else {view -= 1}
+      if (wheelUp) {view += 0.5}
+      else {view -= 0.5}
       thumbSize()}
     else if (type=='video' || type=='audio') {				// seek
       if (myPlayer.duration > 120) {interval = 3}
@@ -297,8 +301,8 @@
       if (over_media) {gesture=2}
       else {gesture=1}}
     if (Click==3 && gesture && !type) {					// zoom thumbs
-      if (Yref<ypos) {view += view/40}
-      else {view -= view/40}
+      if (Yref<ypos) {view += view/50}
+      else {view -= view/50}
       thumbSize()
       inca('View', view.toFixed(1))}
     else if (gesture==2 && !type) {					// move thumb
@@ -329,28 +333,33 @@
   function Timer() {							// every 100mS
     if (block>=25) {block-=5}						// slowly reduce event blocking
     if (wheel>1) {wheel--}
-    xw =  xpos / innerWidth
-    yw =  ypos / innerHeight
-    rect = myPlayer.getBoundingClientRect()
+    xw = xpos / innerWidth
+    yw = ypos / innerHeight
     myNext.innerHTML = index
     myFade.innerHTML = 'Fade '+ fade.toFixed(2)
     myRate.innerHTML = 'Speed '+ d_rate.toFixed(2)
+    if (media) {
+      var dur = Math.round(media.duration/60)+' mins - '
+      if (!Math.round(media.duration/60)) {dur=''}}
+    else {return}
+    el=document.getElementById('title'+index)
     if (rate==d_rate) {mySpeed.innerHTML = 'Speed'} else {mySpeed.innerHTML = rate.toFixed(1)}
     if (selected) {mySelected.innerHTML = selected.split(',').length -1}
     else mySelected.innerHTML = ''
+    if (was_over_media && mySelect.matches(':hover')) {mySelect.innerHTML='Select - ' + dur + el.value}
+    else {mySelect.innerHTML='Select'}
+    if (mySelect2.matches(':hover')) {mySelect2.innerHTML=dur + el.value}
+    else if (dur && type) {mySelect2.innerHTML=(myPlayer.currentTime/60).toFixed(2)}
+    else {mySelect2.innerHTML='Select'}
+    if (selected && (","+selected).match(","+index+",")) {
+      mySelect.style.color='red'; mySelect2.style.color='red'}
+    else {mySelect.style.color=null; mySelect2.style.color=null}
     if (!type) {return}
-    if (myPlayer.duration) {
-      mySelect2.innerHTML = 'Select - '+(myPlayer.currentTime/60).toFixed(2)
-      x=Math.round(myPlayer.duration/60)+'mins - '}
-    if (mySelect2.matches(':hover')) {
-      mySelect2.innerHTML='Select - '+x+document.getElementById('title'+index).value}
+    rect = myPlayer.getBoundingClientRect()
     if (skinny == 1) {mySkinny.innerHTML = 'Skinny'}
     else {mySkinny.innerHTML = skinny.toFixed(2)}
     if (rate == d_rate) {mySpeed.innerHTML = 'Speed'}
     else {mySpeed.innerHTML = rate.toFixed(2)}
-    if (selected && (","+selected).match(","+index+",")) {
-      mySelect2.style.color='red'}
-    else {mySelect2.style.color=null}
     if (type == 'thumbsheet') {
       xm = myPlayer.offsetWidth*sheetY*skinny; ym = myPlayer.offsetHeight*sheetY}
     else {xm = myPlayer.offsetWidth*scaleX; ym = myPlayer.offsetHeight*scaleY}
@@ -371,6 +380,7 @@
     if (skinny<0) {myFlip.style.color='red'} else {myFlip.style.color=null}
     if (type != 'image') {seekBar()}
     if (!Click) {positionMedia(0.01)}}						// in case flipped into fullscreen
+
 
 
   function positionMedia(f) {							// align media in modal
@@ -410,9 +420,9 @@
     myPlayer.style.height = y +'px'
     myPlayer.style.top = mediaY-y/2 +'px'
     myPlayer.style.left = mediaX-x/2 +'px'
-    myPreview.src = media.src						// small seeking preview image
+    myPreview.src = media.src						// seeking preview window
     positionMedia(0)							// prepare player for clean start
-    if (myPlayer.src != media.src) {					// stop reloading stutter
+    if (myPlayer.src != media.src) {					// stop reload stutter
       myPlayer.src=media.src
       if (sheet) {thumbSheet()}						// convert poster to 6x6 thumbsheet src
       else {myPlayer.poster = media.poster}}
@@ -448,7 +458,7 @@
 
 
   function playThumb() {
-    var row = Math.floor(ym * 6)					// get media seek time from cursor xy
+    var row = Math.floor(ym * 6)					// get media seek time from thumbsheet xy
     var col = Math.ceil(xm * 6)
     var offset = 0
     var ps = 5 * ((row * 6) + col)
@@ -460,7 +470,7 @@
     sheet=0}
 
 
-  function thumbSheet() {						// change poster jpg to 6x6 thumbsheet jpg
+  function thumbSheet() {						// change poster to 6x6 thumbsheet folder
     last_start=myPlayer.currentTime
     var x = media.poster.replace("/posters/", "/thumbs/")
     p = x.split('%20')							// see if embedded start time in poster filename
@@ -468,7 +478,7 @@
     p = p.replace('.jpg', '')
     if (!isNaN(p) && p.length > 2 && p.includes('.')) {			// very likely a 'fav' suffix timestamp
       x = x.replace('%20' + p, '')}					// so remove timestamp from filename
-    myPlayer.poster = x							// use 6x6 thumbsheet file
+    myPlayer.poster = x							// now use 6x6 thumbsheet file
     myPlayer.load()
     myPlayer.playbackRate = rate
     type = 'thumbsheet'}
@@ -519,7 +529,7 @@
       mySelected.innerHTML = Time(myPlayer.duration*xm)
       mySeekbar.style.borderTop='10px solid red'
       mySeekbar.style.opacity=1
-      myPreview.style.left = xpos - myPreview.offsetWidth/2 +'px'
+      myPreview.style.left = xpos - myPreview.offsetWidth/2 +'px'	// seeking preview window
       myPreview.style.top = rect.bottom - myPreview.offsetHeight -5 +'px'
       myPreview.currentTime=myPlayer.duration*xm
       if (xm>0 && xm<1) {myPreview.style.opacity=1} else {myPreview.style.opacity=0}} 
@@ -544,7 +554,7 @@
       cap.style.display='block'
       cap.focus()}}
 
-  function showCaption() {						// display captions
+  function showCaption() {						// display caption
     if (document.activeElement.id == 'myCap') {cap.style.color='red'; return}
     else {cap.style.color=null}
     var time = myPlayer.currentTime.toFixed(1)
@@ -569,8 +579,8 @@
       if (!x) {x=''}
       el.innerHTML = x+' '+units; el.style.color = 'red'}
 
-  function getAlpha(e, el) {						// get alpha search char
-      var x = String.fromCharCode(Math.floor(25 * (e.clientX - el.offsetLeft) / el.offsetWidth) + 47)
+  function getAlpha(e, el) {						// get alpha search char in top panel
+      var x = String.fromCharCode(Math.floor(26 * (e.clientX - el.offsetLeft) / el.offsetWidth) + 44)
       if (el.value.includes('Search')) {el.value='Search '+x}
       el=document.getElementById('my'+x)
       el.scrollIntoView()
@@ -590,17 +600,20 @@
       else {el.style.borderBottom = '4px solid red'}
       if (!x.match(","+i+",")) {selected = selected+i+","}}}
 
-  function context() {							// right click context menu
-    var y=0
-    if (yw>0.8) {y=160}
-    nav.style.left=xpos-50+'px'; nav.style.top=ypos-45+'px'
-    nav2.style.left=xpos-60+'px'; nav2.style.top=ypos-45-y+'px'
-    if (el=document.getElementById('entry'+index)) {
-      if (media.duration) {y=Math.round(media.duration/60)+'mins - '}
-      if (!over_media) {mySelect.innerHTML='Select'}
-      else {mySelect.innerHTML=y+document.getElementById('title'+index).value}
-      if (el.matches(":hover")) {was_over_media = index}
-      else {was_over_media = 0}}
+  function context(e) {							// right click context menu
+    var offset=''
+    mySelect.innerHTML='Select'
+    myDelete.innerHTML='Delete'
+    myDelete.style.color=null
+    was_over_media=0
+    if (over_media) {was_over_media = index}
+    if (panel.matches(':hover')) {
+      var x = e.target.innerHTML					// ~ text under cursor
+      if (x && x.length<99) {
+        myDelete.style.color='red'; myDelete.innerHTML='Delete - '+x}}
+    if (yw > 0.8) {offset=160}						// cursor near window bottom, add offset
+    nav.style.left=xpos-70+'px'; nav.style.top=ypos-40-offset/1.5+'px'
+    nav2.style.left=xpos-50+'px'; nav2.style.top=ypos-45-offset+'px'	// context menu for modal player
     if (type) {nav2.style.display='block'; nav2.style.cursor='crosshair'} else {nav.style.display='block'}}
 
   function globals(vi, pg, ps, so, fi, lv, se, pl, ix) {		// import globals to java from inca

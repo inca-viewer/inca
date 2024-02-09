@@ -4,7 +4,7 @@
   ::-webkit-scrollbar {background:#15110a}
   ::-webkit-scrollbar-corner {background:#15110a}
   ::-webkit-scrollbar-thumb {background:#2b2824; border-radius:2px}
-  td {outline:none; text-align:center; min-width:5em; overflow:hidden; white-space:nowrap}
+  td {outline:none; text-align:center; min-width:3.5em; overflow:hidden; white-space:nowrap}
   table {color:#826858; font-size:0.9em; border-collapse:collapse; margin:auto; border-radius:1em; transition:color 0.3s}
   table:hover {background:#1b1814}
   c {display:block; padding-left:1em; text-decoration:none; color:#826858; transition:1s}
