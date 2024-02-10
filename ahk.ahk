@@ -464,6 +464,7 @@
               DeleteEntries(1)
             else 
               {
+              sleep, 200
               Loop, Parse, selected, `,
                 if GetMedia(A_LoopField)
                   FileRecycle, %src%
@@ -1046,18 +1047,18 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1; if(do
 
 <div oncontextmenu="if(yw>0.1 || type) {event.preventDefault()}">`n`n
 <div id='myContext' class='context'>`n
-<a onmouseup="inca('Settings')"> . . .</a>`n
-<a id='mySelect' onmouseup="if (!longClick && was_over_media) {sel(index)} else{selectAll()}">Select</a>`n
+<a id='mySelect' onmouseup="if (!longClick && was_over_media) {sel(index)} else{selectAll()}"></a>`n
 <a id='myDelete' onmousedown="if(!event.button) {inca('Delete','',was_over_media)}">Delete</a>`n
 <a onmousedown="inca('Favorite', start, was_over_media)">Fav</a>`n
 <a id='myFade' onwheel="wheelEvents(event, id, this)">Fade</a>`n
 <a id='myRate' onwheel="wheelEvents(event, id, this)">Speed</a>`n
 <a onmousedown="inca('Join')">Join</a>
-<a onmousedown="inca('Index','',was_over_media)">Index</a></div>`n`n
+<a onmousedown="inca('Index','',was_over_media)">Index</a>
+<a id='mySettings' onmouseup="inca('Settings')"> . . .</a>`n</div>`n`n
 
 <div id='myContext2' class='context'>`n
 <a id='mySelect2' onmouseup='sel(index)'`n onwheel="wheelEvents(event, id, this)" onmouseover="nav2.style.opacity=1"`n onmouseout="this.innerHTML='Select'" >Select</a>`n
-<a id='myNext' style='font-size:1.5em' onwheel="wheelEvents(event, id, this)" onmouseover="nav2.style.opacity=1" onmouseup='togglePause()'></a>`n
+<a id='myNext' style='font-size:1.5em' onwheel="wheelEvents(event, id, this)" onmouseup='togglePause()'></a>`n
 <a id='mySpeed' onwheel="wheelEvents(event, id, this); nav2.style.opacity=1" onmouseup='togglePause()'>Speed</a>`n
 <a id='mySkinny' onwheel="wheelEvents(event, id, this); nav2.style.opacity=1" onmouseup='togglePause()'>Skinny</a>`n
 <a id='myFav' onmousedown="inca('Favorite', myPlayer.currentTime.toFixed(1), index, cue)">Fav</a>`n
@@ -1097,7 +1098,7 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1; if(do
 <a id='List' style='width:3em; %x11%' onmousedown="inca('List', filt)" style='color:red'>%order%</a>`n
 <a id='Alpha' style='width:7`%; %x2%' onmousedown="inca('Alpha', filt)" onwheel="wheelEvents(event,id,this)">Alpha</a>`n
 <a id='Shuffle' style='width:7`%; %x1%' onmousedown="inca('Shuffle')">Shuffle</a>`n
-<a id='View' style='width:7`%' onmousedown="inca('View', view, '', index)" onwheel="wheelEvents(event, id, this)">View %view4%</a>`n 
+<a id='View' style='width:7`%' onmousedown="inca('View', view, '', last_index)" onwheel="wheelEvents(event, id, this)">View %view4%</a>`n 
 <a style='width:5`%; %x8%' onmousedown="inca('Recurse')">+Sub</a>`n
 <a style='width:5`%; %x10%' onmousedown="inca('Images')">Pics</a>`n
 <a style='width:4`%; %x9%' onmousedown="inca('Videos')">Vids</a>`n

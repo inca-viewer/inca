@@ -61,6 +61,7 @@
   white-space:nowrap}
 
 .media {					/* thumb view media */
+  --rate:0;
   position:relative;
   margin:auto;
   outline:0.3em solid #15110a;
@@ -88,7 +89,6 @@
 
 .searchbox {					/* input searchbox in htm tab	*/
   text-overflow:ellipsis;
-  overflow:hidden;
   display:inline;
   text-align:center;
   background:#1b1814;
@@ -98,6 +98,7 @@
   height:1.4em;
   outline:none;
   transition:color 1.4s;
+  overflow:hidden;
   white-space:nowrap}
 
 .searchbutton {
@@ -111,7 +112,7 @@
 .title {					/* file name element */
   display:flex;
   overflow:hidden;
-  text-overflow:ellipsis; 
+//  text-overflow:ellipsis; 
   background-color:inherit;
   color:inherit;
   font-size:inherit;
@@ -154,7 +155,7 @@
   display:none;
   position:fixed;
   z-index:4;
-  resize: none;
+  resize:none;
   height:auto;
   width:24em;
   background-color:inherit;
@@ -188,6 +189,7 @@
   position:fixed;
   font-size:1.3em;
   transition:0.14s;
+  border-radius:1em;
   white-space:nowrap;
   background:inherit}
 
