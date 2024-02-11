@@ -457,9 +457,6 @@
               reload := 1
               return
               }	
-            index := StrSplit(selected, ",").1				; for scrollToIndex() in java
-            popup("Deleted",0,0,0)
-            reload := 3
             if playlist
               DeleteEntries(1)
             else 
@@ -469,6 +466,8 @@
                 if GetMedia(A_LoopField)
                   FileRecycle, %src%
               }
+            index := StrSplit(selected, ",").1				; for scrollToIndex() in java
+            popup("Deleted",0,0,0)
             reload := 3
             }
         if (command == "History")					; media was played in browser
@@ -940,7 +939,7 @@
             fname := array[x]
             if (array[x] == folder)
               container = %container%<c class='p2' style='color:lightsalmon' onmousedown="inca('Path', event.button, '', '%A_Loopfield%')">%fname%</c>`n
-            else container = %container%<c class='p2' onmousedown="inca('Path', event.button, '', '%A_Loopfield%')">%fname%</c>`n
+            else container = %container%<c class='p2' onmousedown="inca('Path', event.button, '', '%A_Loopfield%'); this.style.transform='translate(0em,-0.2em)'; this.style.color='red'">%fname%</c>`n
             if !Mod(A_Index,4)
               container := fill(container)
             }
@@ -955,7 +954,7 @@
             SplitPath, y,,,,x
             if (x == folder)
               container = %container%<c class='p2' style='color:salmon' onmousedown="inca('Path', event.button, '', '%A_Loopfield%')">%x%</c>`n
-            else container = %container%<c class='p2' onmousedown="inca('Path', event.button, '', '%A_Loopfield%')">%x%</c>`n
+            else container = %container%<c class='p2' onmousedown="inca('Path', event.button, '', '%A_Loopfield%'); this.style.transform='translate(0em,-0.2em)'; this.style.color='red'">%x%</c>`n
             if !Mod(A_Index,4)
               container := fill(container)
             }
@@ -969,7 +968,7 @@
             SplitPath, A_Loopfield,,,,x
             if (x == "New" || x == folder)
               container = %container%<c class='p2' style='color:salmon' onmousedown="inca('Path', event.button, '', '%A_Loopfield%')">%x%</c>`n
-            else container = %container%<c class='p2' onmousedown="inca('Path', event.button, '', '%A_Loopfield%')">%x%</c>`n
+            else container = %container%<c class='p2' onmousedown="inca('Path', event.button, '', '%A_Loopfield%'); this.style.transform='translate(0em,-0.2em)'; this.style.color='red'">%x%</c>`n
             if !Mod(A_Index,4)
               container := fill(container)
             }
@@ -983,7 +982,7 @@
             SplitPath, A_Loopfield,,,,x
             if (x == folder)
               container = %container%<c class='p2' style='color:salmon' onmousedown="inca('Path', event.button, '', '%A_Loopfield%')">%x%</c>`n
-            else container = %container%<c class='p2' onmousedown="inca('Path', event.button, '', '%A_Loopfield%')">%x%</c>`n
+            else container = %container%<c class='p2' onmousedown="inca('Path', event.button, '', '%A_Loopfield%'); this.style.transform='translate(0em,-0.2em)'; this.style.color='red'">%x%</c>`n
             if !Mod(A_Index,4)
               container := fill(container)
             }
@@ -1007,7 +1006,7 @@
             count+=1
             if (search_term == A_Loopfield)
               container = %container%<c class='p2' style='color:salmon' onmousedown="inca('Search',event.button,'','%A_Loopfield%')">%A_Loopfield%</c>`n
-            else container = %container%<c class='p2' onmousedown="inca('Search',event.button,'','%A_Loopfield%')">%A_Loopfield%</c>`n
+            else container = %container%<c class='p2' onmousedown="inca('Search',event.button,'','%A_Loopfield%'); this.style.transform='translate(0em,-0.2em)'; this.style.color='red'">%A_Loopfield%</c>`n
             if !Mod(count,4)
               container := fill(container)
             }
@@ -1047,7 +1046,7 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1; if(do
 
 <div oncontextmenu="if(yw>0.1 || type) {event.preventDefault()}">`n`n
 <div id='myContext' class='context'>`n
-<a id='mySelect' onmouseup="if (!longClick && was_over_media) {sel(index)} else{selectAll()}"></a>`n
+<a id='mySelect' onmouseup="if (!longClick && was_over_media) {sel(index)} else{selectAll()}">Select</a>`n
 <a id='myDelete' onmousedown="if(!event.button) {inca('Delete','',was_over_media)}">Delete</a>`n
 <a onmousedown="inca('Favorite', start, was_over_media)">Fav</a>`n
 <a id='myFade' onwheel="wheelEvents(event, id, this)">Fade</a>`n
@@ -1083,10 +1082,11 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1; if(do
 <a style='width:9em' onmouseover="Fol.scrollIntoView(); myView.scrollBy(0,-250)">Fol</a>`n
 <a style='width:9em' onmouseover="Fav.scrollIntoView(); myView.scrollBy(0,-250)">Fav</a>`n
 <a style='width:9em' onmouseover="Music.scrollIntoView(); myView.scrollBy(0,-250)">Music</a>`n
-<input id='myInput' class='searchbox' style='width:40`%; border-radius:1em' type='search' value='%st%' onmousedown="if(myInput.value.includes('Search')) {myInput.value=''}" onmousemove='getAlpha(event, this)'>`n
+<input id='myInput' class='searchbox' style='width:50`%; border-radius:1em' type='search' value='%st%' onmousedown="if(myInput.value.includes('Search')) {myInput.value=''}" onmousemove='getAlpha(event, this)'>`n
 <a id='SearchBox' class='searchbutton' onclick="inca('SearchBox','','',myInput.value)"></a>`n
 <a id='SearchAll' class='searchbutton' onclick="inca('SearchAll','','',myInput.value)"></a>`n
-<a id='SearchAdd' class='searchbutton' onclick="inca('SearchAdd','','',myInput.value)"></a></div>`n`n
+<a id='SearchAdd' class='searchbutton' onclick="inca('SearchAdd','','',myInput.value)"></a>`n
+<a id='SearchRen' class='searchbutton' onclick="inca('Rename', myInput.value, was_over_media)"></a></div>`n`n
 
 <div id='myPanel' class='myPanel' onmouseover="if(selected) {this.style.border='1px solid salmon'}" onmouseout="this.style.border='none'">`n <div id='panel' class='panel'>`n`n%panel_list%`n<div style='height:40em'></div></div></div>`n`n
 
@@ -1272,18 +1272,17 @@ else
         {
         sleep 100							; time for browser to release media
         if (playlist && !InStr(address, "\inca\"))
-          {
           PopUp("Cannot Move Shortcuts",1000,0.34,0.2)
-          return
-          }
-        Loop, Parse, selected, `,
+        else if (path == address && !longClick)
+          PopUp("Same folder",1000,0.34,0.2)
+        else Loop, Parse, selected, `,
             {
             GetMedia(A_LoopField)
-            popup = Move - %media%
+            popup = Moved - %media%
             if (InStr(address, "\inca\"))
               popup = Added
             if longClick
-              popup = Copy - %media%
+              popup = Copied - %media%
             PopUp(popup,0,0,0)
             if GetMedia(A_LoopField)
               if (InStr(address, "inca\fav") || InStr(address, "inca\music"))
@@ -1314,7 +1313,7 @@ else
                   index(x,1)
                 }
             }
-        if !longClick
+        if (popup && !longClick)
           if (InStr(address, "inca\fav") || InStr(address, "inca\music"))
             DeleteEntries(0)
         }  
@@ -1480,8 +1479,7 @@ else
     PopUp(message, time, x, y)
         {
         MouseGetPos, xp, yp
-        xp -= 50
-        yp -= 120
+        yp -= 90
         if (x || y)
             xp := A_ScreenWidth * x, yp :=  A_ScreenHeight * y
         time := Ceil(time / 10)
@@ -1567,12 +1565,15 @@ else
         Gui, background:Show, x0 y0 w%A_ScreenWidth% h%A_ScreenHeight% NA
         WinSet, Transparent, 0
         WinSet, ExStyle, +0x20
+        gui, vol: +lastfound -Caption +ToolWindow +AlwaysOnTop -DPIScale
+        gui, vol: color, fa8072
         Gui Status:+lastfound +AlwaysOnTop -Caption +ToolWindow
         Gui Status:Color, Black
         Gui Status:Add, Text, vGuiSta w200 h35
+        Gui Status: Show, Hide
         ix := A_screenWidth * Setting("Status Bar")/100
         iy := A_ScreenHeight * 0.95
-        Gui Status: Show, x%ix% y%iy%, Hide
+        WinMove,,,ix,iy
         Gui, Indexer:+lastfound +AlwaysOnTop -Caption +ToolWindow
         Gui, Indexer:Color, Black
         Gui, Indexer:Add, Text, vGuiInd h50 w1200
@@ -1597,7 +1598,7 @@ else
         if (volume <= 0)
             vol =
         status = %time%    %vol%
-        if (status != lastStatus && Setting("Status Bar"))
+        if (status != lastStatus && (click == "RButton" || Setting("Status Bar")))
           {
           lastStatus := status
           Gui, Status:+lastfound
@@ -1607,6 +1608,14 @@ else
           GuiControl, Status:, GuiSta, %status%
           Gui, Status:Show, NA
           }
+        if (!GetKeyState("RButton", "P") && !Setting("Status Bar"))
+           Gui, Status:hide, NA
+        yv := A_ScreenHeight - 3
+        xv := A_ScreenWidth * volume/101
+        if (GetKeyState("RButton", "P") && gesture)
+          gui, vol: show, x0 y%yv% w%xv% h3 NA
+        else gui, vol: hide
+
         }
 
 
@@ -1699,6 +1708,9 @@ else
                 Runwait %inca%\cache\apps\ffmpeg -i %inca%\cache\lists\`%d.jpg -filter_complex "tile=6x6" -y "%inca%\cache\thumbs\%filen%.jpg",, Hide
             }
           GuiControl, Indexer:, GuiInd
+        x := Setting("Indexer") * 60000
+        if x
+          SetTimer, indexer, -%x%, -2
           }
 
 

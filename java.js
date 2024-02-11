@@ -4,8 +4,8 @@
 //       - simplify media list htm coding
 //       - duplicate filename issues for thumbs
 
-// rename within thumb view
-// W1 fav - no start times issues
+// myselected show folder on click panel - need click feedback
+// index scroll pos to exact last yaxis not id
 
   var media = document.getElementById('media1')				// first media element
   var modal = document.getElementById('myModal')			// media player window
@@ -86,7 +86,7 @@
   document.addEventListener('mousemove', gestureEvents)
   document.addEventListener('keypress', (e) => {
     if (e.key=='Enter') {
-      if (renamebox) {inca('Rename', renamebox, was_over_media, was_over_media)}	// rename media
+      if (renamebox) {inca('Rename', renamebox, was_over_media)}			// rename media
       else if (cap.value != cap.innerHTML) {editCap()}					// media caption
       else if (myInput.value) {inca('SearchBox','','',myInput.value)}}}, false)		// search for media on pc
 
@@ -236,7 +236,8 @@
       localStorage.setItem("fade",Math.round(10*fade)/10)}
     else if (id=='myRate') {						// default rate
       if (!wheelUp) {d_rate+=0.01} else if (d_rate>0.51) {d_rate-=0.01}
-      localStorage.setItem("d_rate",Math.round(100*d_rate)/100)}
+      d_rate = Math.round(100*d_rate)/100
+      localStorage.setItem("d_rate",d_rate)}
     else if (id == 'myPage') {						// htm page
       if (wheelUp && page<pages) {page++} 
       else if (!wheelUp && page>1) {page--}
@@ -320,7 +321,7 @@
       localStorage.setItem("mediaY",mediaY)}
     else if (type && Click>1 && y>x) {					// zoom media
       if (scaleY>0.25 || Yref<ypos) {
-        if (Yref<ypos) {y=1.02} else {y=0.98}
+        if (Yref<ypos) {y=1.01} else {y=0.99}
         if (type == 'thumbsheet') {sheetY*=y}				// zoom thumbsheet
         else {
           scaleY *= y
@@ -338,20 +339,19 @@
     myFade.innerHTML = 'Fade '+ fade.toFixed(2)
     myRate.innerHTML = 'Speed '+ d_rate.toFixed(2)
     if (media) {
-      var dur = Math.round(media.duration/60)+' mins - '
-      if (!Math.round(media.duration/60)) {dur=''}}
+      var dur = Math.round(media.duration/60)+' mins'
+      if (!Math.round(media.duration/60)) {dur='Select'}}
     else {return}
     el=document.getElementById('title'+index)
     if (rate==d_rate) {mySpeed.innerHTML = 'Speed'} else {mySpeed.innerHTML = rate.toFixed(1)}
     if (selected) {mySelected.innerHTML = selected.split(',').length -1}
     else {mySelected.innerHTML = ''}
-    if (was_over_media && mySelect.matches(':hover')) {mySelect.innerHTML=dur + el.value}
+    if (was_over_media && mySelect.matches(':hover')) {mySelect.innerHTML=dur +' - '+ el.value}
     else {mySelect.innerHTML='Select'}
-    if (mySelect2.matches(':hover')) {mySelect2.innerHTML=dur + el.value}
-    else if (dur && type) {mySelect2.innerHTML=(myPlayer.currentTime/60).toFixed(2)}
-    else {mySelect2.innerHTML='Select'}
-    if (selected && (","+selected).match(","+index+",")) {
-      mySelect.style.color='red'; mySelect2.style.color='red'}
+    if (mySelect2.matches(':hover')) {mySelect2.innerHTML=dur +' - '+ el.value}
+    else if (type && media.duration) {mySelect2.innerHTML=(myPlayer.currentTime/60).toFixed(2)}
+    else {mySelect2.innerHTML=dur}
+    if ((","+selected).match(","+index+",")) {mySelect.style.color='red'; mySelect2.style.color='red'}
     else {mySelect.style.color=null; mySelect2.style.color=null}
     if (!type) {return}
     rect = myPlayer.getBoundingClientRect()
@@ -579,7 +579,8 @@
       el.innerHTML = x+' '+units; el.style.color = 'red'}
 
   function getAlpha(e, el) {						// get alpha search char in top panel
-      var x = String.fromCharCode(Math.floor(26 * (e.clientX - el.offsetLeft) / el.offsetWidth) + 44)
+      var x = String.fromCharCode(Math.floor(28 * (e.clientX - el.offsetLeft) / el.offsetWidth) + 44)
+      if (x<'A' || x>'Z') {return}
       if (el.value.includes('Search')) {el.value='Search '+x}
       el=document.getElementById('my'+x)
       el.scrollIntoView()
@@ -603,7 +604,10 @@
     var offset=''
     myDelete.style.color=null
     was_over_media=0
-    if (over_media) {was_over_media = index}
+    if (over_media) {
+      was_over_media = index
+      SearchRen.innerHTML='Rename'
+      myInput.value=document.getElementById('title'+index).value}
     if (panel.matches(':hover')) {
       var x = e.target.innerHTML					// ~ text under cursor
       if (x && x.length<99) {
