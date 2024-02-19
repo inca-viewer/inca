@@ -36,13 +36,14 @@
 
 .myPanel {					/* top panel element showing folders etc.*/
   position:relative;
-  top:11em;
+  top:10.8em;
   width:100%;
+  margin:-0.5em;
   font-size:0.9em;
   border-radius:1.5em;
   white-space:nowrap;
   overflow:hidden;
-  height:7.5em}
+  height:8em}
 
 .panel {					/* inner panel list container */
   height:100vh;
@@ -53,7 +54,7 @@
   transform-origin:right top;
   border-radius:1em;
   background:#15110a;
-  width:9.8em;
+  width:10em;
   left:-9em}
 
 .p2 {						/* panel entries */
@@ -90,7 +91,6 @@
 .searchbox {					/* input searchbox in htm tab	*/
   text-overflow:ellipsis;
   display:inline;
-  text-align:center;
   background:#1b1814;
   color:#826858;
   font-family:inherit;
@@ -202,6 +202,7 @@
   border-radius:1em;
   color:lightsalmon}
 .context a:hover {background:#1b1814}
+.context a:active {background:#333333}
 
 .container {					/* whole body element */
   font-family:'Yu Gothic', 'Calibri Light';
