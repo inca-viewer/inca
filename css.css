@@ -71,7 +71,7 @@
 .media2 {					/* list view pop up thumbs */
   position:absolute;
   pointer-events:none;
-  translate: 8.5em 2em;
+  translate: 10em;
   border-radius:0.5em;
   margin:auto;
   opacity:0}
