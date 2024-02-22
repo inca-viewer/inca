@@ -23,8 +23,7 @@
   border-radius:9%;
   max-width:170px;
   max-height:120px;
-  transition:opacity 1s;
-  border:3px solid black}
+  transition:opacity 1s}
 
 .myList {					/* list view */
   position:absolute;
@@ -62,10 +61,12 @@
   white-space:nowrap}
 
 .media {					/* thumb view media */
+  --skinny:0;
   --rate:0;
   position:relative;
   margin:auto;
   outline:0.3em solid #15110a;
+transition:transform 0.3s;
   border-radius:0.5em}
 
 .media2 {					/* list view pop up thumbs */
