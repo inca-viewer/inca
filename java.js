@@ -170,7 +170,6 @@
     myPlayer.style.opacity=0
     nav2.style.display=null
     nav2.style.opacity=1
-    cue = 0
     if (type) {								// then close media player
       Messages()							// process cues, width, speed, caption edits
       myPlayer.removeEventListener('ended', nextMedia)
@@ -238,6 +237,7 @@
 
 
   function Play(e) {
+    cue = 0
     overMedia = 0							// when entering modal player
     wasMedia = index
     myPlayer.muted = 1*localStorage.getItem('muted')
@@ -433,7 +433,7 @@
     if (x && x!=skinny) skinny=x 					// in case it has been edited
     if (media.style.position!='fixed') {
       media.style.transform='scale('+skinny+',1)'}
-    else media.style.transform='scale('+skinny*2+',2)'
+    else media.style.transform='scale('+skinny*2.2+',2.2)'
     if (ratio > 1) {
       x = innerWidth*0.70; y = x/ratio; sheetY = innerWidth/x}		// landscape
     else {y = innerHeight; x = y*ratio; sheetY = innerHeight/y}		// portrait

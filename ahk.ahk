@@ -370,7 +370,7 @@ if (x == mouseOver)
             }
         if (command == "mp3" || command == "mp4")
             {
-            if selected
+            if (selected && !address)
               {
               Loop, Parse, selected, `,
                 if GetMedia(A_LoopField)
@@ -379,9 +379,21 @@ if (x == mouseOver)
                   run, %inca%\cache\apps\ffmpeg.exe -i "%src%" "%dest%",,Hide
                   }
               }
+            else if address
+              {
+              reload := 1
+              x = @%value%						; converts number to string
+              y = %mediaPath%\%media% %x%.%command%
+              if (!address || value == address)
+                run, %inca%\cache\apps\ffmpeg.exe -ss %value% -i "%src%" "%y%",,Hide
+              else if (address-value>0.01 && address-value<0.2)
+                run, %inca%\cache\apps\ffmpeg.exe -ss 0 -to %address% -i "%src%" "%y%",,Hide
+              else if (address < value)
+                run, %inca%\cache\apps\ffmpeg.exe -ss %address% -to %value% -i "%src%" "%y%",,Hide
+              else run, %inca%\cache\apps\ffmpeg.exe -ss %value% -to %address% -i "%src%" "%y%",,Hide
+              }
             selected =
             Popup("Creating . . .",1000,0,0)
-            reload := 1
             }
         if (command == "Settings")					; open inca source folder
             run, %inca%\
@@ -1008,8 +1020,8 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n if(
 <a id='myFade' onwheel="wheelEvents(event, id, this)">Fade</a>`n
 <a id='myRate' onwheel="wheelEvents(event, id, this)">Speed</a>`n
 <a id='myJoin' onmousedown="inca('Join')">Join</a>
-<a id='myMp3' onmousedown="inca('mp3', myPlayer.currentTime.toFixed(1), wasMedia, cue.toFixed(1))">mp3</a>`n
-<a id='myMp4' onmousedown="inca('mp4', myPlayer.currentTime.toFixed(1), wasMedia, cue.toFixed(1))">mp4</a>`n
+<a id='myMp3' onmousedown="inca('mp3', myPlayer.currentTime.toFixed(1), lastIndex, cue.toFixed(1))">mp3</a>`n
+<a id='myMp4' onmousedown="inca('mp4', myPlayer.currentTime.toFixed(1), lastIndex, cue.toFixed(1))">mp4</a>`n
 <a id='mySettings' onmouseup="inca('Settings')"> . . .</a>`n</div>`n`n
 
 <div id='myContext2' class='context'>`n
