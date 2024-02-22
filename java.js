@@ -19,7 +19,9 @@
 // fol fav headings highlight
 // random ctrl locking
 // use mpv so can rubberband and fast seek
-
+// not delete american mean girls - lick my boyfriend's shoes
+// folders to show qty files
+// remember sheet zoom
 
 
   var media = document.getElementById('media1')				// first media element
@@ -165,7 +167,7 @@
     Click=0; wheel=0; block=100; gesture=0; longClick=0}
 
 
-  function closePlayer() {						
+  function closePlayer() {			
     myPlayer.style.transition=fade*0.3+'s'
     myPlayer.style.opacity=0
     nav2.style.display=null
@@ -595,7 +597,7 @@
     else {
       if (listView) el.style.borderBottom = '0.1px solid red'
       else el.style.borderBottom = '4px solid red'
-      if (!x.match(","+i+",")) selected = selected+i+","}}
+      if (!x.match(','+i+',')) selected=selected+i+','}}
 
   function context(e) {							// right click context menu
     var offset=''
@@ -610,8 +612,8 @@
       if (x && x.length<99) {
         myDelete.style.color='red'; myDelete.innerHTML='Delete - '+x}}
     if (yw > 0.8) offset=60							// cursor near window bottom, add offset
-    nav.style.left=xpos-70+'px'; nav.style.top=ypos-40-offset+'px'
-    nav2.style.left=xpos-40+'px'; nav2.style.top=ypos-40-offset+'px'		// context menu for modal player
+    nav.style.left=xpos-70+'px'; nav.style.top=ypos-20-offset+'px'
+    nav2.style.left=xpos-40+'px'; nav2.style.top=ypos-20-offset+'px'		// context menu for modal player
     if (type) {nav2.style.display='block'; nav2.style.cursor='crosshair'} 
     else {nav.style.display='block'; myContext.style.background='#15110acc'}}
 
@@ -619,11 +621,12 @@
     view=vi; page=pg; pages=ps; sort=so; filt=fi; listView=lv; mpv=ex; 
     selected=se; playlist=pl; index=ix; wasMedia=ix; lastIndex=ix
     filter(sort)								// show filter heading in red
-    if (ix>1) {media=document.getElementById('media'+ix); scrolltoIndex()}
     for (x of selected.split(',')) { if (x && !isNaN(x)) {			// highlight selected media			
       if (lv) document.getElementById('title'+x).style.borderBottom = '0.1px solid red'
       else document.getElementById('media'+x).style.borderBottom = '4px solid red'}}
-    for (i=1; getParameters(i); i++) {}}					// process cues (eg. thumb widths)
+    for (i=1; getParameters(i); i++) {}					// process cues (eg. thumb widths)
+    media=document.getElementById('media'+ix)
+    if (ix>1) {scrolltoIndex()}}
 
   function inca(command,value,select,address) { 				// send messages to inca.exe
     if (!select) {select=''} else {select=select+','}

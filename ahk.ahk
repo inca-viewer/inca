@@ -1013,10 +1013,10 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n if(
 
 <div oncontextmenu="if(yw>0.1 || type) {event.preventDefault()}">`n`n
 <div id='myContext' class='context'>`n
-<a id='myFav' onmousedown="if(!event.button && !longClick) {inca('Favorite', start, wasMedia)}">Fav</a>`n
 <a id='mySelect' onmouseup="if (!longClick && wasMedia) {sel(index)} else{selectAll()}">Select</a>`n
-<a id='myDelete' onmousedown="if(!event.button) {inca('Delete','',wasMedia)}">Delete</a>`n
 <a id='myIndex' onmousedown="inca('Index','',wasMedia)">Index</a>
+<a id='myFav' onmousedown="if(!event.button && !longClick) {inca('Favorite', start, wasMedia)}">Fav</a>`n
+<a id='myDelete' onmousedown="if(!event.button) {inca('Delete','',wasMedia)}">Delete</a>`n
 <a id='myFade' onwheel="wheelEvents(event, id, this)">Fade</a>`n
 <a id='myRate' onwheel="wheelEvents(event, id, this)">Speed</a>`n
 <a id='myJoin' onmousedown="inca('Join')">Join</a>
@@ -1025,10 +1025,10 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n if(
 <a id='mySettings' onmouseup="inca('Settings')"> . . .</a>`n</div>`n`n
 
 <div id='myContext2' class='context'>`n
-<a id='myFav2' onwheel="wheelEvents(event, id, this)" onmouseup="if(!event.button && !longClick) inca('Favorite', myPlayer.currentTime.toFixed(1), index)">Fav</a>`n
 <a id='mySelect2' onmouseup='sel(index)'`n onwheel="wheelEvents(event, id, this)"`n onmouseover="nav2.style.opacity=1"`n onmouseout="this.innerHTML='Select'" >Select</a>`n
-<a id='myDelete2' onmousedown="if(!event.button) {inca('Delete','',wasMedia)}">Delete</a>`n
 <a id='myNext' style='font-size:1.5em' onwheel="wheelEvents(event, id, this)" onmouseup='togglePause()'></a>`n
+<a id='myFav2' onwheel="wheelEvents(event, id, this)" onmouseup="if(!event.button && !longClick) inca('Favorite', myPlayer.currentTime.toFixed(1), index)">Fav</a>`n
+<a id='myDelete2' onmousedown="if(!event.button) {inca('Delete','',wasMedia)}">Delete</a>`n
 <a id='mySpeed' onwheel="wheelEvents(event, id, this); nav2.style.opacity=1" onmouseup='togglePause()'></a>`n
 <a id='mySkinny' onwheel="wheelEvents(event, id, this); nav2.style.opacity=1" onmouseup='togglePause()'></a>`n
 <a id='myFlip' onmousedown='flip()'>Flip</a>`n
@@ -1750,4 +1750,3 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n if(
           }
 
 
-
