@@ -84,9 +84,16 @@
         Global allFav				; all favorite shortcuts consolidated
         Global showSubs
         Global lastMedia
-        Global lastPath
+        Global panelPath
         Global lastStatus
-        Global mouseOver
+        Global mpvXpos
+        Global mpvYpos
+        Global mpvWidth
+        Global mpvHeight
+        Global CursorPID
+        Global lastPID
+        Global mpvPID
+
 
 
     main:
@@ -100,6 +107,7 @@
       Clipboard()				; process clipboard message
       SetTimer, TimedEvents, 100		; every 100mS
       return					; wait for mouse/key events
+
 
 
     ~Esc up::
@@ -127,12 +135,12 @@
       SetTimer, Timer_up, Off
       if (A_TickCount > timer)
         return
-      IfWinExist, ahk_class OSKMainClass
+      if mpvPID					; mpv external player
+        Process, Close, mpv.exe
+      else IfWinExist, ahk_class OSKMainClass
         send, !0				; close onscreen keyboard
       else if WinActive("ahk_class Notepad")
         Send, {Esc}^s^w
-      else IfWinExist, ahk_class mpv
-        Process, Close, mpv.exe			; mpv player
       else if incaTab
         send, +{MButton}			; close java modal media player
       else if !incaTab
@@ -142,19 +150,14 @@
     ~WheelUp::					; in case external media player
        wheel = up
     ~WheelDown::
-MouseGetPos,,,x
-if (x == mouseOver)
- return
-
-
        MouseGetPos, xpos, ypos
-       IfWinActive, ahk_class ahk_class mpv	; mpv player controls
+       if (mpvPID && mpvPID == lastPID)		; mpv player controls
          {
          if (type != "image")
            if (xpos < 200)
              if (wheel == "up")			; speed
                send, b
-             else send, a
+             else Send, a
            else if (wheel == "up")		; seek
              send, e
            else send, f
@@ -180,11 +183,9 @@ if (x == mouseOver)
           {
           if (click == "RButton")
             {
-            lastPath =				; reset delete path
+            panelPath =				; reset delete path
             if !gesture
               send {RButton}
-            else if (gesture == 2)
-              send {RButton up}
             }
           Gui PopUp:Cancel
           break
@@ -360,10 +361,11 @@ if (x == mouseOver)
             reload:=3
         if (command == "EditCap")					; open caption in notepad
             {
+            x = %address%|cap|
             if value
               {
-              IfNotExist, %inca%\cache\cues\%media%.txt
-                FileAppend, 0.00|cap|, %inca%\cache\cues\%media%.txt, UTF-8
+              if address
+                FileAppend, %x%, %inca%\cache\cues\%media%.txt, UTF-8
               run, %inca%\cache\cues\%media%.txt
               }  
             else run, %inca%\fav\all.m3u
@@ -428,61 +430,63 @@ if (x == mouseOver)
             }
         if (command == "Delete")
             {
-            if !selected
+            if selected
               {
-              if lastpath						; over panel entry
+              if playlist
+                DeleteEntries(1)
+              else 
                 {
-                x = %lastPath%|
-                if InStr(lastPath, "\fav\")				; delete fav folder
-                  {
-                  FileRecycle, %lastPath%
-                  fav := StrReplace(fav, x, "")
-                  IniWrite,%fav%,%inca%\ini.ini,Settings,Fav
-                  }
-                else if InStr(lastPath, "\music\")			; delete music folder
-                  {
-                  FileRecycle, %lastPath%
-                  music := StrReplace(music, x, "")
-                  IniWrite,%music%,%inca%\ini.ini,Settings,Music
-                  }
-                else if !InStr(lastPath, "\")				; delete search term
-                  {
-                  search := StrReplace(search, x, "")
-                  IniWrite,%search%,%inca%\ini.ini,Settings,Search
-                  }
-                else							; delete folder
-                  {
-                  Loop, Files, %lastPath%/*.*, FD			; is folder empty
+                popup = Deleted
+                Loop, Parse, selected, `,
+                  if GetMedia(A_LoopField)
                     {
-                    popup("Must be empty",600,0,0)
-                    return
+                    FileRecycle, %src%
+                    if ErrorLevel
+                      popup = Error . . .
                     }
-                  path := SubStr(lastPath, 1, InStr(lastPath, "\", False, -1))
-                  StringTrimRight, str, path, 1
-                  subfolders := StrReplace(subfolders, folder)
-                  SplitPath, str,,,,folder
-                  FileRecycle, %lastPath%
-                  if ErrorLevel
-                    PopUp("Error . . .",1000,0.34,0.2)                  
-                  }
-                LoadSettings()
                 }
-              reload := 1
-              return
-              }	
-            if playlist
-              DeleteEntries(1)
-            else 
-              {
-              sleep 200							; time for browser to release media
-              Loop, Parse, selected, `,
-                if GetMedia(A_LoopField)
-                  FileRecycle, %src%
+              popup(popup,600,0,0)
+              reload := 3
               }
-            if ErrorLevel
-              PopUp("Error . . .",0,0,0)                  
-            else popup("Deleted",0,0,0)
-            reload := 3
+            else if panelPath						; over panel
+              {
+              x = %panelPath%|
+              if InStr(panelPath, "\fav\")				; delete fav folder
+                {
+                FileRecycle, %panelPath%
+                fav := StrReplace(fav, x, "")
+                IniWrite,%fav%,%inca%\ini.ini,Settings,Fav
+                }
+              else if InStr(panelPath, "\music\")			; delete music folder
+                {
+                FileRecycle, %panelPath%
+                music := StrReplace(music, x, "")
+                IniWrite,%music%,%inca%\ini.ini,Settings,Music
+                }
+              else if !InStr(panelPath,"\")
+                {
+                search := StrReplace(search, x, "")			; delete search term
+                IniWrite,%search%,%inca%\ini.ini,Settings,Search
+                }
+              else							; delete folder
+                {
+                Loop, Files, %panelPath%\*.*, FD			; is folder empty
+                  {
+                  popup("Must be empty",600,0,0)
+                  return
+                  }
+                path := SubStr(panelPath, 1, InStr(panelPath, "\", False, -1))
+                StringTrimRight, str, path, 1
+                subfolders := StrReplace(subfolders, folder)
+                SplitPath, str,,,,folder
+                FileRecycle, %panelPath%
+                if ErrorLevel
+                  PopUp("Error . . .",1000,0.34,0.2)                  
+                }
+              LoadSettings()
+              }
+            reload := 1
+            return	
             }
         if (command == "Cues")						; add media cue edits to cue folder
             {
@@ -536,37 +540,39 @@ if (x == mouseOver)
             {
             if GetMedia(value)
               {
-              if ((type == "video" || type == "audio") && lastMedia != src)	; add to history
-                FileAppend, %src%|%address%`r`n, %inca%\fav\History.m3u, UTF-8
+              if mpvPID							; mpv external player
+                Process, Close, mpv.exe
+              if !mpvXpos
+                geometry = --geometry=+51`%+21`%
+              else geometry = --geometry=+%mpvXpos%+%mpvYpos%
+              if !mpvWidth
+                x := 800
+              else if (mpvWidth > mpvHeight)
+                x := mpvWidth
+              else x := mpvHeight
+              autofit = --autofit=%x%x%x%
+              start := StrSplit(address,"|").1
+              skinny := StrSplit(address,"|").2
+              if (1*StrSplit(address,"|").3 == true)
+                mute = yes
+              else mute = no
+              if !start
+                start = 0.0
+              if ((type == "video" || type == "audio") && !InStr(path, "\inca\music\") && lastMedia != src)  ; add to history
+                FileAppend, %src%|%start%`r`n, %inca%\fav\History.m3u, UTF-8
               playing = true
+              start := Time(start)
               if (ext=="pdf")
                 Run, %src%
               else if (type=="document" || type=="m3u")
                 {
-                Run, % "notepad.exe " . src
+                Run, % "notepad.exe " . src				; --af=rubberband=pitch-scale=1.2 --af=rubberband=pitch-finer
                 sleep 150
                 WinActivate, Notepad
                 }
-              else if (Setting("External Player") && type != "image")
-                {
-      IfWinExist, ahk_class mpv
-        Process, Close, mpv.exe			; mpv player
-
-                send, +{MButton}					; close java player2 --af=rubberband=pitch-finer
-          sleep 50
-MouseGetPos,,,mouseOver
-      start := Time(address)
-
-
-                Run %inca%\cache\apps\mpv "%src%" --start=%start% --af=rubberband=pitch-scale=1.2
-                }
-              else if (!longClick && ((browser == "mozilla firefox" && type == "video" && ext != "mp4" && ext != "m4v" && ext != "webm") || (browser == "google chrome" && type == "video" && ext != "mp4" && ext != "mkv" && ext != "m4v" && ext != "webm")))
-                {
-                send, +{MButton}					; close java player 
-                Run %inca%\cache\apps\mpv "%src%"
-                Popup("Browser Cannot Play",1500,0.34,0.8)
-                }
-              }
+              else if (Setting("External Player") || (type == "video" && browser != "google chrome") || (type == "video" && browser == "google chrome" && ext != "mp4" && ext != "mkv" && ext != "m4v" && ext != "webm"))
+                Run %inca%\cache\apps\mpv "%src%" --start=%start% %autofit% %geometry% --mute=%mute%
+             }
             }
         if (command == "Page")
             {
@@ -610,18 +616,30 @@ MouseGetPos,,,mouseOver
             }
         if (command=="Filt"||command=="Path"||command=="Search"||command=="SearchBox"||command=="SearchAll"||InStr(sortList, command))
             {
-            if (value == 2)
+            x := StrSplit(address,"|").2
+            address := StrSplit(address,"|").1
+            if (x && address == "subs")
+              address := StrSplit(subfolders,"|")[x]
+            else if (x && address == "fol")
+              address := StrSplit(fol,"|")[x]
+            else if (x && address == "fav")
+              address := StrSplit(fav,"|")[x]
+            else if (x && address == "music")
+              address := StrSplit(music,"|")[x]
+            else if (x && address == "search")
+              address := StrSplit(search,"|")[x]
+            if (click == "RButton")					; right click over panel
                {
-               lastPath := address
-               return							; right click
+               panelPath = %address%
+               return
                }
-            if (command == "Path") 
+            if (click == "MButton")					; middle click over panel
               {
-              if value
-                {
-                incaTab =						; middle click - trigger new tab
-                value =
-                }
+              incaTab =							; trigger open new tab
+              value =
+              }
+            if (command == "Path")
+              {
               if (longClick && !selected)
                 {
                 run, %address%						; open source instead
@@ -646,8 +664,8 @@ MouseGetPos,,,mouseOver
                 IfNotExist, %address%
                   path := SubStr(path, 1, InStr(path, "\", False, -1))	; try one folder back
                 else path := address
-                StringTrimRight, address, path, 1
-                SplitPath, address,,,,folder
+		str := StrSplit(path,"\")				; cannot use splitPath
+		folder := str[str.MaxIndex()-1]				; in case folder has .com in name
                 }
               GetTabSettings(0)						; load previous tab basic settings from cache
               searchTerm =
@@ -919,8 +937,8 @@ if searchTerm
             x := array.MaxIndex()
             fname := array[x]
             if (array[x] == folder)
-              container = %container%<c class='p2' style='color:lightsalmon' onmousedown="inca('Path', event.button, '', '%A_Loopfield%')">%fname%</c>`n
-            else container = %container%<c class='p2' onmousedown="inca('Path', event.button, '', '%A_Loopfield%'); this.style.transform='translate(0em,-0.2em)'; this.style.color='red'">%fname%</c>`n
+              container = %container%<c class='p2' style='color:lightsalmon' onmousedown="inca('Path','','','subs|%A_Index%')">%fname%</c>`n
+            else container = %container%<c class='p2' onmousedown="inca('Path','','','subs|%A_Index%'); this.style.transform='translate(0em,-0.2em)'; this.style.color='red'">%fname%</c>`n
             if !Mod(A_Index,4)
               container := fill(container)
             }
@@ -934,8 +952,8 @@ if searchTerm
             StringTrimRight, y, A_Loopfield, 1
             SplitPath, y,,,,x
             if (x == folder)
-              container = %container%<c class='p2' style='color:salmon' onmousedown="inca('Path', event.button, '', '%A_Loopfield%')">%x%</c>`n
-            else container = %container%<c class='p2' onmousedown="inca('Path', event.button, '', '%A_Loopfield%'); this.style.transform='translate(0em,-0.2em)'; this.style.color='red'">%x%</c>`n
+              container = %container%<c class='p2' style='color:salmon' onmousedown="inca('Path','','','fol|%A_Index%')">%x%</c>`n
+            else container = %container%<c class='p2' onmousedown="inca('Path','','','fol|%A_Index%'); this.style.transform='translate(0em,-0.2em)'; this.style.color='red'">%x%</c>`n
             if !Mod(A_Index,4)
               container := fill(container)
             }
@@ -948,8 +966,8 @@ if searchTerm
             {
             SplitPath, A_Loopfield,,,,x
             if (x == folder)
-              container = %container%<c class='p2' style='color:salmon; font-size:0.9em; margin-left:0.2em' onmousedown="inca('Path', event.button, '', '%A_Loopfield%')">%x% &#10084</c>`n
-            else container = %container%<c class='p2' onmousedown="inca('Path', event.button, '', '%A_Loopfield%'); this.style.transform='translate(0em,-0.2em)'; this.style.color='red'">%x%</c>`n
+              container = %container%<c class='p2' style='color:salmon; font-size:0.9em; margin-left:0.2em' onmousedown="inca('Path','','','fav|%A_Index%')">%x% &#10084</c>`n
+            else container = %container%<c class='p2' onmousedown="inca('Path','','','fav|%A_Index%'); this.style.transform='translate(0em,-0.2em)'; this.style.color='red'">%x%</c>`n
             if !Mod(A_Index,4)
               container := fill(container)
             }
@@ -962,8 +980,8 @@ if searchTerm
             {
             SplitPath, A_Loopfield,,,,x
             if (x == folder)
-              container = %container%<c class='p2' style='color:salmon' onmousedown="inca('Path', event.button, '', '%A_Loopfield%')">%x%</c>`n
-            else container = %container%<c class='p2' onmousedown="inca('Path', event.button, '', '%A_Loopfield%'); this.style.transform='translate(0em,-0.2em)'; this.style.color='red'">%x%</c>`n
+              container = %container%<c class='p2' style='color:salmon' onmousedown="inca('Path','','','music|%A_Index%')">%x%</c>`n
+            else container = %container%<c class='p2' onmousedown="inca('Path','','','music|%A_Index%'); this.style.transform='translate(0em,-0.2em)'; this.style.color='red'">%x%</c>`n
             if !Mod(A_Index,4)
               container := fill(container)
             }
@@ -986,8 +1004,8 @@ if searchTerm
             ch := x
             count+=1
             if (searchTerm == A_Loopfield)
-              container = %container%<c class='p2' style='color:salmon' onmousedown="inca('Search',event.button,'','%A_Loopfield%')">%A_Loopfield%</c>`n
-            else container = %container%<c class='p2' onmousedown="inca('Search',event.button,'','%A_Loopfield%'); this.style.transform='translate(0em,-0.2em)'; this.style.color='red'">%A_Loopfield%</c>`n
+              container = %container%<c class='p2' style='color:salmon' onmousedown="inca('Search','','','search|%A_Index%')">%A_Loopfield%</c>`n
+            else container = %container%<c class='p2' onmousedown="inca('Search','','','search|%A_Index%'); this.style.transform='translate(0em,-0.2em)'; this.style.color='red'">%A_Loopfield%</c>`n
             if !Mod(count,4)
               container := fill(container)
             }
@@ -1010,8 +1028,8 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n if(
 
 <div id='myContent' style='position:absolute; width:100`%'>`n`n
 <div id='mySelected' class='selected'></div>`n
-
 <div oncontextmenu="if(yw>0.1 || type) {event.preventDefault()}">`n`n
+
 <div id='myContext' class='context'>`n
 <a id='mySelect' onmouseup="if (!longClick && wasMedia) {sel(index)} else{selectAll()}">Select</a>`n
 <a id='myIndex' onmousedown="inca('Index','',wasMedia)">Index</a>
@@ -1035,7 +1053,7 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n if(
 <a id='myMute' onmouseup='mute()'>Mute</a>`n
 <a id='myLoop' onclick="loop()">Loop</a>`n
 <a id='myCue' onwheel="wheelEvents(event, id, this)" onclick="myPlayer.pause(); cue=Math.round(myPlayer.currentTime*10)/10">Cue</a>`n
-<a id='myCapnav' onclick="inca('EditCap',1,'%j%')">Cap</a></div>`n`n
+<a id='myCapnav' onclick="inca('EditCap',1,'%j%',myPlayer.currentTime.toFixed(2))">Cap</a></div>`n`n
 
 <div id='myModal' class="modal" onwheel="wheelEvents(event, id, this)">`n
 <div><video id="myPlayer" class='player' type="video/mp4" muted></video>`n
@@ -1468,6 +1486,66 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n if(
         }
 
 
+
+    Gesture22(x, y)
+        {
+        if (Abs(x) > Abs(y))					; master volume
+          {
+          gesture := 1
+          x*=1.4
+          Static last_volume
+          last_volume := volume
+          if volume < 10
+            x /= 2						; finer adj at low volume
+          if x < 100						; stop any big volume jumps
+            volume += x/20
+          SoundGet, current
+          if (volume < 0)
+            volume := 0
+          if (volume > 100)
+            volume := 100
+          SoundSet, volume
+          volRef := Round(volume)
+          ShowStatus()
+          }
+        else if (mpvPID && Abs(x) < Abs(y))
+          {
+          ratio := mpvHeight/mpvWidth				; mpv magnify
+          if (y<0)
+            {
+            mpvXpos+=10
+            mpvWidth-=20
+            mpvHeight-=20*ratio
+            }
+          else
+            {
+            mpvXpos-=10
+            mpvWidth+=20
+            mpvHeight+=20*ratio
+            }
+          WinMove, mpv,,mpvXpos,, mpvWidth, mpvHeight
+          Mask()
+          }
+        else if (Abs(x) < Abs(y) && !incaTab && WinActive("ahk_group Browsers"))
+          {
+          gesture += Abs(y)
+          WinGet, state, MinMax, ahk_group Browsers
+          if (!incaTab && state > -1 && gesture > 50)		; browser magnify
+            {
+            gesture := 1
+            WinActivate, ahk_group Browsers
+            if (y < 0)
+              send, ^0
+            else send, ^{+}
+            }
+          }
+        else if (!mpv && !gesture && WinActive("ahk_group Browsers") && Abs(x) < Abs(y))
+          {
+          gesture := 2
+          send {RButton down}
+          }
+        }
+
     Gesture(x, y)
         {
         if (Abs(x) > Abs(y))					; master volume
@@ -1489,20 +1567,39 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n if(
           volRef := Round(volume)
           ShowStatus()
           }
-        else if (Abs(x) < Abs(y) && !incaTab && WinActive("ahk_group Browsers"))	; browser magnify
+        else if (mpvPID && Abs(x) < Abs(y))
           {
           gesture += Abs(y)
-          WinGet, state, MinMax, ahk_group Browsers
-          if (state > -1 && gesture > 50)
+          if mpvPID						; mpv magnify			
             {
-            gesture := 3
+            ratio := mpvHeight/mpvWidth
+            if (y<0)
+              {
+              mpvXpos+=10
+              mpvWidth-=20
+              mpvHeight-=20*ratio
+              }
+            else
+              {
+              mpvXpos-=10
+              mpvWidth+=20
+              mpvHeight+=20*ratio
+              }
+            WinMove, mpv,,mpvXpos,, mpvWidth, mpvHeight
+            Mask()
+            return
+            }
+          WinGet, state, MinMax, ahk_group Browsers
+          if (!incaTab && state > -1 && gesture > 50)		; browser magnify
+            {
+            gesture := 1
             WinActivate, ahk_group Browsers
             if (y < 0)
               send, ^0
             else send, ^{+}
             }
           }
-        else if (!gesture && WinActive("ahk_group Browsers"))
+        else if (!mpv && !gesture && WinActive("ahk_group Browsers") && Abs(x) < Abs(y))
           {
           gesture := 2
           send {RButton down}
@@ -1600,6 +1697,11 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n if(
         Gui, background:Show, x0 y0 w%A_ScreenWidth% h%A_ScreenHeight% NA
         WinSet, Transparent, 0
         WinSet, ExStyle, +0x20
+        Gui, mask:+lastfound -Caption +ToolWindow -DPIScale
+        Gui, mask:Color,Black
+        Gui, mask:Show, x0 y0 w%A_ScreenWidth% h%A_ScreenHeight% NA
+        WinSet, Transparent, 0
+        WinSet, ExStyle, +0x20
         gui, vol: +lastfound -Caption +ToolWindow +AlwaysOnTop -DPIScale
         gui, vol: color, fa8072
         Gui Status:+lastfound +AlwaysOnTop -Caption +ToolWindow
@@ -1652,31 +1754,6 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n if(
         else gui, vol: hide
 
         }
-
-
-    TimedEvents:							; every 100mS
-        GetBrowser()
-        Gui, background:+LastFound
-        if incaTab
-            WinSet, Transparent, % Setting("Dim Desktop")
-        else WinSet, Transparent, 0
-        x := Setting("Sleep Timer") * 60000
-        if (volume >= volRef/10000 && A_TimeIdlePhysical > x)
-            {
-            volume -= volRef/10000					; sleep timer
-            SoundSet, volume						; slowly reduce volume
-            }
-        if incaTab
-          {
-          x := StrLen(Clipboard)
-          y := SubStr(Clipboard, 1, 1)
-          if (y=="#" && x>4 && x<5000 && StrSplit(clipboard,"#").MaxIndex()>4)	; very likely is a java message
-            Clipboard()
-          else if x
-            lastClip := Clipboard
-          }
-        ShowStatus()
-        return
 
 
     Indexer:
@@ -1748,5 +1825,70 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n if(
         if x
           SetTimer, indexer, -%x%, -2
           }
+
+
+    Mask()
+       {
+       ratio := mpvHeight/mpvWidth
+       Gui, mask:+LastFound +AlwaysOnTop
+       x := ratio*mpvWidth*mpvWidth/A_ScreenWidth
+       WinSet, Transparent, % x
+       WinSet, Top,, mpv
+       }
+
+
+    TimedEvents:							; every 100mS
+        GetBrowser()
+        if incaTab
+          {
+          x := StrLen(Clipboard)
+          y := SubStr(Clipboard, 1, 1)
+          if (y=="#" && x>4 && x<5000 && StrSplit(clipboard,"#").MaxIndex()>4)	; very likely is a java message
+            Clipboard()
+          else if x
+            lastClip := Clipboard
+          }
+        WinGet, mpvPID, ID , mpv
+        MouseGetPos,,,CursorPID
+        if mpvPID							; external mpv player running
+          {
+          WinGetPos, x,,w,,mpv
+          if (mpvWidth/2 != w/2)
+            WinMove, mpv,, x + mpvWidth/2 - w/2
+          WinGetPos, mpvXpos,mpvYpos,mpvWidth,mpvHeight,mpv
+          WinGetPos,,,w,,mpv
+          if (w >= A_ScreenWidth-100)					; fullscreen
+            return
+          if (mpvPID != lastPID && mpvPID == cursorPID)
+            WinActivate, ahk_class mpv
+          if (!lastPID || mpvPID == lastPID && cursorPID != mpvPID)
+            {
+            WinActivate, ahk_group Browsers
+            Mask()
+            }
+          lastPID := cursorPID
+          return
+          }
+        else lastPID=
+        Gui, mask:+LastFound
+        WinSet, Transparent, 0
+        WinSet, Bottom
+        Gui, background:+LastFound
+        if incaTab
+            WinSet, Transparent, % Setting("Dim Desktop")
+        else WinSet, Transparent, 0
+        x := Setting("Sleep Timer") * 60000
+        if (volume >= volRef/10000 && A_TimeIdlePhysical > x)
+            {
+            volume -= volRef/10000					; sleep timer
+            SoundSet, volume						; slowly reduce volume
+            }
+        ShowStatus()
+        return
+
+
+
+
+
 
 

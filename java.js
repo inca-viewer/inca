@@ -3,7 +3,6 @@
 // to do - undo delete & move files
 //       - simplify media list htm coding
 //       - duplicate filename issues for thumbs
-//       - subs can't have . in name is windows error
 
 // mbutton open new tab in firefox locks context & opens in wrong browser
 // create title in getparam
@@ -19,9 +18,12 @@
 // fol fav headings highlight
 // random ctrl locking
 // use mpv so can rubberband and fast seek
-// not delete american mean girls - lick my boyfriend's shoes
 // folders to show qty files
 // remember sheet zoom
+// preserve mpv position and keep browser active while on top
+// mpvXpos position if not close properly 
+// dont save mpvX ... if fs
+// zoom mpv + darken background 
 
 
   var media = document.getElementById('media1')				// first media element
@@ -98,7 +100,7 @@
   if (!scaleY || scaleY>2 || scaleY<0.2) scaleY=0.7
   lastScaleY = scaleY
   scaleX = scaleY
-  intervalTimer = setInterval(Timer,100)				// 100mS universal timer
+  intervalTimer = setInterval(Timer,100)				// 100mS background timer
   document.addEventListener('mousedown', mouseDown)
   document.addEventListener('mouseup', mouseUp)
   document.addEventListener('dragend', mouseUp)
@@ -150,7 +152,6 @@
     if (Click==2 && (type||overMedia||e.shiftKey)) e.preventDefault()	// middle click
     clickTimer=setTimeout(function() {
       if (!gesture && xw<0.95) {longClick=lastClick; mouseEvent()}},240)}
-
 
   function mouseUp(e) {
     if (!Click) return							// page load while mouse still down - ignore
@@ -218,7 +219,7 @@
     if (type) positionMedia(fade)
     else {positionMedia(0)}
     myPlayer.style.opacity=0
-    setTimeout(function() {
+    setTimeout(function() {						// so player can fade in/out
       positionMedia(0)
       if (longClick == 1) {
         if (playing) thumbsheet=!thumbsheet
@@ -229,10 +230,9 @@
       if (longClick) start=lastStart
       if (longClick==1 && !thumbsheet && !playing) {
         index=lastIndex; type=getParameters(index); start=lastStart}	// return to last media
-      if (lastClick && !thumbsheet) inca('Media',index,'',start)	// tell inca new media is playing
+      if (e=='Up' && !thumbsheet) inca('Media',index)			// tell inca new media is playing
       if (type == 'document' || type == 'm3u') {type=''; return}	// let inca open file
       if (e=='Up' && lastClick==2 && !playing) start=0
-      if (!playing) myPlayer.addEventListener('ended', nextMedia)
       positionMedia(fade)
       scrolltoIndex()							// + highlight played media
       Play(e)},fadeOut*500)}
@@ -245,9 +245,10 @@
     myPlayer.muted = 1*localStorage.getItem('muted')
     if (type == 'audio' || playlist.match('/inca/music/')) {
       looping=false; myPlayer.muted=false; scaleY=0.25}
+    else if (mpv) {type=''; return}
+    if (type != 'image') {myPlayer.currentTime=start; myPlayer.play()}
     if (thumbsheet) Thumbsheet()
-    else if (type == 'video' && mpv) return
-    else if (type != 'image') {myPlayer.currentTime=start; myPlayer.play()}
+    myPlayer.addEventListener('ended', nextMedia)
     modal.style.zIndex = Zindex+=1					// because htm thumbs use Z-index
     modal.style.opacity = 1
     myPlayer.volume = 0							// allows sound to fade up
@@ -362,8 +363,8 @@
       gesture = 3
       mediaX += xpos - Xref
       mediaY += ypos - Yref
-      localStorage.setItem("mediaX",mediaX)
-      localStorage.setItem("mediaY",mediaY)}
+      localStorage.setItem("mediaX",mediaX.toFixed(0))
+      localStorage.setItem("mediaY",mediaY.toFixed(0))}
     else if (type && Click==3 && y>x) {					// zoom media
       if (scaleY>0.25 || Yref<ypos) {
         if (Yref<ypos) {y=1.02} else {y=0.98}
@@ -372,7 +373,7 @@
           scaleY *= y
           lastScaleY = scaleY
           if (scaleX<0) {scaleX *= -y} else {scaleX *= y}}}		// in case media fipped left/right
-      localStorage.setItem("scaleY", scaleY)}
+      localStorage.setItem("scaleY", scaleY.toFixed(3))}
     Xref=xpos; Yref=ypos; positionMedia(0)}
 
 
@@ -611,6 +612,7 @@
       var x = e.target.innerHTML						// ~ text under cursor
       if (x && x.length<99) {
         myDelete.style.color='red'; myDelete.innerHTML='Delete - '+x}}
+    else {myDelete.style.color=null; myDelete.innerHTML='Delete'}
     if (yw > 0.8) offset=60							// cursor near window bottom, add offset
     nav.style.left=xpos-70+'px'; nav.style.top=ypos-20-offset+'px'
     nav2.style.left=xpos-40+'px'; nav2.style.top=ypos-20-offset+'px'		// context menu for modal player
@@ -629,10 +631,12 @@
     if (ix>1) {scrolltoIndex()}}
 
   function inca(command,value,select,address) { 				// send messages to inca.exe
+    if (command == 'Media') {
+      address = start+'|'+skinny+'|'+localStorage.getItem('muted')}
     if (!select) {select=''} else {select=select+','}
     if (command == 'Favorite') document.getElementById('myFavicon'+index).innerHTML='&#10084'
     else if (selected) select=selected
-    for (x of select.split(',')) {if (x) {document.getElementById('media'+x).load()}}
+    for (x of select.split(',')) {if (x) {document.getElementById('media'+x).load();mySelected.innerHTML =x}}
     setTimeout(function() {							// time for load & right click to be detected
       if (!value) value=''
       if (!address) address=''
