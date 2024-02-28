@@ -4,7 +4,7 @@
   ::-webkit-scrollbar {background:#15110a}
   ::-webkit-scrollbar-corner {background:#15110a}
   ::-webkit-scrollbar-thumb {background:#2b2824; border-radius:2px}
-  td {outline:none; text-align:center; min-width:3.5em; overflow:hidden; white-space:nowrap}
+  td {outline:none; text-align:center; min-width:3.8em; overflow:hidden; white-space:nowrap}
   table {color:#826858; font-size:0.9em; border-collapse:collapse; margin:auto; border-radius:1em; transition:color 0.3s}
   table:hover {background:#1b1814}
   c {display:block; padding-left:1em; text-decoration:none; color:#826858; transition:1s}
@@ -72,7 +72,7 @@
 .media2 {					/* list view pop up thumbs */
   position:absolute;
   pointer-events:none;
-  translate: 10em;
+  translate: 6em;
   border-radius:0.5em;
   margin:auto;
   opacity:0}
@@ -84,6 +84,7 @@
   width:100%;
   border-radius:1em;
   text-align:center;
+  transition:0.4s;
   font-size:1em}
 
 .ribbon a {transition:0.8s; border-radius:0.32em}
@@ -187,7 +188,7 @@
   display:none;
   z-index:888;
   position:fixed;
-  font-size:1.3em;
+  font-size:1.1em;
   transition:0.14s;
   border-radius:1em;
   white-space:nowrap;
@@ -213,6 +214,6 @@
   overflow:hidden;
   color:#826858;
   opacity:0;
-  transition:0.5s}
+  transition:0s}
 
 
