@@ -40,10 +40,13 @@
 // no top of page reset in ff
 // cannot play same file twice mpv
 
-// change parameter passing to class variable --type -- start etc.
-// click on seekbar erratic start time??
 // maybe remove mask in inca
 // list view click fails
+// ff location bar focus 
+// ff mpv 
+// ff top page reset
+// not mpv gchrome player not seeking 
+
 
 
   var media = document.getElementById('media1')				// first media element
@@ -160,7 +163,7 @@
     Click=0; wheel=0; block=100; gesture=0; longClick=0}
 
 
-  function closePlayer() {			
+  function closePlayer() {		
     myPlayer.style.transition=fade*0.3+'s'
     myPlayer.style.opacity=0
     if (playing) {							// then close media player
@@ -183,6 +186,8 @@
 
 
   function overThumb(id,el) {						// play htm thumb
+    myRibbon2.style.height=0
+    myRibbon3.style.height=0
     overMedia=id
     x = el['onmousedown'].toString().split(','); x.pop()		// get start from parameters
     start = 1*x.pop().trim()
@@ -206,8 +211,9 @@
         else myPlayer.currentTime=xm*dur; return}
       else if (myPlayer.matches(':hover')) {togglePause(); return}}
     if (lastClick==1 && e=='Up' && !overMedia && !myPlayer.matches(':hover')) return
+if (lastClick==1 && e=='Up' && overMedia) index=overMedia
     if (e=='Up' && lastClick==1 && nav.matches(':hover')) return
-    if (!longClick && (e=='Next' || lastClick==2)) index++
+    if (playing && !longClick && (e=='Next' || lastClick==2)) index++
     if ((e=='Back' || longClick==2) && index > 1) index--
     scaleY = lastScaleY
     var fadeOut = fade							// media fadeout time 
@@ -223,10 +229,9 @@
         if (playing) thumbsheet=!thumbsheet
         else if (overMedia) thumbsheet=1}
       if (longClick && !thumbsheet && !playing) index=lastIndex		// return to last media
-      getParameters(index)
-      if (ratio > 1) {
-        x = innerWidth*0.70; y = x/ratio; sheetY = innerWidth/x}	// landscape
-      else {y = innerHeight; x = y*ratio; sheetY = innerHeight/y}	// portrait   
+      if (!getParameters(index)) {closePlayer(); return}
+      if (ratio>1) {x=innerWidth*0.70; y=x/ratio; sheetY=innerWidth/x}	// landscape
+      else {y=innerHeight; x=y*ratio; sheetY=innerHeight/y}		// portrait   
       myPlayer.style.width = x +'px'					// media size normalised to screen
       myPlayer.style.height = y +'px'
       myPlayer.style.top = mediaY-y/2 +'px'
@@ -386,10 +391,9 @@
 
 
   function getParameters(i) {						// prepare player for selected media (index)
-    if (i) index=i
-    myRibbon2.style.height=0; myRibbon3.style.height=0
-    if (!(media = document.getElementById('media'+i))) {
-      index=1; type=''; return}
+    if (!(media=document.getElementById('media'+i))) {
+       media=document.getElementById('media1'); return}
+//    if (i) index=i
     rate = d_rate
     skinny = 1
     var x = media.style.borderBottom					// preserve border-radius in myPlayer
@@ -410,7 +414,7 @@
     x = media.style.rate						// custom style variable - rate edited
     if (x && x != rate) rate=x
     if (type != 'image' && !dur) dur=media.duration			// just in case - use browser calc.
-    return}
+    return 1}
 
 
   function Timer() {							// every 100mS
@@ -643,10 +647,10 @@
     view=vi; page=pg; pages=ps; sort=so; filt=fi; listView=lv; 
     selected=se; playlist=pl; index=ix; wasMedia=ix; lastIndex=ix
     filter(sort)								// show filter heading in red
-    for (x of selected.split(',')) { if (x && !isNaN(x)) {			// highlight selected media			
+    for (x of selected.split(',')) {if (x && !isNaN(x)) {			// highlight selected media			
       if (lv) document.getElementById('title'+x).style.borderBottom = '0.1px solid red'
       else document.getElementById('media'+x).style.borderBottom = '4px solid red'}}
-    for (i=1; getParameters(i); i++) {}						// process cues (eg. thumb widths)
+    for (i=1; getParameters(i); i++) 						// process cues (eg. thumb widths)
     media=document.getElementById('media'+ix)
     if (ix>1) {scrolltoIndex()}}
 
