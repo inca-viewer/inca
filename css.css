@@ -13,12 +13,14 @@
 
 .player {					/* modal media player element */
   position:absolute;
+  opacity:0;
   border-radius:16px}
 
 .preview {					/* small preview seeking video */
   position:absolute; 
   display:flex;
   opacity:0;
+  z-index:-1;
   user-select:none;
   border-radius:9%;
   max-width:170px;
@@ -173,9 +175,11 @@
 
 .modal {					/* media player overlay of htm tab */
   display:flex;
-  z-index:3;
+  z-index:-1;
   user-select:none;
   position:fixed;
+pointer-events:none;
+opacity:0;
   justify-content:center;
   align-items:center;
   top:0;
