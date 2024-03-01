@@ -11,21 +11,22 @@
   c:hover {overflow:visible; transition:0.2s; transform:scale(1.1,1.1); translate:0.2em; color:lightsalmon}
   input:hover {color:lightsalmon;transition:color 1.2s}
 
-.player {					/* modal media player element */
+.player {					/* media player element */
+//  display:none;
   position:absolute;
   opacity:0;
   border-radius:16px}
 
 .preview {					/* small preview seeking video */
   position:absolute; 
-  display:flex;
+  display:none;
   opacity:0;
   z-index:-1;
   user-select:none;
   border-radius:9%;
-  max-width:170px;
-  max-height:120px;
-  transition:opacity 1s}
+//  max-width:140px;
+  max-height:100px;
+  transition:opacity 0.6s}
 
 .myList {					/* list view */
   position:absolute;
@@ -67,7 +68,7 @@
   --rate:0;
   position:relative;
   margin:auto;
-  outline:0.3em solid #15110a;
+  outline:0.1em solid #15110a;
   transition:transform 0.4s;
   border-radius:0.5em}
 
@@ -138,6 +139,7 @@
 
 .seekbar {					/* video progress bar	*/
   position:absolute;
+  display:none;
   opacity:0;
   border-radius:4px;
   color:lightsalmon;
@@ -154,7 +156,7 @@
   line-height:1em;
   margin-top:-1em}
 
-.caption {					/* modal caption element */
+.caption {					/* media caption element */
   display:none;
   position:fixed;
   z-index:4;
@@ -173,13 +175,13 @@
   font-size:1.4em;
   transition:0.6s}
 
-.modal {					/* media player overlay of htm tab */
+.mask {						/* media player overlay of htm tab */
   display:flex;
   z-index:-1;
   user-select:none;
   position:fixed;
-pointer-events:none;
-opacity:0;
+  pointer-events:none;
+  opacity:0;
   justify-content:center;
   align-items:center;
   top:0;
