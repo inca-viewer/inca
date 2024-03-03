@@ -20,6 +20,7 @@
 .preview {					/* small preview seeking video */
   position:absolute; 
   display:none;
+  pointer-events:none;
   opacity:0;
   z-index:-1;
   user-select:none;
@@ -180,7 +181,7 @@
   z-index:-1;
   user-select:none;
   position:fixed;
-  pointer-events:none;
+//  pointer-events:none;
   opacity:0;
   justify-content:center;
   align-items:center;
