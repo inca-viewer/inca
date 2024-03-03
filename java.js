@@ -20,7 +20,6 @@
 // mpv offset after close between aspect change
 // mpv next / previous
 // ff localStorage ???
-// no top of page reset in ff
 // filing/ rename errors 
 // thumbsheet size
 
@@ -120,7 +119,7 @@
     Click=e.button+1; lastClick=Click; longClick=0; 
     gesture=0; wheel=0; block=0; Xref=xpos; Yref=ypos
     sessionStorage.setItem('scroll', myView.scrollTop)
-    if (Click==2 && (playing||overMedia)) e.preventDefault()		// middle click
+    if (Click==2) e.preventDefault()					// middle click
     clickTimer=setTimeout(function() {
       if (!gesture && xw<0.95) {longClick=lastClick; mouseEvent()}},240)}
 
@@ -165,7 +164,7 @@
 
   function mouseEvent(e) {						// functional logic
     if (Click > 2) return						// right click
-    if (Click==2 && !playing && !overMedia) return			// middle click
+    if (Click==2 && !playing) {inca('View', view, '', lastIndex); return}
     if (longClick && myInput.matches(':hover')) return
     if (longClick && myPanel.matches(':hover')) return			// also, copy files instead of move
     if (title.matches(':hover')) return					// allow rename of media in htm
