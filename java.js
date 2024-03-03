@@ -22,7 +22,13 @@
 // ff localStorage ???
 // filing/ rename errors 
 // thumbsheet size
-
+// maybe ina can determine canplay
+// scroll index
+// search adds?
+// hover over music
+// when ffmpeg slow
+// flip
+// pause thumb when pop
 
   var mediaX = 1*localStorage.getItem('mediaX')				// caption strings
   var mediaY = 1*localStorage.getItem('mediaY')				// last media position
@@ -170,9 +176,7 @@
     if (title.matches(':hover')) return					// allow rename of media in htm
     if (longClick==1 && !playing && playlist && overMedia && selected) {inca('Move', index); return}
     if (playing=='browser' && lastClick==1 && !longClick && !thumbsheet && type != 'image') {
-    if (!mpv && xm>0 && xm<1 && ym>0.75 && ym<1) {
-        if (xm<0.1) myPlayer.currentTime=start
-        else myPlayer.currentTime=xm*dur; return}
+    if (!mpv && xm>0 && xm<1 && ym>0.75 && ym<1) {myPlayer.currentTime=xm*dur; return}
       else if (!thumbsheet && !myNav.matches(':hover')) {togglePause(); return}}
     if (lastClick==1 && e=='Up' && !thumbsheet && !overMedia && !myPlayer.matches(':hover')) return
     if (lastClick && overMedia) index=overMedia
@@ -242,7 +246,7 @@
     lastIndex = index
     if (media.style.skinny || media.style.rate) 
       messages = messages + '#Cues#'+index+'##'+lastStart.toFixed(1)+'|'+skinny+'|'+rate
-    if (!thumbsheet) messages = messages + '#History#'+index+'##'
+    if (!thumbsheet) messages = messages + '#History#'+lastStart.toFixed(1)+'#'+index+'#'
     mySeekbar.style.opacity = null
     myPreview.style.opacity = null
     myCap.style.display = 'none'
@@ -263,13 +267,11 @@
     if (id=='myFade') {							// fade control
       if (!wheelUp) fade+=0.05
       else if (fade>0.26) fade-=0.05
-      myFade.innerHTML = fade.toFixed(2)
       localStorage.setItem("fade",Math.round(10*fade)/10)}
     else if (id=='myRate') {						// default rate
       if (!wheelUp) d_rate+=0.01
       else if (d_rate>0.51) d_rate-=0.01
       d_rate = Math.round(100*d_rate)/100
-      myRate.innerHTML = d_rate.toFixed(2)
       localStorage.setItem("d_rate",d_rate)}
     else if (id=='myPage') {						// htm page
       if (wheelUp && page<pages) page++
@@ -389,6 +391,8 @@
     if (!media) return
     if (rate==1) mySpeed.innerHTML = 'Speed'
     else mySpeed.innerHTML = rate.toFixed(2)
+    myFade.innerHTML = 'Fade '+fade.toFixed(2)
+    myRate.innerHTML = 'Speed '+d_rate
     if (skinny>0.99 && skinny<1.01) mySkinny.innerHTML = 'Skinny'
     else mySkinny.innerHTML = skinny.toFixed(2)
     if (selected) mySelected.innerHTML = selected.split(',').length -1
@@ -414,7 +418,7 @@
       myPlayer.style.zIndex=Zindex+1
       mySeekbar.style.display='flex'
       myPreview.style.display='flex'
-      myMask.style.backgroundColor='rgba(0,0,0,'+scaleY*1.8+')'
+      myMask.style.backgroundColor='rgba(0,0,0,'+scaleY*2.2+')'
       if (myPlayer.volume <= 0.8) myPlayer.volume += 0.05		// fade sound up
       if (playing=='browser' && type!='image' && !Click && !thumbsheet) seekBar()
       if (!Click) positionMedia(0.01)}

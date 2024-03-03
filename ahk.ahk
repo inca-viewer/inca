@@ -368,9 +368,12 @@ IfWinExist, ahk_class Notepad
             reload:=3
 
         if (command == "History")						; java tells inca to play
-            if GetMedia(value)
+            {
+            if GetMedia(StrSplit(selected, ",").1)
               if ((type == "video" || type == "audio") && !InStr(path, "\inca\music\") && lastMedia != src)  ; add to history
-                FileAppend, %src%|%start%`r`n, %inca%\fav\History.m3u, UTF-8
+                FileAppend, %src%|%value%`r`n, %inca%\fav\History.m3u, UTF-8
+            lastMedia := src
+            }
         if (command == "Media")						; java tells inca to play
             {
             id := StrSplit(selected, ",").1
@@ -562,7 +565,6 @@ sleep 24
             start:=array.1
             skinny:= array.2
             rate:=array.3
-            lastMedia := src
             if skinny is not number
               skinny := 1
             if (skinny < -1.2)
@@ -669,6 +671,7 @@ sleep 24
               }
             if (command == "Path")
               {
+              lastMedia := 0
               if (longClick && !selected)
                 {
                 run, %address%						; open source instead
@@ -981,7 +984,7 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n if(
 <a id='myMute' onmouseup='mute()'>Mute</a>`n
 <a id='myLoop' onclick="loop()">Loop</a>`n
 <a id='myCue' onclick="myPlayer.pause(); cue=Math.round(myPlayer.currentTime*10)/10">Cue</a>`n
-<a id='myCapnav' onclick="inca('EditCue',1,'%j%',myPlayer.currentTime.toFixed(2))">Cap</a>`n
+<a id='myIndex' onmousedown="inca('Index','',wasMedia)">Index</a>
 </div>`n`n
 
 <div id='myMask' class="mask" onwheel="wheelEvents(event, id, this)">`n</div>
@@ -1003,7 +1006,7 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n if(
 <a id='SearchAdd' class='searchbutton' onclick="inca('SearchAdd','','',myInput.value)"></a>`n
 <a id='SearchRen' class='searchbutton' onclick="inca('Rename', myInput.value, wasMedia)"></a></div>`n`n
 
-<div id='myPanel' class='myPanel' onmouseover="if(selected) {this.style.border='1px solid salmon'}" onmouseout="this.style.border='none'">`n <div id='panel' class='panel'>`n`n%panelList%`n<div style='height:40em'></div></div></div>`n`n
+<div id='myPanel' class='myPanel' onmouseover="myRibbon2.style.opacity=0; myRibbon2.style.zIndex=-1; if(selected) {this.style.border='1px solid salmon'}" onmouseout="this.style.border='none'">`n <div id='panel' class='panel'>`n`n%panelList%`n<div style='height:40em'></div></div></div>`n`n
 
 <div id='myRibbon' class='ribbon'>`n
 <a id='Type' style='width:5em; %x6%' onmousedown="inca('Type')">Ext</a>`n
@@ -1026,12 +1029,12 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n if(
 <a id='myJoin' style='width:8`%' onmousedown="inca('Join')">Join</a>
 <a id='myMp3' style='width:8`%' onmousedown="inca('mp3', myPlayer.currentTime.toFixed(1), lastIndex, cue.toFixed(1))">mp3</a>`n
 <a id='myMp4' style='width:8`%' onmousedown="inca('mp4', myPlayer.currentTime.toFixed(1), lastIndex, cue.toFixed(1))">mp4</a>`n
-<a id='myIndex' style='width:8.6`%' onmousedown="inca('Index','',wasMedia)">Index</a>
-<a id='myFade' style='width:8.4`%' onwheel="wheelEvents(event, id, this)">Fade</a>`n
-<a id='myRate' style='width:9`%' onwheel="wheelEvents(event, id, this)">Speed</a>`n
+<a id='myFade' style='width:9.4`%; overflow:visible' onwheel="wheelEvents(event, id, this)">Fade</a>`n
+<a id='myRate' style='width:10`%' onwheel="wheelEvents(event, id, this)">Speed</a>`n
 <a style='width:11`%' onmouseup="inca('Settings',1)">compile</a>`n
-<a style='width:6`%' onmouseup="inca('Settings',0,'','%inca%\ahk.ahk')">ahk</a>`n
 <a style='width:6`%' onmouseup="inca('Settings',0,'','%inca%\java.js')">java</a>`n
+<a style='width:6`%' onmouseup="inca('Settings',0,'','%inca%\ahk.ahk')">ahk</a>`n
+<a style='width:6`%' onmouseup="inca('Settings',0,'','%inca%\css.css')">css</a>`n
 <a style='width:6`%' onmouseup="inca('Settings',0,'','%inca%\ini.ini')">ini</a>`n
 <a style='width:6`%; font-size:1.4em; margin-top:-0.5em' onmouseover="myRibbon3.style.height='1.5em'; myRibbon2.style.height=0">...</a>`n
 </div>`n`n
@@ -1049,7 +1052,7 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n if(
 <a><a></a></a>`n
 </div>`n`n
 
-<div style='width:100`%; height:9.2em'></div>`n%mediaList%<div style='width:100`%; height:100vh'></div>`n`n
+<div style='width:100`%; height:9.6em'></div>`n%mediaList%<div style='width:100`%; height:100vh'></div>`n`n
 
       FileDelete, %inca%\cache\html\%folder%.htm
       StringReplace, header, header, \, /, All
