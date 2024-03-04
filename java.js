@@ -22,13 +22,11 @@
 // ff localStorage ???
 // filing/ rename errors 
 // thumbsheet size
-// maybe ina can determine canplay
-// scroll index
-// search adds?
-// hover over music
+// maybe inca can determine canplay
 // when ffmpeg slow
-// flip
-// pause thumb when pop
+
+
+
 
   var mediaX = 1*localStorage.getItem('mediaX')				// caption strings
   var mediaY = 1*localStorage.getItem('mediaY')				// last media position
@@ -125,7 +123,9 @@
     Click=e.button+1; lastClick=Click; longClick=0; 
     gesture=0; wheel=0; block=0; Xref=xpos; Yref=ypos
     sessionStorage.setItem('scroll', myView.scrollTop)
+    if (Click==2 && myPanel.matches(':hover')) return			// open new tab
     if (Click==2) e.preventDefault()					// middle click
+    else if (overMedia) index = overMedia
     clickTimer=setTimeout(function() {
       if (!gesture && xw<0.95) {longClick=lastClick; mouseEvent()}},240)}
 
@@ -134,8 +134,8 @@
     if (!Click) return							// page load while mouse still down - ignore
     clearTimeout(clickTimer)						// longClick timer
     if (Click==3 &&!gesture && yw>0.1)  context(e)			// new context menu if click below window top
-    else if (!gesture && !longClick) mouseEvent('Up')			// process click event
-    else if (gesture==2 && !playing) getParameters(overMedia)		// double thumb size
+    if (Click==1 && gesture==2 && !playing) getParameters(overMedia)	// double thumb sizeelse
+    else if (!longClick) mouseEvent('Up')				// process click event 
     Click=0; wheel=0; block=100; gesture=0; longClick=0}
 
 
@@ -169,14 +169,13 @@
     
 
   function mouseEvent(e) {						// functional logic
-    if (Click > 2) return						// right click
-    if (Click==2 && !playing) {inca('View', view, '', lastIndex); return}
+    if (Click==2 && !playing) {inca('View', view, '', lastIndex); return} // switch list/thumb view
     if (longClick && myInput.matches(':hover')) return
     if (longClick && myPanel.matches(':hover')) return			// also, copy files instead of move
-    if (title.matches(':hover')) return					// allow rename of media in htm
+    if (Click > 2 || gesture || title.matches(':hover')) return		// allow rename of media in htm
     if (longClick==1 && !playing && playlist && overMedia && selected) {inca('Move', index); return}
     if (playing=='browser' && lastClick==1 && !longClick && !thumbsheet && type != 'image') {
-    if (!mpv && xm>0 && xm<1 && ym>0.75 && ym<1) {myPlayer.currentTime=xm*dur; return}
+    if (!mpv && xm>0 && xm<1 && ym>0.75 && ym<1 && !myNav.matches(':hover')) {myPlayer.currentTime=xm*dur; return}
       else if (!thumbsheet && !myNav.matches(':hover')) {togglePause(); return}}
     if (lastClick==1 && e=='Up' && !thumbsheet && !overMedia && !myPlayer.matches(':hover')) return
     if (lastClick && overMedia) index=overMedia
@@ -282,14 +281,14 @@
       if (wheelUp) filt++ 
       else if (filt) filt--
       filter(id)}
-    else if (id=='mySpeed') {						// speed
+    else if (id=='mySpeed' && playing) {				// speed
       if (type=='video' || type=='audio') {
         if (wheelUp) rate -= 0.01
         else rate += 0.01
         rate = Math.round(100*rate)/100
         myPlayer.playbackRate = rate
         media.style.rate = rate}}
-    else if (id=='mySkinny') {						// skinny
+    else if (id=='mySkinny' && playing) {				// skinny
       block = 30
       if (wheelUp) scaleX -= 0.003
       else scaleX += 0.003
@@ -337,7 +336,8 @@
     if (Click && x+y > 4 && !gesture) {					// gesture detection (mousedown + slide)
       if (overMedia) {gesture=2} else {gesture=1}}
     if (!gesture) return
-    if (gesture==2 && !playing && !listView) {				// move thumb
+    if (gesture==2 && !playing && !listView) {				// move / pop thumb
+      media.pause()
       media.style.opacity = 1
       media.style.position = 'fixed'
       media.style.zIndex = Zindex+=1
@@ -586,7 +586,7 @@
     title.style.background='#1f1c18'
     media.style.border='0.1px solid salmon'
     var x = media.getBoundingClientRect().bottom
-    if (x > innerHeight-20) myView.scrollTo(0, x + myView.scrollTop - innerHeight + 20)}
+    if (x > innerHeight-20 || x<20) myView.scrollTo(0, x + myView.scrollTop - innerHeight/2)}
 
   function sel(i) {							// highlight selected media
     if (!i || longClick || lastClick==2) return
@@ -644,7 +644,7 @@
   function togglePause() {if(!thumbsheet && lastClick==1) {if (myPlayer.paused) {myPlayer.play()} else {myPlayer.pause()}}}
   function selectAll() {for (i=1; document.getElementById('media'+i); i++) {sel(i)}}
   function loop() {looping = !looping}
-  function flip() {skinny*=-1; scaleX*=-1; positionMedia(0.5); media.style.transform='scaleX('+skinny+')'}
+  function flip() {skinny*=-1; scaleX*=-1; media.style.skinny=skinny; positionMedia(0.5); media.style.transform='scaleX('+skinny+')'}
   function mute() {if(!longClick) {
     myPlayer.volume=0; myPlayer.muted=!myPlayer.muted; localStorage.setItem("muted",1*myPlayer.muted)}}
   
