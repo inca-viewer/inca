@@ -7,6 +7,7 @@
   td {outline:none; text-align:center; min-width:3.8em; overflow:hidden; white-space:nowrap}
   table {color:#826858; font-size:0.9em; border-collapse:collapse; margin:auto; border-radius:1em; transition:color 0.3s}
   table:hover {background:#1b1814}
+  a {color:#826858; text-decoration:none}
   c {display:block; padding-left:1em; text-decoration:none; color:#826858; transition:1s}
   c:hover {overflow:visible; transition:0.2s; transform:scale(1.1,1.1); translate:0.2em; color:lightsalmon}
   input:hover {color:lightsalmon;transition:color 1.2s}
@@ -27,7 +28,7 @@
   border-radius:9%;
 //  max-width:140px;
   max-height:100px;
-  transition:opacity 0.6s}
+  transition:opacity 1s}
 
 .myList {					/* list view */
   position:absolute;
@@ -67,6 +68,7 @@
 .media {					/* thumb view media */
   --skinny:0;
   --rate:0;
+  --pitch:0;
   position:relative;
   margin:auto;
   outline:0.1em solid #15110a;
@@ -110,6 +112,8 @@
 .searchbutton {
   height:1.4em;
   width:4em;
+  overflow:visible;
+  white-space:nowrap;
   border-radius:1em;
   transition:0.8s}
 
