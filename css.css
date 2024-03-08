@@ -12,8 +12,10 @@
   c:hover {overflow:visible; transition:0.2s; transform:scale(1.1,1.1); translate:0.2em; color:lightsalmon}
   input:hover {color:lightsalmon;transition:color 1.2s}
 
+#myRibbon2 {opacity:0}
+#myRibbon2:hover {opacity:1}
+
 .player {					/* media player element */
-//  display:none;
   position:absolute;
   opacity:0;
   border-radius:16px}
@@ -26,7 +28,6 @@
   z-index:-1;
   user-select:none;
   border-radius:9%;
-//  max-width:140px;
   max-height:100px;
   transition:opacity 1s}
 
@@ -90,7 +91,7 @@
   width:100%;
   border-radius:1em;
   text-align:center;
-  transition:0.4s;
+  transition:0.5s;
   font-size:1em}
 
 .ribbon a {transition:0.8s; border-radius:0.32em}
@@ -112,8 +113,6 @@
 .searchbutton {
   height:1.4em;
   width:4em;
-  overflow:visible;
-  white-space:nowrap;
   border-radius:1em;
   transition:0.8s}
 
@@ -185,7 +184,6 @@
   z-index:-1;
   user-select:none;
   position:fixed;
-//  pointer-events:none;
   opacity:0;
   justify-content:center;
   align-items:center;

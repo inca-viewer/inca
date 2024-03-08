@@ -19,12 +19,8 @@
 // maybe inca can determine canplay
 // when ffmpeg slow
 // longclick over thumbsheet last start - not edge
+// mclick open tab randomly copies view from 1st tab
 
-// sheetzoom 
-// pitch/seek/volume issues
-// mpv skinny cannot reset
-// lists getting confused
-// remove previous tab
 
   var mediaX = 1*localStorage.getItem('mediaX')				// caption strings
   var mediaY = 1*localStorage.getItem('mediaY')				// last media position
@@ -41,7 +37,6 @@
   var lastStart = 0							// last media start time
   var interval = 0							// media seeking interval step
   var units = ''							// minutes, months, MB etc.
-  var rate = 1								// current rate
   var view = 14								// thumb size em
   var listView = 0							// list or thumbnail view
   var page = 1								// current media page
@@ -63,7 +58,6 @@
   var overMedia = 0							// over thumb or media
   var wasMedia = 0							// before context menu
   var ratio								// media width to height ratio
-  var skinny = 1							// media width
   var messages = ''							// history, width, speed & caption edits
   var Zindex = 3							// element layer
   var xw = 0.5								// cursor over window ratio
@@ -80,10 +74,13 @@
   var Xoff = 0								// maintain player position in fullscreen
   var Yoff = 0
   var dur = 0
+  var rate = 1								// media speed
   var pitch = 1
+  var skinny = 1							// media width
   var playing = ''
   var sheetZoom = 1
   var title
+  var zoom=0
 
 
   if (!mediaX || mediaX < 0 || mediaX > innerWidth) mediaX=innerWidth/2
@@ -136,7 +133,7 @@
     clearTimeout(clickTimer)						// longClick timer
     if (Click==3 &&!gesture && yw>0.1)  context(e)			// new context menu if click below window top
     if (Click==1 && gesture==2 && !playing) getParameters(overMedia)	// double thumb size
-    else if (Click==1 && gesture && wheel>1) positionMedia(-0.2)	// quick gesture - show media full width/height
+    else if (gesture && Click==3 && wheel>1) {zoom=!zoom; positionMedia(0.2)}	// quick gesture - zoom media
     else if (!longClick) mouseEvent('Up')				// process click event 
     Click=0; wheel=0; block=100; gesture=0; longClick=0}
 
@@ -288,14 +285,14 @@
       if (wheelUp) filt++ 
       else if (filt) filt--
       filter(id)}
-    else if (id=='mySpeed' && playing) {				// speed
+    else if (id=='mySpeed') {						// speed
       if (type=='video' || type=='audio') {
         if (wheelUp) rate -= 0.01
         else rate += 0.01
         rate = Math.round(100*rate)/100
         myPlayer.playbackRate = rate
         media.style.rate = rate}}
-    else if (id=='mySkinny' && playing) {				// skinny
+    else if (id=='mySkinny') {						// skinny
       block = 30
       if (wheelUp) scaleX -= 0.003
       else scaleX += 0.003
@@ -303,7 +300,7 @@
       media.style.skinny = skinny
       getParameters(index)
       positionMedia(0)}
-    else if (id=='myPitch' && playing) {				// pitch
+    else if (id=='myPitch') {						// pitch
       block = 100
       if (wheelUp) {if (pitch>0.5) {pitch -= 0.01}}
       else {if (pitch<2) {pitch += 0.01}}
@@ -351,12 +348,14 @@
       mediaX += xpos - Xref
       mediaY += ypos - Yref
       localStorage.setItem("mediaX",mediaX.toFixed(0))
-      localStorage.setItem("mediaY",mediaY.toFixed(0))}
+      localStorage.setItem("mediaY",mediaY.toFixed(0))
+      zoom=0}
     else if (playing=='browser' && Click==3 && y>x) {			// zoom media
       if (y>x && (scaleY>0.25 || Yref<ypos)) {
         scaleY += ((ypos-Yref) * 0.003)
         lastScaleY = scaleY
-        localStorage.setItem('scaleY',scaleY.toFixed(3))}}
+        localStorage.setItem('scaleY',scaleY.toFixed(3))}
+      zoom=0}
     Xref=xpos; Yref=ypos; positionMedia(0)}
 
 
@@ -367,6 +366,7 @@
     rate = defRate
     pitch = 1
     skinny = 1
+    media.style.border=null						// for correct ratio calc,
     ratio = media.offsetWidth/media.offsetHeight
     x = media['onmousedown'].toString().split(','); x.pop()		// get media parameters from htm entry
     start = 1*x.pop().trim()
@@ -395,11 +395,9 @@
     if (selected) panel.style.color='lightsalmon'
     else panel.style.color=null
     if (!myInput.value.includes('Search')) {
-      IncaViewer.style.display='none'
       SearchBox.innerHTML='Search'
       SearchAll.innerHTML='All'
       SearchAdd.innerHTML='Add'}
-    else IncaViewer.style.display=null
     if (!media) return
     if (rate==1) mySpeed.innerHTML = 'Speed'
     else mySpeed.innerHTML = rate.toFixed(2)
@@ -415,7 +413,8 @@
     else mySelected.innerHTML = ''
 // mySelected.innerHTML = ''
     if (playlist) {myFav.innerHTML='Fav &#10084'}
-    if (wasMedia && mySelect.matches(':hover')) mySelect.innerHTML='Select - '+index+' - '+title.value
+    if ((wasMedia || playing) && mySelect.matches(':hover')) {
+      mySelect.innerHTML='Select - '+index+' - '+title.value}
     else mySelect.innerHTML='Select'
     if ((","+selected).match(","+index+",")) {mySelect.style.color='red'}
     else {mySelect.style.color=null}
@@ -425,9 +424,9 @@
     if (looping) {myLoop.style.color='red'} else myLoop.style.color=null
     if (myPlayer.muted) {myMute.style.color='red'} else {myMute.style.color=null}
     if (skinny<0) {myFlip.style.color='red'} else myFlip.style.color=null
-    if (cueList && !thumbSheet) Cue(myPlayer.currentTime, index)
     if (cue) {myRibbon2.style.opacity=1; myRibbon2.style.zIndex=null} 
     if (playing) {
+      if (cueList && !thumbSheet && playing!='mpv') Cue(myPlayer.currentTime, index)
       xm = myPlayer.offsetWidth*scaleX*sheetZoom
       ym = myPlayer.offsetHeight*scaleY*sheetZoom
       rect = myPlayer.getBoundingClientRect()
@@ -451,18 +450,18 @@
   function positionMedia(fa) {
     var x=0; var y=0
     if (screenLeft) {Xoff=screenLeft; Yoff=outerHeight-innerHeight} else {x=Xoff; y=Yoff}	// fullscreen offsets
-    if (fa<0) {
-      if (innerHeight == myPlayer.offsetHeight*scaleY) scaleY=1*localStorage.getItem('scaleY')
-      else {scaleY=innerHeight/myPlayer.offsetHeight; mediaY=(innerHeight/2)-y}
-      if (innerWidth == myPlayer.offsetWidth*scaleX) scaleY=1*localStorage.getItem('scaleY')
-      else if (ratio>1) {mediaX=(innerWidth/2)-x; scaleX=innerWidth/myPlayer.offsetWidth; scaleY = scaleX/skinny}}
+    scaleY=1*localStorage.getItem('scaleY')
+    if (zoom) {
+      mediaY=(innerHeight/2)-y
+      if (ratio<1) {scaleY=innerHeight/myPlayer.offsetHeight}
+      else {scaleX=innerWidth/myPlayer.offsetWidth; mediaX=(innerWidth/2)-x; scaleY = scaleX/skinny}}
     scaleX = skinny*scaleY
     myPlayer.style.left = x+mediaX-(myPlayer.offsetWidth/2) +"px"
     myPlayer.style.top = y+mediaY-(myPlayer.offsetHeight/2) +"px"
-    myPlayer.style.transition = Math.abs(fa)+'s'
+    myPlayer.style.transition = fa+'s'
     if (thumbSheet) {
-      x = myPlayer.offsetWidth*scaleX
-      if (x > innerWidth/2) sheetZoom = 1.6-(x-innerWidth/2)/x
+      y = myPlayer.offsetWidth*scaleX
+      if (y > (innerWidth/2)-x) sheetZoom = 3 - Math.abs(y/((innerWidth/2)-x)) 
       else sheetZoom = 2}
     else sheetZoom = 1
     myPlayer.style.transform = "scale("+scaleX*sheetZoom+","+scaleY*sheetZoom+")"}
@@ -595,10 +594,10 @@
       el.innerHTML = x+' '+units; el.style.color = 'red'}
 
   function getAlpha(e, el) {						// set alpha search char in top panel
-      var x = String.fromCharCode(Math.floor(26 * (e.clientX - el.offsetLeft) / el.offsetWidth) + 44)
+      var x = String.fromCharCode(Math.floor(30 * (e.clientX - el.offsetLeft) / el.offsetWidth) + 44)
       el=document.getElementById('my'+x)
       el.scrollIntoView()
-      panel.scrollBy(0,-250)
+      panel.scrollBy(0,-220)
       myView.scrollBy(0,-200)}
 
   function scrolltoIndex(i) {
@@ -606,7 +605,7 @@
     media=document.getElementById('media'+i)
     title=document.getElementById('title'+i)
     title.style.background='#1f1c18'
-    media.style.border='0.1px solid salmon'
+    media.style.borderBottom='4px solid salmon'
     var x = media.getBoundingClientRect().bottom
     if (x > innerHeight-20 || x<20) myView.scrollTo(0, x + myView.scrollTop - innerHeight/2)}
 
@@ -620,7 +619,7 @@
       selected = x.replace(","+i+",",",").slice(1)}
     else {
       if (listView) el.style.outline = '0.1px solid red'
-      else el.style.outline = '2px solid red'
+      else el.style.outline = '1px solid red'
       if (!x.match(','+i+',')) selected=selected+i+','}}
 
   function context(e) {							// right click context menu
@@ -669,4 +668,3 @@
   function flip() {skinny*=-1; scaleX*=-1; media.style.skinny=skinny; positionMedia(0.5); media.style.transform='scaleX('+skinny+')'}
   function mute() {if(!longClick) {
     myPlayer.volume=0; myPlayer.muted=!myPlayer.muted; localStorage.setItem("muted",1*myPlayer.muted)}}
- 
