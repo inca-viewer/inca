@@ -12,7 +12,6 @@
 // can add fade out option to music at cue time for "dream on" mp3
 // if zoom media from near edge focus zoom on cursor like google earth
 // fol fav headings highlight
-// mpv mix images video confused player open
 // mpv offset after close between aspect change
 // ff localStorage ???
 // filing/ rename errors 
@@ -20,6 +19,7 @@
 // when ffmpeg slow
 // longclick over thumbsheet last start - not edge
 // mclick open tab randomly copies view from 1st tab
+// mpv mixed mp4 wmv confused player open
 
 
   var mediaX = 1*localStorage.getItem('mediaX')				// caption strings
@@ -206,6 +206,7 @@
       myPlayer.style.height = y +'px'
       myPlayer.style.top = mediaY-y/2 +'px'
       myPlayer.style.left = mediaX-x/2 +'px'
+      myPlayer.style.zIndex = Zindex+=1					// because htm thumbs use Z-index
       myPlayer.poster = media.poster					// images also use poster src
       myPreview.src = media.src						// seeking preview window
       myPlayer.src=media.src
@@ -235,10 +236,9 @@
     if (playing=='browser' && !thumbSheet && type != 'image') {
       myPlayer.currentTime=start; myPlayer.play()}
     myPlayer.addEventListener('ended', nextMedia)
-    myMask.style.zIndex = Zindex+=1					// because htm thumbs use Z-index
+    myMask.style.zIndex = Zindex-1					// because htm thumbs use Z-index
     myMask.style.opacity = 1
     if (playing=='browser') {
-      myPlayer.style.zIndex = Zindex+=1					// because htm thumbs use Z-index
       myPlayer.style.opacity=1}
     myPlayer.volume = 0							// allows sound to fade up
     wheel=0; lastClick=0}
@@ -450,8 +450,8 @@
   function positionMedia(fa) {
     var x=0; var y=0
     if (screenLeft) {Xoff=screenLeft; Yoff=outerHeight-innerHeight} else {x=Xoff; y=Yoff}	// fullscreen offsets
-    scaleY=1*localStorage.getItem('scaleY')
     if (zoom) {
+      scaleY=1*localStorage.getItem('scaleY')
       mediaY=(innerHeight/2)-y
       if (ratio<1) {scaleY=innerHeight/myPlayer.offsetHeight}
       else {scaleX=innerWidth/myPlayer.offsetWidth; mediaX=(innerWidth/2)-x; scaleY = scaleX/skinny}}
