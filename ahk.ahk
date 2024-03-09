@@ -1020,15 +1020,15 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n if(
 <a id='mySpeed' onwheel="wheelEvents(event, id, this)" onmouseup='togglePause()'></a>`n
 <a id='mySkinny' onwheel="wheelEvents(event, id, this)" onmouseup='togglePause()'></a>`n
 <a id='myPitch' onwheel="wheelEvents(event, id, this)" onmouseup='togglePause()'></a>`n
+<a id='myIndex' onmousedown="inca('Index','',wasMedia)">Index</a>
 <a id='myFlip' onmousedown='if (playing) flip()'>Flip</a>`n
 <a id='myCue' onclick="myPlayer.pause(); myNav.style.display=null; if (playing) {cue=Math.round(myPlayer.currentTime*100)/100} else {inca('EditCue',1,index,cue)}">Cue</a>`n
-<a id='myIndex' onmousedown="inca('Index','',wasMedia)">Index</a>
 </div>`n`n
 
 <div id='myMask' class="mask" onwheel="wheelEvents(event, id, this)">`n</div>
 <div><video id="myPlayer" class='player' type="video/mp4" muted onwheel="wheelEvents(event, id, this)"></video>`n
 <span id='mySeekbar' class='seekbar'></span>`n
-<textarea id='myCap' class="caption" onmouseenter="if(this.innerHTML){overCap=true}"`n onmouseleave="overCap=false"></textarea>
+<span id='myCap' class='caption'></span>`n
 <span><video class='preview' id='myPreview' muted type="video/mp4"></video></span></div>`n`n
 
 <div id='myView' class='myList' style='padding-left:%page_l%`%; padding-right:%page_r%`%'>`n`n
@@ -1079,8 +1079,7 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n if(
 <a id="myPage" style='width:17`%' onmousedown="inca('Page', page)" onwheel="wheelEvents(event, id, this)">%pg%</a>`n
 </div>`n`n
 
-
-<div style='width:100`%; height:9em'></div>`n%mediaList%<div style='width:100`%; height:100vh'></div>`n`n
+<div style='width:100`%; height:10em'></div>`n%mediaList%<div style='width:100`%; height:100vh'></div>`n`n
 
       FileDelete, %inca%\cache\html\%folder%.htm
       StringReplace, header, header, \, /, All
@@ -1148,7 +1147,7 @@ incaTab := folder
             if (StrSplit(A_LoopField, "|").2 == "cap")
               {
               x := StrSplit(A_LoopField, "|").3
-              caption = <div class='cap' style='font-size:%cap_size%em; width:%view3%em'`n onmousedown="inca('EditCue',1,%j%)">%x%</div>`n
+              caption = <span class='cap' style='font-size:%cap_size%em; width:%view3%em; display:block; position:absolute' onmousedown="inca('EditCue',1,%j%)">%x%</span>`n 
               break
               }
        cueList := StrReplace(cueList, "`r`n", "#1")			; lines
@@ -1201,13 +1200,11 @@ if (dur <= 200 && start < 6)						; use 0.00 start < 200 sec videos
 start := Round(start,2)
 
 if listView
-  mediaList = %mediaList% %fold%<table onmouseover="media%j%.style.opacity=1" onmouseout="title%j%.style.color=null; media%j%.style.opacity=0; overMedia=0">`n <tr id="entry%j%"`n onmouseover="title%j%.style.color='lightsalmon'; overThumb(%j%, this)">`n <td onmouseenter='media%j%.style.opacity=0'>%ext%`n <video id='media%j%' onmousedown="getParameters(%j%, '%type%', '%cueList%', %dur%, %start%, event)" class='media2' style="max-width:%view3%em; max-height:%view3%em"`n src="file:///%src%"`n %poster%`n preload=%preload% muted loop type="video/mp4"></video></td>`n <td>%size%</td>`n <td style='min-width:6em'>%durT%</td>`n <td>%date%</td>`n <td style='min-width:4.4em'>%j%</td>`n <td id='myFavicon%j%' style='width:0; translate:-1em; white-space:nowrap; font-size:0.7em; color:salmon; min-width:1em' onmousedown="overMedia=0">%favicon%</td>`n <td style='width:99em'><input id="title%j%" class='title' type='search' value='%media_s%'`n oninput="wasMedia=%j%; renamebox=this.value"></td>`n <td>%fo%</td></tr></table>`n`n
+  mediaList = %mediaList% %fold%<table onmouseover="media%j%.style.opacity=1" onmouseout="title%j%.style.color=null; media%j%.style.opacity=0; overMedia=0">`n <tr id="entry%j%"`n onmouseover="title%j%.style.color='lightsalmon'; overThumb(%j%, this)">`n <td onmouseenter='media%j%.style.opacity=0'>%ext%`n <video id='media%j%' onmousedown="getParameters(%j%, '%type%', '%cueList%', %dur%, %start%, event)" class='media2' style="max-width:%view3%em; max-height:%view3%em"`n src="file:///%src%"`n %poster%`n preload=%preload% muted loop type="video/mp4"></video></td>`n <td>%size%</td>`n <td style='min-width:6em'>%durT%</td>`n <td>%date%</td>`n <td style='min-width:4.4em'>%j%</td>`n <td id='myFavicon%j%' style='width:0; translate:-1em; white-space:nowrap; font-size:0.7em; color:salmon; min-width:1em'>%favicon%</td>`n <td style='width:99em'><input id="title%j%" class='title' type='search' value='%media_s%'`n oninput="wasMedia=%j%; renamebox=this.value"></td>`n <td>%fo%</td></tr></table>`n`n
 
 else
-  mediaList = %mediaList%<div id="entry%j%" style="display:flex; width%view%em; min-width:%view3%em; height:%view3%em; padding-top:%view4%em">`n <video id="media%j%" class='media' style="max-width:%view3%em; max-height:%view3%em"`n onmousedown="getParameters(%j%, '%type%', '%cueList%', %dur%, %start%, event)"`n onmouseover="overThumb(%j%, this)"`n onmouseout="overMedia=0; setTimeout(function(){media%j%.pause()},144)"`n src="file:///%src%"`n %poster%`n preload=%preload% muted loop type="video/mp4"></video>`n %caption% <input id='title%j%' value='%media_s%' class='title' style='display:none'>`n <span id='myFavicon%j%' style='width:0; translate:-1em 1em; white-space:nowrap; font-size:0.8em; color:salmon' onclick="inca('EditCue',%favi%,'%j%')">%favicon%</span>`n </div>`n`n
-
+  mediaList = %mediaList%<div id="entry%j%" style="display:flex; width%view%em; min-width:%view3%em; padding-top:%view4%em">`n <div class='media'>%caption%<span style='display:block; position:absolute; top:-1.5em; font-size:0.8em; color:salmon' id='myFavicon%j%'>%favicon%</span>`n <span><input id='title%j%' class='title' style='text-align:center; font-size:%cap_size%em' type='search' value='%media_s%'`n oninput="wasMedia=%j%; renamebox=this.value"></span>`n <video id="media%j%" class='media' style="display:flex; justify-content: center; max-width:%view3%em; max-height:%view3%em"`n onmousedown="getParameters(%j%, '%type%', '%cueList%', %dur%, %start%, event)"`n onmouseover="overThumb(%j%, this)"`n onmouseout="overMedia=0; setTimeout(function(){media%j%.pause()},144)"`n src="file:///%src%"`n %poster%`n preload=%preload% muted loop type="video/mp4"></video></div>`n</div>`n`n
 }
-
 
     CreateList(show)							; list of files in path
         {

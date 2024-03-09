@@ -21,6 +21,8 @@
 // mclick open tab randomly copies view from 1st tab
 // mpv mixed mp4 wmv confused player open
 
+// finish menu 2 sleep etc
+
 
   var mediaX = 1*localStorage.getItem('mediaX')				// caption strings
   var mediaY = 1*localStorage.getItem('mediaY')				// last media position
@@ -65,7 +67,6 @@
   var xm = 0								// cursor over media ratio
   var ym = 0
   var scaleX								// skinny & X-zoom
-  var lastScaleY = 0.4
   var thumbSheet = false						// 6x6 thumbsheet mode
   var xpos = 0								// cursor coordinate in pixels
   var ypos = 0
@@ -86,7 +87,6 @@
   if (!mediaX || mediaX < 0 || mediaX > innerWidth) mediaX=innerWidth/2
   if (!mediaY || mediaY < 0 || mediaY > innerHeight) mediaY=innerHeight/2
   if (!scaleY || scaleY>2 || scaleY<0.2) scaleY=0.4
-  lastScaleY = scaleY
   scaleX = scaleY
   if (!fade) fade=0.2							// default transitions
   if (!defRate) defRate=1						// default speed
@@ -133,23 +133,22 @@
     clearTimeout(clickTimer)						// longClick timer
     if (Click==3 &&!gesture && yw>0.1)  context(e)			// new context menu if click below window top
     if (Click==1 && gesture==2 && !playing) getParameters(overMedia)	// double thumb size
-    else if (gesture && Click==3 && wheel>1) {zoom=!zoom; positionMedia(0.2)}	// quick gesture - zoom media
+    else if (gesture && Click==3 && wheel>1) {zoom=1; positionMedia(0.2)} // quick gesture - zoom media
     else if (!longClick) mouseEvent('Up')				// process click event 
     Click=0; wheel=0; block=100; gesture=0; longClick=0}
 
 
   function closePlayer() {		
-    myPlayer.style.transition=fade*0.3+'s'
+    positionMedia(fade*0.3)
     myPlayer.style.opacity=0
     if (playing) {							// then close media player
       Messages()							// process cues, width, speed, caption edits
       myPlayer.removeEventListener('ended', nextMedia)
       navigator.clipboard.writeText(messages)				// send messages to inca
-      messages=''} 
+      messages=''
+      playing=''} 
     setTimeout(function() {						// so player can fadeout before close
       lastStart=Math.round(myPlayer.currentTime*100)/100
-      start=0
-      playing=''
       myPlayer.src=''
       myPlayer.poster=''
       thumbSheet=false},fade*300)}
@@ -173,19 +172,19 @@
     if (longClick && myPanel.matches(':hover')) return			// also, copy files instead of move
     if (Click > 2 || gesture || title.matches(':hover')) return		// allow rename of media in htm
     if (longClick==1 && !playing && playlist && overMedia && selected) {inca('Move', index); return}
-    if (playing=='browser' && lastClick==1 && !thumbSheet && type != 'image') {
+    if (!longClick && playing=='browser' && lastClick==1 && !thumbSheet && type != 'image') {
       if (xm>0 && xm<1 && ym>0.75 && ym<1 && !myNav.matches(':hover')) {
         if (xm<0.1 && longClick) {myPlayer.currentTime=0; return}
         else if (xm< 0.1) {myPlayer.currentTime=start; return}
         else {myPlayer.currentTime=xm*dur; return}}
       else if (!longClick && !myNav.matches(':hover')) {togglePause(); return}}
     if (lastClick==1 && e=='Up' && !thumbSheet && !overMedia && !myPlayer.matches(':hover')) return
-    if (lastClick && overMedia) index=overMedia
+    if (!playing && overMedia) index=overMedia
     if (playing) Messages()						// add last media cue edits to queue
     if (e=='Up' && lastClick==1 && myNav.matches(':hover')) return
     if (playing && !longClick && lastClick==2) index++
     if (longClick==2 && index > 1) index--
-    scaleY = lastScaleY
+    scaleY=1*localStorage.getItem('scaleY')
     var fadeOut = fade							// media fadeout time 
     if (!playing || (e=='Up' && thumbSheet && lastClick==1) || (longClick && !thumbSheet)) fadeOut=0 // no fadeout
     if (playing) positionMedia(fade)
@@ -251,8 +250,8 @@
     if (!thumbSheet) messages = messages + '#History#'+lastStart.toFixed(1)+'#'+index+'#'
     mySeekbar.style.opacity = null
     myPreview.style.opacity = null
-    myCap.style.display = 'none'
     myCap.style.opacity = 0
+    myCap.innerHTML = ''
     block = 160}
 
 
@@ -302,8 +301,8 @@
       positionMedia(0)}
     else if (id=='myPitch') {						// pitch
       block = 100
-      if (wheelUp) {if (pitch>0.5) {pitch -= 0.01}}
-      else {if (pitch<2) {pitch += 0.01}}
+      if (wheelUp) {if (pitch>0.5) {pitch += 0.01}}
+      else {if (pitch<2) {pitch -= 0.01}}
       media.style.pitch = pitch}
     else if (id=='View') {						// thumbs
       if (wheelUp) view += 1
@@ -348,14 +347,11 @@
       mediaX += xpos - Xref
       mediaY += ypos - Yref
       localStorage.setItem("mediaX",mediaX.toFixed(0))
-      localStorage.setItem("mediaY",mediaY.toFixed(0))
-      zoom=0}
+      localStorage.setItem("mediaY",mediaY.toFixed(0))}
     else if (playing=='browser' && Click==3 && y>x) {			// zoom media
       if (y>x && (scaleY>0.25 || Yref<ypos)) {
         scaleY += ((ypos-Yref) * 0.003)
-        lastScaleY = scaleY
-        localStorage.setItem('scaleY',scaleY.toFixed(3))}
-      zoom=0}
+        localStorage.setItem('scaleY',scaleY.toFixed(3))}}
     Xref=xpos; Yref=ypos; positionMedia(0)}
 
 
@@ -426,10 +422,14 @@
     if (skinny<0) {myFlip.style.color='red'} else myFlip.style.color=null
     if (cue) {myRibbon2.style.opacity=1; myRibbon2.style.zIndex=null} 
     if (playing) {
+      rect = myPlayer.getBoundingClientRect()
+      myCap.style.top=rect.top -25 +'px'
+      myCap.style.left=rect.left +10 +'px'
+      myCap.style.zIndex=Zindex
+      if (myCap.innerHTML) {myCap.style.opacity=1}
       if (cueList && !thumbSheet && playing!='mpv') Cue(myPlayer.currentTime, index)
       xm = myPlayer.offsetWidth*scaleX*sheetZoom
       ym = myPlayer.offsetHeight*scaleY*sheetZoom
-      rect = myPlayer.getBoundingClientRect()
       xm = (xpos - rect.left) / Math.abs(xm)
       ym = (ypos - rect.top) / Math.abs(ym)
       myMask.style.display='flex'
@@ -450,11 +450,15 @@
   function positionMedia(fa) {
     var x=0; var y=0
     if (screenLeft) {Xoff=screenLeft; Yoff=outerHeight-innerHeight} else {x=Xoff; y=Yoff}	// fullscreen offsets
+    scaleY=1*localStorage.getItem('scaleY')
     if (zoom) {
-      scaleY=1*localStorage.getItem('scaleY')
-      mediaY=(innerHeight/2)-y
-      if (ratio<1) {scaleY=innerHeight/myPlayer.offsetHeight}
-      else {scaleX=innerWidth/myPlayer.offsetWidth; mediaX=(innerWidth/2)-x; scaleY = scaleX/skinny}}
+      zoom=0
+      if ((ratio>1 && myPlayer.offsetWidth*scaleX<innerWidth-x) || (ratio<1 && myPlayer.offsetHeight*scaleY<innerHeight-y)) {
+        mediaY=(innerHeight/2)-y
+        if (ratio<1) {scaleY=innerHeight/myPlayer.offsetHeight}
+        else {scaleX=innerWidth/myPlayer.offsetWidth; mediaX=(innerWidth/2)-x; scaleY = scaleX/skinny}}
+      else scaleY=0.7
+      localStorage.setItem('scaleY',scaleY.toFixed(3))}
     scaleX = skinny*scaleY
     myPlayer.style.left = x+mediaX-(myPlayer.offsetWidth/2) +"px"
     myPlayer.style.top = y+mediaY-(myPlayer.offsetHeight/2) +"px"
@@ -513,7 +517,7 @@
       type = entry[1]							// cue type
       if (entry[2]) value = entry[2]					// cue value - optional para.
       if (cueTime > time-0.1 && cueTime < time+0.1) {
-        if (type=='next') {cueList=''; nextMedia()}
+        if (type=='next') {lastClick=2; mouseEvent('Up')}
         else if (type=='rate') rate=1*value
         else if (type=='time') myPlayer.currentTime = 1*value
         else if (type=='skinny') {if (isNaN(value)) {skinny=1} else {skinny=1*value}}
@@ -523,14 +527,7 @@
           value *=1000
           if (value>999 && value<9999) {setTimeout(function(){myPlayer.play()},value)}}
         else if (type == 'cap' && playing) {
-          myCap.innerHTML = value.replaceAll("#3", "\,").replaceAll("#4", "\'").replaceAll("#5", "\"")
-          rect = myPlayer.getBoundingClientRect()
-          myCap.style.top = rect.bottom +10 +'px'
-          myCap.style.left = rect.left +10 +'px'
-          myCap.style.display='block'
-          myCap.style.zIndex=Zindex+1
-          myCap.value = myCap.innerHTML
-          myCap.style.opacity = 1}}}}
+          myCap.innerHTML = value.replaceAll("#3", "\,").replaceAll("#4", "\'").replaceAll("#5", "\"")}}}}
 
 
   function thumbSize() {						// change thumb size
@@ -626,11 +623,7 @@
     var offset=''
     myDelete.style.color=null
     wasMedia=0
-    if (overMedia) {
-      index=overMedia
-      wasMedia=overMedia
-      SearchRen.innerHTML='Rename'
-      myInput.value=title.value}
+    if (overMedia) {index=overMedia; wasMedia=overMedia}
     if (panel.matches(':hover')) {
       var x = e.target.innerHTML						// ~ text under cursor
       if (x && x.length<99) {

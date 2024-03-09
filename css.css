@@ -12,9 +12,6 @@
   c:hover {overflow:visible; transition:0.2s; transform:scale(1.1,1.1); translate:0.2em; color:lightsalmon}
   input:hover {color:lightsalmon;transition:color 1.2s}
 
-#myRibbon2 {opacity:0}
-#myRibbon2:hover {opacity:1}
-
 .player {					/* media player element */
   position:absolute;
   opacity:0;
@@ -96,6 +93,8 @@
 
 .ribbon a {transition:0.8s; border-radius:0.32em}
 .ribbon a:hover {transition:0.2s; color:salmon}
+#myRibbon2 {opacity:0}
+#myRibbon2:hover {opacity:1}
 
 .searchbox {					/* input searchbox in htm tab	*/
   text-overflow:ellipsis;
@@ -152,18 +151,17 @@
   transition:0.2s}
 
 .cap {						/* htm caption element */
-  display:block;
-  position:absolute;
-  color:#ffa07a66;
   overflow:wrap;
+  white-space:nowrap;
+  text-align:center;
+  overflow:hidden;
+  text-overflow:ellipsis;
   margin:auto;
   line-height:1em;
   margin-top:-1em}
 
-.caption {					/* media caption element */
-  display:none;
+.caption {					/* myPlayer caption element */
   position:fixed;
-  z-index:4;
   resize:none;
   height:auto;
   width:24em;
@@ -174,7 +172,6 @@
   opacity:0;
   overflow:hidden;
   user-select:none;
-  color:burlywood;
   border-radius:1em;
   font-size:1.4em;
   transition:0.6s}
