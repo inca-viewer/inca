@@ -3,6 +3,8 @@
 // to do - undo delete & move files
 //       - simplify media list htm coding
 //       - duplicate filename issues for thumbs
+// panel corrupt title empty after search
+
 
 // bluetooth hardware interface from cueList
 // in Cue process each line number instead of match myPlayer.currentTime
@@ -20,8 +22,9 @@
 // longclick over thumbsheet last start - not edge
 // mclick open tab randomly copies view from 1st tab
 // mpv mixed mp4 wmv confused player open
-
 // finish menu 2 sleep etc
+// fullscreen zoom issues
+
 
 
   var mediaX = 1*localStorage.getItem('mediaX')				// caption strings
@@ -342,7 +345,7 @@
       media.style.zIndex = Zindex+=1
       media.style.left = xpos-media.offsetWidth/2+"px"
       media.style.top = ypos-media.offsetHeight/2+"px"}
-    else if (xm>0 && xm<1 && ym>0 && ym<1 && playing && Click==1) {	// move media
+    else if (playing && Click==1) {					// move media
       gesture = 3
       mediaX += xpos - Xref
       mediaY += ypos - Yref

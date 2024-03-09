@@ -99,7 +99,6 @@
       sleep 333
       if !GetBrowser()
         Clipboard = #Path###%profile%\Pictures\
-;      else send, {F5}
       Clipboard()				; process clipboard message
       SetTimer, TimedEvents, 100		; every 100mS
       return					; wait for mouse/key events
@@ -143,7 +142,7 @@
       return
     Timer_up:					; long back key press
       IfWinActive, ahk_group Browsers
-        send, ^0^w{Esc} 			; close tab
+        send, ^w				; close tab
       else send, !{F4}				; or close app
       return
     Xbutton1 up::
@@ -1034,7 +1033,7 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n if(
 <div id='myView' class='myList' style='padding-left:%page_l%`%; padding-right:%page_r%`%'>`n`n
 
 <div class='ribbon' style='height:1.4em; justify-content:center; background:#1b1814'>`n
-<a style='width:7em; font-size:1.4em; margin-left:1em; margin-top:-0.2em; %sub%' onmousedown="inca('Path')" onmouseover="Sub.scrollIntoView(); myView.scrollTo(0,0)">&#8678</a>`n
+<a style='width:10em; font-size:1.4em; margin-left:1em; margin-top:-0.2em; %sub%' onmousedown="inca('Path')" onmouseover="Sub.scrollIntoView(); myView.scrollTo(0,0)">&#8678</a>`n
 <a style='width:6em; text-align:left' onmouseover="Fol.scrollIntoView(); myView.scrollTo(0,0)">Fol</a>`n
 <a style='width:6em; text-align:left; padding-left:1em' onmouseover="Fav.scrollIntoView(); myView.scrollTo(0,0)">Fav</a>`n
 <a style='width:7em; text-align:left; padding-left:1em' onmouseover="Music.scrollIntoView(); myView.scrollTo(0,0)">Music</a>`n
