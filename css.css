@@ -26,7 +26,7 @@
   user-select:none;
   border-radius:9%;
   max-height:100px;
-  transition:opacity 1s}
+  transition:opacity 0.5s}
 
 .myList {					/* list view */
   position:absolute;
@@ -193,6 +193,7 @@
 .context {					/* right click menu */
   display:none;
   z-index:888;
+  min-width:6em;
   position:fixed;
   font-size:1.1em;
   transition:0.14s;

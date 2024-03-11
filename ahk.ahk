@@ -501,12 +501,9 @@
               value = 0.0
             start := value -0.1						; smoother start from poster image in htm
             Runwait, %inca%\cache\apps\ffmpeg.exe -ss %start% -i "%src%" -y -vf scale=1280:1280/dar -vframes 1 "%inca%\cache\posters\%media%%A_Space%%value%.jpg",, Hide
-            if playlist
-              ta := folder
-            else ta = new
             Loop, Parse, selected, `,
               if GetMedia(A_Loopfield)
-                FileAppend, %src%|%value%`r`n, %inca%\fav\%ta%.m3u, UTF-8
+                FileAppend, %src%|%value%`r`n, %inca%\fav\new.m3u, UTF-8
             AllFav()							; add to consolidated fav list
             popup("Added - New",500,0,0)
             }
@@ -1019,9 +1016,9 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n if(
 <a id='mySpeed' onwheel="wheelEvents(event, id, this)" onmouseup='togglePause()'></a>`n
 <a id='mySkinny' onwheel="wheelEvents(event, id, this)" onmouseup='togglePause()'></a>`n
 <a id='myPitch' onwheel="wheelEvents(event, id, this)" onmouseup='togglePause()'></a>`n
-<a id='myIndex' onmousedown="inca('Index','',wasMedia)">Index</a>
-<a id='myFlip' onmousedown='if (playing) flip()'>Flip</a>`n
+<a id='myFlip' onmousedown='flip()'>Flip</a>`n
 <a id='myCue' onclick="myPlayer.pause(); myNav.style.display=null; if (playing) {cue=Math.round(myPlayer.currentTime*100)/100} else {inca('EditCue',1,index,cue)}">Cue</a>`n
+<a id='myIndex' onmousedown="inca('Index','',wasMedia)">Index</a>
 </div>`n`n
 
 <div id='myMask' class="mask" onwheel="wheelEvents(event, id, this)">`n</div>
@@ -1033,8 +1030,8 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n if(
 <div id='myView' class='myList' style='padding-left:%page_l%`%; padding-right:%page_r%`%'>`n`n
 
 <div class='ribbon' style='height:1.4em; justify-content:center; background:#1b1814'>`n
-<a style='width:10em; font-size:1.4em; margin-left:1em; margin-top:-0.2em; %sub%' onmousedown="inca('Path')" onmouseover="Sub.scrollIntoView(); myView.scrollTo(0,0)">&#8678</a>`n
-<a style='width:6em; text-align:left' onmouseover="Fol.scrollIntoView(); myView.scrollTo(0,0)">Fol</a>`n
+<a style='width:9em; font-size:1.4em; margin-left:1em; margin-top:-0.2em; %sub%' onmousedown="inca('Path')" onmouseover="Sub.scrollIntoView(); myView.scrollTo(0,0)">&#8678</a>`n
+<a style='width:6em; text-align:left; padding-left:1em' onmouseover="Fol.scrollIntoView(); myView.scrollTo(0,0)">Fol</a>`n
 <a style='width:6em; text-align:left; padding-left:1em' onmouseover="Fav.scrollIntoView(); myView.scrollTo(0,0)">Fav</a>`n
 <a style='width:7em; text-align:left; padding-left:1em' onmouseover="Music.scrollIntoView(); myView.scrollTo(0,0)">Music</a>`n
 <input id='myInput' class='searchbox' style='width:50`%; border-radius:1em; padding-left:1em' type='search' value='%st%' onmousedown="if(myInput.value.includes('Search')) {myInput.value=''}" onmousemove='getAlpha(event, this)'>`n
@@ -1045,29 +1042,23 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n if(
 
 <div id='myPanel' class='myPanel' onmouseover="if(selected) {this.style.border='1px solid salmon'}" onmouseout="this.style.border='none'">`n <div id='panel' class='panel'>`n`n%panelList%`n<div style='height:40em'></div></div></div>`n`n
 
-<div id='myRibbon2' class='ribbon'>`n
-<a id='myJoin' style='width:6`%' onmousedown="inca('Join')">Join</a>
-<a id='myMp3' style='width:6`%' onmousedown="inca('mp3', lastStart, lastIndex, cue)">mp3</a>`n
-<a id='myMp4' style='width:6`%' onmousedown="inca('mp4', lastStart, lastIndex, cue)">mp4</a>`n
-<a id='myMpv' style='width:8`%' onmouseup="mpv*=1; mpv^=1; localStorage.setItem('mpv',mpv)">External</a>`n
-<a style='width:7`%' onmousedown="inca('Settings')">Inca</a>`n
-<a id='myRate' style='width:11`%; overflow:visible' onwheel="wheelEvents(event, id, this)">Speed</a>`n
-<a id='myFade' style='width:10`%; overflow:visible' onwheel="wheelEvents(event, id, this)">Fade</a>`n
-<a id='myLeft' style='width:6`%' onwheel="wheelEvents(event, id, this)">Left</a>`n
-<a id='myRight' style='width:6`%' onwheel="wheelEvents(event, id, this)">Right</a>`n
-<a id='mySize' style='width:6`%' onmouseup="inca('mySize')">Size</a>
-<a id='myStatus' style='width:8`%' onmouseup="inca('myStatus')">Status</a>`n
-<a id='mySleep' style='width:6`%' onmouseup="inca('mySleep')">Sleep</a>`n
-<a id='myIndexer' style='width:9`%' onmouseup="inca('myIndexer')">Indexer</a>`n
-<a id='myAmbient' style='width:9`%' onmouseup="inca('myAmbient')">Ambient</a>`n
-</div>`n`n
+<div id='myRibbon2' class='ribbon' style='justify-content:space-around'>`n
+<a></a><a></a><a></a>
+<a id='myMpv' onmouseup="mpv*=1; mpv^=1; localStorage.setItem('mpv',mpv)">External</a>`n
+<a onmousedown="inca('Settings')">Inca</a>`n
+<a id='myMp4' onmousedown="inca('mp4', lastStart, lastIndex, cue)">mp4</a>`n
+<a id='myMp3' onmousedown="inca('mp3', lastStart, lastIndex, cue)">mp3</a>`n
+<a id='myJoin' onmousedown="inca('Join')">Join</a>
+<a id='myRate' onwheel="wheelEvents(event, id, this)">Speed</a>`n
+<a id='myFade' onwheel="wheelEvents(event, id, this)">Fade</a>`n
+<a></a><a></a><a></a></div>`n`n
 
 <div id='myRibbon' class='ribbon'>`n
-<a id='Type' style='width:5em; %x6%' onmousedown="inca('Type')">Ext</a>`n
+<a id='Type' style='width:4em; %x6%' onmousedown="inca('Type')">Ext</a>`n
 <a id='Size' style='min-width:3em; %x5%' onmousedown="inca('Size', filt)" onwheel="wheelEvents(event, id, this)">Size</a>`n
 <a id='Duration' style='min-width:5em; %x3%' onmousedown="inca('Duration', filt)" onwheel="wheelEvents(event, id, this)"> Duration</a>`n
 <a id='Date' style='min-width:4.5em; %x4%' onmousedown="inca('Date', filt)" onwheel="wheelEvents(event, id, this)">Date</a>`n
-<a id='List' style='width:3em; %x11%' onmousedown="inca('List', filt)" style='color:red'>%order%</a>`n
+<a id='List' style='%x11%' onmousedown="inca('List', filt)" style='color:red'>%order%</a>`n
 <a id='Alpha' style='width:9`%; %x2%' onmousedown="inca('Alpha', filt)" onwheel="wheelEvents(event,id,this)">Alpha</a>`n
 <a id='Shuffle' style='width:9`%; %x1%' onmousedown="inca('Shuffle')">Shuffle</a>`n
 <a id='View' style='width:8`%' onmousedown="inca('View', view, '', lastIndex)" onwheel="wheelEvents(event, id, this)">View %view4%</a>`n 
