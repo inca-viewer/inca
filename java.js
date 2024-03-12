@@ -24,6 +24,8 @@
 // finish menu 2 sleep etc
 // messages in inca function
 // mp3 re start at 0
+// skinny flip messages
+// diana cannot set skinny
 
   var mediaX = 1*localStorage.getItem('mediaX')				// caption strings
   var mediaY = 1*localStorage.getItem('mediaY')				// last media position
@@ -171,8 +173,8 @@
     if (longClick && myPanel.matches(':hover')) return			// also, copy files instead of move
     if (Click > 2 || gesture || title.matches(':hover')) return		// allow rename of media in htm
     if (longClick==1 && !playing && playlist && overMedia && selected) {inca('Move', index); return}
-    if (playing=='browser' && lastClick==1 && !thumbSheet && type != 'image') {
-      if (xm>0 && xm<1 && ym>0.75 && ym<1 && !myNav.matches(':hover')) {
+    if (playing=='browser' && lastClick==1 && !thumbSheet && type != 'image' && !myNav.matches(':hover')) {
+      if (xm>0 && xm<1 && ym>0.75 && ym<1) {
         if (xm<0.2 && longClick) {myPlayer.currentTime=0; return}
         else if (longClick) {myPlayer.currentTime=start; return}
         else {myPlayer.currentTime=xm*dur; return}}
@@ -216,7 +218,7 @@
       if (e=='Up' && lastClick==1 && thumbSheet) getStart()		// thumbsheet xy coord
       if (longClick && !playing) start=lastStart			// return to lat media start
       var z = media.getBoundingClientRect()
-      if (!playing && (z.bottom-ypos)<20 && xpos-z.left<20) start=0	// clicked corner of thumb
+      if (!playing && xpos-z.left<15) start=0				// clicked left of thumb
       positionMedia(fade)
       scrolltoIndex(index)						// + highlight played media
       Play(e)},fadeOut*500)}
@@ -457,11 +459,11 @@
       scaleY=1*localStorage.getItem('scaleY')
       z = (innerHeight+y)/myPlayer.offsetHeight				// media to screen ratio calc.
       if (z > (innerWidth+x)/myPlayer.offsetWidth) z=0
-      if ((!z && 1.2*myPlayer.offsetWidth*scaleX<innerWidth-x) || (z && 1.2*myPlayer.offsetHeight*scaleY<innerHeight-y)) {
+      if ((!z && 1.14*myPlayer.offsetWidth*scaleX<innerWidth-x) || (z && 1.14*myPlayer.offsetHeight*scaleY<innerHeight-y)) {
         mediaY=((innerHeight-y)/2)
         if (z) {scaleY=(innerHeight-y)/myPlayer.offsetHeight}		// full size myPlayer
         else {scaleX=(innerWidth-x)/myPlayer.offsetWidth; mediaX=(innerWidth-x-20)/2; scaleY=scaleX/skinny}}
-      else scaleY=0.64
+      else scaleY=0.7
       localStorage.setItem('scaleY',scaleY.toFixed(3))}
     myPlayer.style.left = mediaX +x/2 -(myPlayer.offsetWidth/2) +"px"	// position media in window
     myPlayer.style.top = mediaY +y/2 -(myPlayer.offsetHeight/2) +"px"
@@ -628,33 +630,33 @@
     wasMedia=0
     if (overMedia) {index=overMedia; wasMedia=overMedia}
     if (panel.matches(':hover')) {
-      var x = e.target.innerHTML						// ~ text under cursor
+      var x = e.target.innerHTML					// ~ text under cursor
       if (x && x.length<99) {
         myDelete.style.color='red'; myDelete.innerHTML='Delete - '+x}}
     else {myDelete.style.color=null; myDelete.innerHTML='Delete'}
-    if (yw > 0.8) offset=60							// cursor near window bottom, add offset
+    if (yw > 0.8) offset=60						// cursor near window bottom, add offset
     myNav.style.left=xpos-45+'px'; myNav.style.top=ypos-10-offset+'px'
     myNav.style.display='block'; myNav.style.background='#15110acc'}
 
-  function globals(vi, pg, ps, so, fi, lv, se, pl, ix) {			// import globals to java from inca
+  function globals(vi, pg, ps, so, fi, lv, se, pl, ix) {		// import globals to java from inca
     view=vi; page=pg; pages=ps; sort=so; filt=fi; listView=lv; 
     selected=se; playlist=pl; index=ix; wasMedia=ix; lastIndex=ix
-    filter(sort)								// show filter heading in red
-    for (x of selected.split(',')) {if (x && !isNaN(x)) {			// highlight selected media			
+    filter(sort)							// show filter heading in red
+    for (x of selected.split(',')) {if (x && !isNaN(x)) {		// highlight selected media			
       if (lv) document.getElementById('title'+x).style.outline = '0.1px solid red'
       else document.getElementById('media'+x).style.outline = '1px solid red'}}
-    for (i=1; getParameters(i); i++) 						// process cues (eg. thumb widths)
+    for (i=1; getParameters(i); i++) 					// process cues (eg. thumb widths)
     scrolltoIndex(index)}
 
-  function inca(command,value,select,address) { 				// send messages to inca.exe
+  function inca(command,value,select,address) { 			// send messages to inca.exe
     if (!select) {select=''} else {select=select+','}
     if (command == 'Favorite') document.getElementById('myFavicon'+index).innerHTML='&#10084'
     else if (selected) select=selected
     for (x of select.split(',')) if (x) document.getElementById('media'+x).load()
-    setTimeout(function() {							// time for load & right click to be detected
+    setTimeout(function() {						// time for load & right click to be detected
       if (!value) value=''
       if (!address) address=''
-      if (isNaN(value)) value=value.replaceAll('#', '<')			// cannot transport '#' over link
+      if (isNaN(value)) value=value.replaceAll('#', '<')		// cannot transport '#' over link
       navigator.clipboard.writeText('#'+command+'#'+value+'#'+select+'#'+address)},20)}
 
   function Time(z) {if (z<0) return '0:00'; var y=Math.floor(z%60); var x=':'+y; if (y<10) {x=':0'+y}; return Math.floor(z/60)+x}

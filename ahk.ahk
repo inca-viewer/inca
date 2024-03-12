@@ -380,7 +380,8 @@
             }
         if (command == "Reload")					; reload web page
             {
-            reload:=3
+selected =
+            reload:=2
             index := 1							; scroll to media 1
             }
         if (command == "History")					; java tells inca to play
@@ -1059,15 +1060,14 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n if(
 <a id="myPage" style='width:17`%' onmousedown="inca('Page', page)" onwheel="wheelEvents(event, id, this)">%pg%</a>`n
 </div>`n`n
 
-<div id='myRibbon2' class='ribbon' style='height:0; overflow:hidden; justify-content:center'>`n
-<a></a><a></a><a></a>
+<div id='myRibbon2' class='ribbon' style='height:0; overflow:hidden; justify-content:right'>`n
+<a id='myRate' style='width:10`%' onwheel="wheelEvents(event, id, this)">Speed</a>`n
+<a id='myFade' style='width:10`%' onwheel="wheelEvents(event, id, this)">Fade</a>`n
+<a id='myMpv' style='width:9`%' onmouseup="mpv*=1; mpv^=1; localStorage.setItem('mpv',mpv)">External</a>`n
 <a id='myMp4' style='width:5`%' onmousedown="inca('mp4', lastStart, lastIndex, cue)">mp4</a>`n
 <a id='myMp3' style='width:5`%' onmousedown="inca('mp3', lastStart, lastIndex, cue)">mp3</a>`n
 <a id='myJoin' style='width:5`%' onmousedown="inca('Join')">Join</a>
-<a id='myRate' style='width:9`%' onwheel="wheelEvents(event, id, this)">Speed</a>`n
-<a id='myFade' style='width:9`%' onwheel="wheelEvents(event, id, this)">Fade</a>`n
-<a id='myMpv' style='width:9`%' onmouseup="mpv*=1; mpv^=1; localStorage.setItem('mpv',mpv)">External</a>`n
-<a></a><a></a><a></a></div>`n`n
+<a style='width:10`%'></a></div>`n`n
 
 <div style='width:100`%; height:9em'></div>`n%mediaList%<div style='width:100`%; height:100vh'></div>`n`n
 
@@ -1185,7 +1185,7 @@ incaTab := folder
         poster = poster="file:///%thumb%"
         StringReplace, media_s, media, `', &apos;, All
 
-if (dur <= 200 && start < 6)						; use 0.00 start < 200 sec videos
+if (!playlist && dur <= 200 && start < 6)				; use 0.00 start < 200 sec videos
   start = 0
 start := Round(start,2)
 
@@ -1193,7 +1193,7 @@ if listView
   mediaList = %mediaList% %fold%<table onmouseover="media%j%.style.opacity=1" onmouseout="title%j%.style.color=null; media%j%.style.opacity=0; overMedia=0">`n <tr id="entry%j%"`n onmouseover="title%j%.style.color='lightsalmon'; overThumb(%j%, this)">`n <td onmouseenter='media%j%.style.opacity=0'>%ext%`n <video id='media%j%' onmousedown="getParameters(%j%, '%type%', '%cueList%', %dur%, %start%, event)" class='media2' style="max-width:%view3%em; max-height:%view3%em"`n src="file:///%src%"`n %poster%`n preload=%preload% muted loop type="video/mp4"></video></td>`n <td>%size%</td>`n <td style='min-width:6em'>%durT%</td>`n <td>%date%</td>`n <td style='min-width:4.4em'>%j%</td>`n <td id='myFavicon%j%' style='width:0; translate:-1em; white-space:nowrap; font-size:0.7em; color:salmon; min-width:1em'>%favicon%</td>`n <td style='width:99em'><input id="title%j%" class='title' type='search' value='%media_s%'`n oninput="wasMedia=%j%; renamebox=this.value"></td>`n <td>%fo%</td></tr></table>`n`n
 
 else
-  mediaList = %mediaList%<div id="entry%j%" style="display:flex; width%view%em; min-width:%view3%em; padding-top:%view4%em">`n <div class='media'>%caption%<span style='display:block; position:absolute; top:-1.5em; font-size:0.8em; color:salmon' id='myFavicon%j%'>%favicon%</span>`n <span><input id='title%j%' class='title' style='text-align:center; font-size:%cap_size%em' type='search' value='%media_s%'`n oninput="wasMedia=%j%; renamebox=this.value"></span>`n <video id="media%j%" class='media' style="display:flex; justify-content: center; max-width:%view3%em; max-height:%view3%em"`n onmousedown="getParameters(%j%, '%type%', '%cueList%', %dur%, %start%, event)"`n onmouseover="overThumb(%j%, this)"`n onmouseout="overMedia=0; setTimeout(function(){media%j%.pause()},144)"`n src="file:///%src%"`n %poster%`n preload=%preload% muted loop type="video/mp4"></video></div>`n</div>`n`n
+  mediaList = %mediaList%<div id="entry%j%" style="display:flex; width%view%em; min-width:%view3%em; padding-top:%view4%em">`n <div class='media'>%caption%<span style='display:block; position:absolute; top:-1.5em; font-size:0.8em; color:salmon' id='myFavicon%j%'>%favicon%</span>`n <span><input id='title%j%' class='title' style='text-align:center; width:%view%em; font-size:%cap_size%em' type='search' value='%media_s%'`n oninput="wasMedia=%j%; renamebox=this.value"></span>`n <video id="media%j%" class='media' style="display:flex; justify-content: center; max-width:%view3%em; max-height:%view3%em"`n onmousedown="getParameters(%j%, '%type%', '%cueList%', %dur%, %start%, event)"`n onmouseover="overThumb(%j%, this)"`n onmouseout="overMedia=0; setTimeout(function(){media%j%.pause()},144)"`n src="file:///%src%"`n %poster%`n preload=%preload% muted loop type="video/mp4"></video></div>`n</div>`n`n
 }
 
     CreateList(show)							; list of files in path
