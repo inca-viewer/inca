@@ -88,13 +88,11 @@
   width:100%;
   border-radius:1em;
   text-align:center;
-  transition:0.5s;
+  transition:0.3s;
   font-size:1em}
 
 .ribbon a {transition:0.8s; border-radius:0.32em}
 .ribbon a:hover {transition:0.2s; color:salmon}
-#myRibbon2 {opacity:0}
-#myRibbon2:hover {opacity:1}
 
 .searchbox {					/* input searchbox in htm tab	*/
   text-overflow:ellipsis;

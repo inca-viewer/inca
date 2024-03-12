@@ -1008,7 +1008,7 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n if(
 <div oncontextmenu="if(yw>0.1 || playing || gesture) {event.preventDefault()}">`n`n
 
 <div id='myNav' class='context'>`n
-<a id='mySelect' onmouseup="if (!longClick && (wasMedia||playing)) {sel(index)} else{selectAll()}">Select</a>`n
+<a id='mySelect' onmouseup="if (wasMedia||playing) {sel(index)} else{selectAll()}">Select</a>`n
 <a id='myDelete' onmousedown="if(!event.button) {inca('Delete','',wasMedia)}">Delete</a>`n
 <a id='myFav' onmouseup="if(!event.button && !longClick) inca('Favorite', myPlayer.currentTime.toFixed(1), index)">Fav</a>`n
 <a id='myMute' onmouseup='mute()'>Mute</a>`n
@@ -1042,17 +1042,6 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n if(
 
 <div id='myPanel' class='myPanel' onmouseover="if(selected) {this.style.border='1px solid salmon'}" onmouseout="this.style.border='none'">`n <div id='panel' class='panel'>`n`n%panelList%`n<div style='height:40em'></div></div></div>`n`n
 
-<div id='myRibbon2' class='ribbon' style='justify-content:space-around'>`n
-<a></a><a></a><a></a>
-<a id='myMpv' onmouseup="mpv*=1; mpv^=1; localStorage.setItem('mpv',mpv)">External</a>`n
-<a onmousedown="inca('Settings')">Inca</a>`n
-<a id='myMp4' onmousedown="inca('mp4', lastStart, lastIndex, cue)">mp4</a>`n
-<a id='myMp3' onmousedown="inca('mp3', lastStart, lastIndex, cue)">mp3</a>`n
-<a id='myJoin' onmousedown="inca('Join')">Join</a>
-<a id='myRate' onwheel="wheelEvents(event, id, this)">Speed</a>`n
-<a id='myFade' onwheel="wheelEvents(event, id, this)">Fade</a>`n
-<a></a><a></a><a></a></div>`n`n
-
 <div id='myRibbon' class='ribbon'>`n
 <a id='Type' style='width:4em; %x6%' onmousedown="inca('Type')">Ext</a>`n
 <a id='Size' style='min-width:3em; %x5%' onmousedown="inca('Size', filt)" onwheel="wheelEvents(event, id, this)">Size</a>`n
@@ -1061,15 +1050,26 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n if(
 <a id='List' style='%x11%' onmousedown="inca('List', filt)" style='color:red'>%order%</a>`n
 <a id='Alpha' style='width:9`%; %x2%' onmousedown="inca('Alpha', filt)" onwheel="wheelEvents(event,id,this)">Alpha</a>`n
 <a id='Shuffle' style='width:9`%; %x1%' onmousedown="inca('Shuffle')">Shuffle</a>`n
-<a id='View' style='width:8`%' onmousedown="inca('View', view, '', lastIndex)" onwheel="wheelEvents(event, id, this)">View %view4%</a>`n 
+<a id='View' style='width:9`%' onmousedown="inca('View', view, '', lastIndex)" onwheel="wheelEvents(event, id, this)">View %view4%</a>`n 
 <a style='width:6.5`%; %x10%' onmousedown="inca('Images')">Pics</a>`n
 <a style='width:6.5`%; %x9%' onmousedown="inca('Videos')">Vids</a>`n
 <a style='width:7`%; %x8%' onmousedown="inca('Recurse')">Subs</a>`n
+<a id='myInca' style='width:12`%' onmouseover="myRibbon2.style.height='1.2em'; this.innerHTML='Inca'" onmouseup="inca('Settings')">&#8230</a>`n
 <a style='color:red; width:14`%; font-size:1.1em; margin-top:-0.1em'>%listSize%</a>
 <a id="myPage" style='width:17`%' onmousedown="inca('Page', page)" onwheel="wheelEvents(event, id, this)">%pg%</a>`n
 </div>`n`n
 
-<div style='width:100`%; height:10em'></div>`n%mediaList%<div style='width:100`%; height:100vh'></div>`n`n
+<div id='myRibbon2' class='ribbon' style='height:0; overflow:hidden; justify-content:center'>`n
+<a></a><a></a><a></a>
+<a id='myMp4' style='width:5`%' onmousedown="inca('mp4', lastStart, lastIndex, cue)">mp4</a>`n
+<a id='myMp3' style='width:5`%' onmousedown="inca('mp3', lastStart, lastIndex, cue)">mp3</a>`n
+<a id='myJoin' style='width:5`%' onmousedown="inca('Join')">Join</a>
+<a id='myRate' style='width:9`%' onwheel="wheelEvents(event, id, this)">Speed</a>`n
+<a id='myFade' style='width:9`%' onwheel="wheelEvents(event, id, this)">Fade</a>`n
+<a id='myMpv' style='width:9`%' onmouseup="mpv*=1; mpv^=1; localStorage.setItem('mpv',mpv)">External</a>`n
+<a></a><a></a><a></a></div>`n`n
+
+<div style='width:100`%; height:9em'></div>`n%mediaList%<div style='width:100`%; height:100vh'></div>`n`n
 
       FileDelete, %inca%\cache\html\%folder%.htm
       StringReplace, header, header, \, /, All

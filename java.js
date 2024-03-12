@@ -124,8 +124,7 @@
     if (Click==2 && myPanel.matches(':hover')) return			// open new tab
     if (Click==2) e.preventDefault()					// middle click
     else if (overMedia) index = overMedia
-    clickTimer=setTimeout(function() {
-      if (!gesture && xw<0.95) {longClick=lastClick; mouseEvent()}},240)}
+    clickTimer=setTimeout(function() {longClick=lastClick; mouseEvent()},240)}
 
 
   function mouseUp(e) {
@@ -133,7 +132,7 @@
     clearTimeout(clickTimer)						// longClick timer
     if (Click==3 &&!gesture && yw>0.1)  context(e)			// new context menu if click below window top
     if (Click==1 && gesture==2 && !playing) getParameters(overMedia)	// double thumb size
-    else if (gesture && Click==3 && wheel>1) {zoom=1; positionMedia(0.2)} // quick gesture - zoom media
+    else if (gesture && Click==3 && !longClick) {zoom=1; positionMedia(0.2)} // quick gesture - zoom media
     else if (!longClick) mouseEvent('Up')				// process click event 
     Click=0; wheel=0; block=100; gesture=0; longClick=0}
 
@@ -178,7 +177,7 @@
         else if (longClick) {myPlayer.currentTime=start; return}
         else {myPlayer.currentTime=xm*dur; return}}
       else if (!longClick) {togglePause(); return}}
-    if (longClick && thumbSheet) {getStart(); myPlayer.play(); return}
+    if (longClick && thumbSheet) {getStart(); positionMedia(0.3); return}
     if (lastClick==1 && e=='Up' && !thumbSheet && !overMedia && !myPlayer.matches(':hover')) return
     if (!playing && overMedia) index=overMedia
     if (playing) Messages()						// add last media cue edits to queue
@@ -410,7 +409,7 @@
     else myPitch.innerHTML = pitch.toFixed(2)
     if (selected) mySelected.innerHTML = selected.split(',').length -1
     else mySelected.innerHTML = ''
-// mySelected.innerHTML = Xoff+' '+Yoff
+// mySelected.innerHTML = ''
     if (playlist) {myFav.innerHTML='Fav &#10084'}
     if ((wasMedia || playing) && mySelect.matches(':hover')) {
       mySelect.innerHTML='Select - '+index+' - '+title.value}
@@ -451,28 +450,27 @@
 
 
   function positionMedia(fa) {
-    var x = outerHeight
-    var y = myPlayer.offsetWidth
-    var v = 0; var w= 0
-    if (screenLeft) {Xoff=screenLeft; Yoff=x-innerHeight} else {v=Xoff; w=Yoff}	// fullscreen offsets
-    var z = x/myPlayer.offsetHeight					// media to screen ratio calc.
-    if (x != innerHeight) x=innerHeight
-    if (z > outerWidth/y) z=0
+    var x=0; var y=0; var z=0
+    if (screenLeft) {Xoff=screenLeft; Yoff=outerHeight-innerHeight} else {x=Xoff; y=Yoff}	// fullscreen offsets
     if (zoom) {								// triggered by quick slide gesture
+      zoom=0
       scaleY=1*localStorage.getItem('scaleY')
-      if ((!z && 1.2*y*scaleX<outerWidth) || (z && 1.2*myPlayer.offsetHeight*scaleY<x)) {
-        if (z) {scaleY=x/myPlayer.offsetHeight; mediaY=x/2}			// full height
-        else {scaleX=outerWidth/y; mediaX=outerWidth/2; scaleY=scaleX/skinny}}	// full width
+      z = (innerHeight+y)/myPlayer.offsetHeight				// media to screen ratio calc.
+      if (z > (innerWidth+x)/myPlayer.offsetWidth) z=0
+      if ((!z && 1.2*myPlayer.offsetWidth*scaleX<innerWidth-x) || (z && 1.2*myPlayer.offsetHeight*scaleY<innerHeight-y)) {
+        mediaY=((innerHeight-y)/2)
+        if (z) {scaleY=(innerHeight-y)/myPlayer.offsetHeight}		// full size myPlayer
+        else {scaleX=(innerWidth-x)/myPlayer.offsetWidth; mediaX=(innerWidth-x-20)/2; scaleY=scaleX/skinny}}
       else scaleY=0.64
       localStorage.setItem('scaleY',scaleY.toFixed(3))}
-    myPlayer.style.left = mediaX +v -y/2 +"px"			// position media in window
-    myPlayer.style.top = mediaY +w -myPlayer.offsetHeight/2 +"px"
+    myPlayer.style.left = mediaX +x/2 -(myPlayer.offsetWidth/2) +"px"	// position media in window
+    myPlayer.style.top = mediaY +y/2 -(myPlayer.offsetHeight/2) +"px"
     myPlayer.style.transition = fa+'s'
-    zoom=0
-    scaleX = skinny*scaleY
+    z = scaleY +(y/innerHeight)
+    scaleX = skinny*z
     if (!thumbSheet) sheetZoom = 1					// make thumbsheet ~2x media size
-    else sheetZoom = Math.abs(2.7-0.9*y*scaleX/outerWidth/2)
-    myPlayer.style.transform = "scale("+scaleX*sheetZoom+","+scaleY*sheetZoom+")"}
+    else sheetZoom = Math.abs(2.7-0.9*myPlayer.offsetWidth*scaleX/((innerWidth/2)))
+    myPlayer.style.transform = "scale("+scaleX*sheetZoom+","+z*sheetZoom+")"}
 
 
   function seekBar() {							// red progress bar beneath player
@@ -556,6 +554,7 @@
     else if (xm>1||xm<0|ym>1||ym<0) start = 0				// if outside thumbsheet start 0
     else start = offset - 0.4 - (ps * offset) + dur * ps
     if (type == 'video') myPlayer.poster = ''				// not flash poster after thumbsheet close
+    myPlayer.play()
     thumbSheet=0}
 
 
@@ -611,7 +610,7 @@
     if (x > innerHeight-20 || x<20) myView.scrollTo(0, x + myView.scrollTop - innerHeight/2)}
 
   function sel(i) {							// highlight selected media
-    if (!i || longClick || lastClick==2) return
+    if (!i || lastClick==2) return
     if (listView) el=document.getElementById('title'+i)
     else el=document.getElementById('media'+i)
     var x = ','+selected
