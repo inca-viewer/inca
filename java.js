@@ -20,12 +20,8 @@
 // maybe inca can determine canplay
 // when ffmpeg slow
 // mclick open tab randomly copies view from 1st tab - inca.ahk
-// mpv mixed mp4 wmv confused player open
-// finish menu 2 sleep etc
-// messages in inca function
-// mp3 re start at 0
-// skinny flip messages
-// diana cannot set skinny
+// seekbar position
+// preview trigger level
 
   var mediaX = 1*localStorage.getItem('mediaX')				// caption strings
   var mediaY = 1*localStorage.getItem('mediaY')				// last media position
@@ -142,14 +138,11 @@
   function closePlayer() {		
     positionMedia(fade*0.3)
     myPlayer.style.opacity=0
-    if (playing) {							// then close media player
-      Messages()							// process cues, width, speed, caption edits
-      myPlayer.removeEventListener('ended', nextMedia)
-      navigator.clipboard.writeText(messages)				// send messages to inca
-      messages=''
-      playing=''} 
+    playing=''
+    inca('Close')
     setTimeout(function() {						// so player can fadeout before close
       lastStart=Math.round(myPlayer.currentTime*100)/100
+      myPlayer.removeEventListener('ended', nextMedia)
       myPlayer.src=''
       myPlayer.poster=''
       thumbSheet=false},fade*300)}
@@ -174,15 +167,15 @@
     if (Click > 2 || gesture || title.matches(':hover')) return		// allow rename of media in htm
     if (longClick==1 && !playing && playlist && overMedia && selected) {inca('Move', index); return}
     if (playing=='browser' && lastClick==1 && !thumbSheet && type != 'image' && !myNav.matches(':hover')) {
-      if (xm>0 && xm<1 && ym>0.75 && ym<1) {
+      if (xm>0 && xm<1 && ym>0.8 && ym<1) {
         if (xm<0.2 && longClick) {myPlayer.currentTime=0; return}
         else if (longClick) {myPlayer.currentTime=start; return}
         else {myPlayer.currentTime=xm*dur; return}}
       else if (!longClick) {togglePause(); return}}
     if (longClick && thumbSheet) {getStart(); positionMedia(0.3); return}
     if (lastClick==1 && e=='Up' && !thumbSheet && !overMedia && !myPlayer.matches(':hover')) return
-    if (!playing && overMedia) index=overMedia
-    if (playing) Messages()						// add last media cue edits to queue
+    Messages()
+    if (!playing && overMedia) {index=overMedia; wasMedia=index}
     if (e=='Up' && lastClick==1 && myNav.matches(':hover')) return
     if (playing && !longClick && lastClick==2) index++
     if (longClick==2 && index > 1) index--
@@ -192,7 +185,7 @@
     if (playing) positionMedia(fade)
     else {positionMedia(0)}
     myPlayer.style.opacity=0
-    positionMedia(fadeOut*500) 
+    positionMedia(fadeOut*500)
     setTimeout(function() {						// so player can fade in/out
       positionMedia(0)
       if (longClick == 1) {
@@ -216,9 +209,9 @@
       myPlayer.playbackRate = rate					// set default speed
       if (!type) {closePlayer(); return}				// end of media list
       if (e=='Up' && lastClick==1 && thumbSheet) getStart()		// thumbsheet xy coord
-      if (longClick && !playing) start=lastStart			// return to lat media start
       var z = media.getBoundingClientRect()
-      if (!playing && xpos-z.left<15) start=0				// clicked left of thumb
+      if (!playing && xpos-z.left<15) start=0				// click left of thumb to start at 0
+      if (longClick && !playing) start=lastStart			// return to last media start
       positionMedia(fade)
       scrolltoIndex(index)						// + highlight played media
       Play(e)},fadeOut*500)}
@@ -226,17 +219,17 @@
 
   function Play(e) {
     cue = 0
-    wasMedia = index
     var ex = myPlayer.src.slice(-3)					// file extension
     var para = start+'|'+skinny+'|'+rate+'|'+pitch+'|'+localStorage.getItem('muted')
     if (!thumbSheet && type=='video' && (mpv || (ex!='mp4' && ex!='mkv' && ex!='m4v' && ex!='ebm'))) playing='mpv'
     else playing='browser'
     myPlayer.muted = 1*localStorage.getItem('muted')
     if (thumbSheet) Thumbsheet()
-    else if (type == 'audio' || playlist.match('/inca/music/')) {
-      looping=false; myPlayer.muted=false; scaleY=0.2; myPlayer.style.border='1px solid salmon'}
-    else if (type=='document' || type=='m3u') {inca('Media',0,index); closePlayer(); return}
+    if (type=='document' || type=='m3u') {inca('Media',0,index); closePlayer(); return}
     else if (playing=='mpv') {inca('Media',0,index,para); scaleY=0.6}	// use external player
+    else inca('Close')
+    if (type == 'audio' || playlist.match('/inca/music/')) {
+      looping=false; myPlayer.muted=false; scaleY=0.2; myPlayer.style.border='1px solid salmon'}
     if (playing=='browser' && !thumbSheet && type != 'image') {
       myPlayer.currentTime=start; myPlayer.play()}
     myPlayer.addEventListener('ended', nextMedia)
@@ -248,11 +241,14 @@
     wheel=0; lastClick=0}
 
 
-  function Messages() {							// for inca.exe via clipboard
+  function Messages() {						// for inca.exe via clipboard
+var x = start
+    if (getParameters(wasMedia)) {
+      if (media.style.skinny || media.style.rate || media.style.pitch) {
+        messages = messages + '#Cues#'+wasMedia+'##'+lastStart.toFixed(1)+'|'+skinny+'|'+rate+'|'+pitch}
+      getParameters(index)}
+start = x
     lastIndex = index
-    if (media.style.skinny || media.style.rate || media.style.pitch) 
-      messages = messages + '#Cues#'+index+'##'+lastStart.toFixed(1)+'|'+skinny+'|'+rate+'|'+pitch
-    if (!thumbSheet) messages = messages + '#History#'+lastStart.toFixed(1)+'#'+index+'#'
     mySeekbar.style.opacity = null
     myPreview.style.opacity = null
     myCap.style.opacity = 0
@@ -287,7 +283,7 @@
     else if (id=='Alpha'||id=='Date'||id=='Duration'||id=='Size') {	// filter
       if (wheelUp) filt++ 
       else if (filt) filt--
-      filter(id)}
+      Filter(id)}
     else if (id=='mySpeed') {						// speed
       if (type=='video' || type=='audio') {
         if (wheelUp) rate -= 0.01
@@ -295,13 +291,13 @@
         rate = Math.round(100*rate)/100
         myPlayer.playbackRate = rate
         media.style.rate = rate}}
-    else if (id=='mySkinny') {						// skinny
+    else if (id=='mySkinny' && wasMedia) {				// skinny
       block = 30
-      if (wheelUp) scaleX -= 0.003
-      else scaleX += 0.003
-      skinny=Math.round((1000*scaleX/scaleY))/1000
+      if (wheelUp) skinny -= 0.003
+      else skinny += 0.003
+      skinny=Math.round((1000*skinny))/1000
       media.style.skinny = skinny
-      getParameters(index)
+      getParameters(wasMedia)
       positionMedia(0)}
     else if (id=='myPitch') {						// pitch
       block = 100
@@ -431,7 +427,7 @@
       myCap.style.left=rect.left +10 +'px'
       myCap.style.zIndex=Zindex
       if (myCap.innerHTML) {myCap.style.opacity=1}
-      if (cueList && !thumbSheet && playing!='mpv') Cue(myPlayer.currentTime, index)
+      if (cueList && !thumbSheet && type!='image' && playing!='mpv') Cue(myPlayer.currentTime, index)
       xm = myPlayer.offsetWidth*scaleX*sheetZoom
       ym = myPlayer.offsetHeight*scaleY*sheetZoom
       xm = (xpos - rect.left) / Math.abs(xm)
@@ -490,7 +486,7 @@
         cueX=rect.left+'px'; cueW=Math.abs(scaleX*myPlayer.offsetWidth*myPlayer.currentTime/dur)+'px'}}
     mySeekbar.style.left = cueX
     mySeekbar.style.width = cueW
-    if (xm>0 && xm<1 && ym>0.75 && ym<1) {
+    if (xm>0 && xm<1 && ym>0.8 && ym<1) {
       myPreview.style.maxHeight= myPlayer.offsetHeight*scaleY*0.2 +'px'
       myPreview.style.left = xpos - myPreview.offsetWidth/2 +'px'	// seeking preview window
       myPreview.style.top = rect.bottom - myPreview.offsetHeight -12 +'px'
@@ -499,9 +495,9 @@
     else mySeekbar.style.top = rect.bottom-6 +'px'
     if (playing=='browser' && type != 'image') {
       if (xm>0 && xm<1 && ym>0 && ym<1 || cue) {mySeekbar.style.opacity=1} else {mySeekbar.style.opacity-=0.2} 
-      if (xm>0 && xm<1 && ym>0.75 && ym<1 || cue) {mySeekbar.style.borderTop='8px solid red'}
+      if (xm>0 && xm<1 && ym>0.8 && ym<1 || cue) {mySeekbar.style.borderTop='8px solid red'}
       else mySeekbar.style.borderTop=null
-      if (xm>0 && xm<1 && ym>0.75 && ym<1) {myPreview.style.opacity=1} else {myPreview.style.opacity=0}
+      if (xm>0 && xm<1 && ym>0.8 && ym<1) {myPreview.style.opacity=1} else {myPreview.style.opacity=0}
       mySeekbar.style.zIndex=Zindex+1; myPreview.style.zIndex=Zindex+1}
     else {myPreview.style.opacity=0; mySeekbar.style.opacity=0}}
 
@@ -584,7 +580,7 @@
     if (!longClick && myPlayer.playbackRate > 0.40) {			// slower each loop
       myPlayer.playbackRate -= 0.05}}
 
-  function filter(id) {
+  function Filter(id) {
       var x = filt							// eg 30 minutes, 2 months, alpha 'A'
       var el = document.getElementById(id)
       if (!x) {el.innerHTML=sort; el.style.color=null; return}
@@ -627,7 +623,9 @@
   function context(e) {							// right click context menu
     var offset=''
     myDelete.style.color=null
+    Messages()
     wasMedia=0
+    if (playing) wasMedia=index
     if (overMedia) {index=overMedia; wasMedia=overMedia}
     if (panel.matches(':hover')) {
       var x = e.target.innerHTML					// ~ text under cursor
@@ -641,7 +639,7 @@
   function globals(vi, pg, ps, so, fi, lv, se, pl, ix) {		// import globals to java from inca
     view=vi; page=pg; pages=ps; sort=so; filt=fi; listView=lv; 
     selected=se; playlist=pl; index=ix; wasMedia=ix; lastIndex=ix
-    filter(sort)							// show filter heading in red
+    Filter(sort)							// show filter heading in red
     for (x of selected.split(',')) {if (x && !isNaN(x)) {		// highlight selected media			
       if (lv) document.getElementById('title'+x).style.outline = '0.1px solid red'
       else document.getElementById('media'+x).style.outline = '1px solid red'}}
@@ -649,6 +647,7 @@
     scrolltoIndex(index)}
 
   function inca(command,value,select,address) { 			// send messages to inca.exe
+    Messages()
     if (!select) {select=''} else {select=select+','}
     if (command == 'Favorite') document.getElementById('myFavicon'+index).innerHTML='&#10084'
     else if (selected) select=selected
@@ -657,7 +656,11 @@
       if (!value) value=''
       if (!address) address=''
       if (isNaN(value)) value=value.replaceAll('#', '<')		// cannot transport '#' over link
-      navigator.clipboard.writeText('#'+command+'#'+value+'#'+select+'#'+address)},20)}
+      if (playing && !thumbSheet) messages = messages + '#History#'+lastStart.toFixed(1)+'#'+index+'#'
+      messages=messages+'#'+command+'#'+value+'#'+select+'#'+address
+      navigator.clipboard.writeText(messages)				// send messages to inca
+      messages=''},20)}
+
 
   function Time(z) {if (z<0) return '0:00'; var y=Math.floor(z%60); var x=':'+y; if (y<10) {x=':0'+y}; return Math.floor(z/60)+x}
   function togglePause() {if(!thumbSheet && lastClick==1) {if (myPlayer.paused) {myPlayer.play()} else {myPlayer.pause()}}}

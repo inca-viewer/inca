@@ -391,6 +391,8 @@ selected =
                 FileAppend, %src%|%value%`r`n, %inca%\fav\History.m3u, UTF-8
             lastMedia := src
             }
+        if (command == "Close")						; close mpv player 
+            Process, Close, mpv.exe
         if (command == "Media")						; java tells inca to play
             {
             id := StrSplit(selected, ",").1
@@ -1069,7 +1071,7 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n if(
 <a id='myJoin' style='width:5`%' onmousedown="inca('Join')">Join</a>
 <a style='width:10`%'></a></div>`n`n
 
-<div style='width:100`%; height:9em'></div>`n%mediaList%<div style='width:100`%; height:100vh'></div>`n`n
+<div style='width:100`%; height:9.5em'></div>`n%mediaList%<div style='width:100`%; height:100vh'></div>`n`n
 
       FileDelete, %inca%\cache\html\%folder%.htm
       StringReplace, header, header, \, /, All
@@ -1137,7 +1139,7 @@ incaTab := folder
             if (StrSplit(A_LoopField, "|").2 == "cap")
               {
               x := StrSplit(A_LoopField, "|").3
-              caption = <span class='cap' style='font-size:%cap_size%em; width:%view3%em; display:block; position:absolute' onmousedown="inca('EditCue',1,%j%)">%x%</span>`n 
+              caption = <span class='cap' style='font-size:%cap_size%em; width:%view3%em' onmousedown="inca('EditCue',1,%j%)">%x%</span>`n 
               break
               }
        cueList := StrReplace(cueList, "`r`n", "#1")			; lines
@@ -1389,7 +1391,6 @@ else
 
     MoveFiles()
         {
-        sleep 100							; time for browser to release media
         if (playlist && !InStr(address, "\inca\"))
           PopUp("Cannot Move Shortcuts",1000,0.34,0.2)
         else if (path == address && !longClick)
@@ -1425,13 +1426,22 @@ else
                     }
                 if (!longClick && address == path)
                   continue
-                if !longClick
-                  FileMove, %src%, %address%%z%				; move file to new folder
-                else FileCopy, %src%, %address%%z%
+                if (x==y)
+                  {
+                  PopUp("Duplicate . . .",500,0.5,0.15) 
+                  continue
+                  }                 
+                Loop, 4
+                  {
+                  if !longClick
+                    FileMove, %src%, %address%%z%				; move file to new folder
+                  else FileCopy, %src%, %address%%z%
+                  if !ErrorLevel
+                    break
+                  sleep 50							; time for browser to release media
+                  }
                 if ErrorLevel
-                  if (x==y)
-                    PopUp("Duplicate . . .",500,0.5,0.15)                  
-                  else PopUp("Error . . .",500,0.5,0.15)                  
+                  PopUp("Error . . .",300,0.5,0.15)
                 }
             }
         if (popup && !longClick)
