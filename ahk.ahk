@@ -346,7 +346,9 @@
             {
             if selected							; index media under cursor
               {
-              index(src,1)
+              Loop, Parse, selected, `,
+                if GetMedia(A_LoopField)
+                  index(src,1)
               reload := 2
               }
             else if !playlist						; index whole folder
@@ -380,7 +382,7 @@
             }
         if (command == "Reload")					; reload web page
             {
-selected =
+            selected =
             reload:=2
             index := 1							; scroll to media 1
             }
@@ -1028,7 +1030,7 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n if(
 <div><video id="myPlayer" class='player' type="video/mp4" muted onwheel="wheelEvents(event, id, this)"></video>`n
 <span id='mySeekbar' class='seekbar'></span>`n
 <span id='myCap' class='caption'></span>`n
-<span><video class='preview' id='myPreview' muted type="video/mp4"></video></span></div>`n`n
+<span><video class='preview' id='myPreview' muted type="video/mp4" onwheel="wheelEvents(event, id, this)"></video></span></div>`n`n
 
 <div id='myView' class='myList' style='padding-left:%page_l%`%; padding-right:%page_r%`%'>`n`n
 
@@ -1047,7 +1049,7 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n if(
 
 <div id='myRibbon' class='ribbon'>`n
 <a id='Type' style='width:4em; %x6%' onmousedown="inca('Type')">Ext</a>`n
-<a id='Size' style='min-width:3em; %x5%' onmousedown="inca('Size', filt)" onwheel="wheelEvents(event, id, this)">Size</a>`n
+<a id='Size' style='min-width:4em; %x5%' onmousedown="inca('Size', filt)" onwheel="wheelEvents(event, id, this)">Size</a>`n
 <a id='Duration' style='min-width:5em; %x3%' onmousedown="inca('Duration', filt)" onwheel="wheelEvents(event, id, this)"> Duration</a>`n
 <a id='Date' style='min-width:4.5em; %x4%' onmousedown="inca('Date', filt)" onwheel="wheelEvents(event, id, this)">Date</a>`n
 <a id='List' style='%x11%' onmousedown="inca('List', filt)" style='color:red'>%order%</a>`n
@@ -1063,8 +1065,8 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n if(
 </div>`n`n
 
 <div id='myRibbon2' class='ribbon' style='height:0; overflow:hidden; justify-content:right'>`n
-<a id='myRate' style='width:10`%' onwheel="wheelEvents(event, id, this)">Speed</a>`n
-<a id='myFade' style='width:10`%' onwheel="wheelEvents(event, id, this)">Fade</a>`n
+<a id='myRate' style='width:9`%' onwheel="wheelEvents(event, id, this)">Speed</a>`n
+<a id='myFade' style='width:9`%' onwheel="wheelEvents(event, id, this)">Fade</a>`n
 <a id='myMpv' style='width:9`%' onmouseup="mpv*=1; mpv^=1; localStorage.setItem('mpv',mpv)">External</a>`n
 <a id='myMp4' style='width:5`%' onmousedown="inca('mp4', lastStart, lastIndex, cue)">mp4</a>`n
 <a id='myMp3' style='width:5`%' onmousedown="inca('mp3', lastStart, lastIndex, cue)">mp3</a>`n
@@ -1089,10 +1091,11 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n if(
       else
         {
         send, ^l
-        sleep 24
+        sleep 44
         send, {BS}
-          SendInput, {Raw}%new_html%
-          Send, {Enter}
+        sleep 24
+        SendInput, {Raw}%new_html%
+        Send, {Enter}
         }
 incaTab := folder
       selected =

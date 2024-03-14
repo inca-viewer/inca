@@ -15,17 +15,17 @@
 .player {					/* media player element */
   position:absolute;
   opacity:0;
-  border-radius:16px}
+// outline:1px solid red;
+  border-radius:4%}
 
 .preview {					/* small preview seeking video */
   position:absolute; 
-  display:none;
-  pointer-events:none;
   opacity:0;
   z-index:-1;
   user-select:none;
-  border-radius:9%;
+  border-radius:6%;
   max-height:100px;
+  min-height:50px;
   transition:opacity 0.5s}
 
 .myList {					/* list view */
@@ -85,8 +85,9 @@
 .ribbon {					/* menu, fol, fav, search ... */
   position:relative;
   display:flex;
-  top:9em;
+  top:9.2em;
   width:100%;
+  white-space:nowrap;
   border-radius:1em;
   text-align:center;
   transition:0.3s;
