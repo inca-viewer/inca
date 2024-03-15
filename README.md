@@ -4,7 +4,7 @@
 Windows - Chrome, Firefox, Edge, Opera & Brave<br>
 YouTube style interface of your hard drive<br><br>
 Is lightweight & portable (no installation)<br>
-Pure vanilla java and ahk script<br>
+Pure vanilla java / ahk script<br>
 No IDE, no libraries, no external calls<br> 
 Does not mess with any settings - see source code<br>
 Just run Compile.exe - browser will open in pictures folder<br>
@@ -35,7 +35,7 @@ Thumbsheets index at about 30 videos per minute<br><br>
 
 Middle click
 - next media
-- long click - previous media - list/thumb view toggle
+- long click - previous media - list / thumb view toggle
 
 Back click
 - exit media
