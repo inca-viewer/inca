@@ -1,5 +1,5 @@
 <img src="screens/computer arm 5.jpg" width="18%"> <img src="screens/computer arm 2.jpg" width="18%"> <img src="screens/computer arm 1.jpg" width="18%">
-<img src="screens/overview.png" width="54.9%"><br>
+
 
 # Media Viewer<br>
 Windows - Chrome, Firefox, Edge, Opera, Brave<br>
