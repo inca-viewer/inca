@@ -1,5 +1,4 @@
-<img src="screens/computer arm 5.jpg" width="10%">
-<img src="screens/computer arm 2.jpg" width="10%">
+<img src="screens/computer arm 5.jpg" width="10%" src="screens/computer arm 2.jpg" width="10%">
 <img src="screens/computer arm 1.jpg" width="10%">
 <img src="screens/computer arm 3.jpg" width="10%">
 <img src="screens/computer arm 4.jpg" width="10%">
