@@ -33,6 +33,15 @@ Thumbsheets index at about 30 videos per minute<br><br>
 
 # Usage
 
+Middle click
+- next media
+- long click - previous media - list/thumb view toggle
+
+Back click
+- exit media
+- page top
+- reset page
+
 Long click
 - on media - show 6 x 6 thumbsheet
 - on white space - return to last media
@@ -47,15 +56,6 @@ Right click slide gesture
 Left click slide gesture
 - on media - re-position media
 - through media - select media
-
-Middle click
-- next media
-- long click - previous media - list/thumb view toggle
-
-Back click
-- exit media
-- page top
-- reset page
 
 Supports rotated screen & osk onscreen keyboard<br>
 long press on any text area for osk<br>
