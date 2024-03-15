@@ -1,20 +1,15 @@
-<img src="screens/computer arm 5.jpg" width="10%">
-<img src="screens/computer arm 2.jpg" width="10%">
-<img src="screens/computer arm 1.jpg" width="10%">
-<img src="screens/computer arm 3.jpg" width="10%">
-<img src="screens/computer arm 4.jpg" width="10%">
+<img src="screens/computer arm 5.jpg" width="16%"> <img src="screens/computer arm 2.jpg" width="16%"> <img src="screens/computer arm 1.jpg" width="16%">
 
 # Browser based file explorer<br>
 Windows - Chrome, Firefox, Edge, Opera & Brave<br>
 YouTube style interface of your hard drive<br><br>
-Around 32k of Java and 72k of AutoHotkey script<br>
 Is lightweight & portable (no installation)<br>
-Pure vanilla script. No IDE, no libraries or external calls<br> 
-Does not mess with any settings<br>
+Pure vanilla java and ahk script<br>
+No IDE, no libraries, no external calls<br> 
+Does not mess with any settings - see source code<br>
 Just run Compile.exe - browser will open in pictures folder<br>
-To 'uninstall', just exit from taskbar & delete inca folder<br><br>
-Written in a simple scripting language - AutoHotkey + java<br>
-If it's not exactly what you want, change it in notepad.<br>
+To 'uninstall', exit from taskbar & delete inca folder<br><br>
+If it's not what you want, edit in notepad.<br>
 The source code is tiny and re-compiles in seconds from browser<br><br>
 
 <img src="screens/inca overview.jpg" width="50%"/>
@@ -63,16 +58,12 @@ Left click slide gesture
 - through media - select media
 
 Supports rotated screen & osk onscreen keyboard<br>
-long press on any text area for osk<br>
+long press on any text area for osk type or search<br>
 If you like program, bookmark inca folder<br>
 and add compile.exe and keyboard.exe to task scheduler<br><br>
-Arm made from 1m x 12mm threaded rod, 2 x nuts + heatshrink<br>
+1m x 12mm threaded rod, 2 x nuts + heatshrink<br>
 drill 12mm hole in wood to bend arm and for cables<br>
-drill 20mm hole for top and bottom nuts<br>><br>
+drill 20mm hole for top and bottom nuts<br><br>
 
-<img src="screens/computer arm 5.jpg" width="50%">
-<img src="screens/computer arm 2.jpg" width="50%">
-<img src="screens/computer arm 1.jpg" width="50%">
-<img src="screens/computer arm 3.jpg" width="50%">
-<img src="screens/computer arm 4.jpg" width="50%"/>
+<img src="screens/computer arm 3.jpg" width="15.9%">   <img src="screens/computer arm 4.jpg" width="25%">
 
