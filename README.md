@@ -28,6 +28,9 @@ To see if you already have a video from an outside website,<br>
 Select part of the title text then 'long click' on it<br>
 A new tab will show all matching files from your computer<br>
 Thumbsheets index at about 30 videos per minute<br><br>
+
+<img src="screens/mouse.jpg" width="50%"/>
+
 # Usage
 
 Long click
