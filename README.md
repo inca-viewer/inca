@@ -1,10 +1,10 @@
-<img src="screens/computer arm 5.jpg" width="18%"> <img src="screens/computer arm 2.jpg" width="18%"> <img src="screens/computer arm 1.jpg" width="18%"><br>
-<img src="screens/overview2.png" width="50%"><br>
-
 
 # Media Viewer<br>
 Windows - Chrome, Firefox, Edge, Opera, Brave<br>
 YouTube style interface of your hard drive<br><br>
+<img src="screens/overview2.png" width="55%"><br>
+<img src="screens/computer arm 5.jpg" width="18%"> <img src="screens/computer arm 2.jpg" width="18%"> <img src="screens/computer arm 1.jpg" width="18%"><br><br>
+
 Lightweight & portable (no installation)<br>
 Pure vanilla java / ahk script<br>
 No IDE, no libraries, no external calls<br> 
