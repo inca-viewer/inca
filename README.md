@@ -7,7 +7,7 @@ Is lightweight & portable (no installation)<br>
 Pure vanilla script. No IDE, no libraries or external calls<br> 
 Does not mess with any settings<br>
 Just run Compile.exe - browser will open in pictures folder<br>
-To 'uninstall', just exit from taskbar & delete folder<br><br>
+To 'uninstall', just exit from taskbar & delete inca folder<br><br>
 Written in a simple scripting language - AutoHotkey + java<br>
 If it's not exactly what you want, change it in notepad.<br>
 The source code is tiny and re-compiles in seconds from browser<br><br>
