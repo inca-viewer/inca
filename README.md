@@ -29,7 +29,7 @@ Select part of the title text then 'long click' on it<br>
 A new tab will show all matching files from your computer<br>
 Thumbsheets index at about 30 videos per minute<br><br>
 
-<img src="screens/mouse.jpg" width="10%"/>
+<img src="screens/mouse.jpg" width="20%"/>
 
 # Usage
 
