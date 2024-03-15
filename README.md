@@ -2,7 +2,7 @@
 <img src="screens/overview.png" width="54.9%"><br>
 
 # Media Viewer<br>
-Windows - Chrome, Firefox, Edge, Opera & Brave<br>
+Windows - Chrome, Firefox, Edge, Opera, Brave<br>
 YouTube style interface of your hard drive<br><br>
 Lightweight & portable (no installation)<br>
 Pure vanilla java / ahk script<br>
