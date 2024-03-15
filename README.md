@@ -2,7 +2,7 @@
 # Browser based file explorer<br>
 Windows - Chrome, Firefox, Edge, Opera & Brave<br>
 YouTube style interface of your hard drive<br><br>
-Around 30k of Java and 60k of AutoHotkey script<br>
+Around 32k of Java and 72k of AutoHotkey script<br>
 Is lightweight & portable (no installation)<br>
 Pure vanilla script. No IDE, no libraries or external calls<br> 
 Does not mess with any settings<br>
@@ -56,11 +56,11 @@ Back click
 
 Supports rotated screen & osk onscreen keyboard<br>
 long press on any text area for osk<br>
-Remember to bookmark primary inca web page<br>
-If you like program, add compile.exe and keyboard.exe to task scheduler<br><br>
-Made from 1m x 12mm threaded rod, 2 x nuts + heatshrink<br>
-drill 12mm hole in wood to bend arm and larger hole for nuts<br>
-Can use small hole for cables.<br><br>
+If you like program, bookmark inca folder<br>
+and add compile.exe and keyboard.exe to task scheduler<br><br>
+Arm made from 1m x 12mm threaded rod, 2 x nuts + heatshrink<br>
+drill 12mm hole in wood to bend arm and for cables<br>
+drill 20mm hole for top and bottom nuts<br>><br>
 
 <img src="screens/computer arm 5.jpg" width="50%">
 <img src="screens/computer arm 2.jpg" width="50%">
