@@ -1,20 +1,19 @@
-<img src="screens/computer arm 5.jpg" width="16%"> <img src="screens/computer arm 2.jpg" width="16%"> <img src="screens/computer arm 1.jpg" width="16%">
+<img src="screens/computer arm 5.jpg" width="18%"> <img src="screens/computer arm 2.jpg" width="18%"> <img src="screens/computer arm 1.jpg" width="18%">
 
-# Browser based file explorer<br>
+# Media Viewer<br>
 Windows - Chrome, Firefox, Edge, Opera & Brave<br>
 YouTube style interface of your hard drive<br><br>
-Is lightweight & portable (no installation)<br>
+Lightweight & portable (no installation)<br>
 Pure vanilla java / ahk script<br>
 No IDE, no libraries, no external calls<br> 
 Does not mess with any settings - see source code<br>
-Just run Compile.exe - browser will open in pictures folder<br>
+Just run compile.exe - browser will open in pictures folder<br>
 To 'uninstall', exit from taskbar & delete inca folder<br><br>
 If it's not what you want, edit in notepad.<br>
 The source code is tiny and re-compiles in seconds from browser<br><br>
 
-<img src="screens/inca overview.jpg" width="50%"/>
-<img src="screens/Screen 1.jpg" width="50%"/>
-<img src="screens/Screen 2.jpg" width="50%"/>
+<img src="screens/inca overview.jpg" width="50%"><br>
+<img src="screens/Screen 1.jpg" width="25%"> <img src="screens/Screen 2.jpg" width="25%"><br>
 
 # Features:<br>
 beautiful fast interface<br>
@@ -49,21 +48,21 @@ Long click
 - on folder - copies selected files (instead of move)
 
 Right click slide gesture
-- left/right - volume
-- up/down - zoom
-- quick gesture - fill screen toggle
+- left / right - volume
+- up / down - zoom
+- quick up gesture - fill screen toggle
 
 Left click slide gesture
-- on media - re-position media
+- on media - position media
 - through media - select media
 
 Supports rotated screen & osk onscreen keyboard<br>
 long press on any text area for osk type or search<br>
 If you like program, bookmark inca folder<br>
 and add compile.exe and keyboard.exe to task scheduler<br><br>
+<img src="screens/computer arm 3.jpg" width="15.9%">   <img src="screens/computer arm 4.jpg" width="25%"><br>
 1m x 12mm threaded rod, 2 x nuts + heatshrink<br>
 drill 12mm hole in wood to bend arm and for cables<br>
 drill 20mm hole for top and bottom nuts<br><br>
 
-<img src="screens/computer arm 3.jpg" width="15.9%">   <img src="screens/computer arm 4.jpg" width="25%">
 
