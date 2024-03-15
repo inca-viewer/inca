@@ -1,4 +1,5 @@
 <img src="screens/computer arm 5.jpg" width="18%"> <img src="screens/computer arm 2.jpg" width="18%"> <img src="screens/computer arm 1.jpg" width="18%">
+<img src="screens/inca overview.jpg" width="54.9%"><br>
 
 # Media Viewer<br>
 Windows - Chrome, Firefox, Edge, Opera & Brave<br>
@@ -12,7 +13,6 @@ To 'uninstall', exit from taskbar & delete inca folder<br><br>
 If it's not what you want, edit in notepad.<br>
 The source code is tiny and re-compiles in seconds from browser<br><br>
 
-<img src="screens/inca overview.jpg" width="50%"><br>
 <img src="screens/Screen 1.jpg" width="25%"> <img src="screens/Screen 2.jpg" width="25%"><br>
 
 # Features:<br>
