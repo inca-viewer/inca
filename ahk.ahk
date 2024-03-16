@@ -2,7 +2,7 @@
 
 	; Browser Based File Explorer - Windows
 	; this script generates web pages of your media
-	; the browser communicates back through clipboard
+	; the browser java messages back through clipboard
 
 
 	#NoEnv
@@ -85,7 +85,7 @@
         Global lastMedia
         Global panelPath
         Global lastStatus
-        Global mpvXpos
+        Global mpvXpos				; external mpv player
         Global mpvYpos
         Global mpvWidth
         Global mpvHeight
@@ -100,7 +100,7 @@
       if !GetBrowser()
         Clipboard = #Path###%profile%\Pictures\
       Clipboard()				; process clipboard message
-      SetTimer, TimedEvents, 100		; every 100mS
+      SetTimer, TimedEvents, 100, 2		; every 100mS
       return					; wait for mouse/key events
 
 
@@ -312,7 +312,7 @@
           address := array[ptr+=1]
           address := StrReplace(address, ">", "'")			; java/html cannot accept ' in string
           if selected
-            GetMedia(StrSplit(selected, ",").1)
+            getMedia(StrSplit(selected, ",").1)
           if !command
             continue
           else ProcessMessage()
@@ -342,23 +342,6 @@
             sleep 400
             Winactivate, ahk_class CabinetWClass
             }
-        if (command == "Index")						; index folder (create thumbsheets)
-            {
-            if selected							; index media under cursor
-              {
-              Loop, Parse, selected, `,
-                if GetMedia(A_LoopField)
-                  index(src,1)
-              reload := 2
-              }
-            else if !playlist						; index whole folder
-              {
-              indexFolders = %indexFolders%|%path%
-              SetTimer, indexer, -100, -2
-              }
-            else Popup("cannot index playlists",600,0,0)
-            selected =
-            }
         if (command == "Move")						; move entry within playlist
             {
             MoveEntry()
@@ -369,7 +352,7 @@
             {
             if (StrLen(value) < 4)
                 popup = too small
-            if !GetMedia(StrSplit(selected, ",").1)
+            if !getMedia(StrSplit(selected, ",").1)
                 popup = no media
             if !popup
                {
@@ -388,17 +371,18 @@
             }
         if (command == "History")					; java tells inca to play
             {
-            if GetMedia(StrSplit(selected, ",").1)
-              if (!InStr(path, "\inca\music\") && lastMedia != src)	; add to history
+            if getMedia(StrSplit(selected, ",").1)
+              if (!InStr(path, "\inca\music\") && folder != "History" && lastMedia != src)
                 FileAppend, %src%|%value%`r`n, %inca%\fav\History.m3u, UTF-8
             lastMedia := src
             }
-        if (command == "Close")						; close mpv player 
-            Process, Close, mpv.exe
+        if (command == "Close")						; close mpv player
+            if mpvPID
+              Process, Close, mpv.exe
         if (command == "Media")						; java tells inca to play
             {
             id := StrSplit(selected, ",").1
-            GetMedia(id)
+            getMedia(id)
             mpvid := id-1
             if !mpvXpos
               geometry = --geometry=+50`%+50`%
@@ -463,7 +447,7 @@
             if !selected 
               return
             id := StrSplit(selected, ",").1
-            if GetMedia(id)
+            if getMedia(id)
             if !address
               address = 0.00
             else address = %address%
@@ -475,7 +459,7 @@
             if (selected && !address)
               {
               Loop, Parse, selected, `,
-                if GetMedia(A_LoopField)
+                if getMedia(A_LoopField)
                   {
                   dest = %mediaPath%\%media% - Copy.%command%
                   run, %inca%\cache\apps\ffmpeg.exe -i "%src%" "%dest%",,Hide
@@ -507,10 +491,14 @@
             start := value -0.1						; smoother start from poster image in htm
             Runwait, %inca%\cache\apps\ffmpeg.exe -ss %start% -i "%src%" -y -vf scale=1280:1280/dar -vframes 1 "%inca%\cache\posters\%media%%A_Space%%value%.jpg",, Hide
             Loop, Parse, selected, `,
-              if GetMedia(A_Loopfield)
+              if getMedia(A_Loopfield)
                 FileAppend, %src%|%value%`r`n, %inca%\fav\new.m3u, UTF-8
-            AllFav()							; add to consolidated fav list
+            AllFav()							; update consolidated fav list
             popup("Added - New",500,0,0)
+            StrReplace(selected, ",",, x)
+            selected =
+            if (x>1)
+              reload:=2
             }
         if (command == "View")						; change thumb/list view or thumb size
             {
@@ -534,7 +522,7 @@
                 {
                 popup = Deleted
                 Loop, Parse, selected, `,
-                  if GetMedia(A_LoopField)
+                  if getMedia(A_LoopField)
                     {
                     FileRecycle, %src%
                     if ErrorLevel
@@ -586,12 +574,11 @@
             }
         if (command == "Cues")						; update any media cue edits - width, speed, pitch...
             {
-            GetMedia(value)
+            getMedia(value)
             array := StrSplit(address,"|")
-            start := Round(array.1,2)
-            skinny := Round(array.2,2)
-            rate := Round(array.3,2)
-            pitch := Round(array.4,2)
+            skinny := Round(array.1,2)
+            rate := Round(array.2,2)
+            pitch := Round(array.3,2)
             if skinny is not number
               skinny := 1.00
             if (skinny < -1.2)
@@ -657,7 +644,7 @@
             if !selected
               return
             Loop, Parse, selected, `,
-              if GetMedia(A_LoopField)
+              if getMedia(A_LoopField)
                 str = %str%file '%src%'`r`n
             FileAppend,  %str%, %inca%\cache\lists\temp1.txt, utf-8
             Popup("Joining Media",0,0,0)
@@ -886,30 +873,27 @@
         if playlist
           order = List
         panelList =							; next sections fills top panel element
-
-
-scroll = Fol				; for scroll to headers in top panel
-if searchTerm
-  st := searchTerm
-else
-  {
-  st = Search
-  if InStr(path, "\inca\fav\")
-    scroll = Fav
-  if InStr(path, "\inca\music\")
-    scroll = Music
-  if showSubs
-    scroll = Sub
-  }
-x:=SubStr(searchTerm, 1, 1)
-stringUpper, x, x
-if x is alpha
-  if searchTerm
-    {
-    scroll = my%x%
-    offset = `;%A_Space%panel.scrollBy(0,-220)
-    }
-
+        scroll = Fol							; for scroll to headers in top panel
+        if searchTerm
+          st := searchTerm
+        else
+          {
+          st = Search
+          if InStr(path, "\inca\fav\")
+          scroll = Fav
+          if InStr(path, "\inca\music\")
+            scroll = Music
+          if showSubs
+            scroll = Sub
+          }
+        x:=SubStr(searchTerm, 1, 1)
+        stringUpper, x, x
+        if x is alpha
+        if searchTerm
+          {
+          scroll = my%x%
+          offset = `;%A_Space%panel.scrollBy(0,-220)
+          }
         if subfolders
           {
           container = <div id='Sub' style='font-size:2em; color:#ffa07ab0; margin:0.8em; text-align:center'>Sub</div>`n
@@ -996,13 +980,11 @@ if x is alpha
             }
         if container
           fill(container)
-
         if (view < 8) 
           view := 8
         view1 := view*1.2
         view2 := view*0.8
         view3 := view/10 
-
 
 header = <!--, %view%, %page%, %pages%, %filt%, %sort%, %toggles%, %listView%, %playlist%, %path%, %searchPath%, %searchTerm%, , -->`n<!doctype html>`n<html>`n<head>`n<meta charset="UTF-8">`n<title>Inca - %title%</title>`n<meta name="viewport" content="width=device-width, initial-scale=1">`n<link rel="icon" type="image/x-icon" href="file:///%inca%\cache\icons\inca.ico">`n<link rel="stylesheet" type="text/css" href="file:///%inca%/css.css">`n</head>`n`n
 
@@ -1013,17 +995,16 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n if(
 <div oncontextmenu="if(yw>0.1 || playing || gesture) {event.preventDefault()}">`n`n
 
 <div id='myNav' class='context'>`n
-<a id='mySelect' onmouseup="if (wasMedia||playing) {sel(index)} else{selectAll()}">Select</a>`n
+<a id='mySelect' onwheel="wheelEvents(event, id, this)" onmouseup="if (wasMedia||playing) {sel(index)} else{selectAll()}">Select</a>`n
 <a id='myDelete' onmousedown="if(!event.button) {inca('Delete','',wasMedia)}">Delete</a>`n
 <a id='myFav' onmouseup="if(!event.button && !longClick) inca('Favorite', myPlayer.currentTime.toFixed(1), index)">Fav</a>`n
 <a id='myMute' onmouseup='mute()'>Mute</a>`n
-<a id='myLoop' onclick="loop()">Loop</a>`n
+<a id='myLoop' onmouseup="looping=!looping">Loop</a>`n
 <a id='mySpeed' onwheel="wheelEvents(event, id, this)" onmouseup='togglePause()'></a>`n
 <a id='mySkinny' onwheel="wheelEvents(event, id, this)" onmouseup='togglePause()'></a>`n
 <a id='myPitch' onwheel="wheelEvents(event, id, this)" onmouseup='togglePause()'></a>`n
 <a id='myFlip' onmousedown='flip()'>Flip</a>`n
 <a id='myCue' onclick="myPlayer.pause(); myNav.style.display=null; if (playing) {cue=Math.round(myPlayer.currentTime*100)/100} else {inca('EditCue',1,index,cue)}">Cue</a>`n
-<a id='myIndex' onmousedown="inca('Index','',wasMedia)">Index</a>
 </div>`n`n
 
 <div id='myMask' class="mask" onwheel="wheelEvents(event, id, this)">`n</div>
@@ -1097,11 +1078,12 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n if(
         SendInput, {Raw}%new_html%
         Send, {Enter}
         }
-incaTab := folder
+      incaTab := folder
       selected =
       if fullscreen
         send, {F11}
       fullscreen := 0
+      SetTimer, indexPage, -100, -2					; check/index first few items in page
       sleep 400								; time for page to load
       PopUp("",0,0,0)
       }
@@ -1145,19 +1127,14 @@ incaTab := folder
               caption = <span class='cap' style='font-size:%cap_size%em; width:%view3%em' onmousedown="inca('EditCue',1,%j%)">%x%</span>`n 
               break
               }
-       cueList := StrReplace(cueList, "`r`n", "#1")			; lines
-       cueList := StrReplace(cueList, "|", "#2")			; entries
-       cueList := StrReplace(cueList, ",", "#3")			; cap punctuation...
-       cueList := StrReplace(cueList, "'", "#4")
-       StringReplace, cueList,cueList, ", #5, All
+        cueList := StrReplace(cueList, "`r`n", "#1")			; lines
+        cueList := StrReplace(cueList, "|", "#2")			; entries
+        cueList := StrReplace(cueList, ",", "#3")			; cap punctuation...
+        cueList := StrReplace(cueList, "'", "#4")
+        StringReplace, cueList,cueList, ", #5, All
         if !playlist
-          Loop, Parse, allFav, `n, `r
-            if (StrSplit(A_LoopField, "|").1 == src)
-              {
-              start := StrSplit(A_LoopField, "|").2
-              favicon = &#10084						; favorite heart symbol
-              break
-              }
+          if InStr(allFav, src)
+            favicon = &#10084						; favorite heart symbol
         if (type == "video")
           IfExist, %inca%\cache\posters\%media% %start%.jpg		; replace poster with fav poster
             thumb = %inca%\cache\posters\%media% %start%.jpg
@@ -1189,17 +1166,17 @@ incaTab := folder
         stringlower, thumb, thumb
         poster = poster="file:///%thumb%"
         StringReplace, media_s, media, `', &apos;, All
-
-if (!playlist && dur <= 200 && start < 6)				; use 0.00 start < 200 sec videos
-  start = 0
-start := Round(start,2)
+        if (!playlist && dur <= 200 && start < 6)			; use 0.00 start < 200 sec videos
+          start = 0
+        start := Round(start,2)
 
 if listView
   mediaList = %mediaList% %fold%<table onmouseover="media%j%.style.opacity=1" onmouseout="title%j%.style.color=null; media%j%.style.opacity=0; overMedia=0">`n <tr id="entry%j%"`n onmouseover="title%j%.style.color='lightsalmon'; overThumb(%j%, this)">`n <td onmouseenter='media%j%.style.opacity=0'>%ext%`n <video id='media%j%' onmousedown="getParameters(%j%, '%type%', '%cueList%', %dur%, %start%, event)" class='media2' style="max-width:%view3%em; max-height:%view3%em"`n src="file:///%src%"`n %poster%`n preload=%preload% muted loop type="video/mp4"></video></td>`n <td>%size%</td>`n <td style='min-width:6em'>%durT%</td>`n <td>%date%</td>`n <td style='min-width:4.4em'>%j%</td>`n <td id='myFavicon%j%' style='width:0; translate:-1em; white-space:nowrap; font-size:0.7em; color:salmon; min-width:1em'>%favicon%</td>`n <td style='width:99em'><input id="title%j%" class='title' type='search' value='%media_s%'`n oninput="wasMedia=%j%; renamebox=this.value"></td>`n <td>%fo%</td></tr></table>`n`n
 
 else
-  mediaList = %mediaList%<div id="entry%j%" style="display:flex; width%view%em; min-width:%view3%em; padding-top:%view4%em">`n <div class='media'>%caption%<span style='display:block; position:absolute; top:-1.5em; font-size:0.8em; color:salmon' id='myFavicon%j%'>%favicon%</span>`n <span><input id='title%j%' class='title' style='text-align:center; width:%view%em; font-size:%cap_size%em' type='search' value='%media_s%'`n oninput="wasMedia=%j%; renamebox=this.value"></span>`n <video id="media%j%" class='media' style="display:flex; justify-content: center; max-width:%view3%em; max-height:%view3%em"`n onmousedown="getParameters(%j%, '%type%', '%cueList%', %dur%, %start%, event)"`n onmouseover="overThumb(%j%, this)"`n onmouseout="overMedia=0; setTimeout(function(){media%j%.pause()},144)"`n src="file:///%src%"`n %poster%`n preload=%preload% muted loop type="video/mp4"></video></div>`n</div>`n`n
+  mediaList = %mediaList%<div id="entry%j%" style="display:flex; width%view%em; min-width:%view3%em; padding-top:%view4%em">`n <div class='media'>%caption%<span style='display:block; position:absolute; top:-1.5em; font-size:0.8em; color:salmon' id='myFavicon%j%'>%favicon%</span>`n <span><input id='title%j%' class='title' style='text-align:center; width:%view3%em; font-size:%cap_size%em' type='search' value='%media_s%'`n oninput="wasMedia=%j%; renamebox=this.value"></span>`n <video id="media%j%" class='media' style="display:flex; justify-content: center; max-width:%view3%em; max-height:%view3%em"`n onmousedown="getParameters(%j%, '%type%', '%cueList%', %dur%, %start%, event)"`n onmouseover="overThumb(%j%, this)"`n onmouseout="overMedia=0; setTimeout(function(){media%j%.pause()},144)"`n src="file:///%src%"`n %poster%`n preload=%preload% muted loop type="video/mp4"></video></div>`n</div>`n`n
 }
+
 
     CreateList(show)							; list of files in path
         {
@@ -1337,7 +1314,6 @@ else
         }
 
 
-
     fill(in) {  
       panelList = %panelList%<div style="height:7em; padding:0.5em; transform:rotate(90deg)">`n%in%</div>`n
       }
@@ -1400,7 +1376,7 @@ else
           PopUp("Same folder",1000,0.34,0.2)
         else Loop, Parse, selected, `,
             {
-            if !GetMedia(A_LoopField)
+            if !getMedia(A_LoopField)
               continue
             popup = Moved %A_Index%
             if (!InStr(path, "\inca\") && InStr(address, "\inca\"))
@@ -1408,7 +1384,7 @@ else
             if longClick
               popup = Copied %A_Index%
             PopUp(popup,0,0,0)
-            if GetMedia(A_LoopField)
+            if getMedia(A_LoopField)
               if (InStr(address, "inca\fav") || InStr(address, "inca\music"))
                 FileAppend, %target%`r`n, %address%, UTF-8		; add media entry to playlist
               else 
@@ -1462,7 +1438,7 @@ else
         Loop, Parse, selected, `,
          if A_LoopField
           {
-          GetMedia(A_LoopField)
+          getMedia(A_LoopField)
           x = %target%`r`n
           y = %src%`r`n
           str := StrReplace(str, x,,,1)					; fav with start time
@@ -1485,9 +1461,9 @@ else
         Loop, Parse, selected, `,
           if A_LoopField
             {
-            GetMedia(A_LoopField)
+            getMedia(A_LoopField)
             source = %target%
-            GetMedia(value)						; target point
+            getMedia(value)						; target point
             FileRead, str, %playlist%
             FileDelete, %playlist%
             both = %target%`r`n%source%
@@ -1555,7 +1531,7 @@ else
         }
 
 
-    GetMedia(id)
+    getMedia(id)
         {
         if !id
           return
@@ -1654,14 +1630,14 @@ else
 
     AllFav()
         {
-        FileDelete, %inca%\fav\All.m3u
+        FileDelete, %inca%\fav\all fav.m3u
         Loop, Files, %inca%\fav\*.m3u, FR				; create consolidated 'All' playlist 
           if !InStr(A_LoopFileFullPath, "\History.m3u")
             {
             FileRead, str, %A_LoopFileFullPath%
-            FileAppend, %str%, %inca%\fav\All.m3u, UTF-8
+            FileAppend, %str%, %inca%\fav\all fav.m3u, UTF-8
             }
-        FileRead, allFav, %inca%\fav\All.m3u      
+        FileRead, allFav, %inca%\fav\all fav.m3u      
         }
 
 
@@ -1699,7 +1675,7 @@ else
         Global
         Clipboard =
         LoadSettings()
-        AllFav()							; create ..\fav\All.m3u
+        AllFav()							; create ..\fav\all fav.m3u
         FileDelete, %inca%\cache\lists\*.*
         FileRead, str, %inca%\fav\History.m3u
         FileDelete, %inca%\fav\History.m3u
@@ -1738,7 +1714,6 @@ else
         WinSet, TransColor, 0 140
         WinSet, ExStyle, +0x20
         SoundGet, volume
-        SetTimer, indexer, -1000, -1
         }
 
 
@@ -1768,8 +1743,15 @@ else
         if (GetKeyState("RButton", "P") && gesture)
           gui, vol: show, x0 y%yv% w%xv% h3 NA
         else gui, vol: hide
-
         }
+
+
+    indexPage:								; ensure first few media are indexed
+    Critical Off							; so thumbsheets available
+    Loop, 10
+      if getMedia(A_Index)
+        index(src,0)
+    return
 
 
     Indexer:
