@@ -222,7 +222,7 @@
               clp := Clipboard
               Clipboard =
               send, ^c
-              ClipWait, 0
+              ClipWait, 0.1
               send, {Lbutton up}
               if ClipBoard
                 {
@@ -368,6 +368,13 @@
             selected =
             reload:=2
             index := 1							; scroll to media 1
+            }
+        if (command == "Index")						; index folder (create thumbsheets)
+            {
+            if selected							; force index of selected media
+              index(src,1)
+            reload := 2
+            selected =
             }
         if (command == "History")					; java tells inca to play
             {
@@ -585,7 +592,7 @@
               skinny = -1.20
             if (skinny > 1.5)
               skinny = 1.50
-            if (skinny >= 0.98 && skinny <= 1.02)
+            if (!skinny || (skinny >= 0.98 && skinny <= 1.02))
               skinny := 1.00
             skinny = 0.00|skinny|%skinny%				; create new mask string
             if rate
@@ -1046,6 +1053,7 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n if(
 </div>`n`n
 
 <div id='myRibbon2' class='ribbon' style='height:0; overflow:hidden; justify-content:right'>`n
+<a id='myIndex' onmousedown="inca('Index','',wasMedia)">Index</a>
 <a id='myRate' style='width:9`%' onwheel="wheelEvents(event, id, this)">Speed</a>`n
 <a id='myFade' style='width:9`%' onwheel="wheelEvents(event, id, this)">Fade</a>`n
 <a id='myMpv' style='width:9`%' onmouseup="mpv*=1; mpv^=1; localStorage.setItem('mpv',mpv)">External</a>`n
@@ -1714,6 +1722,8 @@ else
         WinSet, TransColor, 0 140
         WinSet, ExStyle, +0x20
         SoundGet, volume
+        if (x := Setting("Indexer") * 60000)
+          SetTimer, indexer, %x%, -2
         }
 
 
@@ -1746,9 +1756,9 @@ else
         }
 
 
-    indexPage:								; ensure first few media are indexed
-    Critical Off							; so thumbsheets available
-    Loop, 10
+    indexPage:								; so thumbsheets are available
+    Critical Off
+    Loop, 100
       if getMedia(A_Index)
         index(src,0)
     return
@@ -1759,7 +1769,7 @@ else
     if indexFolders
       Loop, Parse, indexFolders, `|
         Loop, Files, %A_LoopField%*.*, R
-    index(A_LoopFileFullPath,0)
+          index(A_LoopFileFullPath,0)
     return
 
 
@@ -1819,9 +1829,6 @@ else
                 Runwait %inca%\cache\apps\ffmpeg -i %inca%\cache\lists\`%d.jpg -filter_complex "tile=6x6" -y "%inca%\cache\thumbs\%filen%.jpg",, Hide
             }
           GuiControl, Indexer:, GuiInd
-        x := Setting("Indexer") * 60000
-        if x
-          SetTimer, indexer, -%x%, -2
           }
 
 

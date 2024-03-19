@@ -15,7 +15,6 @@
 .player {					/* media player element */
   position:absolute;
   opacity:0;
-// outline:1px solid red;
   border-radius:3%}
 
 .preview {					/* small preview seeking video */
@@ -69,7 +68,6 @@
   --pitch:0;
   position:relative;
   margin:auto;
-  outline:0.1em solid #15110a;
   padding:0.1em;
   transition:transform 0.4s;
   border-radius:0.5em}
@@ -195,7 +193,7 @@
 .context {					/* right click menu */
   display:none;
   z-index:888;
-  min-width:6em;
+  min-width:5em;
   position:fixed;
   font-size:1.1em;
   transition:0.14s;
