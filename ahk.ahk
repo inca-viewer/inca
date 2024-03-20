@@ -1012,12 +1012,14 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n if(
 <a id='myPitch' onwheel="wheelEvents(event, id, this)" onmouseup='togglePause()'></a>`n
 <a id='myFlip' onmousedown='flip()'>Flip</a>`n
 <a id='myCue' onclick="myPlayer.pause(); myNav.style.display=null; if (playing) {cue=Math.round(myPlayer.currentTime*100)/100} else {inca('EditCue',1,index,cue)}">Cue</a>`n
+<a id='Mp3' onmousedown="inca('mp3', myPlayer.currentTime.toFixed(2), index, cue)"></a>`n
+<a id='Mp4' onmousedown="inca('mp4', myPlayer.currentTime.toFixed(2), index, cue)"></a>`n
 </div>`n`n
 
 <div id='myMask' class="mask" onwheel="wheelEvents(event, id, this)">`n</div>
-<div><video id="myPlayer" class='player' type="video/mp4" muted onwheel="wheelEvents(event, id, this)"></video>`n
+<div><span id='myCap' class='caption'></span>`n
+<video id="myPlayer" class='player' type="video/mp4" muted onwheel="wheelEvents(event, id, this)"></video>`n
 <span id='mySeekbar' class='seekbar'></span>`n
-<span id='myCap' class='caption'></span>`n
 <span><video class='preview' id='myPreview' muted type="video/mp4" onwheel="wheelEvents(event, id, this)"></video></span></div>`n`n
 
 <div id='myView' class='myList' style='padding-left:%page_l%`%; padding-right:%page_r%`%'>`n`n

@@ -17,6 +17,8 @@
 // subs hierarchy lost if leave page - lose selection target
 // popouts jump position when moving
 
+// use modal again as myplayer layer to hold all elements
+// start fav longcl
 
   var mediaX = 1*localStorage.getItem('mediaX')				// caption strings
   var mediaY = 1*localStorage.getItem('mediaY')				// last media position
@@ -92,8 +94,8 @@
 
 
   document.addEventListener('keydown', (e) => {				// keyboard events
-    if (e.key=='>' && playing=='mpv') {lastClick=2; mouseEvent('Up')}
-    if (e.key=='<' && playing=='mpv') {longClick=2; mouseEvent('Up')}
+    if (e.key=='>' && playing=='mpv') {lastClick=2; mouseEvent('Up')}	// next media
+    if (e.key=='<' && playing=='mpv') {longClick=2; mouseEvent('Up')}	// previous media
     if (e.key=='Enter') {
       if (renamebox) {inca('Rename', renamebox, wasMedia)}		// rename media
       else if (myInput.value) {
@@ -125,7 +127,6 @@
     clearTimeout(clickTimer)						// longClick timer
     if (Click==3 &&!gesture && yw>0.1)  context(e)			// new context menu if click below window top
     if (Click==1 && gesture==2 && !playing) getParameters(overMedia)	// double thumb size
-    else if (gesture && Click==3 && !longClick) {zoom=1; positionMedia(0.2)} // quick gesture - zoom media
     else if (!longClick) mouseEvent('Up')				// process click event 
     Click=0; wheel=0; block=100; gesture=0; longClick=0}
 
@@ -150,17 +151,19 @@
     if (Click) sel(id)
     var x = el['onmousedown'].toString().split(','); x.pop()		// get start from parameters
     start = 1*x.pop().trim()
+//getParameters(id)
     x = el.getBoundingClientRect()
     x = (xpos-x.left)/el.offsetWidth*skinny				// reset thumb time if enter from left
     if (!el.currentTime || x<0.1) el.currentTime=start; el.play()}
 
 
   function mouseEvent(e) {						// functional logic
-    if (Click==2 && !playing) {inca('View', view, '', lastIndex); return} // switch list/thumb view
-    if (myNav.matches(':hover') && lastClick==1) return
+    if (Click==2 && !playing) {inca('View',view,'',lastIndex); return}	// switch list/thumb view
+    if (playing && gesture && !longClick) {zoom=1; positionMedia(0.2)}	// quick gesture - zoom media
     if (!playing && !longClick && !overMedia) return
     if (longClick && myInput.matches(':hover')) return
     if (longClick && myPanel.matches(':hover')) return			// also, copy files instead of move
+    if (myNav.matches(':hover') && lastClick==1) return
     if (Click > 2 || gesture || title.matches(':hover')) return		// allow rename of media in htm
     if (longClick==1 && !playing && playlist && overMedia && selected) {inca('Move', index); return}
     if (playing=='browser' && lastClick==1 && !thumbSheet && type != 'image') {
@@ -340,7 +343,7 @@
     x = media['onmousedown'].toString().split(','); x.pop()		// get media parameters from htm entry
     start = 1*x.pop().trim()
     dur = 1*x.pop().trim()						// in case wmv, avi etc
-    cueList = x.pop().replaceAll('\'', '').trim().replaceAll("#3", "\,").replaceAll("#4", "\'").replaceAll("#5", "\"")
+    cueList = x.pop().replaceAll('\'', '').trim()
     type = x.pop().replaceAll('\'', '').trim()				// eg video, image
     if (cueList) Cue(0,i)						// get initial width, speed etc.
     x = media.style.skinny						// get any live width edits
@@ -379,9 +382,8 @@
     else mySkinny.innerHTML = skinny.toFixed(2)
     if (pitch>0.99 && pitch<1.01) myPitch.innerHTML = 'Pitch'
     else myPitch.innerHTML = pitch.toFixed(2)
-    if (cue) {mySelected.innerHTML = cue; myRibbon2.style.height='1.2em'}
-    else if (selected) mySelected.innerHTML = selected.split(',').length -1
-    else mySelected.innerHTML = block
+    if (selected) mySelected.innerHTML = selected.split(',').length -1
+    else mySelected.innerHTML = ''
     if (playlist) {myFav.innerHTML='Fav &#10084'}
     if ((wasMedia || playing) && mySelect.matches(':hover')) {
       mySelect.innerHTML='Select - '+index+' - '+title.value}
@@ -394,13 +396,13 @@
     if (looping) {myLoop.style.color='red'} else myLoop.style.color=null
     if (myPlayer.muted) {myMute.style.color='red'} else {myMute.style.color=null}
     if (skinny<0) {myFlip.style.color='red'} else myFlip.style.color=null
-    if (cue) {myRibbon2.style.opacity=1; myRibbon2.style.zIndex=null} 
+    if (cue) {myRibbon2.style.opacity=1; myRibbon2.style.zIndex=null; Mp3.innerHTML='mp3'; Mp4.innerHTML='mp4'} 
     if (playing) {myMask.style.display='flex'; myMask.style.backgroundColor='rgba(0,0,0,'+scaleY*2.2+')'}  
     else myMask.style.display='none'
     if (playing=='browser') {
       myPlayer.playbackRate=rate
       rect = myPlayer.getBoundingClientRect()
-      myCap.style.top=rect.top -25 +'px'
+      myCap.style.top=rect.top -30 +'px'
       myCap.style.left=rect.left +10 +'px'
       myCap.style.zIndex=Zindex
       myPreview.style.maxHeight= myPlayer.offsetHeight*scaleY*0.2 +'px'
@@ -422,6 +424,8 @@
       if (type!='image' && !Click && !thumbSheet) seekBar()
       if (!Click) positionMedia(0.01)}
     else {
+      Mp3.innerHTML=''
+      Mp4.innerHTML=''
       myCap.innerHTML=''
       myCap.style.opacity=0
       mySeekbar.style.display=null
@@ -479,8 +483,8 @@
 
 
   function Cue(time, i) {						// process media cues - captions, pauses etc.
-    el=document.getElementById('media'+i)
-    x = el['onmousedown'].toString().split(',')				// get cueList from htm entry
+    var el=document.getElementById('media'+i)
+    var x = el['onmousedown'].toString().split(',')			// get cueList from htm entry
     x.pop(); x.pop(); x.pop()						// skip over event, start time & dur
     cueList = x.pop().replaceAll('\'', '').trim()
     if (!cueList) return
@@ -492,15 +496,15 @@
       cueTime = 1*entry[0]						// cue time
       type = entry[1]							// cue type
       if (entry[2]) value = entry[2]					// cue value - optional para.
-      if (cueTime > time-0.1 && cueTime < time+0.1) {
+      if (cueTime > time-0.1 && cueTime < time+0.1) { //  alert(value)
         if (type=='next') {lastClick=2; mouseEvent()}
         else if (type=='time') myPlayer.currentTime = 1*value
-        else if (type=='rate') {if (isNaN(value)) {rate=defRate} else {rate=1*value}}
+        else if (type=='rate') {if (isNaN(1*value)) {rate=defRate} else {rate=1*value}}
         else if (type=='skinny') {if (isNaN(value)) {skinny=1} else {skinny=1*value}}
         else if (type=='pitch') {if (isNaN(value)) {pitch=1} else {pitch=1*value}}
         else if (type=='pause' && block<25) {myPlayer.pause(); entry[3]=value}
-        else if (type == 'cap') myCap.innerHTML = value
-        if (x=1000*entry[3]) {setTimeout(function(){myPlayer.play(); myCap.innerHTML=''; block=100},x)}}}}
+        else if (type == 'cap') myCap.innerHTML = value.replaceAll("#3", "\,").replaceAll("#4", "\'").replaceAll("#5", "\"")
+        if (y=1000*entry[3]) {setTimeout(function(){myPlayer.play(); myCap.innerHTML=''; block=100},y)}}}}
 
 
   function thumbSize() {						// change thumb size

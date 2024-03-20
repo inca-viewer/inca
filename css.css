@@ -18,7 +18,8 @@
   border-radius:3%}
 
 .preview {					/* small preview seeking video */
-  position:absolute; 
+  position:absolute;
+  display:none;
   opacity:0;
   z-index:-1;
   user-select:none;
