@@ -16,9 +16,8 @@
 // create debug panel - messages, start index etc.
 // subs hierarchy lost if leave page - lose selection target
 // popouts jump position when moving
-
-// use modal again as myplayer layer to hold all elements
-// start fav longcl
+// zoom fs between portait landscape
+// zoom rclick
 
   var mediaX = 1*localStorage.getItem('mediaX')				// caption strings
   var mediaY = 1*localStorage.getItem('mediaY')				// last media position
@@ -74,14 +73,11 @@
   var pitch = 1
   var skinny = 1							// media width
   var playing = ''
-  var sheetZoom = 1
+  var sheetZoom = 1							// thumbsheet zoom
+  var zoom = 0								// quick gesture toggle zoom
   var title
-  var zoom=0
 
 
-  if (!mediaX || mediaX < 0 || mediaX > innerWidth) mediaX=innerWidth/2
-  if (!mediaY || mediaY < 0 || mediaY > innerHeight) mediaY=innerHeight/2
-  if (!scaleY || scaleY>2 || scaleY<0.2) scaleY=0.4
   scaleX = scaleY
   if (!fade) fade=0.2							// default transitions
   if (!defRate) defRate=1						// default speed
@@ -151,7 +147,6 @@
     if (Click) sel(id)
     var x = el['onmousedown'].toString().split(','); x.pop()		// get start from parameters
     start = 1*x.pop().trim()
-//getParameters(id)
     x = el.getBoundingClientRect()
     x = (xpos-x.left)/el.offsetWidth*skinny				// reset thumb time if enter from left
     if (!el.currentTime || x<0.1) el.currentTime=start; el.play()}
@@ -159,7 +154,7 @@
 
   function mouseEvent(e) {						// functional logic
     if (Click==2 && !playing) {inca('View',view,'',lastIndex); return}	// switch list/thumb view
-    if (playing && gesture && !longClick) {zoom=1; positionMedia(0.2)}	// quick gesture - zoom media
+    if (Click > 2 && playing && gesture && !longClick) {zoom=1; positionMedia(0.2)} // quick gesture - zoom media
     if (!playing && !longClick && !overMedia) return
     if (longClick && myInput.matches(':hover')) return
     if (longClick && myPanel.matches(':hover')) return			// also, copy files instead of move
@@ -175,6 +170,10 @@
       else if (!longClick) {togglePause(); return}}
     if (lastClick==1 && thumbSheet) {getStart(); return}
     lastIndex = index
+    if (!playing) {
+      if (!mediaX || mediaX < 0 || mediaX > innerWidth) mediaX=innerWidth/2
+      if (!mediaY || mediaY < 0 || mediaY > innerHeight) mediaY=innerHeight/2
+      if (!scaleY || scaleY>2 || scaleY<0.2) scaleY=0.4}
     if (!playing && overMedia) {index=overMedia; wasMedia=index}
     if (playing && !longClick && lastClick==2) index++
     if (longClick==2 && index > 1) index--
@@ -441,12 +440,13 @@
       scaleY=1*localStorage.getItem('scaleY')
       z = (innerHeight+y)/myPlayer.offsetHeight				// media to screen ratio calc.
       if (z > (innerWidth+x)/myPlayer.offsetWidth) z=0
-      if ((!z && 1.04*myPlayer.offsetWidth*scaleX<innerWidth-x) || (z && 1.04*myPlayer.offsetHeight*scaleY<innerHeight-y)) {
-        mediaY=((innerHeight-y)/2)
-        if (z) {scaleY=(innerHeight-y)/myPlayer.offsetHeight}		// full size myPlayer
-        else {scaleX=(innerWidth-x)/myPlayer.offsetWidth; mediaX=(innerWidth-x-20)/2; scaleY=scaleX/skinny}}
+      if (!z && 1.04*myPlayer.offsetWidth*scaleX<innerWidth-x) {
+        scaleX=(innerWidth-x)/myPlayer.offsetWidth; scaleY=scaleX/skinny; mediaX=(innerWidth-x-20)/2}
+      else if (z && 1.04*myPlayer.offsetHeight*scaleY<innerHeight-y) {
+        scaleY=(innerHeight-y)/myPlayer.offsetHeight; mediaY=(innerHeight-y)/2}
       else scaleY=0.7
       localStorage.setItem('scaleY',scaleY.toFixed(3))}
+    if (media.offsetWidth/media.offsetHeight < 1) {x*=2} else {y*=2}
     myPlayer.style.left = mediaX +x/2 -(myPlayer.offsetWidth/2) +"px"	// position media in window
     myPlayer.style.top = mediaY +y/2 -(myPlayer.offsetHeight/2) +"px"
     myPlayer.style.transition = fa+'s'
