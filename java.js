@@ -170,6 +170,7 @@
       else if (!longClick) {togglePause(); return}}
     if (lastClick==1 && thumbSheet) {getStart(); return}
     lastIndex = index
+    scaleY=1*localStorage.getItem('scaleY')
     if (!playing) {
       if (!mediaX || mediaX < 0 || mediaX > innerWidth) mediaX=innerWidth/2
       if (!mediaY || mediaY < 0 || mediaY > innerHeight) mediaY=innerHeight/2
@@ -178,7 +179,6 @@
     if (playing && !longClick && lastClick==2) index++
     if (longClick==2 && index > 1) index--
     if (!thumbSheet && e) navigator.clipboard.writeText('#History#'+start.toFixed(1)+'#'+index+'#')
-    scaleY=1*localStorage.getItem('scaleY')
     var fadeOut = fade							// media fadeout time 
     if (!playing || longClick) fadeOut=0
     if (playing) positionMedia(fade)
