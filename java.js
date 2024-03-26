@@ -17,7 +17,8 @@
 // subs hierarchy lost if leave page - lose selection target
 // popouts jump position when moving
 // zoom fs between portait landscape
-// zoom rclick
+// pictures.htm null on new machine
+
 
   var mediaX = 1*localStorage.getItem('mediaX')				// caption strings
   var mediaY = 1*localStorage.getItem('mediaY')				// last media position
@@ -134,7 +135,7 @@
     inca('Close')
     setTimeout(function() {
       myPlayer.removeEventListener('ended', nextMedia)
-      lastStart = myPlayer.currentTime
+      lastStart = myPlayer.currentTime.toFixed(2)
       myPlayer.src=''
       myPlayer.poster=''
       thumbSheet=false},fade*300)}
@@ -174,7 +175,8 @@
     if (!playing) {
       if (!mediaX || mediaX < 0 || mediaX > innerWidth) mediaX=innerWidth/2
       if (!mediaY || mediaY < 0 || mediaY > innerHeight) mediaY=innerHeight/2
-      if (!scaleY || scaleY>2 || scaleY<0.2) scaleY=0.4}
+      if (!scaleY || scaleY>2 || scaleY<0.2) scaleY=0.4
+      localStorage.setItem('scaleY',scaleY.toFixed(3))}
     if (!playing && overMedia) {index=overMedia; wasMedia=index}
     if (playing && !longClick && lastClick==2) index++
     if (longClick==2 && index > 1) index--
@@ -182,7 +184,7 @@
     var fadeOut = fade							// media fadeout time 
     if (!playing || longClick) fadeOut=0
     if (playing) positionMedia(fade)
-    else {positionMedia(0)}
+    else positionMedia(0)
     myPlayer.style.opacity=0
     positionMedia(fadeOut*500)
     setTimeout(function() {						// so player can fade in/out
@@ -225,6 +227,8 @@
     else if (playing=='mpv' && e) {inca('Media',0,index,para); scaleY=0.6} // use external player
     if (type == 'audio' || playlist.match('/inca/music/')) {
       looping=false; myPlayer.muted=false; scaleY=0.2; myPlayer.style.border='1px solid salmon'}
+    if ((","+selected).match(","+index+",")) {mySelect.style.color='red'; myPlayer.style.outline='2px solid red'}
+    else {mySelect.style.color=null; myPlayer.style.outline=null}
     if (playing=='browser' && !thumbSheet && type != 'image') myPlayer.play()
     myPlayer.addEventListener('ended', nextMedia)
     if (playing=='browser') myPlayer.style.opacity=1
@@ -387,8 +391,6 @@
     if ((wasMedia || playing) && mySelect.matches(':hover')) {
       mySelect.innerHTML='Select - '+index+' - '+title.value}
     else mySelect.innerHTML='Select'
-    if ((","+selected).match(","+index+",")) {mySelect.style.color='red'}
-    else {mySelect.style.color=null}
     if (playing && !thumbSheet) myBody.style.cursor = 'crosshair'
     else myBody.style.cursor=null
     if (mpv) {myMpv.style.color='red'} else myMpv.style.color=null
@@ -399,6 +401,7 @@
     if (playing) {myMask.style.display='flex'; myMask.style.backgroundColor='rgba(0,0,0,'+scaleY*2.2+')'}  
     else myMask.style.display='none'
     if (playing=='browser') {
+      Jpg.innerHTML='jpg'
       myPlayer.playbackRate=rate
       rect = myPlayer.getBoundingClientRect()
       myCap.style.top=rect.top -30 +'px'
@@ -423,6 +426,7 @@
       if (type!='image' && !Click && !thumbSheet) seekBar()
       if (!Click) positionMedia(0.01)}
     else {
+      Jpg.innerHTML=''
       Mp3.innerHTML=''
       Mp4.innerHTML=''
       myCap.innerHTML=''
@@ -450,10 +454,10 @@
     myPlayer.style.left = mediaX +x/2 -(myPlayer.offsetWidth/2) +"px"	// position media in window
     myPlayer.style.top = mediaY +y/2 -(myPlayer.offsetHeight/2) +"px"
     myPlayer.style.transition = fa+'s'
-    z = scaleY +(y/innerHeight)
+    z = scaleY
+    if (!thumbSheet) {sheetZoom = 1; z = scaleY +(y/innerHeight)}
+    else sheetZoom = Math.abs(2.7-0.9*myPlayer.offsetWidth*scaleX/((innerWidth/2))) // make thumbsheet ~2x media size
     scaleX = skinny*z
-    if (!thumbSheet) sheetZoom = 1					// make thumbsheet ~2x media size
-    else sheetZoom = Math.abs(2.7-0.9*myPlayer.offsetWidth*scaleX/((innerWidth/2)))
     myPlayer.style.transform = "scale("+scaleX*sheetZoom+","+z*sheetZoom+")"}
 
 

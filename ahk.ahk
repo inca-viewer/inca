@@ -461,6 +461,8 @@
             FileAppend, %address%|`r`n, %inca%\cache\cues\%media%.txt, UTF-8
             run, %inca%\cache\cues\%media%.txt
             }
+        if (command == "jpg")
+          run, %inca%\cache\apps\ffmpeg.exe -ss %value% -i "%src%" -y "%profile%\Pictures\%media%.jpg",, Hide
         if (command == "mp3" || command == "mp4")
             {
             if (selected && !address)
@@ -1012,6 +1014,7 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n if(
 <a id='myPitch' onwheel="wheelEvents(event, id, this)" onmouseup='togglePause()'></a>`n
 <a id='myFlip' onmousedown='flip()'>Flip</a>`n
 <a id='myCue' onclick="myPlayer.pause(); myNav.style.display=null; if (playing) {cue=Math.round(myPlayer.currentTime*100)/100} else {inca('EditCue',1,index,cue)}">Cue</a>`n
+<a id='Jpg' onmousedown="inca('jpg', myPlayer.currentTime.toFixed(2), index)"></a>`n
 <a id='Mp3' onmousedown="inca('mp3', myPlayer.currentTime.toFixed(2), index, cue)"></a>`n
 <a id='Mp4' onmousedown="inca('mp4', myPlayer.currentTime.toFixed(2), index, cue)"></a>`n
 </div>`n`n
@@ -1025,7 +1028,7 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n if(
 <div id='myView' class='myList' style='padding-left:%page_l%`%; padding-right:%page_r%`%'>`n`n
 
 <div class='ribbon' style='height:1.4em; justify-content:center; background:#1b1814'>`n
-<a style='width:9em; font-size:1.4em; margin-left:1em; margin-top:-0.2em; %sub%' onmousedown="inca('Path')" onmouseover="Sub.scrollIntoView(); myView.scrollTo(0,0)">&#8678</a>`n
+<a style='width:7.5em; font-size:1.4em; margin-left:1em; margin-top:-0.2em; %sub%' onmousedown="inca('Path')" onmouseover="Sub.scrollIntoView(); myView.scrollTo(0,0)">&#8678</a>`n
 <a style='width:6em; text-align:left; padding-left:1em' onmouseover="Fol.scrollIntoView(); myView.scrollTo(0,0)">Fol</a>`n
 <a style='width:6em; text-align:left; padding-left:1em' onmouseover="Fav.scrollIntoView(); myView.scrollTo(0,0)">Fav</a>`n
 <a style='width:7em; text-align:left; padding-left:1em' onmouseover="Music.scrollIntoView(); myView.scrollTo(0,0)">Music</a>`n
@@ -1055,7 +1058,7 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n if(
 </div>`n`n
 
 <div id='myRibbon2' class='ribbon' style='height:0; overflow:hidden; justify-content:right'>`n
-<a id='myIndex' onmousedown="inca('Index','',wasMedia)">Index</a>
+<a id='myIndex' style='width:7`%' onmousedown="inca('Index','',wasMedia)">Index</a>
 <a id='myRate' style='width:9`%' onwheel="wheelEvents(event, id, this)">Speed</a>`n
 <a id='myFade' style='width:9`%' onwheel="wheelEvents(event, id, this)">Fade</a>`n
 <a id='myMpv' style='width:9`%' onmouseup="mpv*=1; mpv^=1; localStorage.setItem('mpv',mpv)">External</a>`n
