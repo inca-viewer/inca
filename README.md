@@ -50,7 +50,7 @@ Long click
 Right click slide gesture
 - left / right - volume
 - up / down - zoom
-- quick up gesture - fill screen toggle
+- quick up gesture - toggle zoom
 
 Left click slide gesture
 - on media - position media
