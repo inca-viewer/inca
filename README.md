@@ -11,7 +11,7 @@ No IDE, no libraries, no external calls, no browser extensions<br>
 Does not mess with any settings - see source code<br>
 Just run compile.exe - browser will open in pictures folder<br>
 To 'uninstall', exit from taskbar & delete inca folder<br>
-You can change source code in notepad. Self compiles in under a second<br><br>
+You can change source code in notepad. Compiles in under a second<br><br>
 
 <img src="screens/Screen 1.jpg" width="25%"> <img src="screens/Screen 2.jpg" width="25%"><br>
 
