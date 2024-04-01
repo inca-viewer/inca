@@ -373,6 +373,7 @@
             {
             if selected							; force index of selected media
               index(src,1)
+            else SetTimer, indexPage, -100, -2
             reload := 2
             selected =
             }
@@ -403,17 +404,13 @@
             start := Round(StrSplit(address,"|").1,2)
             skinny := Round(StrSplit(address,"|").2,2)
             rate := Round(StrSplit(address,"|").3,2)
-            pitch := Round(StrSplit(address,"|").4,2)
-            mute := 1*StrSplit(address,"|").5
+            mute := 1*StrSplit(address,"|").4
             if (!skinny || skinny != 1)
               skinny := -1*(1-skinny)
             else skinny=
             if (rate != 1)
               speed = --speed=%rate%
             else speed =
-            if pitch							; engine=finer
-              pitch = --af=rubberband=pitch-scale=%pitch%
-            else pitch =
             if mute
               mute = yes
             else mute = no
@@ -441,7 +438,7 @@
                 sleep 24
                 RunWait %COMSPEC% /c echo seek %start% absolute exact > \\.\pipe\mpv,, hide && exit
                 }
-              else Run %inca%\cache\apps\mpv --start=%start% %autofit% %geometry% %speed% %pitch% --mute=%mute% --playlist-start=%mpvid% --input-ipc-server=\\.\pipe\mpv "%inca%\cache\lists\mpvPlaylist.m3u" 
+              else Run %inca%\cache\apps\mpv --start=%start% %autofit% %geometry% %speed% --mute=%mute% --playlist-start=%mpvid% --input-ipc-server=\\.\pipe\mpv "%inca%\cache\lists\mpvPlaylist.m3u" 
               sleep 100
               if skinny
                 RunWait %COMSPEC% /c echo add video-scale-x %skinny% > \\.\pipe\mpv,, hide && exit
@@ -454,15 +451,15 @@
             if !selected 
               return
             id := StrSplit(selected, ",").1
-            if getMedia(id)
-            if !address
-              address = 0.00
-            else address = %address%
-            FileAppend, %address%|`r`n, %inca%\cache\cues\%media%.txt, UTF-8
+;            if getMedia(id)
+            if !value
+              value = 0.00
+;            else value = %value%
+            FileAppend, %value%|cap|`r`n, %inca%\cache\cues\%media%.txt, UTF-8
             run, %inca%\cache\cues\%media%.txt
             }
         if (command == "jpg")
-          run, %inca%\cache\apps\ffmpeg.exe -ss %value% -i "%src%" -y "%profile%\Pictures\%media%.jpg",, Hide
+          run, %inca%\cache\apps\ffmpeg.exe -ss %value% -i "%src%" -y "%profile%\Pictures\%media% @%value%.jpg",, Hide
         if (command == "mp3" || command == "mp4")
             {
             if (selected && !address)
@@ -476,7 +473,6 @@
               }
             else if address						; cue point time
               {
-              reload := 1
               x = @%value%						; converts value to string
               y = %mediaPath%\%media% %x%.%command%
               if (!address || value == address)
@@ -489,7 +485,7 @@
               }
             selected =
             Popup("Creating . . .",1000,0,0)
-            reload := 2
+;            reload := 2
             }
         if (command == "Favorite")
             {
@@ -581,13 +577,15 @@
             reload := 1
             return	
             }
-        if (command == "Cues")						; update any media cue edits - width, speed, pitch...
+        if (command == "Cues")						; update any media cue edits - width, speed
             {
             getMedia(value)
             array := StrSplit(address,"|")
             skinny := Round(array.1,2)
             rate := Round(array.2,2)
-            pitch := Round(array.3,2)
+            cue := Round(array.3,2)					; cue time for entry (not global)
+            if !cue
+              cue = 0.00
             if skinny is not number
               skinny := 1.00
             if (skinny < -1.2)
@@ -596,13 +594,9 @@
               skinny = 1.50
             if (!skinny || (skinny >= 0.98 && skinny <= 1.02))
               skinny := 1.00
-            skinny = 0.00|skinny|%skinny%				; create new mask string
+            skinny = %cue%|skinny|%skinny%				; create new mask string
             if rate
-              rate = 0.00|rate|%rate%
-            if (pitch > 2 && pitch < 0.5)
-              pitch := 1.00
-            if pitch
-              pitch = 0.00|pitch|%pitch%
+              rate = %cue%|rate|%rate%
             FileRead, cues, %inca%\cache\cues\%media%.txt
             last := cues
             if cues
@@ -610,28 +604,21 @@
                 {
                 array := StrSplit(A_LoopField, "|")			; split each entry
                 x := array.3						; the entry value
-                sk = 0.00|skinny|%x%					; remember existing mask string
-                ra = 0.00|rate|%x%
-                pi = 0.00|pitch|%x%
+                sk = %cue%|skinny|%x%					; remember existing mask string
+                ra = %cue%|rate|%x%
                 if (!array.1 && array.2 == "skinny")			; has "0.00|skinny|" prefix
                   cues := StrReplace(cues, sk, skinny)			; use masks to replace value
                 if (!array.1 && rate && array.2 == "rate")
                   cues := StrReplace(cues, ra, rate)
-                if (!array.1 && pitch && array.2 == "pitch")
-                  cues := StrReplace(cues, pi, pitch)
                 }
              if (skinny && !InStr(cues, "0.00|skinny"))			; if no entries exist
                cues = %skinny%`r`n%cues%
              if (rate && !InStr(cues, "0.00|rate"))			; add new entry
                cues = %rate%`r`n%cues%
-             if (pitch && !InStr(cues, "0.00|pitch"))			; add new entry
-               cues = %pitch%`r`n%cues%
              if (InStr(cues, "0.00|skinny|1.00`r`n"))			; if entry is just the default
                 cues := StrReplace(cues, "0.00|skinny|1.00`r`n")	; remove entry
              if (InStr(cues, "0.00|rate|1.00`r`n"))
                 cues := StrReplace(cues, "0.00|rate|1.00`r`n")
-             if (InStr(cues, "0.00|pitch|1.00`r`n"))
-                cues := StrReplace(cues, "0.00|pitch|1.00`r`n")
             if (cues != last)						; if changed, replace cues file
               {
               FileDelete, %inca%\cache\cues\%media%.txt
@@ -1011,12 +998,13 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n if(
 <a id='myLoop' onmouseup="looping=!looping">Loop</a>`n
 <a id='mySpeed' onwheel="wheelEvents(event, id, this)" onmouseup='togglePause()'></a>`n
 <a id='mySkinny' onwheel="wheelEvents(event, id, this)" onmouseup='togglePause()'></a>`n
-<a id='myPitch' onwheel="wheelEvents(event, id, this)" onmouseup='togglePause()'></a>`n
 <a id='myFlip' onmousedown='flip()'>Flip</a>`n
-<a id='myCue' onclick="myPlayer.pause(); myNav.style.display=null; if (playing) {cue=Math.round(myPlayer.currentTime*100)/100} else {inca('EditCue',1,index,cue)}">Cue</a>`n
+<a id='myCue' onclick="if(!cue) {myPlayer.pause(); myNav.style.display=null; if (playing) {cue=Math.round(myPlayer.currentTime*100)/100} else {inca('EditCue',1,index,cue)}} else {inca('Close'); cue=0; myPlayer.play()}">Cue</a>`n
+<a id='myIndex' onmousedown="inca('Index','',wasMedia)">Index</a>`n
+<a id='Cap' onmousedown="inca('EditCue', myPlayer.currentTime.toFixed(2), wasMedia)">caption</a>`n
+<a id='Mp3' onmousedown="inca('mp3', myPlayer.currentTime.toFixed(2), index, cue); cue=0; myPlayer.play()">mp3</a>`n
+<a id='Mp4' onmousedown="inca('mp4', myPlayer.currentTime.toFixed(2), index, cue); cue=0; myPlayer.play()">mp4</a>`n
 <a id='Jpg' onmousedown="inca('jpg', myPlayer.currentTime.toFixed(2), index)"></a>`n
-<a id='Mp3' onmousedown="inca('mp3', myPlayer.currentTime.toFixed(2), index, cue)"></a>`n
-<a id='Mp4' onmousedown="inca('mp4', myPlayer.currentTime.toFixed(2), index, cue)"></a>`n
 </div>`n`n
 
 <div id='myMask' class="mask" onwheel="wheelEvents(event, id, this)">`n</div>
@@ -1052,20 +1040,18 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n if(
 <a style='width:6.5`%; %x10%' onmousedown="inca('Images')">Pics</a>`n
 <a style='width:6.5`%; %x9%' onmousedown="inca('Videos')">Vids</a>`n
 <a style='width:7`%; %x8%' onmousedown="inca('Recurse')">Subs</a>`n
-<a id='myInca' style='width:12`%' onmouseover="myRibbon2.style.height='1.2em'; this.innerHTML='Inca'" onmouseup="inca('Settings')">&#8230</a>`n
+<a style='width:12`%' onmouseover="myRibbon2.style.height='1.2em'" onmouseup="inca('Settings')">&#8230</a>`n
 <a style='color:red; width:14`%; font-size:1.1em; margin-top:-0.1em'>%listSize%</a>
 <a id="myPage" style='width:17`%' onmousedown="inca('Page', page)" onwheel="wheelEvents(event, id, this)">%pg%</a>`n
 </div>`n`n
 
-<div id='myRibbon2' class='ribbon' style='height:0; overflow:hidden; justify-content:right'>`n
-<a id='myIndex' style='width:7`%' onmousedown="inca('Index','',wasMedia)">Index</a>
+<div id='myRibbon2' class='ribbon' style='height:0; overflow:hidden; justify-content:right' onmouseleave="myRibbon2.style.height=0" >`n
 <a id='myRate' style='width:9`%' onwheel="wheelEvents(event, id, this)">Speed</a>`n
 <a id='myFade' style='width:9`%' onwheel="wheelEvents(event, id, this)">Fade</a>`n
+<a id='myInca' style='width:6`%' onmouseup="inca('Settings')">Inca</a>`n
 <a id='myMpv' style='width:9`%' onmouseup="mpv*=1; mpv^=1; localStorage.setItem('mpv',mpv)">External</a>`n
-<a id='myMp4' style='width:5`%' onmousedown="inca('mp4', lastStart, lastIndex, cue)">mp4</a>`n
-<a id='myMp3' style='width:5`%' onmousedown="inca('mp3', lastStart, lastIndex, cue)">mp3</a>`n
 <a id='myJoin' style='width:5`%' onmousedown="inca('Join')">Join</a>
-<a style='width:10`%'></a></div>`n`n
+<a style='width:12.3`%'></a></div>`n`n
 
 <div style='width:100`%; height:9.5em'></div>`n%mediaList%<div style='width:100`%; height:100vh'></div>`n`n
 
@@ -1096,7 +1082,6 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n if(
       if fullscreen
         send, {F11}
       fullscreen := 0
-      SetTimer, indexPage, -100, -2					; check/index first few items in page
       sleep 400								; time for page to load
       PopUp("",0,0,0)
       }
@@ -1179,8 +1164,6 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n if(
         stringlower, thumb, thumb
         poster = poster="file:///%thumb%"
         StringReplace, media_s, media, `', &apos;, All
-        if (!playlist && dur <= 200 && start < 6)			; use 0.00 start < 200 sec videos
-          start = 0
         start := Round(start,2)
 
 if listView
@@ -1763,7 +1746,8 @@ else
 
     indexPage:								; so thumbsheets are available
     Critical Off
-    Loop, 100
+    page_s := Setting("Page Size")
+    Loop, %page_s%
       if getMedia(A_Index)
         index(src,0)
     return

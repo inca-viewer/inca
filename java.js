@@ -17,7 +17,6 @@
 // subs hierarchy lost if leave page - lose selection target
 // popouts jump position when moving
 // zoom fs between portait landscape
-// pictures.htm null on new machine
 
 
   var mediaX = 1*localStorage.getItem('mediaX')				// caption strings
@@ -71,7 +70,6 @@
   var Yref = 0
   var dur = 0
   var rate = 1								// media speed
-  var pitch = 1
   var skinny = 1							// media width
   var playing = ''
   var sheetZoom = 1							// thumbsheet zoom
@@ -184,7 +182,7 @@
     var fadeOut = fade							// media fadeout time 
     if (!playing || longClick) fadeOut=0
     if (playing) positionMedia(fade)
-    else positionMedia(0)
+if (selected) Timer()							// for myPlayer red outline
     myPlayer.style.opacity=0
     positionMedia(fadeOut*500)
     setTimeout(function() {						// so player can fade in/out
@@ -218,7 +216,7 @@
   function Play(e) {
     cue = 0
     var ex = myPlayer.src.slice(-3)					// file extension
-    var para = start+'|'+skinny+'|'+rate+'|'+pitch+'|'+localStorage.getItem('muted')
+    var para = start+'|'+skinny+'|'+rate+'|'+localStorage.getItem('muted')
     if (!thumbSheet && type=='video' && (mpv || (ex!='mp4' && ex!='mkv' && ex!='m4v' && ex!='ebm'))) playing='mpv'
     else playing='browser'
     myPlayer.muted = 1*localStorage.getItem('muted')
@@ -227,8 +225,6 @@
     else if (playing=='mpv' && e) {inca('Media',0,index,para); scaleY=0.6} // use external player
     if (type == 'audio' || playlist.match('/inca/music/')) {
       looping=false; myPlayer.muted=false; scaleY=0.2; myPlayer.style.border='1px solid salmon'}
-    if ((","+selected).match(","+index+",")) {mySelect.style.color='red'; myPlayer.style.outline='2px solid red'}
-    else {mySelect.style.color=null; myPlayer.style.outline=null}
     if (playing=='browser' && !thumbSheet && type != 'image') myPlayer.play()
     myPlayer.addEventListener('ended', nextMedia)
     if (playing=='browser') myPlayer.style.opacity=1
@@ -280,11 +276,6 @@
       media.style.skinny = skinny
       getParameters(wasMedia)
       positionMedia(0)}
-    else if (id=='myPitch') {						// pitch
-      block = 100
-      if (wheelUp) {if (pitch>0.5) {pitch += 0.01}}
-      else {if (pitch<2) {pitch -= 0.01}}
-      media.style.pitch = pitch}
     else if (id=='View') {						// thumbs
       if (wheelUp) view += 1
       else view -= 1
@@ -332,7 +323,8 @@
       if (y>x && (scaleY>0.25 || Yref<ypos)) {
         scaleY += ((ypos-Yref) * 0.003)
         localStorage.setItem('scaleY',scaleY.toFixed(3))}}
-    Xref=xpos; Yref=ypos; positionMedia(0)}
+    if (Click) positionMedia(0)
+    Xref=xpos; Yref=ypos}
 
 
   function getParameters(i) {						// prepare player for selected media (index)
@@ -340,19 +332,17 @@
       media=document.getElementById('media1'); return}
     title=document.getElementById('title'+i)
     rate = defRate
-    pitch = 1
     skinny = 1
     media.style.border=null						// for correct ratio calc,
     x = media['onmousedown'].toString().split(','); x.pop()		// get media parameters from htm entry
     start = 1*x.pop().trim()
     dur = 1*x.pop().trim()						// in case wmv, avi etc
+    if (!playlist && dur <= 200 && start < 6) start=0
     cueList = x.pop().replaceAll('\'', '').trim()
     type = x.pop().replaceAll('\'', '').trim()				// eg video, image
     if (cueList) Cue(0,i)						// get initial width, speed etc.
     x = media.style.skinny						// get any live width edits
     if (x && x!=skinny) skinny=x 					// in case it has been edited
-    x = media.style.pitch
-    if (x && x!=pitch) pitch=x
     if (media.style.position!='fixed') {
       media.style.transform='scale('+skinny+',1)'}
     else media.style.transform='scale('+skinny*2.2+',2.2)'		// magnify popped out media from htm
@@ -383,8 +373,6 @@
     else mySpeed.innerHTML = rate.toFixed(2)
     if (skinny>0.99 && skinny<1.01) mySkinny.innerHTML = 'Skinny'
     else mySkinny.innerHTML = skinny.toFixed(2)
-    if (pitch>0.99 && pitch<1.01) myPitch.innerHTML = 'Pitch'
-    else myPitch.innerHTML = pitch.toFixed(2)
     if (selected) mySelected.innerHTML = selected.split(',').length -1
     else mySelected.innerHTML = ''
     if (playlist) {myFav.innerHTML='Fav &#10084'}
@@ -397,7 +385,6 @@
     if (looping) {myLoop.style.color='red'} else myLoop.style.color=null
     if (myPlayer.muted) {myMute.style.color='red'} else {myMute.style.color=null}
     if (skinny<0) {myFlip.style.color='red'} else myFlip.style.color=null
-    if (cue) {myRibbon2.style.opacity=1; myRibbon2.style.zIndex=null; Mp3.innerHTML='mp3'; Mp4.innerHTML='mp4'} 
     if (playing) {myMask.style.display='flex'; myMask.style.backgroundColor='rgba(0,0,0,'+scaleY*2.2+')'}  
     else myMask.style.display='none'
     if (playing=='browser') {
@@ -410,6 +397,8 @@
       myPreview.style.maxHeight= myPlayer.offsetHeight*scaleY*0.2 +'px'
       myPreview.style.left = xpos - myPreview.offsetWidth/2 +'px'	// seeking preview window
       myPreview.style.top = rect.bottom - myPreview.offsetHeight -12 +'px' 
+      if ((","+selected).match(","+index+",")) {mySelect.style.color='red'; myPlayer.style.outline='1px solid red'}
+      else {mySelect.style.color=null; myPlayer.style.outline=null}
       if (myCap.innerHTML) {myCap.style.opacity=1}
       if (cueList && !thumbSheet) Cue(myPlayer.currentTime, index)
       xm = myPlayer.offsetWidth*scaleX*sheetZoom
@@ -424,11 +413,9 @@
       myPreview.style.zIndex=Zindex+1
       if (myPlayer.volume <= 0.8) myPlayer.volume += 0.05		// fade sound up
       if (type!='image' && !Click && !thumbSheet) seekBar()
-      if (!Click) positionMedia(0.01)}
+      if (!Click) positionMedia(0)}
     else {
       Jpg.innerHTML=''
-      Mp3.innerHTML=''
-      Mp4.innerHTML=''
       myCap.innerHTML=''
       myCap.style.opacity=0
       mySeekbar.style.display=null
@@ -444,8 +431,8 @@
       scaleY=1*localStorage.getItem('scaleY')
       z = (innerHeight+y)/myPlayer.offsetHeight				// media to screen ratio calc.
       if (z > (innerWidth+x)/myPlayer.offsetWidth) z=0
-      if (!z && 1.04*myPlayer.offsetWidth*scaleX<innerWidth-x) {
-        scaleX=(innerWidth-x)/myPlayer.offsetWidth; scaleY=scaleX/skinny; mediaX=(innerWidth-x-20)/2}
+      if (!z && 1.04*myPlayer.offsetWidth*Math.abs(scaleX)<innerWidth-x) {
+        scaleX=(innerWidth-x)/myPlayer.offsetWidth; scaleY=Math.abs(scaleX/skinny); mediaX=(innerWidth-x-20)/2}
       else if (z && 1.04*myPlayer.offsetHeight*scaleY<innerHeight-y) {
         scaleY=(innerHeight-y)/myPlayer.offsetHeight; mediaY=(innerHeight-y)/2}
       else scaleY=0.7
@@ -455,9 +442,8 @@
     myPlayer.style.top = mediaY +y/2 -(myPlayer.offsetHeight/2) +"px"
     myPlayer.style.transition = fa+'s'
     z = scaleY
-    if (!thumbSheet) {sheetZoom = 1; z = scaleY +(y/innerHeight)}
-    else sheetZoom = Math.abs(2.7-0.9*myPlayer.offsetWidth*scaleX/((innerWidth/2))) // make thumbsheet ~2x media size
-    scaleX = skinny*z
+    if (!thumbSheet) {sheetZoom = 1; z+=(y/innerHeight); scaleX = skinny*z}
+    else {sheetZoom = Math.abs(2.7-0.9*myPlayer.offsetWidth*scaleX/((innerWidth/2))); scaleX = Math.abs(skinny*z)}
     myPlayer.style.transform = "scale("+scaleX*sheetZoom+","+z*sheetZoom+")"}
 
 
@@ -500,12 +486,11 @@
       cueTime = 1*entry[0]						// cue time
       type = entry[1]							// cue type
       if (entry[2]) value = entry[2]					// cue value - optional para.
-      if (cueTime > time-0.1 && cueTime < time+0.1) { //  alert(value)
+      if (cueTime > time-0.1 && cueTime < time+0.1) {
         if (type=='next') {lastClick=2; mouseEvent()}
         else if (type=='time') myPlayer.currentTime = 1*value
         else if (type=='rate') {if (isNaN(1*value)) {rate=defRate} else {rate=1*value}}
-        else if (type=='skinny') {if (isNaN(value)) {skinny=1} else {skinny=1*value}}
-        else if (type=='pitch') {if (isNaN(value)) {pitch=1} else {pitch=1*value}}
+        else if (type=='skinny' && !el.style.skinny) {if (isNaN(value)) {skinny=1} else {skinny=1*value; if (time){positionMedia(1)}}}
         else if (type=='pause' && block<25) {myPlayer.pause(); entry[3]=value}
         else if (type == 'cap') myCap.innerHTML = value.replaceAll("#3", "\,").replaceAll("#4", "\'").replaceAll("#5", "\"")
         if (y=1000*entry[3]) {setTimeout(function(){myPlayer.play(); myCap.innerHTML=''; block=100},y)}}}}
@@ -629,8 +614,9 @@
 
   function inca(command,value,select,address) { 			// send messages to inca.exe
     for (i=1; el=document.getElementById('media'+i); i++) {		// add cue edits to messages
-      if (el.style.skinny || el.style.rate || el.style.pitch) {
-        messages = messages + '#Cues#'+i+'##'+el.style.skinny+'|'+el.style.rate+'|'+el.style.pitch}}
+      if (el.style.skinny || el.style.rate) {
+        messages = messages + '#Cues#'+i+'##'+el.style.skinny+'|'+el.style.rate+'|'+cue
+        if (cue) {el.style.skinny=1; el.style.rate=1; cue=0}}}
     if (!select) {select=''} else {select=select+','}
     if (command == 'Favorite' && !selected) document.getElementById('myFavicon'+index).innerHTML='&#10084'
     if (selected && command!='Close' && command!='Reload') select=selected // selected is global value
