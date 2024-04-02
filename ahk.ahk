@@ -115,7 +115,7 @@
 
     MButton up::
       MouseGetPos,,,cursorPID
-      if (mpvPID==cursorPID && !gesture)
+      if (mpvPID==cursorPID && !gesture)	; external mpv player
         {
         WinActivate, ahk_group Browsers
         if (A_TickCount > timer)		; long click
@@ -152,6 +152,7 @@
       if mpvPID					; mpv external player
         {
         Process, Close, mpv.exe
+if incaTab
         WinActivate, ahk_group Browsers
         send, {Pause}				; close java media player
         }
@@ -450,13 +451,24 @@
             {
             if !selected 
               return
+            FileRead, cues, %inca%\cache\cues\%media%.txt
+            StringTrimRight, cues, cues, 2				; remove end `r`n
+            Sort, cues, NZ
+            FileDelete, %inca%\cache\cues\%media%.txt
+            FileAppend, %cues%`r`n, %inca%\cache\cues\%media%.txt
             id := StrSplit(selected, ",").1
-;            if getMedia(id)
             if !value
               value = 0.00
-;            else value = %value%
-            FileAppend, %value%|cap|`r`n, %inca%\cache\cues\%media%.txt, UTF-8
-            run, %inca%\cache\cues\%media%.txt
+            if (!address || address == value)
+              {
+              FileAppend, %value%|cap|`r`n, %inca%\cache\cues\%media%.txt, UTF-8
+              run, %inca%\cache\cues\%media%.txt
+              }
+            else 
+              {
+              FileAppend, %address%|goto|%value%`r`n, %inca%\cache\cues\%media%.txt, UTF-8
+              Popup("Done . . .",1000,0,0)
+              }
             }
         if (command == "jpg")
           run, %inca%\cache\apps\ffmpeg.exe -ss %value% -i "%src%" -y "%profile%\Pictures\%media% @%value%.jpg",, Hide
@@ -485,7 +497,6 @@
               }
             selected =
             Popup("Creating . . .",1000,0,0)
-;            reload := 2
             }
         if (command == "Favorite")
             {
@@ -874,7 +885,7 @@
           st := searchTerm
         else
           {
-          st = Search
+          st = &#x1F50E;&#xFE0E;
           if InStr(path, "\inca\fav\")
           scroll = Fav
           if InStr(path, "\inca\music\")
@@ -931,7 +942,7 @@
             {
             SplitPath, A_Loopfield,,,,x
             if (x == folder)
-              container = %container%<c class='p2' style='color:salmon; font-size:0.9em; margin-left:0.2em' onmousedown="inca('Path','','','fav|%A_Index%')">%x% &#10084</c>`n
+              container = %container%<c class='p2' style='color:salmon; font-size:0.9em; margin-left:0.2em' onmousedown="inca('Path','','','fav|%A_Index%')">%x%</c>`n
             else container = %container%<c class='p2' onmousedown="inca('Path','','','fav|%A_Index%'); this.style.transform='translate(0em,-0.2em)'; this.style.color='red'">%x%</c>`n
             if !Mod(A_Index,4)
               container := fill(container)
@@ -999,9 +1010,9 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n if(
 <a id='mySpeed' onwheel="wheelEvents(event, id, this)" onmouseup='togglePause()'></a>`n
 <a id='mySkinny' onwheel="wheelEvents(event, id, this)" onmouseup='togglePause()'></a>`n
 <a id='myFlip' onmousedown='flip()'>Flip</a>`n
-<a id='myCue' onclick="if(!cue) {myPlayer.pause(); myNav.style.display=null; if (playing) {cue=Math.round(myPlayer.currentTime*100)/100} else {inca('EditCue',1,index,cue)}} else {inca('Close'); cue=0; myPlayer.play()}">Cue</a>`n
+<a id='myCue' onclick="if(!cue) {if (playing) {myPlayer.pause(); cue=Math.round(myPlayer.currentTime*100)/100} else {inca('EditCue',1,index,cue)}} else {inca('Close'); cue=0; myPlayer.play()}">Cue</a>`n
 <a id='myIndex' onmousedown="inca('Index','',wasMedia)">Index</a>`n
-<a id='Cap' onmousedown="inca('EditCue', myPlayer.currentTime.toFixed(2), wasMedia)">caption</a>`n
+<a id='Cap' onmousedown="myPlayer.pause(); inca('EditCue', myPlayer.currentTime.toFixed(2), wasMedia, cue)">caption</a>`n
 <a id='Mp3' onmousedown="inca('mp3', myPlayer.currentTime.toFixed(2), index, cue); cue=0; myPlayer.play()">mp3</a>`n
 <a id='Mp4' onmousedown="inca('mp4', myPlayer.currentTime.toFixed(2), index, cue); cue=0; myPlayer.play()">mp4</a>`n
 <a id='Jpg' onmousedown="inca('jpg', myPlayer.currentTime.toFixed(2), index)"></a>`n
@@ -1018,9 +1029,9 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n if(
 <div class='ribbon' style='height:1.4em; justify-content:center; background:#1b1814'>`n
 <a style='width:7.5em; font-size:1.4em; margin-left:1em; margin-top:-0.2em; %sub%' onmousedown="inca('Path')" onmouseover="Sub.scrollIntoView(); myView.scrollTo(0,0)">&#8678</a>`n
 <a style='width:6em; text-align:left; padding-left:1em' onmouseover="Fol.scrollIntoView(); myView.scrollTo(0,0)">Fol</a>`n
-<a style='width:6em; text-align:left; padding-left:1em' onmouseover="Fav.scrollIntoView(); myView.scrollTo(0,0)">Fav</a>`n
 <a style='width:7em; text-align:left; padding-left:1em' onmouseover="Music.scrollIntoView(); myView.scrollTo(0,0)">Music</a>`n
-<input id='myInput' class='searchbox' style='width:50`%; border-radius:1em; padding-left:1em' type='search' value='%st%' onmousedown="if(myInput.value.includes('Search')) {myInput.value=''}" onmousemove='getAlpha(event, this)'>`n
+<a style='width:6em; text-align:left; padding-left:1em; font-size:0.9em' onmouseover="Fav.scrollIntoView(); myView.scrollTo(0,0)">&#10084</a>`n
+<input id='myInput' class='searchbox' style='width:50`%; border-radius:1em; padding-left:1em' type='search' value='%st%' onmousedown="if(myInput.value.length == 3) {myInput.value=''}" onmousemove='getAlpha(event, this)'>`n
 <a id='SearchBox' class='searchbutton' onclick="inca('SearchBox','','',myInput.value)"></a>`n
 <a id='SearchAll' class='searchbutton' onclick="inca('SearchAll','','',myInput.value)"></a>`n
 <a id='SearchAdd' class='searchbutton' onclick="inca('SearchAdd','','',myInput.value)"></a>`n

@@ -25,7 +25,6 @@
   user-select:none;
   border-radius:6%;
   max-height:100px;
-  min-height:50px;
   transition:opacity 0.5s}
 
 .myList {					/* list view */

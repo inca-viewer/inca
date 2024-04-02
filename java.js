@@ -15,8 +15,11 @@
 // live edit mpv.conf, input instead of mpv dos commands
 // create debug panel - messages, start index etc.
 // subs hierarchy lost if leave page - lose selection target
-// popouts jump position when moving
 // zoom fs between portait landscape
+
+// open cue panel if exist in player - can edit
+// non indexed no poster
+
 
 
   var mediaX = 1*localStorage.getItem('mediaX')				// caption strings
@@ -182,7 +185,7 @@
     var fadeOut = fade							// media fadeout time 
     if (!playing || longClick) fadeOut=0
     if (playing) positionMedia(fade)
-if (selected) Timer()							// for myPlayer red outline
+    if (selected) Timer()						// for myPlayer red outline
     myPlayer.style.opacity=0
     positionMedia(fadeOut*500)
     setTimeout(function() {						// so player can fade in/out
@@ -360,7 +363,7 @@ if (selected) Timer()							// for myPlayer red outline
     if (selected) panel.style.color='lightsalmon'
     else panel.style.color=null
     if (!myNav.matches(":hover")) myNav.style.display=null
-    if (!myInput.value.includes('Search')) {
+    if (myInput.value.length != 3) {
       SearchBox.innerHTML='Search'
       SearchAll.innerHTML='All'
       SearchAdd.innerHTML='Add'}
@@ -391,7 +394,7 @@ if (selected) Timer()							// for myPlayer red outline
       Jpg.innerHTML='jpg'
       myPlayer.playbackRate=rate
       rect = myPlayer.getBoundingClientRect()
-      myCap.style.top=rect.top -30 +'px'
+      myCap.style.top=rect.bottom +10 +'px'
       myCap.style.left=rect.left +10 +'px'
       myCap.style.zIndex=Zindex
       myPreview.style.maxHeight= myPlayer.offsetHeight*scaleY*0.2 +'px'
@@ -399,6 +402,7 @@ if (selected) Timer()							// for myPlayer red outline
       myPreview.style.top = rect.bottom - myPreview.offsetHeight -12 +'px' 
       if ((","+selected).match(","+index+",")) {mySelect.style.color='red'; myPlayer.style.outline='1px solid red'}
       else {mySelect.style.color=null; myPlayer.style.outline=null}
+      if (cue) {Cap.innerHTML='goto '+myPlayer.currentTime.toFixed(2)} else {Cap.innerHTML='caption'}
       if (myCap.innerHTML) {myCap.style.opacity=1}
       if (cueList && !thumbSheet) Cue(myPlayer.currentTime, index)
       xm = myPlayer.offsetWidth*scaleX*sheetZoom
@@ -488,7 +492,7 @@ if (selected) Timer()							// for myPlayer red outline
       if (entry[2]) value = entry[2]					// cue value - optional para.
       if (cueTime > time-0.1 && cueTime < time+0.1) {
         if (type=='next') {lastClick=2; mouseEvent()}
-        else if (type=='time') myPlayer.currentTime = 1*value
+        else if (type=='goto') myPlayer.currentTime = 1*value
         else if (type=='rate') {if (isNaN(1*value)) {rate=defRate} else {rate=1*value}}
         else if (type=='skinny' && !el.style.skinny) {if (isNaN(value)) {skinny=1} else {skinny=1*value; if (time){positionMedia(1)}}}
         else if (type=='pause' && block<25) {myPlayer.pause(); entry[3]=value}
@@ -616,7 +620,8 @@ if (selected) Timer()							// for myPlayer red outline
     for (i=1; el=document.getElementById('media'+i); i++) {		// add cue edits to messages
       if (el.style.skinny || el.style.rate) {
         messages = messages + '#Cues#'+i+'##'+el.style.skinny+'|'+el.style.rate+'|'+cue
-        if (cue) {el.style.skinny=1; el.style.rate=1; cue=0}}}
+        if (cue) {el.style.skinny=1; el.style.rate=1}}}
+    cue=0
     if (!select) {select=''} else {select=select+','}
     if (command == 'Favorite' && !selected) document.getElementById('myFavicon'+index).innerHTML='&#10084'
     if (selected && command!='Close' && command!='Reload') select=selected // selected is global value
@@ -629,11 +634,10 @@ if (selected) Timer()							// for myPlayer red outline
     messages=''}
 
   function Time(z) {if (z<0) return '0:00'; var y=Math.floor(z%60); var x=':'+y; if (y<10) {x=':0'+y}; return Math.floor(z/60)+x}
-  function togglePause() {if(!thumbSheet && lastClick==1) {if (myPlayer.paused) {myPlayer.play()} else {myPlayer.pause()}}}
+  function togglePause() {if(!thumbSheet&&lastClick==1) {if (myPlayer.paused) {myPlayer.play()} else {myPlayer.pause()}}inca('Close');cue=0}
   function selectAll() {for (i=1; document.getElementById('media'+i); i++) {sel(i)}}
   function flip() {skinny*=-1; scaleX*=-1; media.style.skinny=skinny; positionMedia(0.5); media.style.transform='scaleX('+skinny+')'}
   function mute() {if(!longClick) {myPlayer.volume=0; myPlayer.muted=!myPlayer.muted; localStorage.setItem("muted",1*myPlayer.muted)}}
-
 
 
 
