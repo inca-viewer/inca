@@ -152,8 +152,8 @@
       if mpvPID					; mpv external player
         {
         Process, Close, mpv.exe
-if incaTab
-        WinActivate, ahk_group Browsers
+        if incaTab
+          WinActivate, ahk_group Browsers
         send, {Pause}				; close java media player
         }
       else IfWinExist, ahk_class OSKMainClass
@@ -588,13 +588,10 @@ if incaTab
             reload := 1
             return	
             }
-        if (command == "Cues")						; update any media cue edits - width, speed
+        if (command == "Skinny")					; update any media width edits
             {
-            getMedia(value)
-            array := StrSplit(address,"|")
-            skinny := Round(array.1,2)
-            rate := Round(array.2,2)
-            cue := Round(array.3,2)					; cue time for entry (not global)
+            skinny := Round(value,2)
+            cue := Round(address,2)					; cue time for entry (not global)
             if !cue
               cue = 0.00
             if skinny is not number
@@ -606,6 +603,34 @@ if incaTab
             if (!skinny || (skinny >= 0.98 && skinny <= 1.02))
               skinny := 1.00
             skinny = %cue%|skinny|%skinny%				; create new mask string
+            FileRead, cues, %inca%\cache\cues\%media%.txt
+            last := cues
+            if cues
+              Loop, Parse, cues, `n, `r					; each line of cues
+                {
+                array := StrSplit(A_LoopField, "|")			; split each entry
+                x := array.3						; the entry value
+                sk = %cue%|skinny|%x%					; remember existing mask string
+                if (!array.1 && array.2 == "skinny")			; has "0.00|skinny|" prefix
+                  cues := StrReplace(cues, sk, skinny)			; use masks to replace value
+                }
+             if (skinny && !InStr(cues, "0.00|skinny"))			; if no entries exist
+               cues = %skinny%`r`n%cues%
+             if (InStr(cues, "0.00|skinny|1.00`r`n"))			; if entry is just the default
+                cues := StrReplace(cues, "0.00|skinny|1.00`r`n")	; remove entry
+            if (cues != last)						; if changed, replace cues file
+              {
+              FileDelete, %inca%\cache\cues\%media%.txt
+              if cues
+                FileAppend, %cues%, %inca%\cache\cues\%media%.txt
+              }
+            }
+        if (command == "Rate")						; update any media speed edits
+            {
+            rate := Round(value,2)
+            cue := Round(address,2)					; cue time for entry (not global)
+            if !cue
+              cue = 0.00
             if rate
               rate = %cue%|rate|%rate%
             FileRead, cues, %inca%\cache\cues\%media%.txt
@@ -615,19 +640,12 @@ if incaTab
                 {
                 array := StrSplit(A_LoopField, "|")			; split each entry
                 x := array.3						; the entry value
-                sk = %cue%|skinny|%x%					; remember existing mask string
                 ra = %cue%|rate|%x%
-                if (!array.1 && array.2 == "skinny")			; has "0.00|skinny|" prefix
-                  cues := StrReplace(cues, sk, skinny)			; use masks to replace value
                 if (!array.1 && rate && array.2 == "rate")
                   cues := StrReplace(cues, ra, rate)
                 }
-             if (skinny && !InStr(cues, "0.00|skinny"))			; if no entries exist
-               cues = %skinny%`r`n%cues%
              if (rate && !InStr(cues, "0.00|rate"))			; add new entry
                cues = %rate%`r`n%cues%
-             if (InStr(cues, "0.00|skinny|1.00`r`n"))			; if entry is just the default
-                cues := StrReplace(cues, "0.00|skinny|1.00`r`n")	; remove entry
              if (InStr(cues, "0.00|rate|1.00`r`n"))
                 cues := StrReplace(cues, "0.00|rate|1.00`r`n")
             if (cues != last)						; if changed, replace cues file
@@ -868,7 +886,7 @@ if incaTab
         pages := ceil(listSize/page_s)
         if (pages > 1)
           pg = Page %page% of %pages%
-        Loop, Parse, sortList, `|
+        Loop, Parse, sortList, `|					; html ribbon highlighting
           {
           if InStr(A_LoopField, sort)
             if InStr(toggles, "Reverse")
@@ -877,6 +895,13 @@ if incaTab
           if InStr(toggles, A_LoopField)
             x%A_Index% = color:red
           }
+        if !searchTerm
+          if (!playlist && InStr(fol,folder))
+            x21 = color:lightsalmon
+          else if (playlist && InStr(path,"\music\"))
+            x22 = color:lightsalmon
+          else if (playlist && InStr(path,"\fav\"))
+            x23 = color:lightsalmon
         if playlist
           order = List
         panelList =							; next sections fills top panel element
@@ -885,7 +910,7 @@ if incaTab
           st := searchTerm
         else
           {
-          st = &#x1F50E;&#xFE0E;
+          st = &#x1F50D;&#xFE0E;
           if InStr(path, "\inca\fav\")
           scroll = Fav
           if InStr(path, "\inca\music\")
@@ -991,7 +1016,7 @@ if incaTab
           view := 8
         view1 := view*1.2
         view2 := view*0.8
-        view3 := view/10 
+        view3 := view/10
 
 header = <!--, %view%, %page%, %pages%, %filt%, %sort%, %toggles%, %listView%, %playlist%, %path%, %searchPath%, %searchTerm%, , -->`n<!doctype html>`n<html>`n<head>`n<meta charset="UTF-8">`n<title>Inca - %title%</title>`n<meta name="viewport" content="width=device-width, initial-scale=1">`n<link rel="icon" type="image/x-icon" href="file:///%inca%\cache\icons\inca.ico">`n<link rel="stylesheet" type="text/css" href="file:///%inca%/css.css">`n</head>`n`n
 
@@ -1007,10 +1032,10 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n if(
 <a id='myFav' onmouseup="if(!event.button && !longClick) inca('Favorite', myPlayer.currentTime.toFixed(1), index)">Fav</a>`n
 <a id='myMute' onmouseup='mute()'>Mute</a>`n
 <a id='myLoop' onmouseup="looping=!looping">Loop</a>`n
-<a id='mySpeed' onwheel="wheelEvents(event, id, this)" onmouseup='togglePause()'></a>`n
-<a id='mySkinny' onwheel="wheelEvents(event, id, this)" onmouseup='togglePause()'></a>`n
+<a id='mySpeed' onwheel="wheelEvents(event, id, this)" onmouseup='togglePause()' onclick="inca('Close')"></a>`n
+<a id='mySkinny' onwheel="wheelEvents(event, id, this)" onmouseup='togglePause()' onclick="inca('Close')"></a>`n
 <a id='myFlip' onmousedown='flip()'>Flip</a>`n
-<a id='myCue' onclick="if(!cue) {if (playing) {myPlayer.pause(); cue=Math.round(myPlayer.currentTime*100)/100} else {inca('EditCue',1,index,cue)}} else {inca('Close'); cue=0; myPlayer.play()}">Cue</a>`n
+<a id='myCue' onclick="if(!cue) {if (playing) {myPlayer.pause(); cue=Math.round(myPlayer.currentTime*100)/100} else {inca('EditCue',1,index,cue)}} else {inca('Close'); myPlayer.play()}">Cue</a>`n
 <a id='myIndex' onmousedown="inca('Index','',wasMedia)">Index</a>`n
 <a id='Cap' onmousedown="myPlayer.pause(); inca('EditCue', myPlayer.currentTime.toFixed(2), wasMedia, cue)">caption</a>`n
 <a id='Mp3' onmousedown="inca('mp3', myPlayer.currentTime.toFixed(2), index, cue); cue=0; myPlayer.play()">mp3</a>`n
@@ -1028,9 +1053,9 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n if(
 
 <div class='ribbon' style='height:1.4em; justify-content:center; background:#1b1814'>`n
 <a style='width:7.5em; font-size:1.4em; margin-left:1em; margin-top:-0.2em; %sub%' onmousedown="inca('Path')" onmouseover="Sub.scrollIntoView(); myView.scrollTo(0,0)">&#8678</a>`n
-<a style='width:6em; text-align:left; padding-left:1em' onmouseover="Fol.scrollIntoView(); myView.scrollTo(0,0)">Fol</a>`n
-<a style='width:7em; text-align:left; padding-left:1em' onmouseover="Music.scrollIntoView(); myView.scrollTo(0,0)">Music</a>`n
-<a style='width:6em; text-align:left; padding-left:1em; font-size:0.9em' onmouseover="Fav.scrollIntoView(); myView.scrollTo(0,0)">&#10084</a>`n
+<a style='width:6em; text-align:left; padding-left:1em; %x21%' onmouseover="Fol.scrollIntoView(); myView.scrollTo(0,0)">&#x1F4BB;&#xFE0E;</a>`n
+<a style='width:6em; text-align:left; padding-left:1em; %x22%' onmouseover="Music.scrollIntoView(); myView.scrollTo(0,0)">&#x266B;</a>`n
+<a style='width:6em; text-align:left; padding-left:1em; %x23%' onmouseover="Fav.scrollIntoView(); myView.scrollTo(0,0)">&#x2661;</a>`n
 <input id='myInput' class='searchbox' style='width:50`%; border-radius:1em; padding-left:1em' type='search' value='%st%' onmousedown="if(myInput.value.length == 3) {myInput.value=''}" onmousemove='getAlpha(event, this)'>`n
 <a id='SearchBox' class='searchbutton' onclick="inca('SearchBox','','',myInput.value)"></a>`n
 <a id='SearchAll' class='searchbutton' onclick="inca('SearchAll','','',myInput.value)"></a>`n
@@ -1164,16 +1189,15 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n if(
         if (type == "document")
             thumb = %inca%\cache\icons\ebook.png
         IfExist, %thumb%
-          preload = 'none'						; faster page load
-        else 
           {
-          preload = 'auto'						; but show/load non indexed media
-          poster = 
+          preload = 'none'						; faster page load
+          StringReplace, thumb, thumb, #, `%23, All			; html cannot have # in filename
+          stringlower, thumb, thumb
+          poster = poster="file:///%thumb%"
           }
-        StringReplace, thumb, thumb, #, `%23, All
+        else 
+          preload = 'auto'						; browser to render non indexed media
         StringReplace, src, src, #, `%23, All				; html cannot have # in filename
-        stringlower, thumb, thumb
-        poster = poster="file:///%thumb%"
         StringReplace, media_s, media, `', &apos;, All
         start := Round(start,2)
 
@@ -1400,7 +1424,7 @@ else
                 FileGetSize, x, %address%%media%.%ext%			; if x, name already exists in target folder
                 FileGetSize, y, %src%					; get source file size
                 z=							; new 'Copy -' addendum
-                if ((x && x!=y) || address == path)
+                if ((x && x!=y) || address == mediaPath)
                   Loop 500
                     {
                     z = \%media% - Copy (%A_Index%).%ext%
@@ -1410,7 +1434,7 @@ else
                     if (x == y)
                       break 2
                     }
-                if (!longClick && address == path)
+                if (!longClick && address == mediaPath)
                   continue
                 if (x==y)
                   {

@@ -15,7 +15,7 @@
 .player {					/* media player element */
   position:absolute;
   opacity:0;
-  border-radius:3%}
+  border-radius:2em}
 
 .preview {					/* small preview seeking video */
   position:absolute;
@@ -63,9 +63,8 @@
   white-space:nowrap}
 
 .media {					/* thumb view media */
-  --skinny:0;
-  --rate:0;
-  --pitch:0;
+  --skinny;
+  --rate;
   position:relative;
   margin:auto;
   padding:0.1em;

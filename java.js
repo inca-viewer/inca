@@ -8,18 +8,15 @@
 // cue - zoom into scene but same player size
 // cue - add fade out option to music at cue time
 // media from near edge zoom on cursor like google earth
-// fol fav headings highlight
-// mpv offset after close between aspect change
 // firefox localStorage ??? wtf
 // maybe inca can determine canplay for player choice
 // live edit mpv.conf, input instead of mpv dos commands
 // create debug panel - messages, start index etc.
 // subs hierarchy lost if leave page - lose selection target
 // zoom fs between portait landscape
-
 // open cue panel if exist in player - can edit
-// non indexed no poster
 
+// media.style.rate undefined ?
 
 
   var mediaX = 1*localStorage.getItem('mediaX')				// caption strings
@@ -617,11 +614,9 @@
     scrolltoIndex(index)}
 
   function inca(command,value,select,address) { 			// send messages to inca.exe
-    for (i=1; el=document.getElementById('media'+i); i++) {		// add cue edits to messages
-      if (el.style.skinny || el.style.rate) {
-        messages = messages + '#Cues#'+i+'##'+el.style.skinny+'|'+el.style.rate+'|'+cue
-        if (cue) {el.style.skinny=1; el.style.rate=1}}}
-    cue=0
+    if (media.style.skinny) messages = messages + '#Skinny#'+media.style.skinny+'#'+index+'#'+cue
+    if (media.style.rate) messages = messages + '#Rate#'+media.style.rate+'#'+index+'#'+cue
+    if (cue) {cue=0; media.style.skinny=0; media.style.rate=0}
     if (!select) {select=''} else {select=select+','}
     if (command == 'Favorite' && !selected) document.getElementById('myFavicon'+index).innerHTML='&#10084'
     if (selected && command!='Close' && command!='Reload') select=selected // selected is global value
@@ -634,12 +629,10 @@
     messages=''}
 
   function Time(z) {if (z<0) return '0:00'; var y=Math.floor(z%60); var x=':'+y; if (y<10) {x=':0'+y}; return Math.floor(z/60)+x}
-  function togglePause() {if(!thumbSheet&&lastClick==1) {if (myPlayer.paused) {myPlayer.play()} else {myPlayer.pause()}}inca('Close');cue=0}
+  function togglePause() {if(!thumbSheet&&lastClick==1) {if (myPlayer.paused) {myPlayer.play()} else {myPlayer.pause()}}}
   function selectAll() {for (i=1; document.getElementById('media'+i); i++) {sel(i)}}
   function flip() {skinny*=-1; scaleX*=-1; media.style.skinny=skinny; positionMedia(0.5); media.style.transform='scaleX('+skinny+')'}
   function mute() {if(!longClick) {myPlayer.volume=0; myPlayer.muted=!myPlayer.muted; localStorage.setItem("muted",1*myPlayer.muted)}}
-
-
 
 
 
