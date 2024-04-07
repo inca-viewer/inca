@@ -94,7 +94,6 @@
 
     main:
       initialize()				; set environment
-
       WinActivate, ahk_group Browsers
       sleep 333
       if !GetBrowser()
@@ -114,10 +113,9 @@
       return
 
     MButton up::
-      MouseGetPos,,,cursorPID
-      if (mpvPID==cursorPID && !gesture)	; external mpv player
+      if (mpvPID && !gesture)			; external mpv player
         {
-        WinActivate, ahk_group Browsers
+        WinActivate, ahk_class mpv
         if (A_TickCount > timer)		; long click
           send, <				; playlist previous
         else send, >				; playlist next
@@ -461,7 +459,8 @@
               value = 0.00
             if (!address || address == value)
               {
-              FileAppend, %value%|cap|`r`n, %inca%\cache\cues\%media%.txt, UTF-8
+              if (value != "1")
+                FileAppend, %value%|cap|`r`n, %inca%\cache\cues\%media%.txt, UTF-8
               run, %inca%\cache\cues\%media%.txt
               }
             else 
@@ -471,7 +470,9 @@
               }
             }
         if (command == "jpg")
-          run, %inca%\cache\apps\ffmpeg.exe -ss %value% -i "%src%" -y "%profile%\Pictures\%media% @%value%.jpg",, Hide
+          if (type == "video")
+            run, %inca%\cache\apps\ffmpeg.exe -ss %value% -i "%src%" -y "%profile%\Pictures\%media% @%value%.jpg",, Hide
+          else run, %inca%\cache\apps\ffmpeg.exe -i "%src%" -y "%profile%\Pictures\%media% @%value%.jpg",, Hide
         if (command == "mp3" || command == "mp4")
             {
             if (selected && !address)
@@ -504,13 +505,13 @@
               return
             if !value
               value = 0.0
-            start := value -0.1						; smoother start from poster image in htm
-            Runwait, %inca%\cache\apps\ffmpeg.exe -ss %start% -i "%src%" -y -vf scale=1280:1280/dar -vframes 1 "%inca%\cache\posters\%media%%A_Space%%value%.jpg",, Hide
+            start := Round(value+0.1,1)					; smoother start from poster image in htm
+            Runwait, %inca%\cache\apps\ffmpeg.exe -ss %value% -i "%src%" -y -vf scale=1280:1280/dar -vframes 1 "%inca%\cache\posters\%media%%A_Space%%start%.jpg",, Hide
             Loop, Parse, selected, `,
               if getMedia(A_Loopfield)
-                FileAppend, %src%|%value%`r`n, %inca%\fav\new.m3u, UTF-8
+                FileAppend, %src%|%start%`r`n, %inca%\fav\new.m3u, UTF-8
+            popup("Added - New",444,0,0)
             AllFav()							; update consolidated fav list
-            popup("Added - New",500,0,0)
             StrReplace(selected, ",",, x)
             selected =
             if (x>1)
@@ -1055,7 +1056,7 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n if(
 <a style='width:7.5em; font-size:1.4em; margin-left:1em; margin-top:-0.2em; %sub%' onmousedown="inca('Path')" onmouseover="Sub.scrollIntoView(); myView.scrollTo(0,0)">&#8678</a>`n
 <a style='width:6em; text-align:left; padding-left:1em; %x21%' onmouseover="Fol.scrollIntoView(); myView.scrollTo(0,0)">&#x1F4BB;&#xFE0E;</a>`n
 <a style='width:6em; text-align:left; padding-left:1em; %x22%' onmouseover="Music.scrollIntoView(); myView.scrollTo(0,0)">&#x266B;</a>`n
-<a style='width:6em; text-align:left; padding-left:1em; %x23%' onmouseover="Fav.scrollIntoView(); myView.scrollTo(0,0)">&#x2661;</a>`n
+<a style='width:6em; text-align:left; padding-left:1em; %x23%' onmouseover="Fav.scrollIntoView(); myView.scrollTo(0,0)">&#10084;</a>`n
 <input id='myInput' class='searchbox' style='width:50`%; border-radius:1em; padding-left:1em' type='search' value='%st%' onmousedown="if(myInput.value.length == 3) {myInput.value=''}" onmousemove='getAlpha(event, this)'>`n
 <a id='SearchBox' class='searchbutton' onclick="inca('SearchBox','','',myInput.value)"></a>`n
 <a id='SearchAll' class='searchbutton' onclick="inca('SearchAll','','',myInput.value)"></a>`n
@@ -1083,7 +1084,6 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n if(
 
 <div id='myRibbon2' class='ribbon' style='height:0; overflow:hidden; justify-content:right' onmouseleave="myRibbon2.style.height=0" >`n
 <a id='myRate' style='width:9`%' onwheel="wheelEvents(event, id, this)">Speed</a>`n
-<a id='myFade' style='width:9`%' onwheel="wheelEvents(event, id, this)">Fade</a>`n
 <a id='myInca' style='width:6`%' onmouseup="inca('Settings')">Inca</a>`n
 <a id='myMpv' style='width:9`%' onmouseup="mpv*=1; mpv^=1; localStorage.setItem('mpv',mpv)">External</a>`n
 <a id='myJoin' style='width:5`%' onmousedown="inca('Join')">Join</a>
@@ -1784,7 +1784,13 @@ else
     page_s := Setting("Page Size")
     Loop, %page_s%
       if getMedia(A_Index)
+        {
+        x:= seek    ; -0.1							; smoother start from poster image in htm
         index(src,0)
+        if playlist
+          IfNotExist, %inca%\cache\posters\%media%%A_Space%%seek%.jpg
+            Runwait, %inca%\cache\apps\ffmpeg.exe -ss %x% -i "%src%" -y -vf scale=1280:1280/dar -vframes 1 "%inca%\cache\posters\%media%%A_Space%%seek%.jpg",, Hide
+        }
     return
 
 

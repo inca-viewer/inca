@@ -63,12 +63,15 @@
   white-space:nowrap}
 
 .media {					/* thumb view media */
+  -- start;					/* default start time */
   --skinny;
   --rate;
   position:relative;
   margin:auto;
   padding:0.1em;
-  border-radius:0.5em}
+  border-radius:0.5em;
+  transition:0.8s}
+.media:hover {transition:0s}
 
 .media2 {					/* list view pop up thumbs */
   position:absolute;
