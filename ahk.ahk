@@ -103,6 +103,323 @@
       return					; wait for mouse/key events
 
 
+
+
+
+    RenderPage()							; construct web page from media list
+        {
+        Critical							; pause key & timer interrupts
+        if !path
+          return
+        foldr =
+        mediaList =
+        x = %folder%\
+        if (InStr(fol, x) || playlist)
+          showSubs =
+        else if InStr(subfolders, x)
+          showSubs = true
+        if (InStr(fol, x) || InStr(subfolders, x))
+          {
+          if (!showSubs || InStr(fol, x))
+            subfolders =
+          Loop, Files,%path%*.*, D
+            if A_LoopFileAttrib not contains H,S
+              if !InStr(subfolders, A_LoopFileFullPath)
+                if subfolders
+                  subfolders = %subfolders%|%A_LoopFileFullPath%\
+                else subfolders = %A_LoopFileFullPath%\
+          }
+        if (playlist || searchTerm)
+          subfolders = 
+        title := folder
+        title_s := SubStr(title, 1, 20)					; keep title under 20 chars for htm page
+        FileRead, java, %inca%\java.js
+        FileRead, ini, %inca%\ini.ini
+        ini := StrReplace(ini, "`r`n", "|")				; java cannot accept cr in strings
+        ini := StrReplace(ini, "'", ">")				; java cannot accept ' in strings
+        max_height := Floor(A_ScreenHeight * 0.34)			; max image height in web page
+        menu_item =
+        count:=0
+        listSize := 0
+        type = video							; prime for list parsing
+        page_l := Setting("Margin Left")
+        page_r := Setting("Margin Right")
+        page_s := Setting("Page Size")
+        page_w := 100 - page_l - page_r
+        Loop, Parse, list, `n, `r 					; split big list into smaller web pages
+          {
+          item := StrSplit(A_LoopField, "/")				; sort filter \ src \ media type \ ext
+          id := item.1
+          source := item.2
+          type := item.3
+          sort_name := item.4
+          start := item.5
+          listSize += 1
+          if ((listSize > (page-1) * page_s) && (listSize <= page * page_s))
+            SpoolList(listSize, count+=1, source, sort_name, start)
+          }
+        pages := ceil(listSize/page_s)
+        if (pages > 1)
+          pg = Page %page% of %pages%
+        Loop, Parse, sortList, `|					; html ribbon highlighting
+          {
+          if InStr(A_LoopField, sort)
+            if InStr(toggles, "Reverse")
+              x%A_Index% = border-top:0.1px solid salmon
+            else x%A_Index% = border-bottom:0.1px solid salmon
+          if InStr(toggles, A_LoopField)
+            x%A_Index% = color:red
+          }
+        if !searchTerm
+          if (!playlist && InStr(fol,folder))
+            x21 = color:lightsalmon
+          else if (playlist && InStr(path,"\music\"))
+            x22 = color:lightsalmon
+          else if (playlist && InStr(path,"\fav\"))
+            x23 = color:lightsalmon
+        if playlist
+          order = List
+        panelList =							; next sections fills top panel element
+        scroll = Fol							; for scroll to 'fol' in top panel
+        if searchTerm
+          {
+          st := searchTerm
+          x24=All
+          }
+        else
+          {
+          st = %folder%
+          if InStr(path, "\inca\fav\")
+          scroll = Fav
+          if InStr(path, "\inca\music\")
+            scroll = Music
+          if showSubs
+            scroll = Sub
+          }
+        x:=SubStr(searchTerm, 1, 1)
+        stringUpper, x, x
+        if x is alpha
+        if searchTerm
+          {
+          scroll = my%x%
+          offset = `;%A_Space%panel.scrollBy(0,-220)
+          }
+
+        container = <div id='Music' style='font-size:2em; color:#ffa07ab0; margin:0.8em; text-align:center'>&#x266B;</div>`n
+        container := fill(container)
+        Loop, Parse, music, `|
+          if A_LoopField
+            {
+            SplitPath, A_Loopfield,,,,x
+            if (x == folder)
+              container = %container%<c class='p2' style='color:salmon' onmousedown="inca('Path','','','music|%A_Index%')">%x%</c>`n
+            else container = %container%<c class='p2' onmousedown="inca('Path','','','music|%A_Index%'); this.style.transform='translate(0em,-0.2em)'; this.style.color='red'">%x%</c>`n
+            if !Mod(A_Index,4)
+              container := fill(container)
+            }
+        if container
+          fill(container)
+
+        container = <div id='Fav' style='font-size:1.8em; transform:scale(1.2,1); color:#ffa07ab0; margin:0.8em; text-align:center'>&#9825;</div>`n
+        container := fill(container)
+        Loop, Parse, fav, `|
+          if A_LoopField
+            {
+            SplitPath, A_Loopfield,,,,x
+            if (x == folder)
+              container = %container%<c class='p2' style='color:salmon; font-size:0.9em; margin-left:0.2em' onmousedown="inca('Path','','','fav|%A_Index%')">%x%</c>`n
+            else container = %container%<c class='p2' onmousedown="inca('Path','','','fav|%A_Index%'); this.style.transform='translate(0em,-0.2em)'; this.style.color='red'">%x%</c>`n
+            if !Mod(A_Index,4)
+              container := fill(container)
+            }
+        if container
+          fill(container)
+
+        container = <div id='Fol' style='font-size:2em; color:#ffa07ab0; margin:0.8em; text-align:center'>&#x1F4BB;&#xFE0E;</div>`n
+        container := fill(container)
+        Loop, Parse, fol, `|
+          if A_LoopField
+            {
+            StringTrimRight, y, A_Loopfield, 1
+            SplitPath, y,,,,x
+            if (x == folder)
+              container = %container%<c class='p2' style='color:salmon' onmousedown="inca('Path','','','fol|%A_Index%')">%x%</c>`n
+            else container = %container%<c class='p2' onmousedown="inca('Path','','','fol|%A_Index%'); this.style.transform='translate(0em,-0.2em)'; this.style.color='red'">%x%</c>`n
+            if !Mod(A_Index,4)
+              container := fill(container)
+            }
+        if container
+          fill(container)
+
+        if subfolders
+          {
+          container = <div id='Sub' style='font-size:2em; color:#ffa07ab0; margin:0.8em; text-align:center'>&#8680;</div>`n
+          container := fill(container)
+          }
+        Loop, Parse, subfolders, `|
+            {
+            StringTrimRight, x, A_Loopfield, 1
+            array := StrSplit(x,"\")
+            x := array.MaxIndex()
+            fname := array[x]
+            if (array[x] == folder)
+              container = %container%<c class='p2' style='color:lightsalmon' onmousedown="inca('Path','','','subs|%A_Index%')">%fname%</c>`n
+            else container = %container%<c class='p2' onmousedown="inca('Path','','','subs|%A_Index%'); this.style.transform='translate(0em,-0.2em)'; this.style.color='red'">%fname%</c>`n
+            if !Mod(A_Index,4)
+              container := fill(container)
+            }
+        if (subfolders && container)
+          fill(container)
+
+        ch =
+        count := 0
+        container =
+        Loop, Parse, search, `|
+            {
+            x := SubStr(A_Loopfield, 1, 1)
+            if (ch != x)
+              {
+              if container
+                fill(container)
+              container = <div id='my%x%' style='font-size:2.2em; color:#ffa07ab0; text-align:center'>%x%</div>`n
+              container := fill(container)
+              count := 0
+              }
+            ch := x
+            count+=1
+            if (searchTerm == A_Loopfield)
+              container = %container%<c class='p2' style='color:salmon' onmousedown="inca('Search','','','search|%A_Index%')">%A_Loopfield%</c>`n
+            else container = %container%<c class='p2' onmousedown="inca('Search','','','search|%A_Index%'); this.style.transform='translate(0em,-0.2em)'; this.style.color='red'">%A_Loopfield%</c>`n
+            if !Mod(count,4)
+              container := fill(container)
+            }
+        if container
+          fill(container)
+        if (view < 8) 
+          view := 8
+        view1 := view*1.2
+        view2 := view*0.8
+        view3 := view/10
+
+if subfolders
+ display = display:block
+else display = display:none
+
+
+header = <!--, %view%, %page%, %pages%, %filt%, %sort%, %toggles%, %listView%, %playlist%, %path%, %searchPath%, %searchTerm%, , -->`n<!doctype html>`n<html>`n<head>`n<meta charset="UTF-8">`n<title>Inca - %title%</title>`n<meta name="viewport" content="width=device-width, initial-scale=1">`n<link rel="icon" type="image/x-icon" href="file:///%inca%\cache\icons\inca.ico">`n<link rel="stylesheet" type="text/css" href="file:///%inca%/css.css">`n</head>`n`n
+
+body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n if(document.getElementById('%scroll%')) {%scroll%.scrollIntoView()%offset%} myView.scrollTo(0,1*sessionStorage.getItem('scroll'));`n globals(%view%, %page%, %pages%, '%sort%', %filt%, %listView%, '%selected%', '%playlist%', %index%)">`n`n
+
+<div id='myContent' style='position:absolute; width:100`%'>`n`n
+<div id='mySelected' class='selected'></div>`n
+
+<div oncontextmenu="if(yw>0.1 || playing || gesture) {event.preventDefault()}">`n`n
+<div id='myNav' class='context'>`n
+<a id='mySelect' onwheel="wheelEvent(event, id, this)" onmouseup="if (wasMedia||playing) {sel(index)} else{selectAll()}">Select</a>`n
+<a id='myDelete' onmousedown="if(!event.button) {inca('Delete','',wasMedia)}">Delete</a>`n
+<a id='myFav' onmouseup="if(!event.button && !longClick) inca('Favorite', myPlayer.currentTime.toFixed(1), index)">Fav</a>`n
+<a id='myMute' onmouseup='mute()'>Mute</a>`n
+<a id='myLoop' onmouseup="looping=!looping">Loop</a>`n
+<a id='mySpeed' onwheel="wheelEvent(event, id, this)" onmouseup='togglePause()' onclick="inca('Close')"></a>`n
+<a id='mySkinny' onwheel="wheelEvent(event, id, this)" onmouseup='togglePause()' onclick="inca('Close')"></a>`n
+<a id='myFlip' onmousedown='flip()'>Flip</a>`n
+<a id='myCue' onclick="if(!cue) {if (playing) {myPlayer.pause(); cue=Math.round(myPlayer.currentTime*100)/100} else {inca('EditCue',1,index,cue)}} else {inca('Close'); myPlayer.play()}">Cue</a>`n
+<a id='myIndex' onmousedown="inca('Index','',wasMedia)">Index</a>`n
+<a id='Cap' onmousedown="myPlayer.pause(); inca('EditCue', myPlayer.currentTime.toFixed(2), wasMedia, cue)">caption</a>`n
+<a id='Mp3' onmousedown="inca('mp3', myPlayer.currentTime.toFixed(2), index, cue); cue=0; myPlayer.play()">mp3</a>`n
+<a id='Mp4' onmousedown="inca('mp4', myPlayer.currentTime.toFixed(2), index, cue); cue=0; myPlayer.play()">mp4</a>`n
+<a id='Jpg' onmousedown="inca('jpg', myPlayer.currentTime.toFixed(2), index)"></a>`n
+</div>`n`n
+
+<div id='myMask' class="mask" onwheel="wheelEvent(event, id, this)">`n</div>
+<div><span id='myCap' class='caption'></span>`n
+<video id="myPlayer" class='player' type="video/mp4" muted onwheel="wheelEvent(event, id, this)"></video>`n
+<span id='mySeekbar' class='seekbar'></span>`n
+<span><video class='preview' id='myPreview' muted type="video/mp4" onwheel="wheelEvent(event, id, this)"></video></span></div>`n`n
+
+<div id='myView' class='myList' style='padding-left:%page_l%`%; padding-right:%page_r%`%'>`n`n
+
+<div id='myPanel' class='myPanel'>`n <div id='panel' class='panel'>`n`n%panelList%`n</div></div>`n`n
+
+<div class='ribbon' style='height:1.4em; font-size:1.1em; justify-content:center; background:#1b1814; top:-5.8em'>`n
+<a style='width:6em; text-align:center; color:red; font-weight:bold'>%listSize%</a>`n
+<a style='width:6em; text-align:center; %x22%' onmouseover="Music.scrollIntoView(); myView.scrollTo(0,0)">&#x266B;</a>`n
+<a style='width:6em; text-align:center; %x23%' onmouseover="Fav.scrollIntoView(); myView.scrollTo(0,0)">&#10084;</a>`n
+<a style='width:6em; text-align:center; %x21%' onmouseover="Fol.scrollIntoView(); myView.scrollTo(0,0)">&#x1F4BB;&#xFE0E;</a>`n
+<a style='width:5em; font-size:1.3em; text-align:center; color:lightsalmon; margin-top:-0.2em; %display%' onmousedown="inca('Path')" onmouseover="Sub.scrollIntoView(); myView.scrollTo(0,0)">&#8680;</a>`n
+<a id='SearchBox' style='width:5.5em; text-align:center' onmousedown="inca('SearchBox','','',myInput.value)">&#x1F50D;&#xFE0E;</a>`n
+<a id='Add' style='font-variant-caps:petite-caps' onmousedown="inca('Add','','',myInput.value)"></a>`n
+<input id='myInput' class='searchbox' style='width:70`%; border-radius:1em; font-size:1.1em; font-weight:bold' type='search' value='%st%' onmousemove='getAlpha(event, this)' onmouseenter="if(!'%searchTerm%') {this.value=''}" oninput="Add.innerHTML='Add'">`n</div>`n`n
+
+<div id='myRibbon' class='ribbon'>`n
+<a id='Type' style='width:4em; %x6%' onmousedown="inca('Type')">Ext</a>`n
+<a id='Size' style='min-width:4em; %x5%' onmousedown="inca('Size', filt)" onwheel="wheelEvent(event, id, this)">Size</a>`n
+<a id='Duration' style='min-width:5em; %x3%' onmousedown="inca('Duration', filt)" onwheel="wheelEvent(event, id, this)"> Duration</a>`n
+<a id='Date' style='min-width:4.5em; %x4%' onmousedown="inca('Date', filt)" onwheel="wheelEvent(event, id, this)">Date</a>`n
+<a id='List' style='%x11%' onmousedown="inca('List', filt)" style='color:red'>%order%</a>`n
+<a id='Alpha' style='width:9`%; %x2%' onmousedown="inca('Alpha', filt)" onwheel="wheelEvent(event,id,this)">Alpha</a>`n
+<a id='Shuffle' style='width:9`%; %x1%' onmousedown="inca('Shuffle')">Shuffle</a>`n
+<a id='View' style='width:9`%' onmousedown="inca('View', view, '', lastIndex)" onwheel="wheelEvent(event, id, this)">View %view4%</a>`n 
+<a style='width:6.5`%; %x10%' onmousedown="inca('Images')">Pics</a>`n
+<a style='width:6.5`%; %x9%' onmousedown="inca('Videos')">Vids</a>`n
+<a style='width:7`%; %x8%' onmousedown="inca('Recurse')">Subs</a>`n
+<a style='width:12`%' onmouseover="myRibbon2.style.height='1.2em'" onmouseup="inca('Settings')">&#8230</a>`n
+<a id="myPage" style='width:17`%' onmousedown="inca('Page', page)" onwheel="wheelEvent(event, id, this)">%pg%</a></div>`n`n
+
+<div id='myRibbon2' class='ribbon' style='height:0; overflow:hidden; margin-top:-0.3em; justify-content:right' onmouseleave="this.style.height=0">`n
+<a id='myRate' style='width:9`%' onwheel="wheelEvent(event, id, this)">Speed</a>`n
+<a id='myInca' style='width:6`%' onmouseup="inca('Settings')">Inca</a>`n
+<a id='myMpv' style='width:9`%' onmouseup="mpv*=1; mpv^=1; localStorage.setItem('mpv',mpv)">Mpv</a>`n
+<a id='myJoin' style='width:5`%' onmousedown="inca('Join')">Join</a></div>`n`n
+
+<div style='width:100`%'></div>`n%mediaList%<div style='width:100`%; height:100vh'></div>`n`n
+
+      FileDelete, %inca%\cache\html\%folder%.htm
+      StringReplace, header, header, \, /, All
+      StringReplace, body, body, \, /, All
+      html = %header%%body%</div></div>`n<script>`n%java%</script>`n</body>`n</html>`n
+      FileAppend, %html%, %inca%\cache\html\%folder%.htm, UTF-8
+      new_html = file:///%inca%\cache\html\%folder%.htm			; create / update browser tab
+      StringReplace, new_html, new_html, \,/, All
+      IfWinNotExist, ahk_group Browsers
+        run, %new_html%							; open a new web tab
+      else if (folder == incaTab)					; just refresh existing tab
+        send, {F5}
+      else if !incaTab
+        run, %new_html%							; open a new web tab
+      else
+        {
+        send, ^l
+        sleep 44
+        send, {BS}
+        sleep 24
+        SendInput, {Raw}%new_html%
+        Send, {Enter}
+        }
+      incaTab := folder
+      selected =
+      if fullscreen
+        send, {F11}
+      fullscreen := 0
+      sleep 400								; time for page to load
+      PopUp("",0,0,0)
+      }
+
+
+    fill(in) {  
+      panelList = %panelList%<div style="height:10`%; padding:0.5em; transform:rotate(90deg)">`n%in%</div>`n
+      }
+
+
+
+
+
+
+
+
+
+
+
     ~Esc up::
       ExitApp
 
@@ -372,10 +689,10 @@
               index(src,1)
               if playlist
                 Runwait, %inca%\cache\apps\ffmpeg.exe -ss %seek% -i "%src%" -y -vf scale=1280:1280/dar -vframes 1 "%inca%\cache\posters\%media%%A_Space%%seek%.jpg",, Hide
+              reload := 2
+              selected =
               }
             else SetTimer, indexPage, -100, -2
-            reload := 2
-            selected =
             }
         if (command == "History")					; java tells inca to play
             {
@@ -533,47 +850,31 @@
             }
         if (command == "Delete")
             {
-            if selected
+            if panelPath						; R Click was over top panel
               {
-              if playlist
-                DeleteEntries(1)
-              else 
-                {
-                popup = Deleted
-sleep, 200
-                Loop, Parse, selected, `,
-                  if getMedia(A_LoopField)
-                    {
-                    FileRecycle, %src%
-                    if ErrorLevel
-                      popup = Error . . .
-                    }
-                }
-              popup(popup,0,0,0)
-              reload := 3
-              }
-            else if panelPath						; R Click was over top panel
-              {
-              x = %panelPath%|
-              if InStr(panelPath, "\fav\")				; delete fav folder
+              x  =  %panelPath%|
+              if InStr(panelPath, "\fav\")				; delete fav entry
                 {
                 FileRecycle, %panelPath%
-                fav := StrReplace(fav, x, "")
+                fav := StrReplace(fav, x)
                 IniWrite,%fav%,%inca%\ini.ini,Settings,Fav
                 }
-              else if InStr(panelPath, "\music\")			; delete music folder
+              else if InStr(panelPath, "\music\")			; delete music entry
                 {
                 FileRecycle, %panelPath%
-                music := StrReplace(music, x, "")
+                music := StrReplace(music, x)
                 IniWrite,%music%,%inca%\ini.ini,Settings,Music
                 }
-              else if !InStr(panelPath,"\")
+              else if !InStr(panelPath,"\")				; delete search term
                 {
-                search := StrReplace(search, x, "")			; delete search term
+                search := StrReplace(search, x)
                 IniWrite,%search%,%inca%\ini.ini,Settings,Search
                 }
-              else							; delete folder
+              else							; delete fol entry
                 {
+                x = %panelPath%|
+                fol := StrReplace(fol, x)
+                IniWrite,%fol%,%inca%\ini.ini,Settings,Fol
                 Loop, Files, %panelPath%\*.*, FD			; is folder empty
                   {
                   popup("Must be empty",600,0,0)
@@ -588,6 +889,24 @@ sleep, 200
                   PopUp("Error . . .",1000,0.34,0.2)                  
                 }
               LoadSettings()
+              }
+            else if selected
+              {
+              if playlist
+                DeleteEntries(1)
+              else 
+                {
+                popup = Deleted
+                Loop, Parse, selected, `,
+                  if getMedia(A_LoopField)
+                    {
+                    FileRecycle, %src%
+                    if ErrorLevel
+                      popup = Error . . .
+                    }
+                }
+              popup(popup,0,0,0)
+              reload := 3
               }
             reload := 1
             return	
@@ -687,31 +1006,52 @@ sleep, 200
             index(src,1)
             reload := 3
             }
-        if (command == "SearchAdd" && address)
+        if (command == "Add" && address)
             {
-            StringUpper, searchTerm, address, T
-            search = %search%|%searchTerm%
-            StringReplace, search, search, |, `n, All
-            Sort, search, u
-            StringReplace, search, search, `n, |, All
+            if (InStr(playlist, "music\") && !InStr(music, address))		; new music playlist
+              {
+              music = %music%%inca%\music\%address%.m3u|
+              FileAppend,,%inca%\music\%address%.m3u, utf-8
+              IniWrite, %music%, %inca%\ini.ini,Settings,Music
+              }
+            else if (InStr(playlist, "fav\") && !InStr(fav, address))		; new fav playlist
+              {
+              fav = %fav%%inca%\fav\%address%.m3u|
+              FileAppend,,%inca%\fav\%address%.m3u, utf-8
+              IniWrite, %fav%, %inca%\ini.ini,Settings,Fav
+              }
+            else if !searchTerm							; new folder
+              {
+              fol = %fol%%path%%address%\|
+              FileCreateDir, %path%\%address%
+              IniWrite, %fol%, %inca%\ini.ini,Settings,Fol
+              }
+            else
+              {
+              StringUpper, searchTerm, address, T
+              search = %search%%searchTerm%|
+              StringReplace, search, search, |, `n, All
+              Sort, search, u
+              StringReplace, search, search, `n, |, All
+              }
             IniWrite,%search%,%inca%\ini.ini,Settings,Search
             LoadSettings()
             PopUp("Added",600,0,0)
             reload := 1
             }
-        if (command=="Filt"||command=="Path"||command=="Search"||command=="SearchBox"||command=="SearchAll"||InStr(sortList, command))
+        if (command=="Filt"||command=="Path"||command=="Search"||command=="SearchBox"||InStr(sortList, command))
             {
-            x := StrSplit(address,"|").2
-            address := StrSplit(address,"|").1
-            if (x && address == "subs")
-              address := StrSplit(subfolders,"|")[x]
-            else if (x && address == "fol")
+            x := StrSplit(address,"|").2				; pointer/index from html panel entry
+            y := StrSplit(address,"|").1
+            if (x && y == "subs")
+              address := StrSplit(subfolders,"|")[x]			; uses index to get folder address
+            else if (x && y == "fol")
               address := StrSplit(fol,"|")[x]
-            else if (x && address == "fav")
+            else if (x && y == "fav")
               address := StrSplit(fav,"|")[x]
-            else if (x && address == "music")
+            else if (x && y == "music")
               address := StrSplit(music,"|")[x]
-            else if (x && address == "search")
+            else if (x && y == "search")
               address := StrSplit(search,"|")[x]
             if (click == "RButton")					; right click over panel
                {
@@ -758,13 +1098,13 @@ sleep, 200
               searchPath =
               filt := 0
               }
-            if (command == "Search" || command == "SearchBox" || command == "SearchAll")
+            if (command == "Search" || command == "SearchBox")
               {
               playlist =
               if (command == "SearchBox")
-                address := StrReplace(address, "+", " ")
-              if (command == "SearchAll")
-                address := StrReplace(address, " ", "+")
+                if longClick
+                  address := StrReplace(address, " ", "+")
+                else address := StrReplace(address, "+", " ")
               if (strlen(address) < 2)
                 return
               searchTerm = %address%
@@ -829,303 +1169,6 @@ sleep, 200
                 }
             }
         }
-
-
-    RenderPage()							; construct web page from media list
-        {
-        Critical							; pause key & timer interrupts
-        if !path
-          return
-        foldr =
-        mediaList =
-        x = %folder%\
-        if (InStr(fol, x) || playlist)
-          showSubs =
-        else if InStr(subfolders, x)
-          showSubs = true
-        if (InStr(fol, x) || InStr(subfolders, x))
-          {
-          if (!showSubs || InStr(fol, x))
-            subfolders =
-          Loop, Files,%path%*.*, D
-            if A_LoopFileAttrib not contains H,S
-              if !InStr(subfolders, A_LoopFileFullPath)
-                if subfolders
-                  subfolders = %subfolders%|%A_LoopFileFullPath%\
-                else subfolders = %A_LoopFileFullPath%\
-          }
-        if (playlist || searchTerm)
-          subfolders = 
-        if subfolders
-          sub = color:red
-        else sub = color:#15110a
-        title := folder
-        title_s := SubStr(title, 1, 20)					; keep title under 20 chars for htm page
-        FileRead, java, %inca%\java.js
-        FileRead, ini, %inca%\ini.ini
-        ini := StrReplace(ini, "`r`n", "|")				; java cannot accept cr in strings
-        ini := StrReplace(ini, "'", ">")				; java cannot accept ' in strings
-        max_height := Floor(A_ScreenHeight * 0.34)			; max image height in web page
-        menu_item =
-        count:=0
-        listSize := 0
-        type = video							; prime for list parsing
-        page_l := Setting("Margin Left")
-        page_r := Setting("Margin Right")
-        page_s := Setting("Page Size")
-        page_w := 100 - page_l - page_r
-        Loop, Parse, list, `n, `r 					; split big list into smaller web pages
-          {
-          item := StrSplit(A_LoopField, "/")				; sort filter \ src \ media type \ ext
-          id := item.1
-          source := item.2
-          type := item.3
-          sort_name := item.4
-          start := item.5
-          listSize += 1
-          if ((listSize > (page-1) * page_s) && (listSize <= page * page_s))
-            SpoolList(listSize, count+=1, source, sort_name, start)
-          }
-        pages := ceil(listSize/page_s)
-        if (pages > 1)
-          pg = Page %page% of %pages%
-        Loop, Parse, sortList, `|					; html ribbon highlighting
-          {
-          if InStr(A_LoopField, sort)
-            if InStr(toggles, "Reverse")
-              x%A_Index% = border-top:0.1px solid salmon
-            else x%A_Index% = border-bottom:0.1px solid salmon
-          if InStr(toggles, A_LoopField)
-            x%A_Index% = color:red
-          }
-        if !searchTerm
-          if (!playlist && InStr(fol,folder))
-            x21 = color:lightsalmon
-          else if (playlist && InStr(path,"\music\"))
-            x22 = color:lightsalmon
-          else if (playlist && InStr(path,"\fav\"))
-            x23 = color:lightsalmon
-        if playlist
-          order = List
-        panelList =							; next sections fills top panel element
-        scroll = Fol							; for scroll to headers in top panel
-        if searchTerm
-          {
-          st := searchTerm
-          x31=Search
-          x32=All
-          x33=Add
-          }
-        else
-          {
-          st = %folder%
-          x31=&#x1F50D;&#xFE0E;
-          if InStr(path, "\inca\fav\")
-          scroll = Fav
-          if InStr(path, "\inca\music\")
-            scroll = Music
-          if showSubs
-            scroll = Sub
-          }
-        x:=SubStr(searchTerm, 1, 1)
-        stringUpper, x, x
-        if x is alpha
-        if searchTerm
-          {
-          scroll = my%x%
-          offset = `;%A_Space%panel.scrollBy(0,-220)
-          }
-        if subfolders
-          {
-          container = <div id='Sub' style='font-size:2em; color:#ffa07ab0; margin:0.8em; text-align:center'>Sub</div>`n
-          container := fill(container)
-          }
-        Loop, Parse, subfolders, `|
-            {
-            StringTrimRight, x, A_Loopfield, 1
-            array := StrSplit(x,"\")
-            x := array.MaxIndex()
-            fname := array[x]
-            if (array[x] == folder)
-              container = %container%<c class='p2' style='color:lightsalmon' onmousedown="inca('Path','','','subs|%A_Index%')">%fname%</c>`n
-            else container = %container%<c class='p2' onmousedown="inca('Path','','','subs|%A_Index%'); this.style.transform='translate(0em,-0.2em)'; this.style.color='red'">%fname%</c>`n
-            if !Mod(A_Index,4)
-              container := fill(container)
-            }
-        if (subfolders && container)
-          fill(container)
-
-        container = <div id='Fol' style='font-size:2em; color:#ffa07ab0; margin:0.8em; text-align:center'>Fol</div>`n
-        container := fill(container)
-        Loop, Parse, fol, `|
-            {
-            StringTrimRight, y, A_Loopfield, 1
-            SplitPath, y,,,,x
-            if (x == folder)
-              container = %container%<c class='p2' style='color:salmon' onmousedown="inca('Path','','','fol|%A_Index%')">%x%</c>`n
-            else container = %container%<c class='p2' onmousedown="inca('Path','','','fol|%A_Index%'); this.style.transform='translate(0em,-0.2em)'; this.style.color='red'">%x%</c>`n
-            if !Mod(A_Index,4)
-              container := fill(container)
-            }
-        if container
-          fill(container)
-
-        container = <div id='Fav' style='font-size:2em; color:#ffa07ab0; margin:0.8em; text-align:center'>Fav</div>`n
-        container := fill(container)
-        Loop, Parse, fav, `|
-            {
-            SplitPath, A_Loopfield,,,,x
-            if (x == folder)
-              container = %container%<c class='p2' style='color:salmon; font-size:0.9em; margin-left:0.2em' onmousedown="inca('Path','','','fav|%A_Index%')">%x%</c>`n
-            else container = %container%<c class='p2' onmousedown="inca('Path','','','fav|%A_Index%'); this.style.transform='translate(0em,-0.2em)'; this.style.color='red'">%x%</c>`n
-            if !Mod(A_Index,4)
-              container := fill(container)
-            }
-        if container
-          fill(container)
-
-        container = <div id='Music' style='font-size:2em; color:#ffa07ab0; margin:0.8em; text-align:center'>Music</div>`n
-        container := fill(container)
-        Loop, Parse, music, `|
-            {
-            SplitPath, A_Loopfield,,,,x
-            if (x == folder)
-              container = %container%<c class='p2' style='color:salmon' onmousedown="inca('Path','','','music|%A_Index%')">%x%</c>`n
-            else container = %container%<c class='p2' onmousedown="inca('Path','','','music|%A_Index%'); this.style.transform='translate(0em,-0.2em)'; this.style.color='red'">%x%</c>`n
-            if !Mod(A_Index,4)
-              container := fill(container)
-            }
-        if container
-          fill(container)
-        ch =
-        count := 0
-        container =
-        Loop, Parse, search, `|
-            {
-            x := SubStr(A_Loopfield, 1, 1)
-            if (ch != x)
-              {
-              if container
-                fill(container)
-              container = <div id='my%x%' style='font-size:2.2em; color:#ffa07ab0; text-align:center'>%x%</div>`n
-              container := fill(container)
-              count := 0
-              }
-            ch := x
-            count+=1
-            if (searchTerm == A_Loopfield)
-              container = %container%<c class='p2' style='color:salmon' onmousedown="inca('Search','','','search|%A_Index%')">%A_Loopfield%</c>`n
-            else container = %container%<c class='p2' onmousedown="inca('Search','','','search|%A_Index%'); this.style.transform='translate(0em,-0.2em)'; this.style.color='red'">%A_Loopfield%</c>`n
-            if !Mod(count,4)
-              container := fill(container)
-            }
-        if container
-          fill(container)
-        if (view < 8) 
-          view := 8
-        view1 := view*1.2
-        view2 := view*0.8
-        view3 := view/10
-
-header = <!--, %view%, %page%, %pages%, %filt%, %sort%, %toggles%, %listView%, %playlist%, %path%, %searchPath%, %searchTerm%, , -->`n<!doctype html>`n<html>`n<head>`n<meta charset="UTF-8">`n<title>Inca - %title%</title>`n<meta name="viewport" content="width=device-width, initial-scale=1">`n<link rel="icon" type="image/x-icon" href="file:///%inca%\cache\icons\inca.ico">`n<link rel="stylesheet" type="text/css" href="file:///%inca%/css.css">`n</head>`n`n
-
-body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n if(document.getElementById('%scroll%')) {%scroll%.scrollIntoView()%offset%} myView.scrollTo(0,1*sessionStorage.getItem('scroll'));`n globals(%view%, %page%, %pages%, '%sort%', %filt%, %listView%, '%selected%', '%playlist%', %index%)">`n`n
-
-<div id='myContent' style='position:absolute; width:100`%'>`n`n
-<div id='mySelected' class='selected'></div>`n
-
-<div oncontextmenu="if(yw>0.2 || playing || gesture) {event.preventDefault()}">`n`n
-<div id='myNav' class='context'>`n
-<a id='mySelect' onwheel="wheelEvent(event, id, this)" onmouseup="if (wasMedia||playing) {sel(index)} else{selectAll()}">Select</a>`n
-<a id='myDelete' onmousedown="if(!event.button) {inca('Delete','',wasMedia)}">Delete</a>`n
-<a id='myFav' onmouseup="if(!event.button && !longClick) inca('Favorite', myPlayer.currentTime.toFixed(1), index)">Fav</a>`n
-<a id='myMute' onmouseup='mute()'>Mute</a>`n
-<a id='myLoop' onmouseup="looping=!looping">Loop</a>`n
-<a id='mySpeed' onwheel="wheelEvent(event, id, this)" onmouseup='togglePause()' onclick="inca('Close')"></a>`n
-<a id='mySkinny' onwheel="wheelEvent(event, id, this)" onmouseup='togglePause()' onclick="inca('Close')"></a>`n
-<a id='myFlip' onmousedown='flip()'>Flip</a>`n
-<a id='myCue' onclick="if(!cue) {if (playing) {myPlayer.pause(); cue=Math.round(myPlayer.currentTime*100)/100} else {inca('EditCue',1,index,cue)}} else {inca('Close'); myPlayer.play()}">Cue</a>`n
-<a id='myIndex' onmousedown="inca('Index','',wasMedia)">Index</a>`n
-<a id='Cap' onmousedown="myPlayer.pause(); inca('EditCue', myPlayer.currentTime.toFixed(2), wasMedia, cue)">caption</a>`n
-<a id='Mp3' onmousedown="inca('mp3', myPlayer.currentTime.toFixed(2), index, cue); cue=0; myPlayer.play()">mp3</a>`n
-<a id='Mp4' onmousedown="inca('mp4', myPlayer.currentTime.toFixed(2), index, cue); cue=0; myPlayer.play()">mp4</a>`n
-<a id='Jpg' onmousedown="inca('jpg', myPlayer.currentTime.toFixed(2), index)"></a>`n
-</div>`n`n
-
-<div id='myMask' class="mask" onwheel="wheelEvent(event, id, this)">`n</div>
-<div><span id='myCap' class='caption'></span>`n
-<video id="myPlayer" class='player' type="video/mp4" muted onwheel="wheelEvent(event, id, this)"></video>`n
-<span id='mySeekbar' class='seekbar'></span>`n
-<span><video class='preview' id='myPreview' muted type="video/mp4" onwheel="wheelEvent(event, id, this)"></video></span></div>`n`n
-
-<div id='myView' class='myList' style='padding-left:%page_l%`%; padding-right:%page_r%`%'>`n`n
-
-<div id='myPanel' class='myPanel'>`n <div id='panel' class='panel'>`n`n%panelList%`n</div></div>`n`n
-
-<div class='ribbon' style='height:1.4em; font-size:1.1em; justify-content:center; background:#1b1814; top:-5.8em'>`n
-<a style='width:4em; font-size:1.4em; text-align:center; margin-top:-0.2em; %sub%' onmousedown="inca('Path')" onmouseover="Sub.scrollIntoView(); myView.scrollTo(0,0)">&#8678</a>`n
-<a style='width:6em; text-align:center; %x22%' onmouseover="Music.scrollIntoView(); myView.scrollTo(0,0)">&#x266B;</a>`n
-<a style='width:6em; text-align:center; %x23%' onmouseover="Fav.scrollIntoView(); myView.scrollTo(0,0)">&#10084;</a>`n
-<a style='width:6em; text-align:center; %x21%' onmouseover="Fol.scrollIntoView(); myView.scrollTo(0,0)">&#x1F4BB;&#xFE0E;</a>`n
-<a style='color:lightsalmon; font-weight:bold; margin-left:2em'>%listSize%</a>`n
-<input id='myInput' class='searchbox' style='width:60`%; border-radius:1em; padding-left:1em; font-size:1.1em; font-weight:bold' type='search' value='%st%' onmousemove="getAlpha(event, this); if(!'%searchTerm%') {this.value=''}">`n
-<a id='SearchBox' class='searchbutton' onclick="inca('SearchBox','','',myInput.value)">%x31%</a>`n
-<a id='SearchAll' class='searchbutton' onclick="inca('SearchAll','','',myInput.value)">%x32%</a>`n
-<a id='SearchAdd' class='searchbutton' onclick="inca('SearchAdd','','',myInput.value)">%x33%</a>`n</div>`n`n
-
-<div id='myRibbon' class='ribbon'>`n
-<a id='Type' style='width:4em; %x6%' onmousedown="inca('Type')">Ext</a>`n
-<a id='Size' style='min-width:4em; %x5%' onmousedown="inca('Size', filt)" onwheel="wheelEvent(event, id, this)">Size</a>`n
-<a id='Duration' style='min-width:5em; %x3%' onmousedown="inca('Duration', filt)" onwheel="wheelEvent(event, id, this)"> Duration</a>`n
-<a id='Date' style='min-width:4.5em; %x4%' onmousedown="inca('Date', filt)" onwheel="wheelEvent(event, id, this)">Date</a>`n
-<a id='List' style='%x11%' onmousedown="inca('List', filt)" style='color:red'>%order%</a>`n
-<a id='Alpha' style='width:9`%; %x2%' onmousedown="inca('Alpha', filt)" onwheel="wheelEvent(event,id,this)">Alpha</a>`n
-<a id='Shuffle' style='width:9`%; %x1%' onmousedown="inca('Shuffle')">Shuffle</a>`n
-<a id='View' style='width:9`%' onmousedown="inca('View', view, '', lastIndex)" onwheel="wheelEvent(event, id, this)">View %view4%</a>`n 
-<a style='width:6.5`%; %x10%' onmousedown="inca('Images')">Pics</a>`n
-<a style='width:6.5`%; %x9%' onmousedown="inca('Videos')">Vids</a>`n
-<a style='width:7`%; %x8%' onmousedown="inca('Recurse')">Subs</a>`n
-<a style='width:12`%' onmouseover="myRibbon2.style.height='1.2em'" onmouseup="inca('Settings')">&#8230</a>`n
-<a id="myPage" style='width:17`%' onmousedown="inca('Page', page)" onwheel="wheelEvent(event, id, this)">%pg%</a></div>`n`n
-
-<div id='myRibbon2' class='ribbon' style='height:0; overflow:hidden; margin-top:-0.3em; justify-content:right' onmouseleave="this.style.height=0">`n
-<a id='myRate' style='width:9`%' onwheel="wheelEvent(event, id, this)">Speed</a>`n
-<a id='myInca' style='width:6`%' onmouseup="inca('Settings')">Inca</a>`n
-<a id='myMpv' style='width:9`%' onmouseup="mpv*=1; mpv^=1; localStorage.setItem('mpv',mpv)">Mpv</a>`n
-<a id='myJoin' style='width:5`%' onmousedown="inca('Join')">Join</a></div>`n`n
-
-<div style='width:100`%'></div>`n%mediaList%<div style='width:100`%; height:100vh'></div>`n`n
-
-      FileDelete, %inca%\cache\html\%folder%.htm
-      StringReplace, header, header, \, /, All
-      StringReplace, body, body, \, /, All
-      html = %header%%body%</div></div>`n<script>`n%java%</script>`n</body>`n</html>`n
-      FileAppend, %html%, %inca%\cache\html\%folder%.htm, UTF-8
-      new_html = file:///%inca%\cache\html\%folder%.htm			; create / update browser tab
-      StringReplace, new_html, new_html, \,/, All
-      IfWinNotExist, ahk_group Browsers
-        run, %new_html%							; open a new web tab
-      else if (folder == incaTab)					; just refresh existing tab
-        send, {F5}
-      else if !incaTab
-        run, %new_html%							; open a new web tab
-      else
-        {
-        send, ^l
-        sleep 44
-        send, {BS}
-        sleep 24
-        SendInput, {Raw}%new_html%
-        Send, {Enter}
-        }
-      incaTab := folder
-      selected =
-      if fullscreen
-        send, {F11}
-      fullscreen := 0
-      sleep 400								; time for page to load
-      PopUp("",0,0,0)
-      }
 
 
     SpoolList(i, j, input, sort_name, start)				; spool sorted media files into web page
@@ -1209,7 +1252,7 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n if(
         start := Round(start,2)
 
 if listView
-  mediaList = %mediaList% %fold%<table onmouseover="media%j%.style.opacity=1" onmouseout="title%j%.style.color=null; media%j%.style.opacity=0; overMedia=0">`n <tr id="entry%j%"`n onmouseover="title%j%.style.color='lightsalmon'; overThumb(%j%, this)">`n <td onmouseenter='media%j%.style.opacity=0'>%ext%`n <video id='media%j%' onmousedown="getParameters(%j%, '%type%', '%cueList%', %dur%, %start%, event)" class='media2' style="max-width:%view3%em; max-height:%view3%em"`n src="file:///%src%"`n %poster%`n preload=%preload% muted loop type="video/mp4"></video></td>`n <td>%size%</td>`n <td style='min-width:6em'>%durT%</td>`n <td>%date%</td>`n <td style='min-width:4.4em'>%j%</td>`n <td id='myFavicon%j%' style='width:0; translate:-1em; white-space:nowrap; font-size:0.7em; color:salmon; min-width:1em'>%favicon%</td>`n <td style='width:99em'><input id="title%j%" onmouseout="Click=0" class='title' type='search' value='%media_s%'`n oninput="wasMedia=%j%; renamebox=this.value"></td>`n <td>%fo%</td></tr></table>`n`n
+  mediaList = %mediaList% %fold%<table onmouseout="title%j%.style.color=null; media%j%.style.opacity=0; overMedia=0">`n <tr id="entry%j%"`n onmouseover="title%j%.style.color='lightsalmon'; overThumb(%j%, this)">`n <td onmouseenter='media%j%.style.opacity=0'>%ext%`n <video id='media%j%' onmousedown="getParameters(%j%, '%type%', '%cueList%', %dur%, %start%, event)" class='media2' style="max-width:%view3%em; max-height:%view3%em"`n src="file:///%src%"`n %poster%`n preload=%preload% muted loop type="video/mp4"></video></td>`n <td>%size%</td>`n <td style='min-width:6em' onmouseover='media%j%.style.opacity=1'>%durT%</td>`n <td onmouseover='media%j%.style.opacity=1'>%date%</td>`n <td style='min-width:4.4em'>%j%</td>`n <td id='myFavicon%j%' style='width:0; translate:-1em; white-space:nowrap; font-size:0.7em; color:salmon; min-width:1em'>%favicon%</td>`n <td style='width:99em'><input id="title%j%" onmouseout="Click=0" class='title' type='search' value='%media_s%'`n oninput="wasMedia=%j%; renamebox=this.value"></td>`n <td>%fo%</td></tr></table>`n`n
 
 else
   mediaList = %mediaList%<div id="entry%j%" style="display:flex; width%view%em; min-width:%view3%em; padding-top:%view4%em">`n <div class='media'>%caption%<span style='display:block; position:absolute; top:-1.5em; font-size:0.8em; color:salmon' id='myFavicon%j%'>%favicon%</span>`n <span><input id='title%j%' class='title' style='text-align:center; width:%view3%em; font-size:%cap_size%em' type='search' value='%media_s%'`n oninput="wasMedia=%j%; renamebox=this.value"></span>`n <video id="media%j%" class='media' style="display:flex; justify-content: center; max-width:%view3%em; max-height:%view3%em"`n onmousedown="getParameters(%j%, '%type%', '%cueList%', %dur%, %start%, event)"`n onmouseover="overThumb(%j%, this)"`n onmouseout="overMedia=0; setTimeout(function(){media%j%.pause()},144)"`n src="file:///%src%"`n %poster%`n preload=%preload% muted loop type="video/mp4"></video></div>`n</div>`n`n
@@ -1352,10 +1395,6 @@ else
             }
         }
 
-
-    fill(in) {  
-      panelList = %panelList%<div style="height:7em; padding:0.5em; transform:rotate(90deg)">`n%in%</div>`n
-      }
 
 
     GetTabSettings(all)							; from .htm cache file

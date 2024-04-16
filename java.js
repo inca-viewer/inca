@@ -24,6 +24,17 @@
 // mouseover folder >> expands folders right
 // no more left subs option
 // 'duplicate' when copy files same folder - should add copy
+// click ribbon icon opens last folder? eg downloads, new, sleep, last search on magnifier
+// add folder and fav like add search to panel and .ini
+// spool panel properly
+
+
+// grey background subs
+// remove arrow, put straight after folder 
+// mouseover foder icon closes/collpases subs view
+
+
+
 
 
   var mediaX = 1*localStorage.getItem('mediaX')				// caption strings
@@ -123,7 +134,7 @@
   function mouseUp(e) {
     if (!Click) return							// page load while mouse still down - ignore  
     clearTimeout(clickTimer)						// longClick timer
-    if (Click==3 && !gesture && !longClick && yw>0.2) context(e)	// new context menu if click below window top
+    if (Click==3 && !gesture && !longClick && yw>0.1) context(e)	// new context menu if click below window top
     if (Click==1 && gesture==2 && !playing) getParameters(overMedia)	// double thumb size
     else if (!longClick) mouseEvent()					// process click event
     Click=0; wheel=0; block=100; gesture=0; longClick=0}
@@ -131,9 +142,9 @@
 
   function closePlayer() {		
     positionMedia(0.4)							// fadeout before close
+    if (playing=='mpv') inca('Close')
     myPlayer.style.opacity=0
     playing=''
-    inca('Close')
     setTimeout(function() {
       myPlayer.removeEventListener('ended', nextMedia)
       myPlayer.src=''
@@ -293,10 +304,10 @@
   function gestureEvent(e) {						// cursor moved
     xpos = e.clientX
     ypos = e.clientY
-    mySelected.style.top = e.pageY +'px'
-    mySelected.style.left = e.pageX +10 +'px'
     if (myPanel.matches(':hover')) mySelected.style.fontSize='3em'
     else mySelected.style.fontSize=null
+    mySelected.style.top = e.pageY +'px'
+    mySelected.style.left = e.pageX +10 +'px'
     var x = Math.abs(xpos-Xref)
     var y = Math.abs(ypos-Yref)
     if (Click && x+y > 4 && !gesture && Click!=2) {			// gesture detection (mousedown + slide)
@@ -365,7 +376,9 @@
     if ((wasMedia || playing) && mySelect.matches(':hover')) {
       mySelect.innerHTML='Select - '+index+' - '+title.value}
     else mySelect.innerHTML='Select'
-    if (playing && !thumbSheet) myBody.style.cursor = 'crosshair'
+    if (playing && !thumbSheet) {
+      if (myPlayer.matches(':hover')) myBody.style.cursor = 'crosshair'
+      else myBody.style.cursor = 'none'}
     else myBody.style.cursor=null
     if (mpv) {myMpv.style.color='red'} else myMpv.style.color=null
     if (looping) {myLoop.style.color='red'} else myLoop.style.color=null
@@ -542,7 +555,7 @@
       el.innerHTML = x+' '+units; el.style.color = 'red'}
 
   function getAlpha(e, el) {						// set alpha search char in top panel
-      var x = String.fromCharCode(Math.floor(30 * (e.clientX - el.offsetLeft) / el.offsetWidth) + 44)
+      var x = String.fromCharCode(Math.floor(26 * (e.clientX - el.offsetLeft) / el.offsetWidth) + 52)
       el=document.getElementById('my'+x)
       el.scrollIntoView()
       panel.scrollBy(0,-200)
@@ -594,7 +607,7 @@
     for (i=1; getParameters(i); i++)					// process cues (eg. thumb widths)
     scrolltoIndex(index)}
 
-  function inca(command,value,select,address) { 			// send messages to inca.exe
+  function inca(command,value,select,address) {				// send messages to inca.exe
     for (i=1; el=document.getElementById('media'+i); i++) {		// add cue edits to messages
       if (el.style.skinny) messages = messages + '#Skinny#'+el.style.skinny+'#'+i+'#'+cue
       if (el.style.rate) messages = messages + '#Rate#'+el.style.rate+'#'+i+'#'+cue

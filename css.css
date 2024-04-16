@@ -9,7 +9,7 @@
   table:hover {background:#1b1814}
   a {color:#826858; text-decoration:none}
   c {display:block; padding-left:1em; text-decoration:none; color:#826858; transition:1s}
-  c:hover {overflow:visible; transition:0.2s; transform:scale(1.1,1.1); translate:0.2em; color:lightsalmon}
+  c:hover {overflow:visible; transition:0.2s; transform:scale(1.1,1.1); translate:0.2em; color:lightsalmon; font-weight:bold}
   input:hover {color:lightsalmon;transition:color 1.2s}
 
 .player {					/* media player element */
@@ -84,7 +84,6 @@
   position:relative;
   display:flex;
   width:100%;
-//  padding:0.1em;
   margin-top:0.6em;
   white-space:nowrap;
   border-radius:1em;
@@ -101,22 +100,13 @@
   background:#1b1814;
   color:#826858;
   font-family:inherit;
-  text-align:center;
+  padding-left:1.5em; 
   border:none;
   height:1.4em;
   outline:none;
   transition:color 1.4s;
   overflow:hidden;
   white-space:nowrap}
-
-.searchbutton {
-  height:1.4em;
-  font-size:1em;
-  padding-right:0.8em;
-  font-variant-caps:petite-caps;
-  transition:0.8s}
-
-.searchbutton:hover {transition:0.2s; transform:scale(1.2,1.2); translate:0 -0.1em; color:salmon}
 
 .title {					/* file name element */
   display:flex;
