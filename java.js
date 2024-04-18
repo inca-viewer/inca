@@ -16,25 +16,15 @@
 // zoom fs between portait landscape
 // zoom cue command
 // rem. 'block' value changed in mousedown, cues etc. 12th april due to too long cue pause lockout
-// rem. rbutton uses ~ now - always sent in inca
 // dreamweaver
-
-// idea - put list size and fol/fav where search is, clear when hover to show the magnifier (unless searchterm)
-// navigate to subfolder on mouseover in panel if selected exist
-// mouseover folder >> expands folders right
-// no more left subs option
 // 'duplicate' when copy files same folder - should add copy
-// click ribbon icon opens last folder? eg downloads, new, sleep, last search on magnifier
-// add folder and fav like add search to panel and .ini
-// spool panel properly
-
-
-// grey background subs
-// remove arrow, put straight after folder 
 // mouseover foder icon closes/collpases subs view
+// delete htm cache if title not in .ini file
+// pause over subs arrow before open
 
-
-
+// remove thumnsheet zoom, use gesture
+// wheel=4???
+// volume context
 
 
   var mediaX = 1*localStorage.getItem('mediaX')				// caption strings
@@ -94,6 +84,7 @@
   var fade
   var lastLeft = screenLeft
 
+
   scaleX = scaleY
   if (!defRate) defRate=1						// default speed
   if (!mpv) mpv=0							// external player
@@ -123,7 +114,6 @@
   function mouseDown(e) {						// detect long click
     Click=e.button+1; lastClick=Click; longClick=0;
     gesture=0; Xref=xpos; Yref=ypos
-    myPreview.style.opacity=0; mySeekbar.style.opacity=0
     sessionStorage.setItem('scroll', myView.scrollTop)
     if (Click==2 && myPanel.matches(':hover')) return			// open new tab
     if (Click==2) e.preventDefault()					// middle click
@@ -144,6 +134,7 @@
     positionMedia(0.4)							// fadeout before close
     if (playing=='mpv') inca('Close')
     myPlayer.style.opacity=0
+    myNav.style.display=null
     playing=''
     setTimeout(function() {
       myPlayer.removeEventListener('ended', nextMedia)
@@ -165,7 +156,8 @@
 
   function mouseEvent() {						// functional logic
     if (Click==2 && !playing) {inca('View',view,'',lastIndex); return}	// switch list/thumb view
-    if (longClick==3 && !gesture && playing) {zoom=1; positionMedia(0.2); return} // quick gesture - zoom media
+    if (longClick==1 && !thumbSheet && !gesture && playing && !myPreview.matches(':hover')) {
+      zoom=1; positionMedia(0.2); return} 				// quick gesture - zoom media
     if (!playing && !longClick && !overMedia) return
     if (lastClick==3 && !longClick) return
     if (longClick && myInput.matches(':hover')) return
@@ -173,19 +165,15 @@
     if (myNav.matches(':hover') && lastClick==1) return
     if (gesture || title.matches(':hover')) return			// allow rename of media in htm
     if (longClick==1 && !playing && playlist && overMedia && selected) {inca('Move', index); return}
-    if (playing=='browser' && lastClick==1 && !thumbSheet && type != 'image') {
-      if (xm>0 && xm<1 && (myPreview.matches(':hover') || ym>0.9 && ym<1)) {
-        if (xm<0.5 && longClick) myPlayer.currentTime=0
-        else if (longClick) myPlayer.currentTime=media.style.start
-        else myPlayer.currentTime=xm*dur
-        myPlayer.play(); return}
+    if (playing=='browser' && type != 'image' && lastClick!=2) {
+      if (myPreview.matches(':hover') || thumbSheet) {getStart(); return}
       else if (!longClick) {togglePause(); return}}
-    lastIndex = index
     if (!playing) {
       if (!mediaX || mediaX < 0 || mediaX > innerWidth) mediaX=innerWidth/2
       if (!mediaY || mediaY < 0 || mediaY > innerHeight) mediaY=innerHeight/2
       if (!scaleY || scaleY>2 || scaleY<0.2) scaleY=0.4
       localStorage.setItem('scaleY',scaleY.toFixed(3))}
+    lastIndex = index
     if (!playing && overMedia) {index=overMedia; wasMedia=index}
     if (playing && !longClick && lastClick==2) index++
     if (longClick==2) index--
@@ -207,15 +195,14 @@
       positionMedia(0)
       myPlayer.style.zIndex = Zindex+=1					// because htm thumbs use Z-index
       myPreview.src = media.src						// seeking preview window
-      myCap.innerHTML=''
-      myPlayer.src=media.src
+      myCap.innerHTML = ''
+      myPlayer.src = media.src
       myPlayer.playbackRate = rate					// set default speed
       if (type=='image') myPlayer.poster = media.poster			// images use poster as src
-      if (longClick == 1 && !thumbSheet && (playing || overMedia)) thumbSheet=1	// show thumbSheet
+      if (longClick==3 && !thumbSheet && (playing || overMedia)) thumbSheet=1	// show thumbSheet
       else if (!playing && !overMedia) myPlayer.currentTime=lastStart	// return to last media
-      else if (!playing && lastClick==3) myPlayer.currentTime=0 
-      else if (lastClick==1 && thumbSheet) getStart()			// thumbSheet xy start
-      else if (!thumbSheet) myPlayer.currentTime=media.style.start	// default start time
+      else if (!playing && longClick==1) myPlayer.currentTime=0
+      else if (!thumbSheet) myPlayer.currentTime=media.style.start	// default poster start time
       scrolltoIndex(index)			    			// + highlight played media
       positionMedia(0.2)
       Play()},fade*400)}
@@ -304,6 +291,13 @@
   function gestureEvent(e) {						// cursor moved
     xpos = e.clientX
     ypos = e.clientY
+    if (!playing || thumbSheet || myNav.matches(':hover')) myBody.style.cursor=null	// show cursor
+    else if (!Click && myBody.style.cursor!='crosshair') {
+      myBody.style.cursor='crosshair'
+      setTimeout(function() {
+        if (!myNav.matches(':hover')) myBody.style.cursor='none'
+        if (!cue) mySeekbar.style.opacity=0},540)}
+    if (playing == 'browser' && !Click) mySeekbar.style.opacity=1
     if (myPanel.matches(':hover')) mySelected.style.fontSize='3em'
     else mySelected.style.fontSize=null
     mySelected.style.top = e.pageY +'px'
@@ -376,10 +370,6 @@
     if ((wasMedia || playing) && mySelect.matches(':hover')) {
       mySelect.innerHTML='Select - '+index+' - '+title.value}
     else mySelect.innerHTML='Select'
-    if (playing && !thumbSheet) {
-      if (myPlayer.matches(':hover')) myBody.style.cursor = 'crosshair'
-      else myBody.style.cursor = 'none'}
-    else myBody.style.cursor=null
     if (mpv) {myMpv.style.color='red'} else myMpv.style.color=null
     if (looping) {myLoop.style.color='red'} else myLoop.style.color=null
     if (myPlayer.muted) {myMute.style.color='red'} else {myMute.style.color=null}
@@ -387,15 +377,14 @@
     if (playing) {myMask.style.display='flex'; myMask.style.backgroundColor='rgba(0,0,0,'+scaleY*2.2+')'}  
     else myMask.style.display='none'
     if (myPlayer.style.opacity==0) {if (myPlayer.volume>0.01) myPlayer.volume/=2}
-    else if (myPlayer.volume < 0.8) myPlayer.volume *= 1.3		// fade sound in/out
+    else if (myPlayer.volume < 0.8) myPlayer.volume *= 1.3			// fade sound in/out
     if (playing=='browser') {
       rect = myPlayer.getBoundingClientRect()
       myCap.style.top=rect.bottom +10 +'px'
       myCap.style.left=rect.left +10 +'px'
       myCap.style.zIndex=Zindex
-      myPreview.style.maxHeight= myPlayer.offsetHeight*scaleY*0.2 +'px'
-      myPreview.style.left = xpos - myPreview.offsetWidth/2 +'px'	// seeking preview window
-      myPreview.style.top = rect.bottom - myPreview.offsetHeight -12 +'px' 
+      myPreview.style.left = xpos - myPreview.offsetWidth/2 +'px'		// seeking preview popup
+      myPreview.style.top = innerHeight - myPreview.offsetHeight -12 +'px' 
       if ((","+selected).match(","+index+",")) {mySelect.style.color='red'; myPlayer.style.outline='1px solid red'}
       else {mySelect.style.color=null; myPlayer.style.outline=null}
       if (cue) {Cap.innerHTML='goto '+myPlayer.currentTime.toFixed(2)} else {Cap.innerHTML='caption'}
@@ -406,6 +395,10 @@
       ym = myPlayer.offsetHeight*scaleY*z
       xm = (xpos - rect.left) / Math.abs(xm)
       ym = (ypos - rect.top) / Math.abs(ym)
+      if (xm>0 && xm<1 && myPreview.matches(':hover')) {
+        myPreview.currentTime=dur*xm
+        myPreview.style.opacity=1}
+      else myPreview.style.opacity=0
       myPlayer.playbackRate=rate
       myPlayer.style.zIndex=Zindex+1
       mySeekbar.style.display='flex'
@@ -413,7 +406,7 @@
       mySeekbar.style.zIndex=Zindex+1
       myPreview.style.zIndex=Zindex+1
       if (!thumbSheet) lastStart=myPlayer.currentTime
-      if (type!='image' && !Click && !thumbSheet) seekBar()
+      if (type!='image' && !Click) seekBar()
       if (!Click || longClick) positionMedia(0)
       Jpg.innerHTML='jpg'}
     else {
@@ -463,13 +456,8 @@
     mySeekbar.style.width = cueW
     if (rect.bottom+6 > innerHeight) mySeekbar.style.top = innerHeight -10 +'px'
     else mySeekbar.style.top = rect.bottom-12 +'px'
-    if (playing=='browser' && type != 'image') {
-      if (xm>0 && xm<1 && ym>0 && ym<1 || cue) {mySeekbar.style.opacity=1} else {mySeekbar.style.opacity-=0.2} 
-      if (myPreview.matches(':hover') || cue) {mySeekbar.style.borderTop='8px solid red'}
-      else mySeekbar.style.borderTop=null
-      if (xm>0 && xm<1 && myPreview.matches(':hover')) {myPreview.currentTime=dur*xm; myPreview.style.opacity=1}
-      else myPreview.style.opacity=0}
-    else {myPreview.style.opacity=0; mySeekbar.style.opacity=0}}
+    if (cue) {mySeekbar.style.opacity=1; mySeekbar.style.borderTop='8px solid red'}
+    else mySeekbar.style.borderTop=null}
 
 
   function Cue(time, i) {						// process media cues - captions, pauses etc.
@@ -506,18 +494,23 @@
 
 
   function getStart() {
-    if (skinny < 0) xm = 1-xm						// flipped media
-    var row = Math.floor(ym * 6)					// get media seek time from thumbsheet xy
-    var col = Math.ceil(xm * 6)
-    var offset = 0
-    var ps = 5 * ((row * 6) + col)
-    ps = (ps - 1) / 200
-    if (dur > 60) offset = 20
-    if (longClick==1) myPlayer.currentTime=lastStart
-    else if (xm>1||xm<0|ym>1||ym<0) myPlayer.currentTime=0		// if outside thumbsheet start 0
-    else myPlayer.currentTime=offset - 0.4 - (ps * offset) + dur * ps
-    inca('History', myPlayer.currentTime.toFixed(1), index)
-    thumbSheet=0}
+    if (thumbSheet) {
+      if (skinny < 0) xm = 1-xm						// flipped media
+      var row = Math.floor(ym * 6)					// get media seek time from thumbsheet xy
+      var col = Math.ceil(xm * 6)
+      var offset = 0
+      var ps = 5 * ((row * 6) + col)
+      ps = (ps - 1) / 200
+      if (dur > 60) offset = 20
+      if (longClick) myPlayer.currentTime=lastStart
+      else if (xm>1||xm<0|ym>1||ym<0) myPlayer.currentTime=0		// if outside thumbsheet start 0
+      else myPlayer.currentTime=offset - 0.4 - (ps * offset) + dur * ps}
+    if (myPreview.matches(':hover')) {
+      if (longClick) {if(xm<0.5) {myPlayer.currentTime=0} else myPlayer.currentTime=media.style.start}
+      else myPlayer.currentTime=xm*dur}
+    myPlayer.poster=''
+    thumbSheet=0
+    Play()}
 
 
   function Thumbsheet() {						// 1st thumb or 6x6 thumbsheet
@@ -558,7 +551,7 @@
       var x = String.fromCharCode(Math.floor(26 * (e.clientX - el.offsetLeft) / el.offsetWidth) + 52)
       el=document.getElementById('my'+x)
       el.scrollIntoView()
-      panel.scrollBy(0,-200)
+      panel.scrollBy(0,-250)
       myView.scrollBy(0,-200)}
 
   function scrolltoIndex(i) {
