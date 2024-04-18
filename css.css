@@ -24,7 +24,7 @@
   z-index:-1;
   user-select:none;
   border-radius:6%;
-  max-height:100px;
+  height:100px;
   transition:opacity 0.5s}
 
 .myList {					/* list view */
@@ -46,16 +46,16 @@
   height:20em}
 
 .panel {					/* inner panel list container */
-  height:100vh;
+  height:93vh;
   position:absolute;
   overflow-y:scroll;
   overflow-x:hidden;
   transform:rotate(-90deg);
   transform-origin:right top;
   background:#15110a;
-  padding-right:12em;
+  padding-right:34%;
   width:10em;					/* entry width	*/
-  left:-22em}
+  left:-48%}
 
 .p2 {						/* panel entries */
   overflow:hidden;
@@ -140,7 +140,7 @@
   color:lightsalmon;
   font-size:1.4em;
   border-top:2px solid red;
-  transition:0.2s}
+  transition: opacity 0.3s}
 
 .cap {						/* htm caption element */
   overflow:wrap;
