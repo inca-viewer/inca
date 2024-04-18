@@ -620,7 +620,7 @@
   function togglePause() {if(!thumbSheet&&lastClick==1) {if (myPlayer.paused) {myPlayer.play()} else {myPlayer.pause()}}}
   function selectAll() {for (i=1; document.getElementById('media'+i); i++) {sel(i)}}
   function flip() {skinny*=-1; scaleX*=-1; media.style.skinny=skinny; positionMedia(0.6); media.style.transform='scaleX('+skinny+')'}
-  function mute() {if(!longClick) {myPlayer.volume=0; myPlayer.muted=!myPlayer.muted; localStorage.setItem("muted",1*myPlayer.muted)}}
+  function mute() {if(!longClick) {myPlayer.volume=0.05; myPlayer.muted=!myPlayer.muted; localStorage.setItem("muted",1*myPlayer.muted)}}
 
 
 
