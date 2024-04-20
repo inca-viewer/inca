@@ -240,7 +240,7 @@
     if (playing && !longClick && lastClick==2) index++
     if (longClick==2) index--
     if (!playing || thumbSheet) fade=0
-myPlayer.poster=media.poster
+    if (!thumbSheet) myPlayer.poster=media.poster
     positionMedia(fade)
     if (selected) timerEvent()						// for myPlayer red outline
     if (!longClick && !thumbSheet)  myPlayer.style.opacity=0
