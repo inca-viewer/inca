@@ -344,9 +344,9 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n if(
 <a style='width:6em; text-align:center; %x21%' onmousedown="inca('Path','','','fol|1')" onmouseover="Fol.scrollIntoView(); myView.scrollTo(0,0)">&#x1F4BB;&#xFE0E;</a>`n
 <a style='width:6em; text-align:center; %x23%' onmousedown="inca('Path','','','fav|1')" onmouseover="Fav.scrollIntoView(); myView.scrollTo(0,0)">&#10084;</a>`n
 <a style='width:6em; text-align:center; %x22%' onmousedown="inca('Path','','','music|1')" onmouseover="Music.scrollIntoView(); myView.scrollTo(0,0)">&#x266B;</a>`n
-<a id='SearchBox' style='width:5.5em; text-align:center; %x20%' onmousedown="inca('SearchBox','','',myInput.value)" onmouseover='myA.scrollIntoView(); myView.scrollTo(0,0)' >&#x1F50D;&#xFE0E;</a>`n
+<a id='SearchBox' style='width:5.5em; text-align:center; %x20%' onmousedown="inca('SearchBox','','',myInput.value)" onmouseover='myA.scrollIntoView(); myView.scrollTo(0,0); myInput.focus()' >&#x1F50D;&#xFE0E;</a>`n
 <a id='Add' style='font-variant-caps:petite-caps' onmousedown="inca('Add','','',myInput.value)">%add%</a>`n
-<input id='myInput' class='searchbox' style='width:70`%; border-radius:1em; font-size:1.1em; font-weight:bold' type='search' value='%st%' onmousemove='getAlpha(event, this)' onmousedown="if(!'%searchTerm%') {this.value=''}" oninput="Add.innerHTML='Add'">`n</div>`n`n
+<input id='myInput' class='searchbox' style='width:70`%; border-radius:1em; font-size:1.1em; font-weight:bold' type='search' value='%st%' onmousemove='getAlpha(event, this)' onmouseover="if(!'%searchTerm%') {this.value=''; this.focus()}" oninput="Add.innerHTML='Add'">`n</div>`n`n
 
 <div id='myRibbon' class='ribbon'>`n
 <a id='Type' style='width:4em; %x6%' onmousedown="inca('Type')">Ext</a>`n
@@ -422,12 +422,19 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n if(
 
     RButton::
       panelPath =				; reset panel path
+      MouseGetPos,,, Id
     ~LButton::					; click events
     ~MButton::
       MouseDown()
       if (click == "RButton")
         if incaTab
-          send,{RButton up}
+          {
+          send {RButton up}
+          MouseGetPos,,, Id2
+          if (gesture && id != id2)
+            send, {Esc}				; close context menu if volume gesture crosses windows
+WinActivate, ahk_group Browsers
+         }
         else if !gesture
           send {RButton}
       return
@@ -872,10 +879,14 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n if(
                 x = %panelPath%|
                 fol := StrReplace(fol, x)
                 IniWrite,%fol%,%inca%\ini.ini,Settings,Fol
-                Loop, Files, %panelPath%\*.*, FD			; is folder empty
+                Loop, Files, %panelPath%\*.*, FR			; is folder empty
                   {
-                  popup("Must be empty",600,0,0)
-                  return
+                  FileGetSize, size, %A_LoopFileFullPath%, K
+                  if size
+                    {
+                    popup("Must be empty",600,0,0)
+                    return
+                    }
                   }
                 path := SubStr(panelPath, 1, InStr(panelPath, "\", False, -1))
                 StringTrimRight, str, path, 1
@@ -1443,7 +1454,7 @@ else
         }
 
 
-    MoveFiles()
+    MoveFiles()								; or playlist .m3u entries
         {
         if (playlist && !InStr(address, "\inca\"))
           PopUp("Cannot Move Shortcuts",1000,0.34,0.2)
@@ -1464,23 +1475,18 @@ else
                 FileAppend, %target%`r`n, %address%, UTF-8		; add media entry to playlist
               else 
                 {
-                SplitPath, src,,mediaPath,ext,media
-                FileGetSize, x, %address%%media%.%ext%			; if x, name already exists in target folder
+                FileGetSize, x, %address%%media%.%ext%			; if x, then name already exists in target folder
                 FileGetSize, y, %src%					; get source file size
                 z=							; new 'Copy -' addendum
-                if ((x && x!=y) || address == mediaPath)
-                  Loop 500
+                if x							; filename exists in target folder
+                  Loop 9999						; Copy (index) suffix attempt
                     {
                     z = \%media% - Copy (%A_Index%).%ext%
-                    FileGetSize, x,  %address%%z%
-                    if !x
+                    FileGetSize, w,  %address%%z%
+                    if !w						; if Copy name not exist 
                       break
-                    if (x == y)
-                      break 2
                     }
-                if (!longClick && address == mediaPath)
-                  continue
-                if (x==y)
+                if (!longClick && x==y)
                   {
                   PopUp("Duplicate . . .",500,0.5,0.15) 
                   continue
@@ -1488,11 +1494,11 @@ else
                 Loop, 4
                   {
                   if !longClick
-                    FileMove, %src%, %address%%z%				; move file to new folder
+                    FileMove, %src%, %address%%z%			; move file to new folder
                   else FileCopy, %src%, %address%%z%
                   if !ErrorLevel
                     break
-                  sleep 50							; time for browser to release media
+                  sleep 50						; time for browser to release media
                   }
                 if ErrorLevel
                   PopUp("Error . . .",300,0.5,0.15)
@@ -1762,7 +1768,14 @@ else
         Loop, Parse, str, `n, `r					; keep history below 300 entries
           if (A_Loopfield && A_Index >= count)
             str2 = %str2%%A_Loopfield%`r`n
-        FileAppend, %str2%, %inca%\fav\History.m3u, UTF-8
+        FileAppend, %str2%, %inca%\fav\History.m3u, UTF-8		; clean up html cache
+        str = %fol%,%fav%,%music%,%search%				; all recognized pages
+        Loop, Files, %inca%\cache\html\*.htm, FD
+          {
+          StringTrimRight, x, A_LoopFileName, 4
+          if !InStr(str, x)
+             FileDelete, %A_LoopFileFullPath%
+          }
         CoordMode, Mouse, Screen
         Gui, background:+lastfound -Caption +ToolWindow -DPIScale
         Gui, background:Color,Black
