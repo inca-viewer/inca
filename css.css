@@ -2,15 +2,27 @@
   ::selection {color:red; background:black}
   ::-webkit-search-cancel-button {appearance:none}
   ::-webkit-scrollbar {background:#15110a}
+  ::-webkit-resizer {background:salmon}
   ::-webkit-scrollbar-corner {background:#15110a}
   ::-webkit-scrollbar-thumb {background:#2b2824; border-radius:2px}
   td {outline:none; text-align:center; min-width:3.8em; overflow:hidden; white-space:nowrap}
   table {color:#826858; font-size:0.9em; border-collapse:collapse; margin:auto; border-radius:1em; transition:color 0.3s}
   table:hover {background:#1b1814}
   a {color:#826858; text-decoration:none}
-  c {display:block; padding-left:1em; text-decoration:none; color:#826858; transition:1s}
-  c:hover {overflow:visible; transition:0.2s; transform:scale(1.1,1.1); translate:0.2em; color:lightsalmon; font-weight:bold}
-  input:hover {color:lightsalmon;transition:color 1.2s}
+  c {display:block; padding-left:1em; text-decoration:none; font-weight:bold; color:#826858; transition:1s}
+  c:hover {overflow:visible; transition:0.2s; transform:scale(1.1,1.1); color:lightsalmon}
+  c:active {color:red; transform:scale(0.8,0.8)}
+
+.text {
+  border-radius:0.5em;
+  width:100%;
+  background-color:inherit;
+  color:#826858;
+  line-height:1.1em;
+  font-family:inherit;
+  border:none;
+  outline:none}
+.text::-webkit-scrollbar {width:5px}
 
 .player {					/* media player element */
   position:absolute;
@@ -37,7 +49,7 @@
 
 .myPanel {					/* top panel element showing folders etc.*/
   position:relative;
-  top:2.8em;
+  top:2.6em;
   width:100%;
   margin:-1em;
   font-size:0.9em;
@@ -81,8 +93,9 @@
 .ribbon {					/* menu, fol, fav, search ... */
   position:relative;
   display:flex;
+  font-weight:bold;
   width:100%;
-  margin-top:0.6em;
+  margin-top:1em;
   white-space:nowrap;
   border-radius:1em;
   text-align:center;
@@ -102,7 +115,6 @@
   border:none;
   height:1.4em;
   outline:none;
-  transition:color 1.4s;
   overflow:hidden;
   white-space:nowrap}
 
@@ -119,7 +131,9 @@
   outline:none;
   height:1.4em;
   border:none;
+  transition:color 0.6s;
   white-space:nowrap}
+.title:hover {color:lightsalmon}
 
 .selected {
   display:block; 

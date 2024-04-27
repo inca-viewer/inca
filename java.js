@@ -12,12 +12,21 @@
 // create debug panel - messages, start index etc.
 // subs hierarchy lost if leave page - lose selection target
 // dreamweaver
-
-// remove thumnsheet zoom, use gesture ?
+// mind resonance
 // zoom fs between portait landscape
 // zoom cue command
-// duplicate sub entries
-// not clear all .htm
+
+// too many textarea too big slows page load - eg. books
+// open in notepad
+// search for word
+// add/goto anchors
+// remember textarea size and anchor position
+// text popouts ?
+// longclick over text triggers last media
+// save text if accidental exit
+
+
+
 
   var mediaX = 1*localStorage.getItem('mediaX')				// caption strings
   var mediaY = 1*localStorage.getItem('mediaY')				// last media position
@@ -240,10 +249,11 @@
     if (playing && !longClick && lastClick==2) index++
     if (longClick==2) index--
     if (!playing || thumbSheet) fade=0
-    if (!thumbSheet) myPlayer.poster=media.poster
     positionMedia(fade)
     if (selected) timerEvent()						// for myPlayer red outline
-    if (!longClick && !thumbSheet)  myPlayer.style.opacity=0
+    if (!thumbSheet) {
+      if (!longClick)  myPlayer.style.opacity=0
+      else myPlayer.poster=media.poster}
     setTimeout(function() {						// so player can fade in/out
       if (longClick && !thumbSheet && !playing) index=lastIndex		// return to last media
       if (!getParameters(index)) {closePlayer(); return}		// end of media list
@@ -392,11 +402,11 @@
       myPreview.style.zIndex=Zindex+1
       if (!thumbSheet) lastStart=myPlayer.currentTime
       if (type!='image' && !Click) seekBar()
-      if (xm>0 && xm<1 && myPreview.matches(':hover')) {
+      if (xm>0 && xm<1 && myPreview.matches(':hover') && !thumbSheet) {
         myPreview.currentTime=dur*xm
         myPreview.style.opacity=1}
       else myPreview.style.opacity=0
-      if (type!='image' && (cue || myPlayer.matches(':hover') || myPreview.matches(':hover'))) {
+      if (!thumbSheet && type!='image' && (cue || myPlayer.matches(':hover') || myPreview.matches(':hover'))) {
        mySeekbar.style.opacity=1}
       else mySeekbar.style.opacity=0
       if (xm>0 && xm<1 && (cue || myPreview.matches(':hover'))) {
@@ -500,7 +510,7 @@
       if (longClick) myPlayer.currentTime=lastStart
       else if (xm>1||xm<0|ym>1||ym<0) myPlayer.currentTime=0		// if outside thumbsheet start 0
       else myPlayer.currentTime=offset - 0.4 - (ps * offset) + dur * ps}
-    if (myPreview.matches(':hover')) {
+    else if (myPreview.matches(':hover')) {
       if (longClick) {if(xm<0.5) {myPlayer.currentTime=0} else myPlayer.currentTime=media.style.start}
       else myPlayer.currentTime=xm*dur}
     thumbSheet=0
@@ -599,6 +609,7 @@
       if (el.style.skinny) messages = messages + '#Skinny#'+el.style.skinny+'#'+i+'#'+cue
       if (el.style.rate) messages = messages + '#Rate#'+el.style.rate+'#'+i+'#'+cue
       if (cue) {cue=0; el.style.skinny=0; el.style.rate=0}}
+    if (command=='Text') address = document.getElementById('title'+value).value
     if (!select) {select=''} else {select=select+','}
     if (command == 'Favorite' && !selected) document.getElementById('myFavicon'+index).innerHTML='&#10084'
     if (selected && command!='Close' && command!='Reload') select=selected // selected is global value
