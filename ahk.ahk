@@ -907,8 +907,8 @@
           }
         if (playlist || searchTerm)
           subfolders = 
-        if subfolders
-          showSubs = true
+;        if subfolders
+;          showSubs = true
         title := folder
         title_s := SubStr(title, 1, 20)					; keep title under 20 chars for htm page
         FileRead, java, %inca%\java.js
@@ -1001,7 +1001,7 @@
         if (subfolders && container)
           fill(container)
 
-        container = <div id='Fol' style='font-size:2em; color:#ffa07ab0; margin:0.8em; text-align:center' onmouseover="Sub.scrollIntoView(); myView.scrollTo(0,0)">&#x1F4BB;&#xFE0E;</div>`n
+        container = <div id='Fol' style='font-size:2em; color:#ffa07ab0; margin:0.8em; text-align:center'>&#x1F4BB;&#xFE0E;</div>`n
         container := fill(container)
         Loop, Parse, fol, `|
           if A_LoopField
@@ -1079,6 +1079,8 @@
 x = %searchTerm%|
 if (searchTerm && !InStr(search, x))
   add = Add
+if subfolders
+  subs = &#8656;
 
 header = <!--, %view%, %page%, %pages%, %filt%, %sort%, %toggles%, %listView%, %playlist%, %path%, %searchPath%, %searchTerm%, , -->`n<!doctype html>`n<html>`n<head>`n<meta charset="UTF-8">`n<title>Inca - %title%</title>`n<meta name="viewport" content="width=device-width, initial-scale=1">`n<link rel="icon" type="image/x-icon" href="file:///%inca%\cache\icons\inca.ico">`n<link rel="stylesheet" type="text/css" href="file:///%inca%/css.css">`n</head>`n`n
 
@@ -1116,13 +1118,14 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n if(
 <div id='myPanel' class='myPanel'>`n <div id='panel' class='panel'>`n`n%panelList%`n</div></div>`n`n
 
 <div class='ribbon' style='height:1.4em; font-size:1.1em; justify-content:center; background:#1b1814; top:-5.8em'>`n
-<a style='width:8em; text-align:center; color:red; font-weight:bold' onmouseover="Sub.scrollIntoView(); myView.scrollTo(0,0)">%listSize%</a>`n
+<a style='width:7em; text-align:center; color:salmon; font-weight:bold' onmouseover="Sub.scrollIntoView(); myView.scrollTo(0,0)">%listSize%</a>`n
+<a style='width:1em; text-align:center; color:red' onmouseover="Sub.scrollIntoView(); myView.scrollTo(0,0)">%subs%</a>`n
 <a style='width:6em; text-align:center; %x21%' onmousedown="inca('Path','','','fol|1')" onmouseover="Fol.scrollIntoView(); myView.scrollTo(0,0)">&#x1F4BB;&#xFE0E;</a>`n
 <a style='width:6em; text-align:center; %x23%' onmousedown="inca('Path','','','fav|1')" onmouseover="Fav.scrollIntoView(); myView.scrollTo(0,0)">&#10084;</a>`n
 <a style='width:6em; text-align:center; %x22%' onmousedown="inca('Path','','','music|1')" onmouseover="Music.scrollIntoView(); myView.scrollTo(0,0)">&#x266B;</a>`n
 <a id='SearchBox' style='width:5.5em; text-align:center; %x20%' onmousedown="inca('SearchBox','','',myInput.value)" onmouseover='myA.scrollIntoView(); myView.scrollTo(0,0); myInput.focus()' >&#x1F50D;&#xFE0E;</a>`n
 <a id='Add' style='font-variant-caps:petite-caps' onmousedown="inca('Add','','',myInput.value)">%add%</a>`n
-<input id='myInput' class='searchbox' style='width:70`%; border-radius:1em; font-size:1.1em; font-weight:bold' type='search' value='%st%' onmousemove='getAlpha(event, this)' onmouseover="if(!'%searchTerm%') {this.value=''; this.focus()}" oninput="Add.innerHTML='Add'">`n</div>`n`n
+<input id='myInput' class='searchbox' style='width:70`%; border-radius:1em; font-size:1.1em; font-weight:bold' type='search' value='%st%' onmousemove='getAlpha(event, this)' onmouseover="if(!'%searchTerm%') {this.value=''; this.focus()}" oninput="Add.innerHTML='Add'"></div>`n`n
 
 <div id='myRibbon' class='ribbon'>`n
 <a id='Type' style='width:4em; %x6%' onmousedown="inca('Type')">Ext</a>`n
@@ -1146,6 +1149,7 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n if(
 <a id='myJoin' style='width:5`%' onmousedown="inca('Join')">Join</a></div>`n`n
 
 <div style='width:100`%'></div>`n%mediaList%<div style='width:100`%; height:95vh'></div>`n`n
+
 
       FileDelete, %inca%\cache\html\%folder%.htm
       StringReplace, header, header, \, /, All
@@ -1273,13 +1277,11 @@ if listView
   mediaList = %mediaList% %fold%<table onmouseout="title%j%.style.color=null; media%j%.style.opacity=0; overMedia=0">`n <tr id="entry%j%"`n onmouseover="title%j%.style.color='lightsalmon'; overThumb(%j%, this)">`n <td onmouseenter='media%j%.style.opacity=0'>%ext%`n <video id='media%j%' onmousedown="getParameters(%j%, '%type%', '%cueList%', %dur%, %start%, event)" class='media2' style="max-width:%view3%em; max-height:%view3%em"`n src="file:///%src%"`n %poster%`n preload=%preload% muted loop type="video/mp4"></video></td>`n <td>%size%</td>`n <td style='min-width:6em' onmouseover='media%j%.style.opacity=1'>%durT%</td>`n <td onmouseover='media%j%.style.opacity=1'>%date%</td>`n <td style='min-width:4.4em'>%j%</td>`n <td id='myFavicon%j%' style='width:0; translate:-1em; white-space:nowrap; font-size:0.7em; color:salmon; min-width:1em'>%favicon%</td>`n <td style='width:99em'><input id="title%j%" onmouseout="Click=0" class='title' type='search' value='%media_s%'`n oninput="wasMedia=%j%; renamebox=this.value"></td>`n <td>%fo%</td></tr></table>`n`n
 
 else if (ext == "txt")
-  mediaList = %mediaList%<div id="entry%j%" style="display:flex; position:relative; min-width:%view3%em; padding-top:%view4%em">`n <span id='Save%j%' style='display:none; position:absolute; right:10px; bottom:5px; text-align:center; border-radius:0.3em; color:salmon; background:#15110a; height:1.6em; width:3.5em; font-variant-caps:petite-caps' onmousedown="inca('Text',%j%)">Save</span><textarea id='title%j%' rows=8 class='text' style='font-size:%cap_size%em' oninput="myInput.value=''; this.style.background='#1b1814'; Save%j%.style.display='block'">%str2%</textarea></div>`n`n
+  mediaList = %mediaList%<div id="title%j%" style="display:flex; position:relative; padding-top:%view4%em">`n <span id='Save%j%' class='save' onclick="inca('Text',%j%)">Save</span>`n <textarea id='media%j%' rows=16 class='text' style='font-size:%cap_size%em' onmouseover="overThumb(%j%, this); type='text'" onmouseout='overMedia=0'`n oninput="if(editing&&editing!='%j%') {inca('Text',editing)}; editing='%j%'; this.style.background='inherit'; Save%j%.style.display='block'" onmousedown="getParameters(%j%,'document','',0,0,event)">`n%str2%</textarea></div>`n`n
 
 else mediaList = %mediaList%<div id="entry%j%" style="display:flex; min-width:%view3%em; padding-top:%view4%em">`n <div class='media'>%caption%<span style='display:block; position:absolute; top:-1.5em; font-size:0.8em; color:salmon' id='myFavicon%j%'>%favicon%</span>`n <span><input id='title%j%' class='title' style='text-align:center; width:%view3%em; font-size:%cap_size%em' type='search' value='%media_s%'`n oninput="wasMedia=%j%; renamebox=this.value"></span>`n <video id="media%j%" class='media' style="display:flex; justify-content: center; max-width:%view3%em; max-height:%view3%em"`n onmousedown="getParameters(%j%, '%type%', '%cueList%', %dur%, %start%, event)"`n onmouseover="overThumb(%j%, this)"`n onmouseout="overMedia=0; setTimeout(function(){media%j%.pause()},144)"`n src="file:///%src%"`n %poster%`n type='video/mp4' preload=%preload% muted loop type="video/mp4"></video></div>`n</div>`n`n
 }
-
-;<input id='title%j%' class='title' style='position:absolute; text-align:center; width:%view3%em; font-size:%cap_size%em' type='search' value='%media_s%'>`n 
-
+; min-width:%view3%em; 
     CreateList(show)							; list of files in path
         {
         Critical

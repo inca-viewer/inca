@@ -17,14 +17,13 @@
 // zoom cue command
 
 // too many textarea too big slows page load - eg. books
-// open in notepad
+// open in notepad option
 // search for word
 // add/goto anchors
 // remember textarea size and anchor position
 // text popouts ?
-// longclick over text triggers last media
 // save text if accidental exit
-
+// moving text entries in playlist triggers osk
 
 
 
@@ -84,6 +83,7 @@
   var title
   var fade
   var lastLeft = screenLeft
+  var editing = 0							// editing textarea
 
 
   scaleX = scaleY
@@ -99,16 +99,17 @@
   document.addEventListener('keydown', (e) => {				// keyboard events
     if (e.key=='Enter') {
       if (renamebox) {inca('Rename', renamebox, wasMedia)}		// rename media
-      else if (myInput.value) {
+      else if (!editing && myInput.value && myInput.matches(':focus')) {
         inca('SearchBox','','',myInput.value)}}				// search for media on pc
     if (e.key=='Insert') {thumbSheet=1; mouseEvent()}			// mpv invoke thumbsheet
     if (e.key=='Pause') {						// mouse 'Back' key
       if (playing) closePlayer()
+      else if (editing) alert('Text Changes')
       else if (overMedia && media.style.position=='fixed') {		// close popped out thumb
         media.style.position=null
         media.style.transform='scale('+skinny+',1)'
         media.style.top=null; media.style.left=null}
-      else if (myView.scrollTop > 50) myView.scrollTo(0, 0)		// else scroll to page top
+      else if (myView.scrollTop > 50) myView.scrollTo(0,0)		// else scroll to page top
       else inca('Reload')}}, false)					// or reload page
 
 
@@ -131,10 +132,10 @@
     Click=0; wheel=0; block=100; gesture=0; longClick=0}
 
 
-  function mouseMove(e) {
+  function mouseMove(e) {						// gestures
     xpos = e.clientX
     ypos = e.clientY
-    if (!playing || thumbSheet || myNav.matches(':hover')) myBody.style.cursor=null	// show cursor
+    if (!playing || thumbSheet || myNav.matches(':hover')) myBody.style.cursor=null
     else if (!Click && myBody.style.cursor!='crosshair') {
       myBody.style.cursor='crosshair'; setTimeout(function() {myBody.style.cursor='none'},540)}
     if (myPanel.matches(':hover')) mySelected.style.fontSize='3em'
@@ -144,7 +145,7 @@
     var x = Math.abs(xpos-Xref)
     var y = Math.abs(ypos-Yref)
     if (Click && x+y > 4 && !gesture && Click!=2) {			// gesture detection (mousedown + slide)
-      if (overMedia) {gesture=2} else gesture=1}
+      if (overMedia && !media.value) {gesture=2} else gesture=1}	// media.value implies is text media
     if (!gesture) return
     if (gesture==2 && !playing && !listView && Click==1) {		// move / pop thumb
       media.style.opacity = 1
@@ -338,6 +339,7 @@
     dur = 1*x.pop().trim()						// in case wmv, avi etc
     cueList = x.pop().replaceAll('\'', '').trim()
     type = x.pop().replaceAll('\'', '').trim()				// eg video, image
+    if (type == 'document') return 1
     if (cueList) Cue(0,i)						// get initial width, speed etc.
     x = media.style.skinny						// get any live width edits
     if (x && x!=skinny) skinny=x 					// in case it has been edited
@@ -609,7 +611,7 @@
       if (el.style.skinny) messages = messages + '#Skinny#'+el.style.skinny+'#'+i+'#'+cue
       if (el.style.rate) messages = messages + '#Rate#'+el.style.rate+'#'+i+'#'+cue
       if (cue) {cue=0; el.style.skinny=0; el.style.rate=0}}
-    if (command=='Text') address = document.getElementById('title'+value).value
+    if (command=='Text') address = document.getElementById('media'+value).value
     if (!select) {select=''} else {select=select+','}
     if (command == 'Favorite' && !selected) document.getElementById('myFavicon'+index).innerHTML='&#10084'
     if (selected && command!='Close' && command!='Reload') select=selected // selected is global value

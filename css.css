@@ -13,10 +13,23 @@
   c:hover {overflow:visible; transition:0.2s; transform:scale(1.1,1.1); color:lightsalmon}
   c:active {color:red; transform:scale(0.8,0.8)}
 
+.save {
+  display:none;
+  position:absolute;
+  right:10px;
+  bottom:5px;
+  text-align:center;
+  border-radius:0.3em;
+  color:salmon;
+  background:#1b1814;
+  height:1.6em;
+  width:3.5em;
+  font-variant-caps:petite-caps} 
+
 .text {
   border-radius:0.5em;
-  width:100%;
-  background-color:inherit;
+  width:28em;
+  background-color:#1b1814;
   color:#826858;
   line-height:1.1em;
   font-family:inherit;
@@ -49,7 +62,7 @@
 
 .myPanel {					/* top panel element showing folders etc.*/
   position:relative;
-  top:2.6em;
+  top:3em;
   width:100%;
   margin:-1em;
   font-size:0.9em;
