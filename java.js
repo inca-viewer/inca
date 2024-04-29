@@ -21,10 +21,7 @@
 // search for word
 // add/goto anchors
 // remember textarea size and anchor position
-// text popouts ?
-// save text if accidental exit
-// moving text entries in playlist triggers osk
-
+// scroll to text anchors on reset
 
 
   var mediaX = 1*localStorage.getItem('mediaX')				// caption strings
@@ -85,7 +82,6 @@
   var lastLeft = screenLeft
   var editing = 0							// editing textarea
 
-
   scaleX = scaleY
   if (!defRate) defRate=1						// default speed
   if (!mpv) mpv=0							// external player
@@ -98,13 +94,12 @@
 
   document.addEventListener('keydown', (e) => {				// keyboard events
     if (e.key=='Enter') {
-      if (renamebox) {inca('Rename', renamebox, wasMedia)}		// rename media
-      else if (!editing && myInput.value && myInput.matches(':focus')) {
-        inca('SearchBox','','',myInput.value)}}				// search for media on pc
+      if (renamebox) inca('Rename', renamebox, wasMedia)		// rename media
+      else if (myInput.value && myInput.matches(':focus')) inca('SearchBox','','',myInput.value) // search media on pc
+      else if (type=='document') {var x=media.scrollTop; setTimeout(function(){media.scrollTo(0,x)},100)}}
     if (e.key=='Insert') {thumbSheet=1; mouseEvent()}			// mpv invoke thumbsheet
     if (e.key=='Pause') {						// mouse 'Back' key
       if (playing) closePlayer()
-      else if (editing) alert('Text Changes')
       else if (overMedia && media.style.position=='fixed') {		// close popped out thumb
         media.style.position=null
         media.style.transform='scale('+skinny+',1)'
@@ -235,8 +230,8 @@
     if (longClick && myInput.matches(':hover')) return
     if (longClick && myPanel.matches(':hover')) return			// copy files instead of move
     if (myNav.matches(':hover') && lastClick==1) return
+    if (!gesture && longClick==1 && !playing && playlist && overMedia && selected) {inca('Move', index); return}
     if (gesture || title.matches(':hover')) return			// allow rename of media in htm
-    if (longClick==1 && !playing && playlist && overMedia && selected) {inca('Move', index); return}
     if (playing=='browser' && type != 'image' && lastClick!=2) {
       if (myPreview.matches(':hover') || thumbSheet) {getStart(); return}
       else if (!longClick) {togglePause(); return}}
@@ -607,15 +602,18 @@
     scrolltoIndex(index)}
 
   function inca(command,value,select,address) {				// send messages to inca.exe
+    if (editing) {
+      var x = document.getElementById('media'+editing).value		// save textarea if edited
+      x = '#Text#'+media.scrollTop.toFixed(0)+'#'+editing+'#'+x
+      navigator.clipboard.writeText(x); return}
     for (i=1; el=document.getElementById('media'+i); i++) {		// add cue edits to messages
       if (el.style.skinny) messages = messages + '#Skinny#'+el.style.skinny+'#'+i+'#'+cue
       if (el.style.rate) messages = messages + '#Rate#'+el.style.rate+'#'+i+'#'+cue
       if (cue) {cue=0; el.style.skinny=0; el.style.rate=0}}
-    if (command=='Text') address = document.getElementById('media'+value).value
     if (!select) {select=''} else {select=select+','}
     if (command == 'Favorite' && !selected) document.getElementById('myFavicon'+index).innerHTML='&#10084'
     if (selected && command!='Close' && command!='Reload') select=selected // selected is global value
-    for (x of select.split(',')) if (x) document.getElementById('media'+x).load()
+    for (x of select.split(',')) {if (x=document.getElementById('media'+x)) if (x.src) {x.load()}}
     if (!value) value=''
     if (!address) address=''
     if (isNaN(value)) value=value.replaceAll('#', '<')			// because # is used as delimiter

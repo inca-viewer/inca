@@ -90,6 +90,7 @@
         Global mpvWidth
         Global mpvHeight
         Global mpvPID
+        Global scrollText
 
 
     main:
@@ -115,7 +116,8 @@
       if (click == "RButton")
         if incaTab
           {
-          send {RButton up}
+          if !longClick
+            send {RButton up}
           MouseGetPos,,, Id2
           if (gesture && id != id2)
             {
@@ -123,7 +125,7 @@
             WinActivate, ahk_group Browsers
             }
          }
-        else if !gesture
+        else if (!gesture && !longClick)
           send {RButton}
       return
 
@@ -349,12 +351,11 @@
             }
         if (command == "Text")						; move entry within playlist
             {
-            getMedia(value)
-            if address
-              {
-              FileDelete, %src%
-              FileAppend, %address%, %src%, UTF-8
-              }
+            getMedia(selected)
+            FileDelete, %src%
+            FileAppend, %address%, %src%, UTF-8
+            scrollText := value						; textarea scrollY
+            index := selected						; textarea index id
             reload := 3
             }
         if (command == "Move")						; move entry within playlist
@@ -1084,7 +1085,7 @@ if subfolders
 
 header = <!--, %view%, %page%, %pages%, %filt%, %sort%, %toggles%, %listView%, %playlist%, %path%, %searchPath%, %searchTerm%, , -->`n<!doctype html>`n<html>`n<head>`n<meta charset="UTF-8">`n<title>Inca - %title%</title>`n<meta name="viewport" content="width=device-width, initial-scale=1">`n<link rel="icon" type="image/x-icon" href="file:///%inca%\cache\icons\inca.ico">`n<link rel="stylesheet" type="text/css" href="file:///%inca%/css.css">`n</head>`n`n
 
-body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n if(document.getElementById('%scroll%')) {%scroll%.scrollIntoView()%offset%} myView.scrollTo(0,1*sessionStorage.getItem('scroll'));`n globals(%view%, %page%, %pages%, '%sort%', %filt%, %listView%, '%selected%', '%playlist%', %index%)">`n`n
+body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n if(document.getElementById('%scroll%')) {%scroll%.scrollIntoView()%offset%} myView.scrollTo(0,1*sessionStorage.getItem('scroll'));`n globals(%view%, %page%, %pages%, '%sort%', %filt%, %listView%, '%selected%', '%playlist%', %index%); media%index%.scrollTo(0,%scrollText%)">`n`n
 
 <div id='myContent' style='position:absolute; width:100`%'>`n`n
 <div id='mySelected' class='selected'></div>`n
@@ -1277,11 +1278,12 @@ if listView
   mediaList = %mediaList% %fold%<table onmouseout="title%j%.style.color=null; media%j%.style.opacity=0; overMedia=0">`n <tr id="entry%j%"`n onmouseover="title%j%.style.color='lightsalmon'; overThumb(%j%, this)">`n <td onmouseenter='media%j%.style.opacity=0'>%ext%`n <video id='media%j%' onmousedown="getParameters(%j%, '%type%', '%cueList%', %dur%, %start%, event)" class='media2' style="max-width:%view3%em; max-height:%view3%em"`n src="file:///%src%"`n %poster%`n preload=%preload% muted loop type="video/mp4"></video></td>`n <td>%size%</td>`n <td style='min-width:6em' onmouseover='media%j%.style.opacity=1'>%durT%</td>`n <td onmouseover='media%j%.style.opacity=1'>%date%</td>`n <td style='min-width:4.4em'>%j%</td>`n <td id='myFavicon%j%' style='width:0; translate:-1em; white-space:nowrap; font-size:0.7em; color:salmon; min-width:1em'>%favicon%</td>`n <td style='width:99em'><input id="title%j%" onmouseout="Click=0" class='title' type='search' value='%media_s%'`n oninput="wasMedia=%j%; renamebox=this.value"></td>`n <td>%fo%</td></tr></table>`n`n
 
 else if (ext == "txt")
-  mediaList = %mediaList%<div id="title%j%" style="display:flex; position:relative; padding-top:%view4%em">`n <span id='Save%j%' class='save' onclick="inca('Text',%j%)">Save</span>`n <textarea id='media%j%' rows=16 class='text' style='font-size:%cap_size%em' onmouseover="overThumb(%j%, this); type='text'" onmouseout='overMedia=0'`n oninput="if(editing&&editing!='%j%') {inca('Text',editing)}; editing='%j%'; this.style.background='inherit'; Save%j%.style.display='block'" onmousedown="getParameters(%j%,'document','',0,0,event)">`n%str2%</textarea></div>`n`n
+  mediaList = %mediaList%<div id="title%j%" style="display:flex; position:relative; padding-top:%view4%em">`n <span id='Save%j%' class='save' onclick="inca('Text',%j%)">Save</span>`n <textarea id='media%j%' rows=16 class='text' style='font-size:%cap_size%em' onmouseover="overThumb(%j%, this)" onmouseout='overMedia=0'`n oninput="if(editing&&editing!='%j%') {inca('Text',editing)}; editing='%j%'; this.style.background='inherit'; Save%j%.style.display='block'" onmousedown="getParameters(%j%,'document','',0,0,event)">`n%str2%</textarea></div>`n`n
 
 else mediaList = %mediaList%<div id="entry%j%" style="display:flex; min-width:%view3%em; padding-top:%view4%em">`n <div class='media'>%caption%<span style='display:block; position:absolute; top:-1.5em; font-size:0.8em; color:salmon' id='myFavicon%j%'>%favicon%</span>`n <span><input id='title%j%' class='title' style='text-align:center; width:%view3%em; font-size:%cap_size%em' type='search' value='%media_s%'`n oninput="wasMedia=%j%; renamebox=this.value"></span>`n <video id="media%j%" class='media' style="display:flex; justify-content: center; max-width:%view3%em; max-height:%view3%em"`n onmousedown="getParameters(%j%, '%type%', '%cueList%', %dur%, %start%, event)"`n onmouseover="overThumb(%j%, this)"`n onmouseout="overMedia=0; setTimeout(function(){media%j%.pause()},144)"`n src="file:///%src%"`n %poster%`n type='video/mp4' preload=%preload% muted loop type="video/mp4"></video></div>`n</div>`n`n
 }
-; min-width:%view3%em; 
+
+ 
     CreateList(show)							; list of files in path
         {
         Critical
