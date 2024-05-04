@@ -26,9 +26,9 @@
   width:3.5em;
   font-variant-caps:petite-caps} 
 
-.text {
+.text {						/* editable texarea	*/
   border-radius:0.5em;
-  width:28em;
+//  width:28em;
   background-color:#1b1814;
   color:#826858;
   line-height:1.1em;
@@ -134,7 +134,7 @@
 .title {					/* file name element */
   display:flex;
   overflow:hidden;
-  text-overflow:ellipsis; 
+  text-overflow:ellipsis;
   background-color:inherit;
   color:inherit;
   font-size:inherit;
@@ -170,14 +170,14 @@
 .cap {						/* htm caption element */
   overflow:wrap;
   white-space:nowrap;
+  padding-left:1em;
   color:#ffa07ab0;
   display:block;
   position:absolute;
   text-align:center;
   overflow:hidden;
   text-overflow:ellipsis;
-  margin:auto;
-  line-height:1.1em;
+  line-height:1em;
   margin-top:-1em}
 
 .caption {					/* myPlayer caption element */

@@ -2,42 +2,22 @@
 // Debugging	- use mySelected.innerHTML or alert()
 // undo delete & move
 // duplicate filename issues for thumbs
-// access bluetooth hardware from cueList
-// cue - add audio overlay option
-// cue - zoom into scene but same player size
 // media from near edge zoom on cursor like google earth
-// firefox localStorage ??? wtf
-// maybe inca can determine canplay for player choice
-// live edit mpv.conf, input instead of mpv dos commands ?
-// create debug panel - messages, start index etc.
-// subs hierarchy lost if leave page - lose selection target
-// dreamweaver
-// mind resonance
-// zoom fs between portait landscape
-// zoom cue command
-
-// too many textarea too big slows page load - eg. books
-// open in notepad option
-// search for word
-// add/goto anchors
-// remember textarea size and anchor position
-// scroll to text anchors on reset
+// zoom fs between portait landscape issues
 
 
-  var mediaX = 1*localStorage.getItem('mediaX')				// caption strings
-  var mediaY = 1*localStorage.getItem('mediaY')				// last media position
-  var scaleY = 1*localStorage.getItem('scaleY')				// last media zoom
   var defRate = 1*localStorage.getItem('defRate')			// default playback speed
+  var mediaX = 1*localStorage.getItem('mediaX')				// media position
+  var mediaY = 1*localStorage.getItem('mediaY')
+  var scaleY = 1*localStorage.getItem('scaleY')				// media zoom
   var mpv = 1*localStorage.getItem('mpv')				// external media player
   var intervalTimer							// Timer() every 100mS
-  var wheel = 0
-  var block = 100							// block wheel/gesture events
+  var wheel = 0								// mouse wheel count
+  var block = 100							// block wheel events timer
   var index = 1								// media index (e.g. media14)
   var lastIndex = 1							// last media id
   var lastStart = 0							// last video start time
   var lastCue								// last cue time
-  var interval = 0							// media seeking interval step
-  var units = ''							// minutes, months, MB etc.
   var view = 14								// thumb size em
   var listView = 0							// list or thumbnail view
   var page = 1								// current media page
@@ -60,13 +40,15 @@
   var selected = ''							// list of selected media in page
   var overMedia = 0							// over thumb or media
   var wasMedia = 0							// before context menu
+  var overText = 0							// text input fields, allow cut paste
+  var editing = 0							// editing textarea active
   var messages = ''							// history, width, speed & caption edits
   var Zindex = 3							// element layer
   var xw = 0.5								// cursor over window ratio
   var yw = 0.5
   var xm = 0								// cursor over media ratio
   var ym = 0
-  var scaleX								// skinny & X-zoom
+  var scaleX								// myPlayer X-zoom
   var Xoff = 0								// preserve player position in fullscreen
   var Yoff = 0
   var xpos = 0								// cursor coordinate in pixels
@@ -80,11 +62,12 @@
   var title
   var fade
   var lastLeft = screenLeft
-  var editing = 0							// editing textarea
+
+
 
   scaleX = scaleY
-  if (!defRate) defRate=1						// default speed
   if (!mpv) mpv=0							// external player
+  if (!defRate) defRate=1						// default speed
   intervalTimer = setInterval(timerEvent,100)				// 100mS background timer
   document.addEventListener('mousedown', mouseDown)
   document.addEventListener('mouseup', mouseUp)
@@ -97,7 +80,7 @@
       if (renamebox) inca('Rename', renamebox, wasMedia)		// rename media
       else if (myInput.value && myInput.matches(':focus')) inca('SearchBox','','',myInput.value) // search media on pc
       else if (type=='document') {var x=media.scrollTop; setTimeout(function(){media.scrollTo(0,x)},100)}}
-    if (e.key=='Insert') {thumbSheet=1; mouseEvent()}			// mpv invoke thumbsheet
+    if (e.key=='Insert') {thumbSheet=1.2; mouseEvent()}			// mpv invoke thumbsheet
     if (e.key=='Pause') {						// mouse 'Back' key
       if (playing) closePlayer()
       else if (overMedia && media.style.position=='fixed') {		// close popped out thumb
@@ -121,18 +104,22 @@
   function mouseUp(e) {
     if (!Click) return							// page load while mouse still down - ignore  
     clearTimeout(clickTimer)						// longClick timer
-    if (Click==3 && !gesture && !longClick && yw>0.1) context(e)	// new context menu if click below window top
+    if (Click==3 && !gesture && !longClick && !overText) context(e)	// new context menu
     if (Click==1 && gesture==2 && !playing) getParameters(overMedia)	// move htm thumb to 'fixed'
     else if (!longClick) mouseEvent()					// process click event
     Click=0; wheel=0; block=100; gesture=0; longClick=0}
 
 
-  function mouseMove(e) {						// gestures
+  function mouseMove(e) {
     xpos = e.clientX
     ypos = e.clientY
     if (!playing || thumbSheet || myNav.matches(':hover')) myBody.style.cursor=null
     else if (!Click && myBody.style.cursor!='crosshair') {
-      myBody.style.cursor='crosshair'; setTimeout(function() {myBody.style.cursor='none'},540)}
+      if (type == 'video') mySeekbar.style.opacity=1
+      myBody.style.cursor='crosshair'
+      setTimeout(function() {
+        if (!cue && !myPreview.matches(':hover')) mySeekbar.style.opacity=0; 
+        myBody.style.cursor='none'},540)}
     if (myPanel.matches(':hover')) mySelected.style.fontSize='3em'
     else mySelected.style.fontSize=null
     mySelected.style.top = e.pageY +'px'
@@ -223,14 +210,16 @@
 
   function mouseEvent() {						// functional logic
     if (Click==2 && !playing) {inca('View',view,'',lastIndex); return}	// switch list/thumb view
-    if (longClick==3 && !thumbSheet && !gesture && playing && !myPreview.matches(':hover')) {
+    if (longClick==1 && !thumbSheet && !gesture && playing && !myPreview.matches(':hover')) {
       zoom=1; positionMedia(0.2); return} 				// quick gesture - zoom media
     if (!playing && !longClick && !overMedia) return
     if (lastClick==3 && !longClick) return
+    if (longClick==3 && !playing && !overMedia) return
     if (longClick && myInput.matches(':hover')) return
     if (longClick && myPanel.matches(':hover')) return			// copy files instead of move
     if (myNav.matches(':hover') && lastClick==1) return
     if (!gesture && longClick==1 && !playing && playlist && overMedia && selected) {inca('Move', index); return}
+    if (!media.src && (type=='document' || type=='m3u')) return
     if (gesture || title.matches(':hover')) return			// allow rename of media in htm
     if (playing=='browser' && type != 'image' && lastClick!=2) {
       if (myPreview.matches(':hover') || thumbSheet) {getStart(); return}
@@ -268,9 +257,12 @@
       myPlayer.src = media.src
       myPlayer.playbackRate = rate					// set default speed
       if (type=='image') myPlayer.poster = media.poster			// images use poster as src
-      if (longClick==1 && !thumbSheet && (playing || overMedia)) thumbSheet=1	// show thumbSheet
+      if (longClick==3 && !thumbSheet && type=='video' && (playing || overMedia)) {
+        var ratio = 0.7*media.offsetWidth/media.offsetHeight
+        if (ratio>1) ratio=1
+        thumbSheet = 0.9*ratio*innerWidth/(myPlayer.offsetWidth*scaleX)}
       else if (!playing && !overMedia) myPlayer.currentTime=lastStart	// return to last media
-      else if (!playing && longClick==3) myPlayer.currentTime=0
+      else if (!playing && longClick==1) myPlayer.currentTime=0
       else if (!thumbSheet) myPlayer.currentTime=media.style.start	// default poster start time
       scrolltoIndex(index)			    			// + highlight played media
       positionMedia(0.2)
@@ -295,12 +287,14 @@
     if (playing=='browser') myPlayer.style.opacity=1
     myMask.style.zIndex = Zindex
     myPlayer.volume = 0.05
-    cue=0; lastCue=-1; fade=0.3; lastClick=0}
+    lastCue=-1; fade=0.3; lastClick=0}
 
 
   function closePlayer() {		
     positionMedia(0.4)							// fadeout before close
     if (playing=='mpv') inca('Close')
+    Click=0								// in case browser not active
+    cue=0
     myPlayer.style.opacity=0
     myNav.style.display=null
     playing=''
@@ -308,7 +302,7 @@
       myPlayer.removeEventListener('ended', nextMedia)
       myPlayer.src=''
       myPlayer.poster=''
-      thumbSheet=false},400)}
+      thumbSheet=0},400)}
 
 
   function overThumb(id,el) {						// play htm thumb
@@ -316,10 +310,9 @@
     media=document.getElementById('media'+id)
     overMedia=id
     if (Click) sel(id)
-    x = el.getBoundingClientRect()
-    x = (xpos-x.left)/el.offsetWidth*skinny				// reset thumb time if enter from left
-    if (!el.currentTime || x<0.1) el.currentTime=el.style.start+0.05
-    el.play()}
+    var x = el.getBoundingClientRect()
+    x = (ypos-x.top)/el.offsetHeight					// reset thumb time if enter from left
+    if (!el.currentTime || x<0.1) el.currentTime=el.style.start+0.05}
 
 
   function getParameters(i) {						// prepare player for selected media (index)
@@ -380,13 +373,15 @@
       myCap.style.left=rect.left +10 +'px'
       myCap.style.zIndex=Zindex
       myPreview.style.left = xpos - myPreview.offsetWidth/2 +'px'		// seeking preview popup
-      myPreview.style.top = innerHeight - myPreview.offsetHeight -12 +'px' 
+      if (innerHeight-rect.bottom > myPreview.offsetHeight) myPreview.style.top = rect.bottom +'px'
+      else myPreview.style.top = rect.bottom - myPreview.offsetHeight -16 +'px'
       if ((","+selected).match(","+index+",")) {mySelect.style.color='red'; myPlayer.style.outline='1px solid red'}
       else {mySelect.style.color=null; myPlayer.style.outline=null}
       if (cue) {Cap.innerHTML='goto '+myPlayer.currentTime.toFixed(2)} else {Cap.innerHTML='caption'}
       if (myCap.innerHTML) {myCap.style.opacity=1}
       if (cueList && !thumbSheet) Cue(myPlayer.currentTime, index)
-      var z=1; if(thumbSheet) z=1.5
+      var z=1
+      if (thumbSheet) z=thumbSheet
       xm = myPlayer.offsetWidth*scaleX*z
       ym = myPlayer.offsetHeight*scaleY*z
       xm = (xpos - rect.left) / Math.abs(xm)
@@ -403,13 +398,10 @@
         myPreview.currentTime=dur*xm
         myPreview.style.opacity=1}
       else myPreview.style.opacity=0
-      if (!thumbSheet && type!='image' && (cue || myPlayer.matches(':hover') || myPreview.matches(':hover'))) {
-       mySeekbar.style.opacity=1}
-      else mySeekbar.style.opacity=0
       if (xm>0 && xm<1 && (cue || myPreview.matches(':hover'))) {
         if (!cue) mySeekbar.style.width = myPlayer.offsetWidth*scaleY*xm + 'px'
         mySeekbar.style.borderTop='8px solid red'}
-      else mySeekbar.style.borderTop=null
+      else if (!cue) mySeekbar.style.borderTop=null
       if (!Click || longClick) positionMedia(0)
       Jpg.innerHTML='jpg'}
     else {
@@ -438,7 +430,7 @@
     myPlayer.style.left = mediaX +x/2 -(myPlayer.offsetWidth/2) +"px"	// position media in window
     myPlayer.style.top = mediaY +y/2 -(myPlayer.offsetHeight/2) +"px"
     myPlayer.style.transition = fa+'s'
-    scaleX=skinny*scaleY; z=1; if(thumbSheet) z=1.5
+    scaleX=skinny*scaleY; z=1; if(thumbSheet) z=thumbSheet
     myPlayer.style.transform = "scale("+scaleX*z+","+scaleY*z+")"}
 
 
@@ -537,28 +529,28 @@
       myPlayer.playbackRate -= 0.05}}
 
   function Filter(id) {
-      var x = filt							// eg 30 minutes, 2 months, alpha 'A'
-      var el = document.getElementById(id)
-      if (!x) {el.innerHTML=sort; el.style.color=null; return}
-      if (id == 'Alpha') {
-        if (x > 25) {filt=25}; x = String.fromCharCode(filt + 65)}
-      if (id == 'Size')  {x *= 10; units = " Mb"}
-      if (id == 'Date')  units = " months"
-      if (id == 'Duration') units = " minutes"
-      if (!x) x=''
-      el.innerHTML = x+' '+units; el.style.color = 'red'}
+    var x=filt; var units=''						// eg 30 minutes, 2 months, alpha 'A'
+    var el = document.getElementById(id)
+    if (!x) {el.innerHTML=sort; el.style.color=null; return}
+    if (id == 'Alpha') {
+      if (x > 25) {filt=25}; x = String.fromCharCode(filt + 65)}
+    if (id == 'Size')  {x *= 10; units = " Mb"}
+    if (id == 'Date')  units = " months"
+    if (id == 'Duration') units = " minutes"
+    if (!x) x=''
+    el.innerHTML = x+' '+units; el.style.color = 'red'}
 
   function getAlpha(e, el) {						// set alpha search char in top panel
-      var x = String.fromCharCode(Math.floor(26 * (e.clientX - el.offsetLeft) / el.offsetWidth) + 52)
-      el=document.getElementById('my'+x)
-      el.scrollIntoView()
-      panel.scrollBy(0,-250)
-      myView.scrollBy(0,-200)}
+    var x = String.fromCharCode(Math.floor(26 * (e.clientX - el.offsetLeft) / el.offsetWidth) + 52)
+    el=document.getElementById('my'+x)
+    el.scrollIntoView()
+    panel.scrollBy(0,-250)
+    myView.scrollBy(0,-200)}
 
   function scrolltoIndex(i) {
     if (!i || myView.scrollTop > myView.scrollHeight-1000) return
     title=document.getElementById('title'+i)
-    title.style.background='#1f1c18'
+    if (!playlist) title.style.background='#1f1c18'
     if (!listView) title.style.color='lightsalmon'
     var x = title.getBoundingClientRect().bottom
     if (x > innerHeight-20 || x<20) myView.scrollTo(0, x + myView.scrollTop - innerHeight/2)}
@@ -589,7 +581,9 @@
     else {myDelete.style.color=null; myDelete.innerHTML='Delete'}
     if (yw > 0.8) offset=60						// cursor near window bottom, add offset
     myNav.style.left=xpos-45+'px'; myNav.style.top=ypos-10-offset+'px'
-    myNav.style.display='block'; myNav.style.background='#15110acc'}
+    myNav.style.display='block'; myNav.style.background='#15110acc'
+    if (overMedia || playing) myNav2.style.display='block' 
+    else myNav2.style.display='none'}
 
   function globals(vi, pg, ps, so, fi, lv, se, pl, ix) {		// import globals to java from inca
     view=vi; page=pg; pages=ps; sort=so; filt=fi; listView=lv; 
