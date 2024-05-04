@@ -286,6 +286,7 @@
     myPlayer.addEventListener('ended', nextMedia)
     if (playing=='browser') myPlayer.style.opacity=1
     myMask.style.zIndex = Zindex
+    myBody.style.cursor='none'
     myPlayer.volume = 0.05
     lastCue=-1; fade=0.3; lastClick=0}
 
