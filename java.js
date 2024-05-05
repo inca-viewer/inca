@@ -5,7 +5,6 @@
 // media from near edge zoom on cursor like google earth
 // zoom fs between portait landscape issues
 
-
   var defRate = 1*localStorage.getItem('defRate')			// default playback speed
   var mediaX = 1*localStorage.getItem('mediaX')				// media position
   var mediaY = 1*localStorage.getItem('mediaY')
@@ -210,8 +209,7 @@
 
   function mouseEvent() {						// functional logic
     if (Click==2 && !playing) {inca('View',view,'',lastIndex); return}	// switch list/thumb view
-    if (longClick==1 && !thumbSheet && !gesture && playing && !myPreview.matches(':hover')) {
-      zoom=1; positionMedia(0.2); return} 				// quick gesture - zoom media
+    if (gesture && !longClick && Click==1) {zoom=1; positionMedia(0.2); return} // quick gesture - zoom media
     if (!playing && !longClick && !overMedia) return
     if (lastClick==3 && !longClick) return
     if (longClick==3 && !playing && !overMedia) return
@@ -251,10 +249,10 @@
       myPlayer.style.left = mediaX-x/2 +'px'
       if (!longClick && !thumbSheet) myPlayer.poster=media.poster
       positionMedia(0)
-      myPlayer.style.zIndex = Zindex+=1					// because htm thumbs use Z-index
-      myPreview.src = media.src						// seeking preview window
       myCap.innerHTML = ''
-      myPlayer.src = media.src
+      myPreview.src = media.src						// seeking preview window
+      myPlayer.style.zIndex = Zindex+=1					// because htm thumbs use Z-index
+      if (myPlayer.src != media.src) myPlayer.src = media.src
       myPlayer.playbackRate = rate					// set default speed
       if (type=='image') myPlayer.poster = media.poster			// images use poster as src
       if (longClick==3 && !thumbSheet && type=='video' && (playing || overMedia)) {
@@ -262,8 +260,9 @@
         if (ratio>1) ratio=1
         thumbSheet = 0.9*ratio*innerWidth/(myPlayer.offsetWidth*scaleX)}
       else if (!playing && !overMedia) myPlayer.currentTime=lastStart	// return to last media
-      else if (!playing && longClick==1) myPlayer.currentTime=0
-      else if (!thumbSheet) myPlayer.currentTime=media.style.start	// default poster start time
+      else if (longClick==1 && (!playing || (playing && !myPlayer.matches(':hover')))) myPlayer.currentTime=0
+      else if ((longClick==1 || lastClick==2) && !thumbSheet) {
+        myPlayer.currentTime=media.style.start}				// default poster start time
       scrolltoIndex(index)			    			// + highlight played media
       positionMedia(0.2)
       Play()},fade*400)}
@@ -338,6 +337,9 @@
     x = media.style.rate						// custom style variable - rate edited
     if (x && x != rate) rate=x
     if (type != 'image' && !dur) dur=media.duration			// just in case - use browser calc.
+    if (myPlayer.src != media.src) {
+      myPlayer.src = media.src
+      myPlayer.currentTime=media.currentTime}
     return 1}
 
 
@@ -395,11 +397,11 @@
       myPreview.style.zIndex=Zindex+1
       if (!thumbSheet) lastStart=myPlayer.currentTime
       if (type!='image' && !Click) seekBar()
-      if (xm>0 && xm<1 && myPreview.matches(':hover') && !thumbSheet) {
+      if (xm>0 && xm<1 && myPreview.matches(':hover') && !thumbSheet && !Click) {
         myPreview.currentTime=dur*xm
         myPreview.style.opacity=1}
       else myPreview.style.opacity=0
-      if (xm>0 && xm<1 && (cue || myPreview.matches(':hover'))) {
+      if (xm>0 && xm<1 && !Click && (cue || myPreview.matches(':hover'))) {
         if (!cue) mySeekbar.style.width = myPlayer.offsetWidth*scaleY*xm + 'px'
         mySeekbar.style.borderTop='8px solid red'}
       else if (!cue) mySeekbar.style.borderTop=null
@@ -497,12 +499,9 @@
       var ps = 5 * ((row * 6) + col)
       ps = (ps - 1) / 200
       if (dur > 60) offset = 20
-      if (longClick) myPlayer.currentTime=lastStart
-      else if (xm>1||xm<0|ym>1||ym<0) myPlayer.currentTime=0		// if outside thumbsheet start 0
+      if (longClick || xm>1||xm<0|ym>1||ym<0) myPlayer.currentTime=lastStart
       else myPlayer.currentTime=offset - 0.4 - (ps * offset) + dur * ps}
-    else if (myPreview.matches(':hover')) {
-      if (longClick) {if(xm<0.5) {myPlayer.currentTime=0} else myPlayer.currentTime=media.style.start}
-      else myPlayer.currentTime=xm*dur}
+    else if (myPreview.matches(':hover')) myPlayer.currentTime=xm*dur
     thumbSheet=0
     Play()}
 
@@ -514,10 +513,11 @@
     p = p.replace('.jpg', '')
     if (!isNaN(p) && p.length > 2 && p.includes('.')) {			// very likely a 'fav' suffix timestamp
       x = x.replace('%20' + p, '')}					// so remove timestamp from filename
-    myPlayer.poster = x}						// now use 6x6 thumbsheet file
+    myPlayer.poster = x							// now use 6x6 thumbsheet file
+    myPlayer.load()}
 
 
-  function nextMedia() {						// or looping
+  function nextMedia() {
     if (!looping) {
       lastClick=2
       myPlayer.pause()

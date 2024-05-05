@@ -1,8 +1,8 @@
  
 
 	; Browser Based File Explorer - Windows
-	; this script generates web pages of your media
-	; the browser java messages back through clipboard
+	; generates web pages of your media
+	; browser messages back using clipboard - see ProcessMessage()
 
 
 	#NoEnv
@@ -346,14 +346,14 @@
 
     ProcessMessage()							; messages from java/browser
         {
-        PopUp(".",0,0,0)
+        PopUp(".",0,0,0)						; . message received from browser
         if (command == "Settings")					; open inca source folder
             {
             Run, %inca%\
             sleep 400
             Winactivate, ahk_class CabinetWClass
             }
-        if (command == "Text")						; move entry within playlist
+        if (command == "Text")						; save browser text editing
             {
             getMedia(selected)
             FileDelete, %src%
@@ -366,7 +366,7 @@
             {
             MoveEntry()
             selected =
-            reload := 3
+            reload := 3							; reload web page
             }
         if (command == "Rename")					; rename media
             {
@@ -386,8 +386,8 @@
         if (command == "Reload")					; reload web page
             {
             selected =
-            reload:=2
             index := 1							; scroll to media 1
+            reload := 2
             }
         if (command == "Index")						; index folder (create thumbsheets)
             {
@@ -401,17 +401,17 @@
               }
             else SetTimer, indexPage, -100, -2
             }
-        if (command == "History")					; java tells inca to play
+        if (command == "History")					; maintain play history
             {
             if getMedia(StrSplit(selected, ",").1)
               if (!InStr(path, "\inca\music\") && folder != "History" && lastMedia != src)
                 FileAppend, %src%|%value%`r`n, %inca%\fav\History.m3u, UTF-8
             lastMedia := src
             }
-        if (command == "Close")						; close mpv player
+        if (command == "Close")						; close external mpv player
             if mpvPID
               Process, Close, mpv.exe
-        if (command == "Media")						; java tells inca to play
+        if (command == "Media")						; browser tells inca to play media
             {
             id := StrSplit(selected, ",").1
             getMedia(id)
@@ -472,7 +472,7 @@
               WinActivate, ahk_class mpv
               }
             }
-        if (command == "EditCue")					; open cues in notepad
+        if (command == "EditCue")					; open media cues in notepad
             {
             if !selected 
               return
@@ -526,7 +526,7 @@
             selected =
             Popup("Creating . . .",1000,0,0)
             }
-        if (command == "Favorite")
+        if (command == "Favorite")					; add media favorite to New.m3u
             {
             if !selected
               return
@@ -722,6 +722,7 @@
             }
         if (command == "Add" && address)
             {
+            popup = New Playlist
             if (InStr(playlist, "music\") && !InStr(music, address))		; new music playlist
               {
               music = %music%%inca%\music\%address%.m3u|
@@ -736,12 +737,14 @@
               }
             else if !searchTerm							; new folder
               {
+              popup = New Folder
               fol = %fol%%path%%address%\|
               FileCreateDir, %path%\%address%
               IniWrite, %fol%, %inca%\ini.ini,Settings,Fol
               }
             else
               {
+              popup = New Search Term
               StringUpper, searchTerm, address, T
               search = %search%%searchTerm%|
               StringReplace, search, search, |, `n, All
@@ -750,7 +753,7 @@
               }
             IniWrite,%search%,%inca%\ini.ini,Settings,Search
             LoadSettings()
-            PopUp("Added",600,0,0)
+            PopUp(popup,600,0,0)
             reload := 1
             }
         if (command=="Filt"||command=="Path"||command=="Search"||command=="SearchBox"||InStr(sortList, command))
@@ -1107,7 +1110,7 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n if(
 <a id='myDelete' onmousedown="if(!event.button) {inca('Delete','',wasMedia)}">Delete</a>`n
 <a id='myIndex' onmousedown="inca('Index','',wasMedia)">Index</a>`n
 <span id='myNav2'>
-<a id='myFav' onmouseup="if(!event.button && !longClick) inca('Favorite', myPlayer.currentTime.toFixed(1), index)">Fav</a>`n
+<a id='myFav' onmouseup="if (playing) {x=myPlayer.currentTime.toFixed(1)} else{x=media.style.start}; if(!event.button && !longClick) inca('Favorite', x, index)">Fav</a>`n
 <a id='myMute' onmouseup='mute()'>Mute</a>`n
 <a id='myLoop' onmouseup="looping=!looping">Loop</a>`n
 <a id='mySpeed' onwheel="wheelEvent(event, id, this)" onmouseup='togglePause()' onclick="inca('Close')"></a>`n
@@ -1289,7 +1292,7 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n if(
 if listView
   mediaList = %mediaList% %fold%<table onmouseout="title%j%.style.color=null; media%j%.style.opacity=0; overMedia=0">`n <tr id="entry%j%"`n onmouseover="title%j%.style.color='lightsalmon'; overThumb(%j%, this)">`n <td onmouseenter='media%j%.style.opacity=0'>%ext%`n <video id='media%j%' onmousedown="getParameters(%j%, '%type%', '%cueList%', %dur%, %start%, event)" class='media2' style="max-width:%view3%em; max-height:%view3%em"`n src="file:///%src%"`n %poster%`n preload=%preload% muted loop type="video/mp4"></video></td>`n <td>%size%</td>`n <td style='min-width:6em' onmouseover='media%j%.style.opacity=1'>%durT%</td>`n <td onmouseover='media%j%.style.opacity=1'>%date%</td>`n <td style='min-width:4.4em'>%j%</td>`n <td id='myFavicon%j%' style='width:0; translate:-1em; white-space:nowrap; font-size:0.7em; color:salmon; min-width:1em'>%favicon%</td>`n <td style='width:99em'><input id="title%j%" onmouseover='overText=1' onmouseout='overText=0; Click=0' class='title' type='search' value='%media_s%'`n oninput="wasMedia=%j%; renamebox=this.value"></td>`n <td>%fo%</td></tr></table>`n`n
 
-else if (ext == "txt" && (textCount+=1) <= 20)
+else if ((ext == "txt" || ext=="m3u") && (textCount+=1) <= 20)
   mediaList = %mediaList%<div id="entry%j%" style="display:flex; position:relative; padding-top:%view4%em" onmouseover='overText=1' onmouseout='overText=0'>`n <span><input id='title%j%' class='title' style='text-align:center; background:#15110a; top:8px; padding-left:1em; font-size:%cap_size%em; position:absolute' type='search' value='%media_s%'`n onclick='media%j%.scrollTo(0,0)' oninput="wasMedia=%j%; renamebox=this.value"></span>`n <span id='Save%j%' class='save' onclick="inca('Text',%j%)">Save</span>`n <textarea id='media%j%' rows=12 class='text' style='font-size:%cap_size%em; width:%view1%em' onmouseover="overThumb(%j%, this)" onmouseout='overMedia=0'`n oninput="if(editing&&editing!='%j%') {inca('Text',editing)}; editing='%j%'; this.style.background='#15110a'; Save%j%.style.display='block'" onmousedown="getParameters(%j%,'document','',0,0,event)">`n%str2%</textarea></div>`n`n
 
 else mediaList = %mediaList%<div id="entry%j%" style="display:flex; min-width:%view3%em; padding-top:%view4%em">`n <div class='media'>%caption%<span style='display:block; position:absolute; top:-1.5em; font-size:0.8em; color:salmon' id='myFavicon%j%'>%favicon%</span>`n <span><input id='title%j%' class='title' style='text-align:center; width:%view3%em; font-size:%cap_size%em' type='search' value='%media_s%'`n oninput="wasMedia=%j%; renamebox=this.value" onmouseover='overText=1' onmouseout='overText=0'></span>`n <video id="media%j%" class='media' style="display:flex; justify-content: center; max-width:%view3%em; max-height:%view3%em"`n onmousedown="getParameters(%j%, '%type%', '%cueList%', %dur%, %start%, event)"`n onmouseover="overThumb(%j%, this); this.play()"`n onmouseout="overMedia=0; setTimeout(function(){media%j%.pause()},144)"`n src="file:///%src%"`n %poster%`n type='video/mp4' preload=%preload% muted loop type="video/mp4"></video></div>`n</div>`n`n
@@ -1622,7 +1625,7 @@ else mediaList = %mediaList%<div id="entry%j%" style="display:flex; min-width:%v
             return "video"
         if InStr("mp3 m4a wma mid", ex)
             return "audio"
-        if InStr("pdf txt rtf doc epub mobi htm html", ex)
+        if InStr("pdf txt rtf doc epub mobi htm html js css ahk", ex)
             return "document"
         if (ex == "m3u")
             return "m3u"
