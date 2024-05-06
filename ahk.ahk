@@ -359,7 +359,9 @@
             FileDelete, %src%
             FileAppend, %address%, %src%, UTF-8
             scrollText := value						; textarea scrollY
-            index := selected						; textarea index id
+if (sort!="Date")
+            index := selected
+else index:=1						; textarea index id
             reload := 3
             }
         if (command == "Move")						; move entry within playlist
@@ -1094,7 +1096,7 @@
 x = %searchTerm%|
 if (searchTerm && !InStr(search, x))
   add = Add
-if subfolders       ;  || gesture || playing
+if subfolders
   subs = &#8656;
 
 header = <!--, %view%, %page%, %pages%, %filt%, %sort%, %toggles%, %listView%, %playlist%, %path%, %searchPath%, %searchTerm%, , -->`n<!doctype html>`n<html>`n<head>`n<meta charset="UTF-8">`n<title>Inca - %title%</title>`n<meta name="viewport" content="width=device-width, initial-scale=1">`n<link rel="icon" type="image/x-icon" href="file:///%inca%\cache\icons\inca.ico">`n<link rel="stylesheet" type="text/css" href="file:///%inca%/css.css">`n</head>`n`n
@@ -1909,11 +1911,10 @@ else mediaList = %mediaList%<div id="entry%j%" style="display:flex; min-width:%v
           if (!dur || force)
             {
             RunWait %COMSPEC% /c %inca%\cache\apps\ffmpeg.exe -y -i "%source%" 2>&1 | find "Duration" > "%inca%\meta.txt" , , hide && exit
-            FileRead, dur, %inca%\meta.txt
-            StringTrimLeft, aTime, dur, 12
-            StringLeft, aTime, aTime, 8
-            aTime := StrSplit(aTime, ":")
-            dur := aTime.1 * 3600 + aTime.2 * 60 + aTime.3
+            FileRead, str, %inca%\meta.txt
+            str := StrSplit(str,",")
+            str := StrSplit(str[1],":")
+            dur := Round(str.2*3600 + str.3*60 + str.4, 2)
             FileDelete, %inca%\meta.txt
             FileDelete, %inca%\cache\durations\%filen%.txt
             FileAppend, %dur%, %inca%\cache\durations\%filen%.txt
