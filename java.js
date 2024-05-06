@@ -223,7 +223,7 @@
     if (!media.src && (type=='document' || type=='m3u')) return
     if (gesture || title.matches(':hover')) return			// allow rename of media in htm
     if (playing=='browser' && type != 'image' && lastClick!=2) {
-      if ((longClick!=1 && myPreview.matches(':hover')) || thumbSheet) {getStart(); return}
+      if ((longClick==3 && myPreview.matches(':hover')) || thumbSheet) {getStart(); return}
       else if (!longClick) {togglePause(); return}}
     if (!playing) {
       if (!mediaX || mediaX < 0 || mediaX > innerWidth) mediaX=innerWidth/2
@@ -339,6 +339,7 @@
     if (type != 'image' && !dur) dur=media.duration			// just in case - use browser calc.
     if (!thumbSheet && myPlayer.src != media.src) {
       myPlayer.src = media.src
+      myPlayer.poster=media.poster
       myPlayer.currentTime=media.currentTime}
     return 1}
 
