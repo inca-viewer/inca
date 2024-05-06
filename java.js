@@ -5,7 +5,6 @@
 // media from near edge zoom on cursor like google earth
 // zoom fs between portait landscape issues
 
-// select title?
 
 
   var defRate = 1*localStorage.getItem('defRate')			// default playback speed
@@ -223,7 +222,7 @@
     if (!media.src && (type=='document' || type=='m3u')) return
     if (gesture || title.matches(':hover')) return			// allow rename of media in htm
     if (playing=='browser' && type != 'image' && lastClick!=2) {
-      if ((longClick==3 && myPreview.matches(':hover')) || thumbSheet) {getStart(); return}
+      if ((longClick==3 && myPreview.matches(':hover')) || thumbSheet || (lastClick==1 && !longClick)) {getStart(); return}
       else if (!longClick) {togglePause(); return}}
     if (!playing) {
       if (!mediaX || mediaX < 0 || mediaX > innerWidth) mediaX=innerWidth/2
@@ -285,6 +284,7 @@
     myPlayer.addEventListener('ended', nextMedia)
     if (playing=='browser') myPlayer.style.opacity=1
     myMask.style.zIndex = Zindex
+    myMask.style.display='flex'
     myBody.style.cursor='none'
     myPlayer.volume = 0.05
     lastCue=-1; fade=0.3; lastClick=0}
@@ -367,7 +367,7 @@
     if (looping) {myLoop.style.color='red'} else myLoop.style.color=null
     if (myPlayer.muted) {myMute.style.color='red'} else {myMute.style.color=null}
     if (skinny<0) {myFlip.style.color='red'} else myFlip.style.color=null
-    if (playing) {myMask.style.display='flex'; myMask.style.backgroundColor='rgba(0,0,0,'+scaleY*2.2+')'}  
+    if (playing) {myMask.style.backgroundColor='rgba(0,0,0,'+scaleY*2.2+')'}  
     else myMask.style.display='none'
     if (myPlayer.style.opacity==0) {if (myPlayer.volume>0.01) myPlayer.volume/=2}
     else if (myPlayer.volume < 0.8) myPlayer.volume *= 1.3			// fade sound in/out
@@ -429,7 +429,7 @@
         scaleX=innerWidth/myPlayer.offsetWidth; scaleY=Math.abs(scaleX/skinny); mediaX=(innerWidth-x-20)/2}
       else if (z && 1.1*myPlayer.offsetHeight*scaleY < innerHeight) {
         scaleY=innerHeight/myPlayer.offsetHeight; mediaY=(innerHeight-y)/2}
-      else scaleY=0.6}
+      else scaleY=0.5}
     if (media.offsetWidth/media.offsetHeight < 1) {x*=2} else {y*=2}
     myPlayer.style.left = mediaX +x/2 -(myPlayer.offsetWidth/2) +"px"	// position media in window
     myPlayer.style.top = mediaY +y/2 -(myPlayer.offsetHeight/2) +"px"
@@ -553,8 +553,8 @@
   function scrolltoIndex(i) {
     if (!i || myView.scrollTop > myView.scrollHeight-1000) return
     title=document.getElementById('title'+i)
-    if (!playlist) title.style.background='#1f1c18'
     if (!listView) title.style.color='lightsalmon'
+    else title.style.background='#1f1c18'
     var x = title.getBoundingClientRect().bottom
     if (x > innerHeight-20 || x<20) myView.scrollTo(0, x + myView.scrollTop - innerHeight/2)}
 
