@@ -6,7 +6,6 @@
 // zoom fs between portait landscape issues
 
 
-
   var defRate = 1*localStorage.getItem('defRate')			// default playback speed
   var mediaX = 1*localStorage.getItem('mediaX')				// media position
   var mediaY = 1*localStorage.getItem('mediaY')
@@ -59,7 +58,6 @@
   var dur = 0
   var rate = 1								// media speed
   var skinny = 1							// media width
-  var zoom = 0								// quick gesture toggle zoom
   var title
   var fade
   var lastLeft = screenLeft
@@ -119,7 +117,7 @@
       if (type == 'video') mySeekbar.style.opacity=1
       myBody.style.cursor='crosshair'
       setTimeout(function() {
-        if (!cue && !myPreview.matches(':hover')) mySeekbar.style.opacity=0; 
+        if (!(xm>0&&xm<1&&ym>0.95&&ym<1)) mySeekbar.style.opacity=0
         myBody.style.cursor='none'},540)}
     if (myPanel.matches(':hover')) mySelected.style.fontSize='3em'
     else mySelected.style.fontSize=null
@@ -136,13 +134,13 @@
       media.style.zIndex = Zindex+=1
       media.style.left = xpos-media.offsetWidth/2+"px"
       media.style.top = ypos-media.offsetHeight/2+"px"}
-    else if (playing && Click==1) {					// move media
+    else if (Click==3 && myPlayer.matches(':hover')) {			// move media
       gesture = 3
       mediaX += xpos - Xref
       mediaY += ypos - Yref
       localStorage.setItem("mediaX",mediaX.toFixed(0))
       localStorage.setItem("mediaY",mediaY.toFixed(0))}
-    else if (playing=='browser' && Click==3 && y>x) {			// zoom media
+    else if (playing=='browser' && Click==1 && y>x) {			// zoom media
       if (y>x && (scaleY>0.2 || Yref<ypos)) {
         scaleY += ((ypos-Yref) * 0.003)
         localStorage.setItem('scaleY',scaleY.toFixed(3))}}
@@ -211,7 +209,6 @@
 
   function clickEvent() {						// functional logic
     if (Click==2 && !playing) {inca('View',view,'',lastIndex); return}	// switch list/thumb view
-    if (gesture && !longClick && Click==1) {zoom=1; positionMedia(0.2); return} // quick gesture - zoom media
     if (!playing && !longClick && !overMedia) return
     if (lastClick==3 && !longClick) return
     if (longClick==3 && !playing && !overMedia) return
@@ -222,12 +219,12 @@
     if (!media.src && (type=='document' || type=='m3u')) return
     if (gesture || title.matches(':hover')) return			// allow rename of media in htm
     if (playing=='browser' && type != 'image' && lastClick!=2) {
-      if ((longClick==3 && myPreview.matches(':hover')) || thumbSheet || (lastClick==1 && !longClick)) {getStart(); return}
+      if (thumbSheet || (!longClick && xm>0&&xm<1&&ym>0.95&&ym<1)) {getStart(); return}
       else if (!longClick) {togglePause(); return}}
     if (!playing) {
       if (!mediaX || mediaX < 0 || mediaX > innerWidth) mediaX=innerWidth/2
       if (!mediaY || mediaY < 0 || mediaY > innerHeight) mediaY=innerHeight/2
-      if (!scaleY || scaleY>2 || scaleY<0.2) scaleY=0.4
+      if (!scaleY || scaleY>2 || scaleY<0.15) scaleY=0.4
       localStorage.setItem('scaleY',scaleY.toFixed(3))}
     lastIndex = index
     if (!playing && overMedia) {index=overMedia; wasMedia=index}
@@ -337,7 +334,7 @@
     x = media.style.rate						// custom style variable - rate edited
     if (x && x != rate) rate=x
     if (type != 'image' && !dur) dur=media.duration			// just in case - use browser calc.
-    if (!thumbSheet && myPlayer.src != media.src) {
+    if (!longClick && !thumbSheet && myPlayer.src != media.src) {
       myPlayer.src = media.src
       myPlayer.poster=media.poster
       myPlayer.currentTime=media.currentTime}
@@ -367,7 +364,7 @@
     if (looping) {myLoop.style.color='red'} else myLoop.style.color=null
     if (myPlayer.muted) {myMute.style.color='red'} else {myMute.style.color=null}
     if (skinny<0) {myFlip.style.color='red'} else myFlip.style.color=null
-    if (playing) {myMask.style.backgroundColor='rgba(0,0,0,'+scaleY*2.2+')'}  
+    if (playing) {myMask.style.backgroundColor='rgba(0,0,0,'+scaleY*2.6+')'}  
     else myMask.style.display='none'
     if (myPlayer.style.opacity==0) {if (myPlayer.volume>0.01) myPlayer.volume/=2}
     else if (myPlayer.volume < 0.8) myPlayer.volume *= 1.3			// fade sound in/out
@@ -376,9 +373,6 @@
       myCap.style.top=rect.bottom +10 +'px'
       myCap.style.left=rect.left +10 +'px'
       myCap.style.zIndex=Zindex
-      myPreview.style.left = xpos - myPreview.offsetWidth/2 +'px'		// seeking preview popup
-      if (innerHeight-rect.bottom > myPreview.offsetHeight) myPreview.style.top = rect.bottom +'px'
-      else myPreview.style.top = rect.bottom - myPreview.offsetHeight -16 +'px'
       if ((","+selected).match(","+index+",")) {mySelect.style.color='red'; myPlayer.style.outline='1px solid red'}
       else {mySelect.style.color=null; myPlayer.style.outline=null}
       if (cue) {Cap.innerHTML='goto '+myPlayer.currentTime.toFixed(2)} else {Cap.innerHTML='caption'}
@@ -393,19 +387,17 @@
       myPlayer.playbackRate=rate
       myPlayer.style.zIndex=Zindex+1
       mySeekbar.style.display='flex'
-      myPreview.style.display='flex'
       mySeekbar.style.zIndex=Zindex+1
       myPreview.style.zIndex=Zindex+1
       if (!thumbSheet) lastStart=myPlayer.currentTime
       if (type!='image' && !Click) seekBar()
-      if (xm>0 && xm<1 && myPreview.matches(':hover') && !thumbSheet && !Click) {
-        myPreview.currentTime=dur*xm
-        myPreview.style.opacity=1}
-      else myPreview.style.opacity=0
-      if (xm>0 && xm<1 && !Click && (cue || myPreview.matches(':hover'))) {
-        if (!cue) mySeekbar.style.width = myPlayer.offsetWidth*scaleY*xm + 'px'
-        mySeekbar.style.borderTop='8px solid red'}
-      else if (!cue) mySeekbar.style.borderTop=null
+      if (xm>0 && xm<1 && ym>0.95 && ym<1 && !thumbSheet && !Click) myPreview.currentTime=dur*xm
+      if (cue || xm>0&&xm<1&&ym>0.95&&ym<1) {
+        myPreview.style.left = xpos - myPreview.offsetWidth/2 +'px'		// seeking preview popup
+        myPreview.style.top = rect.bottom -116 +'px'
+        myPreview.style.display='flex'
+        mySeekbar.style.width = myPlayer.offsetWidth*scaleY*xm + 'px'}
+      else myPreview.style.display=null
       if (!Click || longClick) positionMedia(0)
       Jpg.innerHTML='jpg'}
     else {
@@ -417,24 +409,13 @@
       myPlayer.style.zIndex=-1}}					// in case flipped into fullscreen
 
 
-  function positionMedia(fa) {
-    var x=0; var y=0; var z=0
-    if (screenLeft) {Xoff=screenLeft; Yoff=outerHeight-innerHeight} else {x=Xoff; y=Yoff} // fullscreen offsets
-    if (zoom || lastLeft != screenLeft) {				// triggered by long right click
-      zoom=0
-      lastLeft=screenLeft
-      z = (innerHeight+y)/myPlayer.offsetHeight				// media to screen ratio calc.
-      if (z > (innerWidth+x)/myPlayer.offsetWidth) z=0
-      if (!z && 1.1*myPlayer.offsetWidth*Math.abs(scaleX)<innerWidth) {
-        scaleX=innerWidth/myPlayer.offsetWidth; scaleY=Math.abs(scaleX/skinny); mediaX=(innerWidth-x-20)/2}
-      else if (z && 1.1*myPlayer.offsetHeight*scaleY < innerHeight) {
-        scaleY=innerHeight/myPlayer.offsetHeight; mediaY=(innerHeight-y)/2}
-      else scaleY=0.5}
-    if (media.offsetWidth/media.offsetHeight < 1) {x*=2} else {y*=2}
-    myPlayer.style.left = mediaX +x/2 -(myPlayer.offsetWidth/2) +"px"	// position media in window
-    myPlayer.style.top = mediaY +y/2 -(myPlayer.offsetHeight/2) +"px"
+  function positionMedia(fa) {						// position myPlayer in window
+    var x=mediaX; var y=mediaY; var z=1
+    if (!screenLeft) {x=outerWidth/2; y=outerHeight/2}
+    myPlayer.style.left = x - (myPlayer.offsetWidth/2) +"px"
+    myPlayer.style.top = y - (myPlayer.offsetHeight/2) +"px"
     myPlayer.style.transition = fa+'s'
-    scaleX=skinny*scaleY; z=1; if(thumbSheet) z=thumbSheet
+    scaleX=skinny*scaleY; if(thumbSheet) z=thumbSheet
     myPlayer.style.transform = "scale("+scaleX*z+","+scaleY*z+")"}
 
 
