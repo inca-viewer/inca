@@ -334,7 +334,7 @@
     x = media.style.rate						// custom style variable - rate edited
     if (x && x != rate) rate=x
     if (type != 'image' && !dur) dur=media.duration			// just in case - use browser calc.
-    if (!longClick && !thumbSheet && myPlayer.src != media.src) {
+    if (!thumbSheet && !longClick && myPlayer.src != media.src) {
       myPlayer.src = media.src
       myPlayer.poster=media.poster
       myPlayer.currentTime=media.currentTime}
@@ -392,7 +392,7 @@
       if (!thumbSheet) lastStart=myPlayer.currentTime
       if (type!='image' && !Click) seekBar()
       if (xm>0 && xm<1 && ym>0.95 && ym<1 && !thumbSheet && !Click) myPreview.currentTime=dur*xm
-      if (cue || xm>0&&xm<1&&ym>0.95&&ym<1) {
+      if (!thumbSheet && (cue || xm>0&&xm<1&&ym>0.95&&ym<1)) {
         myPreview.style.left = xpos - myPreview.offsetWidth/2 +'px'		// seeking preview popup
         myPreview.style.top = rect.bottom -116 +'px'
         myPreview.style.display='flex'
