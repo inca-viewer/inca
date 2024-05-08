@@ -113,23 +113,6 @@
     ~LButton::					; click events
     ~MButton::
       MouseDown()
-      if (click == "RButton")
-        {
-        if incaTab
-          send {RButton up}
-        else if (!gesture && !longClick)
-          send {RButton}
-        if (incaTab && (gesture || longClick))
-          send, {Esc}				; close context menu
-        GetBrowser()
-        if incaTab
-          WinActivate, ahk_group Browsers
-        if (!longClick && gesture<0)		; fast left gesture - set volume 0
-          {
-          volume := 0
-          SoundSet, volume
-          }
-        }
       return
 
     MButton up::
@@ -192,8 +175,6 @@
       timer := A_TickCount + 300		; set future timout 300mS
       MouseGetPos, xpos, ypos
       StringReplace, click, A_ThisHotkey, ~,, All
-      if (click == "RButton" && incaTab)	; for java longClick to work
-        send {RButton down}
       loop					; gesture detection
         {
         if (A_TickCount > timer)
@@ -203,6 +184,8 @@
         y -= ypos
         if (!GetKeyState("LButton", "P") && !GetKeyState("RButton", "P") && !GetKeyState("MButton", "P"))
           {
+          if (click=="RButton" && !gesture)
+            send, {RButton}
           Gui PopUp:Cancel
           if (mpvPID && click=="LButton" && !gesture)
             {
@@ -225,8 +208,13 @@
           if (click == "RButton")
               Gesture(x, y)
           }
-        if (!gesture && longClick && GetKeyState("LButton", "P"))	; click timout
+        if (!gesture && longClick)	; click timout
           {
+          if (click=="RButton")
+            {
+            send, +{Pause}
+            break
+            }
           if (A_Cursor == "IBeam")
             {
             longClick =
@@ -256,7 +244,7 @@
             }
           Process, Close, mpv.exe
           if WinActive("ahk_class mpv")		; longClick over mpv
-            send, {Insert}			; open thumbsheet in java
+            send, !{Pause}			; open thumbsheet in java
           break
           }
         }
@@ -1664,7 +1652,7 @@ else mediaList = %mediaList%<div id="entry%j%" style="display:flex; min-width:%v
 
     Gesture(x, y)
         {
-        if (Abs(x) > Abs(y)+6)					; left-right gesture
+        if (click=="RButton")
           {
           if x>0
             gesture := 1
@@ -1691,20 +1679,13 @@ else mediaList = %mediaList%<div id="entry%j%" style="display:flex; min-width:%v
           if mpvPID						; mpv zoom			
             {
             ratio := mpvHeight/mpvWidth
-            if (y<0 && mpvWidth*ratio<A_ScreenWidth/18)
+            if (y<0 && mpvWidth*ratio<A_ScreenWidth/18)		; min. size
               return
             mpvXpos-= y
             mpvYpos-= (y*ratio)
             mpvWidth+= (y*2)
             mpvHeight+= (y*2*ratio)
             WinMove, ahk_class mpv,,mpvXpos,mpvYpos,mpvWidth,mpvHeight
-            }
-          if (incaTab || mpvPID)				; java player zoom
-            {
-            if !gesture
-              send {RButton down}
-            gesture := 2
-            return
             }
           gesture += Abs(y)
           WinGet, state, MinMax, ahk_group Browsers

@@ -79,8 +79,11 @@
       if (renamebox) inca('Rename', renamebox, wasMedia)		// rename media
       else if (myInput.value && myInput.matches(':focus')) inca('SearchBox','','',myInput.value) // search media on pc
       else if (type=='document') {var x=media.scrollTop; setTimeout(function(){media.scrollTo(0,x)},100)}}
-    if (e.key=='Insert') {thumbSheet=1.2; clickEvent()}			// mpv invoke thumbsheet
-    if (e.key=='Pause') {						// mouse 'Back' key
+    else if (e.key=='Pause' && e.shiftKey) {
+      if (myPlayer.matches(':hover')) myPlayer.currentTime=0
+      else myPlayer.currentTime=media.style.start}
+    else if (e.key=='Pause' && e.altKey) {thumbSheet=1.2; clickEvent()}	// longClick over mpv invokes thumbsheet
+    else if (e.key=='Pause') {						// mouse 'Back' key
       if (playing) closePlayer()
       else if (overMedia && media.style.position=='fixed') {		// close popped out thumb
         media.style.position=null
@@ -112,12 +115,13 @@
   function mouseMove(e) {
     xpos = e.clientX
     ypos = e.clientY
+    if (playing=='mpv') return 
     if (!playing || thumbSheet || myNav.matches(':hover')) myBody.style.cursor=null
     else if (!Click && myBody.style.cursor!='crosshair') {
       if (type == 'video') mySeekbar.style.opacity=1
       myBody.style.cursor='crosshair'
       setTimeout(function() {
-        if (!(xm>0&&xm<1&&ym>0.95&&ym<1)) mySeekbar.style.opacity=0
+        if (xm<0||xm>1||ym<0.95||ym>1) mySeekbar.style.opacity=0
         myBody.style.cursor='none'},540)}
     if (myPanel.matches(':hover')) mySelected.style.fontSize='3em'
     else mySelected.style.fontSize=null
@@ -125,22 +129,22 @@
     mySelected.style.left = e.pageX +10 +'px'
     var x = Math.abs(xpos-Xref)
     var y = Math.abs(ypos-Yref)
-    if (Click && x+y > 4 && !gesture && Click!=2) {			// gesture detection (mousedown + slide)
+    if (x+y > 4 && !gesture) {				// gesture detection (mousedown + slide)
       if (overMedia && !media.value) {gesture=2} else gesture=1}	// media.value implies is text media
-    if (!gesture) return
-    if (gesture==2 && !playing && !listView && Click==1) {		// move / pop thumb
+    if (!gesture || Click!=1) return
+    if (gesture==2 && !playing && !listView) {				// move / pop thumb
       media.style.opacity = 1
       media.style.position = 'fixed'
       media.style.zIndex = Zindex+=1
       media.style.left = xpos-media.offsetWidth/2+"px"
       media.style.top = ypos-media.offsetHeight/2+"px"}
-    else if (Click==3 && myPlayer.matches(':hover')) {			// move media
+    else if (y<x-2 || gesture==3) {					// move media
       gesture = 3
       mediaX += xpos - Xref
       mediaY += ypos - Yref
       localStorage.setItem("mediaX",mediaX.toFixed(0))
       localStorage.setItem("mediaY",mediaY.toFixed(0))}
-    else if (playing=='browser' && Click==1 && y>x) {			// zoom media
+    else if (y>x) {							// zoom media
       if (y>x && (scaleY>0.2 || Yref<ypos)) {
         scaleY += ((ypos-Yref) * 0.003)
         localStorage.setItem('scaleY',scaleY.toFixed(3))}}
