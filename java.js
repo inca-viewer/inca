@@ -5,6 +5,19 @@
 // media from near edge zoom on cursor like google earth
 // zoom fs between portait landscape issues
 
+// listview pop thumbs
+// text popped out save button and sizer fail
+// save poped media as new htm page and layout
+// add controls
+// collect popouts fro many pages
+// carry selected across
+// instead of moving with m3u, store xy and zoom in each entry
+// either pop out or store zoom in m3u
+// thumbs reset start at top if zoom
+
+// subs delete lose structure and lose selected on other tab
+
+
 
   var defRate = 1*localStorage.getItem('defRate')			// default playback speed
   var mediaX = 1*localStorage.getItem('mediaX')				// media position
@@ -56,12 +69,12 @@
   var Xref = 0								// click cursor coordinate
   var Yref = 0
   var dur = 0
+  var zoom = 0
   var rate = 1								// media speed
   var skinny = 1							// media width
   var title
   var fade
   var lastLeft = screenLeft
-
 
 
   scaleX = scaleY
@@ -86,6 +99,7 @@
     else if (e.key=='Pause') {						// mouse 'Back' key
       if (playing) closePlayer()
       else if (overMedia && media.style.position=='fixed') {		// close popped out thumb
+        media.style.zoom=null
         media.style.position=null
         media.style.transform='scale('+skinny+',1)'
         media.style.top=null; media.style.left=null}
@@ -98,7 +112,8 @@
     gesture=0; Xref=xpos; Yref=ypos
     sessionStorage.setItem('scroll', myView.scrollTop)
     if (Click==2) e.preventDefault()					// middle click
-    else if (overMedia) index = overMedia
+    else if (overMedia) {index=overMedia; wasMedia=index}
+    else wasMedia=0
     if (Click==2 && myPanel.matches(':hover')) return			// open new tab
     clickTimer=setTimeout(function() {longClick=Click; clickEvent()},240)}
 
@@ -129,17 +144,25 @@
     mySelected.style.left = e.pageX +10 +'px'
     var x = Math.abs(xpos-Xref)
     var y = Math.abs(ypos-Yref)
-    if (x+y > 4 && !gesture) {				// gesture detection (mousedown + slide)
-      if (overMedia && !media.value) {gesture=2} else gesture=1}	// media.value implies is text media
+    var z = 1*media.style.zoom
+    if (!z) z=1
+    if (x+y > 4 && !gesture && Click) gesture=1				// gesture (Click + slide)
     if (!gesture || Click!=1) return
-    if (gesture==2 && !playing && !listView) {				// move / pop thumb
-      media.style.opacity = 1
-      media.style.position = 'fixed'
-      media.style.zIndex = Zindex+=1
-      media.style.left = xpos-media.offsetWidth/2+"px"
-      media.style.top = ypos-media.offsetHeight/2+"px"}
-    else if (y<x-2 || gesture==3) {					// move media
-      gesture = 3
+    if (!playing && wasMedia && type!='document') { 			// move / pop thumb
+      if (y<x-2 || gesture==2) {
+        gesture=2
+        media.style.opacity = 1
+        media.style.position = 'fixed'
+        media.style.zIndex = Zindex+=1
+        media.style.left = (xpos-z*media.offsetWidth/2)/z+"px"
+        media.style.top = (ypos-z*media.offsetHeight/2)/z+"px"}
+      else if (y>x) {							// zoom thumb
+        z += 0.01*(ypos-Yref)
+        media.style.zoom = z
+        if (media.style.position=='fixed') {
+          media.style.left = (xpos-z*media.offsetWidth/2)/z+"px"
+          media.style.top = (ypos-z*media.offsetHeight/2)/z+"px"}}}
+    else if (y<x-2 || wasMedia) {					// move media
       mediaX += xpos - Xref
       mediaY += ypos - Yref
       localStorage.setItem("mediaX",mediaX.toFixed(0))
@@ -213,6 +236,7 @@
 
   function clickEvent() {						// functional logic
     if (Click==2 && !playing) {inca('View',view,'',lastIndex); return}	// switch list/thumb view
+    if (gesture || title.matches(':hover')) return			// allow rename of media in htm
     if (!playing && !longClick && !overMedia) return
     if (lastClick==3 && !longClick) return
     if (longClick==3 && !playing && !overMedia) return
@@ -221,7 +245,6 @@
     if (myNav.matches(':hover') && lastClick==1) return
     if (!gesture && longClick==1 && !playing && playlist && overMedia && selected) {inca('Move', index); return}
     if (!media.src && (type=='document' || type=='m3u')) return
-    if (gesture || title.matches(':hover')) return			// allow rename of media in htm
     if (playing=='browser' && type != 'image' && lastClick!=2) {
       if (thumbSheet || (!longClick && xm>0&&xm<1&&ym>0.95&&ym<1)) {getStart(); return}
       else if (!longClick) {togglePause(); return}}
@@ -231,7 +254,6 @@
       if (!scaleY || scaleY>2 || scaleY<0.15) scaleY=0.4
       localStorage.setItem('scaleY',scaleY.toFixed(3))}
     lastIndex = index
-    if (!playing && overMedia) {index=overMedia; wasMedia=index}
     if (playing && !longClick && lastClick==2) index++
     if (longClick==2) index--
     if (!playing || thumbSheet) fade=0
@@ -282,6 +304,7 @@
     if (type == 'audio' || playlist.match('/inca/music/')) {
       looping=false; myPlayer.muted=false; scaleY=0.2; myPlayer.style.border='2px solid salmon'}
     if (playing=='browser' && !thumbSheet && type != 'image') myPlayer.play()
+myPlayer.removeEventListener('ended', nextMedia)
     myPlayer.addEventListener('ended', nextMedia)
     if (playing=='browser') myPlayer.style.opacity=1
     myMask.style.zIndex = Zindex
@@ -323,20 +346,22 @@
     rate = defRate
     skinny = 1
     media.style.border=null						// for correct ratio calc,
-    x = media['onmousedown'].toString().split(','); x.pop()		// get media parameters from htm entry
-    media.style.start = 1*x.pop().trim()
-    dur = 1*x.pop().trim()						// in case wmv, avi etc
-    cueList = x.pop().replaceAll('\'', '').trim()
-    type = x.pop().replaceAll('\'', '').trim()				// eg video, image
+    var x = media['onmousedown'].toString().split(',')			// get media parameters from htm entry
+    type = x[1].replaceAll('\'', '').trim()				// eg video, image
+    cueList = x[2].replaceAll('\'', '').trim()
+    dur = 1*x[3].trim()							// in case wmv, avi etc
+    media.style.start = 1*x[4].trim()
+    zoom = 1*x[5].trim()
     if (type == 'document') return 1
     if (cueList) Cue(0,i)						// get initial width, speed etc.
-    x = media.style.skinny						// get any live width edits
+    x = 1*media.style.skinny						// get any live width edits
     if (x && x!=skinny) skinny=x 					// in case it has been edited
-    if (media.style.position!='fixed') {
-      media.style.transform='scale('+skinny+',1)'}
-    else media.style.transform='scale('+skinny*2.2+',2.2)'		// magnify popped out media from htm
-    x = media.style.rate						// custom style variable - rate edited
+    media.style.transform='scale('+skinny+',1)'
+    x = 1*media.style.rate						// custom style variable - rate edited
     if (x && x != rate) rate=x
+    x = 1*media.style.zoom						// custom style variable - rate edited
+    if (x && x != zoom) zoom=x
+    media.style.zoom = zoom
     if (type != 'image' && !dur) dur=media.duration			// just in case - use browser calc.
     if (!thumbSheet && !longClick && myPlayer.src != media.src) {
       myPlayer.src = media.src
@@ -445,8 +470,7 @@
   function Cue(time, i) {						// process media cues - captions, pauses etc.
     var el=document.getElementById('media'+i)
     var x = el['onmousedown'].toString().split(',')			// get cueList from htm entry
-    x.pop(); x.pop(); x.pop()						// skip over event, start time & dur
-    cueList = x.pop().replaceAll('\'', '').trim()
+    cueList = x[2].replaceAll('\'', '').trim()
     if (!cueList) return
     x = cueList.split('#1')						// each line entry
     for (i=0; i<x.length; i++) {
@@ -458,6 +482,7 @@
       if (cueTime > time-0.1 && cueTime < time+0.1) {
         if (type=='next') {lastClick=2; clickEvent()}
         else if (type=='goto') {myPlayer.currentTime = 1*value; myPlayer.volume=0.001}
+//        else if (type=='zoom') zoom = 1*value
         else if (type=='rate') {if (isNaN(1*value)) {rate=defRate} else {rate=1*value}}
         else if (type=='skinny' && !el.style.skinny) {if (isNaN(value)) {skinny=1} else {skinny=1*value; if(time) {positionMedia(fade)}}}
         else if (type=='pause'&& lastCue!=i) {lastCue=i; myPlayer.pause(); setTimeout(function(){myPlayer.play(); myCap.innerHTML=''},1000*value)}
@@ -591,6 +616,7 @@
     for (i=1; el=document.getElementById('media'+i); i++) {		// add cue edits to messages
       if (el.style.skinny) messages = messages + '#Skinny#'+el.style.skinny+'#'+i+'#'+cue
       if (el.style.rate) messages = messages + '#Rate#'+el.style.rate+'#'+i+'#'+cue
+//      if (el.style.zoom) messages = messages + '#Zoom#'+el.style.zoom+'#'+i+'#'+cue
       if (cue) {cue=0; el.style.skinny=0; el.style.rate=0}}
     if (!select) {select=''} else {select=select+','}
     if (command == 'Favorite' && !selected) document.getElementById('myFavicon'+index).innerHTML='&#10084'

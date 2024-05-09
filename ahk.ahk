@@ -197,8 +197,7 @@
           }
         if (Abs(x)+Abs(y) > 6)			; gesture started
           {
-          if (!gesture && click == "LButton")
-            gesture := 1
+          gesture := 1
           MouseGetPos, xpos, ypos
           if (xpos < 15)			; gesture at screen edges
               xpos := 15
@@ -208,11 +207,11 @@
           if (click == "RButton")
               Gesture(x, y)
           }
-        if (!gesture && longClick)	; click timout
+        if (!gesture && longClick)		; click timout
           {
           if (click=="RButton")
             {
-            send, +{Pause}
+            send, +{Pause}			; long RClick signal to java
             break
             }
           if (A_Cursor == "IBeam")
@@ -383,6 +382,7 @@ else index:=1						; textarea index id
             {
             if selected							; force index of selected media
               {
+
               index(src,1)
               if playlist
                 Runwait, %inca%\cache\apps\ffmpeg.exe -ss %seek% -i "%src%" -y -vf scale=1280:1280/dar -vframes 1 "%inca%\cache\posters\%media%%A_Space%%seek%.jpg",, Hide
@@ -682,6 +682,36 @@ else index:=1						; textarea index id
                 FileAppend, %cues%, %inca%\cache\cues\%media%.txt
               }
             }
+        if (command == "Zoom")						; update any media speed edits
+            {
+            zoom := Round(value,2)
+            cue := Round(address,2)					; cue time for entry (not global)
+            if !cue
+              cue = 0.00
+            if zoom
+              zoom = %cue%|zoom|%zoom%
+            FileRead, cues, %inca%\cache\cues\%media%.txt
+            last := cues
+            if cues
+              Loop, Parse, cues, `n, `r					; each line of cues
+                {
+                array := StrSplit(A_LoopField, "|")			; split each entry
+                x := array.3						; the entry value
+                ra = %cue%|zoom|%x%
+                if (!array.1 && zoom && array.2 == "zoom")
+                  cues := StrReplace(cues, ra, zoom)
+                }
+             if (zoom && !InStr(cues, "0.00|zoom"))			; add new entry
+               cues = %zoom%`r`n%cues%
+             if (InStr(cues, "0.00|zoom|1.00`r`n"))
+                cues := StrReplace(cues, "0.00|zoom|1.00`r`n")
+            if (cues != last)						; if changed, replace cues file
+              {
+              FileDelete, %inca%\cache\cues\%media%.txt
+              if cues
+                FileAppend, %cues%, %inca%\cache\cues\%media%.txt
+              }
+            }
         if (command == "Page")
             {
             if (command == "Page")
@@ -937,9 +967,10 @@ else index:=1						; textarea index id
           type := item.3
           sort_name := item.4
           start := item.5
+zoom := item.6
           listSize += 1
           if ((listSize > (page-1) * page_s) && (listSize <= page * page_s))
-            SpoolList(listSize, count+=1, source, sort_name, start)
+            SpoolList(listSize, count+=1, source, sort_name, start, zoom)
           }
         pages := ceil(listSize/page_s)
         if (pages > 1)
@@ -1115,7 +1146,7 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n if(
 
 <div id='myMask' class="mask" onwheel="wheelEvent(event, id, this)">`n</div>
 <div><span id='myCap' class='caption'></span>`n
-<video id="myPlayer" class='player' type="video/mp4" muted onwheel="wheelEvent(event, id, this)"></video>`n
+<video id="myPlayer" class='player' type="video/mp4" onmouseover='overMedia=index' onmouseout='overMedia=0' muted onwheel="wheelEvent(event, id, this)"></video>`n
 <span id='mySeekbar' class='seekbar'></span>`n
 <span><video class='preview' id='myPreview' muted type="video/mp4" onwheel="wheelEvent(event, id, this)"></video></span></div>`n`n
 
@@ -1156,7 +1187,6 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n if(
 
 <div style='width:100`%'></div>`n%mediaList%<div style='width:100`%; height:95vh'></div>`n`n
 
-
       FileDelete, %inca%\cache\html\%folder%.htm
       StringReplace, header, header, \, /, All
       StringReplace, body, body, \, /, All
@@ -1189,12 +1219,7 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n if(
       }
 
 
-    fill(in) {  
-      panelList = %panelList%<div style="height:10`%; padding:0.5em; transform:rotate(90deg)">`n%in%</div>`n
-      }
-
-
-    SpoolList(i, j, input, sort_name, start)				; spool sorted media files into web page
+    SpoolList(i, j, input, sort_name, start, zoom)			; spool sorted media files into web page
         {
         Critical
         poster =
@@ -1280,15 +1305,20 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n if(
 
 
 if listView
-  mediaList = %mediaList% %fold%<table onmouseout="title%j%.style.color=null; media%j%.style.opacity=0; overMedia=0">`n <tr id="entry%j%"`n onmouseover="title%j%.style.color='lightsalmon'; overThumb(%j%, media%j%)">`n <td onmouseenter='media%j%.style.opacity=0'>%ext%`n <video id='media%j%' onmousedown="getParameters(%j%, '%type%', '%cueList%', %dur%, %start%, event)" class='media2' style="max-width:%view3%em; max-height:%view3%em"`n src="file:///%src%"`n %poster%`n preload=%preload% muted loop type="video/mp4"></video></td>`n <td>%size%</td>`n <td style='min-width:6em' onmouseover='media%j%.style.opacity=1'>%durT%</td>`n <td onmouseover='media%j%.style.opacity=1'>%date%</td>`n <td style='min-width:4.4em'>%j%</td>`n <td id='myFavicon%j%' style='width:0; translate:-1em; white-space:nowrap; font-size:0.7em; color:salmon; min-width:1em'>%favicon%</td>`n <td style='width:99em'><input id="title%j%" onmouseover='overText=1' onmouseout='overText=0; Click=0' class='title' type='search' value='%media_s%'`n oninput="wasMedia=%j%; renamebox=this.value"></td>`n <td>%fo%</td></tr></table>`n`n
+  mediaList = %mediaList% %fold%<table onmouseout="title%j%.style.color=null; media%j%.style.opacity=0; overMedia=0">`n <tr id="entry%j%"`n onmouseover="title%j%.style.color='lightsalmon'; overThumb(%j%, media%j%)">`n <td onmouseenter='media%j%.style.opacity=0'>%ext%`n <video id='media%j%' onmousedown="getParameters(%j%, '%type%', '%cueList%', %dur%, %start%, %zoom%, event)" class='media2' style="max-width:%view3%em; max-height:%view3%em"`n src="file:///%src%"`n %poster%`n preload=%preload% muted loop type="video/mp4"></video></td>`n <td>%size%</td>`n <td style='min-width:6em' onmouseover='media%j%.style.opacity=1'>%durT%</td>`n <td onmouseover='media%j%.style.opacity=1'>%date%</td>`n <td style='min-width:4.4em'>%j%</td>`n <td id='myFavicon%j%' style='width:0; translate:-1em; white-space:nowrap; font-size:0.7em; color:salmon; min-width:1em'>%favicon%</td>`n <td style='width:99em'><input id="title%j%" onmouseover='overText=1' onmouseout='overText=0; Click=0' class='title' type='search' value='%media_s%'`n oninput="wasMedia=%j%; renamebox=this.value"></td>`n <td>%fo%</td></tr></table>`n`n
 
 else if ((ext == "txt" || ext=="m3u") && (textCount+=1) <= 20)
-  mediaList = %mediaList%<div id="entry%j%" style="display:flex; position:relative; padding-top:%view4%em" onmouseover='overText=1' onmouseout='overText=0'>`n <span><input id='title%j%' class='title' style='text-align:center; background:#15110a; top:8px; padding-left:1em; font-size:%cap_size%em; position:absolute' type='search' value='%media_s%'`n onclick='media%j%.scrollTo(0,0)' oninput="wasMedia=%j%; renamebox=this.value"></span>`n <span id='Save%j%' class='save' onclick="inca('Text',%j%)">Save</span>`n <textarea id='media%j%' rows=12 class='text' style='font-size:%cap_size%em; width:%view1%em' onmouseover="overThumb(%j%, this)" onmouseout='overMedia=0'`n oninput="if(editing&&editing!='%j%') {inca('Text',editing)}; editing='%j%'; this.style.background='#15110a'; Save%j%.style.display='block'" onmousedown="getParameters(%j%,'document','',0,0,event)">`n%str2%</textarea></div>`n`n
+  mediaList = %mediaList%<div id="entry%j%" style="display:flex; position:relative; padding-top:%view4%em" onmouseover='overText=1' onmouseout='overText=0'>`n <span><input id='title%j%' class='title' style='text-align:center; background:#15110a; top:8px; padding-left:1em; font-size:%cap_size%em; position:absolute' type='search' value='%media_s%'`n onclick='media%j%.scrollTo(0,0)' oninput="wasMedia=%j%; renamebox=this.value"></span>`n <span id='Save%j%' class='save' onclick="inca('Text',%j%)">Save</span>`n <textarea id='media%j%' rows=12 class='text' style='font-size:%cap_size%em; width:%view1%em' onmouseover="overThumb(%j%, this)" onmouseout='overMedia=0'`n oninput="if(editing&&editing!='%j%') {inca('Text',editing)}; editing='%j%'; this.style.background='#15110a'; Save%j%.style.display='block'" onmousedown="getParameters(%j%,'document','',0,0,0,event)">`n%str2%</textarea></div>`n`n
 
-else mediaList = %mediaList%<div id="entry%j%" style="display:flex; min-width:%view3%em; padding-top:%view4%em">`n <div class='media'>%caption%<span style='display:block; position:absolute; top:-1.5em; font-size:0.8em; color:salmon' id='myFavicon%j%'>%favicon%</span>`n <span><input id='title%j%' class='title' style='text-align:center; width:%view3%em; font-size:%cap_size%em' type='search' value='%media_s%'`n oninput="wasMedia=%j%; renamebox=this.value" onmouseover='overText=1' onmouseout='overText=0'></span>`n <video id="media%j%" class='media' style="display:flex; justify-content: center; max-width:%view3%em; max-height:%view3%em"`n onmousedown="getParameters(%j%, '%type%', '%cueList%', %dur%, %start%, event)"`n onmouseover="overThumb(%j%, this); this.play()"`n onmouseout="overMedia=0; setTimeout(function(){media%j%.pause()},144)"`n src="file:///%src%"`n %poster%`n type='video/mp4' preload=%preload% muted loop type="video/mp4"></video></div>`n</div>`n`n
+else mediaList = %mediaList%<div id="entry%j%" style="display:flex; min-width:%view3%em; padding-top:%view4%em">`n <div class='media'>%caption%<span style='display:block; position:absolute; top:-1.5em; font-size:0.8em; color:salmon' id='myFavicon%j%'>%favicon%</span>`n <span><input id='title%j%' class='title' style='text-align:center; width:%view3%em; font-size:%cap_size%em' type='search' value='%media_s%'`n oninput="wasMedia=%j%; renamebox=this.value" onmouseover='overText=1' onmouseout='overText=0'></span>`n <video id="media%j%" class='media' style="display:flex; justify-content: center; max-width:%view3%em; max-height:%view3%em"`n onmousedown="getParameters(%j%, '%type%', '%cueList%', %dur%, %start%, %zoom%, event)"`n onmouseover="overThumb(%j%, this); this.play()"`n onmouseout="overMedia=0; setTimeout(function(){media%j%.pause()},144)"`n src="file:///%src%"`n %poster%`n type='video/mp4' preload=%preload% muted loop type="video/mp4"></video></div>`n</div>`n`n
 }
 
  
+    fill(in) {  
+      panelList = %panelList%<div style="height:10`%; padding:0.5em; transform:rotate(90deg)">`n%in%</div>`n
+      }
+
+
     CreateList(show)							; list of files in path
         {
         Critical
@@ -1311,13 +1341,16 @@ else mediaList = %mediaList%<div id="entry%j%" style="display:flex; min-width:%v
              {  
              source := StrSplit(A_Loopfield, "|").1
              start := StrSplit(A_Loopfield, "|").2
-             spool(source, A_Index, start)
+zoom := StrSplit(A_Loopfield, "|").3
+if !zoom
+  zoom:=0
+             spool(source, A_Index, start, zoom)
              }
            }
         else Loop, Parse, searchPath, `|
            Loop, Files, %A_LoopField%*.*, F%recurse%
              if A_LoopFileAttrib not contains H,S
-               if spool(A_LoopFileFullPath, A_Index, 0)
+               if spool(A_LoopFileFullPath, A_Index, 0, 0)
                  break 2
                else if (show==1 && (listSize<10000 && !Mod(listSize,1000)) || !Mod(listSize,10000))
                  PopUp(listSize,0,0,0)
@@ -1345,7 +1378,7 @@ else mediaList = %mediaList%<div id="entry%j%" style="display:flex; min-width:%v
         }
 
 
-    Spool(input, count, start)						; sorting and search filters
+    Spool(input, count, start, zoom)					; sorting and search filters
         {
         if !start
           start := 0
@@ -1421,7 +1454,7 @@ else mediaList = %mediaList%<div id="entry%j%" style="display:flex; min-width:%v
               sort_name := Time(listId)
               }
             listSize += 1
-            list = %list%%listId%/%input%/%med%/%sort_name%/%start%`r`n
+            list = %list%%listId%/%input%/%med%/%sort_name%/%start%/%zoom%`r`n
             }
         }
 
@@ -1652,11 +1685,10 @@ else mediaList = %mediaList%<div id="entry%j%" style="display:flex; min-width:%v
 
     Gesture(x, y)
         {
-        if (click=="RButton")
+        if (Abs(x) > Abs(y))
           {
-          if x>0
-            gesture := 1
-          else gesture := -1
+          if x<=0
+            gesture := -1
           x*=1.4
           Static last_volume					; master volume 
           last_volume := volume
@@ -1687,15 +1719,14 @@ else mediaList = %mediaList%<div id="entry%j%" style="display:flex; min-width:%v
             mpvHeight+= (y*2*ratio)
             WinMove, ahk_class mpv,,mpvXpos,mpvYpos,mpvWidth,mpvHeight
             }
-          gesture += Abs(y)
           WinGet, state, MinMax, ahk_group Browsers
-          if (state > -1 && gesture > 50)			; browser zoom
+          if (!incaTab && state > -1)
             {
-            gesture := 1
             WinActivate, ahk_group Browsers
             if (y < 0)
               send, ^0
             else send, ^{+}
+            sleep 111
             }
           }
         }
@@ -1856,17 +1887,10 @@ else mediaList = %mediaList%<div id="entry%j%" style="display:flex; min-width:%v
         }
 
 
-    indexPage:								; so thumbsheets are available
+    indexPage:								; create thumbsheets
     Critical Off
-    page_s := Setting("Page Size")
-    Loop, %page_s%
-      if getMedia(A_Index)
-        {
-        index(src,0)
-        if playlist
-          IfNotExist, %inca%\cache\posters\%media%%A_Space%%seek%.jpg
-            Runwait, %inca%\cache\apps\ffmpeg.exe -ss %seek% -i "%src%" -y -vf scale=1280:1280/dar -vframes 1 "%inca%\cache\posters\%media%%A_Space%%seek%.jpg",, Hide
-        }
+    Loop, Files, %path%*.*, R
+      index(A_LoopFileFullPath,0)
     return
 
 
