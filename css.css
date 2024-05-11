@@ -84,7 +84,7 @@
   overflow:hidden;
   white-space:nowrap}
 
-.media {					/* thumb view media */
+.thumb {					/* thumb view media */
   --start;					/* default start time */
   --skinny;
   --rate;
@@ -93,7 +93,7 @@
   padding:0.1em;
   border-radius:0.5em}
 
-.media2 {					/* list view pop up thumbs */
+.thumb2 {					/* list view pop up thumbs */
   position:absolute;
   pointer-events:none;
   translate: 6em;
@@ -192,7 +192,7 @@
   user-select:none;
   border-radius:1em;
   font-size:1.4em;
-  transition:opacity 0.6s}
+  transition: 0.6s}
 
 .mask {						/* media player overlay of htm tab */
   display:none;
