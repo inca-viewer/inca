@@ -5,8 +5,6 @@
 // media from near edge zoom on cursor like google earth
 // subs delete lose structure and lose selected on other tab
 
-// wheel on sheet messes with myplayer ypos
-
   var defRate = 1*localStorage.getItem('defRate')			// default playback speed
   var mediaX = 1*localStorage.getItem('mediaX')				// myPlayer position
   var mediaY = 1*localStorage.getItem('mediaY')
@@ -256,7 +254,9 @@
       if (myPlayer.src != thumb.src) myPlayer.src = thumb.src
       myPlayer.playbackRate = rate					// set default speed
       if (type=='image') myPlayer.poster = thumb.poster			// images use poster as src
-      if (longClick==3 && type=='video' && (playing || overMedia)) thumbSheet=1.4*Math.abs(1/scaleY)
+      if ((thumbSheet || longClick==3) && type=='video' && (playing || overMedia)) {
+        thumbSheet=1.4*Math.abs(1/scaleY)
+        if (ratio<1) thumbSheet*=0.7}
       else if (!playing && !overMedia) myPlayer.currentTime=lastStart	// return to last media
       else if (longClick==1 && (!playing || (playing && myPlayer.matches(':hover')))) myPlayer.currentTime=0
       else if (longClick==1 || (lastClick==2 && !thumbSheet)) {
