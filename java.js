@@ -5,7 +5,6 @@
 // media from near edge zoom on cursor like google earth
 // subs delete lose structure and lose selected on other tab
 
-
   var defRate = 1*localStorage.getItem('defRate')			// default playback speed
   var mediaX = 1*localStorage.getItem('mediaX')				// myPlayer position
   var mediaY = 1*localStorage.getItem('mediaY')
@@ -237,7 +236,7 @@
       if (!longClick)  myPlayer.style.opacity=0
       else myPlayer.poster=thumb.poster}
     setTimeout(function() {						// so player can fade in/out
-      if (longClick && !thumbSheet && !playing) index=lastIndex		// return to last media
+      if (longClick && !overMedia && !playing) index=lastIndex		// return to last media
       if (!getParameters(index)) {closePlayer(); return}		// end of media list
       var ratio = thumb.offsetWidth/thumb.offsetHeight
       if (ratio>1) {x=innerWidth*0.70; y=x/ratio}			// landscape
