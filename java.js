@@ -5,6 +5,7 @@
 // media from near edge zoom on cursor like google earth
 // subs delete lose structure and lose selected on other tab
 
+
   var defRate = 1*localStorage.getItem('defRate')			// default playback speed
   var mediaX = 1*localStorage.getItem('mediaX')				// myPlayer position
   var mediaY = 1*localStorage.getItem('mediaY')
@@ -228,7 +229,6 @@
       if (!mediaY || mediaY < 0 || mediaY > innerHeight) mediaY=innerHeight/2
       if (!scaleY || scaleY>2 || scaleY<0.15) scaleY=0.4
       localStorage.setItem('scaleY',scaleY.toFixed(3))}
-    lastIndex = index
     if (playing && !longClick && lastClick==2) index++
     if (longClick==2) {index--; getParameters(index)}
     if (!playing || thumbSheet) fade=0
@@ -267,6 +267,7 @@
 
 
   function Play() {
+    lastIndex = index
     var ex = myPlayer.src.slice(-3)					// media file extension
     var para = myPlayer.currentTime+'|'+skinny+'|'+rate+'|'+localStorage.getItem('muted')
     if (!thumbSheet && type=='video' && (mpv || (ex!='mp4' && ex!='mkv' && ex!='m4v' && ex!='ebm'))) playing='mpv'
