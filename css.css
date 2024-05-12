@@ -39,7 +39,7 @@
 .player {					/* media player element */
   position:absolute;
   opacity:0;
-  border-radius:2em}
+  border-radius:4%}
 
 .preview {					/* small preview seeking video */
   position:absolute;
@@ -89,15 +89,17 @@
   --skinny;
   --rate;
   position:relative;
+  outline:none;
   margin:auto;
-  padding:0.1em;
-  border-radius:0.5em}
+  padding:0.3em;
+  border-radius:1em}
 
 .thumb2 {					/* list view pop up thumbs */
   position:absolute;
   pointer-events:none;
   translate: 6em;
   border-radius:0.5em;
+padding:0.3em;
   margin:auto;
   opacity:0}
 
