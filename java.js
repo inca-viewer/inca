@@ -30,7 +30,7 @@
   var cueList = ''							// full caption text file
   var playing = ''							// myPlayer or mpv active
   var thumbSheet = 0							// 6x6 thumbsheet mode
-  var looping = true							// play next or loop media
+  var looping = 1							// play next or loop media
   var lastClick = 0							// state is preserved
   var Click = 0								// state cleared after mouseUp()
   var longClick = 0							// state is preserved
@@ -181,7 +181,7 @@
         else rate += 0.01
         rate = Math.round(100*rate)/100
         myPlayer.playbackRate = rate
-        thumb.style.rate = rate}}
+        thumb.style.rate = rate}}					// css holds edited rate
     else if (id=='mySkinny' && wasMedia) {				// skinny
       if (wheelUp) skinny -= 0.003
       else skinny += 0.003
@@ -278,9 +278,8 @@
     if (type=='document' || type=='m3u') {closePlayer(); inca('Media',0,index); return}
     else if (playing=='mpv') inca('Media',0,index,para)			// open external player
     if (type == 'audio' || playlist.match('/inca/music/')) {
-      looping=false; myPlayer.muted=false; scaleY=0.2; myPlayer.style.border='2px solid salmon'}
+      looping=0; myPlayer.muted=false; scaleY=0.2; myPlayer.style.borderBottom='4px solid salmon'}
     if (playing=='browser' && !thumbSheet && type != 'image') myPlayer.play()
-    myPlayer.removeEventListener('ended', nextMedia)
     myPlayer.addEventListener('ended', nextMedia)
     if (playing=='browser') myPlayer.style.opacity=1
     myMask.style.zIndex = Zindex
@@ -370,7 +369,6 @@
       ym = myPlayer.offsetHeight*scaleY*z
       xm = (xpos - rect.left) / Math.abs(xm)
       ym = (ypos - rect.top) / Math.abs(ym)
-      myPlayer.playbackRate=rate
       myPlayer.style.zIndex=Zindex+1
       mySeekbar.style.display='flex'
       mySeekbar.style.zIndex=Zindex+1
@@ -429,7 +427,7 @@
       if (cueTime > time-0.1 && cueTime < time+0.1) {
         if (type=='next') {lastClick=2; clickEvent()}
         else if (type=='goto') {myPlayer.currentTime = 1*value; myPlayer.volume=0.001}
-        else if (type=='rate') {if (isNaN(1*value)) {rate=defRate} else {rate=1*value}}
+        else if (type=='rate' && looping<2) {if (isNaN(1*value)) {rate=defRate} else {rate=1*value}}
         else if (type=='skinny' && !el.style.skinny) {
           if (isNaN(value)) {skinny=1} else {skinny=1*value; if(time) {positionMedia(fade)}}}
         else if (type=='pause'&& lastCue!=i) {
@@ -500,10 +498,11 @@
       if (playlist.match('/inca/music/')) {
         setTimeout(function() {clickEvent()}, Math.random()*6000)}	// next media
       else {clickEvent()}; return}
+    looping+=1
+    if (!longClick && rate > 0.40) rate-=0.05				// slower each loop  
     myPlayer.currentTime=thumb.style.start
-    myPlayer.play()
-    if (!longClick && myPlayer.playbackRate > 0.40) {			// slower each loop
-      myPlayer.playbackRate -= 0.05}}
+    myPlayer.playbackRate=rate
+    myPlayer.play()}
 
   function Filter(id) {							// for htm ribbon headings
     var x=filt; var units=''						// eg 30 minutes, 2 months, alpha 'A'
