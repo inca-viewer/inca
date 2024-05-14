@@ -9,7 +9,8 @@ Lightweight & portable (no installation)<br>
 Pure vanilla java / ahk script<br>
 No IDE, no libraries, no external calls, no browser extensions<br> 
 Does not mess with any settings - see source code<br>
-Just run compile.exe - browser will open in pictures folder<br>
+Just configure settings.ini in notepad, then run compile.exe<br>
+browser will open in pictures folder<br>
 To 'uninstall', exit from taskbar & delete inca folder<br>
 You can change source code in notepad. Compiles in under a second<br><br>
 
@@ -42,19 +43,18 @@ Back click
 - reset page
 
 Long click
-- on media - show 6 x 6 thumbsheet
+- show 6 x 6 thumbsheet
+- restart media
 - on white space - return to last media
 - on selected text - find media matches
 - on folder - copies selected files (instead of move)
 
-Right click slide gesture
+Right click slide
 - left / right - volume
-- up / down - zoom
-- quick up gesture - toggle zoom
 
-Left click slide gesture
-- on media - position media
-- through media - select media
+Left click slide
+- in player - position/zoom media
+- over thumbs - select media
 
 Supports rotated screen + osk onscreen keyboard<br>
 long press on any text area for osk<br>
