@@ -181,12 +181,12 @@
         else rate += 0.01
         rate = Math.round(100*rate)/100
         thumb.style.rate = rate}}					// css holds edited rate
-    else if (id=='mySkinny' && wasMedia) {				// skinny
+    else if (id=='mySkinny') {						// skinny
       if (wheelUp) skinny -= 0.003
       else skinny += 0.003
       skinny=Math.round((1000*skinny))/1000
       thumb.style.skinny = skinny
-     getParameters(wasMedia)
+     getParameters(index)
       positionMedia(0)}
     else if (id=='View') {						// thumbs
       if (wheelUp) view += 1
