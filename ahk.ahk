@@ -204,8 +204,7 @@
           if (xpos > A_ScreenWidth - 15)
               xpos := A_ScreenWidth - 15
           MouseMove, % xpos, % ypos, 0
-          if (click == "RButton")
-            Gesture(x, y)
+          Gesture(x, y)
           }
         if (!gesture && longClick)		; click timout
           {
@@ -1653,7 +1652,7 @@ else mediaList = %mediaList%<div id="entry%j%" style="display:flex; padding-top:
 
     Gesture(x, y)
         {
-        if (Abs(x) > Abs(y))
+        if (click == "RButton" && Abs(x) > Abs(y))
           {
           if x<=0
             gesture := -1
@@ -1676,7 +1675,7 @@ else mediaList = %mediaList%<div id="entry%j%" style="display:flex; padding-top:
           }
         if (Abs(x) < Abs(y))					; up-down gesture
           {
-          if mpvPID						; mpv zoom			
+          if (click == "LButton" && mpvPID)			; mpv zoom			
             {
             ratio := mpvHeight/mpvWidth
             if (y<0 && mpvWidth*ratio<A_ScreenWidth/18)		; min. size
@@ -1688,9 +1687,10 @@ else mediaList = %mediaList%<div id="entry%j%" style="display:flex; padding-top:
             MouseGetPos , , , x					; mpv not under cursor
             if (x != mpvPID)
               WinMove, ahk_class mpv,,mpvXpos,mpvYpos,mpvWidth,mpvHeight
+            return
             }
           WinGet, state, MinMax, ahk_group Browsers
-          if (!incaTab && state > -1)
+          if (click == "RButton" && !incaTab && state > -1)
             {
             WinActivate, ahk_group Browsers
             if (y < 0)

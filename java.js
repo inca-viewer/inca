@@ -112,7 +112,6 @@
     xpos = e.clientX
     ypos = e.clientY
     if (!myNav.matches(":hover")) myNav.style.display=null
-    if (playing=='mpv') return
     if (!playing || thumbSheet) myBody.style.cursor=null
     else if (!Click && myBody.style.cursor!='crosshair') {
       if (type != 'image') mySeekbar.style.opacity=1
@@ -521,7 +520,7 @@
     myView.scrollBy(0,-200)}
 
   function scrolltoIndex(i) {
-    if (!i || myView.scrollTop > myView.scrollHeight-1000) return
+    if (!i) return
     if (listView) {el=document.getElementById('title'+i); el.style.background='#1f1c18'}
     else {el=document.getElementById('thumb'+i); el.style.borderBottom='1px solid lightsalmon'}
     var x = el.getBoundingClientRect().bottom
