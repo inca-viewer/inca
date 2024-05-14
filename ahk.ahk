@@ -205,13 +205,15 @@
               xpos := A_ScreenWidth - 15
           MouseMove, % xpos, % ypos, 0
           if (click == "RButton")
-              Gesture(x, y)
+            Gesture(x, y)
           }
         if (!gesture && longClick)		; click timout
           {
           if (click=="RButton")
             {
-            send, +{Pause}			; long RClick signal to java
+            if WinActive("ahk_class mpv")	; longClick over mpv
+              Process, Close, mpv.exe
+            send, +{Pause}			; long RClick signal to java - show thumbSheet
             break
             }
           if (A_Cursor == "IBeam")
@@ -241,9 +243,6 @@
               }
             else send, !+0			; trigger osk keyboard
             }
-          Process, Close, mpv.exe
-          if WinActive("ahk_class mpv")		; longClick over mpv
-            send, !{Pause}			; open thumbsheet in java
           break
           }
         }
@@ -458,7 +457,6 @@
               sleep 100
               if skinny
                 RunWait %COMSPEC% /c echo add video-scale-x %skinny% > \\.\pipe\mpv,, hide && exit
-              Popup("External Player",700,0,0)
               WinActivate, ahk_class mpv
               }
             }
@@ -551,7 +549,6 @@
             {
             if panelPath						; R Click was over top panel
               {
-              subfolders =
               x  =  %panelPath%|
               if InStr(panelPath, "\fav\")				; delete fav entry
                 {
@@ -572,22 +569,24 @@
                 }
               else							; delete fol entry
                 {
-                x = %panelPath%|
-                fol := StrReplace(fol, x)
-                IniWrite,%fol%,%inca%\ini.ini,Settings,Fol
                 Loop, Files, %panelPath%\*.*, FR			; is folder empty
                   {
                   FileGetSize, size, %A_LoopFileFullPath%, K
                   if size
                     {
-                    popup("Must be empty",600,0,0)
+                    popup("Must be empty",800,0,0)
                     return
                     }
                   }
-                path := SubStr(panelPath, 1, InStr(panelPath, "\", False, -1))
-                StringTrimRight, str, path, 1
-                subfolders := StrReplace(subfolders, folder)
-                SplitPath, str,,,,folder
+                fol := StrReplace(fol, x)
+                IniWrite,%fol%,%inca%\ini.ini,Settings,Fol
+                subfolders := StrReplace(subfolders, panelPath)
+                if (path == panelPath)
+                  {
+                  path := SubStr(panelPath, 1, InStr(panelPath, "\", False, -1))
+                  StringTrimRight, str, path, 1
+                  SplitPath, str,,,,folder
+                  }
                 FileRecycle, %panelPath%
                 if ErrorLevel
                   PopUp("Error . . .",1000,0.34,0.2)                  
@@ -1277,7 +1276,7 @@ if listView
   mediaList = %mediaList% %fold%<table onmouseout="title%j%.style.color=null; thumb%j%.style.opacity=0; overMedia=0">`n <tr id="entry%j%"`n onmouseover="title%j%.style.color='lightsalmon'; overThumb(%j%, thumb%j%)">`n <td onmouseenter='thumb%j%.style.opacity=0'>%ext%`n <video id='thumb%j%' onmousedown="getParameters(%j%, '%type%', '%cueList%', %dur%, %start%, event)" class='thumb2' style="max-width:%view3%em; max-height:%view3%em"`n src="file:///%src%"`n %poster%`n preload=%preload% muted loop type="video/mp4"></video></td>`n <td>%size%</td>`n <td style='min-width:6em' onmouseover='thumb%j%.style.opacity=1'>%durT%</td>`n <td onmouseover='thumb%j%.style.opacity=1'>%date%</td>`n <td style='min-width:4.4em'>%j%</td>`n <td id='myFavicon%j%' style='width:0; translate:-1em; white-space:nowrap; font-size:0.7em; color:salmon; min-width:1em'>%favicon%</td>`n <td style='width:99em'><input id="title%j%" onmouseover='overText=1' onmouseout='overText=0; Click=0' class='title' type='search' value='%media_s%'`n oninput="wasMedia=%j%; renamebox=this.value"></td>`n <td>%fo%</td></tr></table>`n`n
 
 else if ((ext == "txt" || ext=="m3u") && (textCount+=1) <= 20)
-  mediaList = %mediaList%<div id="entry%j%" style="display:flex; position:relative; padding-top:%view4%em" onmouseover='overText=1' onmouseout='overText=0'>`n <span><input id='title%j%' class='title' style='text-align:center; background:#15110a; top:8px; padding-left:1em; font-size:%cap_size%em; position:absolute' type='search' value='%media_s%'`n onclick='thumb%j%.scrollTo(0,0)' oninput="wasMedia=%j%; renamebox=this.value"></span>`n <span id='Save%j%' class='save' onclick="inca('Text',%j%)">Save</span>`n <textarea id='thumb%j%' rows=12 class='text' style='font-size:%cap_size%em; width:%view1%em' onmouseover="overThumb(%j%, this)" onmouseout='overMedia=0'`n oninput="if(editing&&editing!='%j%') {inca('Text',editing)}; editing='%j%'; this.style.background='#15110a'; Save%j%.style.display='block'" onmousedown="getParameters(%j%,'document','',0,0,event)">`n%str2%</textarea></div>`n`n
+  mediaList = %mediaList%<div id="entry%j%" style="display:flex; position:relative; padding-top:%view4%em" onmouseover='overText=1' onmouseout='overText=0'>`n <span><input id='title%j%' class='title' style='text-align:center; background:#15110a; top:8px; padding-left:1em; font-size:%cap_size%em; position:absolute' type='search' value='%media_s%'`n onmousedown='thumb%j%.scrollTo(0,0)'`n oninput="wasMedia=%j%; renamebox=this.value"></span>`n <span id='Save%j%' class='save' onclick="inca('Text',%j%)">Save</span>`n <textarea id='thumb%j%' rows=12 class='text' style='font-size:%cap_size%em; width:%view1%em' onmouseover="overThumb(%j%, this)" onmouseout='overMedia=0'`n oninput="if(editing&&editing!='%j%') {inca('Text',editing)}; editing='%j%'; this.style.background='#15110a'; Save%j%.style.display='block'" onmousedown="getParameters(%j%,'document','',0,0,event)">`n%str2%</textarea></div>`n`n
 
 else mediaList = %mediaList%<div id="entry%j%" style="display:flex; padding-top:%view4%em">`n <div class='thumb'>%caption%<span style='display:block; position:absolute; top:-1.5em; font-size:0.8em; color:salmon' id='myFavicon%j%'>%favicon%</span>`n <span><input id='title%j%' class='title' style='display:none; text-align:center; max-width:%view3%em; font-size:%cap_size%em' type='search' value='%media_s%'`n oninput="wasMedia=%j%; renamebox=this.value" onmouseover='overText=1' onmouseout='overText=0'></span>`n <video id="thumb%j%" class='thumb' style="display:flex; justify-content:center; max-width:%view3%em; max-height:%view3%em"`n onmousedown="getParameters(%j%, '%type%', '%cueList%', %dur%, %start%, event)"`n onmouseover="overThumb(%j%, this); if(this.style.position=='fixed'){this.setAttribute('controls','controls')} else {this.play()}"`n onmouseout="overMedia=0; if(this.style.position=='fixed'){this.removeAttribute('controls')} else {setTimeout(function(){thumb%j%.pause()},144)}"`n src="file:///%src%"`n %poster%`n type='video/mp4' preload=%preload% muted loop type="video/mp4"></video></div>`n</div>`n`n
 }
@@ -1686,7 +1685,9 @@ else mediaList = %mediaList%<div id="entry%j%" style="display:flex; padding-top:
             mpvYpos-= (y*ratio)
             mpvWidth+= (y*2)
             mpvHeight+= (y*2*ratio)
-            WinMove, ahk_class mpv,,mpvXpos,mpvYpos,mpvWidth,mpvHeight
+            MouseGetPos , , , x					; mpv not under cursor
+            if (x != mpvPID)
+              WinMove, ahk_class mpv,,mpvXpos,mpvYpos,mpvWidth,mpvHeight
             }
           WinGet, state, MinMax, ahk_group Browsers
           if (!incaTab && state > -1)
