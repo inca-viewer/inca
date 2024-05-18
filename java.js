@@ -2,6 +2,9 @@
 // Debugging	- use mySelected.innerHTML or alert()
 // media from near edge zoom on cursor like google earth
 
+// mute wrong
+// use block again for next
+
   var defRate = 1*localStorage.getItem('defRate')			// default playback speed
   var mediaX = 1*localStorage.getItem('mediaX')				// myPlayer position
   var mediaY = 1*localStorage.getItem('mediaY')
@@ -54,7 +57,7 @@
   var Xref = 0								// click cursor coordinate
   var Yref = 0
   var fade = 0								// myPlayer transition
-
+  var cursor								// hide cursor timer
 
   scaleX = scaleY
   if (!mpv) mpv=0							// external player
@@ -72,12 +75,12 @@
       else if (myInput.matches(':focus')) inca('SearchBox','','',myInput.value) // search media on pc
       else if (type=='document') {var x=thumb.scrollTop; setTimeout(function(){thumb.scrollTo(0,x)},100)}}
     else if (e.key=='Pause' && e.altKey) {thumbSheet=2.4; Play()}	// mpv player - show thumbsheet
-    else if (e.key=='Pause' && e.shiftKey) {				// re-map of long right click
-      if (overMedia && !playing) {lastClick=3;longClick=3;clickEvent()}	// simulate RClick
-      else if (myPlayer.matches(':hover')) myPlayer.currentTime=0	// myPlayer to 0:00
+    else if (e.key=='Pause' && e.shiftKey) {				// inca re-map of long right click
+      if (myPlayer.matches(':hover')) myPlayer.currentTime=0		// myPlayer to 0:00
       else myPlayer.currentTime=thumb.style.start			// to default start time
-      if (playing) thumbSheet=0; myPlayer.play()}
-    else if (e.key=='Pause') {						// re-map of mouse 'Back' key
+      if (playing) {thumbSheet=0; myPlayer.play()}
+      else {lastClick=3;longClick=3;clickEvent()}}			// simulate RClick
+    else if (e.key=='Pause') {						// inca re-map of mouse 'Back' key
       if (playing) closePlayer()
       else if (overMedia && thumb.style.position=='fixed') {		// close popped out thumb
         thumb.style.position=null
@@ -97,6 +100,7 @@
     else if (overMedia) wasMedia=overMedia
     else wasMedia=0
     if (Click==2 && myPanel.matches(':hover')) return			// browser opens new tab
+    myBody.style.cursor='none'
     clickTimer=setTimeout(function() {longClick=Click; clickEvent()},240)}
 
 
@@ -107,19 +111,12 @@
     if (!longClick) clickEvent()					// process click event
     Click=0; wheel=0; gesture=0; longClick=0}
 
-
   function mouseMove(e) {
-    xpos = e.clientX
-    ypos = e.clientY
+    cursor=9
+    xpos=e.clientX
+    ypos=e.clientY
     if (!thumb) return
     if (!myNav.matches(":hover")) myNav.style.display=null
-    if (!playing || thumbSheet) myBody.style.cursor=null
-    else if (!Click && myBody.style.cursor!='crosshair') {
-      if (type != 'image') mySeekbar.style.opacity=1
-      myBody.style.cursor='crosshair'
-      setTimeout(function() {						// hide cursor and seekbar
-        if (xm<0||xm>1||ym<0.9||ym>1) mySeekbar.style.opacity=0
-        myBody.style.cursor='none'},1400)}
     if (myPanel.matches(':hover')) mySelected.style.fontSize='3em'
     else mySelected.style.fontSize=null
     mySelected.style.top = e.pageY +'px'
@@ -142,16 +139,11 @@
         if (thumb.style.position=='fixed') {
           thumb.style.left = xpos-thumb.offsetWidth/2+'px'
           thumb.style.top = ypos-thumb.offsetHeight/2+'px'}}}
-    else if (playing && y<x-2 || gesture==2) {				// move myPlayer
-      gesture = 2
+    else if (playing) {							// move myPlayer
       mediaX += xpos - Xref
       mediaY += ypos - Yref
       localStorage.setItem("mediaX",mediaX.toFixed(0))
       localStorage.setItem("mediaY",mediaY.toFixed(0))}
-    else if (playing && y>x) {						// zoom myPlayer
-      if (scaleY>0.2 || Yref<ypos) {
-        scaleY += (ypos-Yref) * 0.003
-        localStorage.setItem('scaleY',scaleY.toFixed(3))}}
     if (Click && playing) positionMedia(0)
     Xref=xpos; Yref=ypos}
 
@@ -192,19 +184,24 @@
       if (wheelUp) view += 1
       else view -= 1
       View.innerHTML='View '+ (view-6)
-      thumbSize()}
-    else if (type=='image' || thumbSheet) {				// scroll image
-      rect = myPlayer.getBoundingClientRect()
-      if (myPlayer.offsetHeight-rect.bottom<0 && wheelUp) mediaY-=100
-      if (rect.top<0 && !wheelUp) mediaY+=100
-      positionMedia(0.3)}
-    else if (type=='video' || type=='audio') {				// seek
+      thumbSize()} 
+    else if (id=='mySelect' && playing) {				// next/previous
+      if (wheelUp) index++
+      else if (index>1) index--
+      lastClick=0; clickEvent()}
+//      if (type=='video' || type=='audio') {wheel=-50; return}}
+    else if ((id=='myDelete' || id=='myIndex') && (type=='video' || type=='audio')) {	// seek
       if (dur > 120) interval = 3
       else interval = 0.5
       mySeekbar.style.opacity = 1
       if (myPlayer.paused) interval = 0.04
       if (wheelUp) myPlayer.currentTime += interval
       else myPlayer.currentTime -= interval}
+    else if (playing) {							// zoom myPlayer
+      if (scaleY>0.2 && !wheelUp) scaleY *= 0.97
+      else scaleY *= 1.03
+      localStorage.setItem('scaleY',scaleY.toFixed(3))
+      positionMedia(0.15)}
     wheel=0; lastCue=-1}
 
 
@@ -255,6 +252,7 @@
       else if (!playing && !overMedia) myPlayer.currentTime=lastStart	// return to last media
       else if (!thumbSheet && (!playing || lastClick==2)) {
         myPlayer.currentTime=thumb.style.start}				// css variable - poster defaultstart time
+      if (lastClick==3) myPlayer.currentTime=0
       scrolltoIndex(index)			    			// + highlight played media
       positionMedia(0.2)
       Play()},fade*400)}
@@ -281,9 +279,10 @@
     myBody.style.cursor='none'
     myPlayer.volume = 0.05
     if (looping) looping=1
-    setTimeout(function() {
-      if (type=='video' && !thumbSheet && !myPlayer.duration) {		// browser cannot play
-        closePlayer(); playing='mpv'; inca('Media',0,index,para)}},600)	// try external mpv player
+//    if (lastClick==2) clearTimeout(playingTimer)
+//    playingTimer = setTimeout(function() {
+//      if (type=='video' && !thumbSheet && !myPlayer.duration) {		// if browser cannot play
+//        closePlayer(); playing='mpv'; inca('Media',0,index,para)}},500)	// try external mpv player
     lastCue=-1; lastClick=0}
 
 
@@ -327,10 +326,16 @@
     return 1}
 
 
-  function timerEvent() {						// every 100mS
+  function timerEvent() {						// every 100mS 
     xw = xpos / innerWidth
     yw = ypos / innerHeight
     if (!thumb) return
+    if (cursor) cursor--
+    if (!playing || thumbSheet) myBody.style.cursor=null		// hide cursor and seekbar
+    else if (!cursor || Click) {mySeekbar.style.opacity=0; myBody.style.cursor='none'}
+    else {myBody.style.cursor='crosshair'; if (type!='image') mySeekbar.style.opacity=1}
+    if (playing) myMask.style.backgroundColor='rgba(0,0,0,'+scaleY*2.6+')' 
+    else myMask.style.display='none'
     if (defRate==1) myRate.innerHTML = 'Speed'
     else myRate.innerHTML = 'Speed '+ defRate
     if (rate==1) mySpeed.innerHTML = 'Speed'
@@ -347,8 +352,6 @@
     if (looping) {myLoop.style.color='red'} else myLoop.style.color=null
     if (myPlayer.muted) {myMute.style.color='red'} else myMute.style.color=null
     if (skinny<0) {myFlip.style.color='red'} else myFlip.style.color=null
-    if (playing) myMask.style.backgroundColor='rgba(0,0,0,'+scaleY*2.6+')' 
-    else myMask.style.display='none'
     if (myPlayer.style.opacity==0) {if (myPlayer.volume>0.01) myPlayer.volume/=2}
     else if (myPlayer.volume < 0.8) myPlayer.volume *= 1.3		// fade sound in/out
     if (playing=='browser') {
@@ -549,7 +552,7 @@
     if (yw > 0.8) offset=60						// cursor near window bottom, add offset
     myNav.style.left=xpos-45+'px'; myNav.style.top=ypos-10-offset+'px'
     myNav.style.display='block'; myNav.style.background='#15110acc'
-    if (overMedia || playing) myNav2.style.display='block' 
+    if (overMedia) myNav2.style.display='block' 
     else myNav2.style.display='none'}
 
   function globals(vi, pg, ps, so, fi, lv, se, pl, ix) {		// import globals to java from inca

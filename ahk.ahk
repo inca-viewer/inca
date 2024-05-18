@@ -1100,8 +1100,8 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n if(
 <div oncontextmenu="if (yw>0.1 && !overText || playing) {event.preventDefault()}">`n`n
 <div id='myNav' class='context'>`n
 <a id='mySelect' onwheel="wheelEvent(event, id, this)" onmousedown="if (wasMedia||playing) {sel(wasMedia)} else{selectAll()}">Select</a>`n
-<a id='myDelete' onmousedown="if(!event.button) {inca('Delete','',wasMedia)}">Delete</a>`n
-<a id='myIndex' onmousedown="inca('Index','',wasMedia)">Index</a>`n
+<a id='myDelete' onwheel="wheelEvent(event, id, this)" onmousedown="if(!event.button) {inca('Delete','',wasMedia)}">Delete</a>`n
+<a id='myIndex' onwheel="wheelEvent(event, id, this)" onmousedown="inca('Index','',wasMedia)">Index</a>`n
 <span id='myNav2'>
 <a id='myFav' onmouseup="if (playing) {x=myPlayer.currentTime.toFixed(1)} else{x=thumb.style.start}; if(!event.button && !longClick) inca('Favorite', x, index)">Fav</a>`n
 <a id='myMute' onmouseup='mute()'>Mute</a>`n
