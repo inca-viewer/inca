@@ -98,7 +98,7 @@
 
   function mouseDown(e) {						// detect long click
     Click=e.button+1; lastClick=Click; longClick=0;
-    gesture=0; Xref=xpos; Yref=ypos; block=140
+    gesture=0; Xref=xpos; Yref=ypos; block=100
     sessionStorage.setItem('scroll', myView.scrollTop)
     if (Click==2) e.preventDefault()					// middle click
     else if (!myNav.matches(":hover")) {
@@ -188,11 +188,11 @@
         rate = Math.round(100*rate)/100
         thumb.style.rate = rate}}					// css holds edited rate
     else if (id=='mySkinny') {						// skinny
-      if (wheelUp) skinny -= 0.003
-      else skinny += 0.003
+      if (wheelUp) skinny -= 0.01
+      else skinny += 0.01
       skinny=Math.round((1000*skinny))/1000
       thumb.style.skinny = skinny					// css holds edited skinny
-     getParameters(index)
+      getParameters(index)
       positionMedia(0)}
     else if (id=='View') {						// thumb size
       if (wheelUp) view += 1
@@ -202,7 +202,7 @@
     else if (id=='myPic' || id=='mySelect') {				// next / previous
       if (wheelUp) index++
       else if (index>1) index--
-      getParameters(index)
+      if (!getParameters(index)) index--
       scrolltoIndex(index)}
     else if ((yw<0.2 || id=='myTitle') && !thumbSheet && type!='image') { // seek
       if (dur > 120) interval = 3
@@ -225,6 +225,7 @@
     if (!playing && !longClick && !overMedia) return
     if (lastClick==3 && !longClick) return
     if (longClick==3 && !playing && !overMedia) return
+if (myPic.matches(':hover')) thumbSheet=0
     if (longClick && myInput.matches(':hover')) return
     if (longClick && myPanel.matches(':hover')) return			// copy files instead of move
     if (myNav.matches(':hover') && lastClick==1) return
@@ -378,7 +379,8 @@
     else if (myPlayer.volume < 0.8) myPlayer.volume *= 1.3		// fade sound in/out
     if ((","+selected).match(","+index+",")) {mySelect.style.color='red'; myPlayer.style.outline='1px solid red'}
     else {mySelect.style.color=null; myPlayer.style.outline=null}
-    if (playing!='browser' && !myNav.matches(':hover') || type=='image' || thumbSheet) mySeekbar.style.opacity=0
+    if (!cue && !playing && !myNav.matches(':hover') || type=='image' || thumbSheet) mySeekbar.style.opacity=0
+if (cue) mySeekbar.style.opacity=1
     if (playing=='browser') {
       myPlayer.playbackRate=rate
       rect = myPlayer.getBoundingClientRect()
@@ -422,7 +424,8 @@
       cueW = Math.abs(scaleX*myPlayer.offsetWidth*(cue - Math.round(myPlayer.currentTime*100)/100)/dur)
       if (cue < 0.1+Math.round(myPlayer.currentTime*100)/100) {
         cueX = rect.left; cueW = Math.abs(scaleX*myPlayer.offsetWidth*myPlayer.currentTime/dur)}}
-    mySeekbar.style.top = rect.top +'px'
+    if (rect.top>0) mySeekbar.style.top = rect.top +'px'
+    else mySeekbar.style.top = '0px'
     mySeekbar.style.left = cueX +'px'
     mySeekbar.style.width = cueW +'px'}
 
@@ -588,8 +591,8 @@
       navigator.clipboard.writeText(x); return}
     for (i=1; el=document.getElementById('thumb'+i); i++) {		// add cue edits to messages
       if (el.style.skinny) messages = messages + '#Skinny#'+el.style.skinny+'#'+i+'#'+cue
-      if (el.style.rate) messages = messages + '#Rate#'+el.style.rate+'#'+i+'#'+cue
-      if (cue) {cue=0; el.style.skinny=0; el.style.rate=0}}
+      if (el.style.rate) messages = messages + '#Rate#'+el.style.rate+'#'+i+'#'+cue}
+//      if (cue) {cue=0; el.style.skinny=0; el.style.rate=0}}
     if (!select) {select=''} else {select=select+','}
     if (command == 'Favorite' && !selected) document.getElementById('myFavicon'+index).innerHTML='&#10084'
     if (selected && command!='Close' && command!='Reload') select=selected // selected is global value

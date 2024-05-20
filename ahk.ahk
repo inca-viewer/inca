@@ -470,28 +470,29 @@
               return
             FileRead, cues, %inca%\cache\cues\%media%.txt
             StringTrimRight, cues, cues, 2				; remove end `r`n
-            Sort, cues, NZ						; sort by time entry
+            Sort, cues, NZ						; sort cues by time entry
             FileDelete, %inca%\cache\cues\%media%.txt
-            FileAppend, %cues%`r`n, %inca%\cache\cues\%media%.txt
+            if cues
+              FileAppend, %cues%`r`n, %inca%\cache\cues\%media%.txt
             id := StrSplit(selected, ",").1
             if !value							; current media time
               value = 0.00
-            if (!address)						; cue time
+            if (!address)						; no cue time
               {
-              if (value != "1" || address == value)
-                FileAppend, %value%|cap|`r`n, %inca%\cache\cues\%media%.txt, UTF-8
-              run, %inca%\cache\cues\%media%.txt
+              IfExist, %inca%\cache\cues\%media%.txt
+                run, %inca%\cache\cues\%media%.txt
+;              FileAppend, %value%|cap|`r`n, %inca%\cache\cues\%media%.txt, UTF-8
               }
-            else 
-              {
-              FileAppend, %address%|goto|%value%`r`n, %inca%\cache\cues\%media%.txt, UTF-8
-              Popup("Done . . .",1000,0,0)
-              }
+            else FileAppend, %address%|goto|%value%`r`n, %inca%\cache\cues\%media%.txt, UTF-8
+            Popup("Done . . .",1000,0,0)
             }
         if (command == "jpg")
+          {
           if (type == "video")
             run, %inca%\cache\apps\ffmpeg.exe -ss %value% -i "%src%" -y "%profile%\Downloads\%media% @%value%.jpg",, Hide
           else run, %inca%\cache\apps\ffmpeg.exe -i "%src%" -y "%profile%\Downloads\%media% @%value%.jpg",, Hide
+          Popup("Done . . .",1000,0,0)
+          }
         if (command == "mp3" || command == "mp4")
             {
             if (selected && !address)
@@ -1111,8 +1112,8 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n if(
 <a id='mySpeed' onwheel='wheelEvent(event, id, this)' onmouseup='togglePause()' onclick="inca('Close')"></a>`n
 <a id='mySkinny' onwheel='wheelEvent(event, id, this)' onmouseup='togglePause()' onclick="inca('Close')"></a>`n
 <a id='myFlip' onmousedown='flip()'>Flip</a>`n
-<a id='myCue' onclick="if(!cue) {if (playing) {myPlayer.pause(); cue=Math.round(myPlayer.currentTime*100)/100} else {inca('EditCue',1,index,cue)}} else {inca('Close'); myPlayer.play()}">Cue</a>`n
-<a id='Cap' onmousedown="myPlayer.pause(); inca('EditCue', myPlayer.currentTime.toFixed(2), wasMedia, cue)">caption</a>`n
+<a id='myCue' onmousedown="if (!playing){inca('EditCue',0,wasMedia,0)} else {myPlayer.pause(); cue=Math.round(myPlayer.currentTime*100)/100}">Cue</a>`n
+<a id='Cap' onmousedown="inca('EditCue', myPlayer.currentTime.toFixed(2), index, cue); cue=0">caption</a>`n
 <a id='Mp3' onmousedown="inca('mp3', myPlayer.currentTime.toFixed(2), index, cue); cue=0; myPlayer.play()">mp3</a>`n
 <a id='Mp4' onmousedown="inca('mp4', myPlayer.currentTime.toFixed(2), index, cue); cue=0; myPlayer.play()">mp4</a>`n
 <a id='Jpg' onmousedown="inca('jpg', myPlayer.currentTime.toFixed(2), index)"></a></span>`n
