@@ -13,6 +13,14 @@
   c:hover {overflow:visible; transition:0.2s; transform:scale(1.1,1.1); color:lightsalmon}
   c:active {color:red; transform:scale(0.8,0.8)}
 
+.pic {
+  width:12em;
+  max-height:12em;
+  position:absolute;
+  margin-left:4em;
+  margin-top:0.6em;
+  border-radius:7%}
+
 .save {
   display:none;
   position:absolute;
@@ -40,15 +48,6 @@
   position:absolute;
   opacity:0;
   border-radius:4%}
-
-.preview {					/* small preview seeking video */
-  position:absolute;
-  display:none;
-  z-index:-1;
-  user-select:none;
-  border-radius:6%;
-  height:100px;
-  transition:opacity 0.5s}
 
 .myList {					/* list view */
   position:absolute;
@@ -99,7 +98,7 @@
   pointer-events:none;
   translate: 6em;
   border-radius:0.5em;
-padding:0.3em;
+  padding:0.3em;
   margin:auto;
   opacity:0}
 
@@ -159,7 +158,9 @@ padding:0.3em;
 
 .seekbar {					/* video progress bar	*/
   position:absolute;
-  display:none;
+  pointer-events:none;
+  z-index:999;
+  opacity:0;
   border-radius:2px;
   color:lightsalmon;
   font-size:1.4em;
@@ -214,6 +215,7 @@ padding:0.3em;
   min-width:5em;
   position:fixed;
   font-size:1.1em;
+  font-variant-caps:petite-caps;
   transition:0.14s;
   border-radius:1em;
   white-space:nowrap;
@@ -221,6 +223,7 @@ padding:0.3em;
 
 .context a {
   display:block;
+  width:16em;
   height:1em;
   margin:auto;
   padding:0.5em;
