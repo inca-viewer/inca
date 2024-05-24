@@ -14,12 +14,14 @@
   c:active {color:red; transform:scale(0.8,0.8)}
 
 .pic {
-  width:12em;
-  max-height:12em;
+  --start;
+  background-size:600%;
+  background-repeat:no-repeat;
   position:absolute;
-  margin-left:4em;
-  margin-top:0.6em;
+  margin-left:4.5em;
+  margin-top:1em;
   border-radius:7%}
+ 
 
 .save {
   display:none;
@@ -38,6 +40,7 @@
   border-radius:0.5em;
   background-color:#1b1814;
   color:#826858;
+  width:50em;					/* becomes max width	*/
   line-height:1.1em;
   font-family:inherit;
   border:none;
@@ -47,7 +50,7 @@
 .player {					/* media player element */
   position:absolute;
   opacity:0;
-  border-radius:4%}
+  border-radius:3%}
 
 .myList {					/* list view */
   position:absolute;
@@ -87,10 +90,10 @@
   --start;					/* default start time */
   --skinny;
   --rate;
+  transition:0.15s;
   position:relative;
   outline:none;
   margin:auto;
-  padding:0.3em;
   border-radius:1em}
 
 .thumb2 {					/* list view pop up thumbs */
@@ -212,23 +215,20 @@
 .context {					/* right click menu */
   display:none;
   z-index:888;
-  min-width:5em;
   position:fixed;
   font-size:1.1em;
   font-variant-caps:petite-caps;
-  transition:0.14s;
-  border-radius:1em;
-  white-space:nowrap;
+  transition:0.1s;
+  border-radius:0.7em;
   background:inherit}
 
 .context a {
   display:block;
-  width:16em;
+  width:3.5em;
+//  min-width:3.5em;
   height:1em;
-  margin:auto;
-  padding:0.5em;
-  padding-top:0;
-  white-space:nowrap;
+  padding:0.2em;
+  padding-right:0;
   border-radius:1em;
   color:lightsalmon}
 .context a:hover {background:#1b1814}
