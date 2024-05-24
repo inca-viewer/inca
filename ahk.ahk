@@ -1699,8 +1699,10 @@ else mediaList = %mediaList%<div id="entry%j%" style="max-width:%view%em; paddin
               WinMove, ahk_class mpv,,mpvXpos,mpvYpos,mpvWidth,mpvHeight
             return
             }
-          WinGet, state, MinMax, ahk_group Browsers
-          if (click == "RButton" && !incaTab && state > -1)
+          MouseGetPos,,, id ; get the window below the mouse 
+          WinGet, cur, ID, ahk_id %id%
+          WinGet, desk, ID , ahk_class Progman
+          if (click=="LButton" && desk==cur)
             {
             WinActivate, ahk_group Browsers
             if (y < 0)

@@ -2,9 +2,6 @@
 // Debugging	- use mySelected.innerHTML or alert()
 // media from near edge zoom on cursor like google earth
 
-// goto cue
-// setting cue on music zoom
-
 
   var defRate = 1*localStorage.getItem('defRate')			// default playback speed
   var mediaX = 1*localStorage.getItem('mediaX')				// myPlayer position
@@ -99,7 +96,7 @@
 
 
   function mouseDown(e) {						// detect long click
-    Click=e.button+1; lastClick=Click; longClick=0; cursor=0
+    Click=e.button+1; lastClick=Click; longClick=0; cursor=6
     gesture=0; Xref=xpos; Yref=ypos; block=100
     sessionStorage.setItem('scroll', myView.scrollTop)
     if (Click==2) e.preventDefault()					// middle click
@@ -237,7 +234,6 @@
   function clickEvent() {						// functional logic
     if (lastClick==3 && !longClick) return
     if (gesture || title.matches(':hover')) return			// allow rename of media in htm
-    if (longClick==3 && !playing && !overMedia) return
     if (longClick && myRibbon.matches(':hover')) return
     if (longClick && myInput.matches(':hover')) return
     if (longClick && myPanel.matches(':hover')) return			// copy files instead of move
