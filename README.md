@@ -9,7 +9,7 @@ Lightweight & portable (no installation)<br>
 Pure vanilla java / ahk script<br>
 No IDE, no libraries, no external calls, no browser extensions<br> 
 Does not mess with any settings - see source code<br>
-Just configure settings.ini in notepad, then run compile.exe<br>
+Just configure your own settings.ini in notepad, then run compile.exe<br>
 browser will open in pictures folder<br>
 To 'uninstall', exit from taskbar & delete inca folder<br>
 You can change source code in notepad. Compiles in under a second<br><br>
@@ -21,13 +21,14 @@ beautiful fast interface<br>
 6 x 6 Video thumbsheets<br>
 Shuffle folders & playlists<br>
 Search, organize, edit & view media files in browser<br>
+Move, Copy, Rename media in browser<br>
 Create slideshows, captions, favorites, clips, joins, conversions etc.<br>
-Music and playlists from browser tab<br>
+Music and playlists from browser tabs<br>
 Sleep timer gradually lowers master volume when mouse quiet<br>
 To see if you already have a video from an outside website,<br>
 Select part of the title text then 'long click' on it<br>
 A new tab will show all matching files from your computer<br>
-Thumbsheets index at about 30 videos per minute<br><br>
+6x6 Thumbsheets index at about 30 videos per minute<br><br>
 
 <img src="screens/mouse.jpg" width="20%"/>
 
@@ -35,26 +36,23 @@ Thumbsheets index at about 30 videos per minute<br><br>
 
 Middle click
 - next media
-- long click - previous media - list / thumb view toggle
+- long click - previous media or list / thumb toggle
 
 Back click
 - exit media
-- page top
-- reset page
+- or page top
+- or reset page
 
 Long click
 - show 6 x 6 thumbsheet
-- restart media
 - on white space - return to last media
 - on selected text - find media matches
 - on folder - copies selected files (instead of move)
 
-Right click slide
-- left / right - volume
+Long RightClick - restart media to 0 or default
 
-Left click slide
-- in player - position/zoom media
-- over thumbs - select media
+RightClick slide - volume
+LeftClick slide - position/zoom media or thumbs
 
 Supports rotated screen + osk onscreen keyboard<br>
 long press on any text area for osk<br>
