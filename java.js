@@ -2,6 +2,8 @@
 // Debugging	- use mySelected.innerHTML or alert()
 
 // mkv not play win 11
+// zoom cues
+
 
   var defRate = 1*localStorage.getItem('defRate')			// default playback speed
   var mediaX = 1*localStorage.getItem('mediaX')				// myPlayer position
@@ -209,7 +211,7 @@
       else if (index>1) index--
       if (!getParameters(index)) index--
       if (playing && !thumbSheet && type=='video') {
-        myPlayer.currentTime=thumb.style.start; myPlayer.play()}
+        myPlayer.currentTime=thumb.style.start}
       scrolltoIndex(index)}
     else if (type=='image' || thumbSheet) {				// scroll image
       rect = myPlayer.getBoundingClientRect()
@@ -239,7 +241,7 @@
     if (myTitle.matches(':hover') && !playing) {overMedia=index; lastClick=0}
     if (myPic.matches(':hover')) {
       if (thumbSheet) myPlayer.currentTime=myPic.style.start
-      overMedia=index; lastClick=0; thumbSheet=0}
+        overMedia=index; lastClick=0; thumbSheet=0}
     if (!playing && !longClick && !overMedia) return
     if (myNav.matches(':hover') && lastClick==1) return
     if (!gesture && longClick==1 && !playing && playlist && wasMedia && selected) {inca('Move', wasMedia); return}
@@ -388,12 +390,12 @@
       if (cueList && !thumbSheet) Cues(myPlayer.currentTime, index)
       var z=1
       if (thumbSheet) z=thumbSheet
+      else lastStart=myPlayer.currentTime
       xm = myPlayer.offsetWidth*scaleX*z
       ym = myPlayer.offsetHeight*scaleY*z
       xm = (xpos - rect.left) / Math.abs(xm)
       ym = (ypos - rect.top) / Math.abs(ym)
       myPlayer.style.zIndex=Zindex+1
-      lastStart=myPlayer.currentTime
       if (!myNav.matches(':hover')) seekBar()
       positionMedia(0)}
     else {
