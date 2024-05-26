@@ -9,6 +9,7 @@ Lightweight & portable (no installation)<br>
 Pure vanilla java / ahk script<br>
 No IDE, no libraries, no external calls, no browser extensions<br> 
 Does not mess with any settings - see source code<br>
+supports most media - mp4, wmv, avi, mpg, mkv etc.<br>
 Just configure your own settings.ini in notepad, then run compile.exe<br>
 browser will open in pictures folder<br>
 To 'uninstall', exit from taskbar & delete inca folder<br>
