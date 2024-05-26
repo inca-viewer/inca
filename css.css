@@ -62,16 +62,15 @@
 
 .myPanel {					/* top panel element showing folders etc.*/
   position:relative;
-  top:3em;
-  width:100%;
-  margin:-1em;
+  top:5em;
+  width:96%;
   font-size:0.9em;
   white-space:nowrap;
   overflow:hidden;
   height:20em}
 
 .panel {					/* inner panel list container */
-  height:93vh;
+  height:76vw;
   position:absolute;
   overflow-y:scroll;
   overflow-x:hidden;
@@ -79,8 +78,8 @@
   transform-origin:right top;
   background:#15110a;
   padding-right:34%;
-  width:10em;					/* entry width	*/
-  left:-48%}
+  width:9em;					/* entry width	*/
+  left:-46%}
 
 .p2 {						/* panel entries */
   overflow:hidden;
@@ -128,7 +127,7 @@
   font-family:inherit;
   padding-left:1.5em; 
   border:none;
-  height:1.4em;
+  height:1.2em;
   outline:none;
   overflow:hidden;
   white-space:nowrap}

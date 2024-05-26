@@ -1,7 +1,7 @@
 
 // Debugging	- use mySelected.innerHTML or alert()
-// media from near edge zoom on cursor like google earth
 
+// mkv not play win 11
 
   var defRate = 1*localStorage.getItem('defRate')			// default playback speed
   var mediaX = 1*localStorage.getItem('mediaX')				// myPlayer position
@@ -46,7 +46,7 @@
   var dur = 0								// duration (from inca)
   var rate = 1								// current myPlayer speed
   var skinny = 1							// media width
-  var scaleX								// myPlayer width (skinny)
+  var scaleX = 0.72								// myPlayer width (skinny)
   var scaleY = 0.72							// myPlayer size
   var xw = 0.5								// cursor over window ratio
   var yw = 0.5
@@ -61,7 +61,6 @@
   var block = 0								// block wheel timer
   var ratio = 1								// media width to height ratio
 
-  scaleX = scaleY
   if (!mpv) mpv=0							// external player
   if (!defRate) defRate=1						// default speed
   intervalTimer = setInterval(timerEvent,100)				// background tasks every 100mS
@@ -160,7 +159,7 @@
       localStorage.setItem("mediaY",mediaY.toFixed(0))}
     else if (playing && y>x) {						// zoom myPlayer
       if (scaleY>0.2 || Yref<ypos) {
-        scaleY += (ypos-Yref) * 0.003
+        scaleY += (ypos-Yref) * 0.01
         localStorage.setItem('scaleY',scaleY.toFixed(3))}}
     positionMedia(0); Xref=xpos; Yref=ypos}
 
@@ -478,7 +477,9 @@
       if (!thumbSheet) myPlayer.poster=thumb.poster}
     if (type!='image') myPic.poster=''
     else myPic.poster=thumb.poster
-    if (type=='video') myPic.style.backgroundImage = 'url(\"'+x+'\")'	// use thumbsheet for preview sprites
+    if (type=='video') {
+      myPic.style.backgroundImage = 'url(\"'+x+'\")'			// use thumbsheet for preview sprites
+      myPic.style.transform='scale('+skinny+',1)'}
     else myPic.style.backgroundImage = ''
     var ratio = thumb.offsetWidth/thumb.offsetHeight
     if (ratio>1) {x=innerWidth*0.70; y=x/ratio}				// landscape

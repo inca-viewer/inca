@@ -384,14 +384,17 @@
             {
             if selected							; force index of selected media
               {
-
-              index(src,1)
-              if playlist
-                Runwait, %inca%\cache\apps\ffmpeg.exe -ss %seek% -i "%src%" -y -vf scale=1280:1280/dar -vframes 1 "%inca%\cache\posters\%media%%A_Space%%seek%.jpg",, Hide
-              reload := 2
-              selected =
+              Loop, Parse, selected, `,
+                if getMedia(A_Loopfield)
+                  {
+                  index(src,1)
+                  if playlist
+                    Run, %inca%\cache\apps\ffmpeg.exe -ss %seek% -i "%src%" -y -vf scale=1280:1280/dar -vframes 1 "%inca%\cache\posters\%media%%A_Space%%seek%.jpg",, Hide
+                  reload := 2
+                  }
               }
             else SetTimer, indexPage, -100, -2
+            selected =
             }
         if (command == "History")					; maintain play history
             {
@@ -1115,7 +1118,7 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n if(
 <a id='Cap' style='width:50`%' onmousedown="inca('EditCue', myPlayer.currentTime.toFixed(2), index, cue); cue=0">caption</a>`n
 <a id='Mp3' onmousedown="inca('mp3', myPlayer.currentTime.toFixed(2), index, cue); cue=0; myPlayer.play()">mp3</a>`n
 <a id='Mp4' onmousedown="inca('mp4', myPlayer.currentTime.toFixed(2), index, cue); cue=0; myPlayer.play()">mp4</a>`n
-<a id='Jpg' onmousedown="inca('jpg', myPlayer.currentTime.toFixed(2), index)"></a></span>`n
+<a id='Jpg' onmouseup="inca('jpg', myPlayer.currentTime.toFixed(2), index); togglePause()"></a></span>`n
 </div>`n`n
 
 <div id='myMask' class="mask" onwheel="wheelEvent(event, id, this)">`n</div>
@@ -1127,7 +1130,7 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n if(
 
 <div id='myPanel' class='myPanel'>`n <div id='panel' class='panel'>`n`n%panelList%`n</div></div>`n`n
 
-<div id='myRibbon' class='ribbon' style='height:1.4em; font-size:1.1em; justify-content:center; background:#1b1814; top:-5.8em'>`n
+<div id='myRibbon' class='ribbon' style='height:1.4em; font-size:1.1em; justify-content:center; background:#1b1814; top:-5em'>`n
 <a style='width:6em; text-align:center; color:salmon; font-weight:bold'>%listSize%</a>`n
 <a style='width:3em; text-align:center; color:red' onmouseover="Sub.scrollIntoView(); myView.scrollTo(0,0)">%subs%</a>`n
 <a style='width:6em; text-align:center; %x21%' onmousedown="inca('Path','','','fol|1')" onmouseover="Fol.scrollIntoView(); myView.scrollTo(0,0)">&#x1F4BB;&#xFE0E;</a>`n
@@ -1702,13 +1705,16 @@ else mediaList = %mediaList%<div id="entry%j%" style="max-width:%view%em; paddin
           MouseGetPos,,, id ; get the window below the mouse 
           WinGet, cur, ID, ahk_id %id%
           WinGet, desk, ID , ahk_class Progman
-          if (click=="LButton" && desk==cur)
+         if !WinExist("ahk_class Notepad")
             {
-            WinActivate, ahk_group Browsers
-            if (y < 0)
-              send, ^0
-            else send, ^{+}
-            sleep 111
+            if (click=="LButton" && desk==cur)
+              {
+              WinActivate, ahk_group Browsers
+              if (y < 0)
+                send, ^0
+              else send, ^{+}
+              sleep 111
+              }
             }
           }
         }
