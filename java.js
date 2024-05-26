@@ -214,7 +214,8 @@
       if (playing && !thumbSheet && type=='video') {
         myPlayer.currentTime=thumb.style.start
         if (!x) myPlayer.play()}
-      scrolltoIndex(index)}
+      scrolltoIndex(index)
+      Sprites()}
     else if (type=='image' || thumbSheet) {				// scroll image
       rect = myPlayer.getBoundingClientRect()
       if (wheelUp) mediaY-=100
@@ -362,7 +363,7 @@
     if (skinny>0.99 && skinny<1.01) mySkinny.innerHTML = 'Skinny'
     else mySkinny.innerHTML = skinny.toFixed(2)
     if (selected) mySelected.innerHTML = selected.split(',').length -1
-//    else mySelected.innerHTML = ''
+    else mySelected.innerHTML = ''
     if (playlist) myFav.innerHTML='Fav &#10084'
     if (myNav.matches(':hover') && (playing || wasMedia)) myPic.style.display=null
     else myPic.style.display='none'
@@ -421,7 +422,7 @@
       cueW = Math.abs(scaleX*myPlayer.offsetWidth*(cue - x)/dur)
       if (cue < 0.2+x) {
         cueX = rect.left; cueW = Math.abs(scaleX*myPlayer.offsetWidth*myPlayer.currentTime/dur)}}
-    if (rect.bottom<innerHeight) mySeekbar.style.top = rect.bottom -9 +'px'
+    if (rect.bottom<innerHeight) mySeekbar.style.top = rect.bottom -12 +'px'
     else mySeekbar.style.top = innerHeight -16 +'px'
     mySeekbar.style.left = cueX +'px'
     mySeekbar.style.width = cueW +'px'}
@@ -502,7 +503,7 @@
     var z = myPic.getBoundingClientRect()
     var x = (xpos-z.left)/myPic.offsetWidth
     mySeekbar.style.opacity=1
-    mySeekbar.style.top = z.bottom -2 +'px'
+    mySeekbar.style.top = z.bottom -12 +'px'
     mySeekbar.style.left = z.left -8 +'px'
     mySeekbar.style.width = myPic.offsetWidth*x +'px'
     z = 20 * Math.ceil(x*35)
@@ -628,7 +629,7 @@
     messages=''}
 
   function Time(z) {if (z<0) return '0:00'; var y=Math.floor(z%60); var x=':'+y; if (y<10) {x=':0'+y}; return Math.floor(z/60)+x}
-  function togglePause() {if(!thumbSheet && lastClick==1) {if (myPlayer.paused) {myPlayer.play()} else {myPlayer.pause()}}}
+  function togglePause() {if(!thumbSheet && lastClick==1 && !longClick) {if (myPlayer.paused) {myPlayer.play()} else {myPlayer.pause()}}}
   function selectAll() {for (i=1; document.getElementById('thumb'+i); i++) {sel(i)}}
   function flip() {skinny*=-1; scaleX*=-1; thumb.style.skinny=skinny; positionMedia(0.6); thumb.style.transform='scaleX('+skinny+')'}
   function mute() {if(!longClick) {myPlayer.volume=0.05; myPlayer.muted=1*localStorage.getItem('muted')
