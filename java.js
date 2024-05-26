@@ -209,9 +209,11 @@
     else if (myTitle.matches(':hover') || mySelect.matches(':hover')) {	// next / previous
       if (wheelUp) index++
       else if (index>1) index--
+      var x=myPlayer.paused
       if (!getParameters(index)) index--
       if (playing && !thumbSheet && type=='video') {
-        myPlayer.currentTime=thumb.style.start}
+        myPlayer.currentTime=thumb.style.start
+        if (!x) myPlayer.play()}
       scrolltoIndex(index)}
     else if (type=='image' || thumbSheet) {				// scroll image
       rect = myPlayer.getBoundingClientRect()
@@ -360,7 +362,7 @@
     if (skinny>0.99 && skinny<1.01) mySkinny.innerHTML = 'Skinny'
     else mySkinny.innerHTML = skinny.toFixed(2)
     if (selected) mySelected.innerHTML = selected.split(',').length -1
-    else mySelected.innerHTML = ''
+//    else mySelected.innerHTML = ''
     if (playlist) myFav.innerHTML='Fav &#10084'
     if (myNav.matches(':hover') && (playing || wasMedia)) myPic.style.display=null
     else myPic.style.display='none'
@@ -420,7 +422,7 @@
       if (cue < 0.2+x) {
         cueX = rect.left; cueW = Math.abs(scaleX*myPlayer.offsetWidth*myPlayer.currentTime/dur)}}
     if (rect.bottom<innerHeight) mySeekbar.style.top = rect.bottom -9 +'px'
-    else mySeekbar.style.top = innerHeight -9 +'px'
+    else mySeekbar.style.top = innerHeight -16 +'px'
     mySeekbar.style.left = cueX +'px'
     mySeekbar.style.width = cueW +'px'}
 
