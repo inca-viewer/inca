@@ -507,11 +507,11 @@
                   run, %inca%\cache\apps\ffmpeg.exe -i "%src%" "%dest%",,Hide
                   }
               }
-            else if address						; cue point time
+            else if address						; cue point
               {
-              x = @%value%						; converts value to string
+              x = @%value%						; suffix
               y = %mediaPath%\%media% %x%.%command%
-              if (!address || value == address)
+              if (!address || value == address || (value-address>0 && value-address<0.2))
                 run, %inca%\cache\apps\ffmpeg.exe -ss %value% -i "%src%" "%y%",,Hide
               else if (address-value>0.01 && address-value<0.2)
                 run, %inca%\cache\apps\ffmpeg.exe -ss 0 -to %address% -i "%src%" "%y%",,Hide
@@ -1114,7 +1114,7 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n if(
 <a id='mySpeed' onclick="inca('Close')"></a>`n
 <a id='mySkinny' onclick="inca('Close')"></a>`n
 <a id='myFlip' onmouseup='flip(); togglePause()'>Flip</a>`n
-<a id='myCue' onmousedown="if (!playing){inca('EditCue',0,wasMedia,0)} else cue=Math.round(myPlayer.currentTime*100)/100">Cue</a>`n
+<a id='myCue' onmouseup="if (!playing){inca('EditCue',0,wasMedia,0)} else {cue=Math.round(myPlayer.currentTime*100)/100; myNav.style.display='none'; togglePause()}">Cue</a>`n
 <a id='Cap' style='width:50`%' onmousedown="inca('EditCue', myPlayer.currentTime.toFixed(2), index, cue); cue=0">caption</a>`n
 <a id='Mp3' onmousedown="inca('mp3', myPlayer.currentTime.toFixed(2), index, cue); cue=0; myPlayer.play(); myNav.style.display=null">mp3</a>`n
 <a id='Mp4' onmousedown="inca('mp4', myPlayer.currentTime.toFixed(2), index, cue); cue=0; myPlayer.play(); myNav.style.display=null">mp4</a>`n
@@ -1289,7 +1289,7 @@ if listView
   mediaList = %mediaList% %fold%<table onmouseout="title%j%.style.color=null; thumb%j%.style.opacity=0; overMedia=0">`n <tr id="entry%j%"`n onmouseover="title%j%.style.color='lightsalmon'; overThumb(%j%, thumb%j%)">`n <td onmouseenter='thumb%j%.style.opacity=0'>%ext%`n <video id='thumb%j%' onmousedown="getParameters(%j%, '%type%', '%cueList%', %dur%, %start%, %size%, event)" class='thumb2' style="max-width:%view%em; max-height:%view%em"`n %src%`n %poster%`n preload=%preload% muted loop type="video/mp4"></video></td>`n <td>%size%</td>`n <td style='min-width:6em' onmouseover='thumb%j%.style.opacity=1'>%durT%</td>`n <td onmouseover='thumb%j%.style.opacity=1'>%date%</td>`n <td style='min-width:4.4em'>%j%</td>`n <td id='myFavicon%j%' style='width:0; translate:-1em; white-space:nowrap; font-size:0.7em; color:salmon; min-width:1em'>%favicon%</td>`n <td style='width:99em'><input id="title%j%" onmouseover='overText=1' onmouseout='overText=0; Click=0' class='title' type='search' value='%media_s%'`n oninput="wasMedia=%j%; renamebox=this.value"></td>`n <td>%fo%</td></tr></table>`n`n
 
 else if ((ext == "txt" || ext=="m3u") && (textCount+=1) <= 20)
-  mediaList = %mediaList%<div id="entry%j%" style="display:flex; position:relative; padding-top:%view4%em" onmouseover='overText=1' onmouseout='overText=0'>`n <span><input id='title%j%' class='title' style='text-align:center; background:#15110a; top:8px; padding-left:1em; font-size:%cap_size%em; position:absolute' type='search' value='%media_s%'`n onmousedown='thumb%j%.scrollTo(0,0)'`n oninput="wasMedia=%j%; renamebox=this.value"></span>`n <span id='Save%j%' class='save' onclick="inca('Text',%j%)">Save</span>`n <textarea id='thumb%j%' rows=12 class='text' style='font-size:%cap_size%em; max-width:%view%em' onmouseover="overThumb(%j%, this)" onmouseout='overMedia=0'`n oninput="if(editing&&editing!='%j%') {inca('Text',editing)}; editing='%j%'; this.style.background='#15110a'; Save%j%.style.display='block'" onmousedown="getParameters(%j%,'document','',0,0,%size%,event)">`n%str2%</textarea></div>`n`n
+  mediaList = %mediaList%<div id="entry%j%" style="display:flex; position:relative; padding-top:%view4%em" onmouseover='overText=1' onmouseout='overText=0'>`n <span><input id='title%j%' class='title' style='text-align:center; background:#15110a; top:8px; padding-left:1em; font-size:%cap_size%em; position:absolute' type='search' value='%media_s%'`n onmousedown='thumb%j%.scrollTo(0,0)'`n oninput="wasMedia=%j%; renamebox=this.value"></span>`n <span id='Save%j%' class='save' onclick="inca('Reload')">Save</span>`n <textarea id='thumb%j%' rows=12 class='text' style='font-size:%cap_size%em; max-width:%view%em' onmouseover="overThumb(%j%, this)" onmouseout='overMedia=0'`n oninput="if(editing&&editing!='%j%') {inca('Text',editing)}; editing='%j%'; this.style.background='#15110a'; Save%j%.style.display='block'" onmousedown="getParameters(%j%,'document','',0,0,%size%,event)">`n%str2%</textarea></div>`n`n
 
 else mediaList = %mediaList%<div id="entry%j%" style="max-width:%view%em; padding:0.5em; display:flex; padding-top:%view4%em">`n <div class='thumb'>%caption%<span style='display:block; position:absolute; top:-1.5em; font-size:0.8em; color:salmon' id='myFavicon%j%'>%favicon%</span>`n <span><input id='title%j%' class='title' style='display:none; text-align:center; max-width:%view%em; font-size:%cap_size%em' type='search' value='%media_s%'`n oninput="wasMedia=%j%; renamebox=this.value" onmouseover='overText=1' onmouseout='overText=0'></span>`n <video id="thumb%j%" class='thumb' style="display:flex; justify-content:center; max-width:%view%em; max-height:%view%em"`n onmousedown="getParameters(%j%, '%type%', '%cueList%', %dur%, %start%, %size%, event)"`n onmouseover="overThumb(%j%, this); if(type=='video') {if(this.style.position=='fixed'){this.setAttribute('controls','controls')} else this.play()}"`n onmouseout="overMedia=0; if(type=='video') {if(this.style.position=='fixed'){this.removeAttribute('controls')} else thumb%j%.pause()}"`n %src%`n %poster%`n type='video/mp4' preload=%preload% muted loop type="video/mp4"></video></div>`n</div>`n`n
 }

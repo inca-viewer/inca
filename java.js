@@ -1,8 +1,10 @@
 
 // Debugging	- use mySelected.innerHTML or alert()
 
+
 // mkv not play win 11
 // zoom cues
+
 
 
   var defRate = 1*localStorage.getItem('defRate')			// default playback speed
@@ -111,8 +113,8 @@
   function mouseUp(e) {
     if (!Click) return							// page load while mouse still down - ignore  
     if (Click==3 && !gesture && !longClick && !overText) context(e)	// new context menu
-    if (Click==2 && !playing) {inca('View',0,'',lastIndex); return}	// middle click - switch list/thumb view
-    if (viewE && thumb.style.position!='fixed') inca('View',viewE.toFixed(1),'',index)
+    if (Click==2 && !playing) inca('View',0,'',lastIndex)		// middle click - switch list/thumb view
+    else if (viewE && thumb.style.position!='fixed') inca('View',viewE.toFixed(1),'',index)
     else if (!longClick) clickEvent()					// process click event
     Click=0; wheel=0; gesture=0; longClick=0; viewE=0
     clearTimeout(clickTimer)}						// longClick timer
@@ -216,15 +218,15 @@
         if (!x) myPlayer.play()}
       scrolltoIndex(index)
       Sprites()}
+    else if (playing && xw>0.7) {					// zoom myPlayer
+      if (scaleY>0.2 && !wheelUp) scaleY *= 0.9
+      else if (wheelUp) scaleY *= 1.1
+      positionMedia(0.5)}
     else if (type=='image' || thumbSheet) {				// scroll image
       rect = myPlayer.getBoundingClientRect()
       if (wheelUp) mediaY-=100
       else mediaY+=100
       positionMedia(0.3)}
-    else if (playing && xw>0.7) {					// zoom myPlayer
-      if (scaleY>0.2 && !wheelUp) scaleY *= 0.9
-      else if (wheelUp) scaleY *= 1.1
-      positionMedia(0.5)}
     else if (!thumbSheet && type!='image') { 				// seek
       cursor=6
       if (dur > 120) interval = 3
@@ -452,12 +454,11 @@
 
 
   function positionMedia(fa) {						// position myPlayer in window
-    var x=mediaX; var y=mediaY; var z=1
-    if (!screenLeft) {x=innerWidth/2; y=innerHeight/2}
-    myPlayer.style.left = x - (myPlayer.offsetWidth/2) +"px"
-    myPlayer.style.top = y - (myPlayer.offsetHeight/2) +"px"
+    myPlayer.style.left = mediaX - myPlayer.offsetWidth/2 +"px"
+    myPlayer.style.top = mediaY - myPlayer.offsetHeight/2 +"px"
     myPlayer.style.transition = fa+'s'
-    scaleX=skinny*scaleY; if(thumbSheet) z=thumbSheet
+    scaleX = skinny*scaleY
+    if (thumbSheet) {z=thumbSheet} else z=1
     myPlayer.style.transform = "scale("+scaleX*z+","+scaleY*z+")"}
 
   function overThumb(id,el) {						// play htm thumb
@@ -612,8 +613,7 @@
   function inca(command,value,select,address) {				// send java messages to inca.exe
     if (editing) {
       var x = document.getElementById('thumb'+editing).value		// save textarea if edited
-      x = '#Text#'+thumb.scrollTop.toFixed(0)+'#'+editing+'#'+x
-      navigator.clipboard.writeText(x); return}
+      messages=messages+'#Text#'+thumb.scrollTop.toFixed(0)+'#'+editing+'#'+x}
     for (i=1; el=document.getElementById('thumb'+i); i++) {		// add cue edits to messages
       if (el.style.skinny) messages = messages + '#Skinny#'+el.style.skinny+'#'+i+'#'+cue
       if (el.style.rate) messages = messages + '#Rate#'+el.style.rate+'#'+i+'#'+cue}
