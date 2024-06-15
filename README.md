@@ -10,10 +10,11 @@ Pure vanilla java / ahk script<br>
 No IDE, no libraries, no external calls, no browser extensions<br> 
 Does not mess with any settings - see source code<br>
 supports most media - mp4, wmv, avi, mpg, mkv etc.<br>
-Just configure your own settings.ini in notepad, then run compile.exe<br>
+Configure settings.ini in notepad, then run compile.exe<br>
 browser will open in pictures folder<br>
 To 'uninstall', exit from taskbar & delete inca folder<br>
-You can change source code in notepad. Compiles in under a second<br><br>
+You can change source code in notepad<br>
+Compiles in under a second<br><br>
 
 <img src="screens/Screen 1.jpg" width="25%"> <img src="screens/Screen 2.jpg" width="25%"><br>
 
@@ -40,26 +41,33 @@ Middle click
 - long click - previous media or list / thumb toggle
 
 Back click
-- exit media
+- exit media or osk
 - or page top
 - or reset page
 
 Long click
-- show 6 x 6 thumbsheet
+- over media - show 6 x 6 thumbsheet
 - on white space - return to last media
 - on selected text - find media matches
 - on folder - copies selected files (instead of move)
 
-Long RightClick - restart media to 0 or default
+Long right click
+- over media - restarts at 0
+- else restarts at default time
 
-RightClick slide - volume
-LeftClick slide - position/zoom media or thumbs
+Right click & slide
+- volume
+
+Left click & slide
+- position/zoom media
+- zoom thumbs
+- pop thumbs out of page
 
 Supports rotated screen + osk onscreen keyboard<br>
-long press on any text area for osk<br>
-long press on any selected text for file search<br>
-Bookmark any inca tab for quick access<br>
-Add compile.exe and keyboard.exe to task scheduler startup<br><br>
+set compile.exe to run as administrator if using osk
+click any text area for osk<br>
+long click selected text for file search<br>
+Create bookmark inca tab<br><br>
 <img src="screens/computer arm 3.jpg" width="15.9%">   <img src="screens/computer arm 4.jpg" width="25%"><br>
 1m x 12mm threaded rod, 2 x nuts + heatshrink<br>
 drill 12mm hole in wood to bend arm and for cables<br>
