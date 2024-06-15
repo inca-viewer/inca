@@ -37,8 +37,8 @@ A new tab will show all matching files from your computer<br><br>
 # Usage
 
 Middle click
-- next media
-- long click - previous media or list / thumb toggle
+- next media (long click for previous)<br>
+- toggle list or thumb view
 
 Back click
 - exit media or osk
