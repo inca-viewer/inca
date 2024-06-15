@@ -12,8 +12,9 @@ Does not mess with any settings - see source code<br>
 supports most media - mp4, wmv, avi, mpg, mkv etc.<br>
 Configure settings.ini in notepad, then run compile.exe<br>
 browser will open in pictures folder<br>
+you must add bookmark for it<br>
 To 'uninstall', exit from taskbar & delete inca folder<br>
-You can change source code in notepad<br>
+You can edit source code in notepad<br>
 Compiles in under a second<br><br>
 
 <img src="screens/Screen 1.jpg" width="25%"> <img src="screens/Screen 2.jpg" width="25%"><br>
@@ -29,8 +30,7 @@ Music and playlists from browser tabs<br>
 Sleep timer gradually lowers master volume when mouse quiet<br>
 To see if you already have a video from an outside website,<br>
 Select part of the title text then 'long click' on it<br>
-A new tab will show all matching files from your computer<br>
-6x6 Thumbsheets index at about 30 videos per minute<br><br>
+A new tab will show all matching files from your computer<br><br>
 
 <img src="screens/mouse.jpg" width="20%"/>
 
@@ -53,7 +53,7 @@ Long click
 
 Long right click
 - over media - restarts at 0
-- else restarts at default time
+- else restarts to default time
 
 Right click & slide
 - volume
@@ -63,11 +63,11 @@ Left click & slide
 - zoom thumbs
 - pop thumbs out of page
 
+6x6 Thumbsheets index at about 30 videos per minute<br>
 Supports rotated screen + osk onscreen keyboard<br>
-set compile.exe to run as administrator if using osk
-click any text area for osk<br>
-long click selected text for file search<br>
-Create bookmark inca tab<br><br>
+set compile.exe to run as administrator if using osk<br>
+then click any text area for osk<br>
+Long click on selected text for file search<br><br>
 <img src="screens/computer arm 3.jpg" width="15.9%">   <img src="screens/computer arm 4.jpg" width="25%"><br>
 1m x 12mm threaded rod, 2 x nuts + heatshrink<br>
 drill 12mm hole in wood to bend arm and for cables<br>
