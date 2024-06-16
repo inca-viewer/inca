@@ -2,18 +2,19 @@
 // Debugging	- use mySelected.innerHTML or alert()
 
 
-// mkv not play win 11
 // zoom cues
-
+// mpv stays active
+// mpv false triggered
+// music next
 
 
   var defRate = 1*localStorage.getItem('defRate')			// default playback speed
   var mediaX = 1*localStorage.getItem('mediaX')				// myPlayer position
   var mediaY = 1*localStorage.getItem('mediaY')
   var mpv = 1*localStorage.getItem('mpv')				// external media player
+  var intervalTimer							// every 100mS
   var thumb = 0								// thumb element
   var title = 0								// title element
-  var intervalTimer							// every 100mS
   var wheel = 0								// mouse wheel count
   var index = 1								// thumb index (e.g. thumb14)
   var lastIndex = 0							// last thumb id
@@ -50,7 +51,7 @@
   var dur = 0								// duration (from inca)
   var rate = 1								// current myPlayer speed
   var skinny = 1							// media width
-  var scaleX = 0.72								// myPlayer width (skinny)
+  var scaleX = 0.72							// myPlayer width (skinny)
   var scaleY = 0.72							// myPlayer size
   var xw = 0.5								// cursor over window ratio
   var yw = 0.5
@@ -218,7 +219,7 @@
         if (!x) myPlayer.play()}
       scrolltoIndex(index)
       Sprites()}
-    else if (playing && xw>0.7) {					// zoom myPlayer
+    else if (playing && xw<0.1) {					// zoom myPlayer
       if (scaleY>0.2 && !wheelUp) scaleY *= 0.9
       else if (wheelUp) scaleY *= 1.1
       positionMedia(0.5)}
@@ -253,7 +254,7 @@
     if (!thumb.src && (type=='document' || type=='m3u')) return
     if (playing && lastClick==1) {
       if (thumbSheet) {getStart(); return}
-      if (xm>0 && xm<1 && ym>0.95 && ym<1) {myPlayer.currentTime=xm*dur; return}
+      if (xm>0 && xm<1 && ym>0.9 && ym<1) {myPlayer.currentTime=xm*dur; return}
       else if (!longClick) {togglePause(); return}}
     if (!playing) {
       if (!mediaX || mediaX<0 || mediaX>innerWidth) mediaX=innerWidth/2
@@ -354,7 +355,7 @@
     if (!playing || thumbSheet) myBody.style.cursor=null		// hide cursor
     else if (!cursor || Click) {
       myBody.style.cursor='none'
-      if (!myNav.matches(':hover')) mySeekbar.style.opacity=0}
+      if (!myNav.matches(':hover') && !overMedia) mySeekbar.style.opacity=0}
     else {myBody.style.cursor='crosshair'; mySeekbar.style.opacity=1}
     if (playing) myMask.style.backgroundColor='rgba(0,0,0,'+scaleY*2.6+')' 
     else myMask.style.display='none'
@@ -424,7 +425,7 @@
       cueW = Math.abs(scaleX*myPlayer.offsetWidth*(cue - x)/dur)
       if (cue < 0.2+x) {
         cueX = rect.left; cueW = Math.abs(scaleX*myPlayer.offsetWidth*myPlayer.currentTime/dur)}}
-    if (rect.bottom<innerHeight) mySeekbar.style.top = rect.bottom -12 +'px'
+    if (rect.bottom<innerHeight) mySeekbar.style.top = rect.bottom +'px'
     else mySeekbar.style.top = innerHeight -16 +'px'
     mySeekbar.style.left = cueX +'px'
     mySeekbar.style.width = cueW +'px'}
@@ -504,7 +505,7 @@
     var z = myPic.getBoundingClientRect()
     var x = (xpos-z.left)/myPic.offsetWidth
     mySeekbar.style.opacity=1
-    mySeekbar.style.top = z.bottom -12 +'px'
+    mySeekbar.style.top = z.bottom +'px'
     mySeekbar.style.left = z.left -8 +'px'
     mySeekbar.style.width = myPic.offsetWidth*x +'px'
     z = 20 * Math.ceil(x*35)
@@ -535,9 +536,9 @@
     if (!looping) {
       lastClick=2
       myPlayer.pause()
-      if (playlist.match('/inca/music/')) {
-        setTimeout(function() {clickEvent()}, Math.random()*6000)}	// next media
-      else {clickEvent()}; return}
+      if (playlist.match('/inca/music/')) setTimeout(function() {clickEvent()}, Math.random()*4000)
+      else clickEvent()
+      return}
     looping+=1
     if (!longClick && rate > 0.40) rate-=0.05				// slower each loop
     myPlayer.currentTime=thumb.style.start

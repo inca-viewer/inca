@@ -22,7 +22,6 @@
   margin-top:1em;
   border-radius:7%}
  
-
 .save {
   display:none;
   position:absolute;
@@ -62,24 +61,24 @@
 
 .myPanel {					/* top panel element showing folders etc.*/
   position:relative;
-  top:5em;
-  width:96%;
+  top:3.4em;
+  width:100%;
   font-size:0.9em;
   white-space:nowrap;
   overflow:hidden;
-  height:20em}
+  height:6em}
 
 .panel {					/* inner panel list container */
-  height:76vw;
+  height:60vw;
   position:absolute;
-  overflow-y:scroll;
-  overflow-x:hidden;
+  overflow:hidden;
+  scrollbar-width:none;
   transform:rotate(-90deg);
   transform-origin:right top;
   background:#15110a;
-  padding-right:34%;
-  width:9em;					/* entry width	*/
-  left:-46%}
+  width:8em;					/* entry width	*/
+  left:-9%}
+.panel:hover {overflow-y:scroll}
 
 .p2 {						/* panel entries */
   overflow:hidden;
@@ -225,7 +224,6 @@
 .context a {
   display:block;
   width:3.5em;
-//  min-width:3.5em;
   height:1em;
   padding:0.2em;
   padding-right:0;

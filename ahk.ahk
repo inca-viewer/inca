@@ -77,7 +77,6 @@
         Global foldr
         Global index = 0			; scroll to index
         Global messages				; between browser and this program
-;        Global playing =			; media is playing in browser
         Global gesture
         Global lastClip				; preserve clipboard
         Global allFav				; all favorite shortcuts consolidated
@@ -136,7 +135,6 @@
 
     Xbutton1::					; mouse "back" button
       Critical
-;      playing =
       longClick =
       timer := A_TickCount + 350
       SetTimer, Timer_up, -350
@@ -159,7 +157,7 @@
         send, {Pause}				; close java media player
         }
       else IfWinExist, ahk_class OSKMainClass
-        send, !0				; close onscreen keyboard
+        WinClose, ahk_class OSKMainClass	; close onscreen keyboard
       else if WinActive("ahk_class Notepad")
         Send, {Esc}^s^w
       else if incaTab
@@ -185,6 +183,8 @@
         y -= ypos
         if (!GetKeyState("LButton", "P") && !GetKeyState("RButton", "P") && !GetKeyState("MButton", "P"))
           {
+          if Setting("osk")
+            Osk()
           if (click=="RButton" && !gesture)
             send, {RButton}
           Gui PopUp:Cancel
@@ -243,11 +243,28 @@
               else send, !+0
               Clipboard := clp
               }
-            else send, !+0			; trigger osk keyboard
             }
           break
           }
         }
+      }
+
+
+    Osk() {
+      IfWinNotExist, ahk_class OSKMainClass
+        if (click=="LButton" && !gesture && A_Cursor == "IBeam")
+          {
+          MouseGetPos, x, y
+          x-=600
+          y+=100
+          run, osk.exe
+          Loop, 100
+            {
+            sleep 5
+            IfWinExist, ahk_class OSKMainClass
+              WinMove, ahk_class OSKMainClass, , %x%, %y%
+            }
+          }
       }
 
 
@@ -286,8 +303,6 @@
 
     Clipboard()								; check for messages from browser
         {
-        IfWinExist, ahk_class OSKMainClass
-          send, !0							; close onscreen keyboard
         selected =
         messages =
         command =
@@ -317,6 +332,8 @@
             continue
           else ProcessMessage()
           }
+        if !selected
+          PopUp(folder,0,0,0)
         if (reload == 1)
           CreateList(1)
         if (reload == 2)
@@ -335,7 +352,6 @@
 
     ProcessMessage()							; messages from java/browser
         {
-        PopUp(".",0,0,0)						; . message received from browser
         if (command == "Settings")					; open inca source folder
             {
             Run, %inca%\
@@ -436,7 +452,6 @@
             else mute = no
             if !start
               start = 0.0
-;            playing = true
             start := Time(start)
             if (ext=="pdf")
               Run, %src%
@@ -1012,7 +1027,7 @@
         if (subfolders && container)
           fill(container)
 
-        container = <div id='Fol' style='font-size:2em; color:#ffa07ab0; margin:0.8em; text-align:center'>&#x1F4BB;&#xFE0E;</div>`n
+        container = <div id='Fol' style='font-size:2em; color:#ffa07ab0; text-align:center'>&#x1F4BB;&#xFE0E;</div>`n
         container := fill(container)
         Loop, Parse, fol, `|
           if A_LoopField
@@ -1028,7 +1043,7 @@
         if container
           fill(container)
 
-        container = <div id='Fav' style='font-size:1.8em; color:#ffa07ab0; margin:0.8em; text-align:center'>&#10084;</div>`n
+        container = <div id='Fav' style='font-size:1.8em; color:#ffa07ab0; text-align:center'>&#10084;</div>`n
         container := fill(container)
         Loop, Parse, fav, `|
           if A_LoopField
@@ -1043,7 +1058,7 @@
         if container
           fill(container)
 
-        container = <div id='Music' style='font-size:2em; color:#ffa07ab0; margin:0.8em; text-align:center'>&#x266B;</div>`n
+        container = <div id='Music' style='font-size:2em; color:#ffa07ab0; text-align:center'>&#x266B;</div>`n
         container := fill(container)
         Loop, Parse, music, `|
           if A_LoopField
@@ -1126,7 +1141,7 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n if(
 <video id="myPlayer" class='player' type="video/mp4" onmouseover='overMedia=index' onmouseout='overMedia=0' muted onwheel="wheelEvent(event, id, this)"></video>`n
 <span id='mySeekbar' class='seekbar'></span>`n
 
-<div id='myView' class='myList' style='padding-left:%page_l%`%; padding-right:%page_r%`%'>`n`n
+<div id='myView' class='myList' style='padding-left:%page_l%`%; padding-right:%page_r%`%; padding-top:20vh'>`n`n
 
 <div id='myPanel' class='myPanel'>`n <div id='panel' class='panel'>`n`n%panelList%`n</div></div>`n`n
 
@@ -1159,7 +1174,7 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n if(
 <a id='View' style='width:7`%' onwheel="wheelEvent(event, id, this)" onmouseout='viewE=0' onmousedown="if(!viewE) inca('View',0)">View</a>`n 
 <a id='myRate' style='width:9`%' onwheel="wheelEvent(event, id, this)">Speed</a></div>`n`n
 
-<div style='width:100`%'></div>`n`n%mediaList%<div style='width:100`%; height:95vh'></div>`n`n
+<div style='width:100`%'></div>`n`n%mediaList%<div style='width:100`%; height:110vh'></div>`n`n
 
       FileDelete, %inca%\cache\html\%folder%.htm
       StringReplace, header, header, \, /, All
@@ -1279,10 +1294,17 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n if(
         if (ext == "txt")
           FileRead, str2, %src%
 
+x := Round(start-5,2)
+if playlist
+ IfNotExist, %src%
+   IfExist, D:\media\snips\%media% @%x%.mp4
+     src=D:\media\snips\%media% @%x%.mp4
+   else IfExist, D:\media\snips\%media% @0.00.mp4
+     src=D:\media\snips\%media% @0.00.mp4
+
 if (type=="image")
   src =
 else src=src="file:///%src%"
-
 
 if listView
 
@@ -1293,8 +1315,6 @@ else if ((ext == "txt" || ext=="m3u") && (textCount+=1) <= 20)
 
 else mediaList = %mediaList%<div id="entry%j%" style="max-width:%view%em; padding:0.5em; display:flex; padding-top:%view4%em">`n <div class='thumb'>%caption%<span style='display:block; position:absolute; top:-1.5em; font-size:0.8em; color:salmon' id='myFavicon%j%'>%favicon%</span>`n <span><input id='title%j%' class='title' style='display:none; text-align:center; max-width:%view%em; font-size:%cap_size%em' type='search' value='%media_s%'`n oninput="wasMedia=%j%; renamebox=this.value" onmouseover='overText=1' onmouseout='overText=0'></span>`n <video id="thumb%j%" class='thumb' style="display:flex; justify-content:center; max-width:%view%em; max-height:%view%em"`n onmousedown="getParameters(%j%, '%type%', '%cueList%', %dur%, %start%, %size%, event)"`n onmouseover="overThumb(%j%, this); if(type=='video') {if(this.style.position=='fixed'){this.setAttribute('controls','controls')} else this.play()}"`n onmouseout="overMedia=0; if(type=='video') {if(this.style.position=='fixed'){this.removeAttribute('controls')} else thumb%j%.pause()}"`n %src%`n %poster%`n type='video/mp4' preload=%preload% muted loop type="video/mp4"></video></div>`n</div>`n`n
 }
-
-
 
 
 
@@ -1898,8 +1918,9 @@ else mediaList = %mediaList%<div id="entry%j%" style="max-width:%view%em; paddin
           med := DecodeExt(ex)
           if (med != "video" && med != "audio")
             return
-          ifExist, %fold%\%Filen%.part					; file downloading
-            return
+          ifExist, %fold%\*.part					; file downloading
+            if !force
+              return
           dur =
           FileRead, dur, %inca%\cache\durations\%filen%.txt
           if (!dur || force)
@@ -1988,7 +2009,7 @@ else mediaList = %mediaList%<div id="entry%j%" style="max-width:%view%em; paddin
 ;  FileCopy, %source%, c:\users\-\downloads\fav\
            start := StrSplit(A_Loopfield, "|").2
            detectMedia(source)
-           x = %indexFolders%|%searchFolders%
+           x = %indexFolders%
            IfNotExist, %source%
              if indexFolders
                Loop, Parse, x, `|
