@@ -3,9 +3,8 @@
 
 
 // zoom cues
-// mpv stays active
-// mpv false triggered
 // music next
+// set ratio and scaleY based on screen orientation/dimensions
 
 
   var defRate = 1*localStorage.getItem('defRate')			// default playback speed
@@ -246,8 +245,7 @@
     if (longClick && myPanel.matches(':hover')) return			// copy files instead of move
     if (myTitle.matches(':hover') && !playing) {overMedia=index; lastClick=0}
     if (myPic.matches(':hover')) {
-      if (thumbSheet) myPlayer.currentTime=myPic.style.start
-        overMedia=index; lastClick=0; thumbSheet=0}
+      if (thumbSheet) {myPlayer.currentTime=myPic.style.start; overMedia=index; lastClick=0; thumbSheet=0}}
     if (!playing && !longClick && !overMedia) return
     if (myNav.matches(':hover') && lastClick==1) return
     if (!gesture && longClick==1 && !playing && playlist && wasMedia && selected) {inca('Move', wasMedia); return}
@@ -259,7 +257,7 @@
     if (!playing) {
       if (!mediaX || mediaX<0 || mediaX>innerWidth) mediaX=innerWidth/2
       if (!mediaY || mediaY<0 || mediaY>innerHeight) mediaY=innerHeight/2
-      if (!scaleY || scaleY>2 || scaleY<0.15) scaleY=0.7}
+      if (!scaleY || scaleY>2 || scaleY<0.1) scaleY=0.7}
     if (playing && lastClick==2) if (longClick) {index--} else index++	// next / previous media
     if (longClick && !overMedia && !playing) index=lastIndex		// return to last media
     if (!playing || thumbSheet) fade=0
@@ -286,16 +284,14 @@
     if (!thumbSheet && lastClick) messages=messages+'#History#'+myPlayer.currentTime.toFixed(1)+'#'+index+'#'
     if (lastClick==2 && playing=='mpv') return				// inca does next/previous media
     if (type=='document' || type=='m3u') {closePlayer(); inca('Media',0,index); return}
-    else if (playing=='mpv') inca('Media',0,index,para)			// use external player
-    if (type == 'audio' || playlist.match('/inca/music/')) {
-      looping=0; myPlayer.muted=false; scaleY=0.2; myPlayer.style.borderBottom='4px solid salmon'}
+    else if (playing=='mpv'|| thumb.src.slice(-3)=='mid') inca('Media',0,index,para)	// use external player
+    if (type=='audio') {looping=0; myPlayer.muted=false; scaleY=0.2; myPlayer.poster=thumb.poster}
     if (playing=='browser' && !thumbSheet && type != 'image') myPlayer.play()
     myPlayer.addEventListener('ended', nextMedia)
     if (playing=='browser') myPlayer.style.opacity=1
     myMask.style.zIndex = Zindex
     myMask.style.display='flex'
     myBody.style.cursor='none'
-    myNav.style.display=null
     myPlayer.volume = 0.05
     if (looping) looping=1
     if (lastClick) {							// not by wheel event
@@ -425,7 +421,7 @@
       cueW = Math.abs(scaleX*myPlayer.offsetWidth*(cue - x)/dur)
       if (cue < 0.2+x) {
         cueX = rect.left; cueW = Math.abs(scaleX*myPlayer.offsetWidth*myPlayer.currentTime/dur)}}
-    if (rect.bottom<innerHeight) mySeekbar.style.top = rect.bottom +'px'
+    if (rect.bottom<innerHeight) mySeekbar.style.top = rect.bottom -6 +'px'
     else mySeekbar.style.top = innerHeight -16 +'px'
     mySeekbar.style.left = cueX +'px'
     mySeekbar.style.width = cueW +'px'}
@@ -505,7 +501,7 @@
     var z = myPic.getBoundingClientRect()
     var x = (xpos-z.left)/myPic.offsetWidth
     mySeekbar.style.opacity=1
-    mySeekbar.style.top = z.bottom +'px'
+    mySeekbar.style.top = z.bottom -6 +'px'
     mySeekbar.style.left = z.left -8 +'px'
     mySeekbar.style.width = myPic.offsetWidth*x +'px'
     z = 20 * Math.ceil(x*35)
