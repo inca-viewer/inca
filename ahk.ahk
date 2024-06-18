@@ -218,8 +218,6 @@
             else send, +{Pause}			; signal to java long RClick
           else if (A_Cursor == "IBeam")
             {
-            if Setting("osk")
-              Osk()
             longClick =
             if WinActive("ahk_group Browsers")
               {
@@ -243,6 +241,8 @@
               else send, !+0
               Clipboard := clp
               }
+            else if Setting("osk")
+              Osk()
             }
           break
           }
