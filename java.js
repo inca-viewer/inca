@@ -286,8 +286,8 @@
     if (!thumbSheet && lastClick) messages=messages+'#History#'+myPlayer.currentTime.toFixed(1)+'#'+index+'#'
     if (lastClick==2 && playing=='mpv') return				// inca does next/previous media
     if (type=='document' || type=='m3u') {closePlayer(); inca('Media',0,index); return}
-    else if (playing=='mpv'|| thumb.src.slice(-3)=='mid') inca('Media',0,index,para)	// use external player
-    if (type=='audio') {looping=0; myPlayer.muted=false; scaleY=0.2; myPlayer.poster=thumb.poster}
+    else if (playing=='mpv' || thumb.src.slice(-3)=='mid') inca('Media',0,index,para)	// use external player
+    if (type=='audio' || playlist.match('/inca/music/')) {looping=0; myPlayer.muted=false; scaleY=0.1; myPlayer.poster=thumb.poster}
     if (playing=='browser' && !thumbSheet && type != 'image') myPlayer.play()
     myPlayer.addEventListener('ended', nextMedia)
     if (playing=='browser') myPlayer.style.opacity=1
