@@ -183,8 +183,6 @@
         y -= ypos
         if (!GetKeyState("LButton", "P") && !GetKeyState("RButton", "P") && !GetKeyState("MButton", "P"))
           {
-          if Setting("osk")
-            Osk()
           if (click=="RButton" && !gesture)
             send, {RButton}
           Gui PopUp:Cancel
@@ -220,6 +218,8 @@
             else send, +{Pause}			; signal to java long RClick
           else if (A_Cursor == "IBeam")
             {
+            if Setting("osk")
+              Osk()
             longClick =
             if WinActive("ahk_group Browsers")
               {
@@ -1141,7 +1141,7 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n if(
 <video id="myPlayer" class='player' type="video/mp4" onmouseover='overMedia=index' onmouseout='overMedia=0' muted onwheel="wheelEvent(event, id, this)"></video>`n
 <span id='mySeekbar' class='seekbar'></span>`n
 
-<div id='myView' class='myList' style='padding-left:%page_l%`%; padding-right:%page_r%`%; padding-top:20vh'>`n`n
+<div id='myView' class='myList' style='padding-left:%page_l%`%; padding-right:%page_r%`%; padding-top:10vh'>`n`n
 
 <div id='myPanel' class='myPanel'>`n <div id='panel' class='panel'>`n`n%panelList%`n</div></div>`n`n
 
@@ -1174,7 +1174,7 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n if(
 <a id='View' style='width:7`%' onwheel="wheelEvent(event, id, this)" onmouseout='viewE=0' onmousedown="if(!viewE) inca('View',0)">View</a>`n 
 <a id='myRate' style='width:9`%' onwheel="wheelEvent(event, id, this)">Speed</a></div>`n`n
 
-<div style='width:100`%'></div>`n`n%mediaList%<div style='width:100`%; height:110vh'></div>`n`n
+<div style='width:100`%'></div>`n`n%mediaList%<div style='width:100`%; height:100vh'></div>`n`n
 
       FileDelete, %inca%\cache\html\%folder%.htm
       StringReplace, header, header, \, /, All
@@ -1916,11 +1916,13 @@ else mediaList = %mediaList%<div id="entry%j%" style="max-width:%view%em; paddin
           {
           SplitPath, source,,fold,ex,filen
           med := DecodeExt(ex)
+          ifExist, %fold%\%filen%.part					; file is downloading
+            return
           if (med != "video" && med != "audio")
             return
-          ifExist, %fold%\*.part					; file downloading
-            if !force
-              return
+          FileGetSize, size, %source%, K
+          if (size < 100)
+            return
           dur =
           FileRead, dur, %inca%\cache\durations\%filen%.txt
           if (!dur || force)

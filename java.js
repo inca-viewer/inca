@@ -1,11 +1,12 @@
 
 // Debugging	- use mySelected.innerHTML or alert()
 
-
 // zoom cues
 // music next
 // set ratio and scaleY based on screen orientation/dimensions
-
+// firefox scrollbar
+// about.lnk
+// music listview inline player?
 
   var defRate = 1*localStorage.getItem('defRate')			// default playback speed
   var mediaX = 1*localStorage.getItem('mediaX')				// myPlayer position
@@ -50,8 +51,8 @@
   var dur = 0								// duration (from inca)
   var rate = 1								// current myPlayer speed
   var skinny = 1							// media width
-  var scaleX = 0.72							// myPlayer width (skinny)
-  var scaleY = 0.72							// myPlayer size
+  var scaleX = 0.55							// myPlayer width (skinny)
+  var scaleY = 0.55							// myPlayer size
   var xw = 0.5								// cursor over window ratio
   var yw = 0.5
   var xm = 0								// cursor over media ratio
@@ -67,6 +68,8 @@
 
   if (!mpv) mpv=0							// external player
   if (!defRate) defRate=1						// default speed
+  if (innerHeight>innerWidth) scaleY=0.32
+  scaleX=scaleY
   intervalTimer = setInterval(timerEvent,100)				// background tasks every 100mS
   document.addEventListener('mousedown', mouseDown)
   document.addEventListener('mouseup', mouseUp)
@@ -79,15 +82,15 @@
       if (renamebox) inca('Rename', renamebox, wasMedia)		// rename media
       else if (myInput.matches(':focus')) inca('SearchBox','','',myInput.value) // search media on pc
       else if (type=='document') {var x=thumb.scrollTop; setTimeout(function(){thumb.scrollTo(0,x)},100)}}
-    else if (e.key=='Pause' && e.altKey) {thumbSheet=2.4; Play()}	// mpv player - show thumbsheet
+    else if (e.key=='Pause' && e.altKey) {thumbSheet=1; Play()}		// mpv player - show thumbsheet
     else if (e.key=='Pause' && e.shiftKey) {				// inca re-map of long right click
       if (myPlayer.matches(':hover')) myPlayer.currentTime=0		// myPlayer to 0:00
       else myPlayer.currentTime=thumb.style.start			// to default start time
       if (playing) {thumbSheet=0; myPlayer.play()}
       else {lastClick=3;longClick=3;clickEvent()}}			// simulate RClick
     else if (e.key=='Pause') {						// inca re-map of mouse 'Back' key
-      if (playing) closePlayer()
-      else if (myNav.matches(':hover')) myNav.style.display='none'
+      if (myNav.matches(':hover')) myNav.style.display='none'
+      else if (playing) closePlayer()
       else if (overMedia && thumb.style.position=='fixed') {		// close popped out thumb
         thumb.style.position=null
         thumb.style.maxWidth=view*0.8+'em'
@@ -162,8 +165,8 @@
       localStorage.setItem("mediaX",mediaX.toFixed(0))
       localStorage.setItem("mediaY",mediaY.toFixed(0))}
     else if (playing && y>x) {						// zoom myPlayer
-      if (scaleY>0.2 || Yref<ypos) {
-        scaleY += (ypos-Yref) * 0.01
+      if (scaleY>0.1 || Yref<ypos) {
+        scaleY += (ypos-Yref) * 0.002
         localStorage.setItem('scaleY',scaleY.toFixed(3))}}
     positionMedia(0); Xref=xpos; Yref=ypos}
 
@@ -219,7 +222,7 @@
       scrolltoIndex(index)
       Sprites()}
     else if (playing && xw<0.1) {					// zoom myPlayer
-      if (scaleY>0.2 && !wheelUp) scaleY *= 0.9
+      if (scaleY>0.1 && !wheelUp) scaleY *= 0.9
       else if (wheelUp) scaleY *= 1.1
       positionMedia(0.5)}
     else if (type=='image' || thumbSheet) {				// scroll image
@@ -244,10 +247,9 @@
     if (longClick && myInput.matches(':hover')) return
     if (longClick && myPanel.matches(':hover')) return			// copy files instead of move
     if (myTitle.matches(':hover') && !playing) {overMedia=index; lastClick=0}
-    if (myPic.matches(':hover')) {
-      if (thumbSheet) {myPlayer.currentTime=myPic.style.start; overMedia=index; lastClick=0; thumbSheet=0}}
-    if (!playing && !longClick && !overMedia) return
-    if (myNav.matches(':hover') && lastClick==1) return
+    if (myPic.matches(':hover')) {myPlayer.currentTime=myPic.style.start; overMedia=index; lastClick=0; thumbSheet=0}
+    else {if (!playing && !longClick && !overMedia) return
+      if (myNav.matches(':hover') && lastClick==1 && !longClick) return}
     if (!gesture && longClick==1 && !playing && playlist && wasMedia && selected) {inca('Move', wasMedia); return}
     if (!thumb.src && (type=='document' || type=='m3u')) return
     if (playing && lastClick==1) {
@@ -267,8 +269,7 @@
       positionMedia(0)
       myPlayer.style.zIndex = Zindex+=1					// because htm thumbs use Z-index
       if (lastClick==3) myPlayer.currentTime=0
-      else if (longClick==1 && type=='video' && (playing || overMedia)) { // show thumbsheet
-        thumbSheet=1.4*Math.abs(1/scaleY); if (ratio<1) thumbSheet*=0.7; Previews()}
+      else if (longClick==1 && type=='video' && (playing || overMedia)) thumbSheet=1 // show thumbsheet
       else if (!playing && !overMedia) myPlayer.currentTime=lastStart	// return to last media
       else if (!thumbSheet && lastClick) myPlayer.currentTime=thumb.style.start
       scrolltoIndex(index)			    			// + highlight played media
@@ -280,6 +281,7 @@
     var para = myPlayer.currentTime+'|'+skinny+'|'+rate+'|'+localStorage.getItem('muted')
     if (!thumbSheet && type=='video' && mpv) playing='mpv'
     else playing='browser'
+    Previews()
     myPlayer.muted = 1*localStorage.getItem('muted')
     if (!thumbSheet && lastClick) messages=messages+'#History#'+myPlayer.currentTime.toFixed(1)+'#'+index+'#'
     if (lastClick==2 && playing=='mpv') return				// inca does next/previous media
@@ -353,7 +355,7 @@
       myBody.style.cursor='none'
       if (!myNav.matches(':hover') && !overMedia) mySeekbar.style.opacity=0}
     else {myBody.style.cursor='crosshair'; mySeekbar.style.opacity=1}
-    if (playing) myMask.style.backgroundColor='rgba(0,0,0,'+scaleY*2.6+')' 
+    if (playing) myMask.style.backgroundColor='rgba(0,0,0,'+scaleY*6+')' 
     else myMask.style.display='none'
     if (defRate==1) myRate.innerHTML = 'Speed'
     else myRate.innerHTML = 'Speed '+ defRate
@@ -455,8 +457,7 @@
     myPlayer.style.top = mediaY - myPlayer.offsetHeight/2 +"px"
     myPlayer.style.transition = fa+'s'
     scaleX = skinny*scaleY
-    if (thumbSheet) {z=thumbSheet} else z=1
-    myPlayer.style.transform = "scale("+scaleX*z+","+scaleY*z+")"}
+    myPlayer.style.transform = "scale("+scaleX+","+scaleY+")"}
 
   function overThumb(id,el) {						// play htm thumb
     overMedia=id; index=id
@@ -485,8 +486,8 @@
       myPic.style.transform='scale('+skinny+',1)'}
     else myPic.style.backgroundImage = ''
     var ratio = thumb.offsetWidth/thumb.offsetHeight
-    if (ratio>1) {x=innerWidth*0.70; y=x/ratio}				// landscape
-    else {y=innerHeight; x=y*ratio}					// portrait  
+    if (ratio<1) {x=innerWidth*innerHeight/innerWidth; y=x/ratio}	// portrait
+    else {y=innerHeight; x=y*ratio}					// landscape
     myPlayer.style.width = x +'px'
     myPlayer.style.height = y +'px'
     myPlayer.style.top = mediaY-y/2 +'px'				// myPlayer size normalised to screen
@@ -501,7 +502,7 @@
     var z = myPic.getBoundingClientRect()
     var x = (xpos-z.left)/myPic.offsetWidth
     mySeekbar.style.opacity=1
-    mySeekbar.style.top = z.bottom -6 +'px'
+    mySeekbar.style.top = z.bottom -4 +'px'
     mySeekbar.style.left = z.left -8 +'px'
     mySeekbar.style.width = myPic.offsetWidth*x +'px'
     z = 20 * Math.ceil(x*35)

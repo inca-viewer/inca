@@ -1,7 +1,7 @@
 
   ::selection {color:red; background:black}
   ::-webkit-search-cancel-button {appearance:none}
-  ::-webkit-scrollbar {background:#15110a}
+  ::-webkit-scrollbar {background:#15110a; width:1em}
   ::-webkit-resizer {background:#826858}
   ::-webkit-scrollbar-corner {background:#15110a}
   ::-webkit-scrollbar-thumb {background:#2b2824; border-radius:2px}
@@ -66,10 +66,10 @@
   font-size:0.9em;
   white-space:nowrap;
   overflow:hidden;
-  height:6em}
+  height:6.1em}
 
 .panel {					/* inner panel list container */
-  height:60vw;
+  height:100vw;
   position:absolute;
   overflow:hidden;
   scrollbar-width:none;
