@@ -528,6 +528,7 @@
   function nextMedia() {
     if (!looping) {
       lastClick=2
+      longClick=0
       myPlayer.pause()
       if (playlist.match('/inca/music/')) setTimeout(function() {clickEvent()}, Math.random()*4000)
       else clickEvent()
