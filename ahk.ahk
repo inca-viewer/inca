@@ -238,11 +238,10 @@
                 ProcessMessage()
                 CreateList(1)
                 }
-              else send, !+0
+              else Osk()
               Clipboard := clp
               }
-            else if Setting("osk")
-              Osk()
+            else Osk()
             }
           break
           }
@@ -252,7 +251,7 @@
 
     Osk() {
       IfWinNotExist, ahk_class OSKMainClass
-        if (click=="LButton" && !gesture && A_Cursor == "IBeam")
+        if Setting("osk")
           {
           MouseGetPos, x, y
           x-=600

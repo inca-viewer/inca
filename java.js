@@ -2,11 +2,7 @@
 // Debugging	- use mySelected.innerHTML or alert()
 
 // zoom cues
-// music next
-// set ratio and scaleY based on screen orientation/dimensions
 // firefox scrollbar
-// about.lnk
-// music listview inline player?
 
   var defRate = 1*localStorage.getItem('defRate')			// default playback speed
   var mediaX = 1*localStorage.getItem('mediaX')				// myPlayer position
@@ -82,7 +78,7 @@
       if (renamebox) inca('Rename', renamebox, wasMedia)		// rename media
       else if (myInput.matches(':focus')) inca('SearchBox','','',myInput.value) // search media on pc
       else if (type=='document') {var x=thumb.scrollTop; setTimeout(function(){thumb.scrollTo(0,x)},100)}}
-    else if (e.key=='Pause' && e.altKey) {thumbSheet=1; Play()}		// mpv player - show thumbsheet
+    else if (e.key=='Pause' && e.altKey) {thumbSheet=1; Previews(); Play()} // mpv player - show thumbsheet
     else if (e.key=='Pause' && e.shiftKey) {				// inca re-map of long right click
       if (myPlayer.matches(':hover')) myPlayer.currentTime=0		// myPlayer to 0:00
       else myPlayer.currentTime=thumb.style.start			// to default start time
@@ -272,6 +268,7 @@
       else if (longClick==1 && type=='video' && (playing || overMedia)) thumbSheet=1 // show thumbsheet
       else if (!playing && !overMedia) myPlayer.currentTime=lastStart	// return to last media
       else if (!thumbSheet && lastClick) myPlayer.currentTime=thumb.style.start
+      Previews()
       scrolltoIndex(index)			    			// + highlight played media
       positionMedia(0.2)
       Play()},fade*400)}
@@ -281,7 +278,6 @@
     var para = myPlayer.currentTime+'|'+skinny+'|'+rate+'|'+localStorage.getItem('muted')
     if (!thumbSheet && type=='video' && mpv) playing='mpv'
     else playing='browser'
-    Previews()
     myPlayer.muted = 1*localStorage.getItem('muted')
     if (!thumbSheet && lastClick) messages=messages+'#History#'+myPlayer.currentTime.toFixed(1)+'#'+index+'#'
     if (lastClick==2 && playing=='mpv') return				// inca does next/previous media
@@ -496,7 +492,7 @@
     myPic.style.width=x+'px'
     myPic.style.height=(x-7)/ratio+'px'
     myCap.innerHTML = ''
-   if (longClick) myPlayer.load()}					// for thumbsheet load
+   if (longClick || playing=='mpv') myPlayer.load()}			// for thumbsheet load
 
   function Sprites() {							// myNav preview thumb
     var z = myPic.getBoundingClientRect()
