@@ -199,9 +199,9 @@
           gesture := 1
           MouseGetPos, xpos, ypos
           if (xpos < 15)			; gesture at screen edges
-              xpos := 15
-          if (xpos > A_ScreenWidth - 15)
-              xpos := A_ScreenWidth - 15
+            xpos := 15
+          if (xpos > A_ScreenWidth - 15 && click=="RButton")
+            xpos := A_ScreenWidth - 15
           MouseMove, % xpos, % ypos, 0
           Gesture(x, y)
           }
@@ -1116,22 +1116,22 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n if(
 
 <div oncontextmenu="if (yw>0.1 && !overText || playing) {event.preventDefault()}">`n`n
 <div id='myNav' class='context' onmouseup='togglePause()' onwheel='wheelEvent(event, id, this)'>`n
+<a id='myIndex' onmousedown="inca('Index','',wasMedia)">Index</a>`n
+<a id='myDelete' onmousedown="if(!event.button) {inca('Delete','',wasMedia)}">Delete</a>`n
+<a id='myFav' onmouseup="if (playing) {x=myPlayer.currentTime.toFixed(1)} else{x=thumb.style.start}; if(!event.button && !longClick) inca('Favorite', x, index)">Fav</a>`n
+<a id='myMute' onmouseup='mute(); togglePause()'>Mute</a>`n
 <a id='mySelect' onmouseup="if (!longClick&&(wasMedia||playing)) {sel(index)} else {selectAll()}"></a>`n
 <a id='myTitle' style='line-height:1em; height:3em'></a>`n 
 <video id='myPic' muted class='pic'></video>`n
-<a id='myDelete' onmousedown="if(!event.button) {inca('Delete','',wasMedia)}">Delete</a>`n
-<a id='myIndex' onmousedown="inca('Index','',wasMedia)">Index</a>`n
 <span id='myNav2'>
-<a id='myFav' onmouseup="if (playing) {x=myPlayer.currentTime.toFixed(1)} else{x=thumb.style.start}; if(!event.button && !longClick) inca('Favorite', x, index)">Fav</a>`n
-<a id='myMute' onmouseup='mute(); togglePause()'>Mute</a>`n
-<a id='myLoop' onmouseup='looping=!looping; togglePause()'>Loop</a>`n
 <a id='mySpeed' onclick="inca('Close')"></a>`n
 <a id='mySkinny' onclick="inca('Close')"></a>`n
 <a id='myFlip' onmouseup='flip(); togglePause()'>Flip</a>`n
+<a id='myLoop' onmouseup='looping=!looping; togglePause()'>Loop</a>`n
 <a id='myCue' onmouseup="if (!playing){inca('EditCue',0,wasMedia,0)} else {cue=Math.round(myPlayer.currentTime*100)/100; myNav.style.display='none'; togglePause()}">Cue</a>`n
 <a id='Cap' style='width:50`%' onmousedown="inca('EditCue', myPlayer.currentTime.toFixed(2), index, cue); cue=0">caption</a>`n
-<a id='Mp3' onmousedown="inca('mp3', myPlayer.currentTime.toFixed(2), index, cue); cue=0; myPlayer.play(); myNav.style.display=null">mp3</a>`n
-<a id='Mp4' onmousedown="inca('mp4', myPlayer.currentTime.toFixed(2), index, cue); cue=0; myPlayer.play(); myNav.style.display=null">mp4</a>`n
+<a id='Mp3' onmouseup="inca('mp3', myPlayer.currentTime.toFixed(2), index, cue); cue=0; myPlayer.play(); myNav.style.display=null">mp3</a>`n
+<a id='Mp4' onmouseup="inca('mp4', myPlayer.currentTime.toFixed(2), index, cue); cue=0; myPlayer.play(); myNav.style.display=null">mp4</a>`n
 <a id='Jpg' onmouseup="inca('jpg', myPlayer.currentTime.toFixed(2), index); togglePause(); myNav.style.display=null"></a></span>`n
 </div>`n`n
 
@@ -1140,7 +1140,7 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n if(
 <video id="myPlayer" class='player' type="video/mp4" onmouseover='overMedia=index' onmouseout='overMedia=0' muted onwheel="wheelEvent(event, id, this)"></video>`n
 <span id='mySeekbar' class='seekbar'></span>`n
 
-<div id='myView' class='myList' style='padding-left:%page_l%`%; padding-right:%page_r%`%; padding-top:10vh'>`n`n
+<div id='myView' class='myList' style='padding-left:%page_l%`%; padding-right:%page_r%`%; padding-top:20vh'>`n`n
 
 <div id='myPanel' class='myPanel'>`n <div id='panel' class='panel'>`n`n%panelList%`n</div></div>`n`n
 
@@ -1173,7 +1173,7 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n if(
 <a id='View' style='width:7`%' onwheel="wheelEvent(event, id, this)" onmouseout='viewE=0' onmousedown="if(!viewE) inca('View',0)">View</a>`n 
 <a id='myRate' style='width:9`%' onwheel="wheelEvent(event, id, this)">Speed</a></div>`n`n
 
-<div style='width:100`%'></div>`n`n%mediaList%<div style='width:100`%; height:100vh'></div>`n`n
+<div style='width:100`%'></div>`n`n%mediaList%<div style='width:100`%; height:115vh'></div>`n`n
 
       FileDelete, %inca%\cache\html\%folder%.htm
       StringReplace, header, header, \, /, All
