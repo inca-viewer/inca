@@ -1008,7 +1008,6 @@
           scroll = my%x%
           offset = `;%A_Space%panel.scrollBy(0,-250)
           }
-
         if subfolders
           container = <div id='Sub'></div>`n
         Loop, Parse, subfolders, `|
@@ -1174,7 +1173,6 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n if(
 <a id='myRate' style='width:9`%' onwheel="wheelEvent(event, id, this)">Speed</a></div>`n`n
 
 <div style='width:100`%'></div>`n`n%mediaList%<div style='width:100`%; height:115vh'></div>`n`n
-
       FileDelete, %inca%\cache\html\%folder%.htm
       StringReplace, header, header, \, /, All
       StringReplace, body, body, \, /, All

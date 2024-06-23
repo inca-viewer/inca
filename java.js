@@ -62,7 +62,7 @@
   var cursor								// hide cursor timer
   var block = 0								// block wheel timer
   var ratio = 1								// media width to height ratio
-  var maximise = 0							// fill window with media
+var xOff = 0								// media width to height ratio
 
 
   if (!mpv) mpv=0							// external player
@@ -124,7 +124,6 @@
 
   function clickEvent() {						// functional logic
     if (lastClick==3 && !longClick) return
-    if (playing && gesture && !longClick) maximise=1			// make myPlayer fit window
     if (gesture || title.matches(':hover')) return			// allow rename of media in htm
     if (longClick && myRibbon.matches(':hover')) return
     if (longClick && myInput.matches(':hover')) return
@@ -217,16 +216,11 @@
       if (thumb.style.position=='fixed') {
         thumb.style.left = xpos-thumb.offsetWidth/2+'px'
         thumb.style.top = ypos-thumb.offsetHeight/2+'px'}}
-    else if (playing && (y<x-2 || gesture==2)) {			// move myPlayer
-      gesture = 2
+    else if (playing) {							// move myPlayer
       mediaX += xpos - Xref
       mediaY += ypos - Yref
       localStorage.setItem("mediaX",mediaX.toFixed(0))
       localStorage.setItem("mediaY",mediaY.toFixed(0))}
-    else if (playing && y>x) {						// zoom myPlayer
-      if (scaleY>0.1 || Yref<ypos) {
-        scaleY += (ypos-Yref) * 0.002
-        maximise=0}}
     positionMedia(0); Xref=xpos; Yref=ypos}
 
 
@@ -234,6 +228,7 @@
     e.preventDefault()
     wheel += Math.ceil(Math.abs(e.deltaY))
     if (Click || wheel < block) return
+    block=120
     var wheelUp=false
     if (e.deltaY > 0) wheelUp=true
     if (id=='myRate') {							// default rate
@@ -280,23 +275,26 @@
         if (!x) myPlayer.play()}
       scrolltoIndex(index)
       Sprites()}
-    else if (playing && xw<0.1) {					// zoom myPlayer
-      if (scaleY>0.1 && !wheelUp) scaleY *= 0.9
-      else if (wheelUp) scaleY *= 1.1
-      positionMedia(0.5)}
-    else if (type=='image' || thumbSheet) {				// scroll image
-      rect = myPlayer.getBoundingClientRect()
-      if (wheelUp) mediaY-=100
-      else mediaY+=100
-      positionMedia(0.3)}
-    else if (!thumbSheet && type!='image') { 				// seek
+    else if (playing=='browser' && !myNav.matches(':hover')) {		// zoom myPlayer
+      var x = 0.015*myPlayer.offsetHeight*scaleY
+      if (wheelUp && scaleY>0.1) {					// make smaller
+        if (mediaY<0.51*innerHeight) mediaY+=x
+        if (mediaY>0.49*innerHeight) mediaY-=x
+        scaleY *= 0.97}
+      else if (!wheelUp) {						// make bigger
+        if (rect.top<40 && yw<0.4) mediaY+=x
+        if (rect.bottom>innerHeight-40 && yw>0.6) mediaY-=x
+        scaleY *= 1.03}
+      positionMedia(0.2)
+      block=12}
+    else if (!thumbSheet) {		 				// seek
       cursor=6
       if (dur > 120) interval = 3
       else interval = 0.5
       if (myPlayer.paused) interval = 0.04
       if (wheelUp) myPlayer.currentTime += interval
       else myPlayer.currentTime -= interval}
-    wheel=0; block=120; lastCue=-1}
+    wheel=0; lastCue=-1}
 
 
   function closePlayer() {		
@@ -348,8 +346,8 @@
     if (!playing || thumbSheet) myBody.style.cursor=null		// hide cursor
     else if (!cursor || Click) {
       myBody.style.cursor='none'
-      if (!myNav.matches(':hover') && !overMedia) mySeekbar.style.opacity=0}
-    else {myBody.style.cursor='crosshair'; if (!mpv) mySeekbar.style.opacity=1}
+      if (!myNav.matches(':hover')) mySeekbar.style.opacity=0}
+    else {myBody.style.cursor='crosshair'; if (playing!='mpv') mySeekbar.style.opacity=1}
     if (playing) myMask.style.backgroundColor='rgba(0,0,0,'+scaleY*6+')' 
     else myMask.style.display='none'
     if (defRate==1) myRate.innerHTML = 'Speed'
@@ -361,8 +359,8 @@
     if (selected) mySelected.innerHTML = selected.split(',').length -1
     else mySelected.innerHTML = ''
     if (playlist) myFav.innerHTML='Fav &#10084'
-    if (myNav.matches(':hover') && (playing || wasMedia)) myPic.style.display=null
-    else myPic.style.display='none'
+    if (myPic.matches(':hover') && (playing || wasMedia)) myPic.style.opacity=1
+    else myPic.style.opacity=0
     if (wasMedia || playing) {
       myTitle.innerHTML=title.value; mySelect.style.width='98%'; myTitle.style.width='16em'
       mySelect.innerHTML='Select - '+index+' - '+Time(dur)+' - '+size+'mb'}
@@ -395,7 +393,7 @@
       xm = (xpos - rect.left) / Math.abs(xm)
       ym = (ypos - rect.top) / Math.abs(ym)
       myPlayer.style.zIndex=Zindex+1
-      if (!myNav.matches(':hover')) seekBar()
+      if (!myPic.matches(':hover')) seekBar()
       positionMedia(0)}
     else {
       Jpg.innerHTML=''
@@ -449,10 +447,12 @@
 
   function positionMedia(fa) {						// position myPlayer in window
     var z=scaleY
-    myPlayer.style.left = mediaX - myPlayer.offsetWidth/2 +"px"
+    var x=0
+    if (screenLeft) {Xoff=screenLeft} else x=Xoff			// fullscreen offset
+    myPlayer.style.left = x + mediaX - myPlayer.offsetWidth/2 +"px"
     myPlayer.style.top = mediaY - myPlayer.offsetHeight/2 +"px"
     myPlayer.style.transition = fa+'s'
-    if (thumbSheet || maximise) {
+    if (thumbSheet) {
         if (ratio<1) {z=innerHeight/myPlayer.offsetHeight; mediaY=innerHeight/2}
         else {z=innerWidth/myPlayer.offsetWidth; mediaX=innerWidth/2}}
     scaleX = skinny*z
@@ -532,7 +532,6 @@
   function nextMedia() {
     if (!looping) {
       lastClick=2
-      longClick=0
       myPlayer.pause()
       if (playlist.match('/inca/music/')) setTimeout(function() {clickEvent()}, Math.random()*4000)
       else clickEvent()
@@ -589,11 +588,9 @@
     if (!x || x.length>99)  mySelect.innerHTML='Select'
     else {mySelect.innerHTML='Select - '+x; mySelect.style.width='100%'}
     if (!wasMedia) wasMedia=0
-    if (yw > 0.8) x=60							// cursor near window bottom, add offset
-    else x=0
     myPic.style.backgroundPosition='0 0'
     mySeekbar.style.width=0
-    myNav.style.left=xpos-45+'px'; myNav.style.top=ypos-90-x+'px'
+    myNav.style.left=xpos-50+'px'; myNav.style.top=ypos-70+'px'
     myNav.style.display='block'; myNav.style.background='#15110acc'
     if (wasMedia || playing) myNav2.style.display='block' 
     else {myNav2.style.display='none'; mySelect.style.minWidth=null}}

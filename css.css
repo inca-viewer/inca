@@ -20,6 +20,7 @@
   position:absolute;
   margin-left:4.5em;
   margin-top:1em;
+transition: opacity 0.4s;
   border-radius:7%}
  
 .save {
