@@ -359,7 +359,7 @@ var xOff = 0								// media width to height ratio
     if (selected) mySelected.innerHTML = selected.split(',').length -1
     else mySelected.innerHTML = ''
     if (playlist) myFav.innerHTML='Fav &#10084'
-    if (myPic.matches(':hover') && (playing || wasMedia)) myPic.style.opacity=1
+    if (myPic.matches(':hover') || (listView && !playing)) myPic.style.opacity=1
     else myPic.style.opacity=0
     if (wasMedia || playing) {
       myTitle.innerHTML=title.value; mySelect.style.width='98%'; myTitle.style.width='16em'
