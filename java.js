@@ -1,9 +1,6 @@
 
 // Debugging	- use mySelected.innerHTML or alert()
 
-// zoom cues
-// firefox scrollbar
-
 
   var defRate = 1*localStorage.getItem('defRate')			// default playback speed
   var mediaX = 1*localStorage.getItem('mediaX')				// myPlayer position
@@ -18,7 +15,7 @@
   var lastStart = 0							// last video start time
   var lastCue								// last cue time
   var view = 14								// thumb size (em)
-  var viewE = 0								// size edited
+  var viewE = 0								// edited thumb size
   var listView = 0							// list or thumb view
   var page = 1								// html media page
   var pages = 1								// how many htm pages of media
@@ -62,7 +59,7 @@
   var cursor								// hide cursor timer
   var block = 0								// block wheel timer
   var ratio = 1								// media width to height ratio
-var xOff = 0								// media width to height ratio
+  var xOff = 0								// window offset before fullscreen
 
 
   if (!mpv) mpv=0							// external player
@@ -88,6 +85,7 @@ var xOff = 0								// media width to height ratio
       if (playing) {thumbSheet=0; myPlayer.play()}
       else {lastClick=3;longClick=3;clickEvent()}}			// simulate RClick
     else if (e.key=='Pause') {						// inca re-map of mouse 'Back' key
+      Click=0; lastClick=0
       if (myNav.matches(':hover')) myNav.style.display='none'
       else if (playing) closePlayer()
       else if (overMedia && thumb.style.position=='fixed') {		// close popped out thumb
@@ -331,7 +329,7 @@ var xOff = 0								// media width to height ratio
     x = 1*thumb.style.rate						// custom css variable - rate edited
     if (x && x != rate) rate=x
     if (type!='image' && !dur) dur=thumb.duration			// just in case - use browser calc.
-    Previews()							// set preview sprites etc.
+    Previews()								// set preview sprites etc.
     return 1}
 
 

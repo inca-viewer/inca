@@ -1110,7 +1110,7 @@ header = <!--, %view%, %page%, %pages%, %filt%, %sort%, %toggles%, %listView%, %
 
 body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n if(document.getElementById('%scroll%')) {%scroll%.scrollIntoView()%offset%} myView.scrollTo(0,1*sessionStorage.getItem('scroll'));`n globals(%view%, %page%, %pages%, '%sort%', %filt%, %listView%, '%selected%', '%playlist%', %index%); if (index) thumb%index%.scrollTo(0,%scrollText%)">`n`n
 
-<div id='myContent' style='position:absolute; width:100`%'>`n`n
+<div id='myContent' style='width:100`%'>`n`n
 <div id='mySelected' class='selected'></div>`n
 
 <div oncontextmenu="if (yw>0.1 && !overText || playing) {event.preventDefault()}">`n`n

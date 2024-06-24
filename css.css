@@ -1,10 +1,11 @@
 
   ::selection {color:red; background:black}
   ::-webkit-search-cancel-button {appearance:none}
-  ::-webkit-scrollbar {background:#15110a; width:1em}
+  ::-webkit-scrollbar {background:#15110a; width:4px}
   ::-webkit-resizer {background:#826858}
   ::-webkit-scrollbar-corner {background:#15110a}
   ::-webkit-scrollbar-thumb {background:#2b2824; border-radius:2px}
+  @supports (not selector(::-webkit-scrollbar)) {html {scrollbar-color:#2b2824 #15110a}}
   td {outline:none; text-align:center; min-width:3.8em; overflow:hidden; white-space:nowrap}
   table {color:#826858; font-size:0.9em; border-collapse:collapse; margin:auto; border-radius:1em; transition:color 0.3s}
   table:hover {background:#1b1814}
@@ -20,7 +21,7 @@
   position:absolute;
   margin-left:4.5em;
   margin-top:1em;
-transition: opacity 0.4s;
+  transition: opacity 0.4s;
   border-radius:7%}
  
 .save {
@@ -242,5 +243,4 @@ transition: opacity 0.4s;
   color:#826858;
   opacity:0;
   transition:0s}
-
 
