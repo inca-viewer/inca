@@ -90,7 +90,6 @@
   --start;					/* default start time */
   --skinny;
   --rate;
-  transition:0.15s;
   position:relative;
   outline:none;
   margin:auto;

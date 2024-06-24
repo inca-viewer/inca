@@ -88,12 +88,12 @@
       Click=0; lastClick=0
       if (myNav.matches(':hover')) myNav.style.display='none'
       else if (playing) closePlayer()
-      else if (overMedia && thumb.style.position=='fixed') {		// close popped out thumb
+      else if (thumb.style.position=='fixed') {				// close popped out thumb
         thumb.style.position=null
-        thumb.style.maxWidth=view*0.8+'em'
-        thumb.style.maxHeight=view*0.8+'em'
-        thumb.removeAttribute('controls')
-        thumb.style.top=null; thumb.style.left=null}
+        thumb.style.maxWidth=view+'em'
+        thumb.style.maxHeight=view+'em'
+        thumb.style.top=null; thumb.style.left=null
+        thumb.removeEventListener('wheel', wheelEvent)}
       else if (myView.scrollTop > 50) myView.scrollTo(0,0)		// else scroll to page top
       else inca('Reload')}}, false)					// or reload page
 
@@ -114,9 +114,9 @@
     if (!Click) return							// page load while mouse still down - ignore  
     if (Click==3 && !gesture && !longClick && !overText) context(e)	// new context menu
     if (Click==2 && !playing) inca('View',0,'',lastIndex)		// middle click - switch list/thumb view
-    else if (viewE && thumb.style.position!='fixed') inca('View',viewE.toFixed(1),'',index)
+    else if (viewE) inca('View',viewE.toFixed(1),'',index)
     else if (!longClick) clickEvent()					// process click event
-    Click=0; wheel=0; gesture=0; longClick=0; viewE=0
+    Click=0; wheel=0; gesture=0; longClick=0
     clearTimeout(clickTimer)}						// longClick timer
 
 
@@ -198,8 +198,8 @@
       myNav.style.top = ypos-myNav.offsetHeight/2+"px"}
     else if (!playing && wasMedia && !listView && type!='document') { 	// move thumb
       thumb.style.zIndex = Zindex+=1
-      thumb.style.transition='0s'
       thumb.style.position = 'fixed'
+      thumb.addEventListener('wheel', wheelEvent)
       thumb.style.left = xpos-thumb.offsetWidth/2+"px"
       thumb.style.top = ypos-thumb.offsetHeight/2+"px"}
     else if (playing) {							// move myPlayer
@@ -243,14 +243,15 @@
       thumb.style.skinny = skinny					// css holds edited skinny
       getParameters(index)
       positionMedia(0)}
-    else if (id=='View') {						// thumb size
-      el = document.getElementById('thumb1')
-      viewE = 1*el.style.maxWidth.slice(0,-2)
-      if (viewE<50 && wheelUp) viewE += 1
-      else if (viewE>8 && !wheelUp) viewE -= 1
-      el.style.opacity=1
-      el.style.maxWidth=viewE+'em'
-      el.style.maxHeight=viewE+'em'} 
+    else if (id=='View' || thumb.style.position=='fixed') {		// zoom thumb
+      viewE = 1*thumb.style.maxWidth.slice(0,-2)
+      if (viewE<50 && wheelUp) viewE += 0.2
+      else if (viewE>8 && !wheelUp) viewE -= 0.2
+      thumb.style.opacity=1
+      thumb.style.maxWidth=viewE+'em'
+      thumb.style.maxHeight=viewE+'em'
+      if (id!='View') viewE=0
+      block=12}
     else if (myTitle.matches(':hover') || mySelect.matches(':hover')) {	// next / previous
       if (wheelUp) index++
       else if (index>1) index--
@@ -263,11 +264,11 @@
       Sprites()}
     else if (playing=='browser' && !myNav.matches(':hover')) {		// zoom myPlayer
       var x = 0.015*myPlayer.offsetHeight*scaleY
-      if (wheelUp && scaleY>0.11) {					// make smaller
+      if (!wheelUp && scaleY>0.11) {					// make smaller
         if (mediaY<0.51*innerHeight) mediaY+=x
         if (mediaY>0.49*innerHeight) mediaY-=x
         scaleY *= 0.97}
-      else if (!wheelUp) {						// make bigger
+      else if (wheelUp) {						// make bigger
         if (rect.top<40 && yw<0.4) mediaY+=x
         if (rect.bottom>innerHeight-40 && yw>0.6) mediaY-=x
         scaleY *= 1.03}
@@ -389,7 +390,7 @@
 
 
   function seekBar() {							// progress bar beneath player
-    var cueX = rect.left
+    var cueX = rect.left + 7
     var x = Math.round(myPlayer.currentTime*100)/100
     var cueW = 0.95*Math.abs(scaleX)*myPlayer.offsetWidth*myPlayer.currentTime/dur
     if (cue && cue<=x) {
@@ -402,7 +403,7 @@
       cueW = Math.abs(scaleX*myPlayer.offsetWidth*(cue - x)/dur)
       if (cue < 0.2+x) {
         cueX = rect.left; cueW = Math.abs(scaleX*myPlayer.offsetWidth*myPlayer.currentTime/dur)}}
-    if (rect.bottom<innerHeight) mySeekbar.style.top = rect.bottom -6 +'px'
+    if (rect.bottom<innerHeight) mySeekbar.style.top = rect.bottom +3 +'px'
     else mySeekbar.style.top = innerHeight -16 +'px'
     mySeekbar.style.left = cueX +'px'
     mySeekbar.style.width = cueW +'px'}
@@ -478,7 +479,7 @@
     myPlayer.style.height = y +'px'
     myPlayer.style.top = mediaY-y/2 +'px'				// myPlayer size normalised to screen
     myPlayer.style.left = mediaX-x/2 +'px'
-    if (ratio>1) {x=150} else x=120					// preview thumb size normalised
+    if (ratio>1) {x=150} else x=90					// preview thumb size normalised
     myPic.style.width=x+'px'
     myPic.style.height=(x-7)/ratio+'px'
     myCap.innerHTML = ''
@@ -488,8 +489,8 @@
     var z = myPic.getBoundingClientRect()
     var x = (xpos-z.left)/myPic.offsetWidth
     mySeekbar.style.opacity=1
-    mySeekbar.style.top = z.bottom -4 +'px'
-    mySeekbar.style.left = z.left -8 +'px'
+    mySeekbar.style.top = z.bottom +5 +'px'
+    mySeekbar.style.left = z.left +'px'
     mySeekbar.style.width = myPic.offsetWidth*x +'px'
     z = 20 * Math.ceil(x*35)
     var y = 20 * Math.floor(z/120)
