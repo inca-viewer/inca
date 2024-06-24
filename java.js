@@ -198,22 +198,10 @@
       myNav.style.top = ypos-myNav.offsetHeight/2+"px"}
     else if (!playing && wasMedia && !listView && type!='document') { 	// move thumb
       thumb.style.zIndex = Zindex+=1
-      if (gesture!=3 && (y<x-1 || gesture==2)) {
-        gesture=2
-        thumb.style.transition='0s'
-        thumb.style.position = 'fixed'
-        thumb.style.left = xpos-thumb.offsetWidth/2+"px"
-        thumb.style.top = ypos-thumb.offsetHeight/2+"px"}
-      else if (gesture!=2 &&  (y>x || gesture==3)) {			// zoom thumb
-        gesture=3
-        viewE = 1*thumb.style.maxWidth.slice(0,-2)
-        if (ypos>Yref) viewE+=0.6
-        else if (viewE>8) viewE-=0.6
-        thumb.style.maxWidth=viewE+'em'
-        thumb.style.maxHeight=viewE+'em'}
-      if (thumb.style.position=='fixed') {
-        thumb.style.left = xpos-thumb.offsetWidth/2+'px'
-        thumb.style.top = ypos-thumb.offsetHeight/2+'px'}}
+      thumb.style.transition='0s'
+      thumb.style.position = 'fixed'
+      thumb.style.left = xpos-thumb.offsetWidth/2+"px"
+      thumb.style.top = ypos-thumb.offsetHeight/2+"px"}
     else if (playing) {							// move myPlayer
       mediaX += xpos - Xref
       mediaY += ypos - Yref
@@ -275,7 +263,7 @@
       Sprites()}
     else if (playing=='browser' && !myNav.matches(':hover')) {		// zoom myPlayer
       var x = 0.015*myPlayer.offsetHeight*scaleY
-      if (wheelUp && scaleY>0.1) {					// make smaller
+      if (wheelUp && scaleY>0.11) {					// make smaller
         if (mediaY<0.51*innerHeight) mediaY+=x
         if (mediaY>0.49*innerHeight) mediaY-=x
         scaleY *= 0.97}

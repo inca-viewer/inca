@@ -1167,9 +1167,9 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n if(
 <a style='width:6.5`%; %x9%' onmousedown="inca('Videos')">Vids</a>`n
 <a style='width:7`%; %x8%' onmousedown="inca('Recurse')">Subs</a>`n
 <a style='width:7`%' onmouseup="inca('Settings')">&#8230</a>`n
+<a id='View' style='width:7`%' onwheel="wheelEvent(event, id, this)" onmouseout='viewE=0' onmousedown="if(!viewE) inca('View',0)">View</a>`n 
 <a id='myMpv' style='width:7`%' onmouseup="mpv*=1; mpv^=1; localStorage.setItem('mpv',mpv)">Mpv</a>`n
 <a id='myJoin' style='width:6`%' onmousedown="inca('Join')">Join</a>`n
-<a id='View' style='width:7`%' onwheel="wheelEvent(event, id, this)" onmouseout='viewE=0' onmousedown="if(!viewE) inca('View',0)">View</a>`n 
 <a id='myRate' style='width:9`%' onwheel="wheelEvent(event, id, this)">Speed</a></div>`n`n
 
 <div style='width:100`%'></div>`n`n%mediaList%<div style='width:100`%; height:115vh'></div>`n`n
