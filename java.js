@@ -263,6 +263,13 @@
         if (!x) myPlayer.play()}
       scrolltoIndex(index)
       Sprites()}
+    else if (playing && !thumbSheet && xw<0.12) {		 	// seek
+      cursor=6
+      if (dur > 120) interval = 3
+      else interval = 0.5
+      if (myPlayer.paused) interval = 0.04
+      if (wheelUp) myPlayer.currentTime += interval
+      else myPlayer.currentTime -= interval}
     else if (playing=='browser' && !myNav.matches(':hover')) {		// zoom myPlayer
       var x = 0.015*myPlayer.offsetHeight*scaleY
       if (!wheelUp && scaleY>0.11) {					// make smaller
@@ -275,13 +282,6 @@
         scaleY *= 1.03}
       positionMedia(0.2)
       block=16}
-    else if (!thumbSheet) {		 				// seek
-      cursor=6
-      if (dur > 120) interval = 3
-      else interval = 0.5
-      if (myPlayer.paused) interval = 0.04
-      if (wheelUp) myPlayer.currentTime += interval
-      else myPlayer.currentTime -= interval}
     wheel=0; lastCue=-1}
 
 
