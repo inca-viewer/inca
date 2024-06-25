@@ -59,7 +59,8 @@
   var cursor								// hide cursor timer
   var block = 0								// block wheel timer
   var ratio = 1								// media width to height ratio
-  var xOff = 0								// window offset before fullscreen
+  var xOff = 0								// window offsets before fullscreen
+  var yOff = 0
 
 
   if (!mpv) mpv=0							// external player
@@ -273,7 +274,7 @@
         if (rect.bottom>innerHeight-40 && yw>0.6) mediaY-=x
         scaleY *= 1.03}
       positionMedia(0.2)
-      block=12}
+      block=16}
     else if (!thumbSheet) {		 				// seek
       cursor=6
       if (dur > 120) interval = 3
@@ -333,7 +334,7 @@
     if (!playing || thumbSheet) myBody.style.cursor=null		// hide cursor
     else if (!cursor || Click) {
       myBody.style.cursor='none'
-      if (!myNav.matches(':hover')) mySeekbar.style.opacity=0}
+      if (!myNav.matches(':hover') && !overMedia) mySeekbar.style.opacity=0}
     else {myBody.style.cursor='crosshair'; if (playing!='mpv') mySeekbar.style.opacity=1}
     if (playing) myMask.style.backgroundColor='rgba(0,0,0,'+scaleY*6+')' 
     else myMask.style.display='none'
@@ -433,11 +434,10 @@
 
 
   function positionMedia(fa) {						// position myPlayer in window
-    var z=scaleY
-    var x=0
-    if (screenLeft) {Xoff=screenLeft} else x=Xoff			// fullscreen offset
+    var x=0; var y=0; var z=scaleY
+    if (screenLeft) {Xoff=screenLeft; Yoff=outerHeight-innerHeight} else {x=Xoff; y=Yoff} // fullscreen offsets
     myPlayer.style.left = x + mediaX - myPlayer.offsetWidth/2 +"px"
-    myPlayer.style.top = mediaY - myPlayer.offsetHeight/2 +"px"
+    myPlayer.style.top = y + mediaY - myPlayer.offsetHeight/2 +"px"
     myPlayer.style.transition = fa+'s'
     if (thumbSheet) {
         if (ratio<1) {z=innerHeight/myPlayer.offsetHeight; mediaY=innerHeight/2}
