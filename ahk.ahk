@@ -230,8 +230,8 @@
                 {
                 if !incaTab			; include current path in search 
                   path =
-                incaTab =			; force new tab
                 value =
+                incaTab =			; force new tab
                 searchTerm =
                 command = SearchBox		; search from selected text
                 address := Clipboard
@@ -1110,8 +1110,8 @@ header = <!--, %view%, %page%, %pages%, %filt%, %sort%, %toggles%, %listView%, %
 
 body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n if(document.getElementById('%scroll%')) {%scroll%.scrollIntoView()%offset%} myView.scrollTo(0,1*sessionStorage.getItem('scroll'));`n globals(%view%, %page%, %pages%, '%sort%', %filt%, %listView%, '%selected%', '%playlist%', %index%); if (index) thumb%index%.scrollTo(0,%scrollText%)">`n`n
 
-<div id='myContent' style='width:100`%'>`n`n
 <div id='mySelected' class='selected'></div>`n
+<div id='myContent' style='width:100`%'>`n`n
 
 <div oncontextmenu="if (yw>0.1 && !overText || playing) {event.preventDefault()}">`n`n
 <div id='myNav' class='context' onmouseup='togglePause()' onwheel='wheelEvent(event, id, this)'>`n
@@ -1508,6 +1508,9 @@ else mediaList = %mediaList%<div id="entry%j%" style="max-width:%view%em; paddin
 
     MoveFiles()								; or playlist .m3u entries
         {
+        if (A_TickCount > timer)
+          longClick=true
+        else longClick=
         if (playlist && !InStr(address, "\inca\") && !longClick)
           PopUp("Cannot Move Shortcuts",1000,0.34,0.2)
         else if (path == address && !longClick)

@@ -87,7 +87,7 @@
       else {lastClick=3;longClick=3;clickEvent()}}			// simulate RClick
     else if (e.key=='Pause') {						// inca re-map of mouse 'Back' key
       Click=0; lastClick=0
-      if (myNav.matches(':hover')) myNav.style.display='none'
+      if (myNav.style.display=='block') myNav.style.display='none'
       else if (playing) closePlayer()
       else if (thumb.style.position=='fixed') {				// close popped out thumb
         thumb.style.position=null
@@ -192,7 +192,7 @@
     if (myPic.matches(':hover') && type=='video') Sprites()		// myNav preview thumb
     var x = Math.abs(xpos-Xref)
     var y = Math.abs(ypos-Yref)
-    if (x+y > 7 && !gesture && Click) gesture=1				// gesture (Click + slide)
+    if (x+y > 7 && Click) gesture=1					// gesture (Click + slide)
     if (!gesture || Click!=1) return
     if (myNav.matches(':hover')) {
       myNav.style.left = xpos-myNav.offsetWidth/2+"px"
@@ -266,8 +266,8 @@
     else if (playing=='browser' && !myNav.matches(':hover') && xw>0.12) { // zoom myPlayer
       var x = 0.015*myPlayer.offsetHeight*scaleY
       if (!wheelUp && scaleY>0.11) {					// make smaller
-        if (mediaY<0.51*innerHeight) mediaY+=x
-        if (mediaY>0.49*innerHeight) mediaY-=x
+        if (mediaY<0.4*innerHeight) mediaY+=x
+        if (mediaY>0.6*innerHeight) mediaY-=x
         scaleY *= 0.97}
       else if (wheelUp) {						// make bigger
         if (rect.top<40 && yw<0.4) mediaY+=x
@@ -344,7 +344,7 @@
     else mySpeed.innerHTML = rate.toFixed(2)
     if (skinny>0.99 && skinny<1.01) mySkinny.innerHTML = 'Skinny'
     else mySkinny.innerHTML = skinny.toFixed(2)
-    if (selected) mySelected.innerHTML = selected.split(',').length -1
+    if (selected && !Click) mySelected.innerHTML = selected.split(',').length -1
     else mySelected.innerHTML = ''
     if (playlist) myFav.innerHTML='Fav &#10084'
     if (myPic.matches(':hover') || (listView && !playing)) myPic.style.opacity=1
