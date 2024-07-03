@@ -41,12 +41,12 @@
   border-radius:0.5em;
   background-color:#1b1814;
   color:#826858;
-  width:50em;					/* becomes max width	*/
+  width:60em;					/* becomes max width	*/
   line-height:1.1em;
   font-family:inherit;
   border:none;
   outline:none}
-.text::-webkit-scrollbar {width:5px}
+.text::-webkit-scrollbar {width:6px}
 
 .player {					/* media player element */
   position:absolute;

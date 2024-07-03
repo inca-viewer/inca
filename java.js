@@ -102,7 +102,7 @@
   function mouseDown(e) {						// detect long click
     Click=e.button+1; lastClick=Click; longClick=0; cursor=6
     gesture=0; Xref=xpos; Yref=ypos; block=100
-    sessionStorage.setItem('scroll', myView.scrollTop)
+    sessionStorage.setItem('scroll', myView.scrollTop)  
     if (Click==2) e.preventDefault()					// middle click
     else if (!myNav.matches(":hover")) {
       if (overMedia) wasMedia=overMedia
@@ -273,9 +273,9 @@
         if (rect.top<40 && yw<0.4) mediaY+=x
         if (rect.bottom>innerHeight-40 && yw>0.6) mediaY-=x
         scaleY *= 1.03}
-      positionMedia(0.2)
+      positionMedia(0)
       block=16}
-    else if (playing && !thumbSheet) {		 	// seek
+    else if (playing && !thumbSheet) {				 	// seek
       cursor=6
       if (dur > 120) interval = 3
       else interval = 0.5
@@ -293,10 +293,11 @@
     cue=0
     myPlayer.style.opacity=0
     myNav.style.display=null
+    myPlayer.removeEventListener('ended', nextMedia)
     setTimeout(function() {						// fadeout before close
-      myPlayer.removeEventListener('ended', nextMedia)
       myPlayer.src=''
       myPlayer.poster=''
+      myPlayer.style.zIndex=-1
       thumbSheet=0},400)}
 
 
@@ -386,8 +387,7 @@
     else {
       Jpg.innerHTML=''
       myCap.innerHTML=''
-      myCap.style.opacity=0
-      myPlayer.style.zIndex=-1}}					// in case flipped into fullscreen
+      myCap.style.opacity=0}}						// in case flipped into fullscreen
 
 
   function seekBar() {							// progress bar beneath player
@@ -438,10 +438,10 @@
     if (screenLeft) {Xoff=screenLeft; Yoff=outerHeight-innerHeight} else {x=Xoff; y=Yoff} // fullscreen offsets
     myPlayer.style.left = x + mediaX - myPlayer.offsetWidth/2 +"px"
     myPlayer.style.top = y + mediaY - myPlayer.offsetHeight/2 +"px"
-    myPlayer.style.transition = fa+'s'
+    myPlayer.style.transition = 'opacity '+fa+'s'
     if (thumbSheet) {
-        if (ratio<1) {z=innerHeight/myPlayer.offsetHeight; mediaY=innerHeight/2}
-        else {z=innerWidth/myPlayer.offsetWidth; mediaX=innerWidth/2}}
+      if (ratio<1) {z=innerHeight/myPlayer.offsetHeight; mediaY=innerHeight/2}
+      else {z=innerWidth/myPlayer.offsetWidth; mediaX=innerWidth/2}}
     scaleX = skinny*z
     if (thumbSheet) thumbSheet=z
     myPlayer.style.transform = "scale("+scaleX+","+z+")"}

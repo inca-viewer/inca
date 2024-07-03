@@ -96,7 +96,11 @@
     main:
       initialize()				; set environment
       WinActivate, ahk_group Browsers
-      sleep 333
+      sleep 24
+      WinGetPos,,,w,,a
+      sleep 300
+      if (w == A_ScreenWidth)			; ensure not fullscreen
+        send, {F11}
       if !GetBrowser()
         Clipboard = #Path###%profile%\Pictures\
       Clipboard()				; process clipboard message
