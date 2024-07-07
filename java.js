@@ -1,6 +1,6 @@
 
 // Debugging	- use mySelected.innerHTML or alert()
-
+// index tab
 
   var defRate = 1*localStorage.getItem('defRate')			// default playback speed
   var mediaX = 1*localStorage.getItem('mediaX')				// myPlayer position
@@ -263,7 +263,7 @@
         if (!x) myPlayer.play()}
       scrolltoIndex(index)
       Sprites()}
-    else if (playing=='browser' && !myNav.matches(':hover') && xw>0.12) { // zoom myPlayer
+    else if (playing=='browser' && !myNav.matches(':hover') && xw>0.2) { // zoom myPlayer
       var x = 0.015*myPlayer.offsetHeight*scaleY
       if (!wheelUp && scaleY>0.11) {					// make smaller
         if (mediaY<0.4*innerHeight) mediaY+=x
@@ -331,12 +331,12 @@
     if (wheel>=10) wheel-=10
     if (!thumb) return
     if (cursor) cursor--
-    if (!myNav.matches(':hover')) myNav.style.display=null
+    if (!myNav.matches(':hover')) myNav.style.display=null 
+    if (playing!='mpv' && (myNav.matches(':hover') || xw<0.2)) mySeekbar.style.opacity=1
+    else mySeekbar.style.opacity=0
     if (!playing || thumbSheet) myBody.style.cursor=null		// hide cursor
-    else if (!cursor || Click) {
-      myBody.style.cursor='none'
-      if (!myNav.matches(':hover') && !overMedia) mySeekbar.style.opacity=0}
-    else {myBody.style.cursor='crosshair'; if (playing!='mpv') mySeekbar.style.opacity=1}
+    else if (!cursor || Click) myBody.style.cursor='none'
+    else myBody.style.cursor='crosshair'
     if (playing) myMask.style.backgroundColor='rgba(0,0,0,'+scaleY*6+')' 
     else myMask.style.display='none'
     if (defRate==1) myRate.innerHTML = 'Speed'
@@ -405,7 +405,7 @@
       if (cue < 0.2+x) {
         cueX = rect.left; cueW = Math.abs(scaleX*myPlayer.offsetWidth*myPlayer.currentTime/dur)}}
     if (rect.bottom<innerHeight) mySeekbar.style.top = rect.bottom +3 +'px'
-    else mySeekbar.style.top = innerHeight -16 +'px'
+    else mySeekbar.style.top = innerHeight -3 +'px'
     mySeekbar.style.left = cueX +'px'
     mySeekbar.style.width = cueW +'px'}
 
