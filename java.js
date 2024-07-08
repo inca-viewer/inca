@@ -87,8 +87,7 @@
       else {lastClick=3;longClick=3;clickEvent()}}			// simulate RClick
     else if (e.key=='Pause') {						// inca re-map of mouse 'Back' key
       Click=0; lastClick=0
-      if (myNav.style.display=='block') myNav.style.display='none'
-      else if (playing) closePlayer()
+      if (playing) closePlayer()
       else if (thumb.style.position=='fixed') {				// close popped out thumb
         thumb.style.position=null
         thumb.style.maxWidth=view+'em'
@@ -331,9 +330,6 @@
     if (wheel>=10) wheel-=10
     if (!thumb) return
     if (cursor) cursor--
-    if (!myNav.matches(':hover')) myNav.style.display=null 
-    if (playing!='mpv' && (myNav.matches(':hover') || xw<0.2)) mySeekbar.style.opacity=1
-    else mySeekbar.style.opacity=0
     if (!playing || thumbSheet) myBody.style.cursor=null		// hide cursor
     else if (!cursor || Click) myBody.style.cursor='none'
     else myBody.style.cursor='crosshair'
@@ -362,9 +358,12 @@
     else if (myPlayer.volume < 0.8) myPlayer.volume *= 1.3		// fade sound in/out
     if ((","+selected).match(","+index+",")) {mySelect.style.color='red'; myPlayer.style.outline='1px solid red'}
     else {mySelect.style.color=null; myPlayer.style.outline=null}
-    if (!playing && (type=='image'||thumbSheet||!myNav.matches(':hover'))) mySeekbar.style.opacity=0
-    if (cue) mySeekbar.style.opacity=1
     if (playing=='browser') {
+      if (myNav.matches(':hover') || xw<0.2 || cue) mySeekbar.style.opacity=1
+      else mySeekbar.style.opacity=0
+      if (myNav.matches(':hover') || xw<0.1) myNav.style.display='block'
+      else myNav.style.display='none'
+      if (xw<0.1) {myNav.style.left=0; myNav.style.top=innerHeight*0.2+'px'}
       Jpg.innerHTML='jpg'
       myPlayer.playbackRate=rate
       rect = myPlayer.getBoundingClientRect()
@@ -385,6 +384,7 @@
       if (!myPic.matches(':hover')) seekBar()
       positionMedia(0)}
     else {
+      if (!myNav.matches(':hover')) {myNav.style.display=null; mySeekbar.style.opacity=0} 
       Jpg.innerHTML=''
       myCap.innerHTML=''
       myCap.style.opacity=0}}						// in case flipped into fullscreen
