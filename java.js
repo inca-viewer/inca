@@ -361,7 +361,7 @@
     if (playing=='browser') {
       if (myNav.matches(':hover') || xw<0.2 || cue || overMedia) mySeekbar.style.opacity=1
       else mySeekbar.style.opacity=0
-      if (myNav.matches(':hover') || xw<0.1) myNav.style.display='block'
+      if (myNav.matches(':hover') || (xw<0.1 && !thumbSheet)) myNav.style.display='block'
       else myNav.style.display='none'
       if (xw<0.1) {myNav.style.left=0; myNav.style.top=innerHeight*0.2+'px'}
       Jpg.innerHTML='jpg'
