@@ -359,7 +359,7 @@
     if ((","+selected).match(","+index+",")) {mySelect.style.color='red'; myPlayer.style.outline='1px solid red'}
     else {mySelect.style.color=null; myPlayer.style.outline=null}
     if (playing=='browser') {
-      if (myNav.matches(':hover') || xw<0.2 || cue) mySeekbar.style.opacity=1
+      if (myNav.matches(':hover') || xw<0.2 || cue || overMedia) mySeekbar.style.opacity=1
       else mySeekbar.style.opacity=0
       if (myNav.matches(':hover') || xw<0.1) myNav.style.display='block'
       else myNav.style.display='none'
