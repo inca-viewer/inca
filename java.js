@@ -1,6 +1,10 @@
 
-// Debugging	- use mySelected.innerHTML or alert()
-// index tab
+// Debugging - use mySelected.innerHTML or alert()
+// index tab not work
+// cue caption
+// what if there's a # within a text edit - will is mess with messages
+
+
 
   var defRate = 1*localStorage.getItem('defRate')			// default playback speed
   var mediaX = 1*localStorage.getItem('mediaX')				// myPlayer position
@@ -243,10 +247,10 @@
       thumb.style.skinny = skinny					// css holds edited skinny
       getParameters(index)
       positionMedia(0)}
-    else if (id=='View' || thumb.style.position=='fixed') {		// zoom thumb
+    else if (!playing && (id=='View' || thumb.style.position=='fixed')) { // zoom thumb
       viewE = 1*thumb.style.maxWidth.slice(0,-2)
-      if (viewE<50 && wheelUp) viewE += 0.2
-      else if (viewE>8 && !wheelUp) viewE -= 0.2
+      if (viewE<50 && wheelUp) viewE += 0.5
+      else if (viewE>8 && !wheelUp) viewE -= 0.5
       thumb.style.opacity=1
       thumb.style.maxWidth=viewE+'em'
       thumb.style.maxHeight=viewE+'em'
@@ -273,7 +277,7 @@
         if (rect.bottom>innerHeight-40 && yw>0.6) mediaY-=x
         scaleY *= 1.03}
       positionMedia(0)
-      block=16}
+      block=13}
     else if (playing && !thumbSheet) {				 	// seek
       cursor=6
       if (dur > 120) interval = 3

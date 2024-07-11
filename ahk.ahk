@@ -338,6 +338,8 @@
           if !command
             continue
           else ProcessMessage()
+if (command == "Text")
+  break
           }
         if !selected
           PopUp(folder,0,0,0)
@@ -368,12 +370,14 @@
         if (command == "Text")						; save browser text editing
             {
             getMedia(selected)
-            FileDelete, %src%
-            FileAppend, %address%, %src%, UTF-8
+            if address
+              {
+              FileDelete, %src%
+              FileAppend, %address%, %src%, UTF-8
+              }
             scrollText := value						; textarea scrollY
-            if (sort!="Date")
-              index := selected
-            else index:=1						; textarea index id
+            sort = Date
+            index:=1
             reload := 3
             }
         if (command == "Move")						; move entry within playlist
@@ -489,7 +493,7 @@
               WinActivate, ahk_class mpv
               }
             }
-        if (command == "EditCue")					; open media cues in notepad
+        if (command == "EditCue" || command == "Caption")		; open media cues in notepad
             {
             if !selected 
               return
@@ -504,12 +508,15 @@
               value = 0.00
             if (!address)						; no cue time
               {
-              IfExist, %inca%\cache\cues\%media%.txt
-                run, %inca%\cache\cues\%media%.txt
-;              FileAppend, %value%|cap|`r`n, %inca%\cache\cues\%media%.txt, UTF-8
+              if (command == "Caption")
+                FileAppend, %value%|cap|`r`n, %inca%\cache\cues\%media%.txt, UTF-8
+              Run, %inca%\cache\cues\%media%.txt
               }
-            else FileAppend, %address%|goto|%value%`r`n, %inca%\cache\cues\%media%.txt, UTF-8
-            Popup("Done . . .",1000,0,0)
+            else 
+              {
+              FileAppend, %address%|goto|%value%`r`n, %inca%\cache\cues\%media%.txt, UTF-8
+              Popup("Added . . .",1000,0,0)
+              }
             }
         if (command == "jpg")
           {
@@ -1136,7 +1143,7 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n if(
 <a id='myFlip' onmouseup='flip(); togglePause()'>Flip</a>`n
 <a id='myLoop' onmouseup='looping=!looping; togglePause()'>Loop</a>`n
 <a id='myCue' onmouseup="if (!playing){inca('EditCue',0,wasMedia,0)} else {cue=Math.round(myPlayer.currentTime*100)/100}">Cue</a>`n
-<a id='Cap' style='width:50`%' onmousedown="inca('EditCue', myPlayer.currentTime.toFixed(2), index, cue); cue=0">caption</a>`n
+<a id='Cap' style='width:50`%' onmousedown="inca('Caption', myPlayer.currentTime.toFixed(2), index, cue); cue=0">caption</a>`n
 <a id='Mp3' onmouseup="inca('mp3', myPlayer.currentTime.toFixed(2), index, cue); cue=0; myPlayer.play(); myNav.style.display=null">mp3</a>`n
 <a id='Mp4' onmouseup="inca('mp4', myPlayer.currentTime.toFixed(2), index, cue); cue=0; myPlayer.play(); myNav.style.display=null">mp4</a>`n
 <a id='Jpg' onmouseup="inca('jpg', myPlayer.currentTime.toFixed(2), index); togglePause(); myNav.style.display=null"></a></span>`n
