@@ -1,7 +1,6 @@
 
 // Debugging - use mySelected.innerHTML or alert()
 // index tab not work
-// cue caption
 // what if there's a # within a text edit - will is mess with messages
 
 
@@ -266,7 +265,7 @@
         if (!x) myPlayer.play()}
       scrolltoIndex(index)
       Sprites()}
-    else if (playing=='browser' && !myNav.matches(':hover') && xw>0.2) { // zoom myPlayer
+    else if (!myNav.matches(':hover')) {				// zoom myPlayer
       var x = 0.015*myPlayer.offsetHeight*scaleY
       if (!wheelUp && scaleY>0.11) {					// make smaller
         if (mediaY<0.4*innerHeight) mediaY+=x
@@ -278,7 +277,7 @@
         scaleY *= 1.03}
       positionMedia(0)
       block=13}
-    else if (playing && !thumbSheet) {				 	// seek
+    else if (!thumbSheet) {					 	// seek
       cursor=6
       if (dur > 120) interval = 3
       else interval = 0.5
@@ -360,21 +359,22 @@
     if (skinny<0) {myFlip.style.color='red'} else myFlip.style.color=null
     if (myPlayer.style.opacity==0) {if (myPlayer.volume>0.01) myPlayer.volume/=2}
     else if (myPlayer.volume < 0.8) myPlayer.volume *= 1.3		// fade sound in/out
-    if ((","+selected).match(","+index+",")) {mySelect.style.color='red'; myPlayer.style.outline='1px solid red'}
+    if ((","+selected).match(","+index+",")) {mySelect.style.color='red'; myPlayer.style.outline='2px solid red'}
     else {mySelect.style.color=null; myPlayer.style.outline=null}
     if (playing=='browser') {
-      if (myNav.matches(':hover') || xw<0.2 || cue || overMedia) mySeekbar.style.opacity=1
+      myNav.style.display='block'
+      if (myNav.matches(':hover') || cue || overMedia) mySeekbar.style.opacity=1
       else mySeekbar.style.opacity=0
-      if (myNav.matches(':hover') || (xw<0.1 && !thumbSheet)) myNav.style.display='block'
-      else myNav.style.display='none'
-      if (xw<0.1) {myNav.style.left=0; myNav.style.top=innerHeight*0.2+'px'}
+      if (myNav.matches(':hover') && !thumbSheet) myNav.style.opacity=1
+      else {myNav.style.opacity=0; myNav.style.left='20px'; myNav.style.bottom='20px'; myNav.style.top=null}
       Jpg.innerHTML='jpg'
       myPlayer.playbackRate=rate
       rect = myPlayer.getBoundingClientRect()
       myCap.style.top=rect.bottom +10 +'px'
       myCap.style.left=rect.left +10 +'px'
       myCap.style.zIndex=Zindex
-      if (cue) {Cap.innerHTML='goto '+myPlayer.currentTime.toFixed(2)} else Cap.innerHTML='caption'
+      if (cue) {Cap.innerHTML='goto '+myPlayer.currentTime.toFixed(2); Cap.style.width='40%'} 
+      else Cap.innerHTML='caption'
       if (myCap.innerHTML) myCap.style.opacity=1
       if (cueList && !thumbSheet) Cues(myPlayer.currentTime, index)
       var z=scaleY
@@ -581,8 +581,11 @@
     if (!wasMedia) wasMedia=0
     myPic.style.backgroundPosition='0 0'
     mySeekbar.style.width=0
-    myNav.style.left=xpos-50+'px'; myNav.style.top=ypos-70+'px'
-    myNav.style.display='block'; myNav.style.background='#15110acc'
+    myNav.style.left=xpos-50+'px'
+    myNav.style.top=ypos-148+'px'
+    myNav.style.bottom=null
+    myNav.style.display='block'
+    myNav.style.opacity=1
     if (wasMedia || playing) myNav2.style.display='block' 
     else {myNav2.style.display='none'; mySelect.style.minWidth=null}}
 

@@ -218,9 +218,9 @@
   position:fixed;
   font-size:1.1em;
   font-variant-caps:petite-caps;
-  transition:0.1s;
+  transition:opacity 0.3s;
   border-radius:0.7em;
-  background:inherit}
+  background:#15110acc}
 
 .context a {
   display:block;
