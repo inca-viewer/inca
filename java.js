@@ -1,9 +1,5 @@
 
 // Debugging - use mySelected.innerHTML or alert()
-// index tab not work
-// what if there's a # within a text edit - will is mess with messages
-
-
 
   var defRate = 1*localStorage.getItem('defRate')			// default playback speed
   var mediaX = 1*localStorage.getItem('mediaX')				// myPlayer position
@@ -62,8 +58,8 @@
   var cursor								// hide cursor timer
   var block = 0								// block wheel timer
   var ratio = 1								// media width to height ratio
-  var xOff = 0								// window offsets before fullscreen
-  var yOff = 0
+  var Xoff = 0								// window offsets before fullscreen
+  var Yoff = 0
 
 
   if (!mpv) mpv=0							// external player
@@ -163,7 +159,8 @@
 
   function Play() {
     var para = myPlayer.currentTime+'|'+skinny+'|'+rate+'|'+localStorage.getItem('muted')
-    if (!thumbSheet && type=='video' && mpv) playing='mpv'
+   if (!playing) myNav.style.display='none'
+   if (!thumbSheet && type=='video' && mpv) playing='mpv'
     else playing='browser'
     myPlayer.muted = 1*localStorage.getItem('muted')
     if (!thumbSheet && lastClick) messages=messages+'#History#'+myPlayer.currentTime.toFixed(1)+'#'+index+'#'
@@ -347,7 +344,7 @@
     if (selected && !Click) mySelected.innerHTML = selected.split(',').length -1
     else mySelected.innerHTML = ''
     if (playlist) myFav.innerHTML='Fav &#10084'
-    if (myPic.matches(':hover') || (listView && !playing)) myPic.style.opacity=1
+    if (myPic.matches(':hover') || (wasMedia && !playing) || (listView && !playing)) myPic.style.opacity=1
     else myPic.style.opacity=0
     if (wasMedia || playing) {
       myTitle.innerHTML=title.value; mySelect.style.width='98%'; myTitle.style.width='16em'
@@ -365,7 +362,7 @@
       myNav.style.display='block'
       if (myNav.matches(':hover') || cue || overMedia) mySeekbar.style.opacity=1
       else mySeekbar.style.opacity=0
-      if (myNav.matches(':hover') && !thumbSheet) myNav.style.opacity=1
+      if (myNav.matches(':hover')) myNav.style.opacity=1
       else {myNav.style.opacity=0; myNav.style.left='20px'; myNav.style.bottom='20px'; myNav.style.top=null}
       Jpg.innerHTML='jpg'
       myPlayer.playbackRate=rate
@@ -483,7 +480,7 @@
     myPlayer.style.height = y +'px'
     myPlayer.style.top = mediaY-y/2 +'px'				// myPlayer size normalised to screen
     myPlayer.style.left = mediaX-x/2 +'px'
-    if (ratio>1) {x=150} else x=90					// preview thumb size normalised
+    if (ratio>1) {x=150} else x=80					// preview thumb size normalised
     myPic.style.width=x+'px'
     myPic.style.height=(x-7)/ratio+'px'
     myCap.innerHTML = ''
@@ -585,9 +582,7 @@
     myNav.style.top=ypos-148+'px'
     myNav.style.bottom=null
     myNav.style.display='block'
-    myNav.style.opacity=1
-    if (wasMedia || playing) myNav2.style.display='block' 
-    else {myNav2.style.display='none'; mySelect.style.minWidth=null}}
+    myNav.style.opacity=1}
 
   function globals(vi, pg, ps, so, fi, lv, se, pl, ix) {		// import globals to java from inca
     view=vi; page=pg; pages=ps; sort=so; filt=fi; listView=lv; 
@@ -602,7 +597,7 @@
 
   function inca(command,value,select,address) {				// send java messages to inca.exe
     if (editing) {
-      var x = document.getElementById('thumb'+editing).value		// save textarea if edited
+      var x = document.getElementById('thumb'+editing).value.replaceAll('#', '*') // save textarea if edited
       messages=messages+'#Text#'+thumb.scrollTop.toFixed(0)+'#'+editing+'#'+x}
     for (i=1; el=document.getElementById('thumb'+i); i++) {		// add cue edits to messages
       if (el.style.skinny) messages = messages + '#Skinny#'+el.style.skinny+'#'+i+'#'+cue
