@@ -1,5 +1,7 @@
 
 // Debugging - use mySelected.innerHTML or alert()
+// always backup your data
+// rem. remove redirect fav to snip - reduced ssd library 
 
   var defRate = 1*localStorage.getItem('defRate')			// default playback speed
   var mediaX = 1*localStorage.getItem('mediaX')				// myPlayer position
@@ -297,7 +299,7 @@
       myPlayer.src=''
       myPlayer.poster=''
       myPlayer.style.zIndex=-1
-      thumbSheet=0},400)}
+      thumbSheet=0},420)}
 
 
   function getParameters(i) {						// prepare myPlayer for media
@@ -430,7 +432,9 @@
         else if (type=='skinny' && !el.style.skinny) {
           if (isNaN(value)) {skinny=1} else {skinny=1*value; if(time) {positionMedia(fade)}}}
         else if (type=='pause'&& lastCue!=i) {
-          lastCue=i; myPlayer.pause(); setTimeout(function(){myPlayer.play(); myCap.innerHTML=''},1000*value)}
+          if (!value) value=1
+          lastCue=i; myPlayer.pause()
+          setTimeout(function(){myPlayer.play(); myCap.innerHTML=''},1000*value)}
         else if (type == 'cap') myCap.innerHTML = value.replaceAll("#3", "\,").replaceAll("#4", "\'").replaceAll("#5", "\"")}}}
 
 
@@ -579,7 +583,7 @@
     myPic.style.backgroundPosition='0 0'
     mySeekbar.style.width=0
     myNav.style.left=xpos-50+'px'
-    myNav.style.top=ypos-148+'px'
+    myNav.style.top=ypos-130+'px'
     myNav.style.bottom=null
     myNav.style.display='block'
     myNav.style.opacity=1}

@@ -420,7 +420,7 @@
                   reload := 2
                   }
               }
-            else SetTimer, indexPage, -100, -2
+            else SetTimer, indexPage, -100
             selected =
             }
         if (command == "History")					; maintain play history
@@ -585,7 +585,8 @@
             {
             if panelPath						; R Click was over top panel
               {
-              x  =  %panelPath%|
+             reload := 2
+             x  =  %panelPath%|
               if InStr(panelPath, "\fav\")				; delete fav entry
                 {
                 FileRecycle, %panelPath%
@@ -1135,7 +1136,7 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n if(
 <a id='Cap' onmousedown="inca('Caption', myPlayer.currentTime.toFixed(2), index, cue); cue=0">caption</a>`n
 <a id='myCue' onmouseup="if (!playing){inca('EditCue',0,wasMedia,0)} else {cue=Math.round(myPlayer.currentTime*100)/100; if (myPlayer.paused){togglePause()}}">Cue</a>`n
 <a id='Jpg' onmouseup="inca('jpg', myPlayer.currentTime.toFixed(2), index); togglePause(); myNav.style.display=null"></a>`n
-<a id='myFav' onmouseup="if (playing) {x=myPlayer.currentTime.toFixed(1)} else{x=thumb.style.start}; if(!event.button && !longClick) inca('Favorite', x, index)">Fav</a>`n
+<a id='myFav' onmouseup="if (playing) {x=myPlayer.currentTime.toFixed(1)} else{x=thumb.style.start}; if(!event.button && !longClick) inca('Favorite', x, index); togglePause()">Fav</a>`n
 <a id='myMute' onmouseup='mute(); togglePause()'>Mute</a>`n
 <a id='mySelect' onmouseup="if (!longClick&&(wasMedia||playing)) {sel(index)} else {selectAll()}"></a>`n
 <a id='myTitle' style='line-height:1em; height:3em'></a>`n 
@@ -1153,7 +1154,7 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n if(
 <video id="myPlayer" class='player' type="video/mp4" onmouseover='overMedia=index' onmouseout='overMedia=0' muted onwheel="wheelEvent(event, id, this)"></video>`n
 <span id='mySeekbar' class='seekbar'></span>`n
 
-<div id='myView' class='myList' style='padding-left:%page_l%`%; padding-right:%page_r%`%; padding-top:20vh'>`n`n
+<div id='myView' class='view' style='padding-left:%page_l%`%; padding-right:%page_r%`%'>`n`n
 
 <div id='myPanel' class='myPanel'>`n <div id='panel' class='panel'>`n`n%panelList%`n</div></div>`n`n
 
@@ -1642,8 +1643,20 @@ else mediaList = %mediaList%<div id="entry%j%" style="max-width:%view%em; paddin
             if !InStr(str, src)
               continue
             FileDelete, %A_LoopFileFullPath%
-            new_src = %mediaPath%\%new_name%.%ext%
-            str := StrReplace(str, src, new_src)
+            array := StrSplit(str,"`n")
+            Loop % array.MaxIndex()
+              {
+              x := StrSplit(array[A_Index], "|").1
+              seek := StrSplit(array[A_Index], "|").2
+              seek := StrReplace(seek, "`r", "")
+              new = %mediaPath%\%new_name%.%ext%|%seek%
+              old = %mediaPath%\%media%.%ext%|%seek%
+              if (src == x)
+                {
+                str := StrReplace(str, old, new)
+                FileMove, %inca%\cache\posters\%media% %seek%.jpg, %inca%\cache\posters\%new_name% %seek%.jpg, 1
+                }
+              }
             FileAppend, %str%, %A_LoopFileFullPath%, UTF-8
             }
         FileMove, %inca%\cache\cues\%media%.txt, %inca%\cache\cues\%new_name%.txt, 1

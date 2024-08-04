@@ -20,7 +20,6 @@
   background-repeat:no-repeat;
   position:absolute;
   margin-left:4.5em;
-//  margin-top:1em;
   transition: opacity 0.4s;
   border-radius:7%}
  
@@ -53,8 +52,10 @@
   opacity:0;
   border-radius:3%}
 
-.myList {					/* list view */
+.view {						/* htm media content */
   position:absolute;
+  padding-top:20vh;
+  outline:none;
   display:flex;
   flex-wrap:wrap;
   justify-content:space-around;
@@ -70,7 +71,7 @@
   overflow:hidden;
   height:6.3em}
 
-.panel {					/* inner panel list container */
+.panel {					/* inner rotated element of myPanel */
   height:72em;
   position:absolute;
   overflow:hidden;
