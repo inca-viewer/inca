@@ -1,7 +1,8 @@
 
 // Debugging - use mySelected.innerHTML or alert()
 // always backup your data
-// rem. remove redirect fav to snip - reduced ssd library 
+// rem. remove redirect favs to snips - due to reduced ssd library
+// jpg failing due to above
 
   var defRate = 1*localStorage.getItem('defRate')			// default playback speed
   var mediaX = 1*localStorage.getItem('mediaX')				// myPlayer position
@@ -254,7 +255,7 @@
       thumb.style.maxHeight=viewE+'em'
       if (id!='View') viewE=0
       block=12}
-    else if (myTitle.matches(':hover') || mySelect.matches(':hover')) {	// next / previous
+    else if (myTitle.matches(':hover') || mySelect.matches(':hover') || (type=='image' && xw<0.05)) {	// next / previous
       if (wheelUp) index++
       else if (index>1) index--
       var x=myPlayer.paused
@@ -264,7 +265,7 @@
         if (!x) myPlayer.play()}
       scrolltoIndex(index)
       Sprites()}
-    else if (!myNav.matches(':hover')) {				// zoom myPlayer
+    else if (!myNav.matches(':hover') && xw>0.05) {			// zoom myPlayer
       var x = 0.015*myPlayer.offsetHeight*scaleY
       if (!wheelUp && scaleY>0.11) {					// make smaller
         if (mediaY<0.4*innerHeight) mediaY+=x
@@ -362,7 +363,7 @@
     else {mySelect.style.color=null; myPlayer.style.outline=null}
     if (playing=='browser') {
       myNav.style.display='block'
-      if (myNav.matches(':hover') || cue || overMedia) mySeekbar.style.opacity=1
+      if (myNav.matches(':hover') || cue || overMedia || xw<0.05) mySeekbar.style.opacity=1
       else mySeekbar.style.opacity=0
       if (myNav.matches(':hover')) myNav.style.opacity=1
       else {myNav.style.opacity=0; myNav.style.left='20px'; myNav.style.bottom='20px'; myNav.style.top=null}
@@ -431,7 +432,7 @@
         else if (type=='rate' && looping<2) {if (isNaN(1*value)) {rate=defRate} else {rate=1*value}}
         else if (type=='skinny' && !el.style.skinny) {
           if (isNaN(value)) {skinny=1} else {skinny=1*value; if(time) {positionMedia(fade)}}}
-        else if (type=='pause'&& lastCue!=i) {
+        else if (type=='pause' && lastCue!=i) {
           if (!value) value=1
           lastCue=i; myPlayer.pause()
           setTimeout(function(){myPlayer.play(); myCap.innerHTML=''},1000*value)}
@@ -596,7 +597,7 @@
       if (lv) document.getElementById('title'+x).style.outline = '0.1px solid red'
       else document.getElementById('thumb'+x).style.outline = '1px solid red'}}
     for (i=1; getParameters(i); i++)					// process cues (eg. thumb widths)
-    scrolltoIndex(index)
+    scrolltoIndex(ix)
     lastIndex=ix}
 
   function inca(command,value,select,address) {				// send java messages to inca.exe

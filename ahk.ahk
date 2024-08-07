@@ -835,9 +835,14 @@
               else
                 {
                 playlist =
-                IfNotExist, %address%
+                path := address
+                IfNotExist, %path%
                   path := SubStr(path, 1, InStr(path, "\", False, -1))	; try one folder back
-                else path := address
+                IfNotExist, %path%
+                  {
+                  PopUp("Folder Not Exist",600,0,0)
+                  return
+                  }
 		str := StrSplit(path,"\")				; cannot use splitPath
 		folder := str[str.MaxIndex()-1]				; in case folder has .com in name
                 }
