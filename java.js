@@ -3,6 +3,7 @@
 // always backup your data
 // rem. remove redirect favs to snips - due to reduced ssd library
 // jpg failing due to above
+// pause cue on looping
 
   var defRate = 1*localStorage.getItem('defRate')			// default playback speed
   var mediaX = 1*localStorage.getItem('mediaX')				// myPlayer position
@@ -15,7 +16,7 @@
   var index = 1								// thumb index (e.g. thumb14)
   var lastIndex = 0							// last thumb id
   var lastStart = 0							// last video start time
-  var lastCue								// last cue time
+  var cueIndex = -1							// current cue entry
   var view = 14								// thumb size (em)
   var viewE = 0								// edited thumb size
   var listView = 0							// list or thumb view
@@ -179,7 +180,7 @@
     myBody.style.cursor='none'
     myPlayer.volume = 0.05
     if (looping) looping=1
-    lastCue=-1; lastClick=0}
+    cueIndex=-1; lastClick=0}
 
 
   function mouseMove(e) {
@@ -284,7 +285,7 @@
       if (myPlayer.paused) interval = 0.04
       if (wheelUp) myPlayer.currentTime += interval
       else myPlayer.currentTime -= interval}
-    wheel=0; lastCue=-1}
+    wheel=0; cueIndex=-1}
 
 
   function closePlayer() {		
@@ -432,9 +433,9 @@
         else if (type=='rate' && looping<2) {if (isNaN(1*value)) {rate=defRate} else {rate=1*value}}
         else if (type=='skinny' && !el.style.skinny) {
           if (isNaN(value)) {skinny=1} else {skinny=1*value; if(time) {positionMedia(fade)}}}
-        else if (type=='pause' && lastCue!=i) {
+        else if (type=='pause' && cueIndex!=i) {
           if (!value) value=1
-          lastCue=i; myPlayer.pause()
+          cueIndex=i; myPlayer.pause()
           setTimeout(function(){myPlayer.play(); myCap.innerHTML=''},1000*value)}
         else if (type == 'cap') myCap.innerHTML = value.replaceAll("#3", "\,").replaceAll("#4", "\'").replaceAll("#5", "\"")}}}
 
@@ -530,6 +531,7 @@
       else clickEvent()
       return}
     looping+=1
+    cueIndex=-1
     if (!longClick && rate > 0.40) rate-=0.05				// slower each loop
     myPlayer.currentTime=thumb.style.start
     myPlayer.play()}
