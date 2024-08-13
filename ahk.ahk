@@ -470,7 +470,7 @@
               if (ext=="rtf" || ext=="doc")
                 Run, %src%
               else Run, % "notepad.exe " . src
-            else if (type=="video"||ext=="mid")
+            else if (type=="video"||ext=="mid"||ext=="gif")
               {
               Loop, Parse, list, `n, `r
                 {

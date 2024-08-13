@@ -3,7 +3,7 @@
 // always backup your data
 // rem. remove redirect favs to snips - due to reduced ssd library
 // jpg failing due to above
-// pause cue on looping
+
 
   var defRate = 1*localStorage.getItem('defRate')			// default playback speed
   var mediaX = 1*localStorage.getItem('mediaX')				// myPlayer position
@@ -107,7 +107,7 @@
     sessionStorage.setItem('scroll', myView.scrollTop)  
     if (Click==2) e.preventDefault()					// middle click
     else if (!myNav.matches(":hover")) {
-      if (overMedia) wasMedia=overMedia
+      if (overMedia || playing) wasMedia=index
       else wasMedia=0}
     if (Click==2 && myPanel.matches(':hover')) return			// browser opens new tab
     clickTimer=setTimeout(function() {longClick=Click; clickEvent()},240)}
@@ -130,7 +130,7 @@
     if (longClick && myInput.matches(':hover')) return
     if (longClick && myPanel.matches(':hover')) return			// copy files instead of move
     if (myTitle.matches(':hover') && !playing) {overMedia=index; lastClick=0}
-    if (myPic.matches(':hover')) {myPlayer.currentTime=myPic.style.start; overMedia=index; lastClick=0; thumbSheet=0}
+    if (myPic.matches(':hover') && lastClick==1) {myPlayer.currentTime=myPic.style.start; overMedia=index; lastClick=0; thumbSheet=0}
     else {if (!playing && !longClick && !overMedia) return
       if (myNav.matches(':hover') && lastClick==1 && !longClick) return}
     if (!gesture && longClick==1 && !playing && playlist && wasMedia && selected) {inca('Move', wasMedia); return}
@@ -162,19 +162,18 @@
 
 
   function Play() {
-    var para = myPlayer.currentTime+'|'+skinny+'|'+rate+'|'+localStorage.getItem('muted')
-   if (!playing) myNav.style.display='none'
+   var para = myPlayer.currentTime+'|'+skinny+'|'+rate+'|'+localStorage.getItem('muted')
    if (!thumbSheet && type=='video' && mpv) playing='mpv'
     else playing='browser'
     myPlayer.muted = 1*localStorage.getItem('muted')
     if (!thumbSheet && lastClick) messages=messages+'#History#'+myPlayer.currentTime.toFixed(1)+'#'+index+'#'
     if (lastClick==2 && playing=='mpv') return				// inca does next/previous media
     if (type=='document' || type=='m3u') {closePlayer(); inca('Media',0,index); return}
-    else if (playing=='mpv' || thumb.src.slice(-3)=='mid') inca('Media',0,index,para)	// use external player
+    else if (playing=='mpv' || thumb.src.slice(-3)=='mid' || thumb.poster.slice(-3)=='gif') inca('Media',0,index,para)	// use external player
     if (type=='audio' || playlist.match('/inca/music/')) {looping=0; myPlayer.muted=false; scaleY=0.1; myPlayer.poster=thumb.poster}
     if (playing=='browser' && !thumbSheet && type != 'image') myPlayer.play()
     myPlayer.addEventListener('ended', nextMedia)
-    if (playing=='browser') myPlayer.style.opacity=1
+    if (playing=='browser' && thumb.poster.slice(-3)!='gif') myPlayer.style.opacity=1
     myMask.style.zIndex = Zindex
     myMask.style.display='flex'
     myBody.style.cursor='none'
@@ -197,7 +196,7 @@
     var y = Math.abs(ypos-Yref)
     if (x+y > 7 && Click) gesture=1					// gesture (Click + slide)
     if (!gesture || Click!=1) return
-    if (myNav.matches(':hover')) {
+    if (myNav.matches(':hover')) {					// move context menu
       myNav.style.left = xpos-myNav.offsetWidth/2+"px"
       myNav.style.top = ypos-myNav.offsetHeight/2+"px"}
     else if (!playing && wasMedia && !listView && type!='document') { 	// move thumb
@@ -256,7 +255,7 @@
       thumb.style.maxHeight=viewE+'em'
       if (id!='View') viewE=0
       block=12}
-    else if (myTitle.matches(':hover') || mySelect.matches(':hover') || (type=='image' && xw<0.05)) {	// next / previous
+    else if (myTitle.matches(':hover') || mySelect.matches(':hover') || (type=='image' && xw<0.1)) {	// next / previous
       if (wheelUp) index++
       else if (index>1) index--
       var x=myPlayer.paused
@@ -266,13 +265,16 @@
         if (!x) myPlayer.play()}
       scrolltoIndex(index)
       Sprites()}
-    else if (!myNav.matches(':hover') && xw>0.05) {			// zoom myPlayer
+    else if (myPic.matches(':hover')) { 				// zoom preview
+      if (wheelUp) myPic.style.transform = 'scale(2,2)'
+      else myPic.style.transform = 'scale(1,1)'}
+    else if (xw>0.1 && !myNav.matches(':hover')) {			// zoom myPlayer
       var x = 0.015*myPlayer.offsetHeight*scaleY
-      if (!wheelUp && scaleY>0.11) {					// make smaller
+      if (!wheelUp && scaleY>0.11) {
         if (mediaY<0.4*innerHeight) mediaY+=x
         if (mediaY>0.6*innerHeight) mediaY-=x
         scaleY *= 0.97}
-      else if (wheelUp) {						// make bigger
+      else if (wheelUp) {
         if (rect.top<40 && yw<0.4) mediaY+=x
         if (rect.bottom>innerHeight-40 && yw>0.6) mediaY-=x
         scaleY *= 1.03}
@@ -330,14 +332,15 @@
   function timerEvent() {						// every 100mS 
     xw = xpos / innerWidth
     yw = ypos / innerHeight
-    if (block>=30) block-=10						// wheel blocking
+    if (block>=30) block-=10						// wheel blocking 
     if (wheel>=10) wheel-=10
     if (!thumb) return
     if (cursor) cursor--
     if (!playing || thumbSheet) myBody.style.cursor=null		// hide cursor
     else if (!cursor || Click) myBody.style.cursor='none'
     else myBody.style.cursor='crosshair'
-    if (playing) myMask.style.backgroundColor='rgba(0,0,0,'+scaleY*6+')' 
+    if (!myNav.matches(':hover')) myNav.style.display='none'
+    if (playing) myMask.style.backgroundColor='rgba(0,0,0,'+scaleY*6+')'
     else myMask.style.display='none'
     if (defRate==1) myRate.innerHTML = 'Speed'
     else myRate.innerHTML = 'Speed '+ defRate
@@ -348,8 +351,9 @@
     if (selected && !Click) mySelected.innerHTML = selected.split(',').length -1
     else mySelected.innerHTML = ''
     if (playlist) myFav.innerHTML='Fav &#10084'
-    if (myPic.matches(':hover') || (wasMedia && !playing) || (listView && !playing)) myPic.style.opacity=1
-    else myPic.style.opacity=0
+    if (myPic.matches(':hover') || myNav.matches(':hover')) {
+      if (!playing && !wasMedia) myPic.style.opacity=0
+      else myPic.style.opacity=1}
     if (wasMedia || playing) {
       myTitle.innerHTML=title.value; mySelect.style.width='98%'; myTitle.style.width='16em'
       mySelect.innerHTML='Select - '+index+' - '+Time(dur)+' - '+size+'mb'}
@@ -362,12 +366,9 @@
     else if (myPlayer.volume < 0.8) myPlayer.volume *= 1.3		// fade sound in/out
     if ((","+selected).match(","+index+",")) {mySelect.style.color='red'; myPlayer.style.outline='2px solid red'}
     else {mySelect.style.color=null; myPlayer.style.outline=null}
+    if (myPic.matches(':hover') || myNav.matches(':hover') || playing && (cue || overMedia || xw<0.1)) mySeekbar.style.opacity=1
+    else mySeekbar.style.opacity=0
     if (playing=='browser') {
-      myNav.style.display='block'
-      if (myNav.matches(':hover') || cue || overMedia || xw<0.05) mySeekbar.style.opacity=1
-      else mySeekbar.style.opacity=0
-      if (myNav.matches(':hover')) myNav.style.opacity=1
-      else {myNav.style.opacity=0; myNav.style.left='20px'; myNav.style.bottom='20px'; myNav.style.top=null}
       Jpg.innerHTML='jpg'
       myPlayer.playbackRate=rate
       rect = myPlayer.getBoundingClientRect()
@@ -389,10 +390,9 @@
       if (!myPic.matches(':hover')) seekBar()
       positionMedia(0)}
     else {
-      if (!myNav.matches(':hover')) {myNav.style.display=null; mySeekbar.style.opacity=0} 
       Jpg.innerHTML=''
       myCap.innerHTML=''
-      myCap.style.opacity=0}}						// in case flipped into fullscreen
+      myCap.style.opacity=0}}
 
 
   function seekBar() {							// progress bar beneath player
@@ -506,8 +506,7 @@
     z=5*(Math.ceil(x*35)+1)
     if (dur > 60) {y = 20} else y=0
     z = (z-1) / 200
-    myPic.style.start=y - 0.4 - (z * y) + dur * z
-    if (!thumbSheet) myPlayer.currentTime=myPic.style.start}
+    myPic.style.start=y - 0.4 - (z * y) + dur * z}
 
   function getStart() {
     myPlayer.poster=''
@@ -582,14 +581,12 @@
     var x = e.target.innerHTML						// ~ text under cursor
     if (!x || x.length>99)  mySelect.innerHTML='Select'
     else {mySelect.innerHTML='Select - '+x; mySelect.style.width='100%'}
-    if (!wasMedia) wasMedia=0
     myPic.style.backgroundPosition='0 0'
     mySeekbar.style.width=0
     myNav.style.left=xpos-50+'px'
     myNav.style.top=ypos-130+'px'
     myNav.style.bottom=null
-    myNav.style.display='block'
-    myNav.style.opacity=1}
+    myNav.style.display='block'}
 
   function globals(vi, pg, ps, so, fi, lv, se, pl, ix) {		// import globals to java from inca
     view=vi; page=pg; pages=ps; sort=so; filt=fi; listView=lv; 
