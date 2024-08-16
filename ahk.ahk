@@ -230,8 +230,9 @@
               send, ^c
               ClipWait, 0.1
               send, {Lbutton up}
-              if ClipBoard
+              if StrLen(ClipBoard) > 2
                 {
+                PopUp(ClipBoard,0,0,0)
                 if !incaTab			; include current path in search 
                   path =
                 value =
@@ -521,8 +522,8 @@
         if (command == "jpg")
           {
           if (type == "video")
-            run, %inca%\cache\apps\ffmpeg.exe -ss %value% -i "%src%" -y "%profile%\Downloads\%media% @%value%.jpg",, Hide
-          else run, %inca%\cache\apps\ffmpeg.exe -i "%src%" -y "%profile%\Downloads\%media% @%value%.jpg",, Hide
+            run, %inca%\cache\apps\ffmpeg.exe -ss %value% -i "%src%" -y "%inca%\screens\%media% @%value%.jpg",, Hide
+          else run, %inca%\cache\apps\ffmpeg.exe -i "%src%" -y "%inca%\screens\%media% @%value%.jpg",, Hide
           Popup("Done . . .",1000,0,0)
           }
         if (command == "mp3" || command == "mp4")
@@ -1151,7 +1152,7 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n if(
 <a id='myFlip' onmouseup='flip(); togglePause()'>Flip</a>`n
 <a id='myLoop' onmouseup='looping=!looping; togglePause()'>Loop</a>`n
 <a id='myIndex' onmousedown="inca('Index','',wasMedia)">Index</a>`n
-<a id='myDelete' onmousedown="if(!event.button) {inca('Delete','',wasMedia)}">Delete</a>
+<a id='myDelete' onmousedown="if(!event.button) {myPlayer.load(); inca('Delete','',wasMedia)}">Delete</a>
 <a></a></div>`n`n
 
 <div id='myMask' class="mask" onwheel="wheelEvent(event, id, this)">`n</div>

@@ -4,7 +4,6 @@
 // rem. remove redirect favs to snips - due to reduced ssd library
 // jpg failing due to above
 
-
   var defRate = 1*localStorage.getItem('defRate')			// default playback speed
   var mediaX = 1*localStorage.getItem('mediaX')				// myPlayer position
   var mediaY = 1*localStorage.getItem('mediaY')
@@ -106,7 +105,7 @@
     gesture=0; Xref=xpos; Yref=ypos; block=100
     sessionStorage.setItem('scroll', myView.scrollTop)  
     if (Click==2) e.preventDefault()					// middle click
-    else if (!myNav.matches(":hover")) {
+    else if (myNav.style.display != 'block') {
       if (overMedia || playing) wasMedia=index
       else wasMedia=0}
     if (Click==2 && myPanel.matches(':hover')) return			// browser opens new tab
@@ -150,6 +149,7 @@
     setTimeout(function() {						// so player can fade in/out 
       if (!getParameters(index)) {closePlayer(); return}		// end of media list
       positionMedia(0)
+      if (!playing) myNav.style.display='none'
       myPlayer.style.zIndex = Zindex+=1					// because htm thumbs use Z-index
       if (lastClick==3) myPlayer.currentTime=0
       else if (longClick==1 && type=='video' && (playing || overMedia)) thumbSheet=1 // show thumbsheet
@@ -492,21 +492,23 @@
     myCap.innerHTML = ''
    if (longClick || playing=='mpv') myPlayer.load()}			// for thumbsheet load
 
-  function Sprites() {							// myNav preview thumb
+  function Sprites() {							// myNav preview thumb from 6x6 thumbsheet
     var z = myPic.getBoundingClientRect()
-    var x = (xpos-z.left)/myPic.offsetWidth
+    var y = myPic.offsetWidth
+    if (myPic.style.transform=='scale(2, 2)') y*=2			// in case myPic is magnified
+    var x = (xpos-z.left)/y
     mySeekbar.style.opacity=1
     mySeekbar.style.top = z.bottom +5 +'px'
     mySeekbar.style.left = z.left +'px'
     mySeekbar.style.width = myPic.offsetWidth*x +'px'
     z = 20 * Math.ceil(x*35)
-    var y = 20 * Math.floor(z/120)
+    y = 20 * Math.floor(z/120)
     z = z % 120
-    myPic.style.backgroundPosition=z+'% '+y+'%'
-    z=5*(Math.ceil(x*35)+1)
+    myPic.style.backgroundPosition=z+'% '+y+'%'				// point to thumb %xy coordinate 
+    z=5*(Math.ceil(x*35)+1)						// thumb number
     if (dur > 60) {y = 20} else y=0
     z = (z-1) / 200
-    myPic.style.start=y - 0.4 - (z * y) + dur * z}
+    myPic.style.start = y - 0.4 - (z * y) + dur * z}
 
   function getStart() {
     myPlayer.poster=''
