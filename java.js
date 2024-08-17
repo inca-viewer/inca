@@ -351,9 +351,8 @@
     if (selected && !Click) mySelected.innerHTML = selected.split(',').length -1
     else mySelected.innerHTML = ''
     if (playlist) myFav.innerHTML='Fav &#10084'
-    if (myPic.matches(':hover') || myNav.matches(':hover')) {
-      if (!playing && !wasMedia) myPic.style.opacity=0
-      else myPic.style.opacity=1}
+    if ((playing || wasMedia) && (myPic.matches(':hover') || myNav.matches(':hover'))) myPic.style.opacity=1
+    else myPic.style.opacity=0
     if (wasMedia || playing) {
       myTitle.innerHTML=title.value; mySelect.style.width='98%'; myTitle.style.width='16em'
       mySelect.innerHTML='Select - '+index+' - '+Time(dur)+' - '+size+'mb'}
