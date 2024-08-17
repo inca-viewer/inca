@@ -113,7 +113,7 @@
 
 
   function mouseUp(e) {
-    if (!Click) return							// page load while mouse still down - ignore  
+    if (!Click) return							// page load while mouse still down - ignore 
     if (Click==3 && !gesture && !longClick && !overText) context(e)	// new context menu
     if (Click==2 && !playing) inca('View',0,'',lastIndex)		// middle click - switch list/thumb view
     else if (viewE) inca('View',viewE.toFixed(1),'',index)
@@ -255,19 +255,16 @@
       thumb.style.maxHeight=viewE+'em'
       if (id!='View') viewE=0
       block=12}
-    else if (myTitle.matches(':hover') || mySelect.matches(':hover') || (type=='image' && xw<0.1)) {	// next / previous
+    else if (myTitle.matches(':hover') || mySelect.matches(':hover') || (type=='image' && xw<0.1)) {
       if (wheelUp) index++
-      else if (index>1) index--
-      var x=myPlayer.paused
+      else if (index>1) index--						// next / previous
+      var x = myPlayer.paused
       if (!getParameters(index)) index--
       if (playing && !thumbSheet && type=='video') {
         myPlayer.currentTime=thumb.style.start
         if (!x) myPlayer.play()}
       scrolltoIndex(index)
       Sprites()}
-    else if (myPic.matches(':hover')) { 				// zoom preview
-      if (wheelUp) myPic.style.transform = 'scale(2,2)'
-      else myPic.style.transform = 'scale(1,1)'}
     else if (xw>0.1 && !myNav.matches(':hover')) {			// zoom myPlayer
       var x = 0.015*myPlayer.offsetHeight*scaleY
       if (!wheelUp && scaleY>0.11) {
@@ -293,6 +290,7 @@
   function closePlayer() {		
     positionMedia(0.4)
     if (playing=='mpv') inca('Close')
+    overMedia=0
     playing=''
     Click=0								// in case browser not active
     cue=0
@@ -353,6 +351,8 @@
     if (playlist) myFav.innerHTML='Fav &#10084'
     if ((playing || wasMedia) && (myPic.matches(':hover') || myNav.matches(':hover'))) myPic.style.opacity=1
     else myPic.style.opacity=0
+    if (myPic.matches(':hover')) myPic.style.transform='scale(2,2)'	// zoom preview
+    else myPic.style.transform='scale(1,1)'
     if (wasMedia || playing) {
       myTitle.innerHTML=title.value; mySelect.style.width='98%'; myTitle.style.width='16em'
       mySelect.innerHTML='Select - '+index+' - '+Time(dur)+' - '+size+'mb'}
@@ -368,7 +368,7 @@
     if (myPic.matches(':hover') || myNav.matches(':hover') || playing && (cue || overMedia || xw<0.1)) mySeekbar.style.opacity=1
     else mySeekbar.style.opacity=0
     if (playing=='browser') {
-      Jpg.innerHTML='jpg'
+      Jpg.innerHTML='Jpg'
       myPlayer.playbackRate=rate
       rect = myPlayer.getBoundingClientRect()
       myCap.style.top=rect.bottom +10 +'px'

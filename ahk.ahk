@@ -522,8 +522,8 @@
         if (command == "jpg")
           {
           if (type == "video")
-            run, %inca%\cache\apps\ffmpeg.exe -ss %value% -i "%src%" -y "%inca%\screens\%media% @%value%.jpg",, Hide
-          else run, %inca%\cache\apps\ffmpeg.exe -i "%src%" -y "%inca%\screens\%media% @%value%.jpg",, Hide
+            run, %inca%\cache\apps\ffmpeg.exe -ss %value% -i "%src%" -y "%inca%\jpg\%media% @%value%.jpg",, Hide
+          else run, %inca%\cache\apps\ffmpeg.exe -i "%src%" -y "%inca%\jpg\%media% @%value%.jpg",, Hide
           Popup("Done . . .",1000,0,0)
           }
         if (command == "mp3" || command == "mp4")
