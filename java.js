@@ -132,7 +132,7 @@
     if (myPic.matches(':hover') && lastClick==1) {
       myPlayer.currentTime=myPic.style.start
       overMedia=index; lastClick=0; thumbSheet=0
-      if (playing) return}
+      if (playing && !longClick) return}
     else {if (!playing && !longClick && !overMedia) return
       if (myNav.matches(':hover') && lastClick==1 && !longClick) return}
     if (!gesture && longClick==1 && !playing && playlist && wasMedia && selected) {inca('Move', wasMedia); return}
@@ -258,7 +258,7 @@
       thumb.style.maxHeight=viewE+'em'
       if (id!='View') viewE=0
       block=12}
-    else if (myTitle.matches(':hover') || mySelect.matches(':hover') || (type=='image' && xw<0.1)) {
+    else if (myTitle.matches(':hover') || mySelect.matches(':hover') || (type=='image' && !overMedia)) {
       if (wheelUp) index++
       else if (index>1) index--						// next / previous
       var x = myPlayer.paused
@@ -268,7 +268,7 @@
         if (!x) myPlayer.play()}
       scrolltoIndex(index)
       Sprites()}
-    else if (xw>0.1 && !myNav.matches(':hover')) {			// zoom myPlayer
+    else if (overMedia && !myNav.matches(':hover')) {			// zoom myPlayer
       var x = 0.015*myPlayer.offsetHeight*scaleY
       if (!wheelUp && scaleY>0.11) {
         if (mediaY<0.4*innerHeight) mediaY+=x
@@ -281,7 +281,6 @@
       positionMedia(0)
       block=13}
     else if (!thumbSheet) {					 	// seek
-      cursor=6
       if (dur > 120) interval = 3
       else interval = 0.5
       if (myPlayer.paused) interval = 0.04
@@ -292,7 +291,7 @@
 
   function closePlayer() {		
     positionMedia(0.4)
-    if (playing=='mpv') inca('Close')
+    inca('Close')							// and send messages to inca
     overMedia=0
     playing=''
     Click=0								// in case browser not active
@@ -338,7 +337,7 @@
     if (!thumb) return
     if (cursor) cursor--
     if (!playing || thumbSheet) myBody.style.cursor=null		// hide cursor
-    else if (!cursor || Click) myBody.style.cursor='none'
+    else if (!cursor || Click) {myBody.style.cursor='none'; mySeekbar.innerHTML=''}
     else myBody.style.cursor='crosshair'
     if (!myNav.matches(':hover')) myNav.style.display='none'
     if (playing) myMask.style.backgroundColor='rgba(0,0,0,'+scaleY*6+')'
@@ -365,10 +364,10 @@
     if (1*localStorage.getItem('muted')) {myMute.style.color='red'} else myMute.style.color=null
     if (skinny<0) {myFlip.style.color='red'} else myFlip.style.color=null
     if (myPlayer.style.opacity==0) {if (myPlayer.volume>0.01) myPlayer.volume/=2}
-    else if (myPlayer.volume < 0.8) myPlayer.volume *= 1.3		// fade sound in/out
+    else if (myPlayer.volume < 0.8) myPlayer.volume *= 1.3		// fade sound in/out 
     if ((","+selected).match(","+index+",")) {mySelect.style.color='red'; myPlayer.style.outline='2px solid red'}
     else {mySelect.style.color=null; myPlayer.style.outline=null}
-    if (myPic.matches(':hover') || myNav.matches(':hover') || playing && (cue || overMedia || xw<0.1)) mySeekbar.style.opacity=1
+    if (myNav.style.display=='block' || (playing && type=='video' && (cue || !overMedia || ym>0.95))) mySeekbar.style.opacity=1
     else mySeekbar.style.opacity=0
     if (playing=='browser') {
       Jpg.innerHTML='Jpg'
@@ -496,13 +495,11 @@
 
   function Sprites() {							// myNav preview thumb from 6x6 thumbsheet
     var z = myPic.getBoundingClientRect()
-    var y = myPic.offsetWidth
-    if (myPic.style.transform=='scale(2, 2)') y*=2			// in case myPic is magnified
+    var y = myPic.offsetWidth * 2
     var x = (xpos-z.left)/y
-    mySeekbar.style.opacity=1
     mySeekbar.style.top = z.bottom +5 +'px'
     mySeekbar.style.left = z.left +'px'
-    mySeekbar.style.width = myPic.offsetWidth*x +'px'
+    mySeekbar.style.width = x * y +'px'
     z = 20 * Math.ceil(x*35)
     y = 20 * Math.floor(z/120)
     z = z % 120
@@ -510,7 +507,7 @@
     z=5*(Math.ceil(x*35)+1)						// thumb number
     if (dur > 60) {y = 20} else y=0
     z = (z-1) / 200
-    myPic.style.start = y - 0.4 - (z * y) + dur * z}
+    myPic.style.start = y - (z * y) + dur * z}
 
   function getStart() {
     myPlayer.poster=''

@@ -1157,7 +1157,7 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n if(
 
 <div id='myMask' class="mask" onwheel="wheelEvent(event, id, this)">`n</div>
 <div><span id='myCap' class='caption'></span>`n
-<video id="myPlayer" class='player' type="video/mp4" onmouseover='overMedia=index' onmouseout='overMedia=0' muted onwheel="wheelEvent(event, id, this)"></video>`n
+<video id="myPlayer" class='player' type="video/mp4" onmouseover='overMedia=index' onmouseout='overMedia=0; if(skinny!=1) mySeekbar.innerHTML=skinny' muted onwheel="wheelEvent(event, id, this)"></video>`n
 <span id='mySeekbar' class='seekbar'></span>`n
 
 <div id='myView' class='view' style='padding-left:%page_l%`%; padding-right:%page_r%`%'>`n`n
