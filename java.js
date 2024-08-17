@@ -129,7 +129,10 @@
     if (longClick && myInput.matches(':hover')) return
     if (longClick && myPanel.matches(':hover')) return			// copy files instead of move
     if (myTitle.matches(':hover') && !playing) {overMedia=index; lastClick=0}
-    if (myPic.matches(':hover') && lastClick==1) {myPlayer.currentTime=myPic.style.start; overMedia=index; lastClick=0; thumbSheet=0}
+    if (myPic.matches(':hover') && lastClick==1) {
+      myPlayer.currentTime=myPic.style.start
+      overMedia=index; lastClick=0; thumbSheet=0
+      if (playing) return}
     else {if (!playing && !longClick && !overMedia) return
       if (myNav.matches(':hover') && lastClick==1 && !longClick) return}
     if (!gesture && longClick==1 && !playing && playlist && wasMedia && selected) {inca('Move', wasMedia); return}

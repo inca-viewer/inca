@@ -1146,7 +1146,7 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n if(
 <a id='myMute' onmouseup='mute(); togglePause()'>Mute</a>`n
 <a id='mySelect' onmouseup="if (!longClick&&(wasMedia||playing)) {sel(index)} else {selectAll()}"></a>`n
 <a id='myTitle' style='line-height:1em; height:3em'></a>`n 
-<video id='myPic' muted class='pic'></video>`n
+<video id='myPic' muted class='pic' onmouseup='togglePause()' ></video>`n
 <a id='mySpeed' onclick="inca('Close')"></a>`n
 <a id='mySkinny' onclick="inca('Close')"></a>`n
 <a id='myFlip' onmouseup='flip(); togglePause()'>Flip</a>`n
