@@ -128,13 +128,12 @@
     if (longClick && myRibbon.matches(':hover')) return
     if (longClick && myInput.matches(':hover')) return
     if (longClick && myPanel.matches(':hover')) return			// copy files instead of move
-    if (myTitle.matches(':hover') && !playing) {overMedia=index; lastClick=0}
+    if (myNav.style.display=='block' && !playing) {overMedia=index; lastClick=0}
     if (myPic.matches(':hover') && lastClick==1) {
       myPlayer.currentTime=myPic.style.start
-      overMedia=index; lastClick=0; thumbSheet=0
+      lastClick=0; thumbSheet=0
       if (playing && !longClick) return}
-    else {if (!playing && !longClick && !overMedia) return
-      if (myNav.matches(':hover') && lastClick==1 && !longClick) return}
+    else if (!longClick && ((!playing  && !overMedia) || (myNav.matches(':hover') && lastClick==1))) return
     if (!gesture && longClick==1 && !playing && playlist && wasMedia && selected) {inca('Move', wasMedia); return}
     if (!thumb.src && (type=='document' || type=='m3u')) return
     if (playing && lastClick==1) {
@@ -155,8 +154,8 @@
       if (!playing) myNav.style.display='none'
       myPlayer.style.zIndex = Zindex+=1					// because htm thumbs use Z-index
       if (lastClick==3) myPlayer.currentTime=0
-      else if (longClick==1 && type=='video' && (playing || overMedia)) thumbSheet=1 // show thumbsheet
-      else if (!playing && !overMedia) myPlayer.currentTime=lastStart	// return to last media
+      else if (longClick && !playing && !overMedia) myPlayer.currentTime=lastStart   // return to last media
+      else if (longClick==1 && type=='video') thumbSheet=1 		// show thumbsheet
       else if (!thumbSheet && lastClick) myPlayer.currentTime=thumb.style.start
       Previews()
       scrolltoIndex(index)			    			// + highlight played media
@@ -249,16 +248,16 @@
       thumb.style.skinny = skinny					// css holds edited skinny
       getParameters(index)
       positionMedia(0)}
-    else if (!playing && (id=='View' || thumb.style.position=='fixed')) { // zoom thumb
+    else if (!playing && (id=='View' || thumb.style.position=='fixed')) {
       viewE = 1*thumb.style.maxWidth.slice(0,-2)
       if (viewE<50 && wheelUp) viewE += 0.5
-      else if (viewE>8 && !wheelUp) viewE -= 0.5
+      else if (viewE>8 && !wheelUp) viewE -= 0.5			 // zoom thumb
       thumb.style.opacity=1
       thumb.style.maxWidth=viewE+'em'
       thumb.style.maxHeight=viewE+'em'
       if (id!='View') viewE=0
       block=12}
-    else if (myTitle.matches(':hover') || mySelect.matches(':hover') || (type=='image' && !overMedia)) {
+    else if (thumbSheet || (!overMedia && (type != 'video' || mySelect.matches(':hover')))) {
       if (wheelUp) index++
       else if (index>1) index--						// next / previous
       var x = myPlayer.paused
@@ -268,7 +267,13 @@
         if (!x) myPlayer.play()}
       scrolltoIndex(index)
       Sprites()}
-    else if (overMedia && !myNav.matches(':hover')) {			// zoom myPlayer
+    else if (!overMedia && type=='video') {				// seek
+      if (dur > 120) interval = 3
+      else interval = 0.5
+      if (myPlayer.paused) interval = 0.04
+      if (wheelUp) myPlayer.currentTime += interval
+      else myPlayer.currentTime -= interval}
+    else if (overMedia && myNav.style.display!='block') {		// zoom myPlayer
       var x = 0.015*myPlayer.offsetHeight*scaleY
       if (!wheelUp && scaleY>0.11) {
         if (mediaY<0.4*innerHeight) mediaY+=x
@@ -280,12 +285,6 @@
         scaleY *= 1.03}
       positionMedia(0)
       block=13}
-    else if (!thumbSheet) {					 	// seek
-      if (dur > 120) interval = 3
-      else interval = 0.5
-      if (myPlayer.paused) interval = 0.04
-      if (wheelUp) myPlayer.currentTime += interval
-      else myPlayer.currentTime -= interval}
     wheel=0; cueIndex=-1}
 
 
