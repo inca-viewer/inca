@@ -1144,7 +1144,7 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n if(
 <a id='Jpg' onmouseup="inca('jpg', myPlayer.currentTime.toFixed(2), index); togglePause(); myNav.style.display=null"></a>`n
 <a id='myFav' onmouseup="if (playing) {x=myPlayer.currentTime.toFixed(1)} else{x=thumb.style.start}; if(!event.button && !longClick) inca('Favorite', x, index); togglePause()">Fav</a>`n
 <a id='myMute' onmouseup='mute(); togglePause()'>Mute</a>`n
-<a id='mySelect' onmouseup="if (!longClick&&(wasMedia||playing)) {sel(index)} else {selectAll()}"></a>`n
+<a id='mySelect' onmouseup="togglePause(); if (!longClick&&(wasMedia||playing)) {sel(index)} else {selectAll()}"></a>`n
 <a id='myTitle' style='line-height:1em; height:3em'></a>`n 
 <video id='myPic' muted class='pic' onmouseup='togglePause()' ></video>`n
 <a id='mySpeed' onclick="inca('Close')"></a>`n

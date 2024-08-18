@@ -129,11 +129,10 @@
     if (longClick && myInput.matches(':hover')) return
     if (longClick && myPanel.matches(':hover')) return			// copy files instead of move
     if (myNav.style.display=='block' && !playing) {overMedia=index; lastClick=0}
-    if (myPic.matches(':hover') && lastClick==1) {
-      myPlayer.currentTime=myPic.style.start
-      lastClick=0; thumbSheet=0
-      if (playing && !longClick) return}
-    else if (!longClick && ((!playing  && !overMedia) || (myNav.matches(':hover') && lastClick==1))) return
+    if (!longClick && Click==1) {
+      if (myPic.matches(':hover')) {myPlayer.currentTime=myPic.style.start; lastClick=0; thumbSheet=0}
+      else if (myNav.matches(':hover') && !myTitle.matches(':hover')) return
+      else if (!playing && !overMedia) return}
     if (!gesture && longClick==1 && !playing && playlist && wasMedia && selected) {inca('Move', wasMedia); return}
     if (!thumb.src && (type=='document' || type=='m3u')) return
     if (playing && lastClick==1) {
@@ -584,7 +583,7 @@
     myPic.style.backgroundPosition='0 0'
     mySeekbar.style.width=0
     myNav.style.left=xpos-50+'px'
-    myNav.style.top=ypos-130+'px'
+    myNav.style.top=ypos-145+'px'
     myNav.style.bottom=null
     myNav.style.display='block'}
 
