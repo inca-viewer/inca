@@ -4,6 +4,7 @@
 // rem. remove redirect favs to snips - due to reduced ssd library
 // jpg failing due to above
 
+
   var defRate = 1*localStorage.getItem('defRate')			// default playback speed
   var mediaX = 1*localStorage.getItem('mediaX')				// myPlayer position
   var mediaY = 1*localStorage.getItem('mediaY')
@@ -47,8 +48,8 @@
   var dur = 0								// duration (from inca)
   var rate = 1								// current myPlayer speed
   var skinny = 1							// media width
-  var scaleX = 0.45							// myPlayer width (skinny)
-  var scaleY = 0.45							// myPlayer size
+  var scaleX = 0.35							// myPlayer width (skinny)
+  var scaleY = 0.35							// myPlayer size
   var xw = 0.5								// cursor over window ratio
   var yw = 0.5
   var xm = 0								// cursor over media ratio
@@ -89,7 +90,8 @@
       else {lastClick=3;longClick=3;clickEvent()}}			// simulate RClick
     else if (e.key=='Pause') {						// inca re-map of mouse 'Back' key
       Click=0; lastClick=0
-      if (playing) closePlayer()
+      if (myNav.style.display=='block') myNav.style.display=null
+      else if (playing) closePlayer()
       else if (thumb.style.position=='fixed') {				// close popped out thumb
         thumb.style.position=null
         thumb.style.maxWidth=view+'em'
@@ -581,11 +583,13 @@
     if (!x || x.length>99)  mySelect.innerHTML='Select'
     else {mySelect.innerHTML='Select - '+x; mySelect.style.width='100%'}
     myPic.style.backgroundPosition='0 0'
-    mySeekbar.style.width=0
-    myNav.style.left=xpos-50+'px'
-    myNav.style.top=ypos-145+'px'
-    myNav.style.bottom=null
-    myNav.style.display='block'}
+    if (!playing) {
+      var x = thumb.getBoundingClientRect()
+      myNav.style.left=x.left-60+'px'
+      myNav.style.top=x.top-202+'px'}
+    else {myNav.style.left=xpos-50+'px'; myNav.style.top=ypos-145+'px'}
+    myNav.style.display='block'
+    mySeekbar.style.width=0}
 
   function globals(vi, pg, ps, so, fi, lv, se, pl, ix) {		// import globals to java from inca
     view=vi; page=pg; pages=ps; sort=so; filt=fi; listView=lv; 
