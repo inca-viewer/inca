@@ -4,6 +4,7 @@
 // rem. remove redirect favs to snips - due to reduced ssd library
 // jpg failing due to above
 
+//cueindex looping pause
 
   var defRate = 1*localStorage.getItem('defRate')			// default playback speed
   var mediaX = 1*localStorage.getItem('mediaX')				// myPlayer position
@@ -258,7 +259,7 @@
       thumb.style.maxHeight=viewE+'em'
       if (id!='View') viewE=0
       block=12}
-    else if (thumbSheet || (!overMedia && (type != 'video' || mySelect.matches(':hover')))) {
+    else if (thumbSheet || mySelect.matches(':hover') || myPic.matches(':hover')) {
       if (wheelUp) index++
       else if (index>1) index--						// next / previous
       var x = myPlayer.paused
@@ -274,7 +275,7 @@
       if (myPlayer.paused) interval = 0.04
       if (wheelUp) myPlayer.currentTime += interval
       else myPlayer.currentTime -= interval}
-    else if (overMedia && myNav.style.display!='block') {		// zoom myPlayer
+    else if (myNav.style.display!='block') {				// zoom myPlayer 
       var x = 0.015*myPlayer.offsetHeight*scaleY
       if (!wheelUp && scaleY>0.11) {
         if (mediaY<0.4*innerHeight) mediaY+=x
@@ -353,11 +354,9 @@
     if (playlist) myFav.innerHTML='Fav &#10084'
     if ((playing || wasMedia) && (myPic.matches(':hover') || myNav.matches(':hover'))) myPic.style.opacity=1
     else myPic.style.opacity=0
-    if (myPic.matches(':hover')) myPic.style.transform='scale(2,2)'	// zoom preview
-    else myPic.style.transform='scale(1,1)'
     if (wasMedia || playing) {
-      myTitle.innerHTML=title.value; mySelect.style.width='98%'; myTitle.style.width='16em'
-      mySelect.innerHTML='Select - '+index+' - '+Time(dur)+' - '+size+'mb'}
+      myTitle.innerHTML=title.value; mySelect.style.width='96%'; myTitle.style.width='96%'
+      mySelect.innerHTML='Select    '+index+'    '+Time(dur)+'    '+size+'mb'}
     else {myTitle.innerHTML=''; myTitle.style.width=null}
     if (mpv) {myMpv.style.color='red'} else myMpv.style.color=null
     if (looping) {myLoop.style.color='red'} else myLoop.style.color=null
@@ -487,7 +486,7 @@
     myPlayer.style.height = y +'px'
     myPlayer.style.top = mediaY-y/2 +'px'				// myPlayer size normalised to screen
     myPlayer.style.left = mediaX-x/2 +'px'
-    if (ratio>1) {x=150} else x=80					// preview thumb size normalised
+    if (ratio>1) {x=view*16} else x=view*9					// preview thumb size normalised
     myPic.style.width=x+'px'
     myPic.style.height=(x-7)/ratio+'px'
     myCap.innerHTML = ''
@@ -495,7 +494,7 @@
 
   function Sprites() {							// myNav preview thumb from 6x6 thumbsheet
     var z = myPic.getBoundingClientRect()
-    var y = myPic.offsetWidth * 2
+    var y = myPic.offsetWidth
     var x = (xpos-z.left)/y
     mySeekbar.style.top = z.bottom +5 +'px'
     mySeekbar.style.left = z.left +'px'
@@ -530,7 +529,7 @@
       if (playlist.match('/inca/music/')) setTimeout(function() {clickEvent()}, Math.random()*4000)
       else clickEvent()
       return}
-    looping+=1
+    looping+=1								// override cue rate changes
     cueIndex=-1
     if (!longClick && rate > 0.40) rate-=0.05				// slower each loop
     myPlayer.currentTime=thumb.style.start
@@ -583,11 +582,11 @@
     if (!x || x.length>99)  mySelect.innerHTML='Select'
     else {mySelect.innerHTML='Select - '+x; mySelect.style.width='100%'}
     myPic.style.backgroundPosition='0 0'
-    if (!playing) {
+    if (!playing && !listView && overMedia) {
       var x = thumb.getBoundingClientRect()
-      myNav.style.left=x.left-60+'px'
-      myNav.style.top=x.top-202+'px'}
-    else {myNav.style.left=xpos-50+'px'; myNav.style.top=ypos-145+'px'}
+      myNav.style.left=x.left-70+'px'
+      myNav.style.top=x.top-70+'px'}
+    else {myNav.style.left=xpos-50+'px'; myNav.style.top=ypos-14+'px'}
     myNav.style.display='block'
     mySeekbar.style.width=0}
 

@@ -1137,27 +1137,27 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n if(
 
 <div oncontextmenu="if (yw>0.1 && !overText || playing) {event.preventDefault()}">`n`n
 <div id='myNav' class='context' onmouseup='togglePause()' onwheel='wheelEvent(event, id, this)'>`n
-<a id='Mp3' onmouseup="inca('mp3', myPlayer.currentTime.toFixed(2), index, cue); cue=0; myPlayer.play(); myNav.style.display=null">mp3</a>`n
-<a id='Mp4' onmouseup="inca('mp4', myPlayer.currentTime.toFixed(2), index, cue); cue=0; myPlayer.play(); myNav.style.display=null">mp4</a>`n
-<a id='Cap' onmousedown="inca('Caption', myPlayer.currentTime.toFixed(2), index, cue); cue=0">caption</a>`n
-<a id='myCue' onmouseup="if (!playing){inca('EditCue',0,wasMedia,0)} else {cue=Math.round(myPlayer.currentTime*100)/100; if (myPlayer.paused){togglePause()}}">Cue</a>`n
-<a id='Jpg' onmouseup="inca('jpg', myPlayer.currentTime.toFixed(2), index); togglePause(); myNav.style.display=null"></a>`n
-<a id='myFav' onmouseup="if (playing) {x=myPlayer.currentTime.toFixed(1)} else{x=thumb.style.start}; if(!event.button && !longClick) inca('Favorite', x, index); togglePause()">Fav</a>`n
-<a id='myMute' onmouseup='mute(); togglePause()'>Mute</a>`n
-<a id='mySelect' onmouseup="togglePause(); if (!longClick&&(wasMedia||playing)) {sel(index)} else {selectAll()}"></a>`n
-<a id='myTitle' style='line-height:1em; height:3em'></a>`n 
+<a id='mySelect' style='word-spacing:3em' onmouseup="togglePause(); if (!longClick&&(wasMedia||playing)) {sel(index)} else {selectAll()}"></a>`n
+<a id='myTitle' class='title'></a>`n 
 <video id='myPic' muted class='pic' onmouseup='togglePause()' ></video>`n
+<a id='myMute' onmouseup='mute(); togglePause()'>Mute</a>`n
 <a id='mySpeed' onclick="inca('Close')"></a>`n
 <a id='mySkinny' onclick="inca('Close')"></a>`n
 <a id='myFlip' onmouseup='flip(); togglePause()'>Flip</a>`n
 <a id='myLoop' onmouseup='looping=!looping; togglePause()'>Loop</a>`n
+<a id='myFav' onmouseup="if (playing) {x=myPlayer.currentTime.toFixed(1)} else{x=thumb.style.start}; if(!event.button && !longClick) inca('Favorite', x, index); togglePause()">Fav</a>`n
+<a id='myCue' onmouseup="if (!playing){inca('EditCue',0,wasMedia,0)} else {cue=Math.round(myPlayer.currentTime*100)/100; if (myPlayer.paused){togglePause()}}">Cue</a>`n
+<a id='Cap' onmousedown="inca('Caption', myPlayer.currentTime.toFixed(2), index, cue); cue=0">caption</a>`n
 <a id='myIndex' onmousedown="inca('Index','',wasMedia)">Index</a>`n
 <a id='myDelete' onmousedown="if(!event.button) {myPlayer.load(); inca('Delete','',wasMedia)}">Delete</a>
+<a id='Mp3' onmouseup="inca('mp3', myPlayer.currentTime.toFixed(2), index, cue); cue=0; myPlayer.play(); myNav.style.display=null">mp3</a>`n
+<a id='Mp4' onmouseup="inca('mp4', myPlayer.currentTime.toFixed(2), index, cue); cue=0; myPlayer.play(); myNav.style.display=null">mp4</a>`n
+<a id='Jpg' onmouseup="inca('jpg', myPlayer.currentTime.toFixed(2), index); togglePause(); myNav.style.display=null"></a>`n
 <a></a></div>`n`n
 
 <div id='myMask' class="mask" onwheel="wheelEvent(event, id, this)">`n</div>
 <div><span id='myCap' class='caption'></span>`n
-<video id="myPlayer" class='player' type="video/mp4" onmouseover='overMedia=index' onmouseout='overMedia=0; if(skinny!=1) mySeekbar.innerHTML=skinny' muted onwheel="wheelEvent(event, id, this)"></video>`n
+<video id="myPlayer" class='player' type="video/mp4" muted onmouseover='overMedia=index' onmouseout='overMedia=0' onwheel="wheelEvent(event, id, this)"></video>`n
 <span id='mySeekbar' class='seekbar'></span>`n
 
 <div id='myView' class='view' style='padding-left:%page_l%`%; padding-right:%page_r%`%'>`n`n
@@ -1282,7 +1282,7 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n if(
             thumb = %inca%\cache\posters\%media% %start%.jpg
           else thumb =  %inca%\cache\posters\%media%.jpg
         FileGetSize, size, %src%, K
-        size := Round(size/1000,1)
+        size := Ceil(size/1000)
         FileGetTime, listId, %src%, M
         sort_date := A_Now
         sort_date -= listId, days

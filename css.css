@@ -19,7 +19,8 @@
   background-size:600%;
   background-repeat:no-repeat;
   position:absolute;
-  margin-left:4.5em;
+  margin-left:4em;
+  margin-top:1em;
   transition:opacity 0.3s, transform 0.3s;
   border-radius:7%}
  
@@ -216,6 +217,7 @@
 .context {					/* right click menu */
   display:none;
   z-index:888;
+  width:21em;
   position:fixed;
   font-size:1.1em;
   font-variant-caps:petite-caps;
