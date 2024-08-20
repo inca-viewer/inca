@@ -4,8 +4,6 @@
 // rem. remove redirect favs to snips - due to reduced ssd library
 // jpg failing due to above
 
-//cueindex looping pause
-
   var defRate = 1*localStorage.getItem('defRate')			// default playback speed
   var mediaX = 1*localStorage.getItem('mediaX')				// myPlayer position
   var mediaY = 1*localStorage.getItem('mediaY')
@@ -80,16 +78,12 @@
 
   document.addEventListener('keydown', (e) => {				// keyboard events
     if (e.key=='Enter') {
-      if (renamebox) inca('Rename', renamebox, wasMedia)		// rename media
-      else if (myInput.matches(':focus')) inca('SearchBox','','',myInput.value) // search media on pc
+      if (renamebox) inca('Rename', renamebox, wasMedia)				// rename media
+      else if (myInput.matches(':focus')) inca('SearchBox','','',myInput.value)		// search media on pc
       else if (type=='document') {var x=thumb.scrollTop; setTimeout(function(){thumb.scrollTo(0,x)},100)}}
-    else if (e.key=='Pause' && e.altKey) {thumbSheet=1; Previews(); Play()} // mpv player - show thumbsheet
-    else if (e.key=='Pause' && e.shiftKey) {				// inca re-map of long right click
-      if (myPlayer.matches(':hover')) myPlayer.currentTime=0		// myPlayer to 0:00
-      else myPlayer.currentTime=thumb.style.start			// to default start time
-      if (playing) {thumbSheet=0; myPlayer.play()}
-      else {lastClick=3;longClick=3;clickEvent()}}			// simulate RClick
-    else if (e.key=='Pause') {						// inca re-map of mouse 'Back' key
+    else if (e.key=='Pause' && e.altKey) {thumbSheet=1; Previews(); Play()}		// mpv player - show thumbsheet
+    else if (e.key=='Pause' && e.shiftKey) {lastClick=3;longClick=3;clickEvent()}	// inca re-map of long right click
+    else if (e.key=='Pause') {								// inca re-map of mouse 'Back' click
       Click=0; lastClick=0
       if (myNav.style.display=='block') myNav.style.display=null
       else if (playing) closePlayer()
@@ -126,7 +120,7 @@
 
 
   function clickEvent() {						// functional logic
-    if (lastClick==3 && !longClick) return
+    if (lastClick==3 && !longClick || (!playing && !overMedia)) return
     if (gesture || title.matches(':hover')) return			// allow rename of media in htm
     if (longClick && myRibbon.matches(':hover')) return
     if (longClick && myInput.matches(':hover')) return
@@ -155,9 +149,9 @@
       positionMedia(0)
       if (!playing) myNav.style.display='none'
       myPlayer.style.zIndex = Zindex+=1					// because htm thumbs use Z-index
-      if (lastClick==3) myPlayer.currentTime=0
-      else if (longClick && !playing && !overMedia) myPlayer.currentTime=lastStart   // return to last media
-      else if (longClick==1 && type=='video') thumbSheet=1 		// show thumbsheet
+      if (lastClick==3 && overMedia) {thumbSheet=0; myPlayer.currentTime=0}
+      else if (longClick && !playing && !overMedia) myPlayer.currentTime=lastStart	// return to last media
+      else if (longClick==1 && type=='video') thumbSheet=1 				// show thumbsheet
       else if (!thumbSheet && lastClick) myPlayer.currentTime=thumb.style.start
       Previews()
       scrolltoIndex(index)			    			// + highlight played media
@@ -421,7 +415,7 @@
     cueList = x[2].replaceAll('\'', '').trim()
     if (!cueList) return
     x = cueList.split('#1')						// each line entry
-    for (i=0; i<x.length; i++) {
+    for (i=0; i<x.length; i++) {					// i represents each line entry
       var entry = x[i].split('#2')
       cueTime = 1*entry[0]
       var type = entry[1]
@@ -433,7 +427,7 @@
         else if (type=='rate' && looping<2) {if (isNaN(1*value)) {rate=defRate} else {rate=1*value}}
         else if (type=='skinny' && !el.style.skinny) {
           if (isNaN(value)) {skinny=1} else {skinny=1*value; if(time) {positionMedia(fade)}}}
-        else if (type=='pause' && cueIndex!=i) {
+        else if (type=='pause' && cueIndex!=i) {			// prevent timer re-entry during pause
           if (!value) value=1
           cueIndex=i; myPlayer.pause()
           setTimeout(function(){myPlayer.play(); myCap.innerHTML=''},1000*value)}
@@ -530,7 +524,7 @@
       else clickEvent()
       return}
     looping+=1								// override cue rate changes
-    cueIndex=-1
+    cueIndex=-1								// reset cue line index
     if (!longClick && rate > 0.40) rate-=0.05				// slower each loop
     myPlayer.currentTime=thumb.style.start
     myPlayer.play()}
