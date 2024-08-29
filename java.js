@@ -85,8 +85,7 @@
     else if (e.key=='Pause' && e.shiftKey) {lastClick=3;longClick=3;clickEvent()}	// inca re-map of long right click
     else if (e.key=='Pause') {								// inca re-map of mouse 'Back' click
       Click=0; lastClick=0
-      if (myNav.style.display=='block') myNav.style.display=null
-      else if (playing) closePlayer()
+      if (playing) closePlayer()					// close media player
       else if (thumb.style.position=='fixed') {				// close popped out thumb
         thumb.style.position=null
         thumb.style.maxWidth=view+'em'
@@ -102,7 +101,7 @@
     gesture=0; Xref=xpos; Yref=ypos; block=100
     sessionStorage.setItem('scroll', myView.scrollTop)  
     if (Click==2) e.preventDefault()					// middle click
-    else if (myNav.style.display != 'block') {
+    else if (!myNav.matches(':hover')) {
       if (overMedia || playing) wasMedia=index
       else wasMedia=0}
     if (Click==2 && myPanel.matches(':hover')) return			// browser opens new tab
@@ -120,12 +119,12 @@
 
 
   function clickEvent() {						// functional logic
-    if (lastClick==3 && !longClick || (!playing && !overMedia)) return
+    if (lastClick==3 && (!longClick || (!playing && !overMedia))) return
     if (gesture || title.matches(':hover')) return			// allow rename of media in htm
     if (longClick && myRibbon.matches(':hover')) return
     if (longClick && myInput.matches(':hover')) return
     if (longClick && myPanel.matches(':hover')) return			// copy files instead of move
-    if (myNav.style.display=='block' && !playing) {overMedia=index; lastClick=0}
+    if (myNav.matches(':hover') && !playing) {overMedia=index; lastClick=0}
     if (!longClick && Click==1) {
       if (myPic.matches(':hover')) {myPlayer.currentTime=myPic.style.start; lastClick=0; thumbSheet=0}
       else if (myNav.matches(':hover') && !myTitle.matches(':hover')) return
@@ -147,9 +146,10 @@
     setTimeout(function() {						// so player can fade in/out 
       if (!getParameters(index)) {closePlayer(); return}		// end of media list
       positionMedia(0)
-      if (!playing) myNav.style.display='none'
+      if (lastClick==1) thumbSheet=0
       myPlayer.style.zIndex = Zindex+=1					// because htm thumbs use Z-index
-      if (lastClick==3 && overMedia) {thumbSheet=0; myPlayer.currentTime=0}
+      if (!playing) myNav.style.display=null
+      if (longClick==3 && overMedia) myPlayer.currentTime=0
       else if (longClick && !playing && !overMedia) myPlayer.currentTime=lastStart	// return to last media
       else if (longClick==1 && type=='video') thumbSheet=1 				// show thumbsheet
       else if (!thumbSheet && lastClick) myPlayer.currentTime=thumb.style.start
@@ -269,7 +269,7 @@
       if (myPlayer.paused) interval = 0.04
       if (wheelUp) myPlayer.currentTime += interval
       else myPlayer.currentTime -= interval}
-    else if (myNav.style.display!='block') {				// zoom myPlayer 
+    else if (!myNav.matches(':hover')) {				// zoom myPlayer 
       var x = 0.015*myPlayer.offsetHeight*scaleY
       if (!wheelUp && scaleY>0.11) {
         if (mediaY<0.4*innerHeight) mediaY+=x
@@ -334,7 +334,7 @@
     if (!playing || thumbSheet) myBody.style.cursor=null		// hide cursor
     else if (!cursor || Click) {myBody.style.cursor='none'; mySeekbar.innerHTML=''}
     else myBody.style.cursor='crosshair'
-    if (!myNav.matches(':hover')) myNav.style.display='none'
+    if (!myNav.matches(':hover')) myNav.style.display=null
     if (playing) myMask.style.backgroundColor='rgba(0,0,0,'+scaleY*6+')'
     else myMask.style.display='none'
     if (defRate==1) myRate.innerHTML = 'Speed'
@@ -345,7 +345,8 @@
     else mySkinny.innerHTML = skinny.toFixed(2)
     if (selected && !Click) mySelected.innerHTML = selected.split(',').length -1
     else mySelected.innerHTML = ''
-    if (playlist) myFav.innerHTML='Fav &#10084'
+    if (document.getElementById('myFavicon'+index).innerHTML) myFav.innerHTML='Fav &#10084'
+    else myFav.innerHTML='Fav'
     if ((playing || wasMedia) && (myPic.matches(':hover') || myNav.matches(':hover'))) myPic.style.opacity=1
     else myPic.style.opacity=0
     if (wasMedia || playing) {
@@ -360,7 +361,7 @@
     else if (myPlayer.volume < 0.8) myPlayer.volume *= 1.3		// fade sound in/out 
     if ((","+selected).match(","+index+",")) {mySelect.style.color='red'; myPlayer.style.outline='2px solid red'}
     else {mySelect.style.color=null; myPlayer.style.outline=null}
-    if (myNav.style.display=='block' || (playing && type=='video' && (cue || !overMedia || ym>0.95))) mySeekbar.style.opacity=1
+    if (myNav.matches(':hover') || (playing && type=='video' && (cue || !overMedia || ym>0.95))) mySeekbar.style.opacity=1
     else mySeekbar.style.opacity=0
     if (playing=='browser') {
       Jpg.innerHTML='Jpg'
