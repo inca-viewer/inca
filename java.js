@@ -155,7 +155,7 @@
       else if (!thumbSheet && lastClick) myPlayer.currentTime=thumb.style.start
       Previews()
       scrolltoIndex(index)			    			// + highlight played media
-      positionMedia(0.2)
+      positionMedia(0.3)
       Play()},fade*400)}
 
 
@@ -301,6 +301,15 @@
       thumbSheet=0},420)}
 
 
+  function overThumb(id,el) {						// play htm thumb
+    overMedia=id; index=id
+    getParameters(id)
+    myPlayer.currentTime=thumb.style.start				// for fast start
+    var x = (ypos-el.getBoundingClientRect().top)/el.offsetHeight	// reset thumb time if enter from top
+    if (type=='video') {if (!el.currentTime || x<0.1) el.currentTime=el.style.start+0.05}
+    if (Click) sel(id)}
+
+
   function getParameters(i) {						// prepare myPlayer for media
     if (!(thumb=document.getElementById('thumb'+i))) {
       thumb=document.getElementById('thumb1'); return}
@@ -365,8 +374,14 @@
     else mySeekbar.style.opacity=0
     if (playing=='browser') {
       Jpg.innerHTML='Jpg'
+      var z=scaleY
+      if (thumbSheet) z=thumbSheet
+      else lastStart=myPlayer.currentTime
+      myPlayer.style.zIndex=Zindex+1
       myPlayer.playbackRate=rate
       rect = myPlayer.getBoundingClientRect()
+      xm = (xpos - rect.left) / Math.abs(myPlayer.offsetWidth*z*skinny)
+      ym = (ypos - rect.top) / Math.abs(myPlayer.offsetHeight*z)
       myCap.style.top=rect.bottom +10 +'px'
       myCap.style.left=rect.left +10 +'px'
       myCap.style.zIndex=Zindex
@@ -374,20 +389,28 @@
       else Cap.innerHTML='caption'
       if (myCap.innerHTML) myCap.style.opacity=1
       if (cueList && !thumbSheet) Cues(myPlayer.currentTime, index)
-      var z=scaleY
-      if (thumbSheet) z=thumbSheet
-      else lastStart=myPlayer.currentTime
-      xm = myPlayer.offsetWidth*z*skinny
-      ym = myPlayer.offsetHeight*z
-      xm = (xpos - rect.left) / Math.abs(xm)
-      ym = (ypos - rect.top) / Math.abs(ym)
-      myPlayer.style.zIndex=Zindex+1
       if (!myPic.matches(':hover')) seekBar()
       positionMedia(0)}
     else {
       Jpg.innerHTML=''
       myCap.innerHTML=''
       myCap.style.opacity=0}}
+
+
+  function positionMedia(fa) {						// position myPlayer in window
+    var x=0; var y=0; var z=scaleY
+    if (screenLeft) {Xoff=screenLeft; Yoff=outerHeight-innerHeight} else {x=Xoff; y=Yoff} // fullscreen offsets
+    myPlayer.style.left = x + mediaX - myPlayer.offsetWidth/2 +"px"
+    myPlayer.style.top = y + mediaY - myPlayer.offsetHeight/2 +"px"
+    if (thumbSheet) {
+      if (ratio<1) {z=innerHeight/myPlayer.offsetHeight; mediaY=innerHeight/2}
+      else {z=innerWidth/myPlayer.offsetWidth; mediaX=innerWidth/2}}
+    scaleX = skinny*z
+    if (thumbSheet) thumbSheet=z
+    x = scaleX * (1+looping/16)
+    y = scaleY * (1+looping/16)
+    if (looping > 1) {myPlayer.style.transition = fa+'s'; myPlayer.style.transform = "scale("+x+","+y+")"}
+    else {myPlayer.style.transition = 'opacity '+fa+'s'; myPlayer.style.transform = "scale("+scaleX+","+z+")"}}
 
 
   function seekBar() {							// progress bar beneath player
@@ -434,27 +457,6 @@
           setTimeout(function(){myPlayer.play(); myCap.innerHTML=''},1000*value)}
         else if (type == 'cap') myCap.innerHTML = value.replaceAll("#3", "\,").replaceAll("#4", "\'").replaceAll("#5", "\"")}}}
 
-
-  function positionMedia(fa) {						// position myPlayer in window
-    var x=0; var y=0; var z=scaleY
-    if (screenLeft) {Xoff=screenLeft; Yoff=outerHeight-innerHeight} else {x=Xoff; y=Yoff} // fullscreen offsets
-    myPlayer.style.left = x + mediaX - myPlayer.offsetWidth/2 +"px"
-    myPlayer.style.top = y + mediaY - myPlayer.offsetHeight/2 +"px"
-    myPlayer.style.transition = 'opacity '+fa+'s'
-    if (thumbSheet) {
-      if (ratio<1) {z=innerHeight/myPlayer.offsetHeight; mediaY=innerHeight/2}
-      else {z=innerWidth/myPlayer.offsetWidth; mediaX=innerWidth/2}}
-    scaleX = skinny*z
-    if (thumbSheet) thumbSheet=z
-    myPlayer.style.transform = "scale("+scaleX+","+z+")"}
-
-  function overThumb(id,el) {						// play htm thumb
-    overMedia=id; index=id
-    getParameters(id)
-    myPlayer.currentTime=thumb.style.start				// for fast start
-    var x = (ypos-el.getBoundingClientRect().top)/el.offsetHeight	// reset thumb time if enter from top
-    if (type=='video') {if (!el.currentTime || x<0.1) el.currentTime=el.style.start+0.05}
-    if (Click) sel(id)}
 
   function Previews() {
     var x = thumb.poster.replace("/posters/", "/thumbs/")		// points to thumbsheets folder
@@ -528,6 +530,7 @@
     cueIndex=-1								// reset cue line index
     if (!longClick && rate > 0.40) rate-=0.05				// slower each loop
     myPlayer.currentTime=thumb.style.start
+    positionMedia(1.4)
     myPlayer.play()}
 
   function Filter(id) {							// for htm ribbon headings
