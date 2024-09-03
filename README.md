@@ -4,18 +4,6 @@ Windows - Chrome, Firefox, Edge, Opera, Brave<br>
 YouTube style interface for your hard drive<br><br>
 <img src="screens/overview2.png" width="55%"><br>
 <img src="screens/computer arm 5.jpg" width="18%"> <img src="screens/computer arm 2.jpg" width="18%"> <img src="screens/computer arm 1.jpg" width="18%"><br><br>
-
-Lightweight & portable (no installation)<br>
-Pure vanilla java / ahk script<br>
-No IDE, no libraries, no external calls, no browser extensions<br> 
-Does not mess with any settings - see source code<br>
-Supports most media - mp4, wmv, avi, mpg, mkv etc.<br>
-Configure your settings.ini in notepad, then run compile.exe<br>
-Browser will default open in pictures folder. Add bookmark for it<br><br>
-To 'uninstall', exit from taskbar & delete inca folder<br>
-You can edit source code in notepad<br>
-Compiles in under a second<br><br>
-
 <img src="screens/Screen 1.jpg" width="25%"> <img src="screens/Screen 2.jpg" width="25%"><br>
 
 # Features:<br>
@@ -31,6 +19,16 @@ To see if you already have a video from an outside website,<br>
 Select part of the title text then 'long click' on it<br>
 A new tab will show all matching files from your computer<br>
 
+Lightweight & portable (no installation)<br>
+Pure vanilla java / ahk script<br>
+No IDE, no libraries, no external calls, no browser extensions<br> 
+Does not mess with any settings - see source code<br>
+Supports most media - mp4, wmv, avi, mpg, mkv etc.<br>
+Configure your settings.ini in notepad, then run compile.exe<br>
+Browser will default open in pictures folder. Add bookmark for it<br><br>
+To 'uninstall', exit from taskbar & delete inca folder<br>
+You can edit source code in notepad<br>
+Compiles in under a second<br><br>
 
 Middle click
 - next media (long click for previous)<br>
