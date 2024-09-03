@@ -9,7 +9,7 @@ Lightweight & portable (no installation)<br>
 Pure vanilla java / ahk script<br>
 No IDE, no libraries, no external calls, no browser extensions<br> 
 Does not mess with any settings - see source code<br>
-supports most media - mp4, wmv, avi, mpg, mkv etc.<br>
+Supports most media - mp4, wmv, avi, mpg, mkv etc.<br>
 Configure your settings.ini in notepad, then run compile.exe<br>
 Browser will default open in pictures folder. Add bookmark for it<br><br>
 To 'uninstall', exit from taskbar & delete inca folder<br>
@@ -19,7 +19,7 @@ Compiles in under a second<br><br>
 <img src="screens/Screen 1.jpg" width="25%"> <img src="screens/Screen 2.jpg" width="25%"><br>
 
 # Features:<br>
-beautiful fast interface for finding and interacting with your media<br>
+beautiful fast interface for finding and enjoying your media<br>
 6 x 6 Video thumbsheets<br>
 Shuffle folders & playlists<br>
 Search, organize, edit & view media files in browser<br>
