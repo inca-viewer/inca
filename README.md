@@ -10,9 +10,8 @@ Pure vanilla java / ahk script<br>
 No IDE, no libraries, no external calls, no browser extensions<br> 
 Does not mess with any settings - see source code<br>
 supports most media - mp4, wmv, avi, mpg, mkv etc.<br>
-Configure settings.ini in notepad, then run compile.exe<br>
-browser will open in pictures folder<br>
-you must add bookmark for it<br>
+Configure your settings.ini in notepad, then run compile.exe<br>
+Browser will default open in pictures folder. Add bookmark for it<br><br>
 To 'uninstall', exit from taskbar & delete inca folder<br>
 You can edit source code in notepad<br>
 Compiles in under a second<br><br>
@@ -20,7 +19,7 @@ Compiles in under a second<br><br>
 <img src="screens/Screen 1.jpg" width="25%"> <img src="screens/Screen 2.jpg" width="25%"><br>
 
 # Features:<br>
-beautiful fast interface<br>
+beautiful fast interface for finding and interacting with your media<br>
 6 x 6 Video thumbsheets<br>
 Shuffle folders & playlists<br>
 Search, organize, edit & view media files in browser<br>
@@ -30,11 +29,8 @@ Music and playlists from browser tabs<br>
 Sleep timer gradually lowers master volume when mouse quiet<br>
 To see if you already have a video from an outside website,<br>
 Select part of the title text then 'long click' on it<br>
-A new tab will show all matching files from your computer<br><br>
+A new tab will show all matching files from your computer<br>
 
-<img src="screens/mouse.jpg" width="20%"/>
-
-# Usage
 
 Middle click
 - next media (long click for previous)<br>
@@ -59,16 +55,15 @@ Right click & slide
 - volume
 
 Left click & slide
-- position/zoom media
-- zoom thumbs
+- position media
 - pop thumbs out of page
 
-6x6 Thumbsheets index at about 30 videos per minute<br>
+6x6 thumbsheets index at about 20 videos per minute<br>
 Supports rotated screen + osk onscreen keyboard<br>
 set compile.exe to run as administrator if using osk<br>
 then click any text area for osk<br>
 Long click on selected text for file search<br><br>
-<img src="screens/computer arm 3.jpg" width="15.9%">   <img src="screens/computer arm 4.jpg" width="25%"><br>
+<img src="screens/mouse.jpg" width="12.6%"> <img src="screens/computer arm 3.jpg" width="15.9%">   <img src="screens/computer arm 4.jpg" width="25%"><br>
 1m x 12mm threaded rod, 2 x nuts + heatshrink<br>
 drill 12mm hole in wood to bend arm and for cables<br>
 drill 20mm hole for top and bottom nuts<br><br>
