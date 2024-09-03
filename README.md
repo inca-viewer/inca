@@ -7,7 +7,7 @@ YouTube style interface for your hard drive<br><br>
 <img src="screens/Screen 1.jpg" width="25%"> <img src="screens/Screen 2.jpg" width="25%"><br>
 
 # Features:<br>
-beautiful fast interface for finding and enjoying your media<br>
+beautiful fast interface<br>
 6 x 6 Video thumbsheets<br>
 Shuffle folders & playlists<br>
 Search, organize, edit & view media files in browser<br>
