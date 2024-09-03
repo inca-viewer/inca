@@ -2,7 +2,8 @@
 // Debugging - use mySelected.innerHTML or alert()
 // always backup your data
 // rem. remove redirect favs to snips - due to reduced ssd library
-// jpg failing due to above
+// jpg failing due to above referencing src from list rather than pre-edited html
+
 
   var defRate = 1*localStorage.getItem('defRate')			// default playback speed
   var mediaX = 1*localStorage.getItem('mediaX')				// myPlayer position
@@ -119,11 +120,11 @@
 
 
   function clickEvent() {						// functional logic
-    if (lastClick==3 && (!longClick || (!playing && !overMedia))) return
     if (gesture || title.matches(':hover')) return			// allow rename of media in htm
     if (longClick && myRibbon.matches(':hover')) return
     if (longClick && myInput.matches(':hover')) return
     if (longClick && myPanel.matches(':hover')) return			// copy files instead of move
+    if (lastClick==3 && (!longClick || (!playing && !overMedia && !myNav.matches(':hover') ))) return
     if (myNav.matches(':hover') && !playing) {overMedia=index; lastClick=0}
     if (!longClick && Click==1) {
       if (myPic.matches(':hover')) {myPlayer.currentTime=myPic.style.start; lastClick=0; thumbSheet=0}
@@ -146,7 +147,7 @@
     setTimeout(function() {						// so player can fade in/out 
       if (!getParameters(index)) {closePlayer(); return}		// end of media list
       positionMedia(0)
-      if (lastClick==1) thumbSheet=0
+      if (lastClick==1 || lastClick==3) thumbSheet=0
       myPlayer.style.zIndex = Zindex+=1					// because htm thumbs use Z-index
       if (!playing) myNav.style.display=null
       if (longClick==3 && overMedia) myPlayer.currentTime=0
@@ -163,6 +164,7 @@
    var para = myPlayer.currentTime+'|'+skinny+'|'+rate+'|'+localStorage.getItem('muted')
    if (!thumbSheet && type=='video' && mpv) playing='mpv'
     else playing='browser'
+    myPlayer.style.opacity=0
     myPlayer.muted = 1*localStorage.getItem('muted')
     if (!thumbSheet && lastClick) messages=messages+'#History#'+myPlayer.currentTime.toFixed(1)+'#'+index+'#'
     if (lastClick==2 && playing=='mpv') return				// inca does next/previous media
@@ -341,7 +343,7 @@
     if (!thumb) return
     if (cursor) cursor--
     if (!playing || thumbSheet) myBody.style.cursor=null		// hide cursor
-    else if (!cursor || Click) {myBody.style.cursor='none'; mySeekbar.innerHTML=''}
+    else if (!cursor || Click) myBody.style.cursor='none'
     else myBody.style.cursor='crosshair'
     if (!myNav.matches(':hover')) myNav.style.display=null
     if (playing) myMask.style.backgroundColor='rgba(0,0,0,'+scaleY*6+')'
@@ -370,7 +372,7 @@
     else if (myPlayer.volume < 0.8) myPlayer.volume *= 1.3		// fade sound in/out 
     if ((","+selected).match(","+index+",")) {mySelect.style.color='red'; myPlayer.style.outline='2px solid red'}
     else {mySelect.style.color=null; myPlayer.style.outline=null}
-    if (myNav.matches(':hover') || (playing && type=='video' && (cue || !overMedia || ym>0.95))) mySeekbar.style.opacity=1
+    if (myNav.matches(':hover') || (playing=='browser' && type=='video' && (cue || !overMedia || ym>0.95))) mySeekbar.style.opacity=1
     else mySeekbar.style.opacity=0
     if (playing=='browser') {
       Jpg.innerHTML='Jpg'
@@ -407,8 +409,8 @@
       else {z=innerWidth/myPlayer.offsetWidth; mediaX=innerWidth/2}}
     scaleX = skinny*z
     if (thumbSheet) thumbSheet=z
-    x = scaleX * (1+looping/16)
-    y = scaleY * (1+looping/16)
+    x = scaleX * (1+(looping-1)/14)
+    y = scaleY * (1+(looping-1)/14)
     if (looping > 1) {myPlayer.style.transition = fa+'s'; myPlayer.style.transform = "scale("+x+","+y+")"}
     else {myPlayer.style.transition = 'opacity '+fa+'s'; myPlayer.style.transform = "scale("+scaleX+","+z+")"}}
 
@@ -530,7 +532,7 @@
     cueIndex=-1								// reset cue line index
     if (!longClick && rate > 0.40) rate-=0.05				// slower each loop
     myPlayer.currentTime=thumb.style.start
-    positionMedia(1.4)
+    positionMedia(1.6)
     myPlayer.play()}
 
   function Filter(id) {							// for htm ribbon headings

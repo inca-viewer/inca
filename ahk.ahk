@@ -91,6 +91,9 @@
         Global mpvPID
         Global scrollText
         Global textCount
+        Global cur
+        Global desk
+
 
 
     main:
@@ -129,12 +132,29 @@
       return
 
     ~WheelUp::
-      if mpvPID					; mpv seek
-        send, 2
-      return
+      wheel := 40
     ~WheelDown::
+      if !wheel
+        wheel := -40
       if mpvPID
-        send, 3
+        {
+        if (cur == mpvPID)
+          {
+          ratio := mpvHeight/mpvWidth
+          if (wheel<0 || mpvWidth*ratio>A_ScreenWidth/18)
+            {
+            mpvXpos+= wheel			; mpv zoom
+            mpvYpos+= wheel*ratio
+            mpvWidth-= wheel*2
+            mpvHeight-= wheel*ratio*2
+            WinMove, ahk_class mpv,,mpvXpos,mpvYpos,mpvWidth,mpvHeight
+            }
+          }
+        else if (wheel<0) 			; mpv seek
+          send, 3
+        else send, 2
+        }
+      wheel := 0
       return
 
     Xbutton1::					; mouse "back" button
@@ -434,7 +454,7 @@
         if (command == "Close")						; close external mpv player
             if mpvPID
               Process, Close, mpv.exe
-        if (command == "Media")						; browser tells inca to play media
+        if (command == "Media")						; browser tells inca to use mpv player
             {
             id := StrSplit(selected, ",").1
             if !getMedia(id)
@@ -488,10 +508,13 @@
                 RunWait %COMSPEC% /c echo seek %start% absolute exact > \\.\pipe\mpv,, hide && exit
                 }
               else Run %inca%\cache\apps\mpv --start=%start% %autofit% %geometry% %speed% --mute=%mute% --playlist-start=%mpvid% --input-ipc-server=\\.\pipe\mpv "%inca%\cache\lists\mpvPlaylist.m3u" 
-              sleep 100
+              Loop, 20
+                if WinActive, ahk_class mpv
+                  break
+                else sleep 20
+              WinActivate, ahk_class mpv
               if skinny
                 RunWait %COMSPEC% /c echo add video-scale-x %skinny% > \\.\pipe\mpv,, hide && exit
-              WinActivate, ahk_class mpv
               }
             }
         if (command == "EditCue" || command == "Caption")		; open media cues in notepad
@@ -521,6 +544,8 @@
             }
         if (command == "jpg")
           {
+          if (address != 1)
+            FileAppend, 0.00|skinny|%address%, %inca%\cache\cues\%media% @%value%.txt
           if (type == "video")
             run, %inca%\cache\apps\ffmpeg.exe -ss %value% -i "%src%" -y "%inca%\jpg\%media% @%value%.jpg",, Hide
           else run, %inca%\cache\apps\ffmpeg.exe -i "%src%" -y "%inca%\jpg\%media% @%value%.jpg",, Hide
@@ -1152,7 +1177,7 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n if(
 <a id='myDelete' onmousedown="if(!event.button) {myPlayer.load(); inca('Delete','',wasMedia)}">Delete</a>
 <a id='Mp3' onmouseup="inca('mp3', myPlayer.currentTime.toFixed(2), index, cue); cue=0; myPlayer.play(); myNav.style.display=null">mp3</a>`n
 <a id='Mp4' onmouseup="inca('mp4', myPlayer.currentTime.toFixed(2), index, cue); cue=0; myPlayer.play(); myNav.style.display=null">mp4</a>`n
-<a id='Jpg' onmouseup="inca('jpg', myPlayer.currentTime.toFixed(2), index); togglePause(); myNav.style.display=null"></a>`n
+<a id='Jpg' onmouseup="inca('jpg', myPlayer.currentTime.toFixed(2), index, skinny); togglePause(); myNav.style.display=null"></a>`n
 <a></a></div>`n`n
 
 <div id='myMask' class="mask" onwheel="wheelEvent(event, id, this)">`n</div>
@@ -1172,7 +1197,7 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n if(
 <a style='width:7em; text-align:center; %x22%' onmousedown="inca('Path','','','music|1')" onmouseover="Music.scrollIntoView(); myView.scrollTo(0,0)">&#x266B;</a>`n
 <a id='SearchBox' style='width:7em; text-align:center; %x20%' onmousedown="inca('SearchBox','','',myInput.value)" onmouseover='myA.scrollIntoView(); myView.scrollTo(0,0); myInput.focus()' >&#x1F50D;&#xFE0E;</a>`n
 <a id='Add' style='font-variant-caps:petite-caps' onmousedown="inca('Add','','',myInput.value)">%add%</a>`n
-<input id='myInput' class='searchbox' style='width:70`%; border-radius:1em; font-size:1.1em; font-weight:bold' type='search' value='%st%' onmousemove='getAlpha(event, this)' onmouseover="overText=1; this.focus(); if(!'%searchTerm%') {myInput.value=''}" oninput="Add.innerHTML='Add'" onmouseout='overText=0'>
+<input id='myInput' class='searchbox' style='width:70`%; border-radius:1em; font-size:1.1em; font-weight:bold' type='search' value='%st%' onmousemove='getAlpha(event, this)' onmouseover="overText=1; this.focus()" oninput="Add.innerHTML='Add'" onmouseout='overText=0'>
 <a id="myPage" style='width:17`%; padding-right:1em' onmousedown="inca('Page', page)" onwheel="wheelEvent(event, id, this)">%pg%</a>
 </div>`n`n
 
@@ -1327,7 +1352,7 @@ else src=src="file:///%src%"
 if listView
   mediaList = %mediaList% %fold%<table onmouseout="title%j%.style.color=null; thumb%j%.style.opacity=0; overMedia=0">`n <tr id="entry%j%"`n onmouseover="title%j%.style.color='lightsalmon'; overThumb(%j%, thumb%j%)">`n <td onmouseenter='thumb%j%.style.opacity=0'>%ext%`n <video id='thumb%j%' onmousedown="getParameters(%j%, '%type%', '%cueList%', %dur%, %start%, %size%, event)" class='thumb2' style="max-width:%view%em; max-height:%view%em"`n %src%`n %poster%`n preload=%preload% muted loop type="video/mp4"></video></td>`n <td>%size%</td>`n <td style='min-width:6em' onmouseover='thumb%j%.style.opacity=1'>%durT%</td>`n <td onmouseover='thumb%j%.style.opacity=1'>%date%</td>`n <td style='min-width:4.4em'>%j%</td>`n <td id='myFavicon%j%' style='width:0; translate:-1em; white-space:nowrap; font-size:0.7em; color:salmon; min-width:1em'>%favicon%</td>`n <td style='width:99em'><input id="title%j%" onmouseover='overText=1' onmouseout='overText=0; Click=0' class='title' type='search' value='%media_s%'`n oninput="wasMedia=%j%; renamebox=this.value"></td>`n <td>%fo%</td></tr></table>`n`n
 
-else if ((ext == "txt" || ext=="m3u") && (textCount+=1) <= 20)
+else if ((ext=="txt" || ext=="m3u") && (textCount+=1) <= 20)
   mediaList = %mediaList%<div id="entry%j%" style="display:flex; position:relative; padding-top:%view4%em" onmouseover='overText=1' onmouseout='overText=0'>`n <span><input id='title%j%' class='title' style='text-align:center; background:#15110a; padding-left:1em; font-size:%cap_size%em; position:absolute' type='search' value='%media_s%'`n onmousedown='thumb%j%.scrollTo(0,0)'`n oninput="wasMedia=%j%; renamebox=this.value"></span>`n <span id='Save%j%' class='save' onclick="inca('Reload')">Save</span>`n <textarea id='thumb%j%' rows=18 class='text' style='margin-top:1.6em; font-size:%cap_size%em; max-width:%view%em' onmouseover="overThumb(%j%, this)" onmouseout='overMedia=0'`n oninput="if(editing&&editing!='%j%') {inca('Text',editing)}; editing='%j%'; this.style.background='#15110a'; Save%j%.style.display='block'" onmousedown="getParameters(%j%,'document','',0,0,%size%,event)">`n%str2%</textarea></div>`n`n
 
 else mediaList = %mediaList%<div id="entry%j%" style="max-width:%view%em; padding:0.5em; display:flex; padding-top:%view4%em">`n <div class='thumb'>%caption%<span style='display:block; position:absolute; top:-1.5em; font-size:0.8em; color:salmon' id='myFavicon%j%'>%favicon%</span>`n <span><input id='title%j%' class='title' style='display:none; text-align:center; max-width:%view%em; font-size:%cap_size%em' type='search' value='%media_s%'`n oninput="wasMedia=%j%; renamebox=this.value" onmouseover='overText=1' onmouseout='overText=0'></span>`n <video id="thumb%j%" class='thumb' style="display:flex; justify-content:center; max-width:%view%em; max-height:%view%em"`n onmousedown="getParameters(%j%, '%type%', '%cueList%', %dur%, %start%, %size%, event)"`n onmouseover="overThumb(%j%, this); this.play()"`n onmouseout="overMedia=0; this.pause()"`n %src%`n %poster%`n type='video/mp4' preload=%preload% muted loop type="video/mp4"></video></div>`n</div>`n`n
@@ -1679,7 +1704,7 @@ else mediaList = %mediaList%<div id="entry%j%" style="max-width:%view%em; paddin
             return "video"
         if InStr("mp3 m4a wma mid", ex)
             return "audio"
-        if InStr("pdf txt rtf doc epub mobi htm html js css ahk", ex)
+        if InStr("pdf txt rtf doc epub mobi htm html js css ini ahk", ex)
             return "document"
         if (ex == "m3u")
             return "m3u"
@@ -1735,38 +1760,14 @@ else mediaList = %mediaList%<div id="entry%j%" style="max-width:%view%em; paddin
           SoundSet, volume
           volRef := Round(volume)
           ShowStatus()
-          return
           }
-        if (Abs(x) < Abs(y))					; up-down gesture
+        if (click=="LButton" && desk==cur && !WinExist("ahk_class Notepad"))
           {
-          if (click == "LButton" && mpvPID)			; mpv zoom			
-            {
-            ratio := mpvHeight/mpvWidth
-            if (y<0 && mpvWidth*ratio<A_ScreenWidth/18)		; min. size
-              return
-            mpvXpos-= y
-            mpvYpos-= (y*ratio)
-            mpvWidth+= (y*2)
-            mpvHeight+= (y*2*ratio)
-            MouseGetPos , , , x					; mpv not under cursor
-            if (x != mpvPID)
-              WinMove, ahk_class mpv,,mpvXpos,mpvYpos,mpvWidth,mpvHeight
-            return
-            }
-          MouseGetPos,,, id ; get the window below the mouse 
-          WinGet, cur, ID, ahk_id %id%
-          WinGet, desk, ID , ahk_class Progman
-         if !WinExist("ahk_class Notepad")
-            {
-            if (click=="LButton" && desk==cur)
-              {
-              WinActivate, ahk_group Browsers
-              if (y < 0)
-                send, ^0
-              else send, ^{+}
-              sleep 111
-              }
-            }
+          WinActivate, ahk_group Browsers
+          if (y < 0)
+            send, ^0
+          else send, ^{+}
+          sleep 111
           }
         }
 
@@ -2003,6 +2004,9 @@ else mediaList = %mediaList%<div id="entry%j%" style="max-width:%view%em; paddin
 
     TimedEvents:							; every 100mS
         GetBrowser()
+        MouseGetPos,,, id 						; get the window below the mouse 
+        WinGet, cur, ID, ahk_id %id%
+        WinGet, desk, ID , ahk_class Progman
         WinGet, mpvPID, ID , ahk_class mpv				; get mpv PID
         if mpvPID
           WinGetPos, mpvXpos,mpvYpos,mpvWidth,mpvHeight,ahk_class mpv
