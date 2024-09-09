@@ -1333,10 +1333,16 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n if(
 x := Round(start-5,2)
 if playlist
  IfNotExist, %src%
+   {
    IfExist, D:\media\snips\%media% @%x%.mp4
-     src=D:\media\snips\%media% @%x%.mp4
+     y=D:\media\snips\%media% @%x%.mp4
    else IfExist, D:\media\snips\%media% @0.00.mp4
-     src=D:\media\snips\%media% @0.00.mp4
+     y=D:\media\snips\%media% @0.00.mp4
+   StringReplace, list, list, %src%, %y%, All
+;   FileDelete, %inca%\cache\lists\%folder%.txt				makes fav work
+;   FileAppend, %list%, %inca%\cache\lists\%folder%.txt, UTF-8
+   src := y
+   }
 
 if (type=="image")
   src =

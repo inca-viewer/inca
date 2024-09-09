@@ -2,7 +2,14 @@
 // Debugging - use mySelected.innerHTML or alert()
 // always backup your data
 // rem. remove redirect favs to snips - due to reduced ssd library
-// jpg failing due to above referencing src from list rather than pre-edited html
+// fav and pause failing due to above referencing src from list rather than pre-edited html
+// cue edits need to be treated similar to skinny/speed edits
+// wheel zoom out centres media better
+
+// seekbar size after wheel zoom
+// false select, slow to click after play image food
+// skinny transition from sheet messed up
+
 
 
   var defRate = 1*localStorage.getItem('defRate')			// default playback speed
@@ -57,7 +64,6 @@
   var ypos = 0
   var Xref = 0								// click cursor coordinate
   var Yref = 0
-  var fade = 0								// myPlayer transition
   var cursor								// hide cursor timer
   var block = 0								// block wheel timer
   var ratio = 1								// media width to height ratio
@@ -139,25 +145,23 @@
       if (!scaleY || scaleY>2 || scaleY<0.1) scaleY=0.7}
     if (playing && lastClick==2) if (longClick) {index--} else index++	// next, previous media
     if (longClick && !overMedia && !playing) index=lastIndex		// return to last media
-    if (!playing || thumbSheet) fade=0
-    positionMedia(fade)
-    setTimeout(function() {						// so player can fade in/out 
-      if (!getParameters(index)) {closePlayer(); return}		// end of media list
-      positionMedia(0)
-      if (lastClick==1 || lastClick==3) thumbSheet=0
-      myPlayer.style.zIndex = Zindex+=1					// because htm thumbs use Z-index
-      if (!playing) myNav.style.display=null
-      if (longClick==3 && overMedia) myPlayer.currentTime=0
-      else if (longClick && !playing && !overMedia) myPlayer.currentTime=lastStart	// return to last media
-      else if (longClick==1 && type=='video') thumbSheet=1 				// show thumbsheet
-      else if (!thumbSheet && lastClick) myPlayer.currentTime=thumb.style.start
-      Previews()
-      scrolltoIndex(index)			    			// + highlight played media
-      positionMedia(0.8)
-      Play()},fade*400)}
+    if (!getParameters(index)) {closePlayer(); return}			// end of media list
+    positionMedia(0)
+    if (lastClick==1 || lastClick==3) thumbSheet=0
+    myPlayer.style.zIndex = Zindex+=1					// because htm thumbs use Z-index
+    if (!playing) myNav.style.display=null
+    if (longClick==3 && overMedia) myPlayer.currentTime=0
+    else if (longClick && !playing && !overMedia) myPlayer.currentTime=lastStart	// return to last media
+    else if (longClick==1 && type=='video') thumbSheet=1 				// show thumbsheet
+    else if (!thumbSheet && lastClick) myPlayer.currentTime=thumb.style.start
+    Previews()
+    scrolltoIndex(index)			    			// + highlight played media
+    Play()}
 
 
   function Play() {
+   myPlayer.style.transition = 'opacity 0s'				// stabilize position
+   positionMedia(0.6)
    var para = myPlayer.currentTime+'|'+skinny+'|'+rate+'|'+localStorage.getItem('muted')
    if (!thumbSheet && type=='video' && toggles.match('Mpv')) playing='mpv'
     else playing='browser'
@@ -263,7 +267,7 @@
       scrolltoIndex(index)
       Sprites()}
     else if (type!='image' && (!overMedia || myTitle.matches(':hover'))) {	// seek
-      if (wheelUp && myPlayer.currentTime > dur-3) return
+      if (wheelUp && !myPlayer.paused && myPlayer.currentTime > dur-3) return
       if (dur > 120) interval = 3
       else interval = 0.5
       if (myPlayer.paused) interval = 0.04
@@ -288,13 +292,14 @@
     positionMedia(0.4)
     inca('Close')							// and send messages to inca
     overMedia=0
-    playing=''
     Click=0								// in case browser not active
     cue=0
     myPlayer.style.opacity=0
     myNav.style.display=null
+    myMask.style.display='none'
     myPlayer.removeEventListener('ended', nextMedia)
     setTimeout(function() {						// fadeout before close
+      playing=''
       myPlayer.src=''
       myPlayer.poster=''
       myPlayer.style.zIndex=-1
@@ -396,20 +401,19 @@
       myCap.style.opacity=0}}
 
 
-  function positionMedia(fa) {						// position myPlayer in window
+  function positionMedia(time) {					// position myPlayer in window
     var x=0; var y=0; var z=scaleY
-    if (screenLeft) {Xoff=screenLeft; Yoff=outerHeight-innerHeight} else {x=Xoff; y=Yoff} // fullscreen offsets
+    if (screenLeft) {Xoff=screenLeft; Yoff=outerHeight-innerHeight} else {x=Xoff; y=Yoff}
     myPlayer.style.left = x + mediaX - myPlayer.offsetWidth/2 +"px"
-    myPlayer.style.top = y + mediaY - myPlayer.offsetHeight/2 +"px"
-    if (thumbSheet) {
-      if (ratio<1) {z=innerHeight/myPlayer.offsetHeight; mediaY=innerHeight/2}
-      else {z=innerWidth/myPlayer.offsetWidth; mediaX=innerWidth/2}}
-    scaleX = skinny*z
-    if (thumbSheet) thumbSheet=z
-    x = scaleX * (1+(looping-1)/14)
+    myPlayer.style.top = y + mediaY - myPlayer.offsetHeight/2 +"px" 	// fullscreen offsets
     y = scaleY * (1+(looping-1)/14)
-    if (looping > 1) {myPlayer.style.transition = fa+'s'; myPlayer.style.transform = "scale("+x+","+y+")"}
-    else {myPlayer.style.transition = 'opacity '+fa+'s'; myPlayer.style.transform = "scale("+scaleX+","+z+")"}}
+    if (thumbSheet) {
+      if (ratio<1) y=innerHeight/myPlayer.offsetHeight
+      else y=innerWidth/myPlayer.offsetWidth
+      thumbSheet=y}
+    x=skinny*y
+    myPlayer.style.transition = time+'s'
+    myPlayer.style.transform = "scale("+x+","+y+")"}
 
 
   function seekBar() {							// progress bar beneath player
@@ -443,13 +447,12 @@
       cueTime = 1*entry[0]
       var type = entry[1]
       var value = entry[2]
-      fade = entry[3]
       if (cueTime > time-0.1 && cueTime < time+0.1) {
         if (type=='next') {lastClick=2; clickEvent()}
         else if (type=='goto') {myPlayer.currentTime = 1*value; myPlayer.volume=0.001}
         else if (type=='rate' && looping<2) {if (isNaN(1*value)) {rate=defRate} else {rate=1*value}}
         else if (type=='skinny' && !el.style.skinny) {
-          if (isNaN(value)) {skinny=1} else {skinny=1*value; if(time) {positionMedia(fade)}}}
+          if (isNaN(value)) {skinny=1} else {skinny=1*value; if(time) {positionMedia(entry[3])}}}
         else if (type=='pause' && cueIndex!=i) {			// prevent timer re-entry during pause
           cueIndex=i; myPlayer.pause()
           if (value) setTimeout(function(){myPlayer.play(); myCap.innerHTML=''},1000*value)}
@@ -470,10 +473,9 @@
       if (!thumbSheet) myPlayer.poster=thumb.poster}
     if (type!='image') myPic.poster=''
     else myPic.poster=thumb.poster
-    if (type=='video') {
-      myPic.style.backgroundImage = 'url(\"'+x+'\")'			// use thumbsheet for preview sprites
-      myPic.style.transform='scale('+skinny+',1)'}
+    if (type=='video') myPic.style.backgroundImage = 'url(\"'+x+'\")'	// use 6x6 thumbsheet src for preview sprites
     else myPic.style.backgroundImage = ''
+    myPic.style.transform='scale('+skinny+',1)'
     ratio = thumb.offsetWidth/thumb.offsetHeight
     if (ratio<1) {x=innerWidth*innerHeight/innerWidth; y=x/ratio}	// portrait
     else {y=innerHeight; x=y*ratio}					// landscape
@@ -481,7 +483,7 @@
     myPlayer.style.height = y +'px'
     myPlayer.style.top = mediaY-y/2 +'px'				// myPlayer size normalised to screen
     myPlayer.style.left = mediaX-x/2 +'px'
-    if (ratio>1) {x=view*16} else x=view*9					// preview thumb size normalised
+    if (ratio>1) {x=view*16} else x=view*9				// preview thumb size normalised
     myPic.style.width=x+'px'
     myPic.style.height=(x-7)/ratio+'px'
     myCap.innerHTML = ''
@@ -504,18 +506,21 @@
     myPic.style.start = y - (z * y) + dur * z}
 
   function getStart() {
-    myPlayer.poster=''
-    if (skinny < 0) xm = 1-xm						// if flipped media
-    var row = Math.floor(ym * 6)					// get media seek time from thumbsheet xy
-    var col = Math.ceil(xm * 6)
-    var offset = 0
-    var ps = 5 * ((row * 6) + col)
-    ps = (ps - 1) / 200
-    if (dur > 60) offset = 20
-    if (longClick==1 || xm>1||xm<0|ym>1||ym<0) myPlayer.currentTime=lastStart
-    else myPlayer.currentTime=offset - 0.4 - (ps * offset) + dur * ps
-    thumbSheet=0
-    Play()}
+    positionMedia(0.3)
+    myPlayer.style.opacity=0
+    setTimeout(function() {
+      myPlayer.poster=''
+      if (skinny < 0) xm = 1-xm						// if flipped media
+      var row = Math.floor(ym * 6)					// get media seek time from thumbsheet xy
+      var col = Math.ceil(xm * 6)
+      var offset = 0
+      var ps = 5 * ((row * 6) + col)
+      ps = (ps - 1) / 200
+      if (dur > 60) offset = 20
+      if (longClick==1 || xm>1||xm<0|ym>1||ym<0) myPlayer.currentTime=lastStart
+      else myPlayer.currentTime=offset - (ps * offset) + dur * ps
+      myPlayer.style.transform = "scale("+scaleX+","+scaleY+")"
+      thumbSheet=0; Play()},200)}
 
   function nextMedia() {
     if (!looping) {
