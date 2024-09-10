@@ -6,11 +6,6 @@
 // cue edits need to be treated similar to skinny/speed edits
 // wheel zoom out centres media better
 
-// seekbar size after wheel zoom
-// false select, slow to click after play image food
-// skinny transition from sheet messed up
-
-
 
   var defRate = 1*localStorage.getItem('defRate')			// default playback speed
   var mediaX = 1*localStorage.getItem('mediaX')				// myPlayer position
@@ -175,6 +170,7 @@
     if (playing=='browser' && !thumbSheet && type != 'image' && !toggles.match('Pause')) myPlayer.play()
     myPlayer.addEventListener('ended', nextMedia)
     if (playing=='browser' && thumb.poster.slice(-3)!='gif') myPlayer.style.opacity=1
+    mySeekbar.style.display=null
     myMask.style.zIndex = Zindex
     myMask.style.display='flex'
     myBody.style.cursor='none'
@@ -274,15 +270,18 @@
       if (wheelUp) myPlayer.currentTime += interval
       else myPlayer.currentTime -= interval}
     else if (!myNav.matches(':hover')) {				// zoom myPlayer 
-      var x = 0.015*myPlayer.offsetHeight*scaleY
+      var x = 0.02*myPlayer.offsetHeight*scaleY
       if (!wheelUp && scaleY>0.11) {
         if (mediaY<0.4*innerHeight) mediaY+=x
         if (mediaY>0.6*innerHeight) mediaY-=x
         scaleY *= 0.97}
-      else if (wheelUp) {
+      else if (wheelUp) {						// zoom around focus
         if (rect.top<40 && yw<0.4) mediaY+=x
         if (rect.bottom>innerHeight-40 && yw>0.6) mediaY-=x
         scaleY *= 1.03}
+      if (mediaY-1.1*x > innerHeight/2) mediaY-=x/4			// re-centre image
+      else if (mediaY+1.1*x < innerHeight/2) mediaY+=x/4
+      scaleX=skinny*scaleY
       positionMedia(0)
       block=13}
     wheel=0; cueIndex=-1}
@@ -297,6 +296,7 @@
     myPlayer.style.opacity=0
     myNav.style.display=null
     myMask.style.display='none'
+    mySeekbar.style.display='none'
     myPlayer.removeEventListener('ended', nextMedia)
     setTimeout(function() {						// fadeout before close
       playing=''
@@ -314,7 +314,7 @@
     var x = (ypos-el.getBoundingClientRect().top)/el.offsetHeight	// reset thumb time if enter from top
     if (type=='video') {if (!el.currentTime || x<0.1) el.currentTime=el.style.start+0.05}
     if (!toggles.match('Pause')) el.play()
-    if (Click) sel(id)}
+    if (Click && gesture) sel(id)}
 
 
   function getParameters(i) {						// prepare myPlayer for media
@@ -402,7 +402,7 @@
 
 
   function positionMedia(time) {					// position myPlayer in window
-    var x=0; var y=0; var z=scaleY
+    var x=0; var y=0
     if (screenLeft) {Xoff=screenLeft; Yoff=outerHeight-innerHeight} else {x=Xoff; y=Yoff}
     myPlayer.style.left = x + mediaX - myPlayer.offsetWidth/2 +"px"
     myPlayer.style.top = y + mediaY - myPlayer.offsetHeight/2 +"px" 	// fullscreen offsets
@@ -520,7 +520,7 @@
       if (longClick==1 || xm>1||xm<0|ym>1||ym<0) myPlayer.currentTime=lastStart
       else myPlayer.currentTime=offset - (ps * offset) + dur * ps
       myPlayer.style.transform = "scale("+scaleX+","+scaleY+")"
-      thumbSheet=0; Play()},200)}
+      thumbSheet=0; Play(); myPlayer.play()},200)}
 
   function nextMedia() {
     if (!looping) {
