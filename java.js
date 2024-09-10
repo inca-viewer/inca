@@ -4,7 +4,7 @@
 // rem. remove redirect favs to snips - due to reduced ssd library
 // fav and pause failing due to above referencing src from list rather than pre-edited html
 // cue edits need to be treated similar to skinny/speed edits
-// wheel zoom out centres media better
+
 
 
   var defRate = 1*localStorage.getItem('defRate')			// default playback speed
@@ -170,11 +170,10 @@
     if (playing=='browser' && !thumbSheet && type != 'image' && !toggles.match('Pause')) myPlayer.play()
     myPlayer.addEventListener('ended', nextMedia)
     if (playing=='browser' && thumb.poster.slice(-3)!='gif') myPlayer.style.opacity=1
-    mySeekbar.style.display=null
-    myMask.style.zIndex = Zindex
+    myMask.style.zIndex=Zindex
     myMask.style.display='flex'
     myBody.style.cursor='none'
-    myPlayer.volume = 0.05
+    myPlayer.volume=0.05
     if (looping) looping=1
     cueIndex=-1; lastClick=0}
 
@@ -252,7 +251,7 @@
       thumb.style.maxHeight=viewE+'em'
       if (id!='View') viewE=0
       block=12}
-    else if (thumbSheet || mySelect.matches(':hover') || myPic.matches(':hover')) {
+    else if (mySelect.matches(':hover') || myPic.matches(':hover')) {
       if (wheelUp) index++
       else if (index>1) index--						// next / previous
       var x = myPlayer.paused
@@ -288,21 +287,20 @@
 
 
   function closePlayer() {		
-    positionMedia(0.4)
+    positionMedia(0.6)
     inca('Close')							// and send messages to inca
     overMedia=0
+    playing=''
     Click=0								// in case browser not active
     cue=0
     myPlayer.style.opacity=0
     myNav.style.display=null
-    myMask.style.display='none'
-    mySeekbar.style.display='none'
     myPlayer.removeEventListener('ended', nextMedia)
     setTimeout(function() {						// fadeout before close
-      playing=''
       myPlayer.src=''
       myPlayer.poster=''
       myPlayer.style.zIndex=-1
+      myMask.style.display=null
       thumbSheet=0},420)}
 
 
@@ -313,7 +311,7 @@
     thumb.playbackRate = defRate
     var x = (ypos-el.getBoundingClientRect().top)/el.offsetHeight	// reset thumb time if enter from top
     if (type=='video') {if (!el.currentTime || x<0.1) el.currentTime=el.style.start+0.05}
-    if (!toggles.match('Pause')) el.play()
+    if (!toggles.match('Pause') || thumb.style.position=='fixed') el.play()
     if (Click && gesture) sel(id)}
 
 
@@ -352,7 +350,7 @@
     if (!myNav.matches(':hover')) myNav.style.display=null
     if (!thumb) return
     if (playing) myMask.style.backgroundColor='rgba(0,0,0,'+scaleY*6+')'
-    else myMask.style.display='none'
+    else myMask.style.backgroundColor='rgba(0,0,0,0)'
     if (defRate==1) myRate.innerHTML = 'Speed'
     else myRate.innerHTML = 'Speed '+ defRate
     if (rate==1) mySpeed.innerHTML = 'Speed'
