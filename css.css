@@ -185,7 +185,7 @@
   line-height:1.4em}
 
 .caption {					/* myPlayer caption element */
-  position:fixed;
+  position:absolute;
   resize:none;
   height:auto;
   width:24em;
@@ -197,8 +197,8 @@
   opacity:0;
   overflow:hidden;
   user-select:none;
-  border-radius:1em;
-  font-size:1.4em;
+  font-size:1.6em;
+  line-height:1.2em;
   transition: 0.6s}
 
 .mask {						/* media player overlay of htm tab */
