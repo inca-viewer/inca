@@ -182,8 +182,7 @@
   text-align:center;
   overflow:hidden;
   text-overflow:ellipsis;
-  line-height:1em;
-  margin-top:-1em}
+  line-height:1.4em}
 
 .caption {					/* myPlayer caption element */
   position:fixed;
