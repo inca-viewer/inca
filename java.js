@@ -155,7 +155,8 @@
 
 
   function Play() {
-   myPlayer.style.transition = 'opacity 0s'				// stabilize position
+   myPlayer.style.transition = 'opacity 0s'
+   positionMedia(0)							// stabilize myPlayer position
    positionMedia(0.6)
    var para = myPlayer.currentTime+'|'+skinny+'|'+rate+'|'+localStorage.getItem('muted')
    if (!thumbSheet && type=='video' && toggles.match('Mpv')) playing='mpv'
@@ -281,8 +282,8 @@
       if (mediaY-1.1*x > innerHeight/2) mediaY-=x/4			// re-centre image
       else if (mediaY+1.1*x < innerHeight/2) mediaY+=x/4
       scaleX=skinny*scaleY
-      positionMedia(0)
-      block=13}
+      positionMedia(0.1)
+      block=14}
     wheel=0; cueIndex=-1}
 
 
@@ -570,6 +571,7 @@
       if (!x.match(','+i+',')) selected=selected+i+','}}
 
   function context(e) {							// right click context menu
+    if (playing == 'mpv') return
     var x = e.target.innerHTML						// ~ text under cursor
     if (!x || x.length>99)  mySelect.innerHTML='Select'
     else {mySelect.innerHTML='Select - '+x; mySelect.style.width='100%'}
