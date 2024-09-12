@@ -6,7 +6,6 @@
 // cue edits need to be treated similar to skinny/speed edits
 
 
-
   var defRate = 1*localStorage.getItem('defRate')			// default playback speed
   var mediaX = 1*localStorage.getItem('mediaX')				// myPlayer position
   var mediaY = 1*localStorage.getItem('mediaY')
@@ -150,7 +149,6 @@
     else if (longClick==1 && type=='video') thumbSheet=1 				// show thumbsheet
     else if (!thumbSheet && lastClick) myPlayer.currentTime=thumb.style.start
     Previews()
-    scrolltoIndex(index)			    			// + highlight played media
     Play()}
 
 
@@ -168,7 +166,7 @@
     if (type=='document' || type=='m3u') {closePlayer(); inca('Media',0,index); return}		// use external player
     else if (playing=='mpv' || thumb.src.slice(-3)=='mid' || thumb.poster.slice(-3)=='gif') inca('Media',0,index,para)
     if (type=='audio' || playlist.match('/inca/music/')) {looping=0; myPlayer.muted=false; scaleY=0.1; myPlayer.poster=thumb.poster}
-    if (playing=='browser' && !thumbSheet && type != 'image' && !toggles.match('Pause')) myPlayer.play()
+    if (playing=='browser' && (longClick==3 || !thumbSheet && type != 'image' && !toggles.match('Pause'))) myPlayer.play()
     myPlayer.addEventListener('ended', nextMedia)
     if (playing=='browser' && thumb.poster.slice(-3)!='gif') myPlayer.style.opacity=1
     myMask.style.zIndex=Zindex
@@ -242,7 +240,8 @@
       skinny=Math.round((1000*skinny))/1000
       thumb.style.skinny = skinny					// css holds edited skinny
       getParameters(index)
-      positionMedia(0)}
+      positionMedia(0.15)
+      block=24}
     else if (!playing && (id=='View' || thumb.style.position=='fixed')) {
       viewE = 1*thumb.style.maxWidth.slice(0,-2)
       if (viewE<50 && wheelUp) viewE += 0.5
@@ -279,8 +278,8 @@
         if (rect.top<40 && yw<0.4) mediaY+=x
         if (rect.bottom>innerHeight-40 && yw>0.6) mediaY-=x
         scaleY *= 1.03}
-      if (mediaY-1.1*x > innerHeight/2) mediaY-=x/4			// re-centre image
-      else if (mediaY+1.1*x < innerHeight/2) mediaY+=x/4
+      if (mediaY-x/4 > innerHeight/2) mediaY-=x/4			// re-centre image
+      else if (mediaY+x/4 < innerHeight/2) mediaY+=x/4
       scaleX=skinny*scaleY
       positionMedia(0.1)
       block=14}
@@ -288,7 +287,8 @@
 
 
   function closePlayer() {		
-    positionMedia(0.6)
+    scrolltoIndex(index)			    			// + highlight played media
+    positionMedia(0.4)
     inca('Close')							// and send messages to inca
     overMedia=0
     playing=''
@@ -302,7 +302,7 @@
       myPlayer.poster=''
       myPlayer.style.zIndex=-1
       myMask.style.display=null
-      thumbSheet=0},420)}
+      thumbSheet=0},400)}
 
 
   function overThumb(id,el) {						// play htm thumb
@@ -394,7 +394,7 @@
       if (myCap.innerHTML) myCap.style.opacity=1
       if (cueList && !thumbSheet) Cues(myPlayer.currentTime, index)
       if (!myPic.matches(':hover')) seekBar()
-      positionMedia(0)}
+      positionMedia(0)}							// in case fullscreen 
     else {
       myCap.innerHTML=''
       myCap.style.opacity=0}}
@@ -550,10 +550,10 @@
   function scrolltoIndex(i) {
     if (!i) return
     if (lastIndex) {document.getElementById('title'+lastIndex).style.background=null
-      document.getElementById('thumb'+lastIndex).style.borderBottom=null}
+      document.getElementById('thumb'+lastIndex).style.border=null}
     lastIndex=i
     if (listView) {el=document.getElementById('title'+i); el.style.background='#1f1c18'}
-    else {el=document.getElementById('thumb'+i); el.style.borderBottom='4px solid lightsalmon'}
+    else {el=document.getElementById('thumb'+i); el.style.border='1px solid lightsalmon'}
     var x = el.getBoundingClientRect().bottom
     if (x > innerHeight-20 || x<20) myView.scrollTo(0, x + myView.scrollTop - innerHeight/2)}
 
