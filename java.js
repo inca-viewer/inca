@@ -153,11 +153,11 @@
 
 
   function Play() {
-   myPlayer.style.transition = 'opacity 0s'
-   positionMedia(0)							// stabilize myPlayer position
-   positionMedia(0.6)
-   var para = myPlayer.currentTime+'|'+skinny+'|'+rate+'|'+localStorage.getItem('muted')
-   if (!thumbSheet && type=='video' && toggles.match('Mpv')) playing='mpv'
+    myPlayer.style.transition = 'opacity 0s'
+    positionMedia(0)							// stabilize myPlayer position
+    positionMedia(0.4)
+    var para = myPlayer.currentTime+'|'+skinny+'|'+rate+'|'+localStorage.getItem('muted')
+    if (!thumbSheet && type=='video' && toggles.match('Mpv')) playing='mpv'
     else playing='browser'
     myPlayer.style.opacity=0
     myPlayer.muted = 1*localStorage.getItem('muted')
@@ -240,8 +240,7 @@
       skinny=Math.round((1000*skinny))/1000
       thumb.style.skinny = skinny					// css holds edited skinny
       getParameters(index)
-      positionMedia(0.15)
-      block=24}
+      positionMedia(0.15)}
     else if (!playing && (id=='View' || thumb.style.position=='fixed')) {
       viewE = 1*thumb.style.maxWidth.slice(0,-2)
       if (viewE<50 && wheelUp) viewE += 0.5
@@ -327,8 +326,8 @@
     dur = 1*x[3].trim()							// in case video is wmv, avi etc
     thumb.style.start = 1*x[4].trim()
     size = 1*x[5]
-    if (type == 'document') return 1
     Cues(0,i)								// process 0:00 cues - width, speed etc.
+    if (type == 'document') return 1
     x = 1*thumb.style.skinny						// get any live width edits
     if (x && x!=skinny) skinny=x
     thumb.style.transform='scale('+skinny+',1)' 			// has been edited
@@ -448,6 +447,7 @@
       var value = entry[2]
       if (cueTime > time-0.1 && cueTime < time+0.1) {
         if (type=='next') {lastClick=2; clickEvent()}
+        else if (type=='scroll' && !index) el.scrollTo(0,value)		// initialize text element to last scrollY
         else if (type=='goto') {myPlayer.currentTime = 1*value; myPlayer.volume=0.001}
         else if (type=='rate' && looping<2) {if (isNaN(1*value)) {rate=defRate} else {rate=1*value}}
         else if (type=='skinny' && !el.style.skinny) {
@@ -552,8 +552,9 @@
     if (lastIndex) {document.getElementById('title'+lastIndex).style.background=null
       document.getElementById('thumb'+lastIndex).style.border=null}
     lastIndex=i
+    el=document.getElementById('thumb'+i)
     if (listView) {el=document.getElementById('title'+i); el.style.background='#1f1c18'}
-    else {el=document.getElementById('thumb'+i); el.style.border='1px solid lightsalmon'}
+    else if (type != 'document') el.style.border='1px solid lightsalmon'
     var x = el.getBoundingClientRect().bottom
     if (x > innerHeight-20 || x<20) myView.scrollTo(0, x + myView.scrollTop - innerHeight/2)}
 
