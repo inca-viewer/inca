@@ -261,11 +261,11 @@
       scrolltoIndex(index)
       Sprites()}
     else if (type!='image' && (!overMedia || myTitle.matches(':hover'))) {	// seek
-      if (wheelUp && !myPlayer.paused && myPlayer.currentTime > dur-3) return
+      if (wheelUp && !myPlayer.paused && myPlayer.currentTime > dur-3.5) return
       if (dur > 120) interval = 3
       else interval = 0.5
       if (myPlayer.paused) interval = 0.04
-      if (wheelUp) myPlayer.currentTime += interval
+      if (wheelUp && myPlayer.currentTime < dur-0.05) myPlayer.currentTime += interval
       else myPlayer.currentTime -= interval}
     else if (!myNav.matches(':hover')) {				// zoom myPlayer 
       var x = 0.02*myPlayer.offsetHeight*scaleY
@@ -285,7 +285,7 @@
     wheel=0; cueIndex=-1}
 
 
-  function closePlayer() {		
+  function closePlayer() {
     scrolltoIndex(index)			    			// + highlight played media
     positionMedia(0.4)
     inca('Close')							// and send messages to inca
@@ -317,7 +317,7 @@
 
   function getParameters(i) {						// prepare myPlayer for media
     if (!(thumb=document.getElementById('thumb'+i))) {
-      thumb=document.getElementById('thumb1'); return}
+      thumb=document.getElementById('thumb1'); index=1; return}
     title=document.getElementById('title'+i)
     rate = defRate
     skinny = 1
