@@ -174,8 +174,6 @@
       if mpvPID					; mpv external player
         {
         Process, Close, mpv.exe
-        if incaTab
-          WinActivate, ahk_group Browsers
         sleep, 100
         send, {Pause}				; close java media player
         }
@@ -186,6 +184,9 @@
       else if incaTab
         send, {Pause}				; close java media player
       else send, {Xbutton1}
+      sleep 100
+      MouseGetPos,,, cur 			; get window under cursor
+      WinActivate, ahk_id %cur%
       return
 
 
@@ -572,7 +573,8 @@
             {
             if !selected
               return
-            if !value
+            StringReplace selected,selected,`,,`,,UseErrorLevel		; count of selected
+            if (!value || ErrorLevel>1)
               value = 0.0
             Loop, Parse, selected, `,
               if getMedia(A_Loopfield)
@@ -1162,10 +1164,10 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n if(
 <a id='mySkinny' onclick="inca('Close')"></a>`n
 <a id='myFlip' onmouseup='flip(); togglePause()'>Flip</a>`n
 <a id='myLoop' onmouseup='looping=!looping; togglePause()'>Loop</a>`n
-<a id='myCue' onmouseup="if (!playing){inca('EditCue',0,wasMedia,0)} else {cue=Math.round(myPlayer.currentTime*100)/100; if (myPlayer.paused){togglePause()}}">Cue</a>`n
-<a id='Cap' onmousedown="inca('Caption', myPlayer.currentTime.toFixed(2), index, cue); cue=0">caption</a>`n
 <a id='myIndex' onmousedown="inca('Index','',wasMedia)">Index</a>`n
 <a id='myDelete' onmousedown="if(!event.button) {myPlayer.load(); inca('Delete','',wasMedia)}">Delete</a>
+<a id='Cap' onmouseup="inca('Caption', myPlayer.currentTime.toFixed(2), index, cue); cue=0; if (myPlayer.paused){togglePause()}">caption</a>`n
+<a id='myCue' onmouseup="if (!playing){inca('EditCue',0,wasMedia,0)} else {cue=Math.round(myPlayer.currentTime*100)/100; if (myPlayer.paused){togglePause()}}">Cue</a>`n
 <a id='Mp3' onmouseup="inca('mp3', myPlayer.currentTime.toFixed(2), index, cue); cue=0; myPlayer.play(); myNav.style.display=null">mp3</a>`n
 <a id='Mp4' onmouseup="inca('mp4', myPlayer.currentTime.toFixed(2), index, cue); cue=0; myPlayer.play(); myNav.style.display=null">mp4</a>`n
 <a></a></div>`n`n
@@ -1322,11 +1324,6 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n if(
           }
         else
           caption = <span class='cap' style='color:red' onmousedown="inca('Index',0,%j%)">no index</span>`n 
-        StringReplace, src, src, #, `%23, All				; html cannot have # in filename
-        StringReplace, media_s, media, `', &apos;, All
-        start := Round(start,2)
-        if (ext == "txt")
-          FileRead, str2, %src%
 
 x := Round(start-5,2)
 if playlist
@@ -1342,12 +1339,21 @@ if playlist
    src := y
    }
 
+        StringReplace, src, src, #, `%23, All				; html cannot have # in filename
+        StringReplace, media_s, media, `', &apos;, All
+        start := Round(start,2)
+        if (ext == "txt")
+          FileRead, str2, %src%
+
+
 if (type=="image")
   src =
 else src=src="file:///%src%"
 
+
+
 if listView
-  mediaList = %mediaList% %fold%<table onmouseout="title%j%.style.color=null; thumb%j%.style.opacity=0; overMedia=0">`n <tr id="entry%j%"`n onmouseover="title%j%.style.color='lightsalmon'; overThumb(%j%, thumb%j%)">`n <td onmouseenter='thumb%j%.style.opacity=0'>%ext%`n <video id='thumb%j%' onmousedown="getParameters(%j%, '%type%', '%cueList%', %dur%, %start%, %size%, event)" class='thumb2' style="max-width:%view%em; max-height:%view%em"`n %src%`n %poster%`n preload=%preload% muted loop type="video/mp4"></video></td>`n <td>%size%</td>`n <td style='min-width:6em' onmouseover='thumb%j%.style.opacity=1'>%durT%</td>`n <td onmouseover='thumb%j%.style.opacity=1'>%date%</td>`n <td style='min-width:4.4em'>%j%</td>`n <td id='myFavicon%j%' style='width:0; translate:-1em; white-space:nowrap; font-size:0.7em; color:salmon; min-width:1em'>%favicon%</td>`n <td style='width:99em'><input id="title%j%" onmouseover='overText=1' onmouseout='overText=0; Click=0' class='title' type='search' value='%media_s%'`n oninput="wasMedia=%j%; renamebox=this.value"></td>`n <td>%fo%</td></tr></table>`n`n
+  mediaList = %mediaList% %fold%<table onmouseout="title%j%.style.color=null; thumb%j%.style.opacity=0; overMedia=0">`n <tr id="entry%j%"`n onmouseover="title%j%.style.color='lightsalmon'; overThumb(%j%, thumb%j%)"`n onmouseout="overMedia=0; thumb%j%.load()">`n <td onmouseenter='thumb%j%.style.opacity=0'>%ext%`n <video id='thumb%j%' onmousedown="getParameters(%j%, '%type%', '%cueList%', %dur%, %start%, %size%, event)" class='thumb2' style="max-width:%view%em; max-height:%view%em"`n %src%`n %poster%`n preload=%preload% muted loop type="video/mp4"></video></td>`n <td>%size%</td>`n <td style='min-width:6em' onmouseover='thumb%j%.style.opacity=1'>%durT%</td>`n <td onmouseover='thumb%j%.style.opacity=1'>%date%</td>`n <td style='min-width:4.4em'>%j%</td>`n <td id='myFavicon%j%' style='width:0; translate:-1em; white-space:nowrap; font-size:0.7em; color:salmon; min-width:1em'>%favicon%</td>`n <td style='width:99em'><input id="title%j%" onmouseover='overText=1' onmouseout='overText=0; Click=0' class='title' type='search' value='%media_s%'`n oninput="wasMedia=%j%; renamebox=this.value"></td>`n <td>%fo%</td></tr></table>`n`n
 
 else if ((ext=="txt" || ext=="m3u") && (textCount+=1) <= 20)
   mediaList = %mediaList%<div id="entry%j%" style="display:flex; position:relative; padding-top:%view4%em" onmouseover='overText=1' onmouseout='overText=0'>`n <span><input id='title%j%' class='title' style='text-align:center; background:#15110a; padding-left:1em; font-size:%cap_size%em; position:absolute' type='search' value='%media_s%'`n onmousedown='thumb%j%.scrollTo(0,0)'`n oninput="wasMedia=%j%; renamebox=this.value"></span>`n <span id='Save%j%' class='save' onclick="sessionStorage.setItem('scroll',0); inca('Reload')">Save</span>`n <textarea id='thumb%j%' rows=18 class='text' style='margin-top:1.6em; font-size:%cap_size%em; max-width:%view%em' onmouseover="overThumb(%j%, this)" onmouseout='overMedia=0'`n oninput="if(editing&&editing!='%j%') {inca('Text',editing)}; editing='%j%'; this.style.background='#15110a'; Save%j%.style.display='block'" onmousedown="getParameters(%j%,'document','%cueList%',0,0,%size%,event)">`n%str2%</textarea></div>`n`n

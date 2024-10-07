@@ -44,6 +44,7 @@
   var editing = 0							// editing textarea active
   var messages = ''							// history, width, speed & caption edits
   var Zindex = 3							// element layer
+  var rect								// myPlayer dimensions
   var size = 0								// file size (from inca)
   var dur = 0								// duration (from inca)
   var rate = 1								// current myPlayer speed
@@ -63,7 +64,6 @@
   var ratio = 1								// media width to height ratio
   var Xoff = 0								// window offsets before fullscreen
   var Yoff = 0
-
 
   if (!defRate) defRate=1						// default speed
   if (innerHeight>innerWidth) scaleY=0.32
@@ -131,7 +131,7 @@
     if (!thumb.src && (type=='document' || type=='m3u')) return
     if (playing && lastClick==1) {
       if (thumbSheet) {getStart(); return}
-      if (xm>0 && xm<1 && ym>0.9 && ym<1) {myPlayer.currentTime=xm*dur; return}
+      if (xm>0 && xm<1 && ym>0.95 && ym<1) {myPlayer.currentTime=xm*dur; return}
       else if (!longClick) {togglePause(); return}}
     if (!playing) {
       if (!mediaX || mediaX<0 || mediaX>innerWidth) mediaX=innerWidth/2
@@ -165,7 +165,7 @@
     if (lastClick==2 && playing=='mpv') return							// inca does next/previous media
     if (type=='document' || type=='m3u') {closePlayer(); inca('Media',0,index); return}		// use external player
     else if (playing=='mpv' || thumb.src.slice(-3)=='mid' || thumb.poster.slice(-3)=='gif') inca('Media',0,index,para)
-    if (type=='audio' || playlist.match('/inca/music/')) {looping=0; myPlayer.muted=false; scaleY=0.1; myPlayer.poster=thumb.poster}
+    if (type=='audio' || playlist.match('/inca/music/')) {looping=0; scaleY=0.1; myPlayer.muted=false; myPlayer.poster=thumb.poster}
     if (playing=='browser' && (longClick==3 || !thumbSheet && type != 'image' && !toggles.match('Pause'))) myPlayer.play()
     myPlayer.addEventListener('ended', nextMedia)
     if (playing=='browser' && thumb.poster.slice(-3)!='gif') myPlayer.style.opacity=1
@@ -268,7 +268,7 @@
       if (wheelUp && myPlayer.currentTime < dur-0.05) myPlayer.currentTime += interval
       else myPlayer.currentTime -= interval}
     else if (!myNav.matches(':hover')) {				// zoom myPlayer 
-      var x = 0.02*myPlayer.offsetHeight*scaleY
+      var x = 0.02*rect.height
       if (!wheelUp && scaleY>0.11) {
         if (mediaY<0.4*innerHeight) mediaY+=x
         if (mediaY>0.6*innerHeight) mediaY-=x
@@ -383,8 +383,8 @@
       myPlayer.style.zIndex=Zindex+1
       myPlayer.playbackRate=rate
       rect = myPlayer.getBoundingClientRect()
-      xm = (xpos - rect.left) / Math.abs(myPlayer.offsetWidth*z*skinny)
-      ym = (ypos - rect.top) / Math.abs(myPlayer.offsetHeight*z)
+      xm = (xpos - rect.left) / rect.width
+      ym = (ypos - rect.top) / rect.height
       myCap.style.top=rect.bottom +10 +'px'
       myCap.style.left=rect.left +10 +'px'
       myCap.style.zIndex=Zindex
@@ -417,17 +417,17 @@
   function seekBar() {							// progress bar beneath player
     var cueX = rect.left + 7
     var x = Math.round(myPlayer.currentTime*100)/100
-    var cueW = 0.95*Math.abs(scaleX)*myPlayer.offsetWidth*myPlayer.currentTime/dur
+    var cueW = 0.95*rect.width*myPlayer.currentTime/dur
     if (cue && cue<=x) {
-      cueX = mediaX - Math.abs((myPlayer.offsetWidth*scaleX))/2 + scaleX * myPlayer.offsetWidth * cue/dur
-      cueW = Math.abs(scaleX*myPlayer.offsetWidth*(myPlayer.currentTime-cue)/dur)
+      cueX = mediaX - rect.width/2 + rect.width * cue/dur
+      cueW = rect.width*(myPlayer.currentTime-cue)/dur
       if (cue<x+0.2 && cue>x-0.2) {
-        cueW = Math.abs(scaleX*myPlayer.offsetWidth*(dur-cue)/dur)}}
+        cueW = rect.width*(dur-cue)/dur}}
     else if (cue) {
-      cueX = rect.left + Math.abs(scaleX*myPlayer.offsetWidth*(myPlayer.currentTime)/dur)
-      cueW = Math.abs(scaleX*myPlayer.offsetWidth*(cue - x)/dur)
+      cueX = rect.left + rect.width*myPlayer.currentTime/dur
+      cueW = rect.width*(cue - x)/dur
       if (cue < 0.2+x) {
-        cueX = rect.left; cueW = Math.abs(scaleX*myPlayer.offsetWidth*myPlayer.currentTime/dur)}}
+        cueX = rect.left; cueW = rect.width*myPlayer.currentTime/dur}}
     if (rect.bottom<innerHeight) mySeekbar.style.top = rect.bottom +3 +'px'
     else mySeekbar.style.top = innerHeight -3 +'px'
     mySeekbar.style.left = cueX +'px'
@@ -435,27 +435,26 @@
 
 
   function Cues(time, i) {						// process media cues - captions, pauses etc.
-    var el=document.getElementById('thumb'+i)
+    var el = document.getElementById('thumb'+i)
     var x = el['onmousedown'].toString().split(',')			// get cueList from htm entry
     cueList = x[2].replaceAll('\'', '').trim()
     if (!cueList) return
     x = cueList.split('#1')						// each line entry
     for (i=0; i<x.length; i++) {					// i represents each line entry
-      var entry = x[i].split('#2')
-      cueTime = 1*entry[0]
-      var type = entry[1]
-      var value = entry[2]
-      if (cueTime > time-0.1 && cueTime < time+0.1) {
+      var entry = x[i].split('#2')					// time | cue | value | period
+      if (entry[1] && 1*entry[0] > time-0.1 && 1*entry[0] < time+0.1) {
         if (type=='next') {lastClick=2; clickEvent()}
-        else if (type=='scroll' && !index) el.scrollTo(0,value)		// initialize text element to last scrollY
-        else if (type=='goto') {myPlayer.currentTime = 1*value; myPlayer.volume=0.001}
-        else if (type=='rate' && looping<2) {if (isNaN(1*value)) {rate=defRate} else {rate=1*value}}
-        else if (type=='skinny' && !el.style.skinny) {
-          if (isNaN(value)) {skinny=1} else {skinny=1*value; if(time) {positionMedia(entry[3])}}}
-        else if (type=='pause' && cueIndex!=i) {			// prevent timer re-entry during pause
+        else if (entry[1]=='scroll' && !index) el.scrollTo(0,entry[2])	// initialize text element to last scrollY
+        else if (entry[1]=='goto') {myPlayer.currentTime = 1*entry[2]; myPlayer.volume=0.001}
+        else if (entry[1]=='rate' && looping<2) {if (isNaN(1*entry[2])) {rate=defRate} else {rate=1*entry[2]}}
+        else if (entry[1]=='skinny' && !el.style.skinny) {
+          if (isNaN(entry[2])) {skinny=1} else {skinny=1*entry[2]; if(time) {positionMedia(entry[3])}}}
+        else if (entry[1]=='pause' && cueIndex!=i) {			// prevent timer re-entry during pause
           cueIndex=i; myPlayer.pause()
-          if (value) setTimeout(function(){myPlayer.play(); myCap.innerHTML=''},1000*value)}
-        else if (type == 'cap') myCap.innerHTML = value.replaceAll("#3", "\,").replaceAll("#4", "\'").replaceAll("#5", "\"")}}}
+          if (entry[2]) setTimeout(function(){myCap.innerHTML=''; myPlayer.play()},1000*entry[2])}
+        else if (entry[1] == 'cap') {
+          myCap.innerHTML = entry[2].replaceAll("#3", "\,").replaceAll("#4", "\'").replaceAll("#5", "\"")
+          if (entry[3]) {setTimeout(function(){myCap.innerHTML=''},1000*entry[3])}}}}}
 
 
   function Previews() {
