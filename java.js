@@ -159,6 +159,7 @@
     var para = myPlayer.currentTime+'|'+skinny+'|'+rate+'|'+localStorage.getItem('muted')
     if (!thumbSheet && type=='video' && toggles.match('Mpv')) playing='mpv'
     else playing='browser'
+    myPlayer.pause()
     myPlayer.style.opacity=0
     myPlayer.muted = 1*localStorage.getItem('muted')
     if (!thumbSheet && lastClick) messages=messages+'#History#'+myPlayer.currentTime.toFixed(1)+'#'+index+'#'
