@@ -1574,7 +1574,10 @@ else mediaList = %mediaList%<div id="entry%j%" style="max-width:%view%em; paddin
             PopUp(popup,0,0,0)
             if getMedia(A_LoopField)
               if (InStr(address, "inca\fav") || InStr(address, "inca\music"))
+                {
                 FileAppend, %target%`r`n, %address%, UTF-8		; add media entry to playlist
+                Runwait, %inca%\cache\apps\ffmpeg.exe -i "%src%" -y -vf scale=1280:1280/dar -vframes 1 "%inca%\cache\posters\%media%%A_Space%0.0.jpg",, Hide
+                }
               else 
                 {
                 FileGetSize, x, %address%%media%.%ext%			; if x, then name already exists in target folder

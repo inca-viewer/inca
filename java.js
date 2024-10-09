@@ -261,14 +261,14 @@
         if (!x) myPlayer.play()}
       scrolltoIndex(index)
       Sprites()}
-    else if (type!='image' && (!overMedia || myTitle.matches(':hover'))) {	// seek
+    else if (type!='image' && (xw<0.05 || !overMedia || myTitle.matches(':hover'))) {	// seek
       if (wheelUp && !myPlayer.paused && myPlayer.currentTime > dur-3.5) return
       if (dur > 120) interval = 3
       else interval = 0.5
       if (myPlayer.paused) interval = 0.04
       if (wheelUp && myPlayer.currentTime < dur-0.05) myPlayer.currentTime += interval
       else myPlayer.currentTime -= interval}
-    else if (!myNav.matches(':hover')) {				// zoom myPlayer 
+    else if (!myNav.matches(':hover')) {			// zoom myPlayer 
       var x = 0.02*rect.height
       if (!wheelUp && scaleY>0.11) {
         if (mediaY<0.4*innerHeight) mediaY+=x
