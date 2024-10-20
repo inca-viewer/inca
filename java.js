@@ -10,9 +10,10 @@
 // use thumb area WxH to normalize size between aspects
 // rem. ' not filtered in processMessage() .ahk
 
-// orphan cannot skinny etc- try put thumb as orphan in doc entry
+// orphan not normalized, cannot skinny etc- try put thumb as orphan in doc entry
 // femdom titles txt?
-
+// page size should be like view on page
+// click html while playing, clears start time to 0
 
 
 
@@ -189,7 +190,7 @@ if (playing && !overMedia && Click==1) return
     if (playing=='browser' && (longClick==3 || !thumbSheet && type != 'image' && !toggles.match('Pause'))) myPlayer.play()
     myPlayer.addEventListener('ended', nextMedia)
 myPlayer.style.transition = 'opacity 1s'
-if (orphan) scaleY=0.24;
+if (orphan && scaleY>0.24) scaleY=0.24;
     if (playing=='browser' && thumb.poster.slice(-3)!='gif') myPlayer.style.opacity=1
     myPlayer.style.zIndex = Zindex+=1								// because htm thumbs use Z-index
     myMask.style.zIndex=Zindex

@@ -1366,47 +1366,10 @@ if playlist
         StringReplace, src, src, #, `%23, All				; html cannot have # in filename
         StringReplace, media_s, media, `', &apos;, All
         start := Round(start,2)
-        if (ext == "txt")
-          FileRead, text, %src%
 
-        if (ext == "vtt")						; html subtitle file
+        if (ext=="vtt")
           {
           FileRead, str2, %src%
-          Loop, Parse, str2, `n, `r
-            if %A_LoopField%  
-             if InStr(A_LoopField, "-->")				; timestamp
-               {
-               x := SubStr(A_LoopField, 1, 12)
-               x := StrReplace(x, " --")				; in case hrs
-               x := StrSplit(x, ":")
-               if (!x.3) 
-                 x := x.1*60 + x.2					; seconds format
-               else x := 3600*x.1 + 60*x.2 + x.3
- ;              if (x > 1) 
- ;                x-=0.8
-               x := Round(x,2)
-               text = %text%<button id='%A_LoopField%' class='play' onclick="playOrphan(%x%)">&#9655;</button>
-               }
-             else
-               {
-               x := StrReplace(A_LoopField, ".", ".<br>")
-; x := StrReplace(x, "."", "."<br>")
-               x := StrReplace(x, "?", "?<br>")
-               x := StrReplace(x, "!", "!<br>")
-               text = %text%%x%
-               }
-          }
-        else
-          {   
-          text := StrReplace(text, ".", ".<br>")
-          text := StrReplace(text, "?", "?<br>")
-          text := StrReplace(text, "!", "!<br>")
-          }
-
-; fileappend, %text%, d:\inca\tmp.txt
-
-
-        if (ext=="txt" || ext=="vtt")
           Loop, Parse, searchFolders, `|
             {
             src=
@@ -1419,7 +1382,35 @@ if playlist
             if src
               break
             }
-
+          Loop, Parse, str2, `n, `r
+            if %A_LoopField%  
+             if InStr(A_LoopField, "-->")				; timestamp
+               {
+               x := SubStr(A_LoopField, 1, 12)
+               x := StrReplace(x, " --")				; in case hrs
+               x := StrSplit(x, ":")
+               if (!x.3) 
+                 x := x.1*60 + x.2					; seconds format
+               else x := 3600*x.1 + 60*x.2 + x.3
+               x := Round(x,2)
+               if src
+                 text = %text%<button id='%A_LoopField%' class='play' onclick="playOrphan(%x%)">&#9655;</button>
+               }
+             else
+               {
+               x := StrReplace(A_LoopField, ".", ".<br>")
+               x := StrReplace(x, "?", "?<br>")
+               x := StrReplace(x, "!", "!<br>")
+               text = %text%%x%
+               }
+          }
+        else if (ext=="txt")
+          {
+          FileRead, text, %src%
+          text := StrReplace(text, ".", ".<br>")
+          text := StrReplace(text, "?", "?<br>")
+          text := StrReplace(text, "!", "!<br>")
+          }
 
 if (type=="image")
   src =
