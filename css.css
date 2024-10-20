@@ -14,7 +14,7 @@
   c:hover {overflow:visible; transition:0.2s; transform:scale(1.1,1.1); color:lightsalmon}
   c:active {color:red; transform:scale(0.8,0.8)}
 
-.pic {
+.pic {						/* context menu pic */
   --start;
   background-size:600%;
   background-repeat:no-repeat;
@@ -23,27 +23,35 @@
   margin-top:1em;
   transition:opacity 0.3s, transform 0.3s;
   border-radius:7%}
- 
-.save {
+
+.play {						/* play at subtitle icon */
+  background:inherit;
+  border:none;
+  outline:none;
+  font-size:0.6em;
+  color:salmon}
+
+.save {						/* save button over textarea */
   display:none;
   position:absolute;
-  right:10px;
-  bottom:5px;
   text-align:center;
-  border-radius:0.3em;
+  border:0.1px solid red;
+  border-radius:0.8em;
   color:salmon;
   background:#1b1814;
   height:1.6em;
   width:3.5em;
   font-variant-caps:petite-caps} 
 
-.text {						/* editable texarea	*/
-  border-radius:0.5em;
-  background-color:#1b1814;
+.text {						/* editable texarea */
+  background-color:inherit;
   color:#826858;
-  width:60em;					/* becomes max width	*/
-  line-height:1.1em;
+  border-radius:0.6em;
+  width:60em;					/* becomes max width */
+  line-height:1.2em;
   font-family:inherit;
+  overflow:hidden;
+  overflow-y: scroll;
   border:none;
   outline:none}
 .text::-webkit-scrollbar {width:6px}
@@ -81,7 +89,7 @@
   transform-origin:right top;
   background:#15110a;
   width:8em;					/* entry width	*/
-  left:-12%}
+  left:-11%}
 .panel:hover {overflow-y:scroll}
 
 .p2 {						/* panel entries */
@@ -90,7 +98,7 @@
 
 .thumb {					/* thumb view media */
   --start;					/* default start time */
-  --skinny;
+  --skinny;					/* java variables attached to element */
   --rate;
   position:relative;
   outline:none;
@@ -121,7 +129,7 @@
 .ribbon a {transition:0.8s; border-radius:0.32em}
 .ribbon a:hover {transition:0.2s; color:salmon}
 
-.searchbox {					/* input searchbox in htm tab	*/
+.searchbox {					/* input searchbox in htm tab */
   text-overflow:ellipsis;
   display:inline;
   background:#1b1814;
@@ -151,7 +159,7 @@
   white-space:nowrap}
 .title:hover {color:lightsalmon}
 
-.selected {
+.selected {					/* red popup following cursor */
   display:block; 
   position:absolute;
   z-index:999;
@@ -160,7 +168,7 @@
   transition:font-size 0.5s;
   font-size:1.2em}
 
-.seekbar {					/* video progress bar	*/
+.seekbar {					/* video progress bar */
   position:absolute;
   pointer-events:none;
   z-index:999;
@@ -204,7 +212,10 @@
 .mask {						/* media player overlay of htm tab */
   display:none;
   user-select:none;
+  pointer-events:none;
   position:fixed;
+  transition:0.6s;
+  opacity=0;
   justify-content:center;
   align-items:center;
   top:0;
