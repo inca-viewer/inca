@@ -410,8 +410,8 @@
                 StringReplace, time,time,`",`|,All
                 time := StrSplit(time, "|").2
                 }
-              FileDelete, %inca%\cache\captions\edited\%media%.vtt
-              FileAppend, %vtt%, %inca%\cache\captions\edited\%media%.vtt
+              FileDelete, %inca%\cache\captions\%media%.vtt
+              FileAppend, %vtt%, %inca%\cache\captions\%media%.vtt
               }
             else 
               {
@@ -1196,13 +1196,12 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n if(
 <a id='Mp4' onmouseup="inca('mp4', myPlayer.currentTime.toFixed(2), index, cue); cue=0; myPlayer.play(); myNav.style.display=null">mp4</a>`n
 <a></a></div>`n`n
 
-<div id='myMask' class="mask" onwheel="wheelEvent(event, id, this)">`n</div>
+<div id='myMask' class="mask" onwheel="wheelEvent(event, id, this)"></div>`n 
 <video id="myPlayer" class='player' type="video/mp4" muted onmouseover='overMedia=index' onmouseout='overMedia=0' onwheel="wheelEvent(event, id, this)"></video>`n
-<div><span id='myCap' class='caption'></span>`n
-<span id='mySeekbar' class='seekbar'></span>`n
+<span id='myCap' class='caption'></span>`n
+<span id='mySeekbar' class='seekbar'></span>`n`n
 
-<div id='myView' class='view' style='padding-left:%page_l%`%; padding-right:%page_r%`%'>`n`n
-
+<div id='myView' class='view' style='padding-left:%page_l%`%; padding-right:%page_r%`%'>`n
 <div id='myPanel' class='myPanel'>`n <div id='panel' class='panel'>`n`n%panelList%`n</div></div>`n`n
 
 <div id='myRibbon' class='ribbon' style='height:1.4em; font-size:1.1em; justify-content:center; background:#1b1814; top:-5em'>`n
@@ -1222,7 +1221,7 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n if(
 <a id='Size' style='min-width:4em; %x5%' onmousedown="inca('Size', filt)" onwheel="wheelEvent(event, id, this)">Size</a>`n
 <a id='Duration' style='min-width:5em; %x3%' onmousedown="inca('Duration', filt)" onwheel="wheelEvent(event, id, this)"> Duration</a>`n
 <a id='Date' style='min-width:4.5em; %x4%' onmousedown="inca('Date', filt)" onwheel="wheelEvent(event, id, this)">Date</a>`n
-<a id='List' style='%x11%' onmousedown="inca('List', filt)" style='color:red'>%order%</a>`n
+<a id='List' style='%x11%' onmousedown="inca('List', filt)">%order%</a>`n
 <a id='Alpha' style='width:9`%; %x2%' onmousedown="inca('Alpha', filt)" onwheel="wheelEvent(event,id,this)">Alpha</a>`n
 <a id='Shuffle' style='width:9`%; %x1%' onmousedown="inca('Shuffle')">Shuffle</a>`n
 <a style='width:6.5`%; %x12%' onmousedown="inca('Pause')">Pause</a>`n
@@ -1230,12 +1229,12 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n if(
 <a style='width:6.5`%; %x9%' onmousedown="inca('Videos')">Vids</a>`n
 <a style='width:7`%; %x8%' onmousedown="inca('Recurse')">Subs</a>`n
 <a style='width:7`%; %x13%' onmousedown="inca('Mpv')">Mpv</a>`n
-<a style='width:7`%' onmouseup="inca('Settings')">&#8230</a>`n
+<a style='width:7`%' onmouseup="inca('Settings')">&#8230;</a>`n
 <a id='View' style='width:7`%' onwheel="wheelEvent(event, id, this)" onmouseout='viewE=0' onmousedown="if(!viewE) inca('View',0)">View</a>`n 
 <a id='myRate' style='width:9`%' onwheel="wheelEvent(event, id, this)">Speed</a>`n
 <a id='myJoin' style='width:6`%' onmousedown="inca('Join')">Join</a>`n</div>`n`n
 
-<div style='width:100`%'></div>`n`n%mediaList%<div style='width:100`%; height:120vh'></div>`n`n
+<div style='width:100`%'></div>`n`n%mediaList%<div style='width:100`%; height:120vh'></div>`n
       FileDelete, %inca%\cache\html\%folder%.htm
       StringReplace, header, header, \, /, All
       StringReplace, body, body, \, /, All
@@ -1373,11 +1372,13 @@ if playlist
           Loop, Parse, searchFolders, `|
             {
             src=
+; tooltip %A_LoopField%%media%
+
             IfExist, %A_LoopField%%media%.mp3
               src = %A_LoopField%%media%.mp3
-            IfExist, %A_LoopField%%media%.mp4
+            else IfExist, %A_LoopField%%media%.mp4
               src = %A_LoopField%%media%.mp4
-            IfExist, %A_LoopField%%media%.mkv
+            else IfExist, %A_LoopField%%media%.mkv
               src = %A_LoopField%%media%.mkv
             if src
               break
@@ -1394,15 +1395,17 @@ if playlist
                else x := 3600*x.1 + 60*x.2 + x.3
                x := Round(x,2)
                if src
-                 text = %text%<button id='%A_LoopField%' class='play' onclick="playOrphan(%x%)">&#9655;</button>
+                 text = %text%<br><button id='%A_LoopField%' class='play' onmouseup='playOrphan(%x%)'>&#9655;</button> 
                }
              else
                {
-               x := StrReplace(A_LoopField, ".", ".<br>")
-               x := StrReplace(x, "?", "?<br>")
-               x := StrReplace(x, "!", "!<br>")
-               text = %text%%x%
+  ;             x := StrReplace(A_LoopField, ".", ".<br>")
+  ;             x := StrReplace(x, "?", "?<br>")
+  ;             x := StrReplace(x, "!", "!<br>")
+               text = %text%%A_LoopField%
                }
+ FileGetSize, size, %src%, K
+ size := Ceil(size/1000)
           }
         else if (ext=="txt")
           {
@@ -1417,12 +1420,11 @@ if (type=="image")
 else src=src="file:///%src%"
 
 
-
 if listView
-  mediaList = %mediaList% %fold%<table onmouseout="title%j%.style.color=null; thumb%j%.style.opacity=0; overMedia=0">`n <tr id="entry%j%"`n onmouseover="title%j%.style.color='lightsalmon'; overThumb(%j%, thumb%j%)"`n onmouseout="overMedia=0; thumb%j%.load()">`n <td onmouseenter='thumb%j%.style.opacity=0'>%ext%`n <video id='thumb%j%' onmousedown="getParameters(%j%, '%type%', '%cueList%', %dur%, %start%, %size%, event)" class='thumb2' style="max-width:%view%em; max-height:%view%em"`n %src%`n %poster%`n preload=%preload% muted loop type="video/mp4"></video></td>`n <td>%size%</td>`n <td style='min-width:6em' onmouseover='thumb%j%.style.opacity=1'>%durT%</td>`n <td onmouseover='thumb%j%.style.opacity=1'>%date%</td>`n <td style='min-width:4.4em'>%j%</td>`n <td id='myFavicon%j%' style='width:0; translate:-1em; white-space:nowrap; font-size:0.7em; color:salmon; min-width:1em'>%favicon%</td>`n <td style='width:99em'><input id="title%j%" onmouseover='overText=1' onmouseout='overText=0; Click=0' class='title' type='search' value='%media_s%'`n oninput="wasMedia=%j%; renamebox=this.value"></td>`n <td>%fo%</td></tr></table>`n`n
+  mediaList = %mediaList% %fold%<table onmouseout="title%j%.style.color=null; thumb%j%.style.opacity=0; overMedia=0">`n <tr id="entry%j%"`n onmouseover="title%j%.style.color='lightsalmon'; overThumb(%j%, thumb%j%)"`n onmouseout="overMedia=0; thumb%j%.load()">`n <td onmouseenter='thumb%j%.style.opacity=0'>%ext%`n <video id='thumb%j%' onmousedown="getParameters(%j%, '%type%', '%cueList%', %dur%, %start%, %size%, event)"`n onmouseover="overThumb(%j%, this)"`n onmouseout="overMedia=0; this.pause()"`n class='thumb2' style="max-width:%view%em; max-height:%view%em"`n %src%`n %poster%`n preload=%preload% muted loop type="video/mp4"></video></td>`n <td>%size%</td>`n <td style='min-width:6em' onmouseover='thumb%j%.style.opacity=1'>%durT%</td>`n <td onmouseover='thumb%j%.style.opacity=1'>%date%</td>`n <td style='min-width:4.4em'>%j%</td>`n <td id='myFavicon%j%' style='width:0; translate:-1em; white-space:nowrap; font-size:0.7em; color:salmon; min-width:1em'>%favicon%</td>`n <td style='width:99em'><input id="title%j%" onmouseover='overText=1' onmouseout='overText=0; Click=0' class='title' type='search' value='%media_s%'`n oninput="wasMedia=%j%; renamebox=this.value"></td>`n <td>%fo%</td></tr></table>`n`n
 
 else if ((ext=="txt" || ext=="vtt") && (textCount+=1) <= 20)
-  mediaList = %mediaList%<div id="entry%j%" style="display:flex; position:relative; padding-top:%view4%em" onmouseover='overText=1' onmouseout='overText=0'>`n <span style='display:block; position:absolute; translate:-1em 0.6em; font-size:0.8em; color:salmon' id='myFavicon%j%'>%favicon%</span>`n <span><input id='title%j%' class='title' style='text-align:center; color:lightsalmon; background:#15110a; padding-left:1em; font-size:%cap_size%em; position:absolute' type='search' value='%media_s%'`n onmousedown='thumb%j%.scrollTo(0,0)'`n oninput="wasMedia=%j%; renamebox=this.value"></span>`n <span id='Save%j%' class='save' onclick="sessionStorage.setItem('scroll',0); inca('Reload')">Save</span>`n <span><video id='orphan%j%' style='display:none'`n %src%`n %poster%`n type="video/mp4"></video></span>`n <p id='thumb%j%' class='text' style='margin-top:1.6em; font-size:%cap_size%em; max-width:%view%em; max-height:22em' contenteditable="true" onmouseover="overThumb(%j%, this)" onmouseout='overMedia=0'`n onmouseenter='if(gesture) sel(%j%)'`n oninput="if(editing&&editing!='%j%') {inca('Text',editing)}; editing='%j%'; this.style.background='#15110a'; Save%j%.style.display='block'" onmousedown="getParameters(%j%,'document','%cueList%',0,0,%size%,event)">`n%text%</p></div>`n`n
+  mediaList = %mediaList%<div id="entry%j%" style="display:flex; position:relative; padding-top:%view4%em" onmouseover='overText=1' onmouseout='overText=0'>`n <span style='display:block; position:absolute; translate:-1em 0.6em; font-size:0.8em; color:salmon' id='myFavicon%j%'>%favicon%</span>`n <span><input id='title%j%' class='title' style='text-align:center; color:lightsalmon; background:#15110a; padding-left:1em; font-size:%cap_size%em; position:absolute' type='search' value='%media_s%'`n onmousedown='thumb%j%.scrollTo(0,0)'`n oninput="wasMedia=%j%; renamebox=this.value"></span>`n <span id='Save%j%' class='save' onclick="sessionStorage.setItem('scroll',0); inca('Reload')">Save</span>`n <span><video id='orphan%j%' style='display:none'`n %src%`n poster='%inca%/cache/posters/%media%.jpg'`n type="video/mp4"></video></span>`n <p id='thumb%j%' class='text' style='margin-top:1.6em; font-size:%cap_size%em; max-width:%view%em; max-height:22em' contenteditable="true" onmouseover="overThumb(%j%, this)" onmouseout='overMedia=0'`n onmouseenter='if(gesture) sel(%j%)'`n oninput="if(editing&&editing!='%j%') {inca('Text',editing)}; editing='%j%'; this.style.background='#15110a'; Save%j%.style.display='block'" onmousedown="getParameters(%j%,'document','%cueList%',0,0,%size%,event)">`n%text%</p></div>`n`n
 
 else mediaList = %mediaList%<div id="entry%j%" style="max-width:%view%em; padding:0.5em; display:flex; padding-top:%view4%em">`n <div class='thumb'><span style='display:block; position:absolute; top:-1.5em; font-size:0.8em; color:salmon' id='myFavicon%j%'>%favicon%</span>`n <span><input id='title%j%' class='title' style='display:none; text-align:center; max-width:%view%em; font-size:%cap_size%em' type='search' value='%media_s%'`n oninput="wasMedia=%j%; renamebox=this.value" onmouseover='overText=1' onmouseout='overText=0'></span>`n <video id="thumb%j%" class='thumb' style="display:flex; justify-content:center; max-width:%view%em; max-height:%view%em"`n onmousedown="getParameters(%j%, '%type%', '%cueList%', %dur%, %start%, %size%, event)"`n onmouseover="overThumb(%j%, this)"`n onmouseout="overMedia=0; this.pause()"`n %src%`n %poster%`n preload=%preload% muted loop type='video/mp4'></video>%caption%</div>`n</div>`n`n
 }
@@ -1764,7 +1766,8 @@ else mediaList = %mediaList%<div id="entry%j%" style="max-width:%view%em; paddin
         FileMove, %inca%\cache\durations\%media%.txt, %inca%\cache\durations\%new_name%.txt, 1
         FileMove, %inca%\cache\thumbs\%media%.jpg, %inca%\cache\thumbs\%new_name%.jpg, 1
         FileMove, %inca%\cache\posters\%media%.jpg, %inca%\cache\posters\%new_name%.jpg, 1
-        }
+        FileMove, %inca%\cache\captions\%media%.vtt, %inca%\cache\captions\%new_name%.vtt, 1
+       }
 
 
     DecodeExt(ex)
