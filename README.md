@@ -1,6 +1,6 @@
 
 # Media Viewer<br>
-Windows - Chrome, Firefox, Edge, Opera, Brave<br>
+Windows - Chrome, Firefox, Edge, Opera, Brave<br><br>
 YouTube style interface for your hard drive<br><br>
 <img src="screens/overview2.png" width="55%"><br>
 <img src="screens/computer arm 5.jpg" width="18%"> <img src="screens/computer arm 2.jpg" width="18%"> <img src="screens/computer arm 1.jpg" width="18%"><br><br>
@@ -12,7 +12,7 @@ beautiful fast interface<br>
 Shuffle folders & playlists<br>
 Search, organize, edit & view media files in browser<br>
 Move, Copy, Rename media in browser<br>
-Create slideshows, captions, favorites, clips, joins, conversions etc.<br>
+Create slideshows, captions, subtitle tracking, favorites, clips, joins, conversions etc.<br>
 Music and playlists from browser tabs<br>
 Sleep timer gradually lowers master volume when mouse quiet<br>
 To see if you already have a video from an outside website,<br>
