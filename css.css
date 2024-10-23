@@ -14,8 +14,15 @@
   c:hover {overflow:visible; transition:0.2s; transform:scale(1.1,1.1); color:lightsalmon}
   c:active {color:red; transform:scale(0.8,0.8)}
 
+
+.orphan {
+  max-width:120px;
+  max-height:120px;
+  display:block;
+outline:none;
+  margin:auto}
+
 .pic {						/* context menu pic */
-  --start;
   background-size:600%;
   background-repeat:no-repeat;
   position:absolute;
@@ -28,7 +35,7 @@
   background:inherit;
   border:none;
   outline:none;
-  font-size:0.6em;
+  font-size:0.8em;
   color:salmon}
 
 .save {						/* save button over textarea */
@@ -97,9 +104,9 @@
   white-space:nowrap}
 
 .thumb {					/* thumb view media */
+  --rate;
   --start;					/* default start time */
   --skinny;					/* java variables attached to element */
-  --rate;
   position:relative;
   outline:none;
   margin:auto;
