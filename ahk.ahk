@@ -1372,7 +1372,7 @@ if playlist
           Loop, Parse, searchFolders, `|
             {
             src=
-text = <video class='orphan' %src% poster='file:///%inca%\cache\posters\%media%.jpg' type="video/mp4" onmouseover='start=%start%' onmouseout='start=-1'></video>	; vtt header video element
+text = <video id='vid%j%' class='orphan' %src% poster='file:///%inca%\cache\posters\%media%.jpg' type="video/mp4" onmouseover='start=%start%' onmouseout='start=-1'></video>	; vtt header video element
 
 ; tooltip %A_LoopField%%media%
 

@@ -24,8 +24,7 @@
 // audio icon poster on vtt
 // close fade transition cannot go over 200ms issue wrong media opens
 // seekbar width if vtt and skinny is set
-// orphan poster skinny
-// last start vtt
+// last start vtt -lastIndex maybe
 
 
   var defRate = 1*localStorage.getItem('defRate')			// default playback speed
@@ -159,7 +158,7 @@
     if (!longClick && lastClick==1) {
       if (myPic.matches(':hover')) {myPlayer.currentTime=start; thumbSheet=0; lastClick=0}
       else if (myNav.matches(':hover') && !myTitle.matches(':hover')) return
-      else if (!playing && !overMedia && start==-1) return}
+      else if (!playing && orphan && start==-1) return}
     if (!gesture && longClick==1 && !playing && playlist && wasMedia && selected) {inca('Move', wasMedia); return}
     if (playing && lastClick==1) {
       if (thumbSheet) {getStart(); return}
@@ -354,7 +353,7 @@
 
   function getParameters(i) {						// prepare myPlayer for media
     if (playing && i!=overMedia) {myPlayer.style.transition='0s'; myPlayer.style.opacity=1}
-    if (orphan=document.getElementById('orphan'+i)) thumb = orphan
+    if (orphan=document.getElementById('orphan'+i)) thumb = orphan	// if vtt file, use orphan video
     else if (!(thumb=document.getElementById('thumb'+i))) {thumb=document.getElementById('thumb1'); index=1; return}
     title=document.getElementById('title'+i)
     el=document.getElementById('thumb'+i)
@@ -372,6 +371,7 @@
     x = 1*el.style.skinny						// get any live width edits
     if (x && x!=skinny) skinny=x
     thumb.style.transform='scale('+skinny+',1)' 			// has been edited
+    if (orphan) document.getElementById('vid'+i).style.transform='scale('+skinny+',1)'
     x = 1*el.style.rate						// custom css variable - rate edited
     if (x && x != rate) rate=x
     Previews()								// set preview sprites etc.
