@@ -15,14 +15,8 @@
   c:active {color:red; transform:scale(0.8,0.8)}
 
 
-.orphan {
-  max-width:120px;
-  max-height:120px;
-  display:block;
-outline:none;
-  margin:auto}
-
 .pic {						/* context menu pic */
+  --start;					/* default start time */
   background-size:600%;
   background-repeat:no-repeat;
   position:absolute;
@@ -32,16 +26,23 @@ outline:none;
   border-radius:7%}
 
 .play {						/* play at subtitle icon */
-  background:inherit;
+  background:#15110a;
   border:none;
+  width:2.4em;
+  text-align:center;
   outline:none;
   font-size:0.8em;
   color:salmon}
+.play:hover {background:#1b1814}
+.play:active {background:#333333}
+
 
 .save {						/* save button over textarea */
   display:none;
   position:absolute;
   text-align:center;
+bottom:0;
+right:0;
   border:0.1px solid red;
   border-radius:0.8em;
   color:salmon;
@@ -50,9 +51,11 @@ outline:none;
   width:3.5em;
   font-variant-caps:petite-caps} 
 
-.text {						/* editable texarea */
+.text {						/* editable text area */
+cursor:text;
   background-color:inherit;
   color:#826858;
+  max-height:12em;
   border-radius:0.6em;
   width:60em;					/* becomes max width */
   line-height:1.2em;
