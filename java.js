@@ -196,8 +196,8 @@ if (!thumb.currentTime) thumb.currentTime=st
       if (!mediaY || mediaY<0 || mediaY>innerHeight) mediaY=innerHeight/2
       if (!scaleY || scaleY>2 || scaleY<0.1) scaleY=0.7}
     if (playing && lastClick==2) if (longClick) {index--} else index++			// next, previous media
-    if (lastClick==1 || lastClick==3) thumbSheet=0
-    if (longClick==3 && type=='video') thumbSheet=1					// show thumbsheet
+    if (lastClick==1) thumbSheet=0
+    if (longClick==3 && type=='video') if(thumbSheet) {thumbSheet=0} else thumbSheet=1	// show thumbsheet
     if (!getParameters(index)) {closePlayer(); return}					// end of media list
     positionMedia(0)
     if (lastClick==2) myPlayer.currentTime=thumb.style.start
@@ -677,9 +677,10 @@ if (el.currentTime<0.1) cueW=0.95*rect.width
     if (command == 'Favorite') {
       value = myPlayer.currentTime.toFixed(1)
       if (!playing) value = thumb.currentTime
-      else ('myFavicon'+index).innerHTML = '&#10084'
-      if (longClick) value = 0
-      address = vtt.scrollTop.toFixed(0)}
+      else togglePause()
+      if (longClick) value = 0						// sets fav start to default
+      address = vtt.scrollTop.toFixed(0)				// include caption scroll
+      document.getElementById('myFavicon'+index).innerHTML = '&#10084'}
     if (selected && command!='Close' && command!='Reload') select=selected // selected is global value
     for (x of select.split(',')) {if (x=document.getElementById('thumb'+x)) if (x.src) {x.load()}}
     if (!value) value=''
