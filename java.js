@@ -17,42 +17,46 @@
 // something is slowing down ahk key response - close osk etc and location bar slow
 // seekbar dissappears on big zoom again mostly shorts???
 // next caption button ??
-
 // edit down text books folder
 // use session storage for padding page size, width view listview ?
-
+// cannot zoom properly mp3 icon or seekbar 
+// if files dont get released from chrome, keep selected and remove file error delays
+// fav scrollto vtt issues if many favs having same media
+// allow wheel scroll panel over headings ribbon 
+// remove all view code from ahk etc
+// change page width id from 'width'
+// change view to pageView and fix view myview names
 // rem simplify/check view wheel code
-// audio play butt entry needs highlighting
-// mp3 not play from thumb - crashing leaving click on
-// cannot zoom properly mp3 icon or seekbar
-// save button intermittent 
-// to be able to line up perfect thumbs in htm 
+// simplify muted localStorage
+// previous thumb to pause when play new
+// last media start (longclick)
+// address := StrReplace(address, "< style="font-family:inherit;font-size:1.1em;">span>") ??
+// cannot select or del media if no vtt - ceara
+// have page, vtt height and thumb qty on ribbon
+// text editing text issues still random <font> entries
+// have thumb fade opacity up in vtt entry
+// get start zoom from new fixed thumb
+// drag thumb properly
+// seek allowed on thumb if mouse is over and playing
+// also if thumb popped can seek
+// 'caps' button in ribbon to show hide subtitles
+// listview flip loses skinny edits and loses page formatting if music folder with no thumnbs
+// can't edit music plist thumb around
+// add height control to add/remove cue text
 
 
-// txt formatting
 
-// view is global now ? use eg. view.downloads.'12.5'
-// set vtt favs scroll start
-// check cues t0
-// vtt font zize
-
-
-
-
-  var defRate = 1*localStorage.defRate					// default playback speed
   var mediaX = 1*localStorage.mediaX					// myPlayer position
   var mediaY = 1*localStorage.mediaY
-  var pageWidth = 1*localStorage.pageWidth
-  var pageView = 1*localStorage.pageView
   var intervalTimer							// every 100mS
   var thumb = 0								// thumb element
   var title = 0								// title element
+  var vtt = 0								// text/subtitle element
   var wheel = 0								// mouse wheel count
   var index = 1								// thumb index (e.g. thumb14)
   var lastStart = 0							// last video start time
   var cueIndex = -1							// current cue entry
   var view = 14								// thumb size (em)
-  var viewE = 0								// edited thumb size
   var listView = 0							// list or thumb view
   var page = 1								// html media page
   var pages = 1								// how many htm pages of media
@@ -81,7 +85,7 @@
   var rect								// myPlayer dimensions
   var size = 0								// file size (from inca)
   var dur = 0								// duration (from inca)
-  var rate = 1								// current myPlayer speed
+  var rate = 1								// myPlayer speed
   var skinny = 1							// media width
   var scaleX = 0.24							// myPlayer width (skinny)
   var scaleY = 0.24							// myPlayer size
@@ -98,9 +102,10 @@
   var ratio = 1								// media width to height ratio
   var Xoff = 0								// window offsets before fullscreen
   var Yoff = 0
+  var folder = ''							// web page name / media folder
+  var defRate = 1							// default speed
 
 
-  if (!defRate) defRate=1						// default speed
   if (innerHeight>innerWidth) scaleY=0.32
   scaleX=scaleY
   intervalTimer = setInterval(timerEvent,100)				// background tasks every 100mS
@@ -115,7 +120,7 @@
       if (renamebox) inca('Rename', renamebox, wasMedia)				// rename media
       else if (myInput.matches(':focus')) inca('SearchBox','','',myInput.value)		// search media on pc
       else if (type=='document') {var x=thumb.scrollTop; setTimeout(function(){thumb.scrollTo(0,x)},100)}}
-    else if (e.key=='Pause' && e.altKey) {thumbSheet=1; Previews(); Play()}		// mpv player - show thumbsheet
+    else if (e.key=='Pause' && e.altKey) {thumbSheet=1; setPlayer(); Play()}	// mpv player - show thumbsheet
     else if (e.key=='Pause' && e.shiftKey) {lastClick=3;longClick=3;clickEvent()}	// inca re-map of long right click
     else if (e.key=='Pause') {								// inca re-map of mouse 'Back' click
       Click=0; lastClick=0
@@ -147,72 +152,63 @@
   function mouseUp(e) {
     if (!Click) return							// page load while mouse still down - ignore 
     if (Click==3 && !gesture && !longClick && ((yw>0.2&&!overText)||playing)) context(e)  // new context menu
-    if (Click==2 && !playing) inca('View',0,'',index)			// middle click - switch list/thumb view
-    else if (viewE) inca('View',viewE.toFixed(1),'',index)
+    if (Click==2 && !playing) inca('View',index)			// middle click - switch list/thumb view
     else if (!longClick) clickEvent()					// process click event
     Click=0; wheel=0; gesture=0; longClick=0
     clearTimeout(clickTimer)}						// longClick timer
 
 
   function overThumb(id, el, st) {					// play htm thumb
-    overMedia=id
+    overMedia = id
     if (!playing) getParameters(id)
+    if (thumb.readyState !== 4) thumb.load()
     thumb.playbackRate = defRate
-    var x = (ypos-thumb.getBoundingClientRect().top)/thumb.offsetHeight	// reset thumb time if enter from top
-    if (type!='image') thumb.style.start=st
-    if (!playing) myPlayer.currentTime=thumb.style.start		// for fast start
-    if (overText || !thumb.currentTime) thumb.currentTime=st+0.05
-
-if (!toggles.match('Pause') || thumb.style.position=='fixed') if (!playing&&!thumb.paused) thumb.play()
-
+    thumb.muted = 1*localStorage.muted
+if (!thumb.currentTime) thumb.currentTime=st
+    if (type!='image' && overMedia) thumb.style.start=st
+    if (!playing) myPlayer.currentTime = thumb.style.start		// for fast start
     if (Click && gesture) sel(id)}
 
 
-  function clickEvent() {						// functional logic
-    if (overText) return
-    thumb.pause()
-    document.getElementById('title'+index).style.borderTop=null	// remove highlight on last media
+  function clickEvent() {								// functional logic
+    if (!playing && overText) return
+    if (!mySeekbar.style.width) if (!playing && thumb.paused && overMedia) {thumb.play()} else thumb.pause()
+    if (thumb.matches(':hover') && (ym<1 && ym>0.8)) {thumb.currentTime=xm*dur; return}
+    if (!playing && !longClick && lastClick==1 && !myNav.style.display) return
+    if (el=document.getElementById('title'+index)) el.style.borderTop=null		// remove highlight on last media
     if (overMedia && lastClick!=2) index=overMedia
-    if (gesture || title.matches(':hover')) return			// allow rename of media in htm
+    if (gesture || title.matches(':hover')) return					// allow rename of media in htm
     if (longClick && myRibbon.matches(':hover')) return
     if (longClick && myInput.matches(':hover')) return
-    if (longClick && myPanel.matches(':hover')) return			// copy files instead of move
-    if (lastClick==3 && (!longClick || (!playing && !overMedia && !myNav.matches(':hover') ))) return
-    if (myFav.matches(':hover')) {
-      if (playing) x=myPlayer.currentTime.toFixed(1)
-      else x=thumb.currentTime
-      if (longClick) x=0
-      inca('Favorite', x, index)
-      myPlayer.pause()
-      return}
+    if (longClick && myPanel.matches(':hover')) return					// copy files instead of move
+    if (lastClick==3 && (!longClick || (!playing && !overMedia && !myNav.matches(':hover')))) return
     if (!longClick && lastClick==1) {
       if (myPic.matches(':hover')) {myPlayer.currentTime=myPic.style.start; thumbSheet=0; lastClick=0}
       else if (myNav.matches(':hover') && !myTitle.matches(':hover')) return
       else if (!playing && !overMedia) return}
-    if (!gesture && longClick==1 && !playing && playlist && wasMedia && selected) {inca('Move', overMedia); return} 
+    if (!gesture && longClick==1 && !playing && playlist && wasMedia && selected) {inca('Move', overMedia); return}
     if (playing && lastClick==1) {
       if (thumbSheet) {getStart(); return}
-      if (myPlayer.matches(':hover') && (ym<1 && ym>0.95)) {myPlayer.currentTime=xm*dur; return}
-      else if (overMedia && !myPlayer.matches(':hover')) myPlayer.currentTime=thumb.currentTime
+      if (myPlayer.matches(':hover') && (ym<1 && ym>0.9)) {myPlayer.currentTime=xm*dur; return}
       else if (!longClick) {togglePause(); return}}
     if (!playing) {
       if (!mediaX || mediaX<0 || mediaX>innerWidth) mediaX=innerWidth/2
       if (!mediaY || mediaY<0 || mediaY>innerHeight) mediaY=innerHeight/2
       if (!scaleY || scaleY>2 || scaleY<0.1) scaleY=0.7}
-    if (playing && lastClick==2) if (longClick) {index--} else index++	// next, previous media
-    if (!getParameters(index)) {closePlayer(); return}			// end of media list
-    positionMedia(0)
+    if (playing && lastClick==2) if (longClick) {index--} else index++			// next, previous media
     if (lastClick==1 || lastClick==3) thumbSheet=0
-    if (!playing) myNav.style.display=null
-    if (longClick==3 && (overMedia || myNav.matches(':hover'))) myPlayer.currentTime=0
-    else if (longClick && !playing && !overMedia) myPlayer.currentTime=lastStart	// return to last media
-    else if (longClick==1 && type=='video') thumbSheet=1				// show thumbsheet	
-    else if (!thumbSheet) myPlayer.currentTime=thumb.currentTime		   
-    Previews()
+    if (longClick==3 && type=='video') thumbSheet=1					// show thumbsheet
+    if (!getParameters(index)) {closePlayer(); return}					// end of media list
+    positionMedia(0)
+    if (lastClick==2) myPlayer.currentTime=thumb.style.start
+    else if (longClick==1 && !overMedia && !playing) myPlayer.currentTime=lastStart	// return to last media
+    else if (longClick==1 && !overMedia) myPlayer.currentTime=0
+    else if (!thumbSheet && !myNav.style.display) myPlayer.currentTime=thumb.currentTime
     Play()}
 
 
   function Play() {
+    thumb.pause()
     positionMedia(0)							// stabilize myPlayer position
     var para = myPlayer.currentTime+'|'+skinny+'|'+rate+'|'+1*localStorage.muted
     if (!thumbSheet && type=='video' && toggles.match('Mpv')) playing='mpv'
@@ -224,7 +220,7 @@ if (!toggles.match('Pause') || thumb.style.position=='fixed') if (!playing&&!thu
     if (type=='document' || type=='m3u') {closePlayer(); inca('Media',0,index); return}			// use external player
     else if (playing=='mpv' || thumb.src.slice(-3)=='mid' || thumb.poster.slice(-3)=='gif') inca('Media',0,index,para)
     if (type=='audio' || playlist.match('/inca/music/')) {scaleY=0.1; looping=0; myPlayer.muted=false; myPlayer.poster=thumb.poster}
-    if (playing=='browser' && (longClick==3 || !thumbSheet && type != 'image' && !toggles.match('Pause'))) myPlayer.play()
+    if (playing=='browser' && (longClick==1 || !thumbSheet && type != 'image' && !toggles.match('Pause'))) myPlayer.play()
     myPlayer.addEventListener('ended', nextMedia)
     myPlayer.style.transition = 'opacity 1s'
     if (thumb.src.slice(-3)=='mp3') myPlayer.style.border='4px solid salmon'
@@ -235,6 +231,7 @@ if (!toggles.match('Pause') || thumb.style.position=='fixed') if (!playing&&!thu
     myMask.style.zIndex=Zindex
     myMask.style.display='flex'
     myBody.style.cursor='none'
+    myNav.style.display=null
     myPlayer.volume=0.05
     if (looping) looping=1
     cueIndex=-1; lastClick=0}
@@ -249,7 +246,7 @@ if (!toggles.match('Pause') || thumb.style.position=='fixed') if (!playing&&!thu
     else mySelected.style.fontSize=null
     mySelected.style.top = e.pageY +'px'
     mySelected.style.left = e.pageX +10 +'px'
-    if (myPic.matches(':hover') && type=='video') Sprites()		// myNav preview thumb
+    if (myPic.matches(':hover') && type=='video') setPic()		// myNav preview thumb
     var x = Math.abs(xpos-Xref)
     var y = Math.abs(ypos-Yref)
     if (x+y > 7 && Click) gesture=1					// gesture (Click + slide)
@@ -278,12 +275,7 @@ if (!toggles.match('Pause') || thumb.style.position=='fixed') if (!playing&&!thu
     block=120
     var wheelUp=false
     if (e.deltaY > 0) wheelUp=true
-    if (id=='myRate') {							// default rate
-      if (!wheelUp) defRate+=0.01
-      else if (defRate>0.31) defRate-=0.01
-      defRate = Math.round(100*defRate)/100
-      localStorage.defRate = defRate}
-    else if (id=='myPage') {						// htm page
+    if (id=='myPage') {							// htm page
       if (wheelUp && page<pages) page++
       else if (!wheelUp && page>1) page--
       myPage.innerHTML = 'Page '+page+' of '+pages}
@@ -292,11 +284,12 @@ if (!toggles.match('Pause') || thumb.style.position=='fixed') if (!playing&&!thu
       else if (filt) filt--
       Filter(id)}
     else if (mySpeed.matches(':hover')) {				// speed
-      if (type=='video' || type=='audio') {
+      if (!playing || type=='video' || type=='audio') {
         if (wheelUp) rate -= 0.01
         else rate += 0.01
         rate = Math.round(100*rate)/100
-        thumb.style.rate=rate}}
+       if (!playing && !wasMedia) {defRate=rate; localStorage.setItem('defRate'+folder, rate)}
+       else thumb.style.rate=rate}}
     else if (mySkinny.matches(':hover')) {				// skinny
       if (wheelUp) skinny -= 0.01
       else skinny += 0.01
@@ -306,39 +299,37 @@ if (!toggles.match('Pause') || thumb.style.position=='fixed') if (!playing&&!thu
       positionMedia(0.15)}
     else if (!playing && (id=='View' || thumb.style.position=='fixed')) {
       if (thumb.style.position=='fixed') el=thumb
-      else el=thumb1
+else el=thumb					// should be thumb1
       if (view<50 && wheelUp) view += 0.5
-      else if (view>8 && !wheelUp) view -= 0.5				// zoom thumb
+      else if (view>8 && !wheelUp) view -= 0.5				// thumb size
+      if (thumb.style.position!='fixed') localStorage.setItem('pageView'+folder, view)
       el.style.opacity=1
       el.style.maxWidth=view+'em'
       el.style.maxHeight=view+'em'
-  vtt1.style.maxWidth=view+'em'
-      localStorage.pageView=view
+vtt.style.maxWidth=view+'em'
       block=12}
     else if (!playing && id=='myWidth') {				// page width
       x = 1*width.style.width.slice(0,-1)
       if (x>20 && wheelUp) x-=2
-      else if (x<=100) x+=2
+      else if (x<=98) x+=2
       width.style.width = x+'%'
-      localStorage.pageWidth=x
+      localStorage.setItem('pageWidth'+folder, x)
       block=12}
     else if (mySelect.matches(':hover') || myPic.matches(':hover')) {
-      if (wheelUp) index++
-      else if (index>1) index--						// next / previous
-      var x = myPlayer.paused
-      if (!getParameters(index)) index--
+      if (wheelUp) {index++} else index--				// next / previous
+      getParameters(index)
       if (playing && !thumbSheet && type=='video') {
         myPlayer.currentTime=thumb.style.start
-        if (!x) myPlayer.play()}
-      scrolltoIndex()
-      Sprites()}
-    else if (type!='image' && !thumbSheet && (!overMedia || ym>0.85 || myTitle.matches(':hover'))) { // seek
-      if (wheelUp && !myPlayer.paused && myPlayer.currentTime > dur-3.5) return
+        myPlayer.pause()}}
+else if (type!='image' && !thumbSheet && (!overMedia || ym>0.8 || myTitle.matches(':hover') || thumb.style.position=='fixed')) { // seek
+if (playing) el=myPlayer
+else el=thumb
+      if (wheelUp && !el.paused && el.currentTime > dur-3.5) return
       if (dur > 120) interval = 3
       else interval = 0.5
-      if (myPlayer.paused) interval = 0.04
-      if (wheelUp && myPlayer.currentTime < dur-0.05) myPlayer.currentTime += interval
-      else myPlayer.currentTime -= interval}
+      if (el.paused) interval = 0.04
+      if (wheelUp && el.currentTime < dur-0.05) el.currentTime += interval
+      else el.currentTime -= interval}
     else if (!myNav.matches(':hover')) {				// zoom myPlayer 
       var x = 0.02*rect.height
       if (wheelUp) {							// zoom around focus
@@ -377,14 +368,15 @@ if (!toggles.match('Pause') || thumb.style.position=='fixed') if (!playing&&!thu
 
   function getParameters(i) {						// prepare myPlayer for media
     if (!(thumb=document.getElementById('thumb'+i))) {thumb=document.getElementById('thumb1'); index=1; return}
-    if (!(vtt=document.getElementById('vtt'+i))) vtt=thumb
+if (!(vtt=document.getElementById('vtt'+i))) vtt=thumb
     title=document.getElementById('title'+i)
     rate = defRate
     skinny = 1
     var x = thumb['ondrag'].toString().split(',')			// trick to get media parameters from htm element
     type = x[1].replaceAll('\'', '').trim()				// eg video, image
-    dur = 1*x[3].trim()							// in case video is wmv, avi etc
-    size = 1*x[4]							// file size
+    thumb.style.start=1*x[3].trim()+0.02
+    dur = 1*x[4].trim()							// in case video is wmv, avi etc
+    size = 1*x[5]							// file size
     Cues(0,i)								// process 0:00 cues - width, speed etc.
     if (type == 'document') return 1
     x = 1*thumb.style.skinny						// get any live width edits
@@ -392,31 +384,41 @@ if (!toggles.match('Pause') || thumb.style.position=='fixed') if (!playing&&!thu
     thumb.style.transform='scale('+skinny+',1)' 			// has been edited
     x = 1*thumb.style.rate						// custom css variable - rate edited
     if (x && x != rate) rate=x
-    Previews()								// set preview sprites etc.
+    if (index) setPlayer()   						// src, poster
     return 1}
 
 
   function timerEvent() {						// every 100mS 
     xw = xpos / innerWidth
     yw = ypos / innerHeight
+    if (myPic.matches(':hover')) el=myPic
+    else if (playing=='browser') el=myPlayer
+    else el=thumb
+    rect = el.getBoundingClientRect()
+    xm = (xpos - rect.left) / rect.width
+    ym = (ypos - rect.top) / rect.height
     if (block>=30) block-=10						// wheel blocking 
     if (wheel>=10) wheel-=10
     if (cursor) cursor--
     if (!playing || thumbSheet) myBody.style.cursor=null		// hide cursor
     else if (!cursor || Click) myBody.style.cursor='none'
     else myBody.style.cursor='crosshair'
+    if (View.matches(':hover')) View.innerHTML=view.toFixed(1)
+    else View.innerHTML='View'
+    if (myWidth.matches(':hover')) myWidth.innerHTML=width.style.width
+    else myWidth.innerHTML='Width'
     if (!myNav.matches(':hover')) myNav.style.display=null
+    if (rate==1) mySpeed.innerHTML = 'Speed'
+    else mySpeed.innerHTML = 'Speed '+rate.toFixed(2)
+    if (skinny>0.99 && skinny<1.01) mySkinny.innerHTML = 'Skinny'
+    else mySkinny.innerHTML = 'Skinny '+skinny.toFixed(2)
+    if (!playing && !overMedia&& !wasMedia) {rate=defRate; mySkinny.innerHTML=''}
+    if (selected && !Click) mySelected.innerHTML = selected.split(',').length -1
+    else mySelected.innerHTML = ''
     if (!thumb) return
+if (type!='image') seekBar()
     if (!playing || scaleY<0.25) {myMask.style.opacity=0; myMask.style.pointerEvents=null}
     else {myMask.style.opacity=1; myMask.style.pointerEvents='auto'}
-    if (defRate==1) myRate.innerHTML = 'Speed'
-    else myRate.innerHTML = 'Speed '+ defRate
-    if (rate==1) mySpeed.innerHTML = 'Speed'
-    else mySpeed.innerHTML = rate.toFixed(2)
-    if (skinny>0.99 && skinny<1.01) mySkinny.innerHTML = 'Skinny'
-    else mySkinny.innerHTML = skinny.toFixed(2)
-    if (selected && !Click) mySelected.innerHTML = selected.split(',').length -1
-    else mySelected.innerHTML = ''  //wasMedia+'   '+overMedia+'    '+index
     if (document.getElementById('myFavicon'+index).innerHTML) myFav.innerHTML='Fav &#10084'
     else myFav.innerHTML='Fav'
     if (wasMedia || playing) {
@@ -431,15 +433,10 @@ if (!toggles.match('Pause') || thumb.style.position=='fixed') if (!playing&&!thu
     else if (myPlayer.volume < 0.8) myPlayer.volume *= 1.3		// fade sound in/out 
     if ((","+selected).match(","+index+",")) {mySelect.style.color='red'; myPlayer.style.outline='4px solid red'}
     else {mySelect.style.color=null; myPlayer.style.outline=null}
-    if (myNav.matches(':hover') || (playing=='browser'&&type!='image'&&(cue||(overMedia&&ym>0.85)||type=='audio'))) mySeekbar.style.opacity=1
-    else mySeekbar.style.opacity=0
     if (playing=='browser') {
       if (type!='image' && !dur) dur=myPlayer.duration			// just in case
       if (!thumbSheet) lastStart=myPlayer.currentTime
       myPlayer.playbackRate=rate
-      rect = myPlayer.getBoundingClientRect()
-      xm = (xpos - rect.left) / rect.width
-      ym = (ypos - rect.top) / rect.height
       myCap.style.top=rect.bottom +10 +'px'
       myCap.style.left=rect.left +10 +'px'
       myCap.style.zIndex=Zindex
@@ -447,7 +444,6 @@ if (!toggles.match('Pause') || thumb.style.position=='fixed') if (!playing&&!thu
       else Cap.innerHTML='caption'
       if (myCap.innerHTML) myCap.style.opacity=1
       if (cueList && !thumbSheet) Cues(myPlayer.currentTime, index)
-      if (!myPic.matches(':hover')) seekBar()
       positionMedia(0)}							// in case fullscreen 
     else {
       myCap.innerHTML=''
@@ -471,23 +467,34 @@ if (!toggles.match('Pause') || thumb.style.position=='fixed') if (!playing&&!thu
 
 
   function seekBar() {							// progress bar beneath player
+    if (myPic.matches(':hover')) el=myPic
+    else {
+      if (playing=='browser') el=myPlayer
+      else el=thumb
+    if (!(overMedia && ym>0.8 && ym<1)) {mySeekbar.style.width=null; return}}
     var cueX = rect.left + 7
-    var x = Math.round(myPlayer.currentTime*100)/100
-    var cueW = 0.95*rect.width*myPlayer.currentTime/dur
+    var x = Math.round(el.currentTime*100)/100
+    var cueW = 0.95*rect.width*el.currentTime/dur
+if (el.currentTime<0.1) cueW=0.95*rect.width
     if (cue && cue<=x) {
       cueX = mediaX - rect.width/2 + rect.width * cue/dur
-      cueW = rect.width*(myPlayer.currentTime-cue)/dur
+      cueW = rect.width*(el.currentTime-cue)/dur
       if (cue<x+0.2 && cue>x-0.2) {
         cueW = rect.width*(dur-cue)/dur}}
     else if (cue) {
-      cueX = rect.left + rect.width*myPlayer.currentTime/dur
+      cueX = rect.left + rect.width*el.currentTime/dur
       cueW = rect.width*(cue - x)/dur
       if (cue < 0.2+x) {
-        cueX = rect.left; cueW = rect.width*myPlayer.currentTime/dur}}
+        cueX = rect.left; cueW = rect.width*el.currentTime/dur}}
+    if (myNav.style.display) {
+      mySeekbar.style.top = rect.bottom +5 +'px'
+      mySeekbar.style.left = rect.left +'px'
+      mySeekbar.style.width = myPic.offsetWidth*myPic.style.start/dur +'px'}
+    else {
     if (rect.bottom<innerHeight) mySeekbar.style.top = rect.bottom -3 +'px'
     else mySeekbar.style.top = innerHeight -5 +'px'
     mySeekbar.style.left = cueX +'px'
-    mySeekbar.style.width = cueW +'px'}
+    mySeekbar.style.width = cueW +'px'}}
 
 
   function Cues(time, i) {						// process media cues - captions, pauses etc.
@@ -514,7 +521,7 @@ if (!toggles.match('Pause') || thumb.style.position=='fixed') if (!playing&&!thu
           if (entry[3]) {setTimeout(function(){myCap.innerHTML=''},1000*entry[3])}}}}}
 
 
-  function Previews() {
+  function setPlayer() {						// set src, poster, thumbsheet, dimensions
     var x = thumb.poster.replace("/posters/", "/thumbs/")		// points to thumbsheets folder
     var y = x.split('%20')						// see if embedded fav start time in poster filename
     y = y.pop()
@@ -541,15 +548,12 @@ if (!toggles.match('Pause') || thumb.style.position=='fixed') if (!playing&&!thu
     myPic.style.width=x+'px'
     myPic.style.height=(x-7)/ratio+'px'
     myCap.innerHTML = ''
-   if (longClick || playing=='mpv') myPlayer.load()}			// for thumbsheet load
+    if (thumbSheet) myPlayer.load()}
 
-  function Sprites() {							// myNav preview thumb from 6x6 thumbsheet
+  function setPic() {							// myNav preview thumb derived from 6x6 thumbsheet
     var z = myPic.getBoundingClientRect()
     var y = myPic.offsetWidth
     var x = (xpos-z.left)/y
-    mySeekbar.style.top = z.bottom +5 +'px'
-    mySeekbar.style.left = z.left +'px'
-    mySeekbar.style.width = x * y +'px'
     z = 20 * Math.ceil(x*35)
     y = 20 * Math.floor(z/120)
     z = z % 120
@@ -557,7 +561,8 @@ if (!toggles.match('Pause') || thumb.style.position=='fixed') if (!playing&&!thu
     z=5*(Math.ceil(x*35)+1)						// thumb number
     if (dur > 60) {y = 20} else y=0
     z = (z-1) / 200
-    myPic.style.start = y - (z * y) + dur * z}
+    myPic.style.start = y - (z * y) + dur * z
+    if (!playing) myPlayer.currentTime=myPic.style.start}
 
   function getStart() {
     positionMedia(0.3)
@@ -625,39 +630,56 @@ if (!toggles.match('Pause') || thumb.style.position=='fixed') if (!playing&&!thu
       myNav.style.left=x.left-70+'px'
       myNav.style.top=x.top-70+'px'}
     else {myNav.style.left=xpos-30+'px'; myNav.style.top=ypos-10+'px'}
-    myNav.style.display='block'
-    mySeekbar.style.width=0}
+    myNav.style.display='block'}
 
-  function globals(vi, pg, ps, to, so, fi, lv, se, pl, ix) {		// import globals to java from inca
-    page=pg; pages=ps; toggles=to; filt=fi;				// view=vi; 
+  function globals(pg, ps, fo, to, so, fi, lv, se, pl, ix) {		// import globals from inca
+    folder=fo; page=pg; pages=ps; toggles=to; filt=fi;
     listView=lv; selected=se; playlist=pl; wasMedia=ix
 
-  if (!pageWidth || listView) pageWidth=100				// default page width
-width.style.width = pageWidth+'%'
-  if (!pageView) view=6							// default thumb size
-  else view=pageView
 
+    key = 'pageWidth'+folder
+    x = localStorage.getItem(key)
+    if (isNaN(x) || x<20 || x>100) localStorage.setItem(key, 90)
+    pageWidth = 1*localStorage.getItem(key)
+    width.style.width = 1*localStorage.getItem(key)+'%'
+    if (listView) width.style.width = '100%'
+
+    key = 'pageView'+folder
+    x = localStorage.getItem(key)
+    if (isNaN(x) || x<6 || x>50) localStorage.setItem(key, 14)
+    view = 1*localStorage.getItem(key)
+
+    key = 'defRate'+folder
+    x = localStorage.getItem(key)
+    if (isNaN(x) || x<0.2 || x>3) localStorage.setItem(key, 1)
+    defRate = 1*localStorage.getItem(key)
     Filter(so)								// show filter heading in red
     for (x of selected.split(',')) {if (x && !isNaN(x)) {		// highlight selected media			
       if (lv) document.getElementById('title'+x).style.outline = '0.1px solid red'
       else document.getElementById('thumb'+x).style.outline = '1.5px solid red'}}
-    for (index=0, i=1; getParameters(i); i++) {thumb.style.maxWidth=view+'em'; thumb.style.maxHeight=view+'em'; vtt.style.maxWidth=view+'em'}						// process cues (eg. thumb widths)
+    for (index=0, i=1; getParameters(i); i++) {				// process cues (eg. thumb widths)
+      thumb.style.maxWidth=view+'em'; thumb.style.maxHeight=view+'em'; vtt.style.maxWidth=view+'em'}
     if (!ix) index=1
     else index=ix
     getParameters(index)
     if (ix) {title.style.borderTop='0.1px solid salmon'; scrolltoIndex()}}  // eg. after switch thumbs/listview
-  
+ 
 
   function inca(command,value,select,address) {				// send java messages to inca.exe
     if (editing) {
       el=document.getElementById('vtt'+editing)
-      x=el.innerHTML.replaceAll('#', '*') 				// save textarea if edited
+      var x=el.innerHTML.replaceAll('#', '*') 				// save textarea if edited
       messages=messages+'#Vtt#'+el.scrollTop.toFixed(0)+'#'+editing+'#'+x}
     for (i=1; el=document.getElementById('thumb'+i); i++) {		// add cue edits to messages
       if (el.style.skinny) messages = messages + '#Skinny#'+el.style.skinny+'#'+i+'#'+cue
       if (el.style.rate) messages = messages + '#Rate#'+el.style.rate+'#'+i+'#'+cue}
     if (!select) {select=''} else {select=select+','}
-    if (command == 'Favorite' && !selected) document.getElementById('myFavicon'+index).innerHTML='&#10084'
+    if (command == 'Favorite') {
+      value = myPlayer.currentTime.toFixed(1)
+      if (!playing) value = thumb.currentTime
+      else ('myFavicon'+index).innerHTML = '&#10084'
+      if (longClick) value = 0
+      address = vtt.scrollTop.toFixed(0)}
     if (selected && command!='Close' && command!='Reload') select=selected // selected is global value
     for (x of select.split(',')) {if (x=document.getElementById('thumb'+x)) if (x.src) {x.load()}}
     if (!value) value=''
@@ -666,6 +688,8 @@ width.style.width = pageWidth+'%'
     messages=messages+'#'+command+'#'+value+'#'+select+'#'+address
     navigator.clipboard.writeText(messages)				// send messages to inca
     messages=''}
+
+
 
   function scrolltoIndex() {if (title) {
     x=thumb.getBoundingClientRect().bottom; if (x>innerHeight-20 || x<20) myView.scrollTo(0, x+myView.scrollTop-innerHeight/2)}}

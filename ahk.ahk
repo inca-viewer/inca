@@ -53,7 +53,7 @@
 	Global filt := 0			; secondary search filter eg. date, duration, Alpha letter
         Global click				; mouse click type
         Global timer				; click down timer
-        Global view := 13			; default thumb view (em size)
+        Global view := 14			; default thumb view (em size)
         Global listView := 0
         Global volRef := 2
         Global wheel
@@ -117,7 +117,6 @@
         Critical
         poster =
         view2 := Round(view*0.7,1)
-        view4 := Round(view/7,1)
         if ((cap_size := view / 14) > 1.2)
           cap_size := 1.2
         if DetectMedia(input)
@@ -214,15 +213,12 @@ if playlist
 
 
 text=
-
-
+;  onmouseup='thumb.currentTime=%x%+0.02; thumb.play()' 
 
         if (ext=="txt")
           {
           FileRead, text, %src%
-          text := StrReplace(text, ".", ".<br>")
-          text := StrReplace(text, "?", "?<br>")
-          text := StrReplace(text, "!", "!<br>")
+          text := StrReplace(text, "`r`n", "<br>")
           }
         else IfExist, %inca%\cache\captions\%media%.vtt
           {
@@ -240,25 +236,24 @@ text=
 if(x<1) x=1
                x := Round(x,1)						; play timestamp buttons in text area
                if src
-                 text = %text%<button id='%A_LoopField%' class='play' onmouseenter="overThumb(%j%, thumb%j%, %x%); if(thumb.paused){thumb.play();thumb.pause()}" onmouseout='overMedia=0' onmouseup='thumb.currentTime=%x%+0.05; thumb.play(); if(!(1*localStorage.muted)) {thumb.muted=0}'>&#9655;</button>
+                 text = %text%<button id='%A_LoopField%' class='play' contenteditable="false" onmouseenter='overText=0; overThumb(%j%, thumb%j%, %x%); thumb.pause(); thumb.currentTime=%x%' onmouseout='overMedia=0' >&#9655;&nbsp;</button>
                }
              else text = %text%%A_LoopField%<br>
           }
 
    if text
-     caption = <p id='vtt%j%' class='text' style='font-size:%cap_size%em; max-width:%view%em' contenteditable="true" onmouseover='overText=1' onmouseout='overText=0'`n oninput="if(editing&&editing!='%j%') {inca('Vtt',editing)}; editing='%j%'; this.style.background='#15110a'; Save%j%.style.display='block'" ondrag="getParameters(%j%, 'document', '%cueList%', %dur%, %size%, event)" onmousedown='if(thumb.paused&&!editing){thumb.play();if(!(1*localStorage.muted)) {thumb.muted=0}} else{thumb.pause()}'>`n%text%</p>`n <span id='Save%j%' class='save' onmouseup="inca('Close')">Save</span>`n
+     caption = <p id='vtt%j%' class='text' style='font-size:1.1em; max-width:%view%em' contenteditable="true" onmouseover='overText=1' onmouseout='overText=0'`n oninput="if(editing&&editing!='%j%') {inca('Vtt',editing)}; editing='%j%'; this.style.background='#15110a'; Save%j%.style.display='block'" ondrag="getParameters(%j%, 'document', '%cueList%', %start%, %dur%, %size%, event)" >`n%text%</p>`n <span id='Save%j%' class='save' onmouseup="inca('Close')">Save</span>`n
 
 if (type=="image")
   src =
 else src=src="file:///%src%"
 
 if listView
-  mediaList = %mediaList% %fold%<table onmouseout="title%j%.style.color=null; thumb%j%.style.opacity=0; overMedia=0">`n <tr id="entry%j%"`n onmouseover="title%j%.style.color='lightsalmon'; overThumb(%j%, thumb%j%, %start%)"`n onmouseout="overMedia=0; thumb%j%.load()">`n <td></td><td onmouseenter='thumb%j%.style.opacity=0'>%ext%`n <video id='thumb%j%' ondrag="getParameters(%j%, '%type%', '%cueList%', %dur%, %size%, event)"`n onmouseover="overThumb(%j%, this, %start%)"`n onmouseout="overMedia=0; this.pause()"`n class='thumb2' style="max-width:%view%em; max-height:%view%em"`n %src%`n %poster%`n preload=%preload% muted loop type="video/mp4"></video></td>`n <td>%size%</td>`n <td style='min-width:6em' onmouseover='thumb%j%.style.opacity=1'>%durT%</td>`n <td onmouseover='thumb%j%.style.opacity=1'>%date%</td>`n <td style='min-width:4.4em'>%j%</td>`n <td id='myFavicon%j%' style='width:0; translate:-1em; white-space:nowrap; font-size:0.7em; color:salmon; min-width:1em'>%favicon%</td>`n <td style='width:99em'><input id="title%j%" onmouseover='overText=1' onmouseout='overText=0; Click=0' class='title' type='search' value='%media_s%'`n oninput="wasMedia=%j%; renamebox=this.value"></td>`n <td>%fo%</td></tr></table>`n`n
+  mediaList = %mediaList% %fold%<table onmouseout="title%j%.style.color=null; thumb%j%.style.opacity=0; overMedia=0">`n <tr id="entry%j%"`n onmouseover="title%j%.style.color='lightsalmon'; overThumb(%j%, thumb%j%, %start%)"`n onmouseout="overMedia=0; thumb%j%.load()">`n <td></td><td onmouseenter='thumb%j%.style.opacity=0'>%ext%`n <video id='thumb%j%' ondrag="getParameters(%j%, '%type%', '%cueList%', %start%, %dur%, %size%, event)"`n onmouseover="overThumb(%j%, this, %start%)"`n onmouseout="overMedia=0; this.pause()"`n class='thumb2' style="max-width:%view%em; max-height:%view%em"`n %src%`n %poster%`n preload=%preload% muted loop type="video/mp4"></video></td>`n <td>%size%</td>`n <td style='min-width:6em' onmouseover='thumb%j%.style.opacity=1'>%durT%</td>`n <td onmouseover='thumb%j%.style.opacity=1'>%date%</td>`n <td style='min-width:4.4em'>%j%</td>`n <td id='myFavicon%j%' style='width:0; translate:-1em; white-space:nowrap; font-size:0.7em; color:salmon; min-width:1em'>%favicon%</td>`n <td style='width:99em'><input id="title%j%" onmouseover='overText=1' onmouseout='overText=0; Click=0' class='title' type='search' value='%media_s%'`n oninput="wasMedia=%j%; renamebox=this.value"></td>`n <td>%fo%</td></tr></table>`n`n
 
-else mediaList = %mediaList%<div id="entry%j%" style="padding:0.5em; display:block; position:relative; padding-top:%view4%em">`n <div class='thumb'><span style='display:block; position:absolute; top:-1.5em; font-size:0.8em; color:salmon' id='myFavicon%j%'>%favicon%</span>`n <span><input id='title%j%' class='title' style='text-align:center; max-width:%view%em; font-size:%cap_size%em' type='search' value='%media_s%'`n oninput="wasMedia=%j%; renamebox=this.value" onmouseover='overText=1; thumb%j%.currentTime=%start%' onmouseout='overText=0'></span>`n <video id="thumb%j%" class='thumb' style="display:block; margin:auto; max-width:%view%em; max-height:%view%em"`n ondrag="getParameters(%j%, '%type%', '%cueList%', %dur%, %size%, event)"`n onmouseover='overThumb(%j%, this, %start%); thumb.muted=true; this.play()'`n onmouseout="overMedia=0; this.pause()"`n %src%`n %poster%`n preload=%preload% muted loop type='video/mp4'></video>`n %caption%`</div></div>`n`n
+else mediaList = %mediaList%<div id="entry%j%" style="padding:0.5em; display:block; position:relative">`n <div class='thumb'><span style='display:block; position:absolute; top:-1.5em; font-size:0.8em; color:salmon' id='myFavicon%j%'>%favicon%</span>`n <input id='title%j%' class='title' style='text-align:center; font-size:%cap_size%em; font-weight:bold' type='search' value='%media_s%'`n oninput="wasMedia=%j%; renamebox=this.value" onmousedown='thumb%j%.currentTime=%start%; vtt%j%.scrollTo(0,0)'`n onmouseover='overText=1; thumb%j%.pause()' onmouseout='overText=0'>`n <video id="thumb%j%" class='thumb' style="display:block; margin:auto; max-width:%view%em; max-height:%view%em"`n ondrag="getParameters(%j%, '%type%', '%cueList%', %start%, %dur%, %size%, event)"`n onmouseover='overThumb(%j%, this, %start%)'`n onmouseout="overMedia=0; this.pause()"`n %src%`n %poster%`n preload=%preload% loop type='video/mp4'></video>`n %caption%`</div></div>`n`n
 }
 
- ;max-width:%view%em; 
 
     ~Esc up::
       ExitApp
@@ -542,10 +537,24 @@ else mediaList = %mediaList%<div id="entry%j%" style="padding:0.5em; display:blo
             if !address
               return
             getMedia(selected)
+            address := StrReplace(address, "`r`n")
+if (ext=="txt")
+ {
+            address := StrReplace(address, "<div><br><\div>", "<br>")
+            address := StrReplace(address, "<div>", "<br>")
+            address := StrReplace(address, "<br>", "`r`n")
+            address := StrReplace(address, ";")
+            StringReplace, address,address, ", , All
+            address := StrReplace(address, "<span style=font-family: inherit font-size: 1.1em>")
+            address := StrReplace(address, "<\span>")
+}
+     else address := StrReplace(address, "<br>")
             address := StrReplace(address, "&nbsp;", " ")
             address := StrReplace(address, "<div>")
             address := StrReplace(address, "<\div>")
-            address := StrReplace(address, "<br>")
+
+						
+
               vtt =
               x := StrSplit(address, "button>")
               Loop % x.MaxIndex()
@@ -569,9 +578,11 @@ else
               FileAppend, %vtt%, %inca%\cache\captions\%media%.vtt
 }
 
+
             FileDelete, %inca%\cache\cues\%media%.txt			; for return to text scroll position
             FileAppend, 0.00|scroll|%value%, %inca%\cache\cues\%media%.txt
 reload := 3
+index:=1
 if (type == "document")
             sort = Date
 else 
@@ -763,6 +774,10 @@ reload := 2
                 FileAppend, %src%|%value%`r`n, %inca%\fav\new.m3u, UTF-8
                 Runwait, %inca%\cache\apps\ffmpeg.exe -ss %value% -i "%src%" -y -vf scale=1280:1280/dar -vframes 1 "%inca%\cache\posters\%media%%A_Space%%value%.jpg",, Hide
                 }
+if address
+  FileAppend, 0.0|scroll|%address%`r`n, %inca%\cache\cues\%media%.txt
+
+
             popup("Added - New",444,0,0)
             AllFav()							; update consolidated fav list
             StrReplace(selected, ",",, x)
@@ -770,15 +785,10 @@ reload := 2
             if (x>1)
               reload:=2
             }
-        if (command == "View")						; change thumb/list view or thumb size
+        if (command == "View")						; change thumb/list view
             {
-            if (!value)
-              listView ^=1
-            else view := Round(value,1) 
-            if (view < 8)
-              view := 8
-            if address
-              index := address						; for scrollToIndex() in java
+listView^=1
+            index := value						; for scrollToIndex() in java
             reload := 2
             }
         if (command == "Delete")
@@ -1156,7 +1166,7 @@ reload := 2
         if InStr(fol, x) 
           showSubs = 
         title := folder
-        title_s := SubStr(title, 1, 20)					; keep title under 20 chars for htm page
+ ;       title_s := SubStr(title, 1, 20)					; keep title under 20 chars for htm page
         FileRead, java, %inca%\java.js
         FileRead, ini, %inca%\ini.ini
         ini := StrReplace(ini, "`r`n", "|")				; java cannot accept cr in strings
@@ -1329,7 +1339,7 @@ if subfolders
 
 header = <!--, %view%, %page%, %pages%, %filt%, %sort%, %toggles%, %listView%, %playlist%, %path%, %searchPath%, %searchTerm%, , -->`n<!doctype html>`n<html>`n<head>`n<meta charset="UTF-8">`n<title>Inca - %title%</title>`n<meta name="viewport" content="width=device-width, initial-scale=1">`n<link rel="icon" type="image/x-icon" href="file:///%inca%\cache\icons\inca.ico">`n<link rel="stylesheet" type="text/css" href="file:///%inca%/css.css">`n</head>`n`n
 
-body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n if(document.getElementById('%scroll%')) {%scroll%.scrollIntoView()%offset%} myView.scrollTo(0,1*sessionStorage.getItem('scroll'));`n globals(%view%, %page%, %pages%, '%toggles%', '%sort%', %filt%, %listView%, '%selected%', '%playlist%', %index%)">`n`n
+body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n if(document.getElementById('%scroll%')) {%scroll%.scrollIntoView()%offset%} myView.scrollTo(0,1*sessionStorage.getItem('scroll'));`n globals(%page%, %pages%, '%folder%', '%toggles%', '%sort%', %filt%, %listView%, '%selected%', '%playlist%', %index%)">`n`n
 
 <div id='mySelected' class='selected'></div>`n
 <div id='myContent' style='width:100`%'>`n`n
@@ -1340,7 +1350,7 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n if(
 <a id='myTitle' class='title' onmouseup='togglePause()'></a>`n 
 <video id='myPic' muted class='pic' onmouseup='togglePause()'></video>`n
 <a id='myMute' onmouseup='mute(); togglePause()'>Mute</a>`n
-<a id='myFav'>Fav</a>`n
+<a id='myFav' onmouseup="inca('Favorite',0,index); togglePause()">Fav</a>`n
 <a id='mySpeed' onclick="inca('Close')"></a>`n
 <a id='mySkinny' onclick="inca('Close')"></a>`n
 <a id='myFlip' onmouseup='flip(); togglePause()'>Flip</a>`n
@@ -1386,9 +1396,8 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n if(
 <a style='width:6.5`%; %x10%' onmousedown="inca('Images')">Pics</a>`n
 <a style='width:6.5`%; %x9%' onmousedown="inca('Videos')">Vids</a>`n
 <a style='width:7`%; %x8%' onmousedown="inca('Recurse')">Subs</a>`n
-<a id='View' style='width:5`%' onwheel="wheelEvent(event, id)" onmouseout="for (index=0, i=1; getParameters(i); i++) {thumb.style.maxWidth=view+'em'; thumb.style.maxHeight=view+'em'; vtt.style.maxHeight=view+'em'}" onmouseup="inca('View',0)">View</a>`n 
+<a id='View' style='width:5`%' onwheel="wheelEvent(event, id)" onmouseout="for (index=0, i=1; getParameters(i); i++) {thumb.style.maxWidth=view+'em'; thumb.style.maxHeight=view+'em'; vtt.style.maxWidth=view+'em'}" onmouseup="inca('View',0)">View</a>`n 
 <a id='myWidth' style='width:8`%' onwheel="wheelEvent(event, id)">Width</a>`n 
-<a id='myRate' style='width:11.5`%' onwheel="wheelEvent(event, id, this)">Speed</a>`n
 <a style='width:6`%; %x13%' onmousedown="inca('Mpv')">Mpv</a>`n
 <a id='myJoin' style='width:5`%' onmousedown="inca('Join')">Join</a>`n</div>`n`n
 
@@ -1582,7 +1591,7 @@ clipboard := x
 
     GetTabSettings(all)							; from .htm cache file
         {
-        listView = 0
+        listView := 0
         page := 1							; default view settings if no html data
         filt := 0
         toggles =

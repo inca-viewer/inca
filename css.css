@@ -20,7 +20,7 @@
   background-size:600%;
   background-repeat:no-repeat;
   position:absolute;
-  margin-left:4em;
+  margin-left:5em;
   margin-top:1em;
   transition:opacity 0.3s, transform 0.3s;
   border-radius:7%}
@@ -28,14 +28,14 @@
 .play {						/* play at subtitle icon */
   background:#15110a;
   border:none;
-  width:2.4em;
+  width:2.6em;
   text-align:center;
+  border-radius:0.8em;
   outline:none;
   font-size:0.8em;
   color:salmon}
-.play:hover {background:#1b1814}
-.play:active {background:#333333}
-
+.play:hover {background:#333333}
+.play:active {background:salmon}
 
 .save {						/* save button over textarea */
   display:none;
@@ -43,18 +43,20 @@
   text-align:center;
   border:0.1px solid red;
   border-radius:0.8em;
+  bottom:-20px;
+  right:0;
   color:salmon;
   background:#1b1814;
   height:1.6em;
   width:3.5em;
   font-variant-caps:petite-caps}
-.save:active {background:#333333}
+.save:hover {background:#333333}
+.save:active {background:salmon}
 
 .text {						/* editable text area */
   background-color:inherit;
   color:#826858;
-  max-height:12em;
-  border-radius:0.6em;
+  max-height:19em;
   width:60em;					/* becomes max width */
   line-height:1.2em;
   font-family:inherit;
@@ -116,6 +118,7 @@
   position:absolute;
   pointer-events:none;
   translate: 6em;
+width:12em;
   border-radius:0.5em;
   padding:0.3em;
   margin:auto;
@@ -164,7 +167,7 @@
   border:none;
   transition:color 0.6s;
   white-space:nowrap}
-// .title:hover {color:lightsalmon}
+.title:hover {color:lightsalmon}
 
 .selected {					/* red popup following cursor */
   display:block; 
@@ -180,12 +183,12 @@
   pointer-events:none;
   z-index:999;
   height:0;
-  opacity:0;
+// opacity:0;
   border-radius:2px;
   color:lightsalmon;
   font-size:1.4em;
   border-top:5px solid red;
-  transition: opacity 0.3s}
+  transition: opacity 0.6s}
 
 .cap {						/* htm caption element */
   overflow:wrap;
@@ -246,7 +249,7 @@
 
 .context a {
   display:block;
-  width:3.5em;
+  width:5.5em;
   height:1em;
   padding:0.2em;
   padding-right:0;
