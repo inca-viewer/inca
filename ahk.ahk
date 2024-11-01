@@ -156,6 +156,9 @@
         if !playlist
           if InStr(allFav, src)
             favicon = &#10084						; favorite heart symbol
+if playlist
+  favicon = &#x2661
+  
         if !start
           start = 0.0
         if (type == "video")
@@ -236,22 +239,22 @@ text=
 if(x<1) x=1
                x := Round(x,1)						; play timestamp buttons in text area
                if src
-                 text = %text%<button id='%A_LoopField%' class='play' contenteditable="false" onmouseenter='overText=0; overThumb(%j%, thumb%j%, %x%); thumb.pause(); thumb.currentTime=%x%' onmouseout='overMedia=0' >&#9655;&nbsp;</button>
+                 text = %text%<button id='%A_LoopField%' class='play' contenteditable="false" onmouseenter='overThumb(%j%, thumb%j%, %x%); overText=2; if(thumb.paused) thumb.currentTime=%x%' onmouseout='overMedia=0' onmouseup='if(lastThumb){lastThumb.pause()}; thumb.currentTime=%x%; if (1*localStorage.muted) {thumb.muted=true} else {thumb.muted=false}; thumb.play(); lastThumb=thumb'>&#9655;&nbsp;</button>
                }
              else text = %text%%A_LoopField%<br>
           }
 
    if text
-     caption = <p id='vtt%j%' class='text' style='font-size:1.1em; max-width:%view%em' contenteditable="true" onmouseover='overText=1' onmouseout='overText=0'`n oninput="if(editing&&editing!='%j%') {inca('Vtt',editing)}; editing='%j%'; this.style.background='#15110a'; Save%j%.style.display='block'" ondrag="getParameters(%j%, 'document', '%cueList%', %start%, %dur%, %size%, event)" >`n%text%</p>`n <span id='Save%j%' class='save' onmouseup="inca('Close')">Save</span>`n
+     caption = <p id='vtt%j%' class='text' style='font-size:1.1em; max-width:%view%em' contenteditable="true" onmouseover='overText=1' onmouseout='overText=0'`n onmouseup="if (longClick) {editing='%j%'; Save%j%.style.display='block'; Cancel%j%.style.display='block'; thumb.pause()}" oninput="if(editing&&editing!='%j%') {inca('Vtt',editing)}; editing='%j%'; Save%j%.style.display='block'; Cancel%j%.style.display='block'" ondrag="getParameters(%j%, 'document', '%cueList%', %start%, %dur%, %size%, event)" >`n%text%</p>`n <span id='Save%j%' class='save' onmouseup="inca('Close')">Save</span>`n <span id='Cancel%j%' class='save' style='right:56px' onmouseup="editing=0; inca('Reload',2)">&#x2715;</span>`n
 
 if (type=="image")
   src =
 else src=src="file:///%src%"
 
 if listView
-  mediaList = %mediaList% %fold%<table onmouseout="title%j%.style.color=null; thumb%j%.style.opacity=0; overMedia=0">`n <tr id="entry%j%"`n onmouseover="title%j%.style.color='lightsalmon'; overThumb(%j%, thumb%j%, %start%)"`n onmouseout="overMedia=0; thumb%j%.load()">`n <td></td><td onmouseenter='thumb%j%.style.opacity=0'>%ext%`n <video id='thumb%j%' ondrag="getParameters(%j%, '%type%', '%cueList%', %start%, %dur%, %size%, event)"`n onmouseover="overThumb(%j%, this, %start%)"`n onmouseout="overMedia=0; this.pause()"`n class='thumb2' style="max-width:%view%em; max-height:%view%em"`n %src%`n %poster%`n preload=%preload% muted loop type="video/mp4"></video></td>`n <td>%size%</td>`n <td style='min-width:6em' onmouseover='thumb%j%.style.opacity=1'>%durT%</td>`n <td onmouseover='thumb%j%.style.opacity=1'>%date%</td>`n <td style='min-width:4.4em'>%j%</td>`n <td id='myFavicon%j%' style='width:0; translate:-1em; white-space:nowrap; font-size:0.7em; color:salmon; min-width:1em'>%favicon%</td>`n <td style='width:99em'><input id="title%j%" onmouseover='overText=1' onmouseout='overText=0; Click=0' class='title' type='search' value='%media_s%'`n oninput="wasMedia=%j%; renamebox=this.value"></td>`n <td>%fo%</td></tr></table>`n`n
+  mediaList = %mediaList% %fold%<table onmouseout="title%j%.style.color=null; thumb%j%.style.opacity=0; overMedia=0">`n <tr id="entry%j%"`n onmouseover="title%j%.style.color='lightsalmon'; overThumb(%j%, thumb%j%, %start%)"`n onmouseout="overMedia=0; thumb%j%.load()">`n <td></td><td onmouseenter='thumb%j%.style.opacity=0'>%ext%`n <video id='thumb%j%' ondrag="getParameters(%j%, '%type%', '%cueList%', %start%, %dur%, %size%, event)"`n onmouseover="overThumb(%j%, this, %start%)"`n onmouseout="overMedia=0; this.pause()"`n class='thumb2' style="max-width:%view%em; max-height:%view%em"`n %src%`n %poster%`n preload=%preload% muted loop type="video/mp4"></video></td>`n <td>%size%</td>`n <td style='min-width:6em' onmouseover='thumb%j%.style.opacity=1'>%durT%</td>`n <td onmouseover='thumb%j%.style.opacity=1'>%date%</td>`n <td style='min-width:4.4em'>%j%</td>`n <td id='myFavicon%j%' style='width:0; translate:-1em; white-space:nowrap; font-size:0.64em; color:salmon; min-width:1em'>%favicon%</td>`n <td style='width:99em'><input id="title%j%" onmouseover='overText=1' onmouseout='overText=0; Click=0' class='title' type='search' value='%media_s%'`n oninput="wasMedia=%j%; renamebox=this.value"></td>`n <td>%fo%</td></tr></table>`n`n
 
-else mediaList = %mediaList%<div id="entry%j%" style="padding:0.5em; display:block; position:relative">`n <div class='thumb'><span id='myFavicon%j%' style='display:block; position:absolute; top:5px; right:-4px; font-size:0.8em; color:salmon'>%favicon%</span>`n <span><input id='title%j%' class='title' style='text-align:center; font-size:%cap_size%em; font-weight:bold' type='search' value='%media_s%'`n oninput="wasMedia=%j%; renamebox=this.value" onmousedown='thumb%j%.currentTime=%start%; vtt%j%.scrollTo(0,0)'`n onmouseover='overText=1; thumb%j%.pause()' onmouseout='overText=0'></span>`n <video id="thumb%j%" class='thumb' style="display:block; margin:auto; max-width:%view%em; max-height:%view%em"`n ondrag="getParameters(%j%, '%type%', '%cueList%', %start%, %dur%, %size%, event)"`n onmouseover='overThumb(%j%, this, %start%)'`n onmouseout="overMedia=0; this.pause()"`n %src%`n %poster%`n preload=%preload% loop type='video/mp4'></video>`n %caption%`</div></div>`n`n
+else mediaList = %mediaList%<div id="entry%j%" style="padding:0.5em; display:block; position:relative">`n <div class='thumb'><span id='myFavicon%j%' style='display:block; position:absolute; top:5px; right:-3px; padding-right:0.1em; font-size:0.64em; color:salmon'>%favicon%</span>`n <span><input id='title%j%' class='title' style='text-align:center; font-size:%cap_size%em; font-weight:bold' type='search' value='%media_s%'`n oninput="wasMedia=%j%; renamebox=this.value" onmouseup='overText=2; thumb%j%.currentTime=%start%; vtt%j%.scrollTo(0,0)'`n onmouseover='overText=1' onmouseout='overText=0'></span>`n <video id="thumb%j%" class='thumb' style="display:block; margin:auto; max-width:%view%em; max-height:%view%em"`n ondrag="getParameters(%j%, '%type%', '%cueList%', %start%, %dur%, %size%, event)"`n onmouseover='overThumb(%j%, this, %start%)'`n onmouseout="overMedia=0"`n %src%`n %poster%`n preload=%preload% loop type='video/mp4'></video>`n %caption%`</div></div>`n`n
 }
 
 
@@ -615,8 +618,9 @@ reload := 2
         if (command == "Reload")					; reload web page
             {
             selected =
-            index := 1							; scroll to media 1
-            reload := 2
+            if value !=2 
+              index := 1							; scroll to media 1
+            reload := value
             }
         if (command == "Index")						; index folder (create thumbsheets)
             {
@@ -1346,7 +1350,7 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n if(
 
 <div oncontextmenu="if (yw>0.2 && !overText || playing) {event.preventDefault()}">`n`n
 <div id='myNav' class='context' onmouseup='togglePause()' onwheel='wheelEvent(event, id, this)'>`n
-<a id='mySelect' style='word-spacing:2em' onmouseup="togglePause(); if (!longClick&&(wasMedia||playing)) {sel(index)} else {selectAll()}"></a>`n
+<a id='mySelect' style='word-spacing:1.5em' onmouseup="togglePause(); if (!longClick&&(wasMedia||playing)) {sel(index)} else {selectAll()}"></a>`n
 <a id='myTitle' class='title' onmouseup='togglePause()'></a>`n 
 <video id='myPic' muted class='pic' onmouseup='togglePause()'></video>`n
 <a id='myMute' onmouseup='mute(); togglePause()'>Mute</a>`n
@@ -1424,13 +1428,12 @@ clipboard := new_html
         send, ^l
         sleep 44
         send, {BS}
+;        sleep 24
+ ;       send, {BS}
+;        sleep 24
+;        send, {BS}
         sleep 24
-        send, {BS}
-        sleep 24
-        send, {BS}
-        sleep 24
-send, ^v
-;  SendInput, {Raw}%new_html%
+        send, ^v
         Send, {Enter}
         }
 sleep 111

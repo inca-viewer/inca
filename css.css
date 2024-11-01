@@ -30,11 +30,11 @@
   border:none;
   width:2.6em;
   text-align:center;
-  border-radius:0.8em;
+  border-radius:0.7em;
   outline:none;
   font-size:0.8em;
   color:salmon}
-.play:hover {background:#333333}
+.play:hover {border:1px solid salmon}
 .play:active {background:salmon}
 
 .save {						/* save button over textarea */
@@ -43,14 +43,15 @@
   text-align:center;
   border:0.1px solid red;
   border-radius:0.8em;
-  bottom:-20px;
-  right:0;
+  padding-left:0.4em;
+  padding-right:0.5em;
+  bottom:5px;
+  right:10px;
   color:salmon;
   background:#1b1814;
   height:1.6em;
-  width:3.5em;
   font-variant-caps:petite-caps}
-.save:hover {background:#333333}
+.save:hover {border:1px solid salmon}
 .save:active {background:salmon}
 
 .text {						/* editable text area */
@@ -222,9 +223,9 @@ width:12em;
 .mask {						/* media player overlay of htm tab */
   display:none;
   user-select:none;
-  pointer-events:none;
+//  pointer-events:none;
   position:fixed;
-  transition:0.6s;
+  transition:0.65s;
   opacity=0;
   justify-content:center;
   align-items:center;
