@@ -15,6 +15,14 @@
   c:active {color:red; transform:scale(0.8,0.8)}
 
 
+.fadeout {
+    position:relative; 
+    margin-bottom:-2em;
+    pointer-events:none;
+    height:1em;
+    width:100%;
+    background:linear-gradient(#15110aff, #15110a00)}
+
 .pic {						/* context menu pic */
   --start;					/* default start time */
   background-size:600%;
@@ -55,14 +63,17 @@
 .save:active {background:salmon}
 
 .text {						/* editable text area */
+  position:relative;
   background-color:inherit;
   color:#826858;
-  max-height:19em;
-  width:60em;					/* becomes max width */
+  height:0;  // 90%;
+  width:70em;					/* becomes max width */
   line-height:1.2em;
   font-family:inherit;
+  font-size:1em;
+  margin:auto;
   overflow:hidden;
-  overflow-y: scroll;
+  overflow-y:scroll;
   border:none;
   outline:none}
 .text::-webkit-scrollbar {width:6px}
@@ -72,32 +83,50 @@
   opacity:0;
   border-radius:3%}
 
-.view {						/* htm media content */
+.view {						/* myView */
+  display:block;
   position:absolute;
-  outline:none;
-  display:flex;
-  flex-wrap:wrap;
-  justify-content:space-around;
   overflow-x:hidden;
-  height:100vh}
+  box-sizing:border-box;
+  height:100%;
+  width:100%}
+
+.view2 {
+  display:flex;
+  position:relative; 
+  outline:none;
+  margin:auto;
+  justify-content:space-around;
+  flex-wrap:wrap;
+  padding-top:6.5vh;
+  padding-bottom:60vh;
+  overflow-x:hidden}
+
+.entry {
+  display:block;
+  position:relative;
+  max-height:22em;
+  overflow:hidden; 
+  border-radius:1em;
+  padding:0.3em;
+padding-bottom:1em}
 
 .myPanel {					/* top panel element showing folders etc.*/
   position:relative;
-  top:3.4em;
   width:100%;
   font-size:0.9em;
   white-space:nowrap;
   overflow:hidden;
-  height:6.3em}
+  height:6.5em}
 
 .panel {					/* inner rotated element of myPanel */
-  height:72em;
+  height:80em;
   position:absolute;
   overflow:hidden;
   scrollbar-width:none;
   transform:rotate(-90deg);
   transform-origin:right top;
-  background:#15110a;
+  background:inherit;
   width:8em;					/* entry width	*/
   left:-11%}
 .panel:hover {overflow-y:scroll}
@@ -107,6 +136,7 @@
   white-space:nowrap}
 
 .thumb {					/* thumb view media */
+  --view;
   --rate;
   --start;					/* default start time */
   --skinny;					/* java variables attached to element */
@@ -120,7 +150,7 @@
   pointer-events:none;
   translate: 6em;
 width:12em;
-  border-radius:0.5em;
+  border-radius:1em;
   padding:0.3em;
   margin:auto;
   opacity:0}
@@ -130,7 +160,7 @@ width:12em;
   display:flex;
   font-weight:bold;
   width:100%;
-  margin-top:1em;
+//  margin:1em;
   white-space:nowrap;
   border-radius:1em;
   text-align:center;
@@ -223,12 +253,12 @@ width:12em;
 .mask {						/* media player overlay of htm tab */
   display:none;
   user-select:none;
-//  pointer-events:none;
+// pointer-events:none;
   position:fixed;
-  transition:0.65s;
+  transition:opacity 0.65s;
   opacity=0;
-  justify-content:center;
-  align-items:center;
+//  justify-content:center;
+//  align-items:center;
   top:0;
   left:0;
   height:100vh;
@@ -264,6 +294,9 @@ width:12em;
   background:#15110a;
   user-select:none;
   font-size:0.8em;
+  margin:0;
+  width:100%;
+  height:100%;
   overflow:hidden;
   color:#826858;
   opacity:0;
