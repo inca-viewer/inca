@@ -9,13 +9,15 @@
   td {outline:none; text-align:center; min-width:3.8em; overflow:hidden; white-space:nowrap}
   table {color:#826858; font-size:0.9em; border-collapse:collapse; margin:auto; border-radius:1em; transition:color 0.3s}
   table:hover {background:#1b1814}
-  a {color:#826858; text-decoration:none}
-  c {display:block; padding-left:1em; text-decoration:none; font-weight:bold; color:#826858; transition:1s}
-  c:hover {overflow:visible; transition:0.2s; transform:scale(1.1,1.1); color:lightsalmon}
+  a {color:#826858; text-decoration:none}						/* default text */
+  c {display:block; padding-left:1em; text-decoration:none; font-weight:bold; color:#826858; transition:1s} /* panel text */
+  c:hover {transition:0.2s; transform:scale(1.1,1.1); color:lightsalmon}
   c:active {color:red; transform:scale(0.8,0.8)}
+  d {display:block; width:100%; font-size:0.7em; text-align:center; transition:0.1s}	/* play at subtitle icon */
+  d:hover {color:salmon; opacity:1}
+  d:active {opacity:0.4}
 
-
-.fadeout {
+.fadeout {					/* between top panel and scrolled thumbs */
     position:relative; 
     margin-bottom:-2em;
     pointer-events:none;
@@ -33,18 +35,6 @@
   transition:opacity 0.3s, transform 0.3s;
   border-radius:7%}
 
-.play {						/* play at subtitle icon */
-  background:#15110a;
-  border:none;
-  width:2.6em;
-  text-align:center;
-  border-radius:0.7em;
-  outline:none;
-  font-size:0.8em;
-  color:salmon}
-.play:hover {border:1px solid salmon}
-.play:active {background:salmon}
-
 .save {						/* save button over textarea */
   display:none;
   position:absolute;
@@ -56,17 +46,18 @@
   bottom:5px;
   right:10px;
   color:salmon;
+  transition:0.6s;
   background:#1b1814;
   height:1.6em;
   font-variant-caps:petite-caps}
-.save:hover {border:1px solid salmon}
-.save:active {background:salmon}
+.save:hover {border:1px solid salmon; transform:scale(1.1,1.1)}
+.save:active {background:salmon; transform:scale(0.7,0.7)}
 
 .text {						/* editable text area */
   position:relative;
   background-color:inherit;
   color:#826858;
-  height:0;  // 90%;
+  height:16em;
   width:70em;					/* becomes max width */
   line-height:1.2em;
   font-family:inherit;
@@ -75,6 +66,7 @@
   overflow:hidden;
   overflow-y:scroll;
   border:none;
+  padding:0.4em;
   outline:none}
 .text::-webkit-scrollbar {width:6px}
 
@@ -83,15 +75,15 @@
   opacity:0;
   border-radius:3%}
 
-.view {						/* myView */
+.mycontent {
   display:block;
   position:absolute;
   overflow-x:hidden;
-  box-sizing:border-box;
+  box-sizing:border-box; 
   height:100%;
   width:100%}
 
-.view2 {
+.myview {
   display:flex;
   position:relative; 
   outline:none;
@@ -106,10 +98,10 @@
   display:block;
   position:relative;
   max-height:22em;
-  overflow:hidden; 
+  overflow:hidden;
   border-radius:1em;
   padding:0.3em;
-padding-bottom:1em}
+  padding-bottom:1em}
 
 .myPanel {					/* top panel element showing folders etc.*/
   position:relative;
@@ -120,15 +112,16 @@ padding-bottom:1em}
   height:6.5em}
 
 .panel {					/* inner rotated element of myPanel */
-  height:80em;
+  height:70em;
   position:absolute;
   overflow:hidden;
   scrollbar-width:none;
   transform:rotate(-90deg);
   transform-origin:right top;
   background:inherit;
-  width:8em;					/* entry width	*/
-  left:-11%}
+  width:9em;					/* entry width	*/
+  left:-9%}
+
 .panel:hover {overflow-y:scroll}
 
 .p2 {						/* panel entries */
@@ -143,6 +136,7 @@ padding-bottom:1em}
   position:relative;
   outline:none;
   margin:auto;
+  max-width:8em;
   border-radius:1em}
 
 .thumb2 {					/* list view pop up thumbs */
@@ -160,7 +154,6 @@ width:12em;
   display:flex;
   font-weight:bold;
   width:100%;
-//  margin:1em;
   white-space:nowrap;
   border-radius:1em;
   text-align:center;
