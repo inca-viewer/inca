@@ -50,14 +50,14 @@
   background:#1b1814;
   height:1.6em;
   font-variant-caps:petite-caps}
-.save:hover {border:1px solid salmon; transform:scale(1.1,1.1)}
+.save:hover {border:1px solid salmon; transform:scale(1.2,1.2)}
 .save:active {background:salmon; transform:scale(0.7,0.7)}
 
 .text {						/* editable text area */
   position:relative;
   background-color:inherit;
   color:#826858;
-  height:16em;
+  height:20em;
   width:70em;					/* becomes max width */
   line-height:1.2em;
   font-family:inherit;
@@ -78,6 +78,7 @@
 .mycontent {
   display:block;
   position:absolute;
+  margin:auto;
   overflow-x:hidden;
   box-sizing:border-box; 
   height:100%;
@@ -87,10 +88,10 @@
   display:flex;
   position:relative; 
   outline:none;
-  margin:auto;
+margin:auto;
   justify-content:space-around;
   flex-wrap:wrap;
-  padding-top:6.5vh;
+  padding-top:8.5vh;
   padding-bottom:60vh;
   overflow-x:hidden}
 
@@ -101,13 +102,14 @@
   overflow:hidden;
   border-radius:1em;
   padding:0.3em;
-  padding-bottom:1em}
+  padding-top:1em}
 
 .myPanel {					/* top panel element showing folders etc.*/
   position:relative;
   width:100%;
   font-size:0.9em;
   white-space:nowrap;
+padding:0.6em;
   overflow:hidden;
   height:6.5em}
 
@@ -121,12 +123,12 @@
   background:inherit;
   width:9em;					/* entry width	*/
   left:-9%}
-
 .panel:hover {overflow-y:scroll}
 
 .p2 {						/* panel entries */
   overflow:hidden;
   white-space:nowrap}
+.p2:hover {overflow:visible}
 
 .thumb {					/* thumb view media */
   --view;
@@ -143,7 +145,7 @@
   position:absolute;
   pointer-events:none;
   translate: 6em;
-width:12em;
+  width:14em;
   border-radius:1em;
   padding:0.3em;
   margin:auto;
@@ -153,14 +155,14 @@ width:12em;
   position:relative;
   display:flex;
   font-weight:bold;
+justify-content:space-around;
   width:100%;
   white-space:nowrap;
   border-radius:1em;
   text-align:center;
   transition:0.3s;
   font-size:1em}
-
-.ribbon a {transition:0.8s; border-radius:0.32em}
+.ribbon a {width:9%; transition:0.8s; border-radius:0.32em}
 .ribbon a:hover {transition:0.2s; color:salmon}
 
 .searchbox {					/* input searchbox in htm tab */
@@ -207,7 +209,6 @@ width:12em;
   pointer-events:none;
   z-index:999;
   height:0;
-// opacity:0;
   border-radius:2px;
   color:lightsalmon;
   font-size:1.4em;
@@ -246,12 +247,9 @@ width:12em;
 .mask {						/* media player overlay of htm tab */
   display:none;
   user-select:none;
-// pointer-events:none;
   position:fixed;
   transition:opacity 0.65s;
   opacity=0;
-//  justify-content:center;
-//  align-items:center;
   top:0;
   left:0;
   height:100vh;
