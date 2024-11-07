@@ -241,6 +241,8 @@ if listView
 else mediaList = %mediaList%<div id="entry%j%" class='entry' onmouseenter='if (Click && gesture) sel(%j%)'>`n <span id='myFavicon%j%' style='display:block; position:absolute; top:9px; right:2px; padding-right:0.1em; font-size:0.7em; color:salmon'>%favicon%</span>`n <input id='title%j%' class='title' style='color:#ffa07a77; text-align:center; font-weight:bold' type='search' value='%media_s%'`n oninput="wasMedia=%j%; renamebox=this.value" onmouseup='overText=2; thumb%j%.currentTime=%start%; vtt%j%.scrollTo(0,0)'`n onmouseover='overText=1'`n onmouseout='overText=0'>`n <video id="thumb%j%" class='thumb' style="display:block; margin:auto"`n ondrag="getParameters(%j%, '%type%', '%cueList%', %start%, %dur%, %size%, event)"`n onmouseover="overThumb(%j%, this, %start%); setTimeout(function() {thumb%j%.play()},200)"`n onmouseout="overMedia=0; setTimeout(function() {thumb%j%.pause()},250)"`n %src%`n %poster%`n preload=%preload% loop muted type='video/mp4'></video>`n %caption%`</div>`n`n
 }
 
+
+
     RenderPage()							; construct web page from media list
         {
         Critical							; pause key & timer interrupts
@@ -440,7 +442,6 @@ if subfolders
   subs = ^
 
 
-
 header = <!--, %page%, %pages%, %sort%, %toggles%, %listView%, %playlist%, %path%, %searchPath%, %searchTerm%, -->`n<!doctype html>`n<html>`n<head>`n<meta charset="UTF-8">`n<title>Inca - %title%</title>`n<meta name="viewport" content="width=device-width, initial-scale=1">`n<link rel="icon" type="image/x-icon" href="file:///%inca%\cache\icons\inca.ico">`n<link rel="stylesheet" type="text/css" href="file:///%inca%/css.css">`n</head>`n`n
 
 body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n globals(%page%, %pages%, '%folder%', '%toggles%', '%sort%', %filt%, %listView%, '%selected%', '%playlist%', %index%); %scroll%.scrollIntoView()">`n`n
@@ -482,10 +483,10 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n glo
 <a style='width:5`%; color:red' onmouseover="Sub.scrollIntoView()">%subs%</a>`n
 <a style='width:9`%; %x21%' onmousedown="inca('Path','','','fol|1')" onmouseover="Fol.scrollIntoView()">&#x1F4BB;&#xFE0E;</a>`n
 <a style='width:9`%; %x23%' onmousedown="inca('Path','','','fav|1')" onmouseover="Fav.scrollIntoView()">&#10084;</a>`n
-<a id='SearchBox' style='width:9`%; %x20%' onmousedown="inca('SearchBox','','',myInput.value)" onmousemove='myA.scrollIntoView()' >&#x1F50D;&#xFE0E;</a>`n
+<a id='SearchBox' style='width:9`%; %x20%' onmousedown="inca('SearchBox','','',myInput.value)" onmouseover='myA.scrollIntoView()' >&#x1F50D;&#xFE0E;</a>`n
 <a style='width:9`%; color:salmon; font-weight:bold'>%listSize%</a>`n
 <a id='Add' style='font-variant-caps:petite-caps' onmousedown="inca('Add','','',myInput.value)">%add%</a>`n
-<input id='myInput' class='searchbox' style='width:50`%; border-radius:1em; font-size:1.1em; font-weight:bold' type='search' value='%st%' onmouseover="overText=1; this.focus()" oninput="Add.innerHTML='Add'" onmouseout='overText=0'>
+<input id='myInput' class='searchbox' type='search' value='%st%' onmouseover="overText=1; this.focus(); this.value=''; this.value='%searchTerm%'" oninput="Add.innerHTML='Add'" onmouseup="this.value='%searchTerm%'" onmouseout='overText=0'>
 <a style='width:9`%; text-align:left; %x22%' onmousedown="inca('Path','','','music|1')" onmouseover="Music.scrollIntoView()">&#x266B;</a>`n
 </div>`n`n
 
@@ -1482,6 +1483,8 @@ if (command=="Pause"||command=="Subtitles")
             reverse = R
         if (!InStr(toggles, "Reverse") && (sort == "Date" || sort == "List"))
             reverse = R
+if (sort == "List" && !playlist)
+  sort = Shuffle
         if (sort == "Type")
             Sort, list, %reverse% Z					; alpha sort
         else if (sort != "Shuffle")

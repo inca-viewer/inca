@@ -88,7 +88,7 @@
   display:flex;
   position:relative; 
   outline:none;
-margin:auto;
+  margin:auto;
   justify-content:space-around;
   flex-wrap:wrap;
   padding-top:8.5vh;
@@ -155,7 +155,7 @@ padding:0.6em;
   position:relative;
   display:flex;
   font-weight:bold;
-justify-content:space-around;
+  justify-content:space-around;
   width:100%;
   white-space:nowrap;
   border-radius:1em;
@@ -168,12 +168,17 @@ justify-content:space-around;
 .searchbox {					/* input searchbox in htm tab */
   text-overflow:ellipsis;
   display:inline;
-  background:#1b1814;
-  color:#826858;
+  width:50%; 
+  translate: 0 2px;
+  border-radius:1em; 
+  color:salmon;
+  background:inherit;
+  font-weight:bold;
+  font-size:1=em;
   font-family:inherit;
   padding-left:1.5em; 
   border:none;
-  height:1.2em;
+  height:1.3em;
   outline:none;
   overflow:hidden;
   white-space:nowrap}
@@ -254,7 +259,7 @@ justify-content:space-around;
   left:0;
   height:100vh;
   width:100vw;
-  background-color:black}
+  background:black}
 
 .context {					/* right click menu */
   display:none;
