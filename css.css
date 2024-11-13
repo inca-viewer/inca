@@ -13,7 +13,7 @@
   c {display:block; padding-left:1em; text-decoration:none; font-weight:bold; color:#826858; transition:1s} /* panel text */
   c:hover {transition:0.2s; transform:scale(1.1,1.1); color:lightsalmon}
   c:active {color:red; transform:scale(0.8,0.8)}
-  d {display:block; width:100%; font-size:0.7em; text-align:center; transition:0.1s}	/* play at subtitle icon */
+  d {display:block; width:4em; font-size:0.7em; text-align:center; transition:0.1s}	/* play at subtitle icon */
   d:hover {color:salmon; opacity:1}
   d:active {opacity:0.4}
 
@@ -57,7 +57,7 @@
   position:relative;
   background-color:inherit;
   color:#826858;
-  height:20em;
+  height:16em;
   width:70em;					/* becomes max width */
   line-height:1.2em;
   font-family:inherit;
@@ -98,7 +98,7 @@
 .entry {
   display:block;
   position:relative;
-  max-height:22em;
+//  max-height:22em;
 // overflow:hidden;
   border-radius:1em;
   padding:0.3em;

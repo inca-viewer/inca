@@ -112,6 +112,8 @@
       return
 
 
+
+
     SpoolList(i, j, input, sort_name, start)				; spool sorted media files into web page
         {
         Critical
@@ -137,19 +139,9 @@
         if !dur
           dur := 0
         FileRead, cueList, %inca%\cache\cues\%media%.txt
-        if cueList
-          Loop, Parse, cueList, `n, `r
-            if (StrSplit(A_LoopField, "|").2 == "cap")
-              {
-              x := StrSplit(A_LoopField, "|").3
-              caption = <span class='cap' onmousedown="inca('EditCue',1,%j%)">%x%</span>`n 
-              break
-              }
         cueList := StrReplace(cueList, "`r`n", "#1")			; lines
         cueList := StrReplace(cueList, "|", "#2")			; entries
-        cueList := StrReplace(cueList, ",", "#3")			; cap punctuation...
-        cueList := StrReplace(cueList, "'", "#4")
-        StringReplace, cueList,cueList, ", #5, All
+
         if !playlist
           if InStr(allFav, src)
             favicon = &#10084						; favorite heart symbol
@@ -189,8 +181,6 @@ if (type == "video")
         else
           caption = <span class='cap' style='color:red' onmousedown="inca('Index',0,%j%)">no index</span>`n 
 
-
-
         StringReplace, src, src, #, `%23, All				; html cannot have # in filename
         StringReplace, media_s, media, `', &apos;, All
         start := Round(start,2)
@@ -217,10 +207,11 @@ text=
                if (!x.3) 
                  x := x.1*60 + x.2					; seconds format
                else x := 3600*x.1 + 60*x.2 + x.3
-if(x<1) x=1
+if(x<1) 
+  x=1
                x := Round(x,1)						; play timestamp buttons in text area
-               if src
-                 text = %text%`n <d id='%A_LoopField%' onmouseenter='overThumb(%j%, thumb%j%, %x%); overText=2; if(thumb.paused) thumb.currentTime=%x%' onmouseout='overMedia=0' onmouseup='vttPlay(%x%)'>&#9655;</d>
+;               if src
+                 text = %text%`n<d name='%x%' id='%A_LoopField%' onmouseenter='overThumb(%j%, thumb%j%, %x%); overText=2; if(thumb.paused) thumb.currentTime=%x%' onmouseout='overMedia=0' onmouseup='vttPlay(%x%)'>&#9655;</d>`n
                }
              else text = %text%%A_LoopField%<br>
           }
@@ -229,7 +220,7 @@ if (type=="image")
   src =
 else src=src="file:///%src%"
 if !size
-size = 0	; cannot have null size - crashes getparameters
+size = 0	; cannot have null size - crashes getParameters()
 
 
 if text
@@ -362,7 +353,7 @@ page_s := 60
             }
           if (subfolders && container)
             fill(container)
-}
+          }
 
         container = <div id='Fol' style='font-size:2em; color:#ffa07ab0; text-align:center'>&#x1F4BB;&#xFE0E;</div>`n
         container := fill(container)
@@ -463,7 +454,6 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n glo
 <a id='myLoop' onmouseup='looping^=1; togglePause()'>Loop</a>`n
 <a id='myIndex' onmousedown="inca('Index','',wasMedia)">Index</a>`n
 <a id='myDelete' onmousedown="if(!event.button) {myPlayer.load(); inca('Delete','',wasMedia)}">Delete</a>
-<a id='Cap' onmouseup="inca('Caption', myPlayer.currentTime.toFixed(2), index, cue); cue=0; if (myPlayer.paused){togglePause()}">caption</a>`n
 <a id='myCue' onmouseup="if (!playing){inca('EditCue',0,wasMedia,0)} else {cue=Math.round(myPlayer.currentTime*100)/100; if (myPlayer.paused){togglePause()}}">Cue</a>`n
 <a id='Mp3' onmouseup="inca('mp3', myPlayer.currentTime.toFixed(2), index, cue); cue=0; myPlayer.play(); myNav.style.display=null">mp3</a>`n
 <a id='Mp4' onmouseup="inca('mp4', myPlayer.currentTime.toFixed(2), index, cue); cue=0; myPlayer.play(); myNav.style.display=null">mp4</a>`n
@@ -476,16 +466,16 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n glo
 <div id='myContent' class='mycontent' style='padding:%padding%`%'>`n
 <div id='myView' class='myview'>`n`n`n %mediaList%<div></div></div>`n`n
 
-<div style='position:fixed; top:0; padding-top:7em; padding-bottom:1em; background:#15110a'>
+<div id='myMenu' style='position:fixed; top:0; padding-top:7em; padding-bottom:1em; background:#15110a'>
 <div id='myPanel' class='myPanel'>`n <div id='panel' class='panel'>`n`n%panelList%`n</div></div>`n`n
 
 <div id='myRibbon' class='ribbon' style='width:60em; height:1.4em; font-size:1.1em; background:#1b1814; margin:0.3em'>`n
 <a id="myPage" style='width:9`%' onmousedown="inca('Page', page)" onwheel="wheelEvent(event, id, this)">%pg%</a>
 <a style='width:4`%; color:salmon; font-weight:bold'>%listSize%</a>`n
-<a id='mySub' style='width:4`%; color:red' onmouseover="setTimeout(function() {if(mySub.matches(':hover'))Sub.scrollIntoView()},160)">%subs%</a>`n
-<a id='myFol' style='%x21%' onmousedown="inca('Path','','','fol|1')" onmouseover="setTimeout(function() {if(myFol.matches(':hover'))Fol.scrollIntoView()},160)">&#x1F4BB;&#xFE0E;</a>`n
-<a id='myFav' style='%x23%' onmousedown="inca('Path','','','fav|1')" onmouseover="setTimeout(function() {if(myFav.matches(':hover'))Fav.scrollIntoView()},160)">&#10084;</a>`n
-<a id='mySearch' style='%x20%' onwheel="wheelEvent(event, id, this)" onmousedown="inca('SearchBox','','',myInput.value)" onmouseover="setTimeout(function() {if(mySearch.matches(':hover'))Filter(id)},160)">&#x1F50D;&#xFE0E;</a>`n
+<a id='mySub' style='width:4`%; color:red' onmouseover="setTimeout(function() {if(mySub.matches(':hover'))Sub.scrollIntoView()},140)">%subs%</a>`n
+<a id='myFol' style='%x21%' onmousedown="inca('Path','','','fol|1')" onmouseover="setTimeout(function() {if(myFol.matches(':hover'))Fol.scrollIntoView()},140)">&#x1F4BB;&#xFE0E;</a>`n
+<a id='myFav' style='%x23%' onmousedown="inca('Path','','','fav|1')" onmouseover="setTimeout(function() {if(myFav.matches(':hover'))Fav.scrollIntoView()},140)">&#10084;</a>`n
+<a id='mySearch' style='%x20%' onwheel="wheelEvent(event, id, this)" onmousedown="inca('SearchBox','','',myInput.value)" onmouseover="setTimeout(function() {if(mySearch.matches(':hover'))Filter(id)},140)">&#x1F50D;&#xFE0E;</a>`n
 <a id='Add' style='width:4em; font-variant-caps:petite-caps' onmousedown="inca('Add','','',myInput.value)">%add%</a>`n
 <input id='myInput' class='searchbox' type='search' value='%st%' onmouseover="overText=1; this.focus(); this.value=''; this.value='%searchTerm%'" oninput="Add.innerHTML='Add'" onmouseup="this.value='%searchTerm%'" onmouseout='overText=0'>
 <a style='text-align:left; %x22%' onmousedown="inca('Path','','','music|1')" onmouseover="Music.scrollIntoView()">&#x266B;</a>`n
@@ -510,10 +500,8 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n glo
 <a id='myJoin' onmousedown="inca('Join')">Join</a>`n
 </div>`n`n
 
-
 <div style='height:1em'></div>
-<div class='fadeout'></div>
-
+<div class='fadeout'></div>`n`n
 
 
       FileDelete, %inca%\cache\html\%folder%.htm
@@ -555,6 +543,7 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n glo
     fill(in) {  
       panelList = %panelList%<div style="height:10`%; padding:0.5em; transform:rotate(90deg)">`n%in%</div>`n
       }
+
 
 
 
@@ -797,10 +786,9 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n glo
           {
           command := array[ptr+=1]
           value := array[ptr+=1]
-          value := StrReplace(value, "<", "#")
+          value := StrReplace(value, "*", "#")
           selected := array[ptr+=1]
           address := array[ptr+=1]
-; address := StrReplace(address, ">", "'")			; java/html cannot accept ' in string
           if selected
             getMedia(StrSplit(selected, ",").1)
           if !command
@@ -913,6 +901,7 @@ index:=selected
                else popup = Renamed
                }
             Popup(popup,0,0,0)
+            index := StrSplit(selected, ",").1
             reload := 3
             }
         if (command == "Reload")					; reload web page
@@ -1011,7 +1000,7 @@ index:=selected
                 RunWait %COMSPEC% /c echo add video-scale-x %skinny% > \\.\pipe\mpv,, hide && exit
               }
             }
-        if (command == "EditCue" || command == "Caption")		; open media cues in notepad
+        if (command == "EditCue")					; open media cues in notepad
             {
             if !selected
               return
@@ -1025,13 +1014,7 @@ index:=selected
             if !value							; current media time
               value = 0.00
             if (!address)						; no cue time
-              {
-              x =
-              if (command == "Caption")
-                x = %value%|cap|`r`n
-              FileAppend, %x%, %inca%\cache\cues\%media%.txt, UTF-8
               Run, %inca%\cache\cues\%media%.txt
-              }
             else 
               {
               FileAppend, %address%|goto|%value%`r`n, %inca%\cache\cues\%media%.txt, UTF-8
@@ -1358,7 +1341,7 @@ if address
                   path := SubStr(path, 1, InStr(path, "\", False, -1))	; try one folder back
                 IfNotExist, %path%
                   {
-                  PopUp("Folder Not Exist",600,0,0)
+                  PopUp("Folder Not Found",600,0,0)
                   return
                   }
 		str := StrSplit(path,"\")				; cannot use splitPath
@@ -2258,6 +2241,59 @@ if y
            runwait C:\Users\asus\AppData\Local\vibe\vibe.exe --file "%A_LoopFileFullPath%" --write "%profile%\downloads\captions\%filename%.vtt" --model "C:\Users\ASUS\AppData\Local\github.com.thewh1teagle.vibe\ggml-medium.bin" --format "vtt" 
          }
        }
+
+
+
+
+     convertCues()
+       {
+       Loop, Files, %inca%\cache\cues\*.txt, R
+         {
+         FileRead, str, %A_LoopFileFullPath%
+           Loop, Parse, str, `n, `r
+             if %A_LoopField%  
+               {
+               time := StrSplit(A_Loopfield, "|").1
+               cue := StrSplit(A_Loopfield, "|").2
+               val := StrSplit(A_Loopfield, "|").3
+        year = 2017
+        x := 1*time
+        year += x, seconds
+        FormatTime, in, %year%, HH:mm:ss
+        year = 2017
+        x := (1*time) + 3
+        year += x, seconds
+        FormatTime, in2, %year%, HH:mm:ss
+               if (cue == "cap" && val)
+                 str2 = %str2%%in%.000 --> %in2%.000`r`n%val%`r`n
+               if (cue != "cap" && val) 
+                 str3 = %str3%%time%|%cue%|%val%`r`n
+               }
+         SplitPath, A_LoopFileFullPath,,mediaPath,ext,media
+         FileDelete, %A_LoopFileFullPath%
+         if str2
+           FileAppend, %str2%, %inca%\cache\cues\%media%.vtt
+         if str3
+           FileAppend, %str3%, %A_LoopFileFullPath%
+         str2=
+         str3=
+         }
+       }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
