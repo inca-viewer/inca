@@ -13,17 +13,26 @@
   c {display:block; padding-left:1em; text-decoration:none; font-weight:bold; color:#826858; transition:1s} /* panel text */
   c:hover {transition:0.2s; transform:scale(1.1,1.1); color:lightsalmon}
   c:active {color:red; transform:scale(0.8,0.8)}
-  d {display:block; width:4em; font-size:0.7em; text-align:center; transition:0.1s}	/* play at subtitle icon */
-  d:hover {color:salmon; opacity:1}
-  d:active {opacity:0.4}
+
+b {						/* subtitle timestamp heading */
+  display:block;
+  font-size:0.8em;
+  width:12em;
+  color:#ffa07a33;
+  overflow:hidden;
+  white-space:nowrap;
+  border-radius:1em;
+  text-align:center;
+  transition:0.1s}
+  b:hover {color:#fa8072; overflow:visible}
 
 .fadeout {					/* between top panel and scrolled thumbs */
-    position:relative; 
-    margin-bottom:-2em;
-    pointer-events:none;
-    height:1em;
-    width:100%;
-    background:linear-gradient(#15110aff, #15110a00)}
+  position:relative; 
+  margin-bottom:-2em;
+  pointer-events:none;
+  height:1em;
+  width:100%;
+  background:linear-gradient(#15110aff, #15110a00)}
 
 .pic {						/* context menu pic */
   --start;					/* default start time */

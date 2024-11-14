@@ -180,13 +180,11 @@ if (type == "video")
           }
         else
           caption = <span class='cap' style='color:red' onmousedown="inca('Index',0,%j%)">no index</span>`n 
-
         StringReplace, src, src, #, `%23, All				; html cannot have # in filename
         StringReplace, media_s, media, `', &apos;, All
         start := Round(start,2)
 
 text=
- 
 
         if (ext=="txt")
           {
@@ -200,20 +198,8 @@ text=
           Loop, Parse, str2, `n, `r
             if %A_LoopField%  
              if InStr(A_LoopField, "-->")				; timestamp
-               {
-               x := SubStr(A_LoopField, 1, 12)
-               x := StrReplace(x, " --")				; in case hrs
-               x := StrSplit(x, ":")
-               if (!x.3) 
-                 x := x.1*60 + x.2					; seconds format
-               else x := 3600*x.1 + 60*x.2 + x.3
-if(x<1) 
-  x=1
-               x := Round(x,1)						; play timestamp buttons in text area
-;               if src
-                 text = %text%`n<d name='%x%' id='%A_LoopField%' onmouseenter='overThumb(%j%, thumb%j%, %x%); overText=2; if(thumb.paused) thumb.currentTime=%x%' onmouseout='overMedia=0' onmouseup='vttPlay(%x%)'>&#9655;</d>`n
-               }
-             else text = %text%%A_LoopField%<br>
+               text = %text%`n<b onmouseenter='vttPlay(%j%, this.innerHTML)'>%A_LoopField%</b>`n
+             else text =%text%%A_LoopField%<br>
           }
 
 if (type=="image")
@@ -230,9 +216,7 @@ if listView
   mediaList = %mediaList% %fold%<table onmouseout="thumb%j%.style.opacity=0; overMedia=0">`n <tr id='entry%j%'`n onmouseenter='if (Click && gesture) sel(%j%)'`n onmouseover="overThumb(%j%, thumb%j%, %start%)"`n onmouseout="overMedia=0; thumb%j%.load()">`n <td onmouseenter='thumb%j%.style.opacity=0'>%ext%`n <video id='thumb%j%' class='thumb2' ondrag="getParameters(%j%, '%type%', '%cueList%', %start%, %dur%, %size%, event)"`n onmouseover="overThumb(%j%, this, %start%)"`n onmouseout="overMedia=0"`n %src%`n %poster%`n preload=%preload% muted loop type="video/mp4"></video></td>`n <td>%size%</td>`n <td style='min-width:6em' onmouseover='thumb%j%.style.opacity=1'>%durT%</td>`n <td onmouseover='thumb%j%.style.opacity=1'>%date%</td>`n <td style='min-width:4.4em'>%j%</td>`n <td id='myFavicon%j%' style='width:0; translate:-1em; white-space:nowrap; font-size:0.7em; color:salmon; min-width:1em'>%favicon%</td>`n <td style='width:80em'><input id="title%j%" onmouseover='overText=1' onmouseout='overText=0; Click=0' class='title' type='search' value='%media_s%'`n oninput="wasMedia=%j%; renamebox=this.value"></td>`n %fo%</tr></table>`n`n
 
 else mediaList = %mediaList%<div id="entry%j%" class='entry' onmouseenter='if (Click && gesture && !editing) sel(%j%)'>`n <span id='myFavicon%j%' style='display:block; position:absolute; top:9px; right:2px; padding-right:0.1em; font-size:0.7em; color:salmon'>%favicon%</span>`n <input id='title%j%' class='title' style='text-align:center; font-weight:bold' type='search' value='%media_s%'`n oninput="wasMedia=%j%; renamebox=this.value" onmouseup='overText=2; thumb%j%.currentTime=%start%; vtt%j%.scrollTo(0,0)'`n onmouseover='overText=1'`n onmouseout='overText=0'>`n <video id="thumb%j%" class='thumb' style="display:block; margin:auto"`n ondrag="getParameters(%j%, '%type%', '%cueList%', %start%, %dur%, %size%, event)"`n onmouseenter="overThumb(%j%, this, %start%); if(!toggles.match('Pause')) setTimeout(function() {thumb%j%.play()},200)"`n onmouseout="overMedia=0; setTimeout(function() {thumb%j%.pause()},250)"`n %src%`n %poster%`n preload=%preload% loop muted type='video/mp4'></video>`n %caption%`</div>`n`n
-}
-
-;; 
+} 
 
 
     RenderPage()							; construct web page from media list
@@ -829,47 +813,22 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n glo
               return
             getMedia(selected)
             address := StrReplace(address, "`r`n")
-if (ext=="txt")
- {
-            address := StrReplace(address, "<div><br><\div>", "<br>")
-            address := StrReplace(address, "<div>", "<br>")
+            address := StrReplace(address, "<\d>", "`r`n")
             address := StrReplace(address, "<br>", "`r`n")
-            address := StrReplace(address, ";")
-            StringReplace, address,address, ", , All
             address := RegExReplace(address, "<.*?>")
-}
-     else address := StrReplace(address, "<br>")
-
+            address := StrReplace(address, "&gt;", ">")
             address := StrReplace(address, "&nbsp;", " ")
-            address := StrReplace(address, "<div>")
-            address := StrReplace(address, "<\div>")
 
-						
-
-              vtt =
-              x := StrSplit(address, "d>")
-              Loop % x.MaxIndex()
-                {
-                y := x[A_Index]
-                cap := StrSplit(y, "<d id").1
-                if (StrLen(time)>2 || StrLen(cap)>2)
-                  vtt = %vtt%%time%`r`n%cap%`r`n
-                time := StrSplit(y, "<d id=").2
-                StringReplace, time,time,`",`|,All
-                time := StrSplit(time, "|").2
-                }
-if (ext=="txt") 
+            if (ext=="txt") 
               {
               FileDelete, %src%
               FileAppend, %address%, %src%
               }
-else
-{
+            else
+              {
               FileDelete, %inca%\cache\captions\%media%.vtt
-              FileAppend, %vtt%, %inca%\cache\captions\%media%.vtt
-}
-
-
+              FileAppend, %address%, %inca%\cache\captions\%media%.vtt
+              }
             FileDelete, %inca%\cache\cues\%media%.txt			; for return to text scroll position
             FileAppend, 0.00|scroll|%value%, %inca%\cache\cues\%media%.txt
 ; reload := 3
@@ -2270,11 +2229,11 @@ if y
                  str3 = %str3%%time%|%cue%|%val%`r`n
                }
          SplitPath, A_LoopFileFullPath,,mediaPath,ext,media
-         FileDelete, %A_LoopFileFullPath%
+ ;        FileDelete, %A_LoopFileFullPath%
          if str2
            FileAppend, %str2%, %inca%\cache\cues\%media%.vtt
-         if str3
-           FileAppend, %str3%, %A_LoopFileFullPath%
+ ;        if str3
+ ;          FileAppend, %str3%, %A_LoopFileFullPath%
          str2=
          str3=
          }

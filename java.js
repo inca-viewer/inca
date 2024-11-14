@@ -1,10 +1,8 @@
 
 // Debugging - use mySelected.innerHTML or alert()
 // need to bring back click through mask to browse while plying eg music but then mouseover thumbs changes myplayer src
-// easily adjust timestamps and add new ones
 // if files dont get released from chrome, keep selected
 // have thumb fade opacity up in vtt entry
-// can use wasmedia as lastthumb ?
 // check overtext=2 needed
 // save video format in durations - use to determine new ondrag mpv flag
 // make mpv player equal to browser player or convert all media to firefox compliant
@@ -20,11 +18,8 @@
 
 
 
-
-  var mediaX = 1*localStorage.mediaX					// myPlayer position
-  var mediaY = 1*localStorage.mediaY
   var intervalTimer							// every 100mS
-  var thumb = 0								// thumb element
+  var thumb = 0								// current thumb element
   var title = 0								// title element
   var vtt = 0								// text/subtitle element
   var wheel = 0								// mouse wheel count
@@ -78,8 +73,9 @@
   var Yoff = 0
   var folder = ''							// web page name / media folder
   var defRate = 1							// default speed
-  var lastThumb = 0	// used in ahk
-var lastMedia
+  var lastMedia
+  var mediaX = 1*localStorage.mediaX					// myPlayer position
+  var mediaY = 1*localStorage.mediaY
 
 
 
@@ -345,6 +341,7 @@ var lastMedia
     if (myPic.matches(':hover')) el=myPic
     else if (playing=='browser') el=myPlayer
     else el=thumb
+    if (myMenu.matches(':hover')) thumb.pause()
     rect = el.getBoundingClientRect()
     xm = (xpos - rect.left) / rect.width
     ym = (ypos - rect.top) / rect.height
@@ -668,16 +665,28 @@ var lastMedia
       var cap = x[i].split('</d>')[1]
       cueList = cueList + '#1' + time + '#2cap#2' + cap}}
 
+  function mute() {
+    if(!longClick) {
+      myPlayer.volume=0.05; myPlayer.muted=1*localStorage.muted
+      myPlayer.muted=!myPlayer.muted; localStorage.muted = 1*myPlayer.muted; thumb.muted=myPlayer.muted}}
+
+  function vttPlay(i, x) {
+    var last=thumb; thumb=document.getElementById('thumb'+i); if (last!=thumb) last.pause()
+    thumb.muted = 1*localStorage.muted
+    x = 60*x.split(':')[0] + 1*x.split(':')[1].slice(0,2) + 0.01*x.split(':')[1].slice(4,6)
+    if (x<1) x=1; thumb.currentTime=x}
+
   function scrolltoIndex() {if (title) {
     x=thumb.getBoundingClientRect().bottom; if (x>innerHeight-20 || x<20) myContent.scrollTo(0, x+myContent.scrollTop-innerHeight/2)}}
+
   function Time(z) {if (z<0) return '0:00'; var y=Math.floor(z%60); var x=':'+y; if (y<10) {x=':0'+y}; return Math.floor(z/60)+x}
+
   function togglePause() {if(!thumbSheet && !longClick) {if (myPlayer.paused) {myPlayer.play()} else {myPlayer.pause()}}}
+
   function selectAll() {for (i=1; document.getElementById('thumb'+i); i++) {sel(i)}}
+
   function flip() {skinny*=-1; scaleX*=-1; thumb.style.skinny=skinny; positionMedia(0.6); thumb.style.transform='scaleX('+skinny+')'}
-  function mute() {if(!longClick) {myPlayer.volume=0.05; myPlayer.muted=1*localStorage.muted
-    myPlayer.muted=!myPlayer.muted; localStorage.muted = 1*myPlayer.muted; thumb.muted=myPlayer.muted}}
-  function vttPlay(x) {if(lastThumb){lastThumb.pause()}; thumb.currentTime=x; if (1*localStorage.muted) {thumb.muted=true}
-    else {thumb.muted=false}; thumb.play(); lastThumb=thumb}
+
 
 
 
