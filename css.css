@@ -67,7 +67,7 @@ b {						/* subtitle timestamp heading */
   position:relative;
   background-color:inherit;
   color:#826858;
-text-align:center;
+  text-align:center;
   height:16em;
   width:70em;					/* becomes max width */
   line-height:1.2em;
@@ -109,8 +109,6 @@ text-align:center;
 .entry {
   display:block;
   position:relative;
-//  max-height:22em;
-// overflow:hidden;
   border-radius:1em;
   padding:0.3em;
   padding-top:1em}
@@ -120,7 +118,7 @@ text-align:center;
   width:100%;
   font-size:0.9em;
   white-space:nowrap;
-padding:0.6em;
+  padding:0.6em;
   overflow:hidden;
   height:6.5em}
 
@@ -141,11 +139,11 @@ padding:0.6em;
   white-space:nowrap}
 .p2:hover {overflow:visible}
 
-.thumb {					/* thumb view media */
+.thumb {					/* htm thumbs */
   --view;
   --rate;
-  --start;					/* default start time */
-  --skinny;					/* java variables attached to element */
+  --start;
+  --skinny;					/* java variables attached to each element */
   position:relative;
   outline:none;
   margin:auto;
@@ -155,8 +153,7 @@ padding:0.6em;
 .thumb2 {					/* list view pop up thumbs */
   position:absolute;
   pointer-events:none;
-  translate: 6em;
-  width:14em;
+  translate:6em;
   border-radius:1em;
   padding:0.3em;
   margin:auto;
