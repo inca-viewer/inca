@@ -198,7 +198,7 @@ text=
           Loop, Parse, str2, `n, `r
             if %A_LoopField%  
              if InStr(A_LoopField, "-->")				; timestamp
-               text = %text%`n<b onmouseenter='vttPlay(%j%, this.innerHTML)'>%A_LoopField%</b>`n
+               text = %text%`n<b onmouseenter="vttPlay(%j%, '%A_LoopField%')" onmouseup="thumb.pause(); vttPlay(%j%, '%A_LoopField%')">%A_LoopField%</b>`n
              else text =%text%%A_LoopField%<br>
           }
 
@@ -210,12 +210,12 @@ size = 0	; cannot have null size - crashes getParameters()
 
 
 if text
-     caption = <p id='vtt%j%' class='text' style='font-size:1.1em' contenteditable="true" onmouseover='overText=1' onmouseout='overText=0'`n onmouseup="if (longClick) {editing='%j%'; Save%j%.style.display='block'; Cancel%j%.style.display='block'; thumb.pause()}"`n oninput="if(editing&&editing!='%j%') {inca('Vtt',editing)}; editing='%j%'; Save%j%.style.display='block'; Cancel%j%.style.display='block'"`n ondrag="getParameters(%j%, 'document', '%cueList%', %start%, %dur%, %size%, event)" >%text%</p>`n <span id='Save%j%' class='save' onmouseup="inca('Close')">Save</span>`n <span id='Cancel%j%' class='save' style='right:60px' onmouseup="editing=0; inca('Reload',2)">&#x2715;</span>`n
+     caption = <p id='vtt%j%' class='text' style='font-size:1.1em' contenteditable="true" onmouseover='overText=1' onmouseout='overText=0'`n onmouseup="if (longClick&&!gesture) {editing='%j%'; Save%j%.style.display='block'; Cancel%j%.style.display='block'; thumb.pause()}"`n oninput="if(editing&&editing!='%j%') {inca('Vtt',editing)}; editing='%j%'; Save%j%.style.display='block'; Cancel%j%.style.display='block'"`n ondrag="getParameters(%j%, 'document', '%cueList%', %start%, %dur%, %size%, event)" >%text%</p>`n <span id='Save%j%' class='save' onmouseup="inca('Close')">Save</span>`n <span id='Cancel%j%' class='save' style='right:60px' onmouseup="editing=0; inca('Reload',2)">&#x2715;</span>`n
 
 if listView
-  mediaList = %mediaList% %fold%<table onmouseout="thumb%j%.style.opacity=0; overMedia=0">`n <tr id='entry%j%'`n onmouseenter='if (Click && gesture) sel(%j%)'`n onmouseover="overThumb(%j%, thumb%j%, %start%)"`n onmouseout="overMedia=0; thumb%j%.load()">`n <td onmouseenter='thumb%j%.style.opacity=0'>%ext%`n <video id='thumb%j%' class='thumb2' ondrag="getParameters(%j%, '%type%', '%cueList%', %start%, %dur%, %size%, event)"`n onmouseover="overThumb(%j%, this, %start%)"`n onmouseout="overMedia=0"`n %src%`n %poster%`n preload=%preload% muted loop type="video/mp4"></video></td>`n <td>%size%</td>`n <td style='min-width:6em' onmouseover='thumb%j%.style.opacity=1'>%durT%</td>`n <td onmouseover='thumb%j%.style.opacity=1'>%date%</td>`n <td style='min-width:4.4em'>%j%</td>`n <td id='myFavicon%j%' style='width:0; translate:-1em; white-space:nowrap; font-size:0.7em; color:salmon; min-width:1em'>%favicon%</td>`n <td style='width:80em'><input id="title%j%" onmouseover='overText=1' onmouseout='overText=0; Click=0' class='title' type='search' value='%media_s%'`n oninput="wasMedia=%j%; renamebox=this.value"></td>`n %fo%</tr></table>`n`n
+  mediaList = %mediaList% %fold%<table onmouseout="thumb%j%.style.opacity=0">`n <tr id='entry%j%'`n onmouseenter='if (Click && gesture) sel(%j%)'`n onmouseover="overThumb(%j%, thumb%j%, %start%)"`n onmouseout="thumb%j%.load()">`n <td onmouseenter='thumb%j%.style.opacity=0'>%ext%`n <video id='thumb%j%' class='thumb2' ondrag="getParameters(%j%, '%type%', '%cueList%', %start%, %dur%, %size%, event)"`n %src%`n %poster%`n preload=%preload% muted loop type="video/mp4"></video></td>`n <td>%size%</td>`n <td style='min-width:6em' onmouseover='thumb%j%.style.opacity=1; overThumb(%j%, thumb%j%, %start%)'>%durT%</td>`n <td onmouseover='thumb%j%.style.opacity=1'>%date%</td>`n <td style='min-width:4.4em'>%j%</td>`n <td id='myFavicon%j%' style='width:0; translate:-1em; white-space:nowrap; font-size:0.7em; color:salmon; min-width:1em'>%favicon%</td>`n <td style='width:80em'><input id="title%j%" onmouseover='overText=1' onmouseout='overText=0; Click=0' class='title' type='search' value='%media_s%'`n oninput="wasMedia=%j%; renamebox=this.value"></td>`n %fo%</tr></table>`n`n
 
-else mediaList = %mediaList%<div id="entry%j%" class='entry' onmouseenter='if (Click && gesture && !editing) sel(%j%)'>`n <span id='myFavicon%j%' style='display:block; position:absolute; top:9px; right:2px; padding-right:0.1em; font-size:0.7em; color:salmon'>%favicon%</span>`n <input id='title%j%' class='title' style='text-align:center; font-weight:bold' type='search' value='%media_s%'`n oninput="wasMedia=%j%; renamebox=this.value" onmouseup='overText=2; thumb%j%.currentTime=%start%; vtt%j%.scrollTo(0,0)'`n onmouseover='overText=1'`n onmouseout='overText=0'>`n <video id="thumb%j%" class='thumb' style="display:block; margin:auto"`n ondrag="getParameters(%j%, '%type%', '%cueList%', %start%, %dur%, %size%, event)"`n onmouseenter="overThumb(%j%, this, %start%); if(!toggles.match('Pause')) setTimeout(function() {thumb%j%.play()},200)"`n onmouseout="overMedia=0; setTimeout(function() {thumb%j%.pause()},250)"`n %src%`n %poster%`n preload=%preload% loop muted type='video/mp4'></video>`n %caption%`</div>`n`n
+else mediaList = %mediaList%<div id="entry%j%" class='entry' onmouseenter='if (Click && gesture && !editing) sel(%j%)'>`n <span id='myFavicon%j%' style='display:block; position:absolute; top:9px; right:2px; padding-right:0.1em; font-size:0.7em; color:salmon'>%favicon%</span>`n <input id='title%j%' class='title' style='text-align:center; font-weight:bold' type='search' value='%media_s%'`n oninput="wasMedia=%j%; renamebox=this.value" onmouseup='overText=2; thumb%j%.currentTime=%start%; vtt%j%.scrollTo(0,0)'`n onmouseover='overText=1'`n onmouseout='overText=0'>`n <video id="thumb%j%" class='thumb' style="display:block; margin:auto"`n ondrag="getParameters(%j%, '%type%', '%cueList%', %start%, %dur%, %size%, event)"`n onmouseenter="overThumb(%j%, this, %start%); if(!toggles.match('Pause')) thumb.muted=1; thumb%j%.play()"`n onmouseout="thumb%j%.pause()"`n %src%`n %poster%`n preload=%preload% loop muted type='video/mp4'></video>`n %caption%`</div>`n`n
 } 
 
 
@@ -435,16 +435,16 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n glo
 <a id='mySpeed' onclick="inca('Close')"></a>`n
 <a id='mySkinny' onclick="inca('Close')"></a>`n
 <a id='myFlip' onmouseup='flip(); togglePause()'>Flip</a>`n
-<a id='myLoop' onmouseup='looping^=1; togglePause()'>Loop</a>`n
+<a id='myLoop' onmouseup='if(looping) {looping=0} else looping=1; togglePause()'>Loop</a>`n
 <a id='myIndex' onmousedown="inca('Index','',wasMedia)">Index</a>`n
 <a id='myDelete' onmousedown="if(!event.button) {myPlayer.load(); inca('Delete','',wasMedia)}">Delete</a>
-<a id='myCue' onmouseup="if (!playing){inca('EditCue',0,wasMedia,0)} else {cue=Math.round(myPlayer.currentTime*100)/100; if (myPlayer.paused){togglePause()}}">Cue</a>`n
+<a id='myCue' onmouseup="if (!playing) {inca('EditCue',0,wasMedia,0)} else if(!cue) {cue=Math.round(myPlayer.currentTime*100)/100; if (myPlayer.paused)togglePause()} else {inca('addCue', myPlayer.currentTime.toFixed(2), index, cue); cue=0}">Cue</a>`n
 <a id='Mp3' onmouseup="inca('mp3', myPlayer.currentTime.toFixed(2), index, cue); cue=0; myPlayer.play(); myNav.style.display=null">mp3</a>`n
 <a id='Mp4' onmouseup="inca('mp4', myPlayer.currentTime.toFixed(2), index, cue); cue=0; myPlayer.play(); myNav.style.display=null">mp4</a>`n
 <a></a></div>`n`n
 
 <div id='myMask' class="mask" onwheel="wheelEvent(event, id, this)"></div>`n 
-<video id="myPlayer" class='player' type="video/mp4" muted onmouseover='overMedia=index' onmouseout='overMedia=0' onwheel="wheelEvent(event, id, this)"></video>`n
+<video id="myPlayer" class='player' type="video/mp4" muted onwheel="wheelEvent(event, id, this)"></video>`n
 <span id='myCap' class='caption'></span>`n
 <span id='mySeekbar' class='seekbar'></span>`n`n
 <div id='myContent' class='mycontent' style='padding:%padding%`%'>`n
@@ -807,13 +807,19 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n glo
             sleep 400
             Winactivate, ahk_class CabinetWClass
             }
+        if (command == "addCue")
+            {
+            FileAppend, %address%|goto|%value%`r`n, %inca%\cache\cues\%media%.txt, UTF-8
+              Popup("Added . . .",900,0,0)
+            }
         if (command == "Vtt")						; save browser text editing
             {
             if !address
               return
             getMedia(selected)
             address := StrReplace(address, "`r`n")
-            address := StrReplace(address, "<\d>", "`r`n")
+            address := StrReplace(address, "<div>", "`r`n")
+            address := StrReplace(address, "<\b>", "`r`n")
             address := StrReplace(address, "<br>", "`r`n")
             address := RegExReplace(address, "<.*?>")
             address := StrReplace(address, "&gt;", ">")
@@ -2102,7 +2108,7 @@ if playlist
            start := StrSplit(A_Loopfield, "|").2
 z := Round(start-5,2)
            detectMedia(source)
-           x = %searchFolders%
+           x = %searchFolders%|%indexFolders%
            IfNotExist, %source%
 y=
 {
