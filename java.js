@@ -17,9 +17,6 @@
 // integrate torrent posting
 // when zoom htm, lose htm list top
 // vtt text height when thumb popped
-// scrool bar of vtt triggers editing mode because no clientX
-
-// why take so long to add 20 shorts to music plist
 
 
 
@@ -147,7 +144,6 @@
       document.getElementById('myFavicon'+index).innerHTML = '&#10084'
       inca('Favorite',x,index,vtt.scrollTop.toFixed(0)); return}	// includes caption scroll
     if (lastClick==3 && (!longClick || (!playing && !overMedia && !myNav.matches(':hover')))) return
-    if (overText && !editing) {thumb.muted = 1*localStorage.muted; if (thumb.paused) {thumb.play()} else thumb.pause()}
     if (!gesture && longClick==1 && !playing && playlist && index && selected) {inca('Move', overMedia); return}
     if (!longClick && lastClick==1) {
       if (myPic.matches(':hover')) {thumbSheet=0; thumb.currentTime=myPic.style.start}
@@ -163,7 +159,7 @@
     if (playing && lastClick==2) {							// next, previous media
       if (!thumbSheet) thumb.currentTime=myPlayer.currentTime
       if (longClick) {index--} else index++}
-    if (longClick==1 && !overMedia && !playing && myNav.style.display=='none') index = lastMedia
+    if (longClick==1 && !overMedia && !playing && !myNav.style.display) index = lastMedia
     else if (longClick==1 && type=='video') if (thumbSheet){thumbSheet=0} else thumbSheet=1	// thumbsheet view
     if ((longClick==3 && !overMedia && playing) || Math.abs(thumb.style.start-thumb.currentTime) < 5) thumb.currentTime=thumb.style.start
     if (longClick==3 && overMedia) thumb.currentTime=0.1
@@ -273,7 +269,7 @@
       else if (x*0.98>8 && !wheelUp) x *= 0.98
       if (thumb.style.position=='fixed') thumb.style.view = x
       else {view=x; localStorage.setItem('pageView'+folder, x)}
-      setThumbs(14)
+      setThumbs(36)
       block=12}
     else if (!playing && id=='myWidth') {				// page width
       x = 1*myView.style.width.slice(0,-1)
@@ -359,7 +355,7 @@
     else mySkinny.innerHTML = skinny.toFixed(2)
     if (outerHeight-innerHeight>30) {myMenu.style.display=null} else myMenu.style.display='none'  // if fullscreen hide menu
     if (selected && !Click) mySelected.innerHTML = selected.split(',').length -1
-    else mySelected.innerHTML = '' //index+'   '+overMedia+'   '+overText 
+    else mySelected.innerHTML = '' // index+'   '+overMedia+'   '+overText 
     if (!thumb) return
     if (type!='image' && !thumbSheet) seekBar()
     if (!playing) myMask.style.opacity=0
@@ -623,7 +619,8 @@
     if (ix) {title.style.borderTop='0.1px solid salmon'; scrolltoIndex()}}  // eg. after switch thumbs/listview
 
   function setThumbs(qty) {						// set thumb sizes in htm
-    for (i=1; i<qty, el=document.getElementById('thumb'+i); i++) {	// until end of list
+    for (i=1; el=document.getElementById('thumb'+i); i++) {		// until end of list
+if (i>qty) break
       if (el.style.position=='fixed') {x=el.style.view} else x=view	// start at last thumb size
       if ((ratio = el.offsetWidth/el.offsetHeight) > 1) ratio=1
       if (listView) {el.style.maxWidth='13em'; el.style.maxHeight='12em'}   // use fixed thumb size

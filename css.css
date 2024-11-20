@@ -9,7 +9,7 @@
   td {outline:none; text-align:center; min-width:3.8em; overflow:hidden; white-space:nowrap}
   table {color:#826858; font-size:0.9em; border-collapse:collapse; margin:auto; border-radius:1em; transition:color 0.3s}
   table:hover {background:#1b1814}
-  a {color:#826858; text-decoration:none}						/* default text */
+  a {color:#826858; text-decoration:none}	/* default text */
   c {display:block; padding-left:1em; text-decoration:none; font-weight:bold; color:#826858; transition:1s} /* panel text */
   c:hover {transition:0.2s; transform:scale(1.1,1.1); color:lightsalmon}
   c:active {color:red; transform:scale(0.8,0.8)}
@@ -170,7 +170,7 @@ b {						/* subtitle timestamp heading */
   text-align:center;
   transition:0.3s;
   font-size:1em}
-.ribbon a {width:9%; transition:0.8s; border-radius:0.32em}
+.ribbon a {width:6%; transition:0.8s; border-radius:1em}
 .ribbon a:hover {transition:0.2s; color:salmon}
 
 .searchbox {					/* input searchbox in htm tab */

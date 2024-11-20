@@ -189,7 +189,7 @@
             Loop, Parse, str2, `n, `r
               if %A_LoopField%  
                 if InStr(A_LoopField, "-->")				; timestamp - warning!! care making changes to this element
-                  text = %text%<b onmouseenter="overThumb(%j%); thumb.currentTime=vttTime('%A_LoopField%')">%A_LoopField%</b>
+                  text = %text%<b onclick='thumb.play(); thumb.muted=0' onmouseenter="overThumb(%j%); thumb.currentTime=vttTime('%A_LoopField%')">%A_LoopField%</b>
                 else text =%text%%A_LoopField%<br>
             }
         text := StrReplace(text, "`r`n", "<br>")
@@ -203,12 +203,12 @@ size = 0	; cannot have null size - crashes getParameters()
 caption = <span id='vtt%j%'></span>					; default null placeholder
 
 if (!listView && text)
-     caption = <p id='vtt%j%' class='text' style='font-size:1.1em' contenteditable="true" onmouseover='overText=1' onmouseout='overText=0'`n onmouseup="if (longClick&&!gesture) {editing='%j%'; Save%j%.style.display='block'; Cancel%j%.style.display='block'}"`n oninput="if(editing&&editing!='%j%') {inca('Vtt',editing)}; editing='%j%'; Save%j%.style.display='block'; Cancel%j%.style.display='block'"`n ondrag="getParameters(%j%, 'document', '%cueList%', %start%, %dur%, %size%, event)">`n %text%</p>`n <span id='Save%j%' class='save' onmouseup="inca('Close')">Save</span>`n <span id='Cancel%j%' class='save' style='right:60px' onmouseup="editing=0; inca('Reload',2)">&#x2715;</span>`n
+     caption = <p id='vtt%j%' class='text' style='font-size:1.1em' contenteditable="true" onmouseover='overText=1' onmouseout='overText=0'`n onmouseup="if (longClick&&!gesture) {editing='%j%'; Save%j%.style.display='block'; Cancel%j%.style.display='block'}"`n oninput="if(editing&&editing!='%j%') {inca('Vtt',editing)}; editing='%j%'; Save%j%.style.display='block'; Cancel%j%.style.display='block'"`n ondrag="getParameters(%j%, 'document', '%cueList%', %start%, %dur%, %size%, event)">%text%</p>`n <span id='Save%j%' class='save' onmouseup="inca('Close')">Save</span>`n <span id='Cancel%j%' class='save' style='right:60px' onmouseup="editing=0; inca('Reload',2)">&#x2715;</span>`n
 
 if listView
   mediaList = %mediaList% %fold%<table onmouseout="thumb%j%.style.opacity=0">`n <tr id='entry%j%'`n onmouseenter='overThumb(%j%); if (Click && gesture==1) sel(%j%)'>`n <td>%ext%`n <video id='thumb%j%' class='thumb2' ondrag="getParameters(%j%, '%type%', '%cueList%', %start%, %dur%, %size%, event)"`n %src%`n %poster%`n preload=%preload% muted loop type="video/mp4"></video></td>`n <td>%size%</td>`n <td style='min-width:6em'>%durT%</td>`n <td>%date%</td>`n <td style='min-width:4.4em'>%j%</td>`n <td id='myFavicon%j%' style='width:0; translate:-1em; white-space:nowrap; font-size:0.7em; color:salmon; min-width:1em'>%favicon%</td>`n <td style='width:80em'><input id="title%j%" onmouseover='overText=1' onmouseout='overText=0; Click=0' class='title' type='search' value='%media_s%'`n oninput="renamebox=this.value"></td>`n %fo%</tr>%caption%</table>`n`n
 
-else mediaList = %mediaList%<div id="entry%j%" class='entry'>`n <span id='myFavicon%j%' style='display:block; position:absolute; top:9px; right:2px; padding-right:0.1em; font-size:0.7em; color:salmon'>%favicon%</span>`n <input id='title%j%' class='title' style='text-align:center; font-weight:bold' type='search' value='%media_s%'`n oninput="renamebox=this.value" onmouseup='thumb%j%.currentTime=%start%; vtt%j%.scrollTo(0,0)'`n onmouseover='overText=1'`n onmouseout='overText=0'>`n <video id="thumb%j%" class='thumb' style="display:block; margin:auto"`n ondrag="getParameters(%j%, '%type%', '%cueList%', %start%, %dur%, %size%, event)"`n onmouseenter="overThumb(%j%); thumb.play(); if (Click && gesture==1 && !editing) sel(%j%)"`n onmouseout='thumb.pause()' %src%`n %poster%`n preload=%preload% loop muted type='video/mp4'></video>`n %noIndex% %caption%</div>`n`n
+else mediaList = %mediaList%<div id="entry%j%" class='entry'>`n <span id='myFavicon%j%' style='display:block; position:absolute; top:9px; right:2px; padding-right:0.1em; font-size:0.7em; color:salmon'>%favicon%</span>`n <input id='title%j%' class='title' style='margin:auto; font-weight:bold' type='search' value='%media_s%'`n oninput="renamebox=this.value" onmouseup='thumb%j%.currentTime=%start%; vtt%j%.scrollTo(0,0)'`n onmouseover='overText=1'`n onmouseout='overText=0'>`n <video id="thumb%j%" class='thumb' style="display:block; margin:auto"`n ondrag="getParameters(%j%, '%type%', '%cueList%', %start%, %dur%, %size%, event)"`n onmouseenter="overThumb(%j%); thumb.play(); if (Click && gesture==1 && !editing) sel(%j%)"`n onmouseout='thumb.pause()' %src%`n %poster%`n preload=%preload% loop muted type='video/mp4'></video>`n %noIndex% %caption%</div>`n`n
 } 
 
 
@@ -311,6 +311,21 @@ page_s := 64
         if searchTerm						; on load scroll top panel to search letter eg 'M'
           scroll = my%x%
 
+        container = <div id='Music' style='font-size:2em; color:#ffa07ab0; text-align:center'>&#x266B;</div>`n
+        container := fill(container)
+        Loop, Parse, music, `|
+          if A_LoopField
+            {
+            SplitPath, A_Loopfield,,,,x
+            if (x == folder)
+              container = %container%<c class='p2' style='color:salmon' onmousedown="inca('Path','','','music|%A_Index%')">%x%</c>`n
+            else container = %container%<c class='p2' onmousedown="inca('Path','','','music|%A_Index%')">%x%</c>`n
+            if !Mod(A_Index,4)
+              container := fill(container)
+            }
+        if container
+          fill(container)
+
         if subfolders
           {
           container = <div id='Sub' style='font-size:2em; color:#ff0000a0; text-align:center'>&#x1F4BB;&#xFE0E;</div>`n
@@ -388,20 +403,6 @@ page_s := 64
         if container
           fill(container)
 
-        container = <div id='Music' style='font-size:2em; color:#ffa07ab0; text-align:center'>&#x266B;</div>`n
-        container := fill(container)
-        Loop, Parse, music, `|
-          if A_LoopField
-            {
-            SplitPath, A_Loopfield,,,,x
-            if (x == folder)
-              container = %container%<c class='p2' style='color:salmon' onmousedown="inca('Path','','','music|%A_Index%')">%x%</c>`n
-            else container = %container%<c class='p2' onmousedown="inca('Path','','','music|%A_Index%')">%x%</c>`n
-            if !Mod(A_Index,4)
-              container := fill(container)
-            }
-        if container
-          fill(container)
 
 x = %searchTerm%|
 if (searchTerm && !InStr(search, x))
@@ -446,15 +447,15 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n glo
 <div id='myPanel' class='myPanel'>`n <div id='panel' class='panel'>`n`n%panelList%`n</div></div>`n`n
 
 <div id='myRibbon' class='ribbon' style='width:60em; height:1.4em; font-size:1.1em; background:#1b1814; margin:0.3em'>`n
-<a id="myPage" style='width:9`%' onmousedown="inca('Page', page)" onwheel="wheelEvent(event, id, this)">%pg%</a>
-<a style='width:4`%; color:salmon; font-weight:bold'>%listSize%</a>`n
-<a id='mySub' style='width:4`%; color:red' onmouseover="setTimeout(function() {if(mySub.matches(':hover'))Sub.scrollIntoView()},140)">%subs%</a>`n
+<a style='width:3`%; %x22%' onmousedown="inca('Path','','','music|1')" onmouseover="Music.scrollIntoView()">&#x266B;</a>`n
+<a id="myPage" onmousedown="inca('Page', page)" onwheel="wheelEvent(event, id, this)">%pg%</a>
+<a style='width:5`%; color:salmon; font-weight:bold'>%listSize%</a>`n
+<a id='mySub' style='width:1`%; color:red' onmouseover="setTimeout(function() {if(mySub.matches(':hover'))Sub.scrollIntoView()},140)">%subs%</a>`n
 <a id='myFol' style='%x21%' onmousedown="inca('Path','','','fol|1')" onmouseover="setTimeout(function() {if(myFol.matches(':hover'))Fol.scrollIntoView()},140)">&#x1F4BB;&#xFE0E;</a>`n
 <a id='myFav' style='%x23%' onmousedown="inca('Path','','','fav|1')" onmouseover="setTimeout(function() {if(myFav.matches(':hover'))Fav.scrollIntoView()},140)">&#10084;</a>`n
 <a id='mySearch' style='%x20%' onwheel="wheelEvent(event, id, this)" onmousedown="inca('SearchBox','','',myInput.value)" onmouseover="setTimeout(function() {if(mySearch.matches(':hover'))Filter(id)},140)">&#x1F50D;&#xFE0E;</a>`n
 <a id='Add' style='width:4em; font-variant-caps:petite-caps' onmousedown="inca('Add','','',myInput.value)">%add%</a>`n
 <input id='myInput' class='searchbox' type='search' value='%st%' onmouseover="overText=1; this.focus(); this.value=''; this.value='%searchTerm%'" oninput="Add.innerHTML='Add'" onmouseup="this.value='%searchTerm%'" onmouseout='overText=0'>
-<a style='text-align:left; %x22%' onmousedown="inca('Path','','','music|1')" onmouseover="Music.scrollIntoView()">&#x266B;</a>`n
 </div>`n`n
 
 <div id='myRibbon1' class='ribbon'>`n
@@ -829,8 +830,14 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n glo
               FileDelete, %inca%\cache\captions\%media%.vtt
               FileAppend, %address%, %inca%\cache\captions\%media%.vtt
               }
+            FileRead, cues, %inca%\cache\cues\%media%.txt
+            if cues
+              Loop, Parse, cues, `n, `r					; each line of cues
+                if A_LoopField
+                  if !InStr(A_LoopField, "scroll")
+                    newCue = %newCue%%A_LoopField%`r`n
             FileDelete, %inca%\cache\cues\%media%.txt			; for return to text scroll position
-            FileAppend, 0.00|scroll|%value%, %inca%\cache\cues\%media%.txt
+            FileAppend, %newCue%0.00|scroll|%value%`r`n, %inca%\cache\cues\%media%.txt
 index:=1
 if (type == "document")
   sort = Date
