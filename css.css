@@ -227,18 +227,6 @@ b {						/* subtitle timestamp heading */
   border-top:5px solid red;
   transition: opacity 0.6s}
 
-.cap {						/* htm caption element */
-  overflow:wrap;
-  white-space:nowrap;
-  padding-left:1em;
-  color:#ffa07ab0;
-  display:block;
-  position:absolute;
-  text-align:center;
-  overflow:hidden;
-  text-overflow:ellipsis;
-  line-height:1.4em}
-
 .caption {					/* myPlayer caption element */
   position:absolute;
   resize:none;
