@@ -19,7 +19,6 @@
 // moving thumbs as fixed to reposition in plist
 
 
-
   var intervalTimer							// every 100mS
   var thumb = 0								// current thumb element
   var title = 0								// title element
@@ -432,7 +431,7 @@ block=120
       cueW = rect.width*(cue - x)/dur
       if (cue < 0.2+x) {
         cueX = rect.left; cueW = rect.width*el.currentTime/dur}}
-    if (myNav.style.display) {
+    if (myPic.matches(':hover')) {
       mySeekbar.style.top = rect.bottom +5 +'px'
       mySeekbar.style.left = rect.left +'px'
       mySeekbar.style.width = myPic.offsetWidth*myPic.style.start/dur +'px'}
