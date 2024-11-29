@@ -14,9 +14,10 @@
 // check invalid vtttime cue time crashes htm
 // mpv needs to exit fullscreen after use
 // speed up first use large htm - maybe durations access
-// maybe inca reset htm page to null before filing/deleting
 // put all videos in 2nd drive and put all asian to fem
 // moving thumbs as fixed to reposition in plist
+
+// selected is passing to renderpage not cleared
 
 
   var intervalTimer							// every 100mS
@@ -89,7 +90,7 @@
 
   document.addEventListener('keydown', (e) => { 					// keyboard events
     if (e.key=='Enter') {
-      if (renamebox) inca('Rename', renamebox, index)					// rename media
+      if (renamebox) inca('Rename', renamebox, lastMedia)				// rename media
       else if (myInput.matches(':focus')) inca('SearchBox','','',myInput.value)		// search media on pc
       else if (type=='document') {var x=thumb.scrollTop; setTimeout(function(){thumb.scrollTo(0,x)},100)}}
     else if (e.code=='Space') togglePause()
@@ -566,8 +567,9 @@ block=120
       if (el.style.skinny) messages = messages + '#Skinny#'+el.style.skinny+'#'+i+'#'+cue
       if (el.style.rate) messages = messages + '#Rate#'+el.style.rate+'#'+i+'#'+cue}
     if (!select) {select=''} else {select=select+','}
-    if (selected && command!='Close' && command!='Reload') select=selected // selected is global value
-    for (x of select.split(',')) {if (x=document.getElementById('thumb'+x)) if (x.src) {x.load()}}
+if (selected) select=selected
+// if (selected && command!='Close' && command!='Reload') select=selected // selected is global value
+// for (x of select.split(',')) {if (x=document.getElementById('thumb'+x)) if (x.src) {x.load()}}
     if (!value) value=''
     if (!address) address=''
     if (isNaN(value)) value=value.replaceAll('#', '*')			// because # is used as delimiter
@@ -619,8 +621,8 @@ block=120
     defRate = 1*localStorage.getItem(key)
     Filter('my'+so)							// show filter heading in red
     for (x of selected.split(',')) {if (x && !isNaN(x)) {		// highlight selected media			
-      if (lv) document.getElementById('title'+x).style.outline = '0.1px solid red'
-      else document.getElementById('thumb'+x).style.outline = '1.5px solid red'}} 
+      if (lv && (el=document.getElementById('title'+x))) el.style.outline = '0.1px solid red'
+      else if (el=document.getElementById('thumb'+x)) el.style.outline = '1.5px solid red'}} 
     for (index=0, n=1; getParameters(n); n++) {}			// process cues (eg. set thumb widths)
     if (!ix) index=1
     else index=ix
