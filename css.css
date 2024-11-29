@@ -102,7 +102,7 @@ b {						/* subtitle timestamp heading */
   margin:auto;
   justify-content:space-around;
   flex-wrap:wrap;
-  padding-top:6vh;
+//  padding-top:6vh;
   padding-bottom:60vh;
   overflow-x:hidden}
 

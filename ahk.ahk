@@ -127,7 +127,7 @@
           {
           if (dur > 61)
             start := 20.1 + (4 * (dur - 20)/200)
-          else start :=0
+          else start := 4 * dur / 200
           }
         durT := Time(dur)
         if !dur
@@ -291,11 +291,8 @@ page_s := 64
         if searchTerm
           {
           st := searchTerm
-
-        StringReplace, st, st, #, `%23, All				; html cannot have # or ' passing parameters
-        StringReplace, st, st, `', &apos;, All
-
-
+          StringReplace, st, st, #, `%23, All				; html cannot have # or ' passing parameters
+          StringReplace, st, st, `', &apos;, All
           x24=All
           }
         else
@@ -412,17 +409,16 @@ if (searchTerm && !InStr(search, x))
   add = Add
 if subfolders
   subs = ^
-
-StringReplace, ff, folder, `', &apos;, All
+StringReplace, folder_s, folder, `', &apos, All				; htm cannot pass '
 
 
 header = <!--, %page%, %pages%, %sort%, %toggles%, %listView%, %playlist%, %path%, %searchPath%, %searchTerm%, -->`n<!doctype html>`n<html>`n<head>`n<meta charset="UTF-8">`n<title>Inca - %title%</title>`n<meta name="viewport" content="width=device-width, initial-scale=1">`n<link rel="icon" type="image/x-icon" href="file:///%inca%\cache\icons\inca.ico">`n<link rel="stylesheet" type="text/css" href="file:///%inca%/css.css">`n</head>`n`n
 
-body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n globals(%page%, %pages%, '%ff%', '%toggles%', '%sort%', %filt%, %listView%, '%selected%', '%playlist%', %index%); %scroll%.scrollIntoView()">`n`n
+body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n globals(%page%, %pages%, '%folder_s%', '%toggles%', '%sort%', %filt%, %listView%, '%selected%', '%playlist%', %index%); %scroll%.scrollIntoView()">`n`n
 
 <div id='mySelected' class='selected'></div>`n
 
-<div oncontextmenu="if (yw>0.1 && !overText || playing) {event.preventDefault()}">`n`n
+<div oncontextmenu="if (yw>0.05 && !overText || playing) {event.preventDefault()}">`n`n
 <div id='myNav' class='context' onwheel='wheelEvent(event, id, this)'>`n
 <a onmouseup="inca('Settings')">&#8230;</a>`n
 <a id='mySelect' style='word-spacing:2em' onmouseup="if (!longClick&&(myTitle.innerHTML||playing)) {sel(index)} else {selectAll()}"></a>`n
@@ -448,11 +444,11 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n glo
 <div id='myContent' class='mycontent' style='padding:%padding%`%'>`n
 <div id='myView' class='myview'>`n`n`n %mediaList%<div></div></div>`n`n
 
-<div id='myMenu' style='position:fixed; top:0; padding-top:7em; padding-bottom:1em; background:#15110a'>
+<div id='myMenu' style='position:fixed; top:0; padding-top:5em; padding-bottom:1em; background:#15110a'>
 <div id='myPanel' class='myPanel'>`n <div id='panel' class='panel'>`n`n%panelList%`n</div></div>`n`n
 
-<div id='myRibbon' class='ribbon' style='width:60em; height:1.4em; font-size:1.1em; background:#1b1814; margin:0.3em'>`n
-<a style='width:3`%; %x22%' onmousedown="inca('Path','','','music|1')" onmouseover="Music.scrollIntoView()">&#x266B;</a>`n
+<div id='myRibbon' class='ribbon' style='width:61em; height:1.4em; font-size:1.1em; background:#1b1814; margin:0.3em'>`n
+<a id='myMusic' style='width:3`%; %x22%' onmousedown="inca('Path','','','music|1')" onmouseover="setTimeout(function() {if(myMusic.matches(':hover'))Music.scrollIntoView()},140)">&#x266B;</a>`n
 <a id="myPage" onmousedown="inca('Page', page)" onwheel="wheelEvent(event, id, this)">%pg%</a>
 <a style='width:5`%; color:salmon; font-weight:bold'>%listSize%</a>`n
 <a id='mySub' style='width:1`%; color:red' onmouseover="setTimeout(function() {if(mySub.matches(':hover'))Sub.scrollIntoView()},140)">%subs%</a>`n
@@ -614,7 +610,7 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n glo
       Critical					; pause timed events
       gesture := 0
       longClick =
-wasCursor := A_Cursor
+      wasCursor := A_Cursor
       timer := A_TickCount + 300		; set future timout 300mS
       MouseGetPos, xpos, ypos
       StringReplace, click, A_ThisHotkey, ~,, All
@@ -649,17 +645,20 @@ wasCursor := A_Cursor
           MouseMove, % xpos, % ypos, 0
           Gesture(x, y)
           }
-        if (!gesture && longClick)		; click timout
+         if (!gesture && longClick && click=="RButton")
+            {
+            if mpvPID 
+              RunWait %COMSPEC% /c echo seek 0 absolute exact > \\.\pipe\mpv,, hide && exit
+            else send, +{Pause}			; signal to java long RClick
+            gesture := 1			; just to block re-entry
+            }
+        if (!gesture && longClick && click=="LButton")		; click timout
           {
-          if (click=="LButton" && mpvPID)	; mpv external player
+          if mpvPID				; mpv external player
             {
             Process, Close, mpv.exe
             send, !{Pause}			; signal java to show thumbSheet
             }
-          else if (click=="RButton")
-            if mpvPID 
-              RunWait %COMSPEC% /c echo seek 0 absolute exact > \\.\pipe\mpv,, hide && exit
-            else send, +{Pause}			; signal to java long RClick
           else if (wasCursor == "IBeam")
             {
             longClick =
@@ -1058,8 +1057,8 @@ if address
             {
             if panelPath						; R Click was over top panel
               {
-             reload := 2
-             x  =  %panelPath%|
+              reload := 2
+              x  =  %panelPath%|
               if InStr(panelPath, "\fav\")				; delete fav entry
                 {
                 FileRecycle, %panelPath%
@@ -1117,7 +1116,8 @@ if address
                     else popup = Deleted %A_Index%
                     popup(popup,0,0,0)
                     }
-              index := StrSplit(selected, ",").1
+              x := StrSplit(selected,",")
+              index := x[x.MaxIndex()-1]
               }
             reload := 3
             return	
@@ -1296,10 +1296,11 @@ if address
                 }
               if selected						; move/copy files
                 {
+                x := StrSplit(selected,",")
+                index := x[x.MaxIndex()-1]
                 MoveFiles()						; between folders or playlists
-                selected =
                 reload := 3
-                index := value
+                selected =
                 return
                 }
               else if InStr(address, ".m3u")				; playlist
@@ -1611,10 +1612,8 @@ if (sort == "List" && !playlist)
             if longClick
               popup = Copying %A_Index%
             else popup = Moving %A_Index%
- ;           if (!InStr(path, "\inca\") && InStr(address, "\inca\"))
- ;             if longClick
- ;               popup = Copying %A_Index%
- ;             else popup = Moving %A_Index%
+            if (!InStr(path, "\inca\") && InStr(address, "\inca\"))
+              popup = Added %A_Index%
             if (InStr(address, "inca\fav") || InStr(address, "inca\music"))
                 {
                 FileAppend, %target%`r`n, %address%, UTF-8		; add media entry to playlist
@@ -2054,10 +2053,7 @@ if (sort == "List" && !playlist)
                 y := Round(A_Index / 5)					; 36 video frames in thumbsheet
                 if !Mod(A_Index,5)
                   {
-if (dur <= 61 && y == 1)
-  st := 0
-else st := t
-                  runwait, %inca%\cache\apps\ffmpeg.exe -ss %st% -i "%source%" -y -vf scale=480:480/dar -vframes 1 "%inca%\cache\lists\%y%.jpg",, Hide
+                  runwait, %inca%\cache\apps\ffmpeg.exe -ss %t% -i "%source%" -y -vf scale=480:480/dar -vframes 1 "%inca%\cache\lists\%y%.jpg",, Hide
                   if (y == 1)
                     FileCopy, %inca%\cache\lists\1.jpg, %inca%\cache\posters\%filen%.jpg, 1	; 1st thumb is poster
                   if (!thumb && !force)
