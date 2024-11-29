@@ -17,7 +17,6 @@
 // put all videos in 2nd drive and put all asian to fem
 // moving thumbs as fixed to reposition in plist
 
-// selected is passing to renderpage not cleared
 
 
   var intervalTimer							// every 100mS
@@ -160,16 +159,15 @@
     if (playing && lastClick==2) {							// next, previous media
       if (!thumbSheet) thumb.currentTime=myPlayer.currentTime
       if (longClick) {index--} else index++}
-    getParameters(index)								// get thumb.style.start
-    if (longClick==1 && !overMedia && !playing && !myNav.style.display) index = lastMedia
     if (longClick==3 && type=='video') if (thumbSheet) {thumbSheet=0} else thumbSheet=1	// thumbsheet view
+    if (!getParameters(index)) {closePlayer(); return}					// get thumb.style.start
+    if (longClick==1 && !overMedia && !playing && !myNav.style.display) index = lastMedia
     if (longClick==1 && (!overMedia && playing || (!playing&&toggles.match('Pause')))) thumb.currentTime=thumb.style.start - 0.8
     else if (longClick==1 && overMedia) thumb.currentTime=0.01				// cannot be 0, see getPara..
     else if (!myPic.matches(':hover') && Math.abs(thumb.style.start-thumb.currentTime) < 5 || lastClick==2) thumb.currentTime=thumb.style.start
     if (longClick==1 && cue) thumb.currentTime=cue
     if (longClick==1) thumbSheet=0
-    if (getParameters(index)) Play()
-    else if (playing && lastClick) closePlayer()}					// end of media list
+    Play()}										// end of media list
 
 
   function Play() {
@@ -244,7 +242,7 @@
     e.preventDefault()
     wheel += Math.ceil(Math.abs(e.deltaY))
     if (Click || wheel < block) return
-block=120
+    block=120
     var wheelUp=false
     if (e.deltaY > 0) wheelUp=true
     if (id=='myPage') {							// htm page
@@ -285,7 +283,7 @@ block=120
       myView.style.width = x+'%'
       localStorage.setItem('pageWidth'+folder, x)
       block=12}
-    else if (mySelect.matches(':hover') || myPic.matches(':hover')) {	// next / previous media
+    else if (mySelect.matches(':hover') || myPic.matches(':hover')) {	// next, previous media
       if (wheelUp) {index++} else if (index>1) index--
       if (!playing) {getParameters(index); setPic()}
       else {lastClick=0; clickEvent(); myNav.style.display='block'}
@@ -567,9 +565,7 @@ block=120
       if (el.style.skinny) messages = messages + '#Skinny#'+el.style.skinny+'#'+i+'#'+cue
       if (el.style.rate) messages = messages + '#Rate#'+el.style.rate+'#'+i+'#'+cue}
     if (!select) {select=''} else {select=select+','}
-if (selected) select=selected
-// if (selected && command!='Close' && command!='Reload') select=selected // selected is global value
-// for (x of select.split(',')) {if (x=document.getElementById('thumb'+x)) if (x.src) {x.load()}}
+    if (selected && command!='Close' && command!='Reload') select=selected // selected is global value
     if (!value) value=''
     if (!address) address=''
     if (isNaN(value)) value=value.replaceAll('#', '*')			// because # is used as delimiter
