@@ -6,17 +6,10 @@
 // make mpv player equal to browser player or convert all media to firefox compliant
 // idea of side trolley to hold pc
 // validate htm and java code online
-// integrate torrent posting
-// when zoom htm, loses htm list top
 // vtt text height when thumb popped
-// myPlayer, zoom to cursor use rect coord and make offsets
-// htm formatting ribbon width etc. is a mess
 // check invalid vtttime cue time crashes htm
-// mpv needs to exit fullscreen after use
 // speed up first use large htm - maybe durations access
 // put all videos in 2nd drive and put all asian to fem
-// moving thumbs as fixed to reposition in plist
-
 
 
   var intervalTimer							// every 100mS
@@ -160,8 +153,8 @@
       if (!thumbSheet) thumb.currentTime=myPlayer.currentTime
       if (longClick) {index--} else index++}
     if (longClick==3 && type=='video') if (thumbSheet) {thumbSheet=0} else thumbSheet=1	// thumbsheet view
-    if (!getParameters(index)) {closePlayer(); return}					// get thumb.style.start
     if (longClick==1 && !overMedia && !playing && !myNav.style.display) index = lastMedia
+    if (!getParameters(index)) {closePlayer(); return}					// get thumb.style.start
     if (longClick==1 && (!overMedia && playing || (!playing&&toggles.match('Pause')))) thumb.currentTime=thumb.style.start - 0.8
     else if (longClick==1 && overMedia) thumb.currentTime=0.01				// cannot be 0, see getPara..
     else if (!myPic.matches(':hover') && Math.abs(thumb.style.start-thumb.currentTime) < 5 || lastClick==2) thumb.currentTime=thumb.style.start
@@ -180,7 +173,7 @@
     myPlayer.pause()
     thumb.pause()
     myPlayer.muted = 1*localStorage.muted
-    if (el=document.getElementById('title'+lastMedia)) el.style.border=null		// remove highlight on last media
+    if (el=document.getElementById('title'+lastMedia)) el.style.color=null		// remove highlight on last media
     lastMedia=index
     if (!thumbSheet && lastClick!=2) messages=messages+'#History#'+myPlayer.currentTime.toFixed(1)+'#'+index+'#' 
     if (lastClick==2 && playing=='mpv') return						// inca does next/previous media
@@ -193,7 +186,7 @@
     if (thumb.src.slice(-3)=='mp3') myPlayer.style.border='4px solid salmon'
     else myPlayer.style.border=null
     if (playing=='browser' && thumb.poster.slice(-3)!='gif') myPlayer.style.opacity=1
-    title.style.border='0.1px solid salmon'
+    title.style.color='lightsalmon'
     myPlayer.style.zIndex = Zindex+=1					// because htm thumbs use Z-index
     myMask.style.zIndex=Zindex
     myMask.style.display='flex'
@@ -296,21 +289,11 @@
       if (el.paused) interval = 0.04
       if (wheelUp && el.currentTime < dur-0.05) el.currentTime += interval
       else el.currentTime -= interval}
-    else if (!myNav.matches(':hover')) {				// zoom myPlayer 
-      var x = 0.02*rect.height
-      if (wheelUp) {							// zoom around focus
-        if (rect.top<40 && yw<0.4) mediaY+=x
-        if (rect.bottom>innerHeight-40 && yw>0.6) mediaY-=x
-        scaleY *= 1.03}
-      else if (!wheelUp && scaleY>0.21) {
-        if (mediaY<0.4*innerHeight) mediaY+=x
-        if (mediaY>0.6*innerHeight) mediaY-=x
-        scaleY *= 0.97}
-      if (mediaY-x/4 > innerHeight/2) mediaY-=x/4			// re-centre image
-      else if (mediaY+x/4 < innerHeight/2) mediaY+=x/4
-      scaleX=skinny*scaleY
-      positionMedia(0.1)
-      block=14}
+    else if (!myNav.matches(':hover')) {				// zoom myPlayer
+      x = mediaX-xpos; y = mediaY-ypos
+      if (wheelUp) {mediaX+=x*0.03; mediaY+=y*0.03; scaleY*=1.03}
+      else if (!wheelUp && scaleY>0.21) {mediaX-=x*0.03; mediaY-=y*0.03; scaleY*=0.97}
+      scaleX=skinny*scaleY; positionMedia(0); block=14}
     wheel=0; cueIndex=-1}
 
 
@@ -359,7 +342,7 @@
     else mySkinny.innerHTML = skinny.toFixed(2)
     if (outerHeight-innerHeight>30) {myMenu.style.display=null} else myMenu.style.display='none'  // if fullscreen hide menu
     if (selected && !Click) mySelected.innerHTML = selected.split(',').length -1
-    else if (block<25) mySelected.innerHTML = '' //index+'   '+overMedia+'   '+overText 
+    else if (block<25) mySelected.innerHTML = '' // index+'   '+overMedia+'   '+lastMedia 
     if (!thumb) return
     if (type!='image' && !thumbSheet && playing!='mpv') seekBar()
     else mySeekbar.style.width=null
@@ -376,9 +359,7 @@
     if ((","+selected).match(","+index+",")) {mySelect.style.color='red'; myPlayer.style.outline='4px solid red'}
     else {mySelect.style.color=null; myPlayer.style.outline=null}
     if (playing=='browser') {
-      if (type=='video' && !myPlayer.duration && block<25) {
-      mySelected.innerHTML = 'File missing or wrong type'
-      myPlayer.load(); myPlayer.play(); block=120}			// in case hard drive slow
+      if (type=='video' && myPlayer.readyState!==4 && block<25) mySelected.innerHTML='File missing or wrong type'
       if (type!='image' && !dur) dur=myPlayer.duration			// just in case
       myPlayer.playbackRate=rate
       myCap.style.top=rect.bottom +10 +'px'
@@ -392,7 +373,7 @@
       positionMedia(0)}							// in case fullscreen 
     else {
       myPlayer.pause(); myCap.innerHTML=''; myCap.style.opacity=0
-      if (!listView && thumb.style.position!='fixed' && thumb.readyState===4 && thumb.duration && !vtt.innerHTML)
+      if (!listView && thumb.readyState===4 && thumb.duration && !vtt.innerHTML)
         if (overMedia && !Click) {thumb.play()} else thumb.pause()}}
 
 
@@ -571,7 +552,7 @@
     if (isNaN(value)) value=value.replaceAll('#', '*')			// because # is used as delimiter
     messages=messages+'#'+command+'#'+value+'#'+select+'#'+address
     navigator.clipboard.writeText(messages)				// send messages to inca
-    messages=''; selected=''}
+    messages=''}
 
 
   function getParameters(i) {						// prepare myPlayer etc. for media
@@ -626,7 +607,7 @@
     setThumbs(1000)
     getParameters(index)
     if (ix && title) {							// eg. after switch thumbs/listview
-      title.style.border='0.1px solid salmon'				// highlight thumb
+      title.style.color='lightsalmon'					// highlight thumb
       title.scrollIntoView()						// scroll to thumb
       myContent.scrollBy(0,-400)}}
 

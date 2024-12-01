@@ -442,13 +442,13 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n glo
 <video id="myPlayer" class='player' type="video/mp4" muted onwheel="wheelEvent(event, id, this)"></video>`n
 <span id='myCap' class='caption'></span>`n
 <span id='mySeekbar' class='seekbar'></span>`n`n
-<div id='myContent' class='mycontent' style='padding:%padding%`%'>`n
+<div id='myContent' class='mycontent' style='padding:%padding%em'>`n
 <div id='myView' class='myview'>`n`n`n %mediaList%<div></div></div>`n`n
 
-<div id='myMenu' style='position:fixed; top:0; padding-top:5em; padding-bottom:1em; background:#15110a'>
+<div id='myMenu' style='position:fixed; top:0; width:67`%; padding-top:5em; padding-bottom:1em; background:#15110a'>
 <div id='myPanel' class='myPanel'>`n <div id='panel' class='panel'>`n`n%panelList%`n</div></div>`n`n
 
-<div id='myRibbon' class='ribbon' style='width:61em; height:1.4em; font-size:1.1em; background:#1b1814; margin:0.3em'>`n
+<div id='myRibbon' class='ribbon' style='height:1.4em; font-size:1.1em; background:#1b1814; margin:0.3em'>`n
 <a id='myMusic' style='width:3`%; %x22%' onmousedown="inca('Path','','','music|1')" onmouseover="setTimeout(function() {if(myMusic.matches(':hover'))Music.scrollIntoView()},140)">&#x266B;</a>`n
 <a id="myPage" onmousedown="inca('Page', page)" onwheel="wheelEvent(event, id, this)">%pg%</a>
 <a style='width:5`%; color:salmon; font-weight:bold'>%listSize%</a>`n
@@ -2095,7 +2095,7 @@ IfWinActive, Notepad
         WinGet, cur, ID, ahk_id %id%
         WinGet, desk, ID , ahk_class Progman
         WinGet, mpvPID, ID , ahk_class mpv				; get mpv PID
-        if mpvPID
+        if (!fullscreen && mpvPID)
           WinGetPos, mpvXpos,mpvYpos,mpvWidth,mpvHeight,ahk_class mpv
         if incaTab
           {

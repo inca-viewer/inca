@@ -97,13 +97,10 @@ b {						/* subtitle timestamp heading */
 
 .myview {
   display:flex;
-  position:relative; 
-  outline:none;
-  margin:auto;
   justify-content:space-around;
   flex-wrap:wrap;
-  padding-bottom:60vh;
-  overflow-x:hidden}
+  padding-top:1em;
+  padding-bottom:60vh}
 
 .entry {
   display:block;
@@ -122,13 +119,13 @@ b {						/* subtitle timestamp heading */
   height:6.5em}
 
 .panel {					/* inner rotated element of myPanel */
-  height:70em;
   position:absolute;
   overflow:hidden;
   scrollbar-width:none;
   transform:rotate(-90deg);
   transform-origin:right top;
   background:inherit;
+  height:100vh;
   width:9em;					/* entry width	*/
   left:-9%}
 .panel:hover {overflow-y:scroll}
