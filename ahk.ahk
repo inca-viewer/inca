@@ -207,7 +207,7 @@ if (!listView && text)
 if listView
   mediaList = %mediaList% %fold%<table onmouseover='overThumb(%j%); if (Click && gesture==1) sel(%j%)'`n onmouseout="thumb%j%.style.opacity=0">`n <tr id='entry%j%'>`n <td>%ext%`n %caption%<video id='thumb%j%' class='thumb2' ondrag="getParameters(%j%, '%type%', '%cueList%', %start%, %dur%, %size%, event)"`n %src%`n %poster%`n preload=%preload% muted loop type="video/mp4"></video></td>`n <td>%size%</td>`n <td style='min-width:6em'>%durT%</td>`n <td>%date%</td>`n <td style='min-width:4.4em'>%j%</td>`n <td id='myFavicon%j%' style='width:0; translate:-1em; white-space:nowrap; font-size:0.7em; color:salmon; min-width:1em'>%favicon%</td>`n <td style='width:80em'><input id="title%j%" onmouseover='overText=1' onmouseout='overText=0; Click=0' class='title' type='search' value='%media_s%'`n oninput="renamebox=this.value; lastMedia=%j%"></td>`n %fo%</tr></table>`n`n
 
-else mediaList = %mediaList%<div id="entry%j%" class='entry'>`n <span id='myFavicon%j%' style='display:block; position:absolute; top:15px; right:10px; padding-right:0.1em; font-size:0.7em; color:salmon'>%favicon%</span>`n <input id='title%j%' class='title' style='margin:auto; text-align:center; font-weight:bold' type='search' value='%media_s%'`n oninput="renamebox=this.value; lastMedia=%j%" onmouseup='thumb%j%.currentTime=%start%; vtt%j%.scrollTo(0,0)'`n onmouseover='overText=1'`n onmouseout='overText=0'>`n <video id="thumb%j%" class='thumb' style="display:block; margin:auto"`n ondrag="getParameters(%j%, '%type%', '%cueList%', %start%, %dur%, %size%, event)"`n onmouseover="overThumb(%j%); if (Click && gesture==1 && !editing) sel(%j%)"`n onmouseout='overMedia=0' %src%`n %poster%`n preload=%preload% loop muted type='video/mp4'></video>`n %noIndex% %caption%</div>`n`n
+else mediaList = %mediaList%<div id="entry%j%" class='entry'>`n <span id='myFavicon%j%' style='display:block; position:absolute; top:15px; right:10px; padding-right:0.1em; font-size:0.7em; color:salmon'>%favicon%</span>`n <input id='title%j%' class='title' style='margin:auto; text-align:center; font-weight:bold' type='search' value='%media_s%'`n oninput="renamebox=this.value; lastMedia=%j%" onmouseup='thumb%j%.currentTime=%start%; vtt%j%.scrollTo(0,0)'`n onmouseover='overText=1'`n onmouseout='overText=0'>`n <video id="thumb%j%" class='thumb' style="display:block; margin:auto"`n ondrag="getParameters(%j%, '%type%', '%cueList%', %start%, %dur%, %size%, event)"`n onmouseenter="overThumb(%j%); if (Click && gesture==1 && !editing) sel(%j%)"`n onmouseout='overMedia=0' %src%`n %poster%`n preload=%preload% loop muted type='video/mp4'></video>`n %noIndex% %caption%</div>`n`n
 } 
 
 
@@ -413,7 +413,7 @@ if subfolders
   subs = ^
 StringReplace, folder_s, folder, `', &apos, All				; htm cannot pass '
 
-header = <!--, %page%, %pages%, %sort%, %toggles%, %listView%, %playlist%, %path%, %searchPath%, %searchTerm%, -->`n<!doctype html>`n<html>`n<head>`n<meta charset="UTF-8">`n<title>Inca - %title%</title>`n<meta name="viewport" content="width=device-width, initial-scale=1">`n<link rel="icon" type="image/x-icon" href="file:///%inca%\cache\icons\inca.ico">`n<link rel="stylesheet" type="text/css" href="file:///%inca%/css.css">`n</head>`n`n
+header = <!--, %page%, %pages%, %sort%, %toggles%, %listView%, %playlist%, %path%, %searchPath%, %searchTerm%, %subfolders%, -->`n<!doctype html>`n<html>`n<head>`n<meta charset="UTF-8">`n<title>Inca - %title%</title>`n<meta name="viewport" content="width=device-width, initial-scale=1">`n<link rel="icon" type="image/x-icon" href="file:///%inca%\cache\icons\inca.ico">`n<link rel="stylesheet" type="text/css" href="file:///%inca%/css.css">`n</head>`n`n
 
 body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n globals(%page%, %pages%, '%folder_s%', '%toggles%', '%sort%', %filt%, %listView%, '%selected%', '%playlist%', %index%); %scroll%.scrollIntoView()">`n`n
 
@@ -1254,11 +1254,6 @@ sleep 200								; time for page to load
             {
             x := StrSplit(address,"|").2				; pointer/index from html panel entry
             y := StrSplit(address,"|").1
-            if (y=="subs" && !subfolders)				; browser tab changed - subs invalid
-              {
-              reload:=1
-              return
-              }
             if (x && y == "subs")
               address := StrSplit(subfolders,"|")[x]			; uses index to get folder address
             else if (x && y == "fol")
@@ -1291,7 +1286,7 @@ sleep 200								; time for page to load
               if selected						; move/copy files
                 {
                 x := StrSplit(selected,",")
-                index := x[x.MaxIndex()-1]
+                index := x[x.MaxIndex()-1]				; scroll htm to end of selection
                 MoveFiles()						; between folders or playlists
                 reload := 3
                 selected =
@@ -1541,7 +1536,7 @@ sleep 200								; time for page to load
 
 
 
-    GetTabSettings(all)							; from .htm cache file
+    GetTabSettings(all)							; from line 1 of .htm cache file
         {
         listView := 0
         page := 1							; default view settings if no html data
@@ -1570,6 +1565,7 @@ sleep 200								; time for page to load
               searchTerm := array.10
               if searchTerm
                 folder := searchTerm
+subfolders := array.11
               }
             }
         }
@@ -1591,11 +1587,14 @@ sleep 200								; time for page to load
 
     MoveFiles()								; or playlist .m3u entries
         {
-        list=								; create null htm to release files
-        RenderPage()
         if longClick
           PopUp("Copying",0,0,0)
-        else PopUp("Moving",0,0,0)
+        else 
+          {
+          list=								; create null htm to release files
+          RenderPage()
+          PopUp("Moving",0,0,0)
+          }
         if (A_TickCount < timer || !GetKeyState("LButton", "P"))
           longClick =
         else longClick = true

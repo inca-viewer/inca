@@ -5,9 +5,9 @@
 // save video format in durations - use to determine new ondrag mpv flag
 // make mpv player equal to browser player or convert all media to firefox compliant
 // idea of side trolley to hold pc
+// check invalid vtttime cue time crashes htm
 // validate htm and java code online
 // vtt text height when thumb popped
-// check invalid vtttime cue time crashes htm
 // speed up first use large htm - maybe durations access
 // put all videos in 2nd drive and put all asian to fem
 
@@ -157,7 +157,8 @@
     if (!getParameters(index)) {closePlayer(); return}					// get thumb.style.start
     if (longClick==1 && (!overMedia && playing || (!playing&&toggles.match('Pause')))) thumb.currentTime=thumb.style.start - 0.8
     else if (longClick==1 && overMedia) thumb.currentTime=0.01				// cannot be 0, see getPara..
-    else if (!myPic.matches(':hover') && Math.abs(thumb.style.start-thumb.currentTime) < 5 || lastClick==2) thumb.currentTime=thumb.style.start
+    else if (!myPic.matches(':hover') && Math.abs(thumb.style.start-thumb.currentTime) < 5 || lastClick==2) {
+      thumb.currentTime=thumb.style.start}
     if (longClick==1 && cue) thumb.currentTime=cue
     if (longClick==1) thumbSheet=0
     Play()}										// end of media list
@@ -201,14 +202,14 @@
 
 
   function mouseMove(e) {
-    xpos=e.clientX
-    ypos=e.clientY
+    if (screenLeft) {xpos=e.clientX; ypos=e.clientY}
+    else {xpos=e.screenX; ypos=e.screenY}
     cursor=6
     if (!thumb) return
     if (myPanel.matches(':hover')) mySelected.style.fontSize='3em'
     else mySelected.style.fontSize=null
     mySelected.style.top = e.pageY +'px'
-    mySelected.style.left = e.pageX +10 +'px'
+    mySelected.style.left = e.pageX +20 +'px'
     if (myPic.matches(':hover') && type=='video') setPic()		// myNav preview thumb
     var x = Math.abs(xpos-Xref)
     var y = Math.abs(ypos-Yref)
@@ -261,13 +262,13 @@
       if (!playing || screenLeft) getParameters(index)
       positionMedia(0.2)}
     else if (id=='myThumbs' || (!playing && thumb.style.position=='fixed')) {	// thumb size
-      var x = view
+      x = view, z = wheel/800
       if (thumb.style.position=='fixed' && thumb.style.view) x=thumb.style.view
-      if (x<98 && wheelUp) x *= 1.02
-      else if (x*0.98>8 && !wheelUp) x *= 0.98
-      if (thumb.style.position=='fixed') thumb.style.view = x
-      else {view=x; localStorage.setItem('pageView'+folder, x)}
-      setThumbs(36)
+      if (x<98 && wheelUp) x *= 1+z
+      else if (x*0.98>8 && !wheelUp) x /= 1+z
+      if (thumb.style.position=='fixed') {
+        thumb.style.view=x; thumb.style.maxWidth=x+'em'; thumb.style.maxHeight=x+'em'}
+      else {view=x; localStorage.setItem('pageView'+folder, x); setThumbs(36)}
       block=12}
     else if (!playing && id=='myWidth') {				// page width
       x = 1*myView.style.width.slice(0,-1)
@@ -281,7 +282,7 @@
       if (!playing) {getParameters(index); setPic()}
       else {lastClick=0; clickEvent(); myNav.style.display='block'}
       block=80}
-    else if (type!='image' && !thumbSheet && (!overMedia || yw>0.9)) {  // seek
+    else if (type!='image' && !thumbSheet && (!overMedia || yw>0.95)) {  // seek
       el=myPlayer
       if (wheelUp && !el.paused && el.currentTime > dur-3.5) return
       if (dur > 120) interval = 3
@@ -290,9 +291,9 @@
       if (wheelUp && el.currentTime < dur-0.05) el.currentTime += interval
       else el.currentTime -= interval}
     else if (!myNav.matches(':hover')) {				// zoom myPlayer
-      x = mediaX-xpos; y = mediaY-ypos
-      if (wheelUp) {mediaX+=x*0.03; mediaY+=y*0.03; scaleY*=1.03}
-      else if (!wheelUp && scaleY>0.21) {mediaX-=x*0.03; mediaY-=y*0.03; scaleY*=0.97}
+      x = mediaX-xpos; y = mediaY-ypos; z = wheel/800
+      if (wheelUp) {mediaX+=x*z; mediaY+=y*z; scaleY*=(1+z)}
+      else if (!wheelUp && scaleY>0.21) {mediaX-=x*z; mediaY-=y*z; scaleY/=(1+z)}
       scaleX=skinny*scaleY; positionMedia(0); block=14}
     wheel=0; cueIndex=-1}
 
@@ -342,7 +343,7 @@
     else mySkinny.innerHTML = skinny.toFixed(2)
     if (outerHeight-innerHeight>30) {myMenu.style.display=null} else myMenu.style.display='none'  // if fullscreen hide menu
     if (selected && !Click) mySelected.innerHTML = selected.split(',').length -1
-    else if (block<25) mySelected.innerHTML = '' // index+'   '+overMedia+'   '+lastMedia 
+    else if (block<25) mySelected.innerHTML = ''  // index+'   '+overMedia+'   '+lastMedia 
     if (!thumb) return
     if (type!='image' && !thumbSheet && playing!='mpv') seekBar()
     else mySeekbar.style.width=null
@@ -378,17 +379,17 @@
 
 
   function positionMedia(time) {					// position myPlayer in window
-    var x=0; var y=0
-    if (screenLeft) {Xoff=screenLeft; Yoff=outerHeight-innerHeight} else {x=Xoff; y=Yoff}
-    myPlayer.style.left = x + mediaX - myPlayer.offsetWidth/2 +"px"
-    myPlayer.style.top = y + mediaY - myPlayer.offsetHeight/2 +"px" 	// fullscreen offsets
-    y = scaleY
+    if (screenLeft && !Xoff) {Xoff=screenLeft; Yoff=outerHeight-innerHeight; mediaX-=Xoff; mediaY-=Yoff}
+    else if (!screenLeft && Xoff) {mediaX+=Xoff; mediaY+=Yoff; Xoff=0}
+    myPlayer.style.left = mediaX - myPlayer.offsetWidth/2 +"px"
+    myPlayer.style.top = mediaY - myPlayer.offsetHeight/2 +"px"
+    var y = scaleY
     if (looping>1) y*=(1+looping/14)
     if (thumbSheet) {
       if (ratio<1) y=0.9*innerHeight/myPlayer.offsetHeight
       else y=0.9*innerWidth/myPlayer.offsetWidth
       thumbSheet=y}
-    x=skinny*y
+    var x=skinny*y
     myPlayer.style.transition = time+'s'
     myPlayer.style.transform = "scale("+x+","+y+")"}
 
@@ -615,7 +616,7 @@
   function setThumbs(qty) {						// set thumb sizes in htm
     for (i=1; el=document.getElementById('thumb'+i); i++) {		// until end of list
       if (i>qty) break
-      if (el.style.position=='fixed') {x=el.style.view} else x=view	// start at last thumb size
+      if (el.style.position!='fixed') x=view				// start at last thumb size
       if ((ratio = el.offsetWidth/el.offsetHeight) > 1) ratio=1
       if (listView) {el.style.maxWidth='13em'; el.style.maxHeight='12em'}   // use fixed thumb size
       else {

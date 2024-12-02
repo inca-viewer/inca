@@ -206,6 +206,7 @@ b {						/* subtitle timestamp heading */
 .selected {					/* red popup following cursor */
   display:block; 
   position:absolute;
+  pointer-events:none;
   z-index:999;
   top:-100px;
   color:red;
