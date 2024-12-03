@@ -205,7 +205,7 @@ if (!listView && text)
      caption = <p id='vtt%j%' class='text' style='font-size:1.1em' contenteditable="true" onmouseover='overText=1' onmouseout='overText=0'`n onmouseup="if (longClick&&!gesture) {editing='%j%'; Save%j%.style.display='block'; Cancel%j%.style.display='block'}"`n oninput="if(editing&&editing!='%j%') {inca('Vtt',editing)}; editing='%j%'; Save%j%.style.display='block'; Cancel%j%.style.display='block'"`n ondrag="getParameters(%j%, 'document', '%cueList%', %start%, %dur%, %size%, event)">%text%</p>`n <span id='Save%j%' class='save' onmouseup="inca('Close')">Save</span>`n <span id='Cancel%j%' class='save' style='right:60px' onmouseup="editing=0; inca('Reload',2)">&#x2715;</span>`n
 
 if listView
-  mediaList = %mediaList% %fold%<table onmouseover='overThumb(%j%); if (Click && gesture==1) sel(%j%)'`n onmouseout="thumb%j%.style.opacity=0">`n <tr id='entry%j%'>`n <td>%ext%`n %caption%<video id='thumb%j%' class='thumb2' ondrag="getParameters(%j%, '%type%', '%cueList%', %start%, %dur%, %size%, event)"`n %src%`n %poster%`n preload=%preload% muted loop type="video/mp4"></video></td>`n <td>%size%</td>`n <td style='min-width:6em'>%durT%</td>`n <td>%date%</td>`n <td style='min-width:4.4em'>%j%</td>`n <td id='myFavicon%j%' style='width:0; translate:-1em; white-space:nowrap; font-size:0.7em; color:salmon; min-width:1em'>%favicon%</td>`n <td style='width:80em'><input id="title%j%" onmouseover='overText=1' onmouseout='overText=0; Click=0' class='title' type='search' value='%media_s%'`n oninput="renamebox=this.value; lastMedia=%j%"></td>`n %fo%</tr></table>`n`n
+  mediaList = %mediaList%%fold%<table onmouseover='overThumb(%j%); if (Click && gesture==1) sel(%j%)'`n onmouseout="thumb%j%.style.opacity=0">`n <tr id='entry%j%'>`n <td>%ext%`n %caption%<video id='thumb%j%' class='thumb2' ondrag="getParameters(%j%, '%type%', '%cueList%', %start%, %dur%, %size%, event)"`n %src%`n %poster%`n preload=%preload% muted loop type="video/mp4"></video></td>`n <td>%size%</td>`n <td style='min-width:6em'>%durT%</td>`n <td>%date%</td>`n <td style='min-width:4.4em'>%j%</td>`n <td id='myFavicon%j%' style='width:0; translate:-1em; white-space:nowrap; font-size:0.7em; color:salmon; min-width:1em'>%favicon%</td>`n <td style='width:80em'><input id="title%j%" onmouseover='overText=1' onmouseout='overText=0; Click=0' class='title' type='search' value='%media_s%'`n oninput="renamebox=this.value; lastMedia=%j%"></td>`n %fo%</tr></table>`n`n
 
 else mediaList = %mediaList%<div id="entry%j%" class='entry'>`n <span id='myFavicon%j%' style='display:block; position:absolute; top:15px; right:10px; padding-right:0.1em; font-size:0.7em; color:salmon'>%favicon%</span>`n <input id='title%j%' class='title' style='margin:auto; text-align:center; font-weight:bold' type='search' value='%media_s%'`n oninput="renamebox=this.value; lastMedia=%j%" onmouseup='thumb%j%.currentTime=%start%; vtt%j%.scrollTo(0,0)'`n onmouseover='overText=1'`n onmouseout='overText=0'>`n <video id="thumb%j%" class='thumb' style="display:block; margin:auto"`n ondrag="getParameters(%j%, '%type%', '%cueList%', %start%, %dur%, %size%, event)"`n onmouseenter="overThumb(%j%); if (Click && gesture==1 && !editing) sel(%j%)"`n onmouseout='overMedia=0' %src%`n %poster%`n preload=%preload% loop muted type='video/mp4'></video>`n %noIndex% %caption%</div>`n`n
 } 
@@ -249,7 +249,6 @@ else mediaList = %mediaList%<div id="entry%j%" class='entry'>`n <span id='myFavi
         count:=0
         listSize := 0
         type = video							; prime for list parsing
-        padding := Setting("Padding")
         page_s := Setting("Page Size")
 if (playlist || SearchTerm || listView)
 page_s := 640
@@ -417,8 +416,6 @@ header = <!--, %page%, %pages%, %sort%, %toggles%, %listView%, %playlist%, %path
 
 body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n globals(%page%, %pages%, '%folder_s%', '%toggles%', '%sort%', %filt%, %listView%, '%selected%', '%playlist%', %index%); %scroll%.scrollIntoView()">`n`n
 
-<div id='mySelected' class='selected'></div>`n
-
 <div oncontextmenu="if (yw>0.05 && !overText || playing) {event.preventDefault()}">`n`n
 <div id='myNav' class='context' onwheel='wheelEvent(event, id, this)'>`n
 <a onmouseup="inca('Settings')">&#8230;</a>`n
@@ -432,7 +429,7 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n glo
 <a id='myFlip' onmouseup='flip()'>Flip</a>`n
 <a id='myLoop' onmouseup='if(looping) {looping=0} else looping=1'>Loop</a>`n
 <a id='myIndex' onmousedown="if(myTitle.innerHTML) {inca('Index','',index)} else inca('Index','',0)">Index</a>`n
-<a id='myDelete' onmousedown="if(!event.button) {myPlayer.load(); inca('Delete','',index)}">Delete</a>
+<a id='myDelete' onmousedown="if(!event.button) inca('Delete','',index)">Delete</a>
 <a id='myCue' onmouseup="if (!playing) {inca('EditCue',0,index,0)} else myPlayer.pause(); if(!cue) {cue=Math.round(myPlayer.currentTime*100)/100} else {inca('addCue', myPlayer.currentTime.toFixed(2), index, cue); cue=0}">Cue</a>`n
 <a id='Mp3' onmouseup="inca('mp3', myPlayer.currentTime.toFixed(2), index, cue); cue=0; myNav.style.display=null">mp3</a>`n
 <a id='Mp4' onmouseup="inca('mp4', myPlayer.currentTime.toFixed(2), index, cue); cue=0; myNav.style.display=null">mp4</a>`n
@@ -442,10 +439,13 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n glo
 <video id="myPlayer" class='player' type="video/mp4" muted onwheel="wheelEvent(event, id, this)"></video>`n
 <span id='myCap' class='caption'></span>`n
 <span id='mySeekbar' class='seekbar'></span>`n`n
-<div id='myContent' class='mycontent' style='padding:%padding%em'>`n
-<div id='myView' class='myview'>`n`n`n %mediaList%<div></div></div>`n`n
+<span id='mySelected' class='selected'></span>`n
 
-<div id='myMenu' style='position:fixed; top:0; width:67`%; padding-top:5em; padding-bottom:1em; background:#15110a'>
+<div id='myContent' class='mycontent'>`n
+<div id='myView' class='myview'>`n`n`n %mediaList%</div>`n`n
+
+<div style='position:fixed; pointer-events:none; height:17em; width:99.7`%; background:#15110a; top:0'></div>`n
+<div id='myMenu' class='myMenu'>
 <div id='myPanel' class='myPanel'>`n <div id='panel' class='panel'>`n`n%panelList%`n</div></div>`n`n
 
 <div id='myRibbon' class='ribbon' style='height:1.4em; font-size:1.1em; background:#1b1814; margin:0.3em'>`n
@@ -473,13 +473,13 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n glo
 <a style='%x10%' onmousedown="inca('Images')">Pics</a>`n
 <a style='%x9%' onmousedown="inca('Videos')">Vids</a>`n
 <a style='%x8%' onmousedown="inca('Recurse')">Subs</a>`n
-<a id='myThumbs' onmouseover='myContent.scrollTo(0,0)' onmouseout='setThumbs(1000)' onmouseup="inca('View',0)" onwheel="wheelEvent(event, id)">Size</a>`n 
-<a id='myWidth' onwheel="wheelEvent(event, id)">Col.</a>`n 
+<a id='myThumbs' onmouseover='myContent.scrollTo(0,0)' onmouseout='setThumbs(1000)' onmouseup="inca('View',0)" onwheel="wheelEvent(event, id)"></a>`n 
+<a id='myWidth' onwheel="wheelEvent(event, id)"></a>`n 
 <a style='%x14%' onmousedown="inca('Mpv')">Mpv</a>`n
 <a id='myJoin' onmousedown="inca('Join')">Join</a>`n
 </div>`n`n
 
-<div style='height:1em'></div>
+<div style='position:relative; left:-21.5`%; width:100vw; height:1em'></div>
 <div class='fadeout'></div>`n`n
 
 
@@ -501,7 +501,7 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n glo
       else
         {
         send, ^l
-        sleep 44
+        sleep 54
         send, {BS}
         sleep 24
         send, ^v
@@ -764,7 +764,7 @@ sleep 200								; time for page to load
         messages := StrReplace(Clipboard, "/", "\")
         array := StrSplit(messages,"#")
         Clipboard := lastClip
-; tooltip %messages%							; for debug
+ ; tooltip %messages%							; for debug
         Loop % array.MaxIndex()/4
           {
           command := array[ptr+=1]
@@ -2088,8 +2088,8 @@ subfolders := array.11
           fullscreen := 1
         else fullscreen := 0
 IfWinActive, Notepad
-        if (x!=600)
-          WinMove,600,0
+  if (x!=600)
+    WinMove,600,0
         MouseGetPos,,, id 						; get the window below the mouse 
         WinGet, cur, ID, ahk_id %id%
         WinGet, desk, ID , ahk_class Progman

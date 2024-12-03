@@ -62,7 +62,7 @@
   var cursor								// hide cursor timer
   var block = 0								// block wheel timer
   var ratio = 1								// media width to height ratio
-  var Xoff = 0								// window offsets before fullscreen
+  var Xoff = 0								// fullscreen offsets
   var Yoff = 0
   var folder = ''							// web page name / media folder
   var defRate = 1							// default speed
@@ -262,7 +262,7 @@
       if (!playing || screenLeft) getParameters(index)
       positionMedia(0.2)}
     else if (id=='myThumbs' || (!playing && thumb.style.position=='fixed')) {	// thumb size
-      x = view, z = wheel/800
+      x = view, z = wheel/1000
       if (thumb.style.position=='fixed' && thumb.style.view) x=thumb.style.view
       if (x<98 && wheelUp) x *= 1+z
       else if (x*0.98>8 && !wheelUp) x /= 1+z
@@ -272,7 +272,7 @@
       block=12}
     else if (!playing && id=='myWidth') {				// page width
       x = 1*myView.style.width.slice(0,-1)
-      if (x>=22 && wheelUp) x-=2
+      if (x>=12 && wheelUp) x-=2
       else if (!wheelUp && x<=98) x+=2
       myView.style.width = x+'%'
       localStorage.setItem('pageWidth'+folder, x)
@@ -282,7 +282,7 @@
       if (!playing) {getParameters(index); setPic()}
       else {lastClick=0; clickEvent(); myNav.style.display='block'}
       block=80}
-    else if (type!='image' && !thumbSheet && (!overMedia || yw>0.95)) {  // seek
+    else if (type!='image' && !thumbSheet && (!overMedia||yw>0.95)) {	// seek
       el=myPlayer
       if (wheelUp && !el.paused && el.currentTime > dur-3.5) return
       if (dur > 120) interval = 3
@@ -291,9 +291,12 @@
       if (wheelUp && el.currentTime < dur-0.05) el.currentTime += interval
       else el.currentTime -= interval}
     else if (!myNav.matches(':hover')) {				// zoom myPlayer
-      x = mediaX-xpos; y = mediaY-ypos; z = wheel/800
+      x=0; y=0; z=0
+      if (!thumbSheet) z=wheel/800
+      if (overMedia && scaleY>1) {x = mediaX-xpos; y = mediaY-ypos}
       if (wheelUp) {mediaX+=x*z; mediaY+=y*z; scaleY*=(1+z)}
       else if (!wheelUp && scaleY>0.21) {mediaX-=x*z; mediaY-=y*z; scaleY/=(1+z)}
+      else closePlayer()
       scaleX=skinny*scaleY; positionMedia(0); block=14}
     wheel=0; cueIndex=-1}
 
@@ -343,9 +346,9 @@
     else mySkinny.innerHTML = skinny.toFixed(2)
     if (outerHeight-innerHeight>30) {myMenu.style.display=null} else myMenu.style.display='none'  // if fullscreen hide menu
     if (selected && !Click) mySelected.innerHTML = selected.split(',').length -1
-    else if (block<25) mySelected.innerHTML = ''  // index+'   '+overMedia+'   '+lastMedia 
+    else if (block<25) mySelected.innerHTML = '' // index+'   '+overMedia+'   '+lastMedia 
     if (!thumb) return
-    if (type!='image' && !thumbSheet && playing!='mpv') seekBar()
+    if (type!='image' && !thumbSheet && playing!='mpv' && myPlayer.duration) seekBar()
     else mySeekbar.style.width=null
     if (!playing) myMask.style.opacity=0
     else if (scaleY<0.41) myMask.style.opacity=0.74
@@ -385,10 +388,7 @@
     myPlayer.style.top = mediaY - myPlayer.offsetHeight/2 +"px"
     var y = scaleY
     if (looping>1) y*=(1+looping/14)
-    if (thumbSheet) {
-      if (ratio<1) y=0.9*innerHeight/myPlayer.offsetHeight
-      else y=0.9*innerWidth/myPlayer.offsetWidth
-      thumbSheet=y}
+    if (thumbSheet) y=0.55*ratio*innerWidth/myPlayer.offsetWidth
     var x=skinny*y
     myPlayer.style.transition = time+'s'
     myPlayer.style.transform = "scale("+x+","+y+")"}
@@ -401,7 +401,6 @@
     var cueX = rect.left + 7
     var x = Math.round(el.currentTime*100)/100
     var cueW = 0.95*rect.width*el.currentTime/dur
-    if (el.currentTime<0.1) cueW=0.95*rect.width
     if (cue && cue<=x) {
       cueX = mediaX - rect.width/2 + rect.width * cue/dur
       cueW = rect.width*(el.currentTime-cue)/dur
@@ -444,7 +443,7 @@
     myPlayer.style.height = y +'px'
     myPlayer.style.top = mediaY-y/2 +'px'				// myPlayer position
     myPlayer.style.left = mediaX-x/2 +'px'
-    if (ratio>1) {x=180} else x=120
+    if (ratio>1) {x=170} else x=110
     myPic.style.width=x+'px'						// context menu thumb
     myPic.style.height=(x-7)/ratio+'px'
     if (thumbSheet) myPlayer.load()
@@ -585,17 +584,16 @@
     listView=lv; selected=se; playlist=pl
     key = 'pageWidth'+folder
     x = localStorage.getItem(key)
-    if (isNaN(x) || x<20 || x>100) localStorage.setItem(key, 100)
+    if (isNaN(x) || x<20 || x>100) localStorage.setItem(key, 70)	// default htm width 70%
     pageWidth = 1*localStorage.getItem(key)
     myView.style.width = 1*localStorage.getItem(key)+'%'
-    if (listView) myView.style.width = '100%'
     key = 'pageView'+folder
     x = localStorage.getItem(key)
-    if (isNaN(x) || x<6 || x>100) localStorage.setItem(key, 12)		// default thumb size
+    if (isNaN(x) || x<6 || x>100) localStorage.setItem(key, 12)		// default thumb size 12em
     view = 1*localStorage.getItem(key)
     key = 'defRate'+folder
     x = localStorage.getItem(key)
-    if (isNaN(x) || x<0.2 || x>5) localStorage.setItem(key, 0.9)
+    if (isNaN(x) || x<0.2 || x>5) localStorage.setItem(key, 0.9)	// default speed 0.9
     defRate = 1*localStorage.getItem(key)
     Filter('my'+so)							// show filter heading in red
     for (x of selected.split(',')) {if (x && !isNaN(x)) {		// highlight selected media			
@@ -605,6 +603,8 @@
     if (!ix) index=1
     else index=ix
     lastMedia=ix
+    Xoff=screenLeft
+    Yoff=outerHeight-innerHeight
     setThumbs(1000)
     getParameters(index)
     if (ix && title) {							// eg. after switch thumbs/listview

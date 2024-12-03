@@ -90,24 +90,32 @@ b {						/* subtitle timestamp heading */
   display:block;
   position:absolute;
   margin:auto;
-  overflow-x:hidden;
-  box-sizing:border-box; 
+  overflow-x:hidden; 
   height:100%;
   width:100%}
 
 .myview {
   display:flex;
+  margin:auto;
   justify-content:space-around;
   flex-wrap:wrap;
-  padding-top:1em;
-  padding-bottom:60vh}
+  padding-top:18em;
+  padding-bottom:70vh}
 
 .entry {
   display:block;
   position:relative;
   border-radius:1em;
-  padding:0.3em;
-  padding-top:1em}
+  padding:0.3em}
+
+.myMenu {
+  position:fixed;
+  top:5em;
+  left:0;
+  transform:translate(calc(50vw - 50%));
+  width:70%;
+  padding-bottom:1em;
+  background:#15110a}
 
 .myPanel {					/* top panel element showing folders etc.*/
   position:relative;
@@ -270,10 +278,8 @@ b {						/* subtitle timestamp heading */
 .context a {
   display:block;
   width:5.5em;
-  height:1em;
-  padding:0.2em;
-  padding-right:0;
-  border-radius:1em;
+  height:1.4em;
+  border-radius:1.4em;
   color:lightsalmon}
 .context a:hover {background:#1b1814}
 .context a:active {background:#333333}
@@ -286,7 +292,6 @@ b {						/* subtitle timestamp heading */
   margin:0;
   width:100%;
   height:100%;
-  overflow:hidden;
   color:#826858;
   opacity:0;
   transition:0s}
