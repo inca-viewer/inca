@@ -145,10 +145,6 @@
       else if (myPlayer.matches(':hover') && (ym<1 && ym>0.9)) {myPlayer.currentTime=xm*dur; return}
       else if (playing) {togglePause(); return}
       else if (!playing && !overMedia) return}
-    if (!playing) {
-      if (!mediaX || mediaX<0 || mediaX>innerWidth) mediaX=innerWidth/2
-      if (!mediaY || mediaY<0 || mediaY>innerHeight) mediaY=innerHeight/2
-      if (!scaleY || scaleY>3 || scaleY<0.2) scaleY=0.5}
     if (playing && lastClick==2) {							// next, previous media
       if (!thumbSheet) thumb.currentTime=myPlayer.currentTime
       if (longClick) {index--} else index++}
@@ -302,6 +298,10 @@
 
 
   function closePlayer() {
+    if (!mediaX || mediaX<0 || mediaX>innerWidth || scaleY>1.5) mediaX=innerWidth/2
+    if (!mediaY || mediaY<0 || mediaY>innerHeight || scaleY>1.5) mediaY=innerHeight/2
+    if (!scaleY || scaleY<0.2) scaleY=0.5
+    if (scaleY>1.5) scaleY=1.5
     positionMedia(0.2)
     playing=''
     Click=0								// in case browser not active
@@ -630,7 +630,7 @@
     var x = cueList.split('#1')						// each line entry
     for (k=0; k<x.length; k++) {					// i represents each line entry
       var entry = x[k].split('#2')					// time | cue | value | period
-      if (entry[1] && 1*entry[0] > time-0.1 && 1*entry[0] < time+0.1) {
+      if (entry[1] && 1*entry[0] > time-0.1 && 1*entry[0] < time+0.2) {
         if (type=='next') {lastClick=2; clickEvent()}
         else if (entry[1]=='scroll' && !index) document.getElementById('vtt'+j).scrollTo(0,entry[2])
         else if (entry[1]=='goto') {myPlayer.currentTime = 1*entry[2]; myPlayer.volume=0.001}
