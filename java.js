@@ -367,7 +367,7 @@
       myCap.style.top=rect.bottom +10 +'px'
       myCap.style.left=rect.left +10 +'px'
       myCap.style.zIndex=Zindex
-      if (toggles.match('Pause') && cueIndex!=index && myPlayer.currentTime>thumb.style.start) {myPlayer.pause(); cueIndex=index}
+      if (toggles.match('Pause') && cueIndex!=index && !Click && myPlayer.currentTime>thumb.style.start) {myPlayer.pause(); cueIndex=index}
       if (cue) {myCue.innerHTML='Goto '+myPlayer.currentTime.toFixed(2); myCue.style.width='40%'} 
       else myCue.innerHTML='Cue'
       if (myCap.innerHTML) myCap.style.opacity=1
