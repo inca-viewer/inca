@@ -109,6 +109,21 @@ if InStr(Label, "T5 EVO")
       return
 
 
+test()
+{
+          Loop, Files,%inca%\ttt\*.jpg
+ {
+        SplitPath, A_LoopFileFullPath,,,,media
+StringTrimRight, media, media, 4
+        IfExist, D:\femdom\%media%.mp4
+          FileDelete, %A_LoopFileFullPath%
+        IfExist, D:\femdom\%media%.mkv
+          FileDelete, %A_LoopFileFullPath%
+tooltip  %media%
+}
+}
+
+
     SpoolList(i, j, input, sort_name, start)				; spool sorted media files into web page
         {
         Critical

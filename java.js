@@ -7,7 +7,6 @@
 // check invalid vtttime cue time crashes htm
 // validate htm and java code online
 // vtt text height when thumb popped
-// put all videos in 2nd drive and put all asian to fem
 
 
 
@@ -191,7 +190,7 @@
     myPlayer.volume=0.05
     if (vtt.innerHTML) appendcueList()					// add vtt captions to cueList for myPlayer to show
     if (looping) looping=1
-    if (longClick==3) cueIndex=-1					// for once only - to stop re-entry (paused)
+    if (longClick==1) cueIndex=-1					// for once only - to stop re-entry (paused)
     else cueIndex=index
     lastClick=0}
 

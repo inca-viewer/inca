@@ -106,7 +106,8 @@ b {						/* subtitle timestamp heading */
   display:block;
   position:relative;
   border-radius:1em;
-  padding:0.3em}
+  padding:0.3em;
+  padding-bottom:1em}
 
 .myMenu {
   position:fixed;
