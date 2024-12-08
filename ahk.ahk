@@ -109,21 +109,6 @@ if InStr(Label, "T5 EVO")
       return
 
 
-test()
-{
-          Loop, Files,%inca%\ttt\*.jpg
- {
-        SplitPath, A_LoopFileFullPath,,,,media
-StringTrimRight, media, media, 4
-        IfExist, D:\femdom\%media%.mp4
-          FileDelete, %A_LoopFileFullPath%
-        IfExist, D:\femdom\%media%.mkv
-          FileDelete, %A_LoopFileFullPath%
-tooltip  %media%
-}
-}
-
-
     SpoolList(i, j, input, sort_name, start)				; spool sorted media files into web page
         {
         Critical
@@ -203,8 +188,16 @@ tooltip  %media%
             Loop, Parse, str2, `n, `r
               if %A_LoopField%  
                 if InStr(A_LoopField, "-->")				; timestamp - warning!! care making changes to this element
-                  text = %text%<b onclick="thumb.currentTime=vttTime('%A_LoopField%'); thumb.play(); thumb.muted=0" onmouseenter="overThumb(%j%)">%A_LoopField%</b>
-                else text =%text%%A_LoopField%<br>
+                  {
+                  x := SubStr(A_LoopField, 1, 12)
+                  x := StrReplace(x, " --")				; in case hrs
+                  x := StrSplit(x, ":")
+                  if (!x.3) 
+                    x := Round(x.1*60 + x.2,1)				; seconds format
+                  else x := Round(3600*x.1 + 60*x.2 + x.3,1)
+                  text = %text%<b id='%j%.%x%' onclick="vttClick(%x%)" onmouseenter="overThumb(%j%)">%A_LoopField%</b>
+                  }
+                else text =%text%<span id='my%j%.%x%'>%A_LoopField%<br></span>
             }
         text := StrReplace(text, "`r`n", "<br>")
 
@@ -217,12 +210,12 @@ size = 0	; cannot have null size - crashes getParameters()
 caption = <span id='vtt%j%'></span>					; default null placeholder
 
 if (!listView && text)
-     caption = <p id='vtt%j%' class='text' style='font-size:1.1em' contenteditable="true" onmouseover='overText=1' onmouseout='overText=0'`n onmouseup="if (longClick&&!gesture) {editing='%j%'; Save%j%.style.display='block'; Cancel%j%.style.display='block'}"`n oninput="if(editing&&editing!='%j%') {inca('Vtt',editing)}; editing='%j%'; Save%j%.style.display='block'; Cancel%j%.style.display='block'"`n ondrag="getParameters(%j%, 'document', '%cueList%', %start%, %dur%, %size%, event)">%text%</p>`n <span id='Save%j%' class='save' onmouseup="inca('Close')">Save</span>`n <span id='Cancel%j%' class='save' style='right:60px' onmouseup="editing=0; inca('Reload',2)">&#x2715;</span>`n
+     caption = <p id='vtt%j%' class='text' style='font-size:1.1em' contenteditable="true" onmouseover='overText=1' onmouseout='overText=0'`n onmouseup="if (longClick&&!gesture) editing='%j%'"`n oninput="if(editing&&editing!='%j%') {inca('Vtt',editing)}; editing='%j%'"`n ondrag="getParameters(%j%, 'document', '%cueList%', %start%, %dur%, %size%, event)">%text%</p>`n 
 
 if listView
   mediaList = %mediaList%%fold%<table onmouseover='overThumb(%j%); if (Click && gesture==1) sel(%j%)'`n onmouseout="thumb%j%.style.opacity=0">`n <tr id='entry%j%'>`n <td>%ext%`n %caption%<video id='thumb%j%' class='thumb2' ondrag="getParameters(%j%, '%type%', '%cueList%', %start%, %dur%, %size%, event)"`n %src%`n %poster%`n preload=%preload% muted loop type="video/mp4"></video></td>`n <td>%size%</td>`n <td style='min-width:6em'>%durT%</td>`n <td>%date%</td>`n <td style='min-width:4.4em'>%j%</td>`n <td id='myFavicon%j%' style='width:0; translate:-1em; white-space:nowrap; font-size:0.7em; color:salmon; min-width:1em'>%favicon%</td>`n <td style='width:80em'><input id="title%j%" onmouseover='overText=1' onmouseout='overText=0; Click=0' class='title' type='search' value='%media_s%'`n oninput="renamebox=this.value; lastMedia=%j%"></td>`n %fo%</tr></table>`n`n
 
-else mediaList = %mediaList%<div id="entry%j%" class='entry'>`n <span id='myFavicon%j%' style='display:block; position:absolute; top:6px; right:4px; padding-right:0.1em; font-size:0.7em; color:salmon'>%favicon%</span>`n <input id='title%j%' class='title' style='margin:auto; text-align:center; font-weight:bold' type='search' value='%media_s%'`n oninput="renamebox=this.value; lastMedia=%j%" onmouseup='thumb%j%.currentTime=%start%; vtt%j%.scrollTo(0,0)'`n onmouseover='overText=1'`n onmouseout='overText=0'>`n <video id="thumb%j%" class='thumb' style="display:block; margin:auto"`n ondrag="getParameters(%j%, '%type%', '%cueList%', %start%, %dur%, %size%, event)"`n onmouseenter="overThumb(%j%); if (Click && gesture==1 && !editing) sel(%j%)"`n onmouseout='overMedia=0' %src%`n %poster%`n preload=%preload% loop muted type='video/mp4'></video>`n %noIndex% %caption%</div>`n`n
+else mediaList = %mediaList%<div id="entry%j%" class='entry'>`n <span id='myFavicon%j%' style='display:block; position:absolute; top:6px; right:4px; padding-right:0.1em; font-size:0.7em; color:salmon'>%favicon%</span>`n <input id='title%j%' class='title' style='margin:auto; text-align:center; font-weight:bold' type='search' value='%media_s%'`n oninput="renamebox=this.value; lastMedia=%j%" onmouseup='thumb%j%.currentTime=%start%; vtt%j%.scrollTo(0,0)'`n onmouseover='overText=1'`n onmouseout='overText=0'>`n <video id="thumb%j%" class='thumb' style="display:block; margin:auto"`n ondrag="getParameters(%j%, '%type%', '%cueList%', %start%, %dur%, %size%, event)"`n onmouseenter="overThumb(%j%); if (Click && gesture==1 && !editing) sel(%j%)"`n onmouseout='overMedia=0' %src%`n %poster%`n preload=%preload% loop muted type='video/mp4'></video>`n %noIndex%%caption%</div>`n`n
 } 
 
 
@@ -265,10 +258,11 @@ else mediaList = %mediaList%<div id="entry%j%" class='entry'>`n <span id='myFavi
         listSize := 0
         type = video							; prime for list parsing
         page_s := Setting("Page Size")
-if (playlist || SearchTerm || listView)
-page_s := 640
-if InStr(toggles, "Subtitles")
+
+if (!listView && InStr(toggles, "Subtitles"))
 page_s := 64
+else if (playlist || SearchTerm || listView)
+page_s := 640
 
         Loop, Parse, list, `n, `r 					; split big list into smaller web pages
           {
@@ -451,15 +445,16 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n glo
 <a></a></div>`n`n
 
 <div id='myMask' class="mask" onwheel="wheelEvent(event, id, this)"></div>`n 
-<video id="myPlayer" class='player' type="video/mp4" muted onwheel="wheelEvent(event, id, this)"></video>`n
-<span id='myCap' class='caption'></span>`n
+<video id="myPlayer" class='player' type="video/mp4" muted onmouseenter='if (Click) sel(index)' onwheel="wheelEvent(event, id, this)"></video>`n
 <span id='mySeekbar' class='seekbar'></span>`n`n
 <span id='mySelected' class='selected'></span>`n
+<span id='mySave' class='save' onmouseenter='overText=1' onmouseout='overText=0' onmouseup="inca('Close')">Save</span>`n 
+<span id='myCancel' class='save' style='left:0px' onmouseup="editing=0; inca('Reload',2)">&#x2715;</span>
 
 <div id='myContent' class='mycontent'>`n
 <div id='myView' class='myview'>`n`n`n %mediaList%</div>`n`n
 
-<div style='position:fixed; pointer-events:none; height:17em; width:99.7`%; background:#15110a; top:0'></div>`n
+<div id='myMask2' style='position:fixed; pointer-events:none; height:17em; width:99.7`%; background:#15110a; top:0'></div>`n
 <div id='myMenu' class='myMenu'>
 <div id='myPanel' class='myPanel'>`n <div id='panel' class='panel'>`n`n%panelList%`n</div></div>`n`n
 
@@ -779,7 +774,7 @@ sleep 200								; time for page to load
         messages := StrReplace(Clipboard, "/", "\")
         array := StrSplit(messages,"#")
         Clipboard := lastClip
- ; tooltip %messages%							; for debug
+;  tooltip %messages%							; for debug
         Loop % array.MaxIndex()/4
           {
           command := array[ptr+=1]
