@@ -68,8 +68,8 @@ b {						/* subtitle timestamp heading */
   scroll-behavior:smooth;
   color:#826858;
   text-align:center;
-  height:16em;
-  width:70em;					/* becomes max width */
+  height:9em;
+//  width:70em;					/* becomes max width */
   line-height:1.2em;
   font-family:inherit;
   font-size:1em;

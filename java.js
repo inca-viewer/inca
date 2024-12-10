@@ -10,7 +10,15 @@
 // remove captions from cues, move to vtt
 
 // mute on thumb/player
-
+// vtt to fill entry
+// vtt time being merged with text during editing
+// vtt starts paused and not seek on first use and in myplayer
+// check addfavorite
+// sometimes ceara vtt time does not start playing (near default time?)
+// rclick over big thumb
+// seekbar click yw
+// if vtt cannot use panel eg in ceara search
+// search/switch in listview clears caps toggle
 
   var intervalTimer							// every 100mS
   var thumb = 0								// current thumb element
@@ -116,34 +124,30 @@
   function mouseUp(e) {
     if (!Click) return									// page load while mouse still down - ignore 
     if (Click==3 && !gesture && !longClick && ((yw>0.05&&!overText)||playing)) context(e)  // new context menu
-    if (Click==2 && !playing) inca('View',lastMedia)					// middle click - switch list/thumb view
-    else if (!longClick) clickEvent()							// process click event
+    if (!longClick) clickEvent()							// process click event
     Click=0; wheel=0; gesture=0; longClick=0
     clearTimeout(clickTimer)}								// longClick timer
 
 
   function clickEvent() {								// functional logic
-    if (overText) return
     if (gesture || title.matches(':hover')) return					// allow rename of media in htm
     if (longClick && myRibbon.matches(':hover')) return
     if (longClick && myInput.matches(':hover')) return
     if (longClick && myPanel.matches(':hover')) return					// copy files instead of move
-    if (myFavorite.matches(':hover')) {
-      if (longClick) x = 0								// sets fav start to default
-      else if (!playing) x = thumb.currentTime
-      else x = myPlayer.currentTime.toFixed(1)
-      inca('Favorite',x,index,vtt.scrollTop.toFixed(0))					// includes any caption/txt scroll
-      document.getElementById('myFavicon'+index).innerHTML='&#10084'			// heart symbol on htm thumb
-      return}
+    if (Click==2 && !playing) {inca('View',lastMedia); return}				// middle click - switch list/thumb view
+    if (myFavorite.matches(':hover')) {addFavorite(); return}
     if (lastClick==3 && (!longClick || (!playing && !overMedia && !myNav.matches(':hover')))) return
     if (!gesture && longClick==1 && !playing && playlist && index && selected) {inca('Move', overMedia); return}
     if (!longClick && lastClick==1) {
-      if (!playing && thumb.paused && !myNav.style.display) {thumb.play()} else thumb.pause()
+      if (overText==2) return								// clicked vtt timestamp
+      if (editing && overText) {thumb.pause(); myPlayer.pause(); return}
       if (myPic.matches(':hover')) {thumbSheet=0; thumb.currentTime=myPic.style.start}
-      else if (myNav.matches(':hover')) return
+ //     if (editing && overText) thumb.pause()
+      if (playing) {togglePause(); return}
+      else if (!playing && thumb.paused && !myNav.style.display) {thumb.play()} else thumb.pause()
+      if (myNav.matches(':hover')) return
       else if (thumbSheet) {getStart(); return}
       else if (myPlayer.matches(':hover') && (ym<1 && ym>0.9)) {myPlayer.currentTime=xm*dur; return}
-      else if (playing) {togglePause(); return}
       else if (!playing && !overMedia) return}
     if (playing && lastClick==2) {							// next, previous media
       if (!thumbSheet) thumb.currentTime=myPlayer.currentTime
@@ -332,7 +336,8 @@
     if (wheel>=10) wheel-=10
     if (cursor) cursor--
     if (!playing || thumbSheet) myBody.style.cursor=null		// hide cursor
-    else if (!cursor || Click) myBody.style.cursor='none'
+    else if (!cursor) myBody.style.cursor='none'
+    else if (overText) myBody.style.cursor=null
     else myBody.style.cursor='crosshair'
     if (toggles.match('Subtitles')) Subtitles()
     if (editing) {mySave.style.display='block'; myCancel.style.display='block'} 
@@ -351,7 +356,7 @@
     else if (skinny>0.99 && skinny<1.01) mySkinny.innerHTML = 'Skinny'
     else mySkinny.innerHTML = skinny.toFixed(2)
     if (outerHeight-innerHeight>30) {myMenu.style.display=null; myMask2.style.display=null} 
-    else {myMenu.style.display='none'; myMask2.style.display='none'}  			// if fullscreen hide menu
+    else {myMenu.style.display='none'; myMask2.style.display='none'}  			// if fullscreen hide menu 
     if (selected && !Click) mySelected.innerHTML = selected.split(',').length -1
     else if (block<25) mySelected.innerHTML = ''
     if (!thumb) return
@@ -374,9 +379,9 @@
       if (type!='image' && !dur) dur=myPlayer.duration			// just in case
       myPlayer.playbackRate=rate
       vtt.style.position='fixed'
-      vtt.style.maxWidth=rect.width+'px'
+      vtt.style.maxWidth=rect.width-10+'px'
       vtt.style.top=rect.bottom +10 +'px'
-      vtt.style.left=rect.left +10 +'px'
+      vtt.style.left=rect.left +'px'
       if (toggles.match('Pause') && cueIndex!=index && !Click && myPlayer.currentTime>thumb.style.start) {myPlayer.pause(); cueIndex=index}
       if (cue) {myCue.innerHTML='Goto '+myPlayer.currentTime.toFixed(2); myCue.style.width='40%'} 
       else myCue.innerHTML='Cue'
@@ -632,12 +637,22 @@
         document.getElementById('vtt'+i).style.maxWidth=x+'em'}}}
 
 
+  function addFavorite() {
+      if (longClick) x = 0								// sets fav start to default
+      else if (!playing) x = thumb.currentTime
+      else x = myPlayer.currentTime.toFixed(1)
+      inca('Favorite',x,index,vtt.scrollTop.toFixed(0))					// includes any caption/txt scroll
+      document.getElementById('myFavicon'+index).innerHTML='&#10084'}			// heart symbol on htm thumb
+
+
   function Subtitles() {						// track & highlight vtt subtitles
     var y = myContent.scrollTop
     var x = index+'.'+thumb.currentTime.toFixed(1)
     if (playing) x = index+'.'+myPlayer.currentTime.toFixed(1)
-    if ((!thumb.paused || !myPlayer.paused) && (el2=document.getElementById(x)) && (el3=document.getElementById('my'+x))) {
-      el2.scrollIntoView(); myContent.scrollTo(0,y); el3.style.color='salmon'; el3.style.fontSize='1.2em'}
+    if (!(el2=document.getElementById(x))) return
+    if (!(el3=document.getElementById('my'+x))) return
+    if (!thumb.paused || !myPlayer.paused) {
+      el2.scrollIntoView(); myContent.scrollTo(0,y); el3.style.color='lightsalmon'; el3.style.fontSize='1.1em'}
     mySave.style.top=rect.bottom+5+'px'; mySave.style.left=rect.left+50+'px'
     myCancel.style.top=rect.bottom+5+'px'; myCancel.style.left=rect.left+'px'}
 
@@ -657,13 +672,16 @@
           if (entry[2]) setTimeout(function(){myPlayer.play()},1000*entry[2])}}}}
 
 
-  function overThumb(id) { 
-    if (index!=id || !vtt.innerHTML) thumb.pause()			// pause previous thumb
+  function overThumb(id, x) {
+    if (id!=index) thumb.pause()					// pause previous thumb
     index = id
     getParameters(id)
-    if (!vtt.innerHTML) thumb.playbackRate=0.6				// less busy thumb page
+    if (!vtt.innerHTML) thumb.playbackRate=0.6				// less busy htm thumbs
     if (listView) thumb.style.opacity=1
-    if (thumb.readyState !== 4) thumb.load()}				// first use
+    if (thumb.readyState !== 4) thumb.load()				// first use
+    if (x) { myPlayer.currentTime=x; thumb.currentTime=x
+      if (!playing && !editing) {thumb.play(); thumb.muted=0}
+      else if (!editing) vtt.style.maxWidth='20em'; vtt.style.height='16em'; myPlayer.play()}}
 
 
   function mute() {
@@ -671,13 +689,12 @@
       myPlayer.volume=0.05; myPlayer.muted=1*localStorage.muted
       myPlayer.muted=!myPlayer.muted; localStorage.muted = 1*myPlayer.muted}}
 
-  function vttClick(x) {thumb.currentTime=x; myPlayer.currentTime=x; thumb.muted=0; if(!playing) thumb.play()}
+
   function Time(z) {if (z<0) return '0:00'; var y=Math.floor(z%60); var x=':'+y; if (y<10) {x=':0'+y}; return Math.floor(z/60)+x}
   function togglePause() {if(!thumbSheet && !longClick) {if (myPlayer.paused) {myPlayer.play()} else {myPlayer.pause()}}}
   function selectAll() {for (i=1; document.getElementById('thumb'+i); i++) {sel(i)}}
   function flip() {skinny*=-1; scaleX*=-1; thumb.style.skinny=skinny; positionMedia(0.6); thumb.style.transform='scaleX('+skinny+')'}
-  function vttTime(x) {x = x.split(':'); if (x.length == 3) x = 60*x[0] + 1*x[1].slice(0,2) + 0.01*x[1].slice(3,5)
-    else x = 3600*x[0] + 60*x[1] + 1*x[2].slice(0,2) + 0.01*x[2].slice(3,5); return(x)}
+
 
 
 
