@@ -1,24 +1,15 @@
 
 // Debugging - use mySelected.innerHTML or alert()
-
 // save video format in durations - use to determine new ondrag mpv flag
 // make mpv player equal to browser player or convert all media to firefox compliant
 // idea of side trolley to hold pc
 // check invalid vtttime cue time crashes htm
 // validate htm and java code online
 // create vtt timestamps on cue
-// remove captions from cues, move to vtt
-
-// mute on thumb/player
-// vtt to fill entry
 // vtt time being merged with text during editing
-// vtt starts paused and not seek on first use and in myplayer
-// check addfavorite
-// sometimes ceara vtt time does not start playing (near default time?)
-// rclick over big thumb
-// seekbar click yw
-// if vtt cannot use panel eg in ceara search
-// search/switch in listview clears caps toggle
+
+// return to java vttTime?
+
 
   var intervalTimer							// every 100mS
   var thumb = 0								// current thumb element
@@ -130,6 +121,7 @@
 
 
   function clickEvent() {								// functional logic
+    if (mySave.matches(':hover')) return
     if (gesture || title.matches(':hover')) return					// allow rename of media in htm
     if (longClick && myRibbon.matches(':hover')) return
     if (longClick && myInput.matches(':hover')) return
@@ -139,15 +131,14 @@
     if (lastClick==3 && (!longClick || (!playing && !overMedia && !myNav.matches(':hover')))) return
     if (!gesture && longClick==1 && !playing && playlist && index && selected) {inca('Move', overMedia); return}
     if (!longClick && lastClick==1) {
-      if (overText==2) return								// clicked vtt timestamp
-      if (editing && overText) {thumb.pause(); myPlayer.pause(); return}
+      if (overText) {vtt.style.maxWidth='22em'; vtt.style.height='18em'}
+      if (overText==2 || (overText && editing)) return					// clicked vtt timestamp
+      if (thumb.paused && !myNav.style.display) {thumb.play()} else thumb.pause()
       if (myPic.matches(':hover')) {thumbSheet=0; thumb.currentTime=myPic.style.start}
- //     if (editing && overText) thumb.pause()
-      if (playing) {togglePause(); return}
-      else if (!playing && thumb.paused && !myNav.style.display) {thumb.play()} else thumb.pause()
-      if (myNav.matches(':hover')) return
+      else if (myNav.matches(':hover')) return
       else if (thumbSheet) {getStart(); return}
-      else if (myPlayer.matches(':hover') && (ym<1 && ym>0.9)) {myPlayer.currentTime=xm*dur; return}
+      else if (myPlayer.matches(':hover') && ((ym<1 && ym>0.9) || yw>0.95)) {myPlayer.currentTime=xm*dur; return}
+      else if (playing) {togglePause(); return}
       else if (!playing && !overMedia) return}
     if (playing && lastClick==2) {							// next, previous media
       if (!thumbSheet) thumb.currentTime=myPlayer.currentTime
@@ -155,7 +146,7 @@
     if (longClick==3 && type=='video') if (thumbSheet) {thumbSheet=0} else thumbSheet=1	// show thumbsheet
     if (longClick==1 && !overMedia && !playing && !myNav.style.display) index = lastMedia
     if (!getParameters(index)) {closePlayer(); return}					// end of media list
-    if (longClick==1 && (!overMedia && playing || (!playing&&toggles.match('Pause')))) thumb.currentTime=thumb.style.start - 0.8
+    if (longClick==1 && (!overMedia&&playing || (!playing&&toggles.match('Pause')))) thumb.currentTime=thumb.style.start-0.8
     else if (longClick==1 && overMedia) thumb.currentTime=0.01				// cannot be 0, see getPara..
     else if (!longClick && !myPic.matches(':hover') && Math.abs(thumb.style.start-thumb.currentTime) < 5 || lastClick==2) {
       thumb.currentTime=thumb.style.start}
@@ -282,7 +273,7 @@
       if (!playing) {getParameters(index); setPic()}
       else {lastClick=0; clickEvent(); myNav.style.display='block'}
       block=80}
-    else if (type!='image' && !thumbSheet && (!overMedia||yw>0.95)) {	// seek
+    else if (type!='image' && !thumbSheet && (!overMedia||yw>0.95||ym>0.95)) {	// seek
       el=myPlayer
       if (wheelUp && !el.paused && el.currentTime > dur-3.5) return
       if (dur > 120) interval = 3
@@ -340,6 +331,8 @@
     else if (overText) myBody.style.cursor=null
     else myBody.style.cursor='crosshair'
     if (toggles.match('Subtitles')) Subtitles()
+    mySave.style.top=rect.bottom+5+'px'; mySave.style.left=rect.left+50+'px'
+    myCancel.style.top=rect.bottom+5+'px'; myCancel.style.left=rect.left+'px'
     if (editing) {mySave.style.display='block'; myCancel.style.display='block'} 
     else {mySave.style.display=null; myCancel.style.display=null}
     if (myPlayer.matches(':hover') || thumb.matches(':hover') || (listView&&thumb.style.opacity==1)) overMedia=index
@@ -378,8 +371,7 @@
       if (type=='video' && !myPlayer.duration && myPlayer.readyState!==4 && block<25) mySelected.innerHTML='File missing or wrong type'
       if (type!='image' && !dur) dur=myPlayer.duration			// just in case
       myPlayer.playbackRate=rate
-      vtt.style.position='fixed'
-      vtt.style.maxWidth=rect.width-10+'px'
+      if (!thumbSheet) {vtt.style.position='fixed'; vtt.style.maxWidth=rect.width-10+'px'}
       vtt.style.top=rect.bottom +10 +'px'
       vtt.style.left=rect.left +'px'
       if (toggles.match('Pause') && cueIndex!=index && !Click && myPlayer.currentTime>thumb.style.start) {myPlayer.pause(); cueIndex=index}
@@ -408,7 +400,7 @@
 
   function seekBar() {							// progress bar beneath player
     if (playing=='browser') {el=myPlayer} else el=myPic
-    if (el==myPlayer && overMedia && !cue) {mySeekbar.style.width=null; return}
+    if (el==myPlayer && overMedia && ym<0.95 && yw<0.95 && !cue) {mySeekbar.style.width=null; return}
     if (!playing && !myPic.matches(':hover')) {mySeekbar.style.width=null; return}
     var cueX = rect.left + 7
     var x = Math.round(el.currentTime*100)/100
@@ -542,7 +534,7 @@
     if (playing || overMedia) {myPic.style.display=null; myNav.style.width='20em'}
     else {myPic.style.display='none'; myNav.style.width=null}
     myPic.style.backgroundPosition='0 0'
-    if (!playing && !listView && overMedia) {myNav.style.left=x.left-70+'px'; myNav.style.top=x.top-70+'px'}
+    if (!playing && !listView && overMedia && view<16) {myNav.style.left=x.left-70+'px'; myNav.style.top=x.top-70+'px'}
     else {myNav.style.left=xpos-30+'px'; myNav.style.top=ypos-30+'px'}
     myNav.style.display='block'}
 
@@ -638,11 +630,12 @@
 
 
   function addFavorite() {
-      if (longClick) x = 0								// sets fav start to default
-      else if (!playing) x = thumb.currentTime
+      if (longClick && dur>120) x = thumb.style.start			// sets start to default
+      else if (longClick) x = 0						// sets start to 0
+      else if (!playing) x = thumb.currentTime.toFixed(1)
       else x = myPlayer.currentTime.toFixed(1)
-      inca('Favorite',x,index,vtt.scrollTop.toFixed(0))					// includes any caption/txt scroll
-      document.getElementById('myFavicon'+index).innerHTML='&#10084'}			// heart symbol on htm thumb
+      inca('Favorite',x,index,vtt.scrollTop.toFixed(0))			// includes any caption/txt scroll
+      document.getElementById('myFavicon'+index).innerHTML='&#10084'}	// heart symbol on htm thumb
 
 
   function Subtitles() {						// track & highlight vtt subtitles
@@ -651,10 +644,8 @@
     if (playing) x = index+'.'+myPlayer.currentTime.toFixed(1)
     if (!(el2=document.getElementById(x))) return
     if (!(el3=document.getElementById('my'+x))) return
-    if (!thumb.paused || !myPlayer.paused) {
-      el2.scrollIntoView(); myContent.scrollTo(0,y); el3.style.color='lightsalmon'; el3.style.fontSize='1.1em'}
-    mySave.style.top=rect.bottom+5+'px'; mySave.style.left=rect.left+50+'px'
-    myCancel.style.top=rect.bottom+5+'px'; myCancel.style.left=rect.left+'px'}
+    if (!thumb.paused || !myPlayer.paused) { el2.scrollIntoView(); myContent.scrollTo(0,y);
+      el3.style.color='#ffa07add'; el3.style.fontSize='1.1em'}}
 
 
   function Cues(time, j) {						// process media cues- captions, speed, skinny, pauses etc.
@@ -672,16 +663,16 @@
           if (entry[2]) setTimeout(function(){myPlayer.play()},1000*entry[2])}}}}
 
 
-  function overThumb(id, x) {
+  function overThumb(id, timeStamp) {
     if (id!=index) thumb.pause()					// pause previous thumb
     index = id
     getParameters(id)
     if (!vtt.innerHTML) thumb.playbackRate=0.6				// less busy htm thumbs
     if (listView) thumb.style.opacity=1
-    if (thumb.readyState !== 4) thumb.load()				// first use
-    if (x) { myPlayer.currentTime=x; thumb.currentTime=x
+    if (thumb.readyState !== 4) thumb.load()			// first use
+    if (timeStamp) { myPlayer.currentTime=timeStamp; thumb.currentTime=timeStamp
       if (!playing && !editing) {thumb.play(); thumb.muted=0}
-      else if (!editing) vtt.style.maxWidth='20em'; vtt.style.height='16em'; myPlayer.play()}}
+      else if (!editing) myPlayer.play()}}
 
 
   function mute() {

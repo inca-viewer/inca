@@ -210,7 +210,7 @@ size = 0								; cannot have null size in getParameters()
 caption = <span id='vtt%j%'></span>					; default null placeholder
 
 if (!listView && text)
-     caption = <p id='vtt%j%' class='text' style='font-size:1.2em' contenteditable="true" onmouseover='overText=1' onmouseout='overText=0'`n oninput="if(editing&&editing!='%j%') {inca('Vtt',editing)}; editing='%j%'; thumb.pause(); myPlayer.pause()"`n ondrag="getParameters(%j%, 'document', '%cueList%', %start%, %dur%, %size%, event)">%text%</p>`n 
+     caption = <p id='vtt%j%' class='text' style='font-size:1.2em' contenteditable="true" onmouseover='overText=1; getParameters(%j%)' onmouseout='overText=0'`n oninput="if(editing&&editing!='%j%') {inca('Vtt',editing)}; editing='%j%'; thumb.pause(); myPlayer.pause()"`n ondrag="getParameters(%j%, 'document', '%cueList%', %start%, %dur%, %size%, event)">%text%</p>`n 
 
 if listView
   mediaList = %mediaList%%fold%<table onmouseover='overThumb(%j%); if (Click && gesture==1) sel(%j%)'`n onmouseout="thumb%j%.style.opacity=0">`n <tr id='entry%j%'>`n <td>%ext%`n %caption%<video id='thumb%j%' class='thumb2' ondrag="getParameters(%j%, '%type%', '%cueList%', %start%, %dur%, %size%, event)"`n %src%`n %poster%`n preload=%preload% muted loop type="video/mp4"></video></td>`n <td>%size%</td>`n <td style='min-width:6em'>%durT%</td>`n <td>%date%</td>`n <td style='min-width:4.4em'>%j%</td>`n <td id='myFavicon%j%' style='width:0; translate:-1em; white-space:nowrap; font-size:0.7em; color:salmon; min-width:1em'>%favicon%</td>`n <td style='width:80em'><input id="title%j%" onmouseover='overText=1' onmouseout='overText=0; Click=0' class='title' type='search' value='%media_s%'`n oninput="renamebox=this.value; lastMedia=%j%"></td>`n %fo%</tr></table>`n`n
@@ -826,6 +826,7 @@ sleep 200								; time for page to load
             {
             if !address
               return
+xx := address
             getMedia(selected)
             if (ext == "txt")
               {
@@ -850,6 +851,8 @@ sleep 200								; time for page to load
               address := StrReplace(address, "`r`n`r`n", "`r`n")
               FileDelete, %inca%\cache\captions\%media%.vtt
               FileAppend, %address%, %inca%\cache\captions\%media%.vtt
+FileAppend, %xx%`r`n, %inca%\temp.vtt
+FileAppend, %address%`r`n`r`n, %inca%\temp.vtt
               }
             FileRead, cues, %inca%\cache\cues\%media%.txt
             if cues
