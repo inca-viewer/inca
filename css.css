@@ -69,7 +69,6 @@ b {						/* subtitle timestamp heading */
   color:#826858;
   text-align:center;
   height:9em;
-//  width:70em;					/* becomes max width */
   line-height:1.2em;
   font-family:inherit;
   font-size:1em;
@@ -203,6 +202,7 @@ b {						/* subtitle timestamp heading */
   text-overflow:ellipsis;
   background-color:inherit;
   color:#ffa07a44;
+//  font-size:1.2em;
   font-size:inherit;
   font-family:inherit;
   border-radius:1em;
