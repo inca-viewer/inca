@@ -182,7 +182,7 @@ if InStr(Label, "T5 EVO")
         if (ext=="txt")
           FileRead, text, %src%
         else IfExist, %inca%\cache\captions\%media%.vtt
-          if InStr(toggles, "Subtitles")
+          if InStr(toggles, "Captions")
             {
             FileRead, str2, %inca%\cache\captions\%media%.vtt
             Loop, Parse, str2, `n, `r
@@ -195,11 +195,11 @@ if InStr(Label, "T5 EVO")
                   if (!x.3)
                     x := Round(x.1*60 + x.2,1)				; seconds format
                   else x := Round(3600*x.1 + 60*x.2 + x.3,1)
-                  text = %text%<b id='%j%-%x%'>%A_LoopField%</b>
+                  text = %text%<d id='%j%-%x%'>%A_LoopField%</d>
                   }
-                else text =%text%<span id='my%j%-%x%'>%A_LoopField%</span>
+                else text =%text%<e id='my%j%-%x%'>%A_LoopField%</e>
+        text := StrReplace(text, "..", "<br>")				; trick to allow LF/CR in vtt files
             }
-        text := StrReplace(text, "`r`n", "<br>")
 
 if (type=="image")
   src =
@@ -215,7 +215,7 @@ if (!listView && text)
 if listView
   mediaList = %mediaList%%fold%<table onmouseover='overThumb(%j%); if (Click && gesture==1) sel(%j%)'`n onmouseout="thumb%j%.style.opacity=0">`n <tr id='entry%j%'>`n <td>%ext%`n %caption%<video id='thumb%j%' class='thumb2' ondrag="getParameters(%j%, '%type%', '%cueList%', %start%, %dur%, %size%, event)"`n %src%`n %poster%`n preload=%preload% muted loop type="video/mp4"></video></td>`n <td>%size%</td>`n <td style='min-width:6em'>%durT%</td>`n <td>%date%</td>`n <td style='min-width:4.4em'>%j%</td>`n <td id='myFavicon%j%' style='width:0; translate:-1em; white-space:nowrap; font-size:0.7em; color:salmon; min-width:1em'>%favicon%</td>`n <td style='width:80em; font-size:1.2em'><input id="title%j%" class='title' onmouseover='overText=1' onmouseout='overText=0; Click=0' type='search' value='%media_s%'`n oninput="renamebox=this.value; lastMedia=%j%"></td>`n %fo%</tr></table>`n`n
 
-else mediaList = %mediaList%<div id="entry%j%" class='entry'>`n <span id='myFavicon%j%' style='display:block; position:absolute; top:6px; right:4px; padding-right:0.1em; font-size:0.7em; color:salmon'>%favicon%</span>`n <input id='title%j%' class='title' style='margin:auto; text-align:center; font-weight:bold' type='search' value='%media_s%'`n oninput="renamebox=this.value; lastMedia=%j%" onmouseup='thumb%j%.currentTime=%start%; vtt%j%.scrollTo(0,0)'`n onmouseover='overText=1'`n onmouseout='overText=0'>`n <video id="thumb%j%" class='thumb' style="display:block; margin:auto"`n ondrag="getParameters(%j%, '%type%', '%cueList%', %start%, %dur%, %size%, event)"`n onmouseenter="overThumb(%j%); if (Click && gesture==1 && !editing) sel(%j%)"`n onmouseout='overMedia=0' %src%`n %poster%`n preload=%preload% loop muted type='video/mp4'></video>`n %noIndex%%caption%</div>`n`n
+else mediaList = %mediaList%<div id="entry%j%" class='entry'>`n <span id='myFavicon%j%' style='display:block; position:absolute; top:6px; right:4px; padding-right:0.1em; font-size:0.7em; color:salmon'>%favicon%</span>`n <input id='title%j%' class='title' style='margin:auto; text-align:center; font-weight:bold' type='search' value='%media_s%'`n oninput="renamebox=this.value; lastMedia=%j%" onmouseup='thumb%j%.currentTime=%start%; vtt%j%.scrollTo(0,0); vtt.style.width=null; vtt.style.height=null'`n onmouseover='overText=1'`n onmouseout='overText=0'>`n <video id="thumb%j%" class='thumb' style="display:block; margin:auto"`n ondrag="getParameters(%j%, '%type%', '%cueList%', %start%, %dur%, %size%, event)"`n onmouseenter="overThumb(%j%); if (Click && gesture==1 && !editing) sel(%j%)"`n onmouseout='overMedia=0' %src%`n %poster%`n preload=%preload% loop muted type='video/mp4'></video>`n %noIndex%%caption%</div>`n`n
 } 
 
 
@@ -259,7 +259,7 @@ else mediaList = %mediaList%<div id="entry%j%" class='entry'>`n <span id='myFavi
         type = video							; prime for list parsing
         page_s := Setting("Page Size")
 
-if (!listView && InStr(toggles, "Subtitles"))
+if (!listView && InStr(toggles, "Captions"))
 page_s := 64
 else if (playlist || SearchTerm || listView)
 page_s := 640
@@ -480,7 +480,7 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n glo
 <a id='myList' style='%x11%' onmousedown="inca('List')">%order%</a>`n
 <a id='myShuffle' style='%x1%' onmousedown="inca('Shuffle')">Shuffle</a>`n
 <a style='%x12%' onmousedown="inca('Pause')">Pause</a>`n
-<a style='%x13%' onmousedown="inca('Subtitles')">Caps</a>`n
+<a style='%x13%' onmousedown="inca('Captions')">Caps</a>`n
 <a style='%x10%' onmousedown="inca('Images')">Pics</a>`n
 <a style='%x9%' onmousedown="inca('Videos')">Vids</a>`n
 <a style='%x8%' onmousedown="inca('Recurse')">Subs</a>`n
@@ -830,9 +830,11 @@ sleep 200								; time for page to load
               address := StrReplace(address, "<div><br><\div>","`r`n")
               address := StrReplace(address, "<div>", "`r`n")
               }
-            address := StrReplace(address, "<\span>", "`r`n")		; timestamp / text split
+            else address := StrReplace(address, "<br>", "..")		; return LF/CR to .. for vtt file
+            address := StrReplace(address, "<\e><e id=", "..<e id=")	; .. triggers LF/CR encoding
+            address := StrReplace(address, "<\e>", "`r`n")		; timestamp / text split
             address := StrReplace(address, "<div><br><\div>")
-            address := StrReplace(address, "<\b>", "`r`n")		; \ is reversed in clipboard
+            address := StrReplace(address, "<\d>", "`r`n")		; \ is reversed in clipboard
             address := StrReplace(address, "<br>", "`r`n")
             address := StrReplace(address, "-->", "--&gt;")		; so "<.*?>" can clear out injected html
             address := RegExReplace(address, "<.*?>")			; remove everything between <>
@@ -1118,7 +1120,7 @@ sleep 200								; time for page to load
                     popup(popup,0,0,0)
                     }
                 }
-              else DeleteEntries(1)
+              else DeleteEntries()
               x := StrSplit(selected,",")
               index := x[x.MaxIndex()-1]
               }
@@ -1297,8 +1299,20 @@ sleep 200								; time for page to load
                 x := StrSplit(selected,",")
                 index := x[x.MaxIndex()-1]				; scroll htm to end of selection
                 MoveFiles()						; between folders or playlists
-                reload := 3
                 selected =
+                CreateList(0)						; briefly show current folder
+                incaTab =						; then trigger new tab
+                path := address
+		str := StrSplit(address,"\")
+		folder := str[str.MaxIndex()-1]
+                if playList
+                  {
+                  playlist := address
+                  SplitPath, address,,path,,folder
+                  path = %path%\
+                  }
+                else searchPath := address
+                reload := 3						; open target folder in new tab
                 return
                 }
               else if InStr(address, ".m3u")				; playlist
@@ -1364,7 +1378,7 @@ sleep 200								; time for page to load
             page := 1
             if value is not number
               value := 0
-            if (command != "Images" && command != "videos" && command != "Recurse" && command != "Pause" && command != "Subtitles" && command != "Mpv")
+            if (command != "Images" && command != "videos" && command != "Recurse" && command != "Pause" && command != "Captions" && command != "Mpv")
               if (InStr(sortList, command) && sort != command)		; changed sort column
                 {
                 StringReplace, toggles, toggles, Reverse		; clear reverse
@@ -1381,9 +1395,9 @@ sleep 200								; time for page to load
                 filt := value
               else if (InStr(sortList, command))			; sort filter
                 {
-                if (command=="Pause"||command=="Subtitles")
+                if (command=="Pause"||command=="Captions")
                   reload := 2
-                toggle_list = Reverse Recurse Videos Images Pause Subtitles Mpv
+                toggle_list = Reverse Recurse Videos Images Pause Captions Mpv
                 if (sort != command)					; new sort
                     {
                     if (command != "Reverse" && !InStr(toggle_list, command))
@@ -1614,8 +1628,9 @@ subfolders := array.11
           popup = Same folder . . .
         else Loop, Parse, selected, `,
             {
-            if !getMedia(A_LoopField)
+            if A_LoopField is not number
               continue
+            getMedia(A_LoopField)
             if longClick
               popup = Copying %A_Index%
             else popup = Moving %A_Index%
@@ -1624,9 +1639,10 @@ subfolders := array.11
             if (InStr(address, "inca\fav") || InStr(address, "inca\music"))
                 {
                 FileAppend, %target%`r`n, %address%, UTF-8		; add media entry to playlist
-                Runwait, %inca%\cache\apps\ffmpeg.exe -i "%src%" -y -vf scale=1280:1280/dar -vframes 1 "%inca%\cache\posters\%media%%A_Space%0.0.jpg",, Hide
+                if (src && !InStr(path, "\inca\"))
+                  Runwait, %inca%\cache\apps\ffmpeg.exe -i "%src%" -y -vf scale=1280:1280/dar -vframes 1 "%inca%\cache\posters\%media%%A_Space%0.0.jpg",, Hide
                 }
-            else 
+            else if src
                 {
                 FileGetSize, x, %address%%media%.%ext%			; if x, then name already exists in target folder
                 FileGetSize, y, %src%					; get source file size
@@ -1664,20 +1680,20 @@ subfolders := array.11
             }
         if (popup && !longClick)
           if (InStr(address, "inca\fav") || InStr(address, "inca\music"))
-            DeleteEntries(0)
+            DeleteEntries()
         if popup
           PopUp(popup,0,0,0) 
         }  
 
 
-    DeleteEntries(trash)						; playlist entries
+    DeleteEntries()							; playlist entries
         {
         IfNotExist, %playlist%
           return
         FileRead, str, %playlist%
         FileDelete, %playlist%
         Loop, Parse, selected, `,
-         if A_LoopField
+         if A_LoopField is number
           {
           getMedia(A_LoopField)
           x = %target%`r`n
@@ -1700,7 +1716,7 @@ subfolders := array.11
           return
           }
         Loop, Parse, selected, `,
-          if A_LoopField
+          if A_LoopField is number
             {
             getMedia(A_LoopField)
             source = %target%						; source = entry to move
@@ -1881,7 +1897,7 @@ subfolders := array.11
         inca := SubStr(inca, 1, InStr(inca, "\", False, -1))
         StringTrimRight, inca, inca, 1
         EnvGet, profile, UserProfile
-        sortList = Shuffle|Alpha|Duration|Date|Size|Type|Reverse|Recurse|Videos|Images|List|Pause|Subtitles|Mpv
+        sortList = Shuffle|Alpha|Duration|Date|Size|Type|Reverse|Recurse|Videos|Images|List|Pause|Captions|Mpv
         IniRead,config,%inca%\ini.ini,Settings,config
         IniRead,searchFolders,%inca%\ini.ini,Settings,searchFolders
         IniRead,indexFolders,%inca%\ini.ini,Settings,indexFolders

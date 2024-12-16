@@ -13,19 +13,10 @@
   c {display:block; padding-left:1em; text-decoration:none; font-weight:bold; color:#826858; transition:1s} /* panel text */
   c:hover {transition:0.2s; transform:scale(1.1,1.1); color:lightsalmon}
   c:active {color:red; transform:scale(0.8,0.8)}
-
-b {						/* subtitle timestamp heading */
-  display:block;
-  font-size:0.8em;
-  width:12em;
-  margin:auto;
-  color:#ffa07a22;
-  overflow:hidden;
-  white-space:nowrap;
-  border-radius:1em;
-  text-align:center;
-  transition:0.1s}
-  b:hover {color:#fa8072aa; overflow:visible}
+  d {display:block; color:#ffa07a22; font-size:0.6em; transition:0.8s}
+  d:hover {transform:scale(1.2,1.2); color:lightsalmon}
+  e {display:block; padding-left:5%; padding-right:5%; color:#826858; transition:0.8s}
+  e:hover {color:#ffa07abb}
 
 .fadeout {					/* between top panel and scrolled thumbs */
   position:relative; 
@@ -68,7 +59,9 @@ b {						/* subtitle timestamp heading */
   scroll-behavior:smooth;
   color:#826858;
   text-align:center;
-  height:9em;
+  height:2.9em;
+  width:9em;
+  max-height:18em;
   line-height:1.2em;
   font-family:inherit;
   font-size:1em;

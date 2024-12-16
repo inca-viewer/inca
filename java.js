@@ -9,7 +9,8 @@
   var intervalTimer							// every 100mS
   var thumb = 0								// current thumb element
   var title = 0								// title element
-  var vtt = 0								// text/subtitle element
+  var vtt = 0								// whole text/subtitle element
+  var myVtt								// current caption element
   var wheel = 0								// mouse wheel count
   var index = 1								// thumb index (e.g. thumb14)
   var cueIndex = -1							// current cue entry
@@ -127,7 +128,7 @@
     if (lastClick==3 && (!longClick || (!playing && !overMedia && !myNav.matches(':hover')))) return
     if (!gesture && longClick==1 && !playing && playlist && index && selected) {inca('Move', overMedia); return}
     if (!longClick && lastClick==1) {
-      if (overText) if (caption()) return
+      if (overText) if (openCap()) return
       if (myPic.matches(':hover')) {thumbSheet=0; thumb.currentTime=myPic.style.start}
       else if (myNav.matches(':hover')) return
       if (!playing && index==lastMedia && thumb.paused) {thumb.play()} else thumb.pause()
@@ -324,7 +325,7 @@
     else if (!cursor) myBody.style.cursor='none'
     else if (overText) myBody.style.cursor=null
     else myBody.style.cursor='crosshair'
-    if (toggles.match('Subtitles')) Subtitles()
+    if (toggles.match('Captions')) Captions()
     mySave.style.top=rect.bottom+5+'px'; mySave.style.left=rect.left+50+'px'
     myCancel.style.top=rect.bottom+5+'px'; myCancel.style.left=rect.left+'px'
     if (editing) {mySave.style.display='block'; myCancel.style.display='block'} 
@@ -635,15 +636,6 @@
       document.getElementById('myFavicon'+index).innerHTML='&#10084'}	// heart symbol on htm thumb
 
 
-  function Subtitles() {						// track & highlight vtt subtitles
-    var y = myContent.scrollTop
-    var x = index+'-'+thumb.currentTime.toFixed(1)
-    if (playing) x = index+'-'+myPlayer.currentTime.toFixed(1)		//
-    if (el=document.getElementById('my'+x)) {el.style.color='lightsalmon'}
-    if (!thumb.paused || !myPlayer.paused) {
-      if (el=document.getElementById(x)) {el.scrollIntoView(); myContent.scrollTo(0,y)}}}
-
-
   function Cues(time, j) {						// process media cues- captions, speed, skinny, pauses etc.
     var x = cueList.split('#1')						// each line entry
     for (k=0; k<x.length; k++) {					// i represents each line entry
@@ -674,11 +666,23 @@
       myPlayer.muted=!myPlayer.muted; localStorage.muted = 1*myPlayer.muted}}
 
 
-  function caption() {							// click over caption
+  function Captions() {							// track & highlight vtt Captions
+    var y = myContent.scrollTop
+    var x = index+'-'+thumb.currentTime.toFixed(1)
+    if (playing) x = index+'-'+myPlayer.currentTime.toFixed(1)
+    if (el=document.getElementById('my'+x)) {
+      el.style.color='lightsalmon'; el.style.transform='scale(1.1,1.1)'
+      if (myVtt && el != myVtt) {myVtt.style.color=null; myVtt.style.transform='none'} myVtt = el}
+    if (!thumb.paused || !myPlayer.paused) {
+      if (el=document.getElementById(x)) {el.scrollIntoView(); myContent.scrollTo(0,y)}}}
+
+
+  function openCap() {							// click over caption
     var id = document.elementFromPoint(xpos,ypos).id
     lastMedia = id.split('-')[0]
     if (vtt.style.height!='18em') {
-      vtt.style.width='20em'; vtt.style.height='18em'}
+      if (vtt.style.width.slice(0,-2)<20) vtt.style.width='20em'
+      x=vtt.innerHTML.length/100; vtt.style.height=3+x+'em'}
     if (!id.match('my')) {
       var tm = id.split('-')[1]
       if (!isNaN(tm)) {myPlayer.currentTime=tm; thumb.currentTime=tm}
@@ -687,27 +691,27 @@
       return 1}}
 
 
-  function newCap() {							// slice new timestamp into vtt.innerHTML
+  function newCap() {							// slice new caption into vtt.innerHTML
     y=''								// yes, very ugly code
-    w=thumb.currentTime.toFixed(3).toString().split('.')
+    w=thumb.currentTime.toFixed(3).toString().split('.')		// second and millisecond parts
     var t=thumb.currentTime.toFixed(1)
-    minutes = w[0] / 60; seconds = w[0] % 60
+    minutes = w[0] / 60; seconds = w[0] % 60				// create vtt style timestamp
     if (minutes<10) minutes='0'+minutes.toFixed(0)
     if (seconds<10) seconds='0'+seconds.toFixed(0)
     ww = minutes+':'+seconds+'.'+w[1]
     ww = ww+' --> '+ww
     if (!vtt.innerHTML) {						// first ever caption 
-    vtt.innerHTML='<p id="vtt'+index+'" class="text" contenteditable="true" oninput="editing='+index+'" onmouseover="overText=1"><b id="'+index+'-'+t+'">'+ww+'</b><span id="my'+index+'-'+t+'">_________</span></p>'; return}
-    for (x of vtt.innerHTML.split('</span><b id=')) {			// spool through vtt entries
+    vtt.innerHTML='<p id="vtt'+index+'" class="text" contenteditable="true" oninput="editing='+index+'" onmouseover="overText=1"><d id="'+index+'-'+t+'">'+ww+'</d><e id="my'+index+'-'+t+'">_________</e></p>'; return}
+    for (x of vtt.innerHTML.split('</e><d id=')) {			// spool through vtt entries
       if (z = x.split('id="my'+index+'-')[1]) {				// when time >, splice in
-        if (z.split('"')[0] > 1*t) {y = y+'<b id="'+index+'-'+t+'">'+ww+'</b><span id="my'+index+'-'+t+'">_________</span>'; t=99999}
-        y=y+'<b id='+x+'</span>'}}
-    if (t!=99999) y = y+'<b id="'+index+'-'+t+'">'+ww+'</b><span id="my'+index+'-'+t+'">_________</span>'	// end of vtt
+        if (z.split('"')[0] > 1*t) {y = y+'<d id="'+index+'-'+t+'">'+ww+'</d><e id="my'+index+'-'+t+'">_________</e>'; t=99999}
+        y=y+'<d id='+x+'</e>'}}
+    if (t!=99999) y = y+'<d id="'+index+'-'+t+'">'+ww+'</d><e id="my'+index+'-'+t+'">_________</e>'	// end of vtt html
     vtt.innerHTML = y}
 
 
   function Time(z) {if (z<0) return '0:00'; var y=Math.floor(z%60); var x=':'+y; if (y<10) {x=':0'+y}; return Math.floor(z/60)+x}
-  function togglePause() {if(!thumbSheet && !longClick) {if (myPlayer.paused) {myPlayer.play()} else {myPlayer.pause()}}}
+  function togglePause(){if(!thumbSheet && !longClick) {if (myPlayer.paused&&!(overText&&editing)) {myPlayer.play()} else {myPlayer.pause()}}}
   function selectAll() {for (i=1; document.getElementById('thumb'+i); i++) {sel(i)}}
   function flip() {skinny*=-1; scaleX*=-1; thumb.style.skinny=skinny; positionMedia(0.6); thumb.style.transform='scaleX('+skinny+')'}
 
