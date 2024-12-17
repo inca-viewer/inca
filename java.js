@@ -118,22 +118,22 @@
 
   function clickEvent() {								// functional logic
     if (mySave.matches(':hover')) return
+    if (Click==2 && !playing) {inca('View',lastMedia); return}				// middle click - switch list/thumb view
     if (gesture || title.matches(':hover')) return					// allow rename of media in htm
     if (longClick==3 && overText) {newCap(); return}
     if (longClick && myInput.matches(':hover')) return
     if (longClick && myPanel.matches(':hover')) return					// copy files instead of move
     if (longClick && myRibbon.matches(':hover')) return
-    if (Click==2 && !playing) {inca('View',lastMedia); return}				// middle click - switch list/thumb view
     if (myFavorite.matches(':hover')) {addFavorite(); return}
     if (lastClick==3 && (!longClick || (!playing && !overMedia && !myNav.matches(':hover')))) return
     if (!gesture && longClick==1 && !playing && playlist && index && selected) {inca('Move', overMedia); return}
     if (!longClick && lastClick==1) {
       if (overText) if (openCap()) return
-      if (myPic.matches(':hover')) {thumbSheet=0; thumb.currentTime=myPic.style.start}
-      else if (myNav.matches(':hover')) return
-      if (!playing && index==lastMedia && thumb.paused) {thumb.play()} else thumb.pause()
+      if (!playing && index==lastMedia && thumb.paused && !(editing&&overText)) {thumb.play()} else thumb.pause()
       if (thumbSheet) {getStart(); return}
       else if (myPlayer.matches(':hover') && ((ym<1 && ym>0.9) || yw>0.95)) {myPlayer.currentTime=xm*dur; return}
+      if (myPic.matches(':hover')) {thumbSheet=0; thumb.currentTime=myPic.style.start}
+      else if (myNav.matches(':hover')) return
       else if (playing) {togglePause(); return}
       else if (!playing && !overMedia) return}
     if (playing && lastClick==2) {							// next, previous media
@@ -365,7 +365,7 @@
     else {mySelect.style.color=null; myPlayer.style.outline=null}
     if (playing=='browser') {
       if (!thumbSheet) thumb.currentTime=myPlayer.currentTime
-      if (type=='video' && !myPlayer.duration && myPlayer.readyState!==4 && block<25) mySelected.innerHTML='File missing or wrong type'
+      if (type!='image' && !myPlayer.duration && myPlayer.readyState!==4 && block<25) mySelected.innerHTML='File missing or wrong type'
       if (type!='image' && !dur) dur=myPlayer.duration			// just in case
       myPlayer.playbackRate=rate
       if (!thumbSheet) {vtt.style.position='fixed'; vtt.style.width=rect.width-10+'px'}
@@ -584,7 +584,7 @@
     listView=lv; selected=se; playlist=pl
     key = 'pageWidth'+folder
     x = localStorage.getItem(key)
-    if (isNaN(x) || x<20 || x>100) localStorage.setItem(key, 70)	// default htm width 70%
+    if (isNaN(x) || x<20 || x>100) localStorage.setItem(key, 60)	// default htm width 60%
     pageWidth = 1*localStorage.getItem(key)
     myView.style.width = 1*localStorage.getItem(key)+'%'
     key = 'pageView'+folder
@@ -651,6 +651,13 @@
           if (entry[2]) setTimeout(function(){myPlayer.play()},1000*entry[2])}}}}
 
 
+  function newCue() {
+    if (!playing) inca('EditCue',0,index,0)
+    else myPlayer.pause()
+    if (!cue) cue=Math.round(myPlayer.currentTime*100)/100
+    else {inca('addCue', myPlayer.currentTime.toFixed(2), index, cue); cue=0}}
+
+
   function overThumb(id) {
     thumb.pause()							// pause previous thumb
     index = id
@@ -679,7 +686,7 @@
 
   function openCap() {							// click over caption
     var id = document.elementFromPoint(xpos,ypos).id
-    lastMedia = id.split('-')[0]
+    lastMedia = id.split('-')[0].replace('my','')
     if (vtt.style.height!='18em') {
       if (vtt.style.width.slice(0,-2)<20) vtt.style.width='20em'
       x=vtt.innerHTML.length/100; vtt.style.height=3+x+'em'}
@@ -701,13 +708,14 @@
     ww = minutes+':'+seconds+'.'+w[1]
     ww = ww+' --> '+ww
     if (!vtt.innerHTML) {						// first ever caption 
-    vtt.innerHTML='<p id="vtt'+index+'" class="text" contenteditable="true" oninput="editing='+index+'" onmouseover="overText=1"><d id="'+index+'-'+t+'">'+ww+'</d><e id="my'+index+'-'+t+'">_________</e></p>'; return}
+    vtt.innerHTML='<p id="vtt'+index+'" class="text" oninput="editing='+index+'" onmouseover="overText=1"><d id="'+index+'-'+t+'">'+ww+'</d><e contenteditable="true" id="my'+index+'-'+t+'">_________</e></p>'; return}
     for (x of vtt.innerHTML.split('</e><d id=')) {			// spool through vtt entries
       if (z = x.split('id="my'+index+'-')[1]) {				// when time >, splice in
-        if (z.split('"')[0] > 1*t) {y = y+'<d id="'+index+'-'+t+'">'+ww+'</d><e id="my'+index+'-'+t+'">_________</e>'; t=99999}
+        if (z.split('"')[0] > 1*t) {y = y+'<d id="'+index+'-'+t+'">'+ww+'</d><e contenteditable="true" id="my'+index+'-'+t+'">_________</e>'; t=99999}
         y=y+'<d id='+x+'</e>'}}
-    if (t!=99999) y = y+'<d id="'+index+'-'+t+'">'+ww+'</d><e id="my'+index+'-'+t+'">_________</e>'	// end of vtt html
+    if (t!=99999) y = y+'<d id="'+index+'-'+t+'">'+ww+'</d><e contenteditable="true" id="my'+index+'-'+t+'">_________</e>'
     vtt.innerHTML = y}
+
 
 
   function Time(z) {if (z<0) return '0:00'; var y=Math.floor(z%60); var x=':'+y; if (y<10) {x=':0'+y}; return Math.floor(z/60)+x}

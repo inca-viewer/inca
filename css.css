@@ -15,7 +15,7 @@
   c:active {color:red; transform:scale(0.8,0.8)}
   d {display:block; color:#ffa07a22; font-size:0.6em; transition:0.8s}
   d:hover {transform:scale(1.2,1.2); color:lightsalmon}
-  e {display:block; padding-left:5%; padding-right:5%; color:#826858; transition:0.8s}
+  e {display:block; padding-left:5%; padding-right:5%; color:#826858; outline:none; transition:0.8s}
   e:hover {color:#ffa07abb}
 
 .fadeout {					/* between top panel and scrolled thumbs */
@@ -59,7 +59,7 @@
   scroll-behavior:smooth;
   color:#826858;
   text-align:center;
-  height:2.9em;
+  height:6em;
   width:9em;
   max-height:18em;
   line-height:1.2em;

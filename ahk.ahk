@@ -195,11 +195,20 @@ if InStr(Label, "T5 EVO")
                   if (!x.3)
                     x := Round(x.1*60 + x.2,1)				; seconds format
                   else x := Round(3600*x.1 + 60*x.2 + x.3,1)
-                  text = %text%<d id='%j%-%x%'>%A_LoopField%</d>
+                  text = %text%<d id="%j%-%x%">%A_LoopField%</d>
                   }
-                else text =%text%<e id='my%j%-%x%'>%A_LoopField%</e>
-        text := StrReplace(text, "..", "<br>")				; trick to allow LF/CR in vtt files
+                else
+                  {
+                  y := A_LoopField
+                  y := StrReplace(y, ",", ",<br>")
+                  y := StrReplace(y, ".", ".<br>")
+                  y := StrReplace(y, "?", "?<br>")
+                  y := StrReplace(y, "!", "!<br>")
+                  text =%text%<e contenteditable="true" id="my%j%-%x%">%y%</e>
+                  }
             }
+        if (ext=="txt")
+          text := StrReplace(text, "`r`n", "<br>")
 
 if (type=="image")
   src =
@@ -210,7 +219,7 @@ size = 0								; cannot have null size in getParameters()
 caption = <span id='vtt%j%'></span>					; default null placeholder
 
 if (!listView && text)
-     caption = <p id='vtt%j%' class='text' style='font-size:1.2em' contenteditable="true" onmouseover='overText=1; if(index!=%j%) thumb.pause(); index=%j%; getParameters(%j%)' onmouseout='overText=0'`n oninput="if(editing&&editing!='%j%') {inca('Vtt',editing)}; editing='%j%'; thumb.pause(); myPlayer.pause()"`n ondrag="getParameters(%j%, 'document', '%cueList%', %start%, %dur%, %size%, event)">%text%</p>`n 
+     caption = <p id='vtt%j%' class='text' style='font-size:1.2em' onmouseover='overText=1; if(index!=%j%) thumb.pause(); index=%j%; getParameters(%j%)' onmouseout='overText=0'`n oninput="if(editing&&editing!='%j%') {inca('Vtt',editing)}; editing='%j%'; thumb.pause(); myPlayer.pause()"`n ondrag="getParameters(%j%, 'document', '%cueList%', %start%, %dur%, %size%, event)">%text%</p>`n 
 
 if listView
   mediaList = %mediaList%%fold%<table onmouseover='overThumb(%j%); if (Click && gesture==1) sel(%j%)'`n onmouseout="thumb%j%.style.opacity=0">`n <tr id='entry%j%'>`n <td>%ext%`n %caption%<video id='thumb%j%' class='thumb2' ondrag="getParameters(%j%, '%type%', '%cueList%', %start%, %dur%, %size%, event)"`n %src%`n %poster%`n preload=%preload% muted loop type="video/mp4"></video></td>`n <td>%size%</td>`n <td style='min-width:6em'>%durT%</td>`n <td>%date%</td>`n <td style='min-width:4.4em'>%j%</td>`n <td id='myFavicon%j%' style='width:0; translate:-1em; white-space:nowrap; font-size:0.7em; color:salmon; min-width:1em'>%favicon%</td>`n <td style='width:80em; font-size:1.2em'><input id="title%j%" class='title' onmouseover='overText=1' onmouseout='overText=0; Click=0' type='search' value='%media_s%'`n oninput="renamebox=this.value; lastMedia=%j%"></td>`n %fo%</tr></table>`n`n
@@ -439,7 +448,7 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n glo
 <a id='myLoop' onmouseup='if(looping) {looping=0} else looping=1'>Loop</a>`n
 <a id='myIndex' onmousedown="if(myTitle.innerHTML) {inca('Index','',index)} else inca('Index','',0)">Index</a>`n
 <a id='myDelete' onmousedown="if(!event.button) inca('Delete','',index)">Delete</a>
-<a id='myCue' onmouseup='Cue()'>Cue</a>`n
+<a id='myCue' onmouseup='newCue()'>Cue</a>`n
 <a id='myCap' onmouseup='newCap()'>Caption</a>`n
 <a id='Mp3' onmouseup="inca('mp3', myPlayer.currentTime.toFixed(2), index, cue); cue=0; myNav.style.display=null">mp3</a>`n
 <a id='Mp4' onmouseup="inca('mp4', myPlayer.currentTime.toFixed(2), index, cue); cue=0; myNav.style.display=null">mp4</a>`n
@@ -830,8 +839,7 @@ sleep 200								; time for page to load
               address := StrReplace(address, "<div><br><\div>","`r`n")
               address := StrReplace(address, "<div>", "`r`n")
               }
-            else address := StrReplace(address, "<br>", "..")		; return LF/CR to .. for vtt file
-            address := StrReplace(address, "<\e><e id=", "..<e id=")	; .. triggers LF/CR encoding
+            else address := StrReplace(address, "<br>")
             address := StrReplace(address, "<\e>", "`r`n")		; timestamp / text split
             address := StrReplace(address, "<div><br><\div>")
             address := StrReplace(address, "<\d>", "`r`n")		; \ is reversed in clipboard
@@ -1300,18 +1308,18 @@ sleep 200								; time for page to load
                 index := x[x.MaxIndex()-1]				; scroll htm to end of selection
                 MoveFiles()						; between folders or playlists
                 selected =
-                CreateList(0)						; briefly show current folder
-                incaTab =						; then trigger new tab
-                path := address
-		str := StrSplit(address,"\")
-		folder := str[str.MaxIndex()-1]
-                if playList
-                  {
-                  playlist := address
-                  SplitPath, address,,path,,folder
-                  path = %path%\
-                  }
-                else searchPath := address
+          ;      CreateList(0)						; briefly show current folder
+          ;      incaTab =						; then trigger new tab
+          ;      path := address
+	;	str := StrSplit(address,"\")
+	;	folder := str[str.MaxIndex()-1]
+         ;       if playList
+         ;         {
+         ;         playlist := address
+         ;         SplitPath, address,,path,,folder
+         ;         path = %path%\
+         ;         }
+         ;       else searchPath := address
                 reload := 3						; open target folder in new tab
                 return
                 }
