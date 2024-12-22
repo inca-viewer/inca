@@ -200,7 +200,6 @@ if InStr(Label, "T5 EVO")
                 else
                   {
                   y := A_LoopField
-                  y := StrReplace(y, ",", ",<br>")
                   y := StrReplace(y, ".", ".<br>")
                   y := StrReplace(y, "?", "?<br>")
                   y := StrReplace(y, "!", "!<br>")
@@ -208,7 +207,10 @@ if InStr(Label, "T5 EVO")
                   }
             }
         if (ext=="txt")
+          {
           text := StrReplace(text, "`r`n", "<br>")
+          text = <a contenteditable="true">%text%</a>
+          }
 
 if (type=="image")
   src =
@@ -222,11 +224,12 @@ if (!listView && text)
      caption = <p id='vtt%j%' class='text' style='font-size:1.2em' onmouseover='overText=1; if(index!=%j%) thumb.pause(); index=%j%; getParameters(%j%)' onmouseout='overText=0'`n oninput="if(editing&&editing!='%j%') {inca('Vtt',editing)}; editing='%j%'; thumb.pause(); myPlayer.pause()"`n ondrag="getParameters(%j%, 'document', '%cueList%', %start%, %dur%, %size%, event)">%text%</p>`n 
 
 if listView
-  mediaList = %mediaList%%fold%<table onmouseover='overThumb(%j%); if (Click && gesture==1) sel(%j%)'`n onmouseout="thumb%j%.style.opacity=0">`n <tr id='entry%j%'>`n <td>%ext%`n %caption%<video id='thumb%j%' class='thumb2' ondrag="getParameters(%j%, '%type%', '%cueList%', %start%, %dur%, %size%, event)"`n %src%`n %poster%`n preload=%preload% muted loop type="video/mp4"></video></td>`n <td>%size%</td>`n <td style='min-width:6em'>%durT%</td>`n <td>%date%</td>`n <td style='min-width:4.4em'>%j%</td>`n <td id='myFavicon%j%' style='width:0; translate:-1em; white-space:nowrap; font-size:0.7em; color:salmon; min-width:1em'>%favicon%</td>`n <td style='width:80em; font-size:1.2em'><input id="title%j%" class='title' onmouseover='overText=1' onmouseout='overText=0; Click=0' type='search' value='%media_s%'`n oninput="renamebox=this.value; lastMedia=%j%"></td>`n %fo%</tr></table>`n`n
+  mediaList = %mediaList%%fold%<table onmouseover='overThumb(%j%); if (Click && gesture==1) sel(%j%)'`n onmouseout="thumb%j%.style.opacity=0">`n <tr id='entry%j%'>`n <td>%ext%`n %caption%<video id='thumb%j%' class='thumb2' ondrag="getParameters(%j%, '%type%', '%cueList%', %start%, %dur%, %size%, event)"`n %src%`n %poster%`n preload=%preload% muted loop type="video/mp4"></video></td>`n <td>%size%</td>`n <td style='min-width:6em'>%durT%</td>`n <td>%date%</td>`n <td style='min-width:4.4em'>%j%</td>`n <td id='myFavicon%j%' style='width:0; translate:-1em; white-space:nowrap; font-size:0.7em; color:salmon; min-width:1em'>%favicon%</td>`n <td style='width:70vw'><input id="title%j%" class='title' style='text-align:left' onmouseover='overText=1' onmouseout='overText=0; Click=0' type='search' value='%media_s%'`n oninput="renamebox=this.value; lastMedia=%j%"></td>`n %fo%</tr></table>`n`n
 
-else mediaList = %mediaList%<div id="entry%j%" class='entry'>`n <span id='myFavicon%j%' style='display:block; position:absolute; top:6px; right:4px; padding-right:0.1em; font-size:0.7em; color:salmon'>%favicon%</span>`n <input id='title%j%' class='title' style='margin:auto; text-align:center; font-weight:bold' type='search' value='%media_s%'`n oninput="renamebox=this.value; lastMedia=%j%" onmouseup='thumb%j%.currentTime=%start%; vtt%j%.scrollTo(0,0); vtt.style.width=null; vtt.style.height=null'`n onmouseover='overText=1'`n onmouseout='overText=0'>`n <video id="thumb%j%" class='thumb' style="display:block; margin:auto"`n ondrag="getParameters(%j%, '%type%', '%cueList%', %start%, %dur%, %size%, event)"`n onmouseenter="overThumb(%j%); if (Click && gesture==1 && !editing) sel(%j%)"`n onmouseout='overMedia=0' %src%`n %poster%`n preload=%preload% loop muted type='video/mp4'></video>`n %noIndex%%caption%</div>`n`n
-} 
+else mediaList = %mediaList%<div id="entry%j%" class='entry' onmouseenter='overThumb(%j%)'>`n <span id='myFavicon%j%' style='display:block; position:absolute; top:6px; right:4px; padding-right:0.1em; font-size:0.7em; color:salmon'>%favicon%</span>`n <input id='title%j%' class='title' type='search'`n value='%media_s%'`n oninput="renamebox=this.value; lastMedia=%j%"`n onmouseover="overText=1; if((x=this.value.length/2) > view) this.style.width=x+'em'"`n onmouseout="overText=0; this.style.width='100`%'">`n <video id="thumb%j%" class='thumb' style="display:block; margin:auto"`n ondrag="getParameters(%j%, '%type%', '%cueList%', %start%, %dur%, %size%, event)"`n onmouseenter="if (Click && gesture==1 && !editing) sel(%j%)"`n onmouseout='overMedia=0' %src%`n %poster%`n preload=%preload% loop muted type='video/mp4'></video>`n %noIndex%%caption%</div>`n`n
+}
 
+ 
 
     RenderPage()							; construct web page from media list
         {
@@ -956,7 +959,7 @@ sleep 200								; time for page to load
               if (ext=="rtf" || ext=="doc")
                 Run, %src%
               else Run, % "notepad.exe " . src
-            else if (type=="video"||ext=="mid"||ext=="gif")
+            else
               {
               Loop, Parse, list, `n, `r
                 {
@@ -1062,6 +1065,9 @@ sleep 200								; time for page to load
             listView^=1
             index := value						; for scrollToIndex() in java
             reload := 2
+            if (listView)
+              Popup("List",0,0,0)
+            else Popup("Thumbs",0,0,0)
             }
         if (command == "Delete")
             {
@@ -1308,18 +1314,18 @@ sleep 200								; time for page to load
                 index := x[x.MaxIndex()-1]				; scroll htm to end of selection
                 MoveFiles()						; between folders or playlists
                 selected =
-          ;      CreateList(0)						; briefly show current folder
-          ;      incaTab =						; then trigger new tab
-          ;      path := address
-	;	str := StrSplit(address,"\")
-	;	folder := str[str.MaxIndex()-1]
-         ;       if playList
+         ;      CreateList(0)						; briefly show current folder
+         ;      incaTab =						; then go to new tab of destination folder
+         ;      path := address
+	 ;	str := StrSplit(address,"\")
+	 ;	folder := str[str.MaxIndex()-1]
+         ;      if playList
          ;         {
          ;         playlist := address
          ;         SplitPath, address,,path,,folder
          ;         path = %path%\
          ;         }
-         ;       else searchPath := address
+         ;      else searchPath := address
                 reload := 3						; open target folder in new tab
                 return
                 }

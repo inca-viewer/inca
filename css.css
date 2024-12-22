@@ -9,14 +9,57 @@
   td {outline:none; text-align:center; min-width:3.8em; overflow:hidden; white-space:nowrap}
   table {color:#826858; font-size:0.9em; border-collapse:collapse; margin:auto; border-radius:1em; transition:color 0.3s}
   table:hover {background:#1b1814}
-  a {color:#826858; text-decoration:none}	/* default text */
+  a {color:#826858; text-decoration:none; outline:none}	/* default text */
   c {display:block; padding-left:1em; text-decoration:none; font-weight:bold; color:#826858; transition:1s} /* panel text */
   c:hover {transition:0.2s; transform:scale(1.1,1.1); color:lightsalmon}
   c:active {color:red; transform:scale(0.8,0.8)}
-  d {display:block; color:#ffa07a22; font-size:0.6em; transition:0.8s}
+  d {display:block; color:#ffa07a22; font-size:0.6em; transition:0.8s; white-space:nowrap}
   d:hover {transform:scale(1.2,1.2); color:lightsalmon}
   e {display:block; padding-left:5%; padding-right:5%; color:#826858; outline:none; transition:0.8s}
   e:hover {color:#ffa07abb}
+
+.title {					/* thumb title element */
+  display:block;
+  white-space:nowrap;
+  background-color:inherit;
+  color:#ffa07a44;
+  overflow:hidden;
+  font-size:inherit;
+  text-align:center;
+  font-family:inherit;
+  width:100%;
+  margin:auto;
+  outline:none;
+  height:1.4em;
+  border:none;
+  transition:0.4s;
+  border-radius:1em}
+.title:hover {color:salmon; overflow:visible; background:#2b2824; transform:scale(1.1,1.1)}
+
+.entry {
+  padding:0.3em;
+  border-radius:1em;
+  padding-bottom:1em}
+
+.text {						/* editable text area - vtt */
+  position:relative;
+  background-color:inherit;
+  scroll-behavior:smooth;
+  color:#826858;
+  text-align:center;
+  height:6em;
+  max-height:32vh;
+  line-height:1.2em;
+  font-family:inherit;
+  font-size:1em;
+  margin:auto;
+  overflow:hidden;
+  overflow-y:scroll;
+  border:none;
+  padding:0.4em;
+  outline:1px solid #2b2824;
+  border-radius:1em}
+.text::-webkit-scrollbar {background:inherit; width:6px}
 
 .fadeout {					/* between top panel and scrolled thumbs */
   position:relative; 
@@ -53,26 +96,6 @@
 .save:hover {border:1px solid salmon; transform:scale(1.2,1.2)}
 .save:active {background:salmon; transform:scale(0.7,0.7)}
 
-.text {						/* editable text area - vtt */
-  position:relative;
-  background-color:inherit;
-  scroll-behavior:smooth;
-  color:#826858;
-  text-align:center;
-  height:6em;
-  width:9em;
-  max-height:18em;
-  line-height:1.2em;
-  font-family:inherit;
-  font-size:1em;
-  margin:auto;
-  overflow:hidden;
-  overflow-y:scroll;
-  border:none;
-  padding:0.4em;
-  outline:none}
-.text::-webkit-scrollbar {background:inherit; width:6px}
-
 .player {					/* media player element */
   position:absolute;
   opacity:0;
@@ -93,13 +116,6 @@
   flex-wrap:wrap;
   padding-top:18em;
   padding-bottom:70vh}
-
-.entry {
-  display:block;
-  position:relative;
-  border-radius:1em;
-  padding:0.3em;
-  padding-bottom:1em}
 
 .myMenu {
   position:fixed;
@@ -189,24 +205,6 @@
   overflow:hidden;
   white-space:nowrap}
 
-.title {					/* file name element */
-  display:flex;
-  overflow:hidden;
-  text-overflow:ellipsis;
-  background-color:inherit;
-  color:#ffa07a44;
-//  font-size:1.2em;
-  font-size:inherit;
-  font-family:inherit;
-  border-radius:1em;
-  width:100%;
-  outline:none;
-  height:1.4em;
-  border:none;
-  transition:0.6s;
-  white-space:nowrap}
-.title:hover {color:salmon; overflow:visible}
-
 .selected {					/* red popup following cursor */
   display:block; 
   position:absolute;
@@ -244,7 +242,7 @@
 .context {					/* right click menu */
   display:none;
   opacity:0;
-  transition:opacity 0.5s;
+  transition:0.5s;
   z-index:888;
   max-width:19em;
   position:fixed;
@@ -256,6 +254,7 @@
 
 .context a {
   display:block;
+  white-space:nowrap;
   width:5.5em;
   height:1.4em;
   border-radius:1.4em;
