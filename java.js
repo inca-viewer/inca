@@ -5,6 +5,7 @@
 // idea of side trolley to hold pc
 // validate vtt timestamps, htm and java code online
 
+// make context width match mypic
 
   var intervalTimer							// every 100mS
   var entry = 0								// current thumb htm container
@@ -146,7 +147,7 @@
     if (longClick==3 && type=='video') if (thumbSheet) {thumbSheet=0} else thumbSheet=1	// show thumbsheet
     if (longClick==1 && !overMedia && !playing && !myNav.style.display) index = lastMedia
     if (!getParameters(index)) {closePlayer(); return}					// end of media list
-    if (longClick==1 && (!overMedia&&playing || (!playing&&toggles.match('Pause')))) thumb.currentTime=thumb.style.start-0.8
+    if (longClick==1 && (!overMedia&&playing || (!playing&&toggles.match('Pause')))) thumb.currentTime=thumb.style.start
     else if (longClick==1 && overMedia) thumb.currentTime=0.01				// cannot be 0, see getPara..
     else if (!longClick && !myPic.matches(':hover') && Math.abs(thumb.style.start-thumb.currentTime) < 5 || lastClick==2) {
       thumb.currentTime=thumb.style.start}
@@ -173,7 +174,7 @@
     else if (playing=='mpv' || thumb.src.slice(-3)=='mid') inca('Media',0,index,para)
     if (type=='audio' || playlist.match('/inca/music/')) {
       scaleY=0.2; looping=0; myPlayer.muted=false; if (!thumbSheet) myPlayer.poster=thumb.poster}
-    if (playing=='browser' && (longClick==1 || !thumbSheet && type != 'image' && !toggles.match('Pause'))) myPlayer.play()
+    if (playing=='browser' && !thumbSheet && type != 'image' && !toggles.match('Pause')) myPlayer.play()
     myPlayer.addEventListener('ended', nextMedia)
     if (thumb.src.slice(-3)=='mp3') myPlayer.style.border='4px solid salmon'
     else myPlayer.style.border=null
@@ -187,8 +188,7 @@
     myNav.style.display=null
     myPlayer.volume=0.05
     if (looping) looping=1
-    if (longClick==1) cueIndex=-1					// for once only - to stop re-entry (paused)
-    else cueIndex=index
+    cueIndex=index
     lastClick=0}
 
 
@@ -263,12 +263,12 @@
       block=12}
     else if (!playing && id=='myWidth') {				// page width
       x = 1*myView.style.width.slice(0,-1)
-      if (x>=12 && wheelUp) x-=2
-      else if (!wheelUp && x<=98) x+=2
-      myView.style.width = x+'%'
+      if (x>=12 && wheelUp) x-=1
+      else if (!wheelUp && x<=98) x+=1
+      myView.style.width = x.toFixed(0)+'%'
       localStorage.setItem('pageWidth'+folder, x)
       block=12}
-    else if (mySelect.matches(':hover') || myPic.matches(':hover')) {	// next, previous media
+    else if (mySelect.matches(':hover') || myPic.matches(':hover') || myTitle.matches(':hover')) {  // next, previous media
       if (wheelUp) {index++} else if (index>1) index--
       if (!playing) {getParameters(index); setPic()}
       else {lastClick=0; clickEvent(); myNav.style.display='block'}
@@ -288,7 +288,7 @@
       if (wheelUp) {mediaX+=x*z; mediaY+=y*z; scaleY*=(1+z)}
       else if (!wheelUp && scaleY>0.21) {mediaX-=x*z; mediaY-=y*z; scaleY/=(1+z)}
       scaleX=skinny*scaleY; positionMedia(0); block=14}
-    wheel=0; cueIndex=-1}
+    wheel=0}
 
 
   function closePlayer() {
@@ -376,7 +376,6 @@
       if (type!='image' && !myPlayer.duration && myPlayer.readyState!==4 && block<25) mySelected.innerHTML='File missing or wrong type'
       if (type!='image' && !dur) dur=myPlayer.duration			// just in case
       myPlayer.playbackRate=rate
-      if (toggles.match('Pause') && cueIndex!=index && !Click && myPlayer.currentTime>thumb.style.start) {myPlayer.pause(); cueIndex=index}
       if (cue) {myCue.innerHTML='Goto '+myPlayer.currentTime.toFixed(2)} 
       if (cueList && !thumbSheet && myPlayer.currentTime>0.1) Cues(myPlayer.currentTime, index)
       positionMedia(0)}							// in case fullscreen 
@@ -535,7 +534,7 @@
     myPic.style.backgroundPosition='0 0'
     if (!playing && !listView && overMedia && view<16) {myNav.style.left=x.left-70+'px'; myNav.style.top=x.top-70+'px'}
     else {myNav.style.left=xpos-30+'px'; myNav.style.top=ypos-30+'px'}
-    myNav.style.display='block'}
+    myNav.style.display='block'; setPic()}
 
 
   function inca(command,value,select,address) {				// send java messages to inca.exe
@@ -629,12 +628,12 @@
 
 
   function addFavorite() {
-      if (longClick && dur>120) x = thumb.style.start			// sets start to default
-      else if (longClick) x = 0						// sets start to 0
-      else if (!playing) x = thumb.currentTime.toFixed(1)
-      else x = myPlayer.currentTime.toFixed(1)
-      inca('Favorite',x,index,vtt.scrollTop.toFixed(0))			// includes any caption/txt scroll
-      document.getElementById('myFavicon'+index).innerHTML='&#10084'}	// heart symbol on htm thumb
+    if (longClick && dur>120) x = thumb.style.start			// sets start to default
+    else if (longClick) x = 0						// sets start to 0
+    else if (!playing) x = thumb.currentTime.toFixed(1)
+    else x = myPlayer.currentTime.toFixed(1)
+    inca('Favorite',x,index,vtt.scrollTop.toFixed(0))			// includes any caption/txt scroll
+    document.getElementById('myFavicon'+index).innerHTML='&#10084'}	// heart symbol on htm thumb
 
 
   function Cues(time, j) {						// process media cues- captions, speed, skinny, pauses etc.
@@ -643,7 +642,7 @@
       var entry = x[k].split('#2')					// time[0] cue[1] value[2] period[3]
       if (entry[1] && 1*entry[0] > time-0.1 && 1*entry[0] < time+0.2) {
         if (type=='next') {lastClick=2; clickEvent()}
-        else if (entry[1]=='scroll' && !index) document.getElementById('vtt'+j).scrollTo(0,entry[2])
+        else if (entry[1]=='scroll' && Click) document.getElementById('vtt'+j).scrollTo(0,entry[2])
         else if (entry[1]=='goto') {myPlayer.currentTime = 1*entry[2]; myPlayer.volume=0.001}
         else if (entry[1]=='rate' && looping<2) {if (isNaN(1*entry[2])) {rate=defRate} else {rate=1*entry[2]}}
         else if (entry[1]=='skinny') {if (isNaN(entry[2])) {skinny=1} else {skinny=1*entry[2]; if(time) {positionMedia(entry[3])}}}
@@ -696,6 +695,7 @@
     lastMedia = id.split('-')[0].replace('my','')
     vtt.style.height=1+vtt.innerHTML.split('<br>').length+'em'
     entry.style.width='60%'
+    if (!vtt.scrollTop) Cues(0,index)					// scroll to last position
     if (!id.match('my')) {
       var tm = id.split('-')[1]
       if (!isNaN(tm)) {myPlayer.currentTime=tm; thumb.currentTime=tm}

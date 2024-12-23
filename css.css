@@ -34,7 +34,7 @@
   border:none;
   transition:0.4s;
   border-radius:1em}
-.title:hover {color:salmon; overflow:visible; background:#2b2824; transform:scale(1.1,1.1)}
+.title:hover {color:salmon; overflow:visible; transform:scale(1.1,1.1)} 
 
 .entry {
   padding:0.3em;
@@ -57,7 +57,7 @@
   overflow-y:scroll;
   border:none;
   padding:0.4em;
-  outline:1px solid #2b2824;
+  outline:0.1px solid #2b2824;
   border-radius:1em}
 .text::-webkit-scrollbar {background:inherit; width:6px}
 
