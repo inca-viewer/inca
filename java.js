@@ -158,6 +158,7 @@
 
   function Play() {
     positionMedia(0)									// stabilize myPlayer position
+    if (!playing) myNav.style.display=null
     myPlayer.style.transition = 'opacity 1s'
     if (!thumbSheet) myPlayer.currentTime=thumb.currentTime
     var para = myPlayer.currentTime+'|'+skinny+'|'+rate+'|'+1*localStorage.muted	// for if external player
@@ -185,7 +186,6 @@
     vtt.style.zIndex=Zindex
     myMask.style.display='flex'
     myBody.style.cursor='none'
-    myNav.style.display=null
     myPlayer.volume=0.05
     if (looping) looping=1
     cueIndex=index
