@@ -15,8 +15,8 @@
   c:active {color:red; transform:scale(0.8,0.8)}
   d {display:none; color:#ffa07a22; font-size:0.6em; transition:0.8s; white-space:nowrap}
   d:hover {transform:scale(1.2,1.2); color:lightsalmon}
-  e {display:block; padding:1.2%; color:#826858; outline:none; transition:0.8s}
-  e:hover {color:lightsalmon}
+  e {display:block; padding:1.2%; color:#926858bb; outline:none; transition:0.8s}
+  e:hover {color:#927868}
 
 .title {					/* thumb title element */
   display:block;
@@ -24,7 +24,7 @@
   background:inherit;
   color:#ffa07a44;
   overflow:hidden;
-  font-size:inherit;
+  font-size:1.1em;
   text-align:center;
   font-family:inherit;
   width:100%;
@@ -34,7 +34,7 @@
   border:none;
   transition:0.5s;
   border-radius:1em}
-.title:hover {color:salmon; transition:2s; overflow:visible; text-align:left} 
+.title:hover {color:salmon; transition:2s; overflow:visible}
 
 .entry {
   --view;					/* fixed 'popped' thumb width */
@@ -58,6 +58,8 @@
   font-family:inherit;
   font-size:1em;
   margin:auto;
+opacity:0;
+transition:opacity 1s;
   overflow:hidden;
   overflow-y:scroll;
   padding:0.4em;
@@ -79,7 +81,7 @@
   position:absolute;
   margin-left:4em;
   margin-top:1em;
-  transition:opacity 0.3s, transform 0.3s;
+//  transition:opacity 0.3s, transform 0.3s;
   border-radius:7%}
 
 .save {						/* save button over textarea */
@@ -252,7 +254,7 @@
   max-width:19em;
   position:fixed;
   font-size:1em;
-  font-variant-caps:petite-caps;
+//  font-variant-caps:petite-caps;
   border-radius:0.7em;
   background:#15110acc}
 .context:hover {opacity:1}

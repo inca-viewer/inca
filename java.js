@@ -4,6 +4,7 @@
 // make mpv player equal to browser player or convert all media to firefox compliant
 // idea of side trolley to hold pc
 
+// scatter audio close
 
 
   var intervalTimer							// every 100mS
@@ -125,7 +126,7 @@ else {vttPlay(); return}}
     if (lastClick==3 && (!longClick || (!playing && !overMedia && !myNav.matches(':hover')))) return
     if (!gesture && longClick==1 && !playing && playlist && index && selected) {inca('Move', overMedia); return}
     if (!longClick && lastClick==1) {
-      if (!playing && index==lastMedia && thumb.paused && !(editing&&overText)) {thumb.play()} else thumb.pause()
+if (!playing && thumb.paused && !(editing&&overText)) {thumb.play()} else thumb.pause()
       if (thumbSheet) {getStart(); return}
       else if (myPlayer.matches(':hover') && ((ym<1 && ym>0.9) || yw>0.95)) {myPlayer.currentTime=xm*dur; return}
       if (myPic.matches(':hover')) {thumbSheet=0; thumb.currentTime=myPic.style.start}
@@ -304,7 +305,7 @@ if (overText) return
     else myBody.style.cursor='crosshair'
     if (vtt.style.display) Captions()
     if (myNav.style.width) {
-      myTitle.innerHTML=title.value; mySelect.style.width='96%'; myTitle.style.width='96%'
+myTitle.innerHTML=title.value; mySelect.style.width='100%'; myTitle.style.width='100%'
       mySelect.innerHTML='Select '+index+' '+Time(dur)+' '+size+'mb'}
     else {mySelect.innerHTML='Select'; myTitle.innerHTML=''; myTitle.style.width=null}
     mySave.style.top=rect.bottom+5+'px'; mySave.style.left=rect.left+50+'px'
@@ -651,7 +652,7 @@ if (overText) return
     var x = index+'-'+thumb.currentTime.toFixed(1)
     thumb.playbackRate=1
     if (playing) vtt.style.width=rect.width-10+'px'
-    vtt.style.top=rect.bottom +10 +'px'
+    vtt.style.top=rect.bottom +'px'
     vtt.style.left=rect.left +'px'
 return
 
@@ -669,6 +670,7 @@ return
     if (vtt.style.display || !vtt.innerHTML) {newCap(); return}
     else {vtt.style.display='block'; Cues(index,-0.01)}			// scroll to last
     vtt.style.zIndex=Zindex+=1
+setTimeout(function() {vtt.style.opacity=1},100)
     if (!playing) {
       myMask.style.zIndex=Zindex
       myMask.style.display='flex'
@@ -721,6 +723,7 @@ return
     vtt.style.width=null
     vtt.style.zIndex=null
     vtt.style.display=null
+vtt.style.opacity=null
     entry.style.top=null
     entry.style.left=null
     entry.style.zIndex=null
