@@ -1,5 +1,5 @@
 
-  ::selection {color:red; background:black}
+  ::selection {color:#aaaaaa}
   ::-webkit-search-cancel-button {appearance:none}
   ::-webkit-scrollbar {background:#15110a; width:4px}
   ::-webkit-resizer {background:#826858}
@@ -13,15 +13,15 @@
   c {display:block; padding-left:1em; text-decoration:none; font-weight:bold; color:#826858; transition:1s} /* panel text */
   c:hover {transition:0.2s; transform:scale(1.1,1.1); color:lightsalmon}
   c:active {color:red; transform:scale(0.8,0.8)}
-  d {display:block; color:#ffa07a22; font-size:0.6em; transition:0.8s; white-space:nowrap}
+  d {display:none; color:#ffa07a22; font-size:0.6em; transition:0.8s; white-space:nowrap}
   d:hover {transform:scale(1.2,1.2); color:lightsalmon}
-  e {display:block; padding-left:5%; padding-right:5%; color:#826858; outline:none; transition:0.8s}
-  e:hover {color:#ffa07abb}
+  e {display:block; padding:1.2%; color:#826858; outline:none; transition:0.8s}
+  e:hover {color:lightsalmon}
 
 .title {					/* thumb title element */
   display:block;
   white-space:nowrap;
-  background-color:inherit;
+  background:inherit;
   color:#ffa07a44;
   overflow:hidden;
   font-size:inherit;
@@ -32,32 +32,35 @@
   outline:none;
   height:1.4em;
   border:none;
-  transition:0.4s;
+  transition:0.5s;
   border-radius:1em}
-.title:hover {color:salmon; overflow:visible; transform:scale(1.1,1.1)} 
+.title:hover {color:salmon; transition:2s; overflow:visible; text-align:left} 
 
 .entry {
-  padding:0.3em;
+  --view;					/* fixed 'popped' thumb width */
+  position:relative;
   border-radius:1em;
-  padding-bottom:1em}
+  padding:0.5%;
+  padding-bottom:2.5em}
 
 .text {						/* editable text area - vtt */
-  position:relative;
-  background-color:inherit;
+  position:fixed;
+  display:none;
+  border:none;
+  background:black;
   scroll-behavior:smooth;
   color:#826858;
   text-align:center;
-  height:6em;
-  max-height:32vh;
+  max-height:40vh;
+  width:40vw;
+  height:40vh;
   line-height:1.2em;
   font-family:inherit;
   font-size:1em;
   margin:auto;
   overflow:hidden;
   overflow-y:scroll;
-  border:none;
   padding:0.4em;
-  outline:0.1px solid #2b2824;
   border-radius:1em}
 .text::-webkit-scrollbar {background:inherit; width:6px}
 
@@ -155,20 +158,22 @@
 .p2:hover {overflow:visible}
 
 .thumb {					/* htm thumbs */
-  --view;
   --rate;
   --start;
   --skinny;					/* java variables attached to each element */
   position:relative;
+  max-width:100%;
+  max-height:100%;
   outline:none;
   margin:auto;
-  max-width:8em;
   border-radius:1em}
 
 .thumb2 {					/* list view pop up thumbs */
   position:absolute;
   pointer-events:none;
   translate:6em;
+  max-width:12em;
+  max-height:11em;
   border-radius:1em;
   padding:0.3em;
   margin:auto;
