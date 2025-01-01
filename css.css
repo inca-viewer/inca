@@ -15,7 +15,7 @@
   c:active {color:red; transform:scale(0.8,0.8)}
   d {display:none; color:#ffa07a22; font-size:0.6em; transition:0.8s; white-space:nowrap}
   d:hover {transform:scale(1.2,1.2); color:lightsalmon}
-  e {display:block; padding:1.2%; color:#926858bb; outline:none; transition:0.8s}
+  e {display:block; padding:1.5%; color:#926858bb; outline:none; transition:0.8s}
   e:hover {color:#927868}
 
 .title {					/* thumb title element */
@@ -62,7 +62,8 @@ opacity:0;
 transition:opacity 1s;
   overflow:hidden;
   overflow-y:scroll;
-  padding:0.4em;
+  padding:1em;
+margin-top:1.5em;
   border-radius:1em}
 .text::-webkit-scrollbar {background:inherit; width:6px}
 

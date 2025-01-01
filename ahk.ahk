@@ -220,9 +220,9 @@ else src=src="file:///%src%"
 if !size
 size = 0								; cannot have null size in getParameters()
 
-caption = <span id='vtt%j%'></span>					; default null placeholder
+; caption = <p id='vtt%j%'></p>						; default null placeholder
 
-if (text)
+; if (text)
      caption = <p id='vtt%j%' class='text' style='font-size:1.2em' onmouseover='overText=1; if(index!=%j%) thumb.pause(); index=%j%; getParameters(%j%)' onmouseout='overText=0'`n oninput="if(editing&&editing!='%j%') {inca('Vtt',editing)}; editing='%j%'; thumb.pause(); myPlayer.pause()"`n ondrag="getParameters(%j%, 'document', '%cueList%', %start%, %dur%, %size%, event)">%text%</p>`n 
 
 if listView
