@@ -232,7 +232,7 @@ else mediaList = %mediaList%<div id="entry%j%" class='entry' onmouseenter='overT
 }
  
 
-    RenderPage()							; construct web page from media list
+    RenderPage(reset)							; construct web page from media list
         {
         Critical							; pause key & timer interrupts
         if !path
@@ -271,11 +271,10 @@ else mediaList = %mediaList%<div id="entry%j%" class='entry' onmouseenter='overT
         listSize := 0
         type = video							; prime for list parsing
         page_s := Setting("Page Size")
-
-if (playlist || SearchTerm || listView)
-page_s := 640
-
-        Loop, Parse, list, `n, `r 					; split big list into smaller web pages
+        if (playlist || SearchTerm || listView)
+        page_s := 600
+        if !reset
+         Loop, Parse, list, `n, `r 					; split big list into smaller web pages
           {
           item := StrSplit(A_LoopField, "/")				; sort filter \ src \ media type \ ext
           id := item.1
@@ -436,22 +435,22 @@ header = <!--, %page%, %pages%, %sort%, %toggles%, %listView%, %playlist%, %path
 
 body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n globals(%page%, %pages%, '%folder_s%', '%toggles%', '%sort%', %filt%, %listView%, '%selected%', '%playlist%', %index%); %scroll%.scrollIntoView()">`n`n
 
-<div oncontextmenu="if (yw>0.05 && !overText || playing) {event.preventDefault()}">`n`n
-<div id='myNav' class='context' onwheel='wheelEvent(event, id, this)'>`n
+<div oncontextmenu="if (yw>0.05 && !overText) {event.preventDefault()}">`n`n
+<div id='myNav' class='context' onmouseup='togglePause()' onwheel='wheelEvent(event, id, this)'>`n
 <a onmouseup="inca('Settings')">&#8230;</a>`n
-<a id='mySelect' style='word-spacing:2em' onmouseup="if (!longClick&&(myTitle.innerHTML||playing)) {sel(index)} else {selectAll()}"></a>`n
+<a id='mySelect' style='word-spacing:2em' onmouseup="togglePause(); if (!longClick&&myTitle.innerHTML) {sel(index)} else {selectAll()}"></a>`n
 <a id='myTitle' class='title'></a>`n
 <video id='myPic' muted class='pic'></video>`n
-<a id='myMute' onmouseup='mute()'>Mute</a>`n
-<a id='myFavorite'>Fav</a>`n
+<a id='myMute' onmouseup='mute(); togglePause()'>Mute</a>`n
+<a id='myFavorite' onmouseup='togglePause()'>Fav</a>`n
 <a id='mySpeed' onclick="inca('Close')"></a>`n
 <a id='mySkinny' onclick="inca('Close')"></a>`n
-<a id='myFlip' onmouseup='flip()'>Flip</a>`n
-<a id='myLoop' onmouseup='if(looping) {looping=0} else looping=1'>Loop</a>`n
+<a id='myFlip' onmouseup='flip(); togglePause()'>Flip</a>`n
+<a id='myLoop' onmouseup='togglePause(); if(looping) {looping=0} else looping=1'>Loop</a>`n
 <a id='myIndex' onmouseup="if(myTitle.innerHTML) {inca('Index','',index)} else inca('Index','',0)">Index</a>`n
-<a id='myDelete' onmouseup="if(!event.button) inca('Delete','',index)">Delete</a>
-<a id='myCue' onmouseup='newCue()'>Cue</a>`n
-<a id='myCap' onmouseup='openCap()'>Caption</a>`n
+<a id='myDelete' onmouseup="if(!event.button && (myTitle.innerHTML || selected)) inca('Delete','',index)">Delete</a>
+<a id='myCue' onmouseup='newCue(); togglePause()'>Cue</a>`n
+<a id='myCap' onmouseup='togglePause(); if (myTitle.innerHTML) {if (!vtt.innerHTML || captions) {newCap()} else openCap()}'>Caption</a>`n
 <a id='Mp3' onmouseup="inca('mp3', myPlayer.currentTime.toFixed(2), index, cue); cue=0; myNav.style.display=null">mp3</a>`n
 <a id='Mp4' onmouseup="inca('mp4', myPlayer.currentTime.toFixed(2), index, cue); cue=0; myNav.style.display=null">mp4</a>`n
 <a></a></div>`n`n
@@ -804,7 +803,7 @@ sleep 200								; time for page to load
         if (reload == 1)
           CreateList(1)
         if (reload == 2)
-          RenderPage()
+          RenderPage(0)
         if (reload == 3)
           CreateList(0)
         longClick =
@@ -896,6 +895,7 @@ sleep 200								; time for page to load
             Popup(popup,0,0,0)
             index := StrSplit(selected, ",").1
             reload := 3
+            selected=
             }
         if (command == "Reload")					; reload web page
             {
@@ -1034,7 +1034,7 @@ sleep 200								; time for page to load
               else run, %inca%\cache\apps\ffmpeg.exe -ss %value% -to %address% -i "%src%" "%y%",,Hide
               }
             selected =
-            Popup("Creating . . .",1000,0,0)
+            reload:=2
             }
         if (command == "Favorite")					; add media favorite to New.m3u
             {
@@ -1123,8 +1123,7 @@ sleep 200								; time for page to load
               {
               if !playlist
                 {
-                list =							; create null htm to release media files
-                RenderPage()
+                RenderPage(1)						; create null htm to release media files
                 Loop, Parse, selected, `,
                   if getMedia(A_LoopField)
                     {
@@ -1139,6 +1138,7 @@ sleep 200								; time for page to load
               x := StrSplit(selected,",")
               index := x[x.MaxIndex()-1]
               }
+            selected =
             reload := 3
             return	
             }
@@ -1315,19 +1315,7 @@ sleep 200								; time for page to load
                 index := x[x.MaxIndex()-1]				; scroll htm to end of selection
                 MoveFiles()						; between folders or playlists
                 selected =
-         ;      CreateList(0)						; briefly show current folder
-         ;      incaTab =						; then go to new tab of destination folder
-         ;      path := address
-	 ;	str := StrSplit(address,"\")
-	 ;	folder := str[str.MaxIndex()-1]
-         ;      if playList
-         ;         {
-         ;         playlist := address
-         ;         SplitPath, address,,path,,folder
-         ;         path = %path%\
-         ;         }
-         ;      else searchPath := address
-                reload := 3						; open target folder in new tab
+                reload := 3
                 return
                 }
               else if InStr(address, ".m3u")				; playlist
@@ -1488,7 +1476,7 @@ sleep 200								; time for page to load
         FileAppend, %list%, %inca%\cache\lists\%folder%.txt, UTF-8
         selected =
         if (show != 2)
-          RenderPage()
+          RenderPage(0)
         }
 
 
@@ -1627,10 +1615,9 @@ subfolders := array.11
         {
         if longClick
           PopUp("Copying",0,0,0)
-        else 
+        else
           {
-          list=								; create null htm to release files
-          RenderPage()
+          RenderPage(1)							; create null htm to release files
           PopUp("Moving",0,0,0)
           }
         if (A_TickCount < timer || !GetKeyState("LButton", "P"))
@@ -1751,8 +1738,7 @@ subfolders := array.11
         {
         IfNotExist, %src%
           return
-        list=								; make browser release files
-        RenderPage()
+        RenderPage(1)							; make browser release files
         FileMove, %src%, %mediaPath%\%new_name%.%ext%			; FileMove = FileRename
         if ErrorLevel
           return 1               
@@ -2000,13 +1986,22 @@ subfolders := array.11
             vol := Round(volume,1)
         if (volume <= 0)
             vol =
-        status = %time%    %vol%
+        Process, Exist, ffmpeg.exe
+        if ErrorLevel
+          status = processing...
+        else status = %time%    %vol%
         if (status != lastStatus && (click == "RButton" || Setting("Status Bar")))
           {
           lastStatus := status
           Gui, Status:+lastfound
           WinSet, TransColor, 0 60
-          Gui, Status:Font, s20 cWhite, Segoe UI
+          Process, Exist, ffmpeg.exe
+          if ErrorLevel
+            {
+            Gui, Status:Font, s20 cRed, Segoe UI
+            WinSet, TransColor, 0 200
+            }
+          else Gui, Status:Font, s20 cWhite, Segoe UI
           GuiControl, Status:Font, GuiSta
           GuiControl, Status:, GuiSta, %status%
           Gui, Status:Show, NA
@@ -2127,9 +2122,11 @@ subfolders := array.11
         if (w == A_ScreenWidth)
           fullscreen := 1
         else fullscreen := 0
+
 IfWinActive, Notepad
   if (x!=600)
     WinMove,600,0
+
         MouseGetPos,,, id 						; get the window below the mouse 
         WinGet, cur, ID, ahk_id %id%
         WinGet, desk, ID , ahk_class Progman
