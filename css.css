@@ -1,283 +1,284 @@
 
-  ::selection {color:#aaaaaa}
-  ::-webkit-search-cancel-button {appearance:none}
-  ::-webkit-scrollbar {background:#15110a; width:4px}
-  ::-webkit-resizer {background:#826858}
-  ::-webkit-scrollbar-corner {background:#15110a}
-  ::-webkit-scrollbar-thumb {background:#2b2824; border-radius:2px}
-  @supports (not selector(::-webkit-scrollbar)) {html {scrollbar-color:#2b2824 #15110a}}
-  td {outline:none; text-align:center; min-width:3.8em; overflow:hidden; white-space:nowrap}
-  table {color:#826858; font-size:0.9em; border-collapse:collapse; margin:auto; border-radius:1em; transition:color 0.3s}
-  table:hover {background:#1b1814}
-  a {color:#826858; text-decoration:none; outline:none}	/* default text */
-  c {display:block; padding-left:1em; text-decoration:none; font-weight:bold; color:#826858; transition:1s} /* panel text */
-  c:hover {transition:0.2s; transform:scale(1.1,1.1); color:lightsalmon}
-  c:active {color:red; transform:scale(0.8,0.8)}
-  d {display:none; color:#ffa07a22; font-size:0.6em; transition:0.8s; white-space:nowrap}
-  d:hover {transform:scale(1.2,1.2); color:lightsalmon}
-  e {display:block; padding:2.4%; color:#926858bb; outline:none; transition:0.8s}
-//  e:hover {color:#927868}
+  ::placeholder {color: lightsalmon}
+  ::selection {color: #aaaaaa}
+  ::-webkit-search-cancel-button {appearance: none}
+  ::-webkit-scrollbar {background: #15110a; width: 4px}
+  ::-webkit-resizer {background: #826858}
+  ::-webkit-scrollbar-corner {background: #15110a}
+  ::-webkit-scrollbar-thumb {background: #2b2824; border-radius: 2px}
+  @supports (not selector(::-webkit-scrollbar)) {html {scrollbar-color: #2b2824 #15110a}}
+  td {outline: none; text-align: center; min-width: 3.8em; overflow: hidden; white-space: nowrap}
+  table {color: #826858; font-size: 0.9em; border-collapse: collapse; margin: auto; border-radius: 1em; transition: color 0.3s}
+  table:hover {background: #1b1814}
+  a {color: #826858; text-decoration: none; outline: none}	/* default text */
+  c {display: block; padding-left: 1em; text-decoration: none; font-weight: bold; color: #826858; transition: 1s} /* panel text */
+  c:hover {transition: 0.2s; transform: scale(1.1,1.1); color: lightsalmon}
+  c:active {color: red; transform: scale(0.8,0.8)}
+  d {display: block; color: #ffa07a11; font-size: 0.8em; transition: 2s; padding: 2%}
+  d:active {color: lightsalmon}
+  e {display: block; color: #926858bb; outline: none; transition: 0.8s}
 
 .title {					/* thumb title element */
-  display:block;
-  white-space:nowrap;
-  background:inherit;
-  color:#ffa07a44;
-  overflow:hidden;
-  font-size:1.1em;
-  text-align:center;
-  font-family:inherit;
-  width:100%;
-  margin:auto;
-  outline:none;
-  height:1.4em;
-  border:none;
-  transition:0.5s;
-  border-radius:1em}
-.title:hover {color:salmon; transition:2s; overflow:visible}
+  display: block;
+  white-space: nowrap;
+  background: inherit;
+  color: #ffa07a44;
+  overflow: hidden;
+  font-size: 1.1em;
+  text-align: center;
+  font-family: inherit;
+  width: 100%;
+  margin: auto;
+  outline: none;
+  height: 1.4em;
+  border: none;
+  transition: 0.5s;
+  border-radius: 1em}
+.title:hover {color: salmon; transition: 2s; overflow: visible}
 
 .entry {
   --view;					/* fixed 'popped' thumb width */
-  position:relative;
-  border-radius:1em;
-  padding:0.5%;
-  padding-bottom:2.5em}
+  position: relative;
+  border-radius: 1em;
+  padding: 0.5%;
+  padding-bottom: 2.5em}
 
 .text {						/* editable text area - vtt */
-  position:fixed;
-  display:none;
-  border:none;
-  background:black;
-  scroll-behavior:smooth;
-  color:#826858;
-  text-align:center;
-  max-height:40vh;
-  width:40vw;
-  height:34vh;
-  line-height:1.2em;
-  font-family:inherit;
-  font-size:1em;
-  margin:auto;
-  opacity:0;
-  transition:opacity 0.8s;
-  overflow:hidden;
-  overflow-y:scroll;
-  padding:2.3em;
-  margin-top:1.5em;
-  border-radius:1em}
-.text::-webkit-scrollbar {background:inherit; width:6px}
+  position: fixed;
+  display: none;
+  border: none;
+  background: black;
+  scroll-behavior: smooth;
+  color: #826858;
+  text-align: center;
+  max-height: 40vh;
+  width: 40vw;
+  height: 34vh;
+  line-height: 1.2em;
+  font-family: inherit;
+  font-size: 1em;
+  margin: auto;
+  opacity: 0;
+  transition: opacity 0.8s;
+  overflow: hidden;
+  overflow-y: scroll;
+  padding: 2.3em;
+  border-radius: 1em}
+.text::-webkit-scrollbar {background: inherit; width: 6px}
 
 .fadeout {					/* between top panel and scrolled thumbs */
-  position:relative; 
-  margin-bottom:-2em;
-  pointer-events:none;
-  height:1em;
-  width:100%;
-  background:linear-gradient(#15110aff, #15110a00)}
+  position: relative; 
+  margin-bottom: -2em;
+  pointer-events: none;
+  height: 1em;
+  width: 100%;
+  background: linear-gradient(#15110aff, #15110a00)}
 
 .pic {						/* context menu pic */
   --start;					/* default start time */
-  background-size:600%;
-  background-repeat:no-repeat;
-  position:absolute;
-  margin-left:4em;
-  margin-top:1em;
-  border-radius:7%}
+  display: none;
+  position: absolute;
+  background-size: 600%;
+  background-repeat: no-repeat;
+  transform-origin: top left;
+  transition: transform 0.2s;
+  margin-left: 4em;
+  margin-top: 1em;
+  border-radius: 7%}
 
 .save {						/* save button over textarea */
-  display:none;
-  position:fixed;
-  text-align:center;
-  border:0.1px solid red;
-  border-radius:0.8em;
-  padding-left:0.4em;
-  padding-right:0.5em;
-  z-index:991;
-  color:salmon;
-  transition:0.4s;
-  background:#1b1814;
-  height:1.6em;
-  font-variant-caps:petite-caps}
-.save:hover {border:1px solid salmon; transform:scale(1.2,1.2)}
-.save:active {background:salmon; transform:scale(0.7,0.7)}
+  display: none;
+  position: fixed;
+  text-align: center;
+  border: 0.1px solid red;
+  border-radius: 0.8em;
+  padding-left: 0.4em;
+  padding-right: 0.5em;
+  z-index: 991;
+  color: salmon;
+  transition: 0.4s;
+  background: #1b1814;
+  height: 1.6em;
+  font-variant-caps: petite-caps}
+.save:hover {border: 1px solid salmon; transform: scale(1.2,1.2)}
+.save:active {background: salmon; transform: scale(0.7,0.7)}
 
 .player {					/* media player element */
-  position:absolute;
-  opacity:0;
-  border-radius:4%}
+  position: absolute;
+  opacity: 0;
+  border-radius: 4%}
 
 .mycontent {
-  display:block;
-  position:absolute;
-  margin:auto;
-  overflow-x:hidden; 
-  height:100%;
-  width:100%}
+  display: block;
+  position: absolute;
+  margin: auto;
+  overflow-x: hidden; 
+  height: 100%;
+  width: 100%}
 
 .myview {
-  display:flex;
-  margin:auto;
-  justify-content:space-around;
-  flex-wrap:wrap;
-  padding-top:18em;
-  padding-bottom:70vh}
+  display: flex;
+  margin: auto;
+  justify-content: space-around;
+  flex-wrap: wrap;
+  padding-top: 18em;
+  padding-bottom: 70vh}
 
 .myMenu {
-  position:fixed;
-  top:5em;
-  left:0;
-  transform:translate(calc(50vw - 50%));
-  width:70%;
-  min-width:50em;
-  max-width:70em;
-  padding-bottom:1em;
-  background:#15110a}
+  position: fixed;
+  top: 5em;
+  left: 0;
+  transform: translate(calc(50vw - 50%));
+  width: 70%;
+  min-width: 50em;
+  max-width: 70em;
+  padding-bottom: 1em;
+  background: #15110a}
 
 .myPanel {					/* top panel element showing folders etc.*/
-  position:relative;
-  width:100%;
-  font-size:0.9em;
-  white-space:nowrap;
-  padding:0.6em;
-  overflow:hidden;
-  height:6.5em}
+  position: relative;
+  width: 100%;
+  font-size: 0.9em;
+  white-space: nowrap;
+  padding: 0.6em;
+  overflow: hidden;
+  height: 6.5em}
 
 .panel {					/* inner rotated element of myPanel */
-  position:absolute;
-  overflow:hidden;
-  scrollbar-width:none;
-  transform:rotate(-90deg);
-  transform-origin:right top;
-  background:inherit;
-  height:100vh;
-  width:9em;					/* entry width	*/
-  left:-9%}
-.panel:hover {overflow-y:scroll}
+  position: absolute;
+  overflow: hidden;
+  scrollbar-width: none;
+  transform: rotate(-90deg);
+  transform-origin: right top;
+  background: inherit;
+  height: 100vh;
+  width: 9em;					/* entry width	*/
+  left: -9%}
+.panel:hover {overflow-y: scroll}
 
 .p2 {						/* panel entries */
-  overflow:hidden;
-  white-space:nowrap}
-.p2:hover {overflow:visible}
+  overflow: hidden;
+  white-space: nowrap}
+.p2:hover {overflow: visible}
 
 .thumb {					/* htm thumbs */
   --rate;
   --start;
   --skinny;					/* java variables attached to each element */
-  position:relative;
-  max-width:100%;
-  max-height:100%;
-  outline:none;
-  margin:auto;
-  border-radius:1em}
+  position: relative;
+  max-width: 100%;
+  max-height: 100%;
+  outline: none;
+  margin: auto;
+  border-radius: 1em}
 
 .thumb2 {					/* list view pop up thumbs */
-  position:absolute;
-  pointer-events:none;
-  translate:6em;
-  max-width:12em;
-  max-height:11em;
-  border-radius:1em;
-  padding:0.3em;
-  margin:auto;
-  opacity:0}
+  position: absolute;
+  pointer-events: none;
+  translate: 6em;
+  max-width: 12em;
+  max-height: 11em;
+  border-radius: 1em;
+  padding: 0.3em;
+  margin: auto;
+  opacity: 0}
 
 .ribbon {					/* menu, fol, fav, search ... */
-  position:relative;
-  display:flex;
-  font-weight:bold;
-  justify-content:space-around;
-  width:100%;
-  white-space:nowrap;
-  border-radius:1em;
-  text-align:center;
-  transition:0.3s;
-  font-size:1em}
-.ribbon a {width:6%; transition:0.8s; border-radius:1em}
-.ribbon a:hover {transition:0.2s; color:salmon}
+  position: relative;
+  display: flex;
+  font-weight: bold;
+  justify-content: space-around;
+  width: 100%;
+  white-space: nowrap;
+  border-radius: 1em;
+  text-align: center;
+  transition: 0.3s;
+  font-size: 1em}
+.ribbon a {width: 6%; transition: 0.8s; border-radius: 1em}
+.ribbon a:hover {transition: 0.2s; color: salmon}
 
 .searchbox {					/* input searchbox in htm tab */
-  text-overflow:ellipsis;
-  display:inline;
-  width:45%; 
-  translate: 0 2px;
-  border-radius:1em; 
-  color:salmon;
-  background:inherit;
-  font-weight:bold;
-  font-size:1=em;
-  font-family:inherit;
-  border:none;
-  height:1.3em;
-  outline:none;
-  overflow:hidden;
-  white-space:nowrap}
+  text-overflow: ellipsis;
+  display: inline;
+  width: 45%; 
+  translate:  0 2px;
+  border-radius: 1em; 
+  color: salmon;
+  background: inherit;
+  font-weight: bold;
+  font-size: 1em;
+  font-family: inherit;
+  border: none;
+  height: 1.3em;
+  outline: none;
+  overflow: hidden;
+  white-space: nowrap}
 
 .selected {					/* red popup following cursor */
-  display:block; 
-  position:absolute;
-  pointer-events:none;
-  z-index:999;
-  top:-100px;
-  color:red;
-  height:2em;
-  transition:font-size 0.5s;
-  font-size:1.2em}
+  display: block; 
+  position: absolute;
+  pointer-events: none;
+  z-index: 999;
+  top: -100px;
+  color: red;
+  height: 2em;
+  transition: font-size 0.5s;
+  font-size: 1.2em}
 
 .seekbar {					/* video progress bar */
-  position:absolute;
-  pointer-events:none;
-  z-index:999;
-  height:0;
-  border-radius:2px;
-  color:lightsalmon;
-  font-size:1.4em;
-  border-top:5px solid red;
-  transition: opacity 0.6s}
+  position: absolute;
+  pointer-events: none;
+  z-index: 999;
+  height: 0;
+  border-radius: 2px;
+  color: lightsalmon;
+  font-size: 1.4em;
+  border-top: 5px solid red;
+  transition:  opacity 0.6s}
 
 .mask {						/* media player overlay of htm tab */
-  display:none;
-  user-select:none;
-  position:fixed;
-  transition:opacity 0.65s;
-  opacity=0;
-  top:0;
-  left:0;
-  height:100vh;
-  width:100vw;
-  background:black}
+  display: none;
+  user-select: none;
+  position: fixed;
+  transition: opacity 0.65s;
+  opacity: 0;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  width: 100vw;
+  background: black}
 
 .context {					/* right click menu */
-  display:none;
-  opacity:0;
-  transition:0.5s;
-  z-index:888;
-  max-width:19em;
-  position:fixed;
-  font-size:1em;
-  border-radius:0.7em;
-  background:#15110acc}
-.context:hover {opacity:1}
+  display: none;
+  opacity: 0;
+  transition: opacity 0.5s;
+  z-index: 888;
+  position: fixed;
+  font-size: 1em;
+  border-radius: 0.7em;
+  background: #15110acc}
+.context:hover {opacity: 1}
 
 .context a {
-  display:block;
-  white-space:nowrap;
-  width:5.5em;
-  height:1.4em;
-  border-radius:1.4em;
-  color:lightsalmon}
-.context a:hover {background:#1b1814}
-.context a:active {background:#333333}
+  display: block;
+  white-space: nowrap;
+  width: 5.5em;
+  height: 1.4em;
+  border-radius: 1.4em;
+  color: lightsalmon}
+.context a:hover {background: #1b1814}
+.context a:active {background: #333333}
 
 .container {					/* whole body element */
-  font-family:'Yu Gothic', 'Calibri Light';
-  background:#15110a;
-  user-select:none;
-  font-size:0.8em;
-  overflow:hidden;
-  margin:0;
-  opacity:0;
-  width:100%;
-  height:100%;
-  color:#826858;
-  transition:0s}
+  font-family: 'Yu Gothic', 'Calibri Light';
+  background: #15110a;
+  user-select: none;
+  font-size: 0.8em;
+  overflow: hidden;
+  margin: 0;
+  opacity: 0;
+  width: 100%;
+  height: 100%;
+  color: #826858;
+  transition: 0s}
 

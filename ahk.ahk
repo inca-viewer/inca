@@ -226,9 +226,9 @@ size = 0								; cannot have null size in getParameters()
      caption = <p id='vtt%j%' class='text' style='font-size:1.2em' onmouseover='overText=1; if(index!=%j%) thumb.pause(); index=%j%; getParameters(%j%)' onmouseout='overText=0'`n oninput="if(editing&&editing!='%j%') {inca('Vtt',editing)}; editing='%j%'; thumb.pause(); myPlayer.pause()"`n ondrag="getParameters(%j%, 'document', '%cueList%', %start%, %dur%, %size%, event)">%text%</p>`n 
 
 if listView
-  mediaList = %mediaList%%fold%<table onmouseover='overThumb(%j%); if (Click && gesture==1) sel(%j%)'`n onmouseout="if(entry%j%.style.position!='fixed') thumb%j%.style.opacity=0">`n <tr id='entry%j%'>`n <td>%ext%`n <video id='thumb%j%' class='thumb2' ondrag="getParameters(%j%, '%type%', '%cueList%', %start%, %dur%, %size%, event)"`n %src%`n %poster%`n preload=%preload% muted loop type="video/mp4"></video></td>`n <td>%size%</td>`n <td style='min-width:6em'>%durT%</td>`n <td>%date%</td>`n <td style='min-width:4.4em'>%j%</td>`n <td id='myFavicon%j%' style='translate:-1.3em; font-size:0.7em; color:salmon; min-width:1em'>%favicon% %cc%</td>`n <td style='width:70vw'><input id="title%j%" class='title' style='text-align:left; transition:0.8s' onmouseover='overText=1' onmouseout='overText=0; Click=0' type='search' value='%media_s%'`n oninput="renamebox=this.value; lastMedia=%j%"></td>`n %fo%</tr></table>%caption%`n`n
+  mediaList = %mediaList%%fold%<table onmouseover='overThumb(%j%); if (Click && gesture==1) sel(%j%)'`n onmouseout="if(entry%j%.style.position!='fixed') thumb%j%.style.opacity=0">`n <tr id='entry%j%'>`n <td>%ext%`n <video id='thumb%j%' class='thumb2' ondrag="getParameters(%j%, '%type%', '%cueList%', %start%, %dur%, %size%, event)"`n %src%`n %poster%`n preload=%preload% muted loop type="video/mp4"></video></td>`n <td>%size%</td>`n <td style='min-width: 6em'>%durT%</td>`n <td>%date%</td>`n <td style='min-width: 4.4em'>%j%</td>`n <td id='myFavicon%j%' style='translate: -1.3em; font-size: 0.7em; color: salmon; min-width: 1em'>%favicon% %cc%</td>`n <td style='width: 70vw'><input id="title%j%" class='title' style='text-align: left; transition: 0.8s' onmouseover='overText=1' onmouseout='overText=0; Click=0' type='search' value='%media_s%'`n oninput="renamebox=this.value; lastMedia=%j%"></td>`n %fo%</tr></table>%caption%`n`n
 
-else mediaList = %mediaList%<div id="entry%j%" class='entry' onmouseenter='overThumb(%j%)'>`n <span id='myFavicon%j%' style='display:block; position:absolute; bottom:0; right:0; font-size:0.7em; color:salmon'>%favicon% %cc%</span>`n <input id='title%j%' class='title' type='search'`n value='%media_s%'`n oninput="renamebox=this.value; lastMedia=%j%"`n onmouseover="overText=1; if((x=this.value.length/2) > view) this.style.width=x+'em'"`n onmouseout="overText=0; this.style.width='100`%'">`n <video id="thumb%j%" class='thumb' ondrag="getParameters(%j%, '%type%', '%cueList%', %start%, %dur%, %size%, event)"`n onmouseenter="if (Click && gesture==1 && !editing) sel(%j%)"`n onmouseout='overMedia=0' %src%`n %poster%`n preload=%preload% loop muted type='video/mp4'></video>`n %noIndex%</div>%caption%`n`n
+else mediaList = %mediaList%<div id="entry%j%" class='entry' onmouseenter='overThumb(%j%)'>`n <span id='myFavicon%j%' style='display: block; position: absolute; bottom: 0; right: 0; font-size: 0.7em; color: salmon'>%favicon% %cc%</span>`n <input id='title%j%' class='title' type='search'`n value='%media_s%'`n oninput="renamebox=this.value; lastMedia=%j%"`n onmouseover="overText=1; if((x=this.value.length/2) > view) this.style.width=x+'em'"`n onmouseout="overText=0; this.style.width='100`%'">`n <video id="thumb%j%" class='thumb' ondrag="getParameters(%j%, '%type%', '%cueList%', %start%, %dur%, %size%, event)"`n onmouseenter="if (Click && gesture==1 && !editing) sel(%j%)"`n onmouseout='overMedia=0' %src%`n %poster%`n preload=%preload% loop muted type='video/mp4'></video>`n %noIndex%</div>%caption%`n`n
 }
  
 
@@ -438,7 +438,7 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n glo
 <div oncontextmenu="if (yw>0.05 && !overText) {event.preventDefault()}">`n`n
 <div id='myNav' class='context' onmouseup='togglePause()' onwheel='wheelEvent(event, id, this)'>`n
 <a onmouseup="inca('Settings')">&#8230;</a>`n
-<a id='mySelect' style='word-spacing:2em' onmouseup="togglePause(); if (!longClick&&myTitle.innerHTML) {sel(index)} else {selectAll()}"></a>`n
+<a id='mySelect' style='word-spacing:1em' onmouseup="togglePause(); if (!longClick&&myTitle.innerHTML) {sel(index)} else {if (!longClick) selectAll()}"></a>`n
 <a id='myTitle' class='title'></a>`n
 <video id='myPic' muted class='pic'></video>`n
 <a id='myMute' onmouseup='mute(); togglePause()'>Mute</a>`n
@@ -784,7 +784,7 @@ sleep 200								; time for page to load
         messages := StrReplace(Clipboard, "/", "\")
         array := StrSplit(messages,"#")
         Clipboard := lastClip
-;  tooltip %messages%							; for debug
+  ; tooltip %messages%							; for debug
         Loop % array.MaxIndex()/4
           {
           command := array[ptr+=1]
@@ -808,7 +808,6 @@ sleep 200								; time for page to load
           CreateList(0)
         longClick =
         selected = 
-        GuiControl, Indexer:, GuiInd
         PopUp("",0,0,0)
         sleep 100
         if (command == "Settings" || command == "EditCue" || command == "Media" && type=="document")
@@ -873,6 +872,7 @@ sleep 200								; time for page to load
             if (type == "document")
               sort = Date
             else index := selected
+            PopUp("saved",600,0,0)
             }
         if (command == "Move")						; move entry within playlist
             {
@@ -1033,6 +1033,7 @@ sleep 200								; time for page to load
                 run, %inca%\cache\apps\ffmpeg.exe -ss %address% -to %value% -i "%src%" "%y%",,Hide
               else run, %inca%\cache\apps\ffmpeg.exe -ss %value% -to %address% -i "%src%" "%y%",,Hide
               }
+            GuiControl, Indexer:, GuiInd, processing - %media%
             selected =
             reload:=2
             }
@@ -1965,7 +1966,7 @@ subfolders := array.11
         Gui, Indexer:+lastfound +AlwaysOnTop -Caption +ToolWindow
         Gui, Indexer:Color, Black
         Gui, Indexer:Add, Text, vGuiInd h50 w1200
-        Gui, Indexer:Font, s11 c705a4c, Segoe UI
+        Gui, Indexer:Font, s11 c806a5c, Segoe UI
         GuiControl, Indexer:Font, GuiInd
         iy := A_ScreenHeight * 0.966
         Gui, Indexer:Show, x600 y%iy%, NA
@@ -1986,22 +1987,13 @@ subfolders := array.11
             vol := Round(volume,1)
         if (volume <= 0)
             vol =
-        Process, Exist, ffmpeg.exe
-        if ErrorLevel
-          status = processing...
-        else status = %time%    %vol%
+        status = %time%    %vol%
         if (status != lastStatus && (click == "RButton" || Setting("Status Bar")))
           {
           lastStatus := status
           Gui, Status:+lastfound
           WinSet, TransColor, 0 60
-          Process, Exist, ffmpeg.exe
-          if ErrorLevel
-            {
-            Gui, Status:Font, s20 cRed, Segoe UI
-            WinSet, TransColor, 0 200
-            }
-          else Gui, Status:Font, s20 cWhite, Segoe UI
+          Gui, Status:Font, s20 cWhite, Segoe UI
           GuiControl, Status:Font, GuiSta
           GuiControl, Status:, GuiSta, %status%
           Gui, Status:Show, NA
@@ -2122,6 +2114,10 @@ subfolders := array.11
         if (w == A_ScreenWidth)
           fullscreen := 1
         else fullscreen := 0
+
+Process, Exist, ffmpeg.exe
+if !ErrorLevel
+  GuiControl, Indexer:, GuiInd
 
 IfWinActive, Notepad
   if (x!=600)
