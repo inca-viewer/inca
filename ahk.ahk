@@ -209,7 +209,7 @@ if InStr(Label, "T5 EVO")
         if (ext=="txt")
           {
           text := StrReplace(text, "`r`n", "<br>")
-          text = <a contenteditable="true">%text%</a>
+          text = <e contenteditable="true">%text%</e>
           }
 
 if text
@@ -227,9 +227,9 @@ size = 0								; cannot have null size in getParameters()
      caption = <p id='vtt%j%' class='text' style='font-size:1.2em' onmouseover='overText=1; if(index!=%j%) thumb.pause(); index=%j%; getParameters(%j%)' onmouseout='overText=0'`n oninput="if(editing&&editing!='%j%') {inca('Vtt',editing)}; editing='%j%'; thumb.pause(); myPlayer.pause()"`n ondrag="getParameters(%j%, 'document', '%cueList%', %start%, %dur%, %size%, event)">%text%</p>`n 
 
 if listView
-  mediaList = %mediaList%%fold%<table onmouseover='overThumb(%j%); if (Click && gesture==1) sel(%j%)'`n onmouseout="if(entry%j%.style.position!='fixed') thumb%j%.style.opacity=0">`n <tr id='entry%j%'>`n <td>%ext%`n <video id='thumb%j%' class='thumb2' ondrag="getParameters(%j%, '%type%', '%cueList%', %start%, %dur%, %size%, event)"`n %src%`n %poster%`n preload=%preload% muted loop type="video/mp4"></video></td>`n <td>%size%</td>`n <td style='min-width: 6em'>%durT%</td>`n <td>%date%</td>`n <td style='min-width: 4.4em'>%j%</td>`n <td id='myFavicon%j%' style='translate: -1.3em; font-size: 0.7em; color: salmon; min-width: 1em'>%favicon% %cc%</td>`n <td style='width: 70vw'><input id="title%j%" class='title' style='text-align: left; transition: 0.8s' onmouseover='overText=1' onmouseout='overText=0; Click=0' type='search' value='%media_s%'`n oninput="renamebox=this.value; lastMedia=%j%"></td>`n %fo%</tr></table>%caption%`n`n
+  mediaList = %mediaList%%fold%<table onmouseover='overThumb(%j%); if (gesture) sel(%j%)'`n onmouseout="thumb%j%.style.opacity=0">`n <tr id='entry%j%'>`n <td>%ext%`n <video id='thumb%j%' class='thumb2' ondrag="getParameters(%j%, '%type%', '%cueList%', %start%, %dur%, %size%, event)"`n %src%`n %poster%`n preload=%preload% muted loop type="video/mp4"></video></td>`n <td>%size%</td>`n <td style='min-width: 6em'>%durT%</td>`n <td>%date%</td>`n <td style='min-width: 4.4em'>%j%</td>`n <td id='myFavicon%j%' style='translate: -1.3em; font-size: 0.7em; color: salmon; min-width: 1em'>%favicon% %cc%</td>`n <td style='width: 70vw'><input id="title%j%" class='title' style='text-align: left; transition: 0.8s' onmouseover='overText=1' onmouseout='overText=0; Click=0' type='search' value='%media_s%'`n oninput="renamebox=this.value; lastMedia=%j%"></td>`n %fo%</tr></table>%caption%`n`n
 
-else mediaList = %mediaList%<div id="entry%j%" class='entry' onmouseenter='overThumb(%j%)'>`n <span id='myFavicon%j%' style='display: block; position: absolute; bottom: 0; right: 0; font-size: 0.7em; color: salmon'>%favicon% %cc%</span>`n <input id='title%j%' class='title' type='search'`n value='%media_s%'`n oninput="renamebox=this.value; lastMedia=%j%"`n onmouseover="overText=1; if((x=this.value.length/2) > view) this.style.width=x+'em'"`n onmouseout="overText=0; this.style.width='100`%'">`n <video id="thumb%j%" class='thumb' ondrag="getParameters(%j%, '%type%', '%cueList%', %start%, %dur%, %size%, event)"`n onmouseenter="if (Click && gesture==1 && !editing) sel(%j%)"`n onmouseout='overMedia=0' %src%`n %poster%`n preload=%preload% loop muted type='video/mp4'></video>`n %noIndex%</div>%caption%`n`n
+else mediaList = %mediaList%<div id="entry%j%" class='entry' onmouseenter='overThumb(%j%)'>`n <span id='myFavicon%j%' style='display: block; position: absolute; bottom: 0; right: 0; font-size: 0.7em; color: salmon'>%favicon% %cc%</span>`n <input id='title%j%' class='title' type='search'`n value='%media_s%'`n oninput="renamebox=this.value; lastMedia=%j%"`n onmouseover="overText=1; if((x=this.value.length/2) > view) this.style.width=x+'em'"`n onmouseout="overText=0; this.style.width='100`%'">`n <video id="thumb%j%" class='thumb' ondrag="getParameters(%j%, '%type%', '%cueList%', %start%, %dur%, %size%, event); sel(%j%)"`n onmouseenter="if (gesture) sel(%j%)"`n onmouseout='overMedia=0' %src%`n %poster%`n preload=%preload% loop muted type='video/mp4'></video>`n %noIndex%</div>%caption%`n`n
 }
  
 

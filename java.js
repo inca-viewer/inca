@@ -86,7 +86,6 @@
       myPic.style.transform='scale('+skinny+',1)'					// reset context image
       if (myNav.style.display) myNav.style.display=null
       else if (playing) {closePlayer(); inca('Close')}					// close player and send messages to inca
-      else if (entry.style.position=='fixed') closePlayer()				// close popped out thumb
       else if (myContent.scrollTop > 50) myContent.scrollTo(0,0)			// else scroll to page top
       else inca('Reload',2)								// or finally, reload page & clear selected
       Click=0; lastClick=0}}, false) 
@@ -128,7 +127,8 @@
       else if (myNav.matches(':hover')) return
       else if (!overText && playing) {togglePause(); return}
       else if (!playing && !overMedia) return}
-    if (playing && overText && type!='document') {vttPlay(); return}
+if (longClick && overText) {myPlayer.pause(); return}
+    if (playing && overText && type!='document') {if (myPlayer.paused) {vttPlay()} else myPlayer.pause(); return}
     if (playing && lastClick==2) {							// next, previous media
       if (!thumbSheet) thumb.currentTime=myPlayer.currentTime
       if (longClick) {index--} else index++}
@@ -192,21 +192,13 @@
     var x = Math.abs(xpos-Xref)
     var y = Math.abs(ypos-Yref)
     if (x+y > 7 && Click==1 && !gesture) {				// gesture (Click + slide)
-      if (myNav.style.display) gesture=myNav
-      else if (!playing && overMedia) gesture=entry
-      if (gesture) {x=gesture.getBoundingClientRect(); Xref=(xpos-x.left)/skinny; Yref=ypos-x.top}
-      else if (overMedia) gesture=myPlayer
-      else gesture=1}
+      gesture=1
+      if (!playing && overMedia) sel(index)
+      if (myNav.style.display) {x=myNav.getBoundingClientRect(); Xref=(xpos-x.left)/skinny; Yref=ypos-x.top}}
     if (!gesture || !Click) return
     if (myNav.style.display) {						// move context menu
       myNav.style.left = xpos-Xref+"px"; myNav.style.top = ypos-Yref+"px"}
-    else if (!listView && !playing && !overText && gesture==entry) { 	// move (pop) thumb out of htm
-      if (type=='document') thumb.src=thumb.poster
-      entry.style.zIndex = Zindex+=1
-      entry.style.position = 'fixed'
-      thumb.addEventListener('wheel', wheelEvent)			// for thumb zoom
-      entry.style.left = xpos-Xref+"px"; entry.style.top = ypos-Yref+"px"}
-    else if (playing && gesture==myPlayer) {				// move myPlayer
+    else if (playing && !overText) {					// move myPlayer
       mediaX += xpos - Xref
       mediaY += ypos - Yref
       Xref=xpos; Yref=ypos
@@ -244,15 +236,12 @@
       thumb.style.skinny=skinny						// css holds edited skinny
       if (!playing || screenLeft) getParameters(index)
       positionMedia(0.2)}
-    else if (id=='myThumbs' || (!playing && entry.style.position=='fixed' && overMedia)) {  // thumb size
+    else if (id=='myThumbs') { 						// thumb size
       var x=view; var z=wheel/1000
-      if (entry.style.position=='fixed' && entry.style.view) x=entry.style.view
       if (x<98 && wheelUp) x *= 1+z
       else if (!wheelUp) x /= 1+z
       if (x<8) x=8
-      if (entry.style.position=='fixed') {
-        entry.style.view=x; entry.style.width=x+'em'; entry.style.height=x+'em'}
-      else {view=x; localStorage.setItem('pageView'+folder, x); setThumbs(index,36)}
+      view=x; localStorage.setItem('pageView'+folder, x); setThumbs(index,36)
       block=12}
     else if (!playing && id=='myWidth') {				// page width
       var x = 1*myView.style.width.slice(0,-1)
@@ -596,7 +585,7 @@
       if (i-start>qty) break						// start at last thumb size
       el2 = document.getElementById('thumb'+i)
       x = el2.offsetWidth/el2.offsetHeight				// for portrait/landscape thumb layout
-      if (!listView && el.style.position!='fixed') {
+      if (!listView) {
         if (x>1) el.style.width=view+'em'
         else el.style.width=x*view+'em'
         if (x>1) {el.style.height=view/x+'em'} else el.style.height=view+'em'}}}
@@ -716,13 +705,6 @@
     vtt.style.display=null
     vtt.style.opacity=null
     myNav.style.display=null
-    if (entry.style.position=='fixed') {
-      entry.style.top=null
-      entry.style.left=null
-      entry.style.zIndex=null
-      entry.style.position=null
-      if (ratio>1) {entry.style.width=view+'em'; entry.style.height=view/ratio+'em'}
-      else {entry.style.width=ratio*view+'em'; entry.style.height=view+'em'}}
     myPlayer.style.opacity=0
     thumb.currentTime=thumb.style.start
     myPlayer.removeEventListener('ended', nextMedia)
