@@ -38,6 +38,7 @@
         Global listSize
         Global selected :=""			; selected files from web page
         Global searchTerm
+        Global lastSearch
         Global src				; current media file incl. path
         Global media				; media filename, no path or ext
         Global mediaPath
@@ -439,7 +440,7 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n glo
 <div id='myNav' class='context' onmouseup='togglePause()' onwheel='wheelEvent(event, id, this)'>`n
 <a onmouseup="inca('Settings')">&#8230;</a>`n
 <a id='mySelect' style='word-spacing:1em' onmouseup="togglePause(); if (!longClick&&myTitle.innerHTML) {sel(index)} else {if (!longClick) selectAll()}"></a>`n
-<a id='myTitle' class='title'></a>`n
+<a id='myTitle' class='title' style='width:100`%; text-align:left'></a>`n
 <video id='myPic' muted class='pic'></video>`n
 <a id='myMute' onmouseup='mute(); togglePause()'>Mute</a>`n
 <a id='myFavorite' onmouseup='togglePause()'>Fav</a>`n
@@ -448,7 +449,7 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n glo
 <a id='myFlip' onmouseup='flip(); togglePause()'>Flip</a>`n
 <a id='myLoop' onmouseup='togglePause(); if(looping) {looping=0} else looping=1'>Loop</a>`n
 <a id='myIndex' onmouseup="if(myTitle.innerHTML) {inca('Index','',index)} else inca('Index','',0)">Index</a>`n
-<a id='myDelete' onmouseup="if(!event.button && (myTitle.innerHTML || selected)) inca('Delete','',index)">Delete</a>
+<a id='myDelete' onmouseup="if(!event.button) inca('Delete','',index)">Delete</a>
 <a id='myCue' onmouseup='newCue(); togglePause()'>Cue</a>`n
 <a id='myCap' onmouseup='togglePause(); if (myTitle.innerHTML) {if (!vtt.innerHTML || captions) {newCap()} else openCap()}'>Caption</a>`n
 <a id='Mp3' onmouseup="inca('mp3', myPlayer.currentTime.toFixed(2), index, cue); cue=0; myNav.style.display=null">mp3</a>`n
@@ -478,7 +479,7 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n glo
 <a id='myFav' style='%x23%' onmousedown="inca('Path','','','fav|1')" onmouseover="setTimeout(function() {if(myFav.matches(':hover'))Fav.scrollIntoView()},140)">&#10084;</a>`n
 <a id='mySearch' style='%x20%' onwheel="wheelEvent(event, id, this)" onmousedown="inca('SearchBox','','',myInput.value)" onmouseover="setTimeout(function() {if(mySearch.matches(':hover'))Filter(id)},140)">&#x1F50D;&#xFE0E;</a>`n
 <a id='Add' style='width:4em; font-variant-caps:petite-caps' onmousedown="inca('Add','','',myInput.value)">%add%</a>`n
-<input id='myInput' class='searchbox' type='search' value='%st%' onmouseover="overText=1; this.focus(); this.value=''; this.value='%searchTerm%'" oninput="Add.innerHTML='Add'" onmouseup="this.value='%searchTerm%'" onmouseout='overText=0'>
+<input id='myInput' class='searchbox' type='search' value='%st%' onmouseover="overText=1; this.focus(); if(!Add.innerHTML) {this.value=''; this.value='%lastSearch%'}" oninput="Add.innerHTML='Add'" onmouseout='overText=0'>
 </div>`n`n
 
 <div id='myRibbon1' class='ribbon'>`n
@@ -1138,9 +1139,9 @@ sleep 200								; time for page to load
               else DeleteEntries()
               x := StrSplit(selected,",")
               index := x[x.MaxIndex()-1]
+              reload := 3
               }
             selected =
-            reload := 3
             return	
             }
         if (command == "Skinny")					; update any media width edits
@@ -1355,6 +1356,7 @@ sleep 200								; time for page to load
               if (strlen(address) < 2)
                 return
               searchTerm = %address%
+              lastSearch=%address%
               }
             reload := 1
             if searchTerm						; search text from link or search box
