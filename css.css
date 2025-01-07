@@ -26,7 +26,6 @@
   font-size: 1.1em;
   font-family: inherit;
   width: 100%;
-  margin: auto;
   outline: none;
   height: 1.4em;
   border: none;
@@ -35,7 +34,6 @@
 .title:hover {color: salmon; transition: 2s; overflow: visible}
 
 .entry {
-  --view;					/* fixed 'popped' thumb width */
   position: relative;
   border-radius: 1em;
   padding: 0.5%;
@@ -73,7 +71,6 @@
   background: linear-gradient(#15110aff, #15110a00)}
 
 .pic {						/* context menu pic */
-  --start;					/* default start time */
   display: none;
   position: absolute;
   background-size: 600%;
@@ -102,7 +99,6 @@
 .save:active {background: salmon; transform: scale(0.7,0.7)}
 
 .player {					/* media player element */
-  --start;
   position: absolute;
   opacity: 0;
   border-radius: 4%}
@@ -163,7 +159,7 @@
 .thumb {					/* htm thumbs */
   --rate;
   --start;
-  --skinny;					/* java variables attached to each element */
+  --skinny;					/* java variables for each thumb */
   position: relative;
   max-width: 100%;
   max-height: 100%;
@@ -250,10 +246,10 @@
 
 .context {					/* right click menu */
   display: none;
+  position: fixed;
   opacity: 0;
   transition: opacity 0.6s;
   z-index: 888;
-  position: fixed;
   font-size: 1em;
   border-radius: 0.7em;
   background: #15110acc}
@@ -261,9 +257,9 @@
 
 .context a {
   display: block;
-  white-space: nowrap;
   width: 70px;
   height: 1.4em;
+  white-space: nowrap;
   border-radius: 1.4em;
   color: lightsalmon}
 .context a:hover {background: #1b1814}

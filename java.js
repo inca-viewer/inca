@@ -1,6 +1,8 @@
 
 // Debugging - use mySelected.innerHTML or alert()
 
+
+
   var intervalTimer							// every 100mS
   var entry = 0								// current thumb htm container
   var thumb = 0								// current thumb element
@@ -25,6 +27,7 @@
   var looping = 1							// play next or loop media
   var Click = 0								// state is cleared after up
   var lastClick = 0							// state is preserved after up
+  var lastStart = 0							// last myPlayer time
   var longClick = 0							// state is preserved
   var gesture = 0							// state is preserved
   var searchbox = ''							// search input field
@@ -119,14 +122,14 @@
     if (!longClick && lastClick==1) {
       if (thumbSheet) {getStart(); return}
       else if (myPlayer.matches(':hover') && ((ym<1 && ym>0.9) || yw>0.95)) {myPlayer.currentTime=xm*dur; return}
-      if (myPic.matches(':hover')) {thumbSheet=0; thumb.currentTime=myPic.style.start}
+      if (myPic.matches(':hover')) {thumbSheet=0; thumb.currentTime=lastStart}
       else if (myNav.matches(':hover')) return
       else if (!overText && playing) {togglePause(); return}
       else if (!playing && !overMedia) return}
     if (longClick && overText) {myPlayer.pause(); return}
     if (playing && overText && type!='document') {vttPlay(); return}
     if (lastClick==3 && !longClick) return						// right click
-    if (longClick==3 && type=='video') if (thumbSheet) {thumbSheet=0} else {thumb.currentTime=myPlayer.style.start; thumbSheet=1}
+    if (longClick==3 && type=='video') if (thumbSheet) {thumbSheet=0} else {thumbSheet=1; thumb.currentTime=lastStart}
     if (longClick==1 && !overMedia && !playing && !myNav.style.display) index = lastMedia
     if (lastClick==2) {									// middle click
       if (!playing && !myNav.style.display) {inca('View',lastMedia); return}		// switch list/thumb view
@@ -187,7 +190,7 @@
     if (myPic.matches(':hover') && type=='video') setPic()		// update context menu preview thumb
     var x = Math.abs(xpos-Xref)
     var y = Math.abs(ypos-Yref)
-if (myTitle.matches(':hover')) return
+    if (myTitle.matches(':hover')) return
     if (x+y > 7 && Click==1 && !gesture) {				// gesture (Click + slide)
       gesture=1
       if (!playing && overMedia) sel(index)
@@ -278,7 +281,7 @@ if (myTitle.matches(':hover')) return
   function timerEvent() { 						// every 100mS 
     xw = xpos / innerWidth
     yw = ypos / innerHeight
-    if (myNav.style.display) el=myPic
+    if (myNav.style.display) {el=myPic; myNav.style.width=rect.width+60+'px'}
     else if (playing=='browser') el=myPlayer
     else el=thumb
     rect = el.getBoundingClientRect()
@@ -292,13 +295,7 @@ if (myTitle.matches(':hover')) return
     else if (overText) myBody.style.cursor=null
     else myBody.style.cursor='crosshair'
     if (captions) Captions()
-    if (el==myPic) myNav.style.width=rect.width+60+'px'
-    if (myPic.style.display) {
-      myTitle.value=title.value; mySelect.style.width='100%'; myTitle.style.width='100%'
-      if (type=='image') mySelect.innerHTML='Select '+index+' Pic '+size+'kb'
-      else mySelect.innerHTML='Select '+index+' '+Time(dur)+' '+size+'mb'
-      if (!vtt.innerHTML || vtt.style.display) {myCap.innerHTML='New Caption'} else myCap.innerHTML='Captions'}
-    else {mySelect.innerHTML='Select'; myTitle.value=''; myTitle.style.width=null}
+    if (!vtt.innerHTML || vtt.style.display) {myCap.innerHTML='New Caption'} else myCap.innerHTML='Captions'
     mySave.style.top=rect.bottom+5+'px'; mySave.style.left=mediaX+10+'px'
     myCancel.style.top=rect.bottom+5+'px'; myCancel.style.left=mediaX-50+'px'
     if (editing) {mySave.style.display='block'; myCancel.style.display='block'} 
@@ -339,7 +336,7 @@ if (myTitle.matches(':hover')) return
     else {myMask.style.opacity=0; myMask.style.pointerEvents=null}
     if (myMask.style.opacity!=0) {myMask.style.pointerEvents='auto'; myMask.style.zIndex=Zindex}
     if (playing=='browser') {
-      if (!thumbSheet) myPlayer.style.start=myPlayer.currentTime
+      if (!myNav.style.display) lastStart=myPlayer.currentTime
       if (type=='video' && !myPlayer.duration && myPlayer.readyState!==4 && block<25) mySelected.innerHTML='File missing or wrong type'
       if (type!='image' && !dur) dur=myPlayer.duration			// just in case
       myPlayer.playbackRate=rate
@@ -386,7 +383,7 @@ myPlayer.pause()
     if (myPic.matches(':hover')) {
       mySeekbar.style.top = rect.bottom +5 +'px'
       mySeekbar.style.left = rect.left +'px'
-      mySeekbar.style.width = rect.width*myPic.style.start/dur +'px'}
+      mySeekbar.style.width = rect.width*lastStart/dur +'px'}
     else {
       if (rect.bottom<innerHeight) mySeekbar.style.top = rect.bottom -3 +'px'
       else mySeekbar.style.top = innerHeight -5 +'px'
@@ -395,6 +392,9 @@ myPlayer.pause()
 
 
   function setPlayer() {						// get src, poster, thumbsheet & dimensions
+    myTitle.value=title.value
+    if (type=='image') mySelect.innerHTML='Select '+index+' Pic '+size+'kb'
+    else mySelect.innerHTML='Select '+index+' '+Time(dur)+' '+size+'mb'
     var x = thumb.poster.replace("/posters/", "/thumbs/")		// points to thumbsheet src folder
     var y = x.split('%20').pop().replace('.jpg', '')			// get fav start time from poster filename
     if (!isNaN(y) && y.length > 2 && y.includes('.')) {			// very likely a 'fav' suffix timestamp
@@ -434,8 +434,8 @@ myPlayer.pause()
     z=5*(Math.ceil(x*35)+1)						// thumb number
     if (dur > 60) {y = 20} else y=0
     z = (z-1) / 200
-    myPic.style.start = y - (z * y) + dur * z
-    if (!playing) myPlayer.currentTime=myPic.style.start}
+    lastStart = y - (z * y) + dur * z
+    if (!playing) myPlayer.currentTime=lastStart}
 
 
   function getStart() {							// clicked thumb on 6x6 thumbsheet
@@ -505,7 +505,7 @@ myPlayer.pause()
     zoom = 1.1
     myPic.style.transform='scale('+skinny*zoom+','+zoom+')'
     if (overMedia || playing) myPic.style.display='block'
-    else {myPic.style.display=null; myNav.style.width=null}
+    else {myPic.style.display=null; myNav.style.width=null; myTitle.value=''; mySelect.innerHTML='Select'}
     if (!playing && overMedia) {myNav.style.left=rect.left-50+'px'; myNav.style.top=rect.top-70+'px'}
     else {myNav.style.left=xpos-30+'px'; myNav.style.top=ypos-30+'px'}
     myNav.style.display='block'; setPic()}
@@ -703,7 +703,7 @@ myPlayer.pause()
     vtt.style.opacity=null
     myNav.style.display=null
     myPlayer.style.opacity=0
-    myPlayer.style.start=myPlayer.currentTime
+    lastStart=myPlayer.currentTime
     myPlayer.removeEventListener('ended', nextMedia)
     setTimeout(function() {						// fadeout before close
       if (rect.top>innerHeight-50) {

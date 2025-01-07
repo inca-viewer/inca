@@ -439,7 +439,7 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n glo
 <div oncontextmenu="if (yw>0.05 && !overText) {event.preventDefault()}">`n`n
 <div id='myNav' class='context' onmouseup='togglePause()' onwheel='wheelEvent(event, id, this)'>`n
 <a onmouseup="inca('Settings')">&#8230;</a>`n
-<a id='mySelect' style='word-spacing:0.8em; font-variant-caps:petite-caps' onmouseup="togglePause(); if (!longClick&&myTitle.innerHTML) {sel(index)} else {if (!longClick) selectAll()}"></a>`n
+<a id='mySelect' style='word-spacing:0.8em; font-variant-caps:petite-caps' onmouseup="togglePause(); if (!longClick&&myTitle.value) {sel(index)} else {if (!longClick) selectAll()}"></a>`n
 <input id='myTitle' class='title' style='color:lightsalmon'>`n
 <video id='myPic' muted class='pic'></video>`n
 <a id='myMute' onmouseup='mute(); togglePause()'>Mute</a>`n
@@ -448,16 +448,16 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n glo
 <a id='mySkinny' onclick="inca('Close')"></a>`n
 <a id='myFlip' onmouseup='flip(); togglePause()'>Flip</a>`n
 <a id='myLoop' onmouseup='togglePause(); if(looping) {looping=0} else looping=1'>Loop</a>`n
-<a id='myIndex' onmouseup="if(myTitle.innerHTML) {inca('Index','',index)} else inca('Index','',0)">Index</a>`n
+<a id='myIndex' onmouseup="if(myTitle.value) {inca('Index','',index)} else inca('Index','',0)">Index</a>`n
 <a id='myDelete' onmouseup="if(!event.button) inca('Delete','',index)">Delete</a>
 <a id='myCue' onmouseup='newCue(); togglePause()'>Cue</a>`n
-<a id='myCap' onmouseup='togglePause(); if (myTitle.innerHTML) {if (!vtt.innerHTML || captions) {newCap()} else openCap()}'>Caption</a>`n
+<a id='myCap' onmouseup='togglePause(); if (myTitle.value) {if (!vtt.innerHTML || captions) {newCap()} else openCap()}'>Caption</a>`n
 <a id='Mp3' onmouseup="inca('mp3', myPlayer.currentTime.toFixed(2), index, cue); cue=0; myNav.style.display=null">mp3</a>`n
 <a id='Mp4' onmouseup="inca('mp4', myPlayer.currentTime.toFixed(2), index, cue); cue=0; myNav.style.display=null">mp4</a>`n
 <a></a></div>`n`n
 
 <div id='myMask' class="mask" onwheel="wheelEvent(event, id, this)"></div>`n 
-<video id="myPlayer" class='player' type="video/mp4" muted onmouseenter='if (gesture) sel(index)' onwheel="wheelEvent(event, id, this)"></video>`n
+<video id="myPlayer" class='player' type="video/mp4" muted onwheel="wheelEvent(event, id, this)"></video>`n
 <span id='mySeekbar' class='seekbar'></span>`n`n
 <span id='mySelected' class='selected'></span>`n
 <span id='mySave' class='save' onmouseup="inca('Close')">Save</span>`n 
@@ -841,9 +841,9 @@ sleep 200								; time for page to load
               address := StrReplace(address, "<div>", "`r`n")
               }
             else address := StrReplace(address, "<br>")
-            address := StrReplace(address, "<\e>", "`r`n")		; timestamp / text split
+            address := StrReplace(address, "<\e>", "`r`n")		; e is text element - note: / is reversed in Clipboard()
             address := StrReplace(address, "<div><br><\div>")
-            address := StrReplace(address, "<\d>", "`r`n")		; \ is reversed in clipboard
+            address := StrReplace(address, "<\d>", "`r`n")		; d is timestamp element
             address := StrReplace(address, "<br>", "`r`n")
             address := StrReplace(address, "-->", "--&gt;")		; so "<.*?>" can clear out injected html
             address := RegExReplace(address, "<.*?>")			; remove everything between <>
