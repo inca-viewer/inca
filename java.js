@@ -1,5 +1,6 @@
 // Debugging - use mySelected.innerHTML or alert()
 
+// indexing breaking bad ??
 
   var intervalTimer							// every 100mS
   var entry = 0								// current thumb htm container
@@ -195,7 +196,7 @@
     if (myTitle.matches(':hover')) return
     if (x+y > 7 && Click==1 && !gesture) {				// gesture (Click + slide)
       gesture=1
-      if (!playing && overMedia) sel(index)
+      if (!playing && !overText && overMedia) sel(index)
       if (myNav.style.display) {x=myNav.getBoundingClientRect(); Xref=(xpos-x.left)/skinny; Yref=ypos-x.top}}
     if (!gesture || !Click) return
     if (myNav.style.display) {						// move context menu
