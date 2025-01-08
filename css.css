@@ -16,7 +16,7 @@
   c:active {color: red; transform: scale(0.8,0.8)}
   d {display: block; color: #ffa07a11; font-size: 0.8em; transition: 2s; padding: 2%}
   d:active {color: lightsalmon}
-  e {display: block; color: #826858; outline: none; transition: 0.8s}
+  e {display: block; background: #0c0c0c; color: #826858; outline: none; transition: 0.8s; border-radius: 1em; padding: 2%}
 
 .title {					/* thumb title element */
   display: block;
@@ -58,7 +58,6 @@
   transition: opacity 0.8s;
   overflow: hidden;
   overflow-y: scroll;
-  padding: 2.3em;
   border-radius: 1em}
 .text::-webkit-scrollbar {background: inherit; width: 6px}
 
