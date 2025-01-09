@@ -1,6 +1,8 @@
 // Debugging - use mySelected.innerHTML or alert()
 
-// indexing breaking bad ??
+// porn into a netwok or a map
+// so your mind can maintain a 'flow state' for many hours
+
 
   var intervalTimer							// every 100mS
   var entry = 0								// current thumb htm container
@@ -86,7 +88,7 @@
     else if (e.key=='Pause') {								// inca re-map of mouse 'Back' click
       myPic.style.transform='scale('+skinny+',1)'					// reset context image
       if (myNav.style.display) myNav.style.display=null
-      else if (playing) {closePlayer(); inca('Close')}					// close player and send messages to inca
+      else if (playing) {inca('Close'); closePlayer()}					// close player and send messages to inca
       else if (myContent.scrollTop > 50) myContent.scrollTo(0,0)			// else scroll to page top
       else inca('Reload',2)								// or finally, reload page & clear selected
       Click=0; lastClick=0}}, false) 
@@ -118,13 +120,13 @@
     if (document.getElementById('myFavicon'+index).matches(':hover')) {openCap(); myPlayer.pause(); return}
     if (title.matches(':hover')) {if (!longClick) thumb.currentTime=thumb.style.start ;return}
     if (!gesture && longClick==1 && !playing && playlist && index && selected) {inca('Move', overMedia); return}
+    if (longClick==1 && playing && overText && type!='document') {vttPlay(); return}
     if (!longClick && lastClick==1) {
-      if (playing && overText && type!='document') {vttPlay(); return}
       if (thumbSheet) {getStart(); return}
       else if (myPlayer.matches(':hover') && ((ym<1 && ym>0.9) || yw>0.95)) {myPlayer.currentTime=xm*dur; return}
       if (myPic.matches(':hover')) {thumbSheet=0; thumb.currentTime=lastStart}
       else if (myNav.matches(':hover')) return
-      else if (!overText && playing) {togglePause(); return}
+      else if (playing) {togglePause(); return}
       else if (!playing && !overMedia) return}
     if (longClick && overText && lastClick==1) {myPlayer.pause(); return}
     if (lastClick==3 && !longClick) return						// right click
@@ -648,7 +650,7 @@
     else {
       var id = document.elementFromPoint(xpos,ypos).id
       var tm = id.split('-')[1]
-      if (id.match('my')) togglePause()
+      if (id.match('my')) myPlayer.pause()
       else if (!isNaN(tm)) {myPlayer.currentTime=thumb.currentTime=tm; myPlayer.play()}}}
 
 

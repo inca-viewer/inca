@@ -697,7 +697,7 @@ sleep 200								; time for page to load
                 incaTab =			; force new tab
                 searchTerm =
                 command = SearchBox		; search from selected text
-                address := Clipboard
+                address := RegExReplace(Clipboard, "\W", " ")
                 ProcessMessage()
                 CreateList(1)
                 }
@@ -866,10 +866,7 @@ sleep 200								; time for page to load
                     newCue = %newCue%%A_LoopField%`r`n
             FileDelete, %inca%\cache\cues\%media%.txt			; for return to text scroll position
             FileAppend, %newCue%0.00|scroll|%value%`r`n, %inca%\cache\cues\%media%.txt
-            index:=1
-            if (type == "document")
-              sort = Date
-            else index := selected
+            index := selected
             PopUp("saved",600,0,0)
             }
         if (command == "Move")						; move entry within playlist
@@ -1341,7 +1338,7 @@ sleep 200								; time for page to load
               searchTerm =
               searchPath =
               filt := 0
-PopUp(folder,0,0,0)
+              PopUp(folder,0,0,0)
               }
             if (command == "Search" || command == "SearchBox")
               {
@@ -1354,8 +1351,8 @@ PopUp(folder,0,0,0)
               if (strlen(address) < 2)
                 return
               searchTerm = %address%
-              lastSearch=%address%
-PopUp(searchTerm,0,0,0)
+              lastSearch = %address%
+              PopUp(searchTerm,0,0,0)
               }
             reload := 1
             if searchTerm						; search text from link or search box
