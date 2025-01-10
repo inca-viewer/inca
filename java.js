@@ -1,8 +1,5 @@
 // Debugging - use mySelected.innerHTML or alert()
 
-// porn into a netwok or a map
-// so your mind can maintain a 'flow state' for many hours
-
 
   var intervalTimer							// every 100mS
   var entry = 0								// current thumb htm container
@@ -178,9 +175,8 @@
     else myPlayer.style.border=null
     if (playing=='browser') myPlayer.style.opacity=1
     title.style.color='lightsalmon'
-    myBody.style.cursor='none'
-    myPlayer.style.zIndex=Zindex					// because popped htm thumbs use Z-index
-    myPlayer.volume=0.05
+    myPlayer.style.zIndex=Zindex
+    myPlayer.volume=0.05						// triggers volume fadeup
     if (looping) looping=1}
 
 
@@ -234,7 +230,7 @@
       rate = Math.round(100*rate)/100
       if (!playing && !myTitle.value) {defRate=rate; localStorage.setItem('defRate'+folder, rate)}
       else thumb.style.rate=rate}
-    else if (mySkinny.matches(':hover')) {				// skinny
+    else if (mySkinny.matches(':hover') && myTitle.value) {		// skinny
       if (wheelUp) skinny -= 0.01
       else skinny += 0.01
       skinny=Math.round(1000*skinny)/1000
@@ -312,12 +308,13 @@
     if (myWidth.matches(':hover')) myWidth.innerHTML=myView.style.width
     else myWidth.innerHTML='Cols'
     if (!myNav.matches(':hover')) myNav.style.display=null
-    if (rate==1) mySpeed.innerHTML = 'Speed'
-    else mySpeed.innerHTML = rate.toFixed(2)
-    myCue.innerHTML='Cue '+thumb.currentTime.toFixed(1)
-    if (!myTitle.value) {mySpeed.innerHTML=defRate; mySkinny.innerHTML=''}
-    else if (skinny>0.99 && skinny<1.01) mySkinny.innerHTML = 'Skinny'
-    else mySkinny.innerHTML = skinny.toFixed(2)
+    myCue.innerHTML='Cue'
+    if (!myTitle.value) {								// no media under context menu
+      mySkinny.innerHTML=''
+      if (defRate==1) {mySpeed.innerHTML='Speed'} else mySpeed.innerHTML=defRate}
+    else {
+      if (skinny>0.99 && skinny<1.01) {mySkinny.innerHTML='Skinny'} else mySkinny.innerHTML=skinny.toFixed(2)
+      if (rate==1) {mySpeed.innerHTML='Speed'} else mySpeed.innerHTML=rate.toFixed(2)}
     if (outerHeight-innerHeight>30) {myMenu.style.display=null; myMask2.style.display=null} 
     else {myMenu.style.display='none'; myMask2.style.display='none'}  			// if fullscreen hide menu 
     if (selected && !Click) mySelected.innerHTML = selected.split(',').length -1
@@ -447,8 +444,8 @@
     var col = Math.ceil(xm * 6)
     var offset = 0
     var ps = 5 * ((row * 6) + col)
-    ps = (ps - 1) / 200
-    if (dur > 60) offset = 20
+    ps = (ps - 1) / 200							// see index() in inca.ahk to explain
+    if (dur > 60) offset = 20						// skip movie credits...
     if (longClick!=1) thumb.currentTime=offset - (ps * offset) + dur * ps
     myPlayer.style.transform = "scale("+scaleX+","+scaleY+")"
     thumbSheet=0; Play()}
@@ -456,7 +453,7 @@
 
   function addFavorite() {
     var x = myPlayer.currentTime.toFixed(1)
-    if (longClick) x = 0						// sets start to 0
+    if (longClick) x = 0						// sets fav start to 0
     else if (!playing) x = thumb.currentTime.toFixed(1)
     inca('Favorite',x,index,vtt.scrollTop.toFixed(0))			// includes any caption/txt scroll
     document.getElementById('myFavicon'+index).innerHTML='&#10084'}	// heart symbol on htm thumb
@@ -502,7 +499,7 @@
   function context(e) {							// right click context menu
     if (playing == 'mpv') return
     zoom = 1.1
-    myPic.style.transform='scale('+skinny*zoom+','+zoom+')'
+    myPic.style.transform='scale('+skinny*zoom+','+zoom+')'		// pop thumb out a little
     if (overMedia || playing) myPic.style.display='block'
     else {myPic.style.display=null; myNav.style.width=null; myTitle.value=''; mySelect.innerHTML='Select'}
     if (!playing && overMedia) {myNav.style.left=rect.left-50+'px'; myNav.style.top=rect.top-70+'px'}
@@ -636,7 +633,7 @@
 
   function Captions() { 						// track & highlight vtt Captions
     thumb.playbackRate=1
-    vtt.style.top=rect.bottom +'px'
+    vtt.style.top=myPlayer.getBoundingClientRect().bottom +'px'
     vtt.style.left=mediaX-vtt.offsetWidth/2 +'px'
     var x = index+'-'+myPlayer.currentTime.toFixed(1)
     if (el=document.getElementById('my'+x)) {

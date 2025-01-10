@@ -2,7 +2,7 @@
 
 	; Browser Based File Explorer - Windows
 	; generates web pages of your media
-	; browser messages back using clipboard - see ProcessMessage()
+	; browser messages back using java via clipboard - see ProcessMessage()
 
 
 	#NoEnv
@@ -34,10 +34,10 @@
         Global searchPath			; current search paths
         Global inca				; default folder path
         Global list				; sorted media file list
-        Global listId
-        Global listSize
+        Global listId				; pointer to media
+        Global listSize				; qty of media
         Global selected :=""			; selected files from web page
-        Global searchTerm
+        Global searchTerm			; eg. all files with 'japan' in name
         Global lastSearch
         Global src				; current media file incl. path
         Global media				; media filename, no path or ext
@@ -45,54 +45,53 @@
         Global type				; eg. video
 	Global subfolders
         Global folder				; current folder name, no path
-        Global path
+        Global path				; current folder path
         Global ext				; file extension
         Global incaTab				; browser tab title (usually folder name)
         Global volume
         Global page := 1			; current page within list
-        Global sort
+        Global sort				; eg by date, dur, shuffle, size, alpha, ext...
 	Global filt := 0			; secondary search filter eg. date, duration, Alpha letter
         Global click				; mouse click type
         Global timer				; click down timer
-        Global listView := 0
+        Global listView := 0			; list or thumb view
         Global volRef := 2
         Global wheel
         Global playlist				; playlist - full path
 	Global xpos				; current mouse position - 100mS updated 
 	Global ypos
-        Global command				; message fields
-        Global value
-        Global address
-        Global skinny
+        Global command				; java message commands to this program
+        Global value				; message 1st value (selected is 2nd value)
+        Global address				; message 3rd value (can be extended eg. ,,,)
+        Global skinny				; edited media width
         Global seek
-        Global target
+        Global target				; folder path
         Global reload
         Global browser				; current browser
         Global longClick
         Global fullscreen
-        Global pages
+        Global pages				; file list is broken down into smaller html pages
         Global poster				; htm thumbnail
-        Global mediaList
-        Global panelList
+        Global mediaList			; html of media content
+        Global panelList			; html of top panel
         Global foldr
         Global index = 0			; scroll to index
-        Global messages				; between browser and this program
-        Global gesture
+        Global messages				; between browser java and this program
+        Global gesture				; mouse gestures
         Global lastClip				; preserve clipboard
         Global allFav				; all favorite shortcuts consolidated
         Global showSubs
         Global lastMedia
-        Global panelPath
-        Global lastStatus
-        Global mpvXpos				; external mpv player
+        Global panelPath			; click over top panel (folder/search paths)
+        Global lastStatus			; reduce screen update flicker
+        Global mpvXpos				; external mpv player display parameters
         Global mpvYpos
         Global mpvWidth
         Global mpvHeight
         Global mpvPID
-        Global textCount
-        Global cur
-        Global desk
-        Global indexPage			; holds copy of selected to index
+        Global cur				; window under cursor
+        Global desk				; current desktop window
+        Global indexPage			; html media page to index (create thumbs)
 
 
 
@@ -237,7 +236,6 @@ else mediaList = %mediaList%<div id="entry%j%" class='entry' onmouseenter='overT
           return
         foldr =
         mediaList =
-        textCount := 0
         x = %folder%\
         if (InStr(fol, x) || playlist)
           showSubs =
@@ -344,7 +342,7 @@ else mediaList = %mediaList%<div id="entry%j%" class='entry' onmouseenter='overT
         if container
           fill(container)
 
-        if subfolders
+        if subfolders								; add list to top panel element
           {
           container = <div id='Sub' style='font-size:2em; color:#ff0000a0; text-align:center'>&#x1F4BB;&#xFE0E;</div>`n
           container := fill(container)
@@ -366,7 +364,7 @@ else mediaList = %mediaList%<div id="entry%j%" class='entry' onmouseenter='overT
 
         container = <div id='Fol' style='font-size:2em; color:#ffa07ab0; text-align:center'>&#x1F4BB;&#xFE0E;</div>`n
         container := fill(container)
-        Loop, Parse, fol, `|
+        Loop, Parse, fol, `|							; add folder list to top panel
           if A_LoopField
             {
             StringTrimRight, y, A_Loopfield, 1
@@ -382,7 +380,7 @@ else mediaList = %mediaList%<div id="entry%j%" class='entry' onmouseenter='overT
 
         container = <div id='Fav' style='font-size:1.8em; color:#ffa07ab0; text-align:center'>&#10084;</div>`n
         container := fill(container)
-        Loop, Parse, fav, `|
+        Loop, Parse, fav, `|							; add favorites to top panel
           if A_LoopField
             {
             SplitPath, A_Loopfield,,,,x
@@ -402,7 +400,7 @@ else mediaList = %mediaList%<div id="entry%j%" class='entry' onmouseenter='overT
             {
             if A_Loopfield
               x := SubStr(A_Loopfield, 1, 1)
-            if (ch != x)
+            if (ch != x)							; add search word list to top panel
               {
               if container
                 fill(container)
