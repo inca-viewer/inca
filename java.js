@@ -295,7 +295,8 @@
     else if (!cursor) myBody.style.cursor='none'
     else myBody.style.cursor='crosshair'
     if (captions) Captions()
-    if (!vtt.innerHTML || vtt.style.display) {myCap.innerHTML='New Caption'} else myCap.innerHTML='Captions'
+    if (!myTitle.value) myCap.innerHTML=''
+    else if (!vtt.innerHTML || vtt.style.display) {myCap.innerHTML='New Caption'} else myCap.innerHTML='Captions'
     mySave.style.top=rect.bottom+5+'px'; mySave.style.left=mediaX+10+'px'
     myCancel.style.top=rect.bottom+5+'px'; myCancel.style.left=mediaX-50+'px'
     if (editing) {mySave.style.display='block'; myCancel.style.display='block'} 

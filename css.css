@@ -47,9 +47,8 @@
   scroll-behavior: smooth;
   color: #826858;
   text-align: center;
-  max-height: 40vh;
-  width: 40vw;
-  height: 34vh;
+  width: 34em;
+  height: 26em;
   line-height: 1.2em;
   font-family: inherit;
   font-size: 1em;
@@ -89,7 +88,7 @@
   background: inherit;
   height: 60em;				/* becomes width when rotated	*/
   width: 7.4em;
-  left: -8em}
+  left: -4em}
 .panel:hover {overflow-y: scroll}
 
 .p2 {						/* panel entries */
