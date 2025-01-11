@@ -181,8 +181,8 @@
 
 
   function mouseMove(e) {
-    if (screenLeft) {xpos=e.clientX; ypos=e.clientY}			// fullscreen detection/offsets
-    else {xpos=e.screenX; ypos=e.screenY}
+    if (innerHeight==outerHeight) {xpos=e.screenX; ypos=e.screenY}	// fullscreen detection/offsets
+    else {xpos=e.clientX; ypos=e.clientY}
     cursor=6
     if (myPanel.matches(':hover')) mySelected.style.fontSize='3em'
     else mySelected.style.fontSize=null
@@ -194,9 +194,9 @@
     if (myTitle.matches(':hover')) return
     if (x+y > 7 && Click==1 && !gesture) {				// gesture (Click + slide)
       gesture=1
-      if (!playing && !overText && overMedia) sel(index)
+      if (!playing && overMedia) sel(index)
       if (myNav.style.display) {x=myNav.getBoundingClientRect(); Xref=(xpos-x.left)/skinny; Yref=ypos-x.top}}
-    if (!gesture || !Click) return
+    if (!gesture || !Click) {gesture=''; return}
     if (myNav.style.display) {						// move context menu
       myNav.style.left = xpos-Xref+"px"; myNav.style.top = ypos-Yref+"px"}
     else if (playing && !overText) {					// move myPlayer
@@ -235,7 +235,7 @@
       else skinny += 0.01
       skinny=Math.round(1000*skinny)/1000
       thumb.style.skinny=skinny						// css holds edited skinny
-      if (!playing || screenLeft) getParameters(index)
+      getParameters(index)
       positionMedia(0.2)}
     else if (id=='myThumbs') { 						// thumb size
       var x=view; var z=wheel/1000
@@ -483,7 +483,7 @@
 
 
   function sel(i) {							// highlight selected media
-    if (!i || Click==2) return
+    if (!i || Click==2 || overText) return
     var el=document.getElementById('thumb'+i)
     if (listView) el=document.getElementById('title'+i)
     var x = ','+selected

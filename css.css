@@ -61,6 +61,42 @@
   border-radius: 1em}
 .text::-webkit-scrollbar {background: inherit; width: 6px}
 
+.myMenu {
+  position: fixed;
+  top: 5em;
+  left: 0;
+  transform: translate(calc(50vw - 50%));
+  width: 70%;
+  min-width: 50em;
+  max-width: 70em;
+  padding-bottom: 1em;
+  background: #15110a}
+
+.myPanel {					/* top panel element showing folders etc.*/
+  position: relative;
+  font-size: 0.9em;
+  white-space: nowrap;
+  padding: 0.6em;
+  overflow: hidden;
+  height: 6em}
+
+.panel {					/* inner rotated element of myPanel */
+  position: absolute;
+  overflow: hidden;
+  scrollbar-width: none;
+  transform: rotate(-90deg);
+  transform-origin: right top;
+  background: inherit;
+  height: 60em;				/* becomes width when rotated	*/
+  width: 7.4em;
+  left: -8em}
+.panel:hover {overflow-y: scroll}
+
+.p2 {						/* panel entries */
+  overflow: hidden;
+  white-space: nowrap}
+.p2:hover {overflow: visible}
+
 .fadeout {					/* between top panel and scrolled thumbs */
   position: relative; 
   margin-bottom: -2em;
@@ -117,43 +153,6 @@
   flex-wrap: wrap;
   padding-top: 18em;
   padding-bottom: 70vh}
-
-.myMenu {
-  position: fixed;
-  top: 5em;
-  left: 0;
-  transform: translate(calc(50vw - 50%));
-  width: 70%;
-  min-width: 50em;
-  max-width: 70em;
-  padding-bottom: 1em;
-  background: #15110a}
-
-.myPanel {					/* top panel element showing folders etc.*/
-  position: relative;
-  width: 100%;
-  font-size: 0.9em;
-  white-space: nowrap;
-  padding: 0.6em;
-  overflow: hidden;
-  height: 6.5em}
-
-.panel {					/* inner rotated element of myPanel */
-  position: absolute;
-  overflow: hidden;
-  scrollbar-width: none;
-  transform: rotate(-90deg);
-  transform-origin: right top;
-  background: inherit;
-  height: 100vh;
-  width: 9em;					/* entry width	*/
-  left: -9%}
-.panel:hover {overflow-y: scroll}
-
-.p2 {						/* panel entries */
-  overflow: hidden;
-  white-space: nowrap}
-.p2:hover {overflow: visible}
 
 .thumb {					/* htm thumbs */
   --rate;
