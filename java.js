@@ -1,6 +1,5 @@
 // Debugging - use mySelected.innerHTML or alert()
 
-
   var intervalTimer							// every 100mS
   var entry = 0								// current thumb htm container
   var thumb = 0								// current thumb element
@@ -163,7 +162,7 @@
     else playing='browser'
     if (!thumbSheet && lastClick!=2) messages=messages+'#History#'+myPlayer.currentTime.toFixed(1)+'#'+index+'#' 
     if (lastClick==2 && playing=='mpv') return						// inca does next/previous media
-    if (playing=='mpv' || thumb.src.slice(-3)=='mid') inca('Media',0,index,para)
+    if (playing=='mpv') inca('Media',0,index,para)
     if (type=='document' && !captions) openCap()
     if (type=='audio' || playlist.match('/inca/music/')) {
       scaleY=0.2; looping=0; myPlayer.muted=false; if (!thumbSheet) myPlayer.poster=thumb.poster}
@@ -281,7 +280,7 @@
   function timerEvent() { 						// every 100mS 
     xw = xpos / innerWidth
     yw = ypos / innerHeight
-    if (myNav.style.display) {el=myPic; myNav.style.width=rect.width+60+'px'}
+    if (myNav.style.display) {el=myPic; myNav.style.width=rect.width+85+'px'}
     else if (playing=='browser') el=myPlayer
     else el=thumb
     rect = el.getBoundingClientRect()
@@ -498,11 +497,11 @@
 
   function context() {							// right click context menu
     if (playing == 'mpv') return
-    zoom = 1.1
+    zoom = 1.2
     myPic.style.transform='scale('+Math.abs(skinny)*zoom+','+zoom+')'	// pop thumb out a little
     if (overMedia || playing) myPic.style.display='block'
     else {myPic.style.display=null; myNav.style.width=null; myTitle.value=''; mySelect.innerHTML='Select'}
-    if (!playing && overMedia) {myNav.style.left=rect.left-50+'px'; myNav.style.top=rect.top-70+'px'}
+    if (!playing && overMedia) {myNav.style.left=rect.left-74+'px'; myNav.style.top=rect.top-74+'px'}
     else {myNav.style.left=xpos-30+'px'; myNav.style.top=ypos-30+'px'}
     myNav.style.display='block'; setPic()}
 
@@ -697,7 +696,8 @@
     vtt.style.opacity=null
     myNav.style.display=null
     myPlayer.style.opacity=0
-    lastStart=myPlayer.currentTime
+    thumb.load()
+    thumb.currentTime=lastStart
     myPlayer.removeEventListener('ended', nextMedia)
     setTimeout(function() {						// fadeout before close
       if (rect.top>innerHeight-50) {
