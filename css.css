@@ -25,7 +25,7 @@
   color: #ffa07a44;
   font-size: 1.1em;
   font-family: inherit;
-  width: 100%;
+  width: 90%;
   outline: none;
   height: 1.4em;
   border: none;
@@ -258,6 +258,7 @@
   height: 1.4em;
   white-space: nowrap;
   border-radius: 1.4em;
+  padding-left:1.4em;
   color: lightsalmon}
 .context a:hover {background: #1b1814}
 .context a:active {background: #333333}

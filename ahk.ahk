@@ -431,10 +431,10 @@ header = <!--, %page%, %pages%, %sort%, %toggles%, %listView%, %playlist%, %path
 body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n globals(%page%, %pages%, '%folder_s%', '%toggles%', '%sort%', %filt%, %listView%, '%selected%', '%playlist%', %index%); %scroll%.scrollIntoView()">`n`n
 
 <div oncontextmenu="if (yw>0.05 && !overText) {event.preventDefault()}">`n`n
-<div id='myNav' class='context' onmouseup='togglePause()' onwheel='wheelEvent(event, id, this)'>`n
+<div id='myNav' class='context' onmouseup='if (!gesture) togglePause()' onwheel='wheelEvent(event, id, this)'>`n
 <a onmouseup="inca('Settings')">&#8230;</a>`n
 <a id='mySelect' style='word-spacing:0.8em' onmouseup="togglePause(); if (!longClick&&myTitle.value) {sel(index)} else {if (!longClick) selectAll()}"></a>`n
-<input id='myTitle' class='title' style='color:lightsalmon'>`n
+<input id='myTitle' class='title' style='color:lightsalmon; padding-left:1.2em'>`n
 <video id='myPic' muted class='pic'></video>`n
 <a id='myMute' onmouseup='mute(); togglePause()'>Mute</a>`n
 <a id='myFavorite' onmouseup='togglePause()'>Fav</a>`n
@@ -455,7 +455,7 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n glo
 <span id='mySeekbar' class='seekbar'></span>`n`n
 <span id='mySelected' class='selected'></span>`n
 <span id='mySave' class='save' onmouseup="inca('Close')">Save</span>`n 
-<span id='myCancel' class='save' style='left:0px' onmouseup="editing=0; inca('Reload',2)">&#x2715;</span>
+<span id='myCancel' class='save' style='left:0px' onmouseup="editing=0; inca('Reload',index)">&#x2715;</span>
 
 <div id='myContent' class='mycontent'>`n
 <div id='myView' class='myview'>`n`n`n %mediaList%</div>`n`n
@@ -891,10 +891,10 @@ sleep 200								; time for page to load
             }
         if (command == "Reload")					; reload web page
             {
-            selected =
-            if value !=2 
-              index := 1						; scroll to media 1
-            reload := value
+            if !value
+              selected =
+            else index := value
+            reload := 2
             }
         if (command == "Index")						; index folder (create thumbsheets)
             {
@@ -931,7 +931,8 @@ sleep 200								; time for page to load
             start := Round(StrSplit(address,"|").1,2)
             skinny := Round(StrSplit(address,"|").2,2)
             rate := Round(StrSplit(address,"|").3,2)
-            mute := 1*StrSplit(address,"|").4
+            if (type != "audio")
+              mute := 1*StrSplit(address,"|").4
             if (!skinny || skinny != 1)
               skinny := -1*(1-skinny)
             else skinny=
@@ -972,7 +973,7 @@ sleep 200								; time for page to load
                   break
                 else sleep 20
               WinActivate, ahk_class mpv
-              if skinny
+              if (skinny>0)
                 RunWait %COMSPEC% /c echo add video-scale-x %skinny% > \\.\pipe\mpv,, hide && exit
               }
             }
@@ -1041,9 +1042,7 @@ sleep 200								; time for page to load
             Loop, Parse, selected, `,
               if getMedia(A_Loopfield)
                 {
-                if playlist 
-                  FileAppend, %src%|%value%`r`n, %playlist%, UTF-8
-                else FileAppend, %src%|%value%`r`n, %inca%\fav\new.m3u, UTF-8
+                FileAppend, %src%|%value%`r`n, %inca%\fav\new.m3u, UTF-8
                 Runwait, %inca%\cache\apps\ffmpeg.exe -ss %value% -i "%src%" -y -vf scale=1280:1280/dar -vframes 1 "%inca%\cache\posters\%media%%A_Space%%value%.jpg",, Hide
                 }
             if address
