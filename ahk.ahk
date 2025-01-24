@@ -445,7 +445,7 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n glo
 <a id='myIndex' onmouseup="if(myTitle.value) {inca('Index','',index)} else inca('Index','',0)">Index</a>`n
 <a id='myDelete' onmouseup="if(!event.button) inca('Delete','',index)">Delete</a>
 <a id='myCue' onmouseup='newCue(); togglePause()'>Cue</a>`n
-<a id='myCap' onmouseup='togglePause(); if (myTitle.value) {if (!vtt.innerHTML || captions) {newCap()} else openCap()}'>Caption</a>`n
+<a id='myCap' onmouseup='if (myTitle.value) {if(!vtt.innerHTML||captions) {newCap()} else {openCap();Play()}}'>Caption</a>`n
 <a id='Mp3' onmouseup="inca('mp3', myPlayer.currentTime.toFixed(2), index, cue); cue=0; myNav.style.display=null">mp3</a>`n
 <a id='Mp4' onmouseup="inca('mp4', myPlayer.currentTime.toFixed(2), index, cue); cue=0; myNav.style.display=null">mp4</a>`n
 <a></a></div>`n`n
@@ -490,7 +490,7 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n glo
 <a style='%x8%' onmousedown="inca('Recurse')">Subs</a>`n
 <a id='myThumbs' onmouseout='setThumbs(1,1000)' onmouseup="inca('View',0)" onwheel="wheelEvent(event, id)"></a>`n 
 <a id='myWidth' onwheel="wheelEvent(event, id)"></a>`n 
-<a style='%x14%' onmousedown="inca('Mpv')">Mpv</a>`n
+<a style='%x13%' onmousedown="inca('Mpv')">Mpv</a>`n
 <a id='myJoin' onmousedown="inca('Join')">Join</a>`n
 </div>`n`n
 
@@ -500,7 +500,7 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n glo
       FileDelete, %inca%\cache\html\%folder%.htm
       StringReplace, header, header, \, /, All
       StringReplace, body, body, \, /, All
-      html = %header%%body%</div></div>`n<script>`n%java%</script>`n</body>`n</html>`n
+      html = %header%%body%</div></div>`n<script>%java%</script>`n</body>`n</html>`n
       FileAppend, %html%, %inca%\cache\html\%folder%.htm, UTF-8
       new_html = file:///%inca%\cache\html\%folder%.htm			; create / update browser tab
       StringReplace, new_html, new_html, \,/, All
@@ -822,7 +822,10 @@ sleep 200								; time for page to load
         if (command == "addCue")
             {
             FileAppend, %address%|goto|%value%`r`n, %inca%\cache\cues\%media%.txt, UTF-8
-              Popup("Added . . .",900,0,0)
+            Popup("Added . . .",0,0,0)
+            index := selected
+            reload := 2
+            selected =
             }
         if (command == "Vtt")						; save browser text editing
             {
@@ -863,8 +866,10 @@ sleep 200								; time for page to load
                     newCue = %newCue%%A_LoopField%`r`n
             FileDelete, %inca%\cache\cues\%media%.txt			; for return to text scroll position
             FileAppend, %newCue%0.00|scroll|%value%`r`n, %inca%\cache\cues\%media%.txt
+            PopUp("saved",0,0,0)
             index := selected
-            PopUp("saved",600,0,0)
+            reload := 2
+            selected =
             }
         if (command == "Move")						; move entry within playlist
             {
@@ -887,7 +892,7 @@ sleep 200								; time for page to load
             Popup(popup,0,0,0)
             index := StrSplit(selected, ",").1
             reload := 3
-            selected=
+            selected =
             }
         if (command == "Reload")					; reload web page
             {
