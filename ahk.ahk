@@ -805,7 +805,7 @@ sleep 200								; time for page to load
         selected = 
         PopUp("",0,0,0)
         sleep 100
-        if (command == "Settings" || command == "EditCue" || command == "Media" && type=="document")
+        if (command == "Settings" || command == "editCue" || command == "Media" && type=="document")
           IfWinExist, ahk_class Notepad
             WinActivate, ahk_class Notepad
         }
@@ -819,7 +819,7 @@ sleep 200								; time for page to load
             sleep 400
             Winactivate, ahk_class CabinetWClass
             }
-        if (command == "addCue")
+        if (command == "newCue")
             {
             FileAppend, %address%|goto|%value%`r`n, %inca%\cache\cues\%media%.txt, UTF-8
             Popup("Added . . .",0,0,0)
@@ -982,13 +982,15 @@ sleep 200								; time for page to load
                 RunWait %COMSPEC% /c echo add video-scale-x %skinny% > \\.\pipe\mpv,, hide && exit
               }
             }
-        if (command == "EditCue")					; open media cues in notepad
+        if (command == "editCue")					; open media cues in notepad
             {
             if !selected
               return
-            cues = 0.00|goto|`r`n
             IfNotExist, %inca%\cache\cues\%media%.txt
-              FileAppend, %cues%, %inca%\cache\cues\%media%.txt, UTF-8
+              {
+              PopUp("no cues",600,0,0)
+              return
+              }
             else FileRead, cues, %inca%\cache\cues\%media%.txt
             StringTrimRight, cues, cues, 2				; remove end `r`n
             Sort, cues, NZ						; sort cues by time entry

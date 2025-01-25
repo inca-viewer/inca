@@ -174,8 +174,7 @@
     myPlayer.style.opacity=1
     title.style.color='lightsalmon'
     myPlayer.style.zIndex=Zindex
-    myPlayer.volume=0.05						// triggers volume fadeup
-    if (looping) looping=1}
+    myPlayer.volume=0.05}						// triggers volume fadeup
 
 
   function mouseMove(e) {
@@ -351,12 +350,12 @@
     else if (!screenLeft && Xoff) {mediaX+=Xoff; mediaY+=Yoff; Xoff=0}
     myPlayer.style.left = mediaX - myPlayer.offsetWidth/2 +"px"
     myPlayer.style.top = mediaY - myPlayer.offsetHeight/2 +"px"
-    let y = scaleY
-    if (looping>1) y*=(1+looping/14)
-    if (thumbSheet) y=0.55*ratio*innerWidth/myPlayer.offsetWidth
-    let x=skinny*y
+    if (thumbSheet) {
+      myPlayer.style.left = innerWidth/2 - myPlayer.offsetWidth/2 +"px"
+      myPlayer.style.top = innerHeight/2 - myPlayer.offsetHeight/2 +"px"
+      y=0.55*ratio*innerWidth/myPlayer.offsetWidth}
     myPlayer.style.transition = time+'s'
-    myPlayer.style.transform = "scale("+x+","+y+")"}
+    myPlayer.style.transform = "scale("+skinny*scaleY+","+scaleY+")"}
 
 
   function seekBar() {							// progress bar beneath player
@@ -460,8 +459,6 @@
 
   function nextMedia() {						// after media finished playing
     if (!looping) {if (getParameters(index+=1)) {Play()} else closePlayer(); return}
-    looping+=1								// zoom each loop
-    if (!longClick && rate > 0.40) rate-=0.05				// slower each loop
     myPlayer.currentTime=thumb.style.start
     positionMedia(1.6)
     myPlayer.play()}
@@ -603,17 +600,17 @@
         if (entry[1]=='next') {lastClick=2; clickEvent()}
         else if (entry[1]=='scroll' && time<0) vtt.scrollTo(0,entry[2])
         else if (entry[1]=='goto') {myPlayer.currentTime=thumb.style.start=thumb.currentTime=1*entry[2]; myPlayer.volume=0.001}
-        else if (entry[1]=='rate' && looping<2) {if (isNaN(1*entry[2])) {rate=defRate} else {rate=1*entry[2]}}
+        else if (entry[1]=='rate') {if (isNaN(1*entry[2])) {rate=defRate} else {rate=1*entry[2]}}
         else if (entry[1]=='skinny') {if (isNaN(entry[2])) {skinny=1} else {skinny=1*entry[2]; if(time) {positionMedia(entry[3])}}}
         else if (entry[1]=='pause') {myPlayer.pause(); if (entry[2]) setTimeout(function(){myPlayer.play()},1000*entry[2])}}}}
 
 
   function newCue() {
     myNav.style.display=null
-    if (!playing) inca('EditCue',0,index,0)
+    if (!playing) inca('editCue',0,index,0)
     else { myPlayer.pause()
       if (!cue) cue=Math.round(myPlayer.currentTime*100)/100
-      else {inca('addCue', myPlayer.currentTime.toFixed(2), index, cue); cue=0}}}
+      else {inca('newCue', myPlayer.currentTime.toFixed(2), index, cue); cue=0}}}
 
 
   function overThumb(id) {
