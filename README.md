@@ -1,7 +1,10 @@
 
 # Media Viewer<br>
 Windows - Chrome, Firefox, Edge, Opera, Brave<br>
-YouTube style media interface for your hard drive<br><br><br>
+YouTube style media interface for your hard drive<br><br>
+No other program can find media faster than this<br>
+Or control how media is presented better than this<br>
+Using only a mouse and your browser tab<br><br><br>
 <img src="screens/overview2.png" width="55%"><br>
 <img src="screens/computer arm 5.jpg" width="18%"> <img src="screens/computer arm 2.jpg" width="18%"> <img src="screens/computer arm 1.jpg" width="18%"><br><br>
 <img src="screens/Screen 1.jpg" width="25%"> <img src="screens/Screen 2.jpg" width="25%"><br>
