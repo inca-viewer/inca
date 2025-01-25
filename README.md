@@ -1,7 +1,7 @@
 
 # Media Viewer<br>
-Windows - Chrome, Firefox, Edge, Opera, Brave<br><br>
-YouTube style interface for your hard drive<br><br>
+Windows - Chrome, Firefox, Edge, Opera, Brave<br>
+YouTube style media interface for your hard drive<br><br><br>
 <img src="screens/overview2.png" width="55%"><br>
 <img src="screens/computer arm 5.jpg" width="18%"> <img src="screens/computer arm 2.jpg" width="18%"> <img src="screens/computer arm 1.jpg" width="18%"><br><br>
 <img src="screens/Screen 1.jpg" width="25%"> <img src="screens/Screen 2.jpg" width="25%"><br>
