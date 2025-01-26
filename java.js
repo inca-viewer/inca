@@ -101,9 +101,9 @@
 
   function mouseUp(e) {
     if (!Click) return									// stop re-entry if new page load
-    clearTimeout(clickTimer)
+    clearTimeout(clickTimer)								// longClick timer
     if (!longClick) clickEvent()							// process click event
-    Click=0; wheel=0; gesture=0}							// longClick timer
+    Click=0; wheel=0; gesture=0}
 
 
   function clickEvent() {								// functional logic
@@ -114,7 +114,7 @@
     if (longClick && myPanel.matches(':hover')) return					// copy files instead of move
     if (longClick && myRibbon.matches(':hover')) return
     if (lastClick==1 && myFavorite.matches(':hover')) {addFavorite(); return}
-    if (title.matches(':hover')) {if (!longClick) thumb.currentTime=thumb.style.start ;return}
+    if (lastClick==1 && title.matches(':hover')) {if (!longClick) thumb.currentTime=thumb.style.start ;return}
     if (!gesture && longClick==1 && !playing && playlist && index && selected) {inca('Move', overMedia); return}
     if ((longClick==1 || longClick==3) && playing && overText && type!='document') {vttPlay(); return}
     if (!longClick && lastClick==1) {
@@ -142,12 +142,13 @@
 
 
   function Play() {
-    if (!mediaX || mediaX<0 || mediaX>innerWidth) mediaX=innerWidth/2
-    if (!mediaY || mediaY<0 || mediaY>innerHeight) mediaY=innerHeight/2
-    if (!scaleY || scaleY<0.2) scaleY=0.5
-    if (scaleY>1.5) scaleY=1.5
+    if (!playing) {
+      myNav.style.display=null
+      if (!mediaX || mediaX<0 || mediaX>innerWidth) mediaX=innerWidth/2
+      if (!mediaY || mediaY<0 || mediaY>innerHeight) mediaY=innerHeight/2
+      if (!scaleY || scaleY<0.2) scaleY=0.5
+      if (scaleY>1.5) scaleY=1.5}
     positionMedia(0)									// stabilize myPlayer position
-    if (!playing) myNav.style.display=null
     myPlayer.style.transition = 'opacity 1s'
     if (!thumbSheet) myPlayer.currentTime=thumb.currentTime
     let para = myPlayer.currentTime+'|'+skinny+'|'+rate+'|'+1*localStorage.muted	// for if external player
@@ -340,7 +341,7 @@
       if (type!='image' && !dur) dur=myPlayer.duration			// just in case
       myPlayer.playbackRate=rate
       if (cue) {myCue.innerHTML='Goto '+myPlayer.currentTime.toFixed(2)} 
-      if (cueList && !thumbSheet && myPlayer.currentTime>0.1) Cues(index, myPlayer.currentTime)
+      if (cueList && !thumbSheet && myPlayer.currentTime>0.1) Cues(myPlayer.currentTime)
       positionMedia(0)}							// in case fullscreen 
     else if (!listView && thumb.readyState===4 && thumb.duration && overMedia) {thumb.play()} else thumb.pause()}
 
@@ -350,12 +351,13 @@
     else if (!screenLeft && Xoff) {mediaX+=Xoff; mediaY+=Yoff; Xoff=0}
     myPlayer.style.left = mediaX - myPlayer.offsetWidth/2 +"px"
     myPlayer.style.top = mediaY - myPlayer.offsetHeight/2 +"px"
+    let y = scaleY
     if (thumbSheet) {
       myPlayer.style.left = innerWidth/2 - myPlayer.offsetWidth/2 +"px"
       myPlayer.style.top = innerHeight/2 - myPlayer.offsetHeight/2 +"px"
       y=0.55*ratio*innerWidth/myPlayer.offsetWidth}
     myPlayer.style.transition = time+'s'
-    myPlayer.style.transform = "scale("+skinny*scaleY+","+scaleY+")"}
+    myPlayer.style.transform = "scale("+skinny*y+","+y+")"}
 
 
   function seekBar() {							// progress bar beneath player
@@ -460,7 +462,6 @@
   function nextMedia() {						// after media finished playing
     if (!looping) {if (getParameters(index+=1)) {Play()} else closePlayer(); return}
     myPlayer.currentTime=thumb.style.start
-    positionMedia(1.6)
     myPlayer.play()}
 
 
@@ -525,10 +526,10 @@
 
   function getParameters(i) {						// set media parameters
     if (!(document.getElementById('thumb'+i))) return			// end of media list
-    thumb=document.getElementById('thumb'+i)
-    entry=document.getElementById('entry'+i)
-    title=document.getElementById('title'+i)
-    vtt=document.getElementById('vtt'+i)
+    thumb = document.getElementById('thumb'+i)				// htm thumb element
+    entry = document.getElementById('entry'+i)				// thumb and title container
+    title = document.getElementById('title'+i)				// htm title element
+    vtt = document.getElementById('vtt'+i)				// txt / caption / subtitle element
     rate = defRate
     skinny = 1
     let x = thumb['ondrag'].toString().split(',')			// trick to get media parameters from htm element
@@ -538,7 +539,7 @@
     if (index && !thumb.currentTime) thumb.currentTime=thumb.style.start
     size = 1*x[5]							// file size
     cueList = x[2].replaceAll('\'', '').trim()
-    if (cueList) Cues(i,0)   						// process 0:00 cues - width, speed etc.
+    if (cueList) Cues(0)   						// process 0:00 cues - width, speed etc.
     if (x=1*thumb.style.rate) rate=x					// custom css variable - rate edited
     if (x=1*thumb.style.skinny) skinny=x				// get any live width edits
     thumb.style.transform='scale('+skinny+',1)' 			// set thumb width
@@ -592,17 +593,17 @@
         if (x>1) {el.style.height=view/x+'em'} else el.style.height=view+'em'}}}
 
 
-  function Cues(j, time) {						// process media cues- captions, speed, skinny, pauses etc.
+  function Cues(time) {							// process media cues- captions, speed, skinny, pauses etc.
     let x = cueList.split('#1')						// get each line entry
     for (k=0; k<x.length; k++) {					// for each line entry
-      let entry = x[k].split('#2')					// time[0] cue[1] value[2] period[3]
-      if (entry[1] && 1*entry[0] > time-0.1 && 1*entry[0] < time+0.1) {
-        if (entry[1]=='next') {lastClick=2; clickEvent()}
-        else if (entry[1]=='scroll' && time<0) vtt.scrollTo(0,entry[2])
-        else if (entry[1]=='goto') {myPlayer.currentTime=thumb.style.start=thumb.currentTime=1*entry[2]; myPlayer.volume=0.001}
-        else if (entry[1]=='rate') {if (isNaN(1*entry[2])) {rate=defRate} else {rate=1*entry[2]}}
-        else if (entry[1]=='skinny') {if (isNaN(entry[2])) {skinny=1} else {skinny=1*entry[2]; if(time) {positionMedia(entry[3])}}}
-        else if (entry[1]=='pause') {myPlayer.pause(); if (entry[2]) setTimeout(function(){myPlayer.play()},1000*entry[2])}}}}
+      let el = x[k].split('#2')						// time[0] cue[1] value[2] period[3]
+      if (el[1] && 1*el[0] > time-0.1 && 1*el[0] < time+0.1) {
+        if (el[1]=='next') {lastClick=2; clickEvent()}
+        else if (el[1]=='scroll' && time<0) vtt.scrollTo(0,el[2])
+        else if (el[1]=='goto') {myPlayer.currentTime=thumb.style.start=thumb.currentTime=1*el[2]; myPlayer.volume=0.001}
+        else if (el[1]=='rate') {if (isNaN(1*el[2])) {rate=defRate} else {rate=1*el[2]}}
+        else if (el[1]=='skinny') {if (isNaN(el[2])) {skinny=1} else {skinny=1*el[2]; if(time) {positionMedia(el[3])}}}
+        else if (el[1]=='pause') {myPlayer.pause(); if (el[2]) setTimeout(function(){myPlayer.play()},1000*el[2])}}}}
 
 
   function newCue() {
@@ -652,7 +653,7 @@
     captions=1
     vtt.style.display='block'
     myNav.style.display=null
-    Cues(index,-0.01)							// scroll to last
+    Cues(-0.01)								// scroll to last
     vtt.style.zIndex=Zindex
     setTimeout(function() {vtt.style.opacity=1},100)}
 
