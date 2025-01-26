@@ -12,12 +12,13 @@ beautiful fast interface<br>
 Shuffle folders & playlists<br>
 Search, organize, edit & view media files in browser<br>
 Move, Copy, Rename files in browser<br>
-Create slideshows, captions, customized subtitles, favorites, clips, joins, conversions etc.<br>
+Create slideshows, favorites, clips, joins, conversions etc.<br>
+Create, edit or search captions and subtitles<br>
 Music and playlists from browser tabs<br>
 Sleep timer gradually lowers master volume when mouse quiet<br>
 To see if you already have a video from an outside website,<br>
 Select part of the title text, then 'long click' on it<br>
-A new tab will show all matching files from your computer<br>
+A new tab will show all matching media files from your computer<br>
 
 Lightweight & portable (no installation)<br>
 Pure vanilla java / ahk script<br>
