@@ -7,6 +7,7 @@
 
 	#NoEnv
 	#UseHook, On
+        #MaxMem, 4095
 	SetWinDelay, 0
 	SetKeyDelay, 0
 	SetBatchLines -1
@@ -418,7 +419,6 @@ else mediaList = %mediaList%<div id="entry%j%" class='entry' onmouseenter='overT
         if container
           fill(container)
 
-
 x = %searchTerm%|
 if (searchTerm && !InStr(search, x))
   add = Add
@@ -454,7 +454,7 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n glo
 <video id="myPlayer" class='player' type="video/mp4" muted onwheel="wheelEvent(event, id, this)"></video>`n
 <span id='mySeekbar' class='seekbar'></span>`n`n
 <span id='mySelected' class='selected'></span>`n
-<span id='mySave' class='save' onmouseup="inca('Close')">Save</span>`n 
+<span id='mySave' class='save' onmouseup="setTimeout(function() {inca('Close')},250)">Save</span>`n 
 <span id='myCancel' class='save' style='left:0px' onmouseup="editing=0; inca('Reload',index)">&#x2715;</span>
 
 <div id='myContent' class='mycontent'>`n

@@ -16,7 +16,7 @@
   c:active {color: red; transform: scale(0.8,0.8)}
   d {display: block; color: #ffa07a11; font-size: 0.8em; transition: 2s; padding: 2%}
   d:active {color: lightsalmon}
-  e {display: block; background: #0c0c0c; color: #826858; outline: none; transition: 0.8s; border-radius: 1em; padding: 2%}
+  e {display: block; color: #826858; outline: none; width:92%; margin:auto; transition: 0.4s}
 
 .title {					/* thumb title element */
   display: block;
@@ -47,7 +47,7 @@
   scroll-behavior: smooth;
   color: #826858;
   text-align: center;
-  width: 34em;
+  width: 36em;
   height: 26em;
   line-height: 1.2em;
   font-family: inherit;
