@@ -1,7 +1,5 @@
 // Debugging - use mySelected.innerHTML or alert()
 
-// could the wheel scroll through folders selected when over rribbon
-
 
   let intervalTimer							// every 100mS
   let entry = 0								// current thumb htm container
@@ -81,8 +79,8 @@
       if (renamebox) inca('Rename', renamebox, lastMedia)				// rename media
       else if (myInput.matches(':focus')) inca('SearchBox','','',myInput.value)		// search media on pc
       else if (type=='document') {let x=thumb.scrollTop; setTimeout(function(){thumb.scrollTo(0,x)},100)}}
-    else if (e.code=='Space' && !vtt.innerHTML) togglePause()
-    else if (e.key=='Backspace' && playing && !vtt.innerHTML) {closePlayer(); inca('Close')}
+    else if (e.code=='Space' && !overText) togglePause()
+    else if (e.key=='Backspace' && playing && !overText) {closePlayer(); inca('Close')}
     else if (e.key=='Pause' && e.altKey) {thumbSheet=1; setPlayer(); Play()}		// mpv player - show thumbsheet
     else if (e.key=='Pause' && e.shiftKey) {lastClick=3;longClick=3;clickEvent()}	// inca re-map of long right click
     else if (e.key=='Pause') {								// inca re-map of mouse 'Back' click
@@ -121,10 +119,9 @@
     if (playing && vttText && (!vttText.innerHTML || vttText.innerHTML=="<br>")) {vttTime.remove(); vttText.remove(); vttText=''; return}
     if (mySave.matches(':hover') || myInput.matches(':hover')) return
     if (playing && overText && type!='document') {					// captions live
-      if (longClick==1) {editing=1; myPlayer.pause()}
-      if (lastClick==1) vttPlay()
-      if (longClick==3) newCap()
-      return}
+      if (longClick==1) {editing=index; myPlayer.pause(); return}
+      if (lastClick==1) {vttPlay(); return}
+      if (longClick==3) {newCap(); return}}
     if (!longClick && lastClick==1) {
       if (thumbSheet) {getStart(); return}
       else if (myPlayer.matches(':hover') && ((ym<1 && ym>0.9) || yw>0.95)) {myPlayer.currentTime=xm*dur; return}
@@ -325,7 +322,7 @@
     if (outerHeight-innerHeight>30) {myMenu.style.display=null; myMask2.style.display=null} 
     else {myMenu.style.display='none'; myMask2.style.display='none'}  			// if fullscreen hide menu 
     if (selected && !Click) mySelected.innerHTML = selected.split(',').length -1
-    else if (block<25) mySelected.innerHTML = ''
+    else if (block<25) mySelected.innerHTML = '' 
     if (!thumb) return
     if (type!='image' && !thumbSheet && playing!='mpv' && myPlayer.duration) seekBar()
     else mySeekbar.style.width=null
@@ -358,7 +355,8 @@
     if (screenLeft && !Xoff) {Xoff=screenLeft; Yoff=outerHeight-innerHeight; mediaX-=Xoff; mediaY-=Yoff}
     else if (!screenLeft && Xoff) {mediaX+=Xoff; mediaY+=Yoff; Xoff=0}
     myPlayer.style.left = mediaX - myPlayer.offsetWidth/2 +"px"
-    myPlayer.style.top = mediaY - myPlayer.offsetHeight/2 +"px"
+    if (captions && vtt.innerHTML) myPlayer.style.top = mediaY - myPlayer.offsetHeight*0.75 +"px"
+    else myPlayer.style.top = mediaY - myPlayer.offsetHeight/2 +"px"
     let y = scaleY
     if (thumbSheet) {
       myPlayer.style.left = innerWidth/2 - myPlayer.offsetWidth/2 +"px"
@@ -417,8 +415,6 @@
     else {y=innerHeight/ratio; x=innerHeight}				// landscape - normalised size
     myPlayer.style.width = x +'px'
     myPlayer.style.height = y +'px'
-    myPlayer.style.top = mediaY-y/2 +'px'				// myPlayer position
-    myPlayer.style.left = mediaX-x/2 +'px'
     el=thumb.getBoundingClientRect()
     myPic.style.height=el.height+'px'					// context menu thumb
     myPic.style.width=el.height*ratio+'px'
@@ -644,19 +640,17 @@
     let x = index+'-'+myPlayer.currentTime.toFixed(1)
     if (el=document.getElementById('my'+x)) {
       if (vttText && el!=vttText) {vttText.style.color = null; vttText.style.transform = 'none'}
-      else {el.style.color = 'lightsalmon'; el.style.transform = 'scale(1.1,1.1)'}
+      el.style.color = 'lightsalmon'; el.style.transform = 'scale(1.1,1.1)'
       vttTime = document.getElementById(x)
-      if (vttText != el) vttTime.scrollIntoView()
+      if (vttText!=el && !overText) vttTime.scrollIntoView()
       vttText = el}}
 
 
-  function vttPlay() {
+  function vttPlay() { 
       let id = document.elementFromPoint(xpos,ypos).id
       let tm = id.split('-')[1]
       if (!id.match('my')) {togglePause(); return}
       if (!isNaN(tm)) myPlayer.currentTime=thumb.currentTime = tm
-      if (editing) myPlayer.pause()
-      else myPlayer.play()
       Captions()}
 
 
@@ -671,8 +665,9 @@
 
   function newCap() {							// caption button in context menu
     let y=''								// slice new caption into vtt.innerHTML
-    let w=myPlayer.currentTime.toFixed(3).toString().split('.')		// second and millisecond parts
-    let t=myPlayer.currentTime.toFixed(1)
+    if (playing) thumb.currentTime = myPlayer.currentTime
+    let w=thumb.currentTime.toFixed(3).toString().split('.')		// second and millisecond parts
+    let t=thumb.currentTime.toFixed(1)
     let minutes = (w[0] / 60).toFixed(0)
     let seconds = (w[0] % 60).toFixed(0)				// create vtt style timestamp
     if (minutes<10) minutes='0'+minutes
@@ -702,8 +697,8 @@
     playing=''
     captions=0
     thumbSheet=0
-    vtt.style.display=null
     vtt.style.opacity=null
+    vtt.style.display=null
     myNav.style.display=null
     myPlayer.style.opacity=0
     thumb.load()
@@ -721,9 +716,7 @@
   function Time(z) {if (z<0) return '0:00'; let y=Math.floor(z%60); let x=':'+y; if (y<10) {x=':0'+y}; return Math.floor(z/60)+x}
   function selectAll() {for (i=1; document.getElementById('thumb'+i); i++) {sel(i)}}
   function flip() {skinny*=-1; scaleX*=-1; thumb.style.skinny=skinny; positionMedia(0.6); getParameters(index)()}
-  function togglePause() {
-    if (overMedia) {vtt.scrollTo(0,0); myPlayer.pause()}
-    else if (playing && myPlayer.paused) {myPlayer.play()} else myPlayer.pause()}
+  function togglePause() {if (playing && myPlayer.paused) {myPlayer.play()} else myPlayer.pause()}
 
 
 

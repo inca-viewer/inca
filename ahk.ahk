@@ -220,7 +220,7 @@ else src=src="file:///%src%"
 if !size
   size = 0								; cannot have null size in getParameters()
 
-caption = <p id='vtt%j%' class='text' style='font-size:1.2em' onmouseover='overText=1; if(index!=%j%) thumb.pause(); index=%j%; getParameters(%j%)' onmouseout='overText=0'`n oninput="if(editing&&editing!='%j%') {inca('Vtt',editing)}; editing='%j%'; thumb.pause(); myPlayer.pause()"`n ondrag="getParameters(%j%, 'document', '%cueList%', %start%, %dur%, %size%, event)">%text%</p>`n 
+caption = <p id='vtt%j%' class='text' style='font-size:1.2em' onmouseover='overText=1' onmouseout='overText=0'`n oninput="if(editing&&editing!='%j%') {inca('Vtt',editing)}; editing='%j%'; myPlayer.pause()"`n ondrag="getParameters(%j%, 'document', '%cueList%', %start%, %dur%, %size%, event)">%text%</p>`n 
 
 if listView
   mediaList = %mediaList%%fold%<table onmouseover='overThumb(%j%)'`n onmouseout="thumb%j%.style.opacity=0">`n <tr id='entry%j%' onmouseenter='if (gesture) sel(%j%)'>`n <td>%ext%`n <video id='thumb%j%' class='thumb2' ondrag="getParameters(%j%, '%type%', '%cueList%', %start%, %dur%, %size%, event)"`n %src%`n %poster%`n preload=%preload% muted loop type="video/mp4"></video></td>`n <td>%size%</td>`n <td style='min-width: 6em'>%durT%</td>`n <td>%date%</td>`n <td style='min-width: 4.4em'>%j%</td>`n <td id='myFavicon%j%' style='translate: -1.3em; font-size: 0.7em; color: salmon; min-width: 1em'>%favicon% %cc%</td>`n <td style='width: 70vw'><input id="title%j%" class='title' style='transition: 0.8s' onmouseover='overText=1' onmouseout='overText=0; Click=0' type='search' value='%media_s%'`n oninput="renamebox=this.value; lastMedia=%j%"></td>`n %fo%</tr></table>%caption%`n`n
@@ -267,8 +267,8 @@ else mediaList = %mediaList%<div id="entry%j%" class='entry' onmouseenter='overT
         listSize := 0
         type = video							; prime for list parsing
         page_s := Setting("Page Size")
-        if (playlist || SearchTerm || listView)
-        page_s := 600
+  ;      if (playlist || SearchTerm || listView)
+  ;      page_s := 600
         if !reset
          Loop, Parse, list, `n, `r 					; split big list into smaller web pages
           {
