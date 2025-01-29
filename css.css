@@ -14,11 +14,23 @@
   c {display: block; padding-left: 1em; text-decoration: none; font-weight: bold; color: #826858; transition: 1s} /* panel text */
   c:hover {transition: 0.2s; transform: scale(1.1,1.1); color: lightsalmon}
   c:active {color: red; transform: scale(0.8,0.8)}
-  d {display: block; color: #ffa07a11; font-size: 0.8em; transition: 2s; padding: 2%}
+  d {display: block; color: #ffa07a11; font-size: 0.8em; transition: 2s; padding: 2%}	/* caption timestamps */
   d:active {color: lightsalmon}
-  e {display: block; color: #826858; outline: none; width:92%; margin:auto; transition: 0.4s}
 
-.title {					/* thumb title element */
+e {						/* caption text entries */
+  display: block;
+  background: #0e0e0e;
+  font-size: 1em;
+  outline: none;
+  border-radius: 1em;
+  padding-left: 2em;
+  padding-right: 2em;
+  color: #826858;
+  width: fit-content;
+  margin:auto;
+  transition: 0.4s}
+
+.title {					/* thumb title */
   display: block;
   white-space: nowrap;
   background: inherit;
@@ -31,7 +43,7 @@
   border: none;
   transition: 0.5s;
   border-radius: 1em}
-.title:hover {color: salmon; transition: 2s; overflow: visible}
+.title:hover {color: salmon; transition: 1.4s; overflow: visible}
 
 .entry {
   position: relative;
@@ -39,7 +51,7 @@
   padding: 0.5%;
   padding-bottom: 2.5em}
 
-.text {						/* editable text area - vtt */
+.text {						/* captions / txt container - vtt */
   position: fixed;
   display: none;
   border: none;
