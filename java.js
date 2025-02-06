@@ -654,7 +654,7 @@ intervalTimer = setInterval(timerEvent,90)				// background tasks every 100mS
       let tm = id.split('-')[1]						// timestamp
       if (longClick==1) {editing=index; myPlayer.pause()}		// begin editing caption
       else if (!id.match('my')) {togglePause(); return}			// not over caption text
-      else if (!editing) myPlayer.play()				// not same caption as editing
+      else if (!editing || capText.id!=id) myPlayer.play()		// not same caption as editing
       else myPlayer.pause()
       if (!isNaN(tm)) myPlayer.currentTime = thumb.currentTime = tm	// rest player to start of caption
       Captions()}							// highlight caption
