@@ -11,10 +11,10 @@
   table {color: #826858; font-size: 0.9em; border-collapse: collapse; margin: auto; border-radius: 1em; transition: color 0.3s}
   table:hover {background: #1b1814}
   a {color: #826858; text-decoration: none; outline: none}	/* default text */
-  c {display: block; padding-left: 1em; text-decoration: none; font-weight: bold; color: #826858; transition: 1s} /* panel text */
+  c {display: block; padding-left: 1em; text-decoration: none; font-weight: bold; color: #826858bb; transition: 1s} /* panel text */
   c:hover {transition: 0.2s; transform: scale(1.1,1.1); color: lightsalmon}
   c:active {color: red; transform: scale(0.8,0.8)}
-  d {display: block; color: #ffa07a11; font-size: 0.8em; transition: 2s; padding: 2%}	/* caption timestamps */
+  d {display: block; color: #ffa07a11; font-size: 0.8em; transition: 2s; padding:1%}	/* caption timestamps */
   d:active {color: lightsalmon}
 
 e {						/* caption text entries */
@@ -127,22 +127,19 @@ e {						/* caption text entries */
   margin-top: 1em;
   border-radius: 7%}
 
-.save {						/* save button over textarea */
-  display: none;
-  position: fixed;
+.capMenu {					/* buttons over caption */
   text-align: center;
   border: 0.1px solid red;
   border-radius: 0.8em;
   padding-left: 0.4em;
   padding-right: 0.5em;
-  z-index: 991;
   color: salmon;
-  transition: 0.4s;
+  transition: 0.3s;
   background: #1b1814;
-  height: 1.6em;
+  font-size:0.9em;
   font-variant-caps: petite-caps}
-.save:hover {border: 1px solid salmon; transform: scale(1.2,1.2)}
-.save:active {background: salmon; transform: scale(0.7,0.7)}
+.capMenu:hover {border: 1px solid salmon; transform: scale(1.2,1.2)}
+.capMenu:active {background: salmon; transform: scale(0.7,0.7)}
 
 .player {					/* media player element */
   position: absolute;
@@ -204,7 +201,7 @@ e {						/* caption text entries */
 .searchbox {					/* input searchbox in htm tab */
   text-overflow: ellipsis;
   display: inline;
-  width: 45%; 
+  width: 54%; 
   translate:  0 2px;
   border-radius: 1em; 
   color: salmon;
@@ -281,6 +278,7 @@ e {						/* caption text entries */
   user-select: none;
   font-size: 0.8em;
   overflow: hidden;
+  cursor: normal;
   margin: 0;
   opacity: 0;
   width: 100%;

@@ -186,7 +186,7 @@ if InStr(Label, "T5 EVO")
             FileRead, str2, %inca%\cache\captions\%media%.vtt
             Loop, Parse, str2, `n, `r
               if %A_LoopField%  
-                if InStr(A_LoopField, "-->")				; timestamp - warning!! care making changes to this element
+                if InStr(A_LoopField, "-->")				; timestamp element
                   {
                   x := SubStr(A_LoopField, 1, 12)
                   x := StrReplace(x, " --")				; in case hrs
@@ -196,14 +196,7 @@ if InStr(Label, "T5 EVO")
                   else x := Round(3600*x.1 + 60*x.2 + x.3,1)
                   text = %text%<d id="%j%-%x%">%A_LoopField%</d>
                   }
-                else
-                  {
-                  y := A_LoopField
-                  y := StrReplace(y, ".", ".<br>")
-                  y := StrReplace(y, "?", "?<br>")
-                  y := StrReplace(y, "!", "!<br>")
-                  text =%text%<e contenteditable="true" id="my%j%-%x%">%y%</e>
-                  }
+                else text = %text%<e contenteditable="true" id="my%j%-%x%">%A_LoopField%</e>
             }
         if (ext=="txt")
           {
@@ -212,7 +205,7 @@ if InStr(Label, "T5 EVO")
           }
 
 if text
-  cc = &#169
+  cc = &#169			; add caption icon
 
 if (type=="image")
   src =
@@ -430,7 +423,7 @@ header = <!--, %page%, %pages%, %sort%, %toggles%, %listView%, %playlist%, %path
 
 body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n globals(%page%, %pages%, '%folder_s%', '%toggles%', '%sort%', %filt%, %listView%, '%selected%', '%playlist%', %index%); %scroll%.scrollIntoView()">`n`n
 
-<div oncontextmenu="if (yw>0.05 && !overText) {event.preventDefault()}">`n`n
+<div oncontextmenu="if (yw>0.08) {event.preventDefault()}">`n`n
 <div id='myNav' class='context' onmouseup='if (!gesture) togglePause()' onwheel='wheelEvent(event, id, this)'>`n
 <a onmouseup="inca('Settings')">&#8230;</a>`n
 <a id='mySelect' style='word-spacing:0.8em' onmouseup="togglePause(); if (!longClick&&myTitle.value) {sel(index)} else {if (!longClick) selectAll()}"></a>`n
@@ -438,8 +431,8 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n glo
 <video id='myPic' muted class='pic'></video>`n
 <a id='myMute' onmouseup='mute(); togglePause()'>Mute</a>`n
 <a id='myFavorite' onmouseup='togglePause()'>Fav</a>`n
-<a id='mySpeed' onclick="inca('Close')"></a>`n
-<a id='mySkinny' onclick="inca('Close')"></a>`n
+<a id='mySpeed'></a>`n
+<a id='mySkinny'></a>`n
 <a id='myFlip' onmouseup='flip(); togglePause()'>Flip</a>`n
 <a id='myLoop' onmouseup='togglePause(); if(looping) {looping=0} else looping=1'>Loop</a>`n
 <a id='myIndex' onmouseup="if(myTitle.value) {inca('Index','',index)} else inca('Index','',0)">Index</a>`n
@@ -454,8 +447,11 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n glo
 <video id="myPlayer" class='player' type="video/mp4" muted onwheel="wheelEvent(event, id, this)"></video>`n
 <span id='mySeekbar' class='seekbar'></span>`n`n
 <span id='mySelected' class='selected'></span>`n
-<span id='mySave' class='save' onmouseup="setTimeout(function() {inca('Close')},250)">Save</span>`n 
-<span id='myCancel' class='save' style='left:0px' onmouseup="editing=0; inca('Reload',index)">&#x2715;</span>
+<div id='capMenu' style='position: fixed; display: none; justify-content: space-around; width: 12em; z-index: 991'>
+<span id='myCancel' class='capMenu'onmouseup="editing=0; inca('Reload',index)">&#x2715;</span>`n 
+<span id='myBack' class='capMenu' style='font-weight:bold'>&#x2212</span>`n 
+<span id='myForward' class='capMenu' style='font-weight:bold'>&#xFF0B</span>`n
+<span id='mySave' class='capMenu' onmouseup="inca('Null')">Save</span></div>`n 
 
 <div id='myContent' class='mycontent'>`n
 <div id='myView' class='myview'>`n`n`n %mediaList%</div>`n`n
@@ -471,8 +467,8 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n glo
 <a id='mySub' style='width:1`%; color:red' onmouseover="setTimeout(function() {if(mySub.matches(':hover'))Sub.scrollIntoView()},140)">%subs%</a>`n
 <a id='myFol' style='%x21%' onmousedown="inca('Path','','','fol|1')" onmouseover="setTimeout(function() {if(myFol.matches(':hover'))Fol.scrollIntoView()},140)">&#x1F4BB;&#xFE0E;</a>`n
 <a id='myFav' style='%x23%' onmousedown="inca('Path','','','fav|1')" onmouseover="setTimeout(function() {if(myFav.matches(':hover'))Fav.scrollIntoView()},140)">&#10084;</a>`n
-<a id='mySearch' style='%x20%' onwheel="wheelEvent(event, id, this)" onmousedown="inca('SearchBox','','',myInput.value)" onmouseover="setTimeout(function() {if(mySearch.matches(':hover'))Filter(id)},140)">&#x1F50D;&#xFE0E;</a>`n
-<a id='Add' style='width:4em; font-variant-caps:petite-caps' onmousedown="inca('Add','','',myInput.value)">%add%</a>`n
+<a id='mySearch' style='width:1em; padding-left:1em; %x20%' onwheel="wheelEvent(event, id, this)" onmousedown="inca('SearchBox','','',myInput.value)" onmouseover="setTimeout(function() {if(mySearch.matches(':hover'))Filter(id)},140)">&#x1F50D;&#xFE0E;</a>`n
+<a id='Add' style='width:2em; font-size:0.8em; font-variant-caps:petite-caps' onmousedown="inca('Add','','',myInput.value)">%add%</a>`n
 <input id='myInput' class='searchbox' type='search' value='%st%' onmouseover="overText=1; this.focus(); if(!Add.innerHTML) {this.value=''; this.value='%lastSearch%'}" oninput="Add.innerHTML='Add'" onmouseout='overText=0'>
 </div>`n`n
 
@@ -524,11 +520,10 @@ body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n glo
       sleep 100
       clipboard := clip
       incaTab := folder
-;selected =
       if fullscreen
         send, {F11}
       fullscreen := 0
-sleep 200								; time for page to load
+      sleep 200								; time for page to load
       PopUp("",0,0,0)
       }
 
@@ -536,8 +531,6 @@ sleep 200								; time for page to load
     fill(in) {  
       panelList = %panelList%<div style="height:10`%; padding:0.5em; transform:rotate(90deg)">`n%in%</div>`n
       }
-
-
 
 
     ~Esc up::
@@ -694,7 +687,7 @@ sleep 200								; time for page to load
                 incaTab =			; force new tab
                 searchTerm =
                 command = SearchBox		; search from selected text
-                address := RegExReplace(Clipboard, "\W", " ")
+                address := RegExReplace(Clipboard, "[^a-zA-Z0-9._\- ]", " ")
                 ProcessMessage()
                 CreateList(1)
                 }
@@ -779,7 +772,7 @@ sleep 200								; time for page to load
         messages := StrReplace(Clipboard, "/", "\")
         array := StrSplit(messages,"#")
         Clipboard := lastClip
-  ; tooltip %messages%							; for debug
+ ;  tooltip %messages%							; for debug
         Loop % array.MaxIndex()/4
           {
           command := array[ptr+=1]
@@ -813,6 +806,8 @@ sleep 200								; time for page to load
 
     ProcessMessage()							; messages from java/browser
         {
+        if (command == "Null")						; used as trigger to save text editing - see Java inca()
+          return
         if (command == "Settings")					; open inca source folder
             {
             Run, %inca%\
@@ -823,9 +818,6 @@ sleep 200								; time for page to load
             {
             FileAppend, %address%|goto|%value%`r`n, %inca%\cache\cues\%media%.txt, UTF-8
             Popup("Added . . .",0,0,0)
-            index := selected
-            reload := 2
-            selected =
             }
         if (command == "Vtt")						; save browser text editing
             {
@@ -867,9 +859,6 @@ sleep 200								; time for page to load
             FileDelete, %inca%\cache\cues\%media%.txt			; for return to text scroll position
             FileAppend, %newCue%0.00|scroll|%value%`r`n, %inca%\cache\cues\%media%.txt
             PopUp("saved",0,0,0)
-            index := selected
-            reload := 2
-            selected =
             }
         if (command == "Move")						; move entry within playlist
             {
@@ -915,7 +904,7 @@ sleep 200								; time for page to load
                 FileAppend, %src%|%value%`r`n, %inca%\fav\History.m3u, UTF-8
             lastMedia := src
             }
-        if (command == "Close")						; close external mpv player
+        if (command == "closeMpv")					; close external mpv player
             if mpvPID
               Process, Close, mpv.exe
         if (command == "Media")						; browser tells inca to use mpv player
@@ -950,12 +939,15 @@ sleep 200								; time for page to load
             if !start
               start = 0.0
             start := Time(start)
-            if (ext=="pdf")
+            if (ext=="pdf" || ext=="rtf" || ext=="doc")
               Run, %src%
-            else if (type=="m3u" || type=="document")
-              if (ext=="rtf" || ext=="doc")
-                Run, %src%
-              else Run, % "notepad.exe " . src
+            else if (type=="m3u" || type=="document" || longClick)
+                {
+                if (type!="m3u" && type!="document")
+                  ifExist, %inca%\cache\captions\%media%.vtt
+                    src=%inca%\cache\captions\%media%.vtt
+                Run, % "notepad.exe " . src
+                }
             else
               {
               Loop, Parse, list, `n, `r
@@ -2144,7 +2136,7 @@ IfWinActive, Notepad
           }
         Gui, background:+LastFound
         if (incaTab || mpvPID)
-            WinSet, Transparent, % Setting("Ambient Mode")
+            WinSet, Transparent, % Setting("Ambiance")
         else WinSet, Transparent, 0
         x := Setting("Sleep Timer") * 60000
         if (volume >= volRef/10000 && A_TimeIdlePhysical > x)
