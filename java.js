@@ -1,7 +1,6 @@
 // Debugging - use mySelected.innerHTML or alert()
 
 
-  let intervalTimer							// every 100mS
   let entry = 0								// current thumb htm container
   let thumb = 0								// current thumb element
   let title = 0								// title element
@@ -55,7 +54,7 @@
   let ypos = 0
   let Xref = 0								// click cursor xy
   let Yref = 0
-  let cursor								// hide cursor timer
+  let cursor = 0							// hide cursor timer
   let block = 0								// block wheel timer
   let ratio = 1								// media width to height ratio
   let Xoff = 0								// fullscreen offsets
@@ -65,10 +64,9 @@
   let mediaX = 1*localStorage.mediaX					// myPlayer position
   let mediaY = 1*localStorage.mediaY
 
-
+  let intervalTimer = setInterval(timerEvent,90)			// background tasks every 90mS
   if (innerHeight>innerWidth) {scaleX=0.64; scaleY=0.64}		// screen is portrait
   else {scaleX=0.5; scaleY=0.5}
-intervalTimer = setInterval(timerEvent,90)				// background tasks every 100mS
   document.addEventListener('mousedown', mouseDown)
   document.addEventListener('mouseup', mouseUp)
   document.addEventListener('dragend', mouseUp)
@@ -122,14 +120,14 @@ intervalTimer = setInterval(timerEvent,90)				// background tasks every 100mS
     if (mySave.matches(':hover') || myInput.matches(':hover')) return
     if (myForward.matches(':hover')) {newCap(0.4); return}
     if (myBack.matches(':hover')) {newCap(-0.4); return}
-    if (lastClick != 2 && thumbSheet) {getStart(); return}
     if (lastClick==1 && playing && overText && type!='document') {playCap(); return}	// captions live
     if (lastClick==1 && !longClick) {
-      if (myPlayer.matches(':hover') && ((ym<1 && ym>0.9) || yw>0.95)) {myPlayer.currentTime=xm*dur; return}
+      if (playing && overMedia && (ym>0.9 || yw>0.95 || type=='audio')) {myPlayer.currentTime=xm*dur; return}
       if (myPic.matches(':hover')) {thumbSheet=0; thumb.currentTime=lastStart}
       else if (myNav.matches(':hover')) return
+      else if (thumbSheet) {getStart(); return}
       else if (playing) {togglePause(); return}
-      else if (!entry.matches(':hover')) return}
+      else if (!entry.matches(':hover')) return}					// not over html thumb/media
     if (longClick && overText && lastClick==1) {myPlayer.pause(); return}
     if (longClick==3 && type=='video') if (thumbSheet) {thumbSheet=0} else {thumbSheet=1; thumb.currentTime=lastStart}
     if (longClick==1 && !playing && !myNav.style.display && !entry.matches(':hover')) index = lastMedia
@@ -266,7 +264,7 @@ intervalTimer = setInterval(timerEvent,90)				// background tasks every 100mS
       if (wheelUp) {zoom*=1.1} else zoom*=0.9
       myPic.style.transform='scale('+Math.abs(skinny)*zoom+','+zoom+')'
       block=80}
-    else if ((type=='video'||type=='audio') && !thumbSheet && (!overMedia||yw>0.95||ym>0.95)) {	// seek
+    else if ((type=='video'||type=='audio') && !thumbSheet && (ym>0.9||yw>0.95)) {	// seek
       if (wheelUp && !myPlayer.paused && myPlayer.currentTime > dur-3) return
       if (dur > 120) interval = 3
       else interval = 0.5
@@ -284,12 +282,12 @@ intervalTimer = setInterval(timerEvent,90)				// background tasks every 100mS
     wheel=0}
  
 
-  function timerEvent() { 						// every 100mS
+  function timerEvent() { 						// every 90mS
     xw = xpos / innerWidth
     yw = ypos / innerHeight
+    let el = thumb
     if (myNav.style.display) {el=myPic; myNav.style.width=rect.width+85+'px'}
     else if (playing=='browser') el=myPlayer
-    else el=thumb
     rect = el.getBoundingClientRect()
     xm = (xpos - rect.left) / rect.width
     ym = (ypos - rect.top) / rect.height
@@ -321,10 +319,10 @@ intervalTimer = setInterval(timerEvent,90)				// background tasks every 100mS
     if (outerHeight-innerHeight>30) {myMenu.style.display=null; myMask2.style.display=null} 
     else {myMenu.style.display='none'; myMask2.style.display='none'}  			// if fullscreen hide menu 
     if (selected && !Click) mySelected.innerHTML = selected.split(',').length -1
-    else if (block<25) mySelected.innerHTML = '' 
+    else if (block<25) mySelected.innerHTML = ''
     if (!thumb) return
     if (type!='image' && !thumbSheet && playing!='mpv' && myPlayer.duration) seekBar()
-    else mySeekbar.style.width=null
+    else mySeekbar.style.height=null
     if (document.getElementById('myFavicon'+index).innerHTML.match('\u2764')) myFavorite.innerHTML='Fav &#x2764'
     else myFavorite.innerHTML='Fav'
     if (looping) {myLoop.style.color='red'} else myLoop.style.color=null
@@ -342,56 +340,55 @@ intervalTimer = setInterval(timerEvent,90)				// background tasks every 100mS
     if (playing=='browser') {
       if (!myNav.style.display) lastStart=myPlayer.currentTime
       if (type=='video' && !myPlayer.duration && myPlayer.readyState!==4 && block<25) mySelected.innerHTML='File missing or wrong type'
-      if (type!='image' && !dur) dur=myPlayer.duration			// just in case
+      if (type!='image' && !dur) dur=myPlayer.duration					// just in case
       myPlayer.playbackRate=rate
       if (cue) {myCue.innerHTML='Goto '+myPlayer.currentTime.toFixed(2)} 
       if (cueList && !thumbSheet && myPlayer.currentTime>0.1) Cues(myPlayer.currentTime)
-      positionMedia(0)}							// in case fullscreen 
+      positionMedia(0)}									// in case fullscreen 
     else if (!listView && thumb.readyState===4 && thumb.duration && overMedia) {thumb.play()} else thumb.pause()}
 
 
-  function positionMedia(time) {					// position myPlayer in window
+  function positionMedia(time) {							// position myPlayer in window
     if (screenLeft && !Xoff) {Xoff=screenLeft; Yoff=outerHeight-innerHeight; mediaX-=Xoff; mediaY-=Yoff}
     else if (!screenLeft && Xoff) {mediaX+=Xoff; mediaY+=Yoff; Xoff=0}
     myPlayer.style.left = mediaX - myPlayer.offsetWidth/2 +"px"
     let x = 0
-    if ((captions && vtt.innerHTML) || thumb.src.slice(-3)=='txt') x = 140	// move player up for caption beneath
+    if ((captions && vtt.innerHTML) || thumb.src.slice(-3)=='txt') x = 140		// move player up for caption beneath
     myPlayer.style.top = mediaY - myPlayer.offsetHeight/2 -x +"px"
     let y = scaleY
     if (thumbSheet) {
       myPlayer.style.left = innerWidth/2 - myPlayer.offsetWidth/2 +"px"
       myPlayer.style.top = innerHeight/2 - myPlayer.offsetHeight/2 +"px"
-      y=0.55*ratio*innerWidth/myPlayer.offsetWidth}
+      y=0.6*ratio*innerWidth/myPlayer.offsetWidth}
     myPlayer.style.transition = time+'s'
     myPlayer.style.transform = "scale("+skinny*y+","+y+")"}
 
 
-  function seekBar() {							// progress bar beneath player
-    if (myNav.style.display) {el=myPic} else el=myPlayer
-    if (el==myPlayer && overMedia && ym<0.95 && yw<0.95 && !cue && type!='audio') {mySeekbar.style.width=null; return}
-    if (!playing && !myPic.matches(':hover')) {mySeekbar.style.width=null; return}
+  function seekBar() {									// progress bar beneath player
+    let el = myPlayer
+    if (myPic.matches(':hover')) el=myPic
+    if (el==myPlayer && ym<0.9 && yw<0.95 && !cue && type!='audio') {mySeekbar.style.height=null; return}
+    if (!playing && !myPic.matches(':hover')) {mySeekbar.style.height=null; return}
     let cueX = rect.left + 7
     let x = Math.round(el.currentTime*100)/100
-    let cueW = 0.95*rect.width*el.currentTime/dur
-    if (cue && cue<=x) {
-      cueX = mediaX - rect.width/2 + rect.width * cue/dur
-      cueW = rect.width*(el.currentTime-cue)/dur
-      if (cue<x+0.2 && cue>x-0.2) {
-        cueW = rect.width*(dur-cue)/dur}}
+    let cueW = 0.95 * rect.width * el.currentTime / dur
+    if (overMedia || myPic.matches(':hover')) cueW = rect.width * xm
+    if (cue && cue <= x) {
+      cueX = mediaX - rect.width / 2 + rect.width * cue / dur
+      cueW = rect.width * (el.currentTime - cue) / dur
+      if (cue < x + 0.2 && cue > x - 0.2) {
+        cueW = rect.width * (dur - cue) / dur}}
     else if (cue) {
-      cueX = rect.left + rect.width*el.currentTime/dur
-      cueW = rect.width*(cue - x)/dur
-      if (cue < 0.2+x) {
-        cueX = rect.left; cueW = rect.width*el.currentTime/dur}}
-    if (myPic.matches(':hover')) {
-      mySeekbar.style.top = rect.bottom +5 +'px'
-      mySeekbar.style.left = rect.left +'px'
-      mySeekbar.style.width = rect.width*lastStart/dur +'px'}
-    else {
-      if (rect.bottom<innerHeight) mySeekbar.style.top = rect.bottom -3 +'px'
-      else mySeekbar.style.top = innerHeight -5 +'px'
-      mySeekbar.style.left = cueX +'px'
-      mySeekbar.style.width = cueW +'px'}}
+      cueX = rect.left + rect.width * el.currentTime / dur
+      cueW = rect.width * (cue - x) / dur
+      if (cue < 0.2 + x) {
+        cueX = rect.left; cueW = rect.width * el.currentTime / dur}}
+    if (overMedia) mySeekbar.style.height = '10px'
+    else mySeekbar.style.height = '5px'
+    if (rect.bottom > innerHeight) mySeekbar.style.top = innerHeight -15 +'px'
+    else mySeekbar.style.top = (rect.top + rect.height - mySeekbar.offsetHeight) + 'px';
+    mySeekbar.style.left = cueX +'px'
+    mySeekbar.style.width = cueW +'px'}
 
 
   function setPlayer() {						// get src, poster, thumbsheet & dimensions
@@ -413,8 +410,7 @@ intervalTimer = setInterval(timerEvent,90)				// background tasks every 100mS
     ratio = thumb.offsetWidth/thumb.offsetHeight
     let z = window.screen.availHeight
     if (ratio<1) {y=z; x=z*ratio} else {y=z/ratio; x=z}			// portrait or landscape - normalised size
-    myPlayer.style.width = x +'px'
-    myPlayer.style.height = y +'px'
+    myPlayer.style.width = x +'px'					// normalise player size
     el=thumb.getBoundingClientRect()
     myPic.style.height=el.height+'px'					// context menu thumb
     myPic.style.width=el.height*ratio+'px'
@@ -679,7 +675,7 @@ intervalTimer = setInterval(timerEvent,90)				// background tasks every 100mS
 
 
   function newCap(nudge) {
-    if (type=='document' || block>20) {return} else block = 40				// block rapid click re-entry
+    if (type=='document' || block>20) {return} else block = 40		// block rapid click re-entry
     let y = ''
     let newText = ''
     if (capTime) myPlayer.currentTime = 1*capTime.id.split('-')[1]	// set player to caption start
@@ -761,7 +757,7 @@ intervalTimer = setInterval(timerEvent,90)				// background tasks every 100mS
   function selectAll() {for (i=1; document.getElementById('thumb'+i); i++) {sel(i)}}
   function flip() {skinny*=-1; scaleX*=-1; thumb.style.skinny=skinny; positionMedia(0.6); getParameters(index)()}
   function togglePause() {
-    if (playing && myPlayer.paused && !(overMedia && vtt.scrollTop)) {myPlayer.play()} else myPlayer.pause()
+    if (!thumbSheet && !longClick && playing && myPlayer.paused) {myPlayer.play()} else myPlayer.pause()
     if (overMedia) vtt.scrollTo(0,0)}
 
 

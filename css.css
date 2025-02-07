@@ -231,11 +231,11 @@ e {						/* caption text entries */
   pointer-events: none;
   z-index: 999;
   height: 0;
-  border-radius: 2px;
+  width: 0;
+  border-radius: 8px;
   color: lightsalmon;
-  font-size: 1.4em;
-  border-top: 5px solid red;
-  transition:  opacity 0.6s}
+  background: red;
+  transition: opacity 0.6s}
 
 .mask {						/* media player overlay of htm tab */
   display: flex;
@@ -272,7 +272,7 @@ e {						/* caption text entries */
 .context a:hover {background: #1b1814}
 .context a:active {background: #333333}
 
-.container {					/* whole body element */
+.myBody {					/* whole body element */
   font-family: 'Yu Gothic', 'Calibri Light';
   background: #15110a;
   user-select: none;

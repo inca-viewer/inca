@@ -421,7 +421,7 @@ StringReplace, folder_s, folder, `', &apos, All				; htm cannot pass '
 
 header = <!--, %page%, %pages%, %sort%, %toggles%, %listView%, %playlist%, %path%, %searchPath%, %searchTerm%, %subfolders%, -->`n<!doctype html>`n<html>`n<head>`n<meta charset="UTF-8">`n<title>Inca - %title%</title>`n<meta name="viewport" content="width=device-width, initial-scale=1">`n<link rel="icon" type="image/x-icon" href="file:///%inca%\cache\icons\inca.ico">`n<link rel="stylesheet" type="text/css" href="file:///%inca%/css.css">`n</head>`n`n
 
-body = <body id='myBody' class='container' onload="myBody.style.opacity=1;`n globals(%page%, %pages%, '%folder_s%', '%toggles%', '%sort%', %filt%, %listView%, '%selected%', '%playlist%', %index%); %scroll%.scrollIntoView()">`n`n
+body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1;`n globals(%page%, %pages%, '%folder_s%', '%toggles%', '%sort%', %filt%, %listView%, '%selected%', '%playlist%', %index%); %scroll%.scrollIntoView()">`n`n
 
 <div oncontextmenu="if (yw>0.08) {event.preventDefault()}">`n`n
 <div id='myNav' class='context' onmouseup='if (!gesture) togglePause()' onwheel='wheelEvent(event, id, this)'>`n
@@ -1739,7 +1739,7 @@ subfolders := array.11
           return 1               
         new_entry := StrReplace(target, media, new_name)
         folders = %inca%\fav\*.m3u|%inca%\music\*.m3u
-        Loop, Parse, folders, `|
+        Loop, Parse, folders, `|					; rename any entries within favorites
           Loop, Files, %A_LoopField%*.*, FR
             {
             FileRead, str, %A_LoopFileFullPath%				; find & replace in .m3u files
