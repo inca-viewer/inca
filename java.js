@@ -1,12 +1,16 @@
 // Debugging - use mySelected.innerHTML or alert()
 
+// if click link in text, media at top changes to it
+// new caption in context menu not working if no caption exists
+// width of context menu flashes wide when no index
+
 
   let entry = 0								// current thumb htm container
   let thumb = 0								// current thumb element
   let title = 0								// title element
-  let vtt = 0								// whole text/subtitle element
-  let capTime = ''							// vtt time element
-  let capText = ''							// vtt caption text element
+  let srt = 0								// txt or subtitle container
+  let capTime = ''							// srt time element
+  let capText = ''							// srt caption text element
   let wheel = 0								// mouse wheel count
   let index = 1								// thumb index (e.g. thumb14)
   let view = 14								// thumb size (em)
@@ -18,8 +22,8 @@
   let playlist								// full .m3u filepath
   let captions = 0							// captions enabled
   let type = ''								// audio, video, image, document
-  let cue = 0								// cue point time
-  let cueList = ''							// cue list file - appended by vtt text at play()
+  let cue = 0								// cue time point
+  let cues = ''								// list of cue actions at media times
   let playing = ''							// myPlayer or mpv active
   let thumbSheet = 0							// 6x6 thumbsheet mode
   let looping = 1							// play next or loop media
@@ -64,6 +68,7 @@
   let mediaX = 1*localStorage.mediaX					// myPlayer position
   let mediaY = 1*localStorage.mediaY
 
+
   let intervalTimer = setInterval(timerEvent,90)			// background tasks every 90mS
   if (innerHeight>innerWidth) {scaleX=0.64; scaleY=0.64}		// screen is portrait
   else {scaleX=0.5; scaleY=0.5}
@@ -79,8 +84,8 @@
       else if (myInput.matches(':focus')) inca('SearchBox','','',myInput.value)		// search media on pc
       else if (captions) newCap()
       else if (type=='document') {let x=thumb.scrollTop; setTimeout(function(){thumb.scrollTo(0,x)},100)}}
-    else if (e.code=='Space' && !vtt.innerHTML) togglePause()
-    else if (e.key=='Backspace') {if (vtt.innerHTML) {joinCap()} else closePlayer()}
+    else if (e.code=='Space' && !myCaption.innerHTML) togglePause()
+    else if (e.key=='Backspace') {if (myCaption.innerHTML) {joinCap()} else closePlayer()}
     else if (e.key=='Pause' && e.altKey) {thumbSheet=1; setPlayer(); Play()}		// mpv player - show thumbsheet
     else if (e.key=='Pause' && e.shiftKey) {lastClick=3;longClick=3;clickEvent()}	// inca re-map of long right click
     else if (e.key=='Pause') {								// inca re-map of mouse 'Back' click
@@ -120,16 +125,16 @@
     if (mySave.matches(':hover') || myInput.matches(':hover')) return
     if (myForward.matches(':hover')) {newCap(0.4); return}
     if (myBack.matches(':hover')) {newCap(-0.4); return}
-    if (lastClick==1 && playing && overText && type!='document') {playCap(); return}	// captions live
+    if (longClick==3 && type=='video' && !thumbSheet) {thumbSheet=1; thumb.currentTime=lastStart}
+    else if (lastClick!=2 && (thumbSheet || myPic.matches(':hover'))) {getStart(); return}
+    if (lastClick==1 && playing && type!='document' && overText) {playCap(); return}	// play at caption
+    if (lastClick==1 && srt.matches(':hover')) {playCap(); openCap(); Play(); Captions(); return} 
     if (lastClick==1 && !longClick) {
       if (playing && overMedia && (ym>0.9 || yw>0.95 || type=='audio')) {myPlayer.currentTime=xm*dur; return}
-      if (myPic.matches(':hover')) {thumbSheet=0; thumb.currentTime=lastStart}
       else if (myNav.matches(':hover')) return
-      else if (thumbSheet) {getStart(); return}
       else if (playing) {togglePause(); return}
       else if (!entry.matches(':hover')) return}					// not over html thumb/media
     if (longClick && overText && lastClick==1) {myPlayer.pause(); return}
-    if (longClick==3 && type=='video') if (thumbSheet) {thumbSheet=0} else {thumbSheet=1; thumb.currentTime=lastStart}
     if (longClick==1 && !playing && !myNav.style.display && !entry.matches(':hover')) index = lastMedia
     if (lastClick==2) {									// middle click
       if (!playing && !myNav.style.display) {inca('View',lastMedia); return}		// switch list/thumb view
@@ -159,12 +164,13 @@
     myPlayer.pause()
     myPlayer.muted = 1*localStorage.muted
     if (el=document.getElementById('title'+lastMedia)) el.style.color=null		// remove highlight on last media
-    if ((el=document.getElementById('vtt'+lastMedia)) && playing && index!=lastMedia) {	// hide last caption
-      el.style.display=null; if (captions && vtt.innerHTML && lastClick==2) openCap()}	// next/back
+    if ((el=document.getElementById('srt'+lastMedia)) && playing && index!=lastMedia) {	// hide last caption
+      el.style.display=null
+      if (captions && myCaption.innerHTML && lastClick==2) openCap()}			// next/back
     lastMedia=index
     if (!thumbSheet && lastClick!=2) messages=messages+'#History#'+myPlayer.currentTime.toFixed(1)+'#'+index+'#'
-    if (document.getElementById('myFavicon'+index).matches(':hover') || type=='document') {
-      if (!longClick && vtt.innerHTML) openCap()					// show cap or txt in browser
+    if (lastClick==1 && (document.getElementById('myFavicon'+index).matches(':hover') || type=='document')) {
+      if (!longClick && srt.innerHTML) openCap()					// show cap or txt in browser
       else {Click=0; inca('Media',0,index,para); return}}				// eg. open in notepad
     if (!thumbSheet && toggles.match('Mpv')) {playing='mpv'; scaleY=0.5; inca('Media',0,index,para); return}
     else playing='browser'
@@ -177,6 +183,7 @@
     if (thumb.src.slice(-3)=='mp3') myPlayer.style.borderBottom='1px solid salmon'
     else myPlayer.style.border=null
     myPlayer.style.opacity=1
+myCaption.innerHTML = srt.innerHTML
     title.style.color='lightsalmon'
     myPlayer.style.zIndex=Zindex
     myPlayer.volume=0.05						// triggers volume fadeup
@@ -264,7 +271,7 @@
       if (wheelUp) {zoom*=1.1} else zoom*=0.9
       myPic.style.transform='scale('+Math.abs(skinny)*zoom+','+zoom+')'
       block=80}
-    else if ((type=='video'||type=='audio') && !thumbSheet && (ym>0.9||yw>0.95)) {	// seek
+    else if ((type=='video'||type=='audio') && !thumbSheet && (!overMedia||ym>0.9||yw>0.95)) {	// seek
       if (wheelUp && !myPlayer.paused && myPlayer.currentTime > dur-3) return
       if (dur > 120) interval = 3
       else interval = 0.5
@@ -300,7 +307,7 @@
     if (editing) {capMenu.style.display='flex'} else capMenu.style.display='none'
     if (captions) Captions()
     if (!myTitle.value) myCap.innerHTML=''
-    else if (!vtt.innerHTML || vtt.style.display) {myCap.innerHTML='New Caption'} else myCap.innerHTML='Captions'
+    else if (!myCaption.innerHTML || myCaption.style.display) {myCap.innerHTML='New Caption'} else myCap.innerHTML='Captions'
     if (myPlayer.matches(':hover') || thumb.matches(':hover') || (listView && thumb.style.opacity==1)) overMedia=index
     else overMedia=0
     if (myThumbs.matches(':hover')) myThumbs.innerHTML=view.toFixed(1)
@@ -321,8 +328,7 @@
     if (selected && !Click) mySelected.innerHTML = selected.split(',').length -1
     else if (block<25) mySelected.innerHTML = ''
     if (!thumb) return
-    if (type!='image' && !thumbSheet && playing!='mpv' && myPlayer.duration) seekBar()
-    else mySeekbar.style.height=null
+    if (!seekBar()) mySeekbar.style.height = mySeekbar2.style.height = null
     if (document.getElementById('myFavicon'+index).innerHTML.match('\u2764')) myFavorite.innerHTML='Fav &#x2764'
     else myFavorite.innerHTML='Fav'
     if (looping) {myLoop.style.color='red'} else myLoop.style.color=null
@@ -343,7 +349,7 @@
       if (type!='image' && !dur) dur=myPlayer.duration					// just in case
       myPlayer.playbackRate=rate
       if (cue) {myCue.innerHTML='Goto '+myPlayer.currentTime.toFixed(2)} 
-      if (cueList && !thumbSheet && myPlayer.currentTime>0.1) Cues(myPlayer.currentTime)
+      if (cues && !thumbSheet && myPlayer.currentTime>0.1) myCues(myPlayer.currentTime)
       positionMedia(0)}									// in case fullscreen 
     else if (!listView && thumb.readyState===4 && thumb.duration && overMedia) {thumb.play()} else thumb.pause()}
 
@@ -353,7 +359,7 @@
     else if (!screenLeft && Xoff) {mediaX+=Xoff; mediaY+=Yoff; Xoff=0}
     myPlayer.style.left = mediaX - myPlayer.offsetWidth/2 +"px"
     let x = 0
-    if ((captions && vtt.innerHTML) || thumb.src.slice(-3)=='txt') x = 140		// move player up for caption beneath
+    if ((captions && myCaption.innerHTML) || thumb.src.slice(-3)=='txt') x = 140		// move player up for caption beneath
     myPlayer.style.top = mediaY - myPlayer.offsetHeight/2 -x +"px"
     let y = scaleY
     if (thumbSheet) {
@@ -365,14 +371,15 @@
 
 
   function seekBar() {									// progress bar beneath player
+    if (type=='image') return
     let el = myPlayer
     if (myPic.matches(':hover')) el=myPic
-    if (el==myPlayer && ym<0.9 && yw<0.95 && !cue && type!='audio') {mySeekbar.style.height=null; return}
-    if (!playing && !myPic.matches(':hover')) {mySeekbar.style.height=null; return}
+    else if (thumbSheet || !playing || playing=='mpv' || !myPlayer.duration) return
+    if (el==myPlayer && ym<0.9 && yw<0.95 && overMedia && !cue && type!='audio') return
     let cueX = rect.left + 7
     let x = Math.round(el.currentTime*100)/100
+    mySeekbar2.style.width = rect.width * xm + 'px'
     let cueW = 0.95 * rect.width * el.currentTime / dur
-    if (overMedia || myPic.matches(':hover')) cueW = rect.width * xm
     if (cue && cue <= x) {
       cueX = mediaX - rect.width / 2 + rect.width * cue / dur
       cueW = rect.width * (el.currentTime - cue) / dur
@@ -383,18 +390,20 @@
       cueW = rect.width * (cue - x) / dur
       if (cue < 0.2 + x) {
         cueX = rect.left; cueW = rect.width * el.currentTime / dur}}
-    if (overMedia) mySeekbar.style.height = '10px'
-    else mySeekbar.style.height = '5px'
-    if (rect.bottom > innerHeight) mySeekbar.style.top = innerHeight -15 +'px'
-    else mySeekbar.style.top = (rect.top + rect.height - mySeekbar.offsetHeight) + 'px';
-    mySeekbar.style.left = cueX +'px'
-    mySeekbar.style.width = cueW +'px'}
+    if (overMedia && !cue) mySeekbar.style.height = mySeekbar2.style.height = '8px'
+    else if (el == myPic) mySeekbar2.style.height = '5px'
+    else {mySeekbar.style.height = '5px'; mySeekbar2.style.height = null}
+    if (rect.bottom > innerHeight) mySeekbar.style.top = mySeekbar2.style.top = innerHeight -15 +'px'
+    else mySeekbar.style.top = mySeekbar2.style.top = (rect.top + rect.height - mySeekbar.offsetHeight) + 'px';
+    mySeekbar.style.left =  mySeekbar2.style.left = cueX +'px'
+    mySeekbar.style.width = cueW +'px'
+    return 1}
 
 
   function setPlayer() {						// get src, poster, thumbsheet & dimensions
     myTitle.value=title.value
-    if (type=='image') mySelect.innerHTML='Select '+index+' Pic '+size+'kB'
-    else mySelect.innerHTML='Select '+index+' '+Time(dur)+' '+size+'mB'
+    if (type=='video') mySelect.innerHTML='Select '+index+' '+Time(dur)+' '+size+'mB'
+    else mySelect.innerHTML='Select '+index+' Pic '+size+'kB'
     let x = thumb.poster.replace("/posters/", "/thumbs/")		// points to thumbsheet src folder
     let y = x.split('%20').pop().replace('.jpg', '')			// get fav start time from poster filename
     if (!isNaN(y) && y.length > 2 && y.includes('.')) {			// very likely a 'fav' suffix timestamp
@@ -415,7 +424,7 @@
     myPic.style.height=el.height+'px'					// context menu thumb
     myPic.style.width=el.height*ratio+'px'
     myPic.style.transform='scale('+Math.abs(skinny)*zoom+','+zoom+')'
-    if (thumbSheet) {myPlayer.load(); vtt.style.opacity=0}
+    if (thumbSheet) {myPlayer.load(); myCaption.style.opacity=0}
     else if (!playing) myPlayer.currentTime=thumb.currentTime}		// fast start play
 
 
@@ -446,9 +455,10 @@
     let ps = 5 * ((row * 6) + col)
     ps = (ps - 1) / 200							// see index() in inca.ahk to explain
     if (dur > 60) offset = 20						// skip movie credits...
-    if (!longClick) thumb.currentTime=offset - (ps * offset) + dur * ps
+    if (myPic.matches(':hover')) thumb.currentTime=lastStart
+    else if (!longClick) thumb.currentTime=offset - (ps * offset) + dur * ps
     myPlayer.style.transform = "scale("+scaleX+","+scaleY+")"
-    if (captions) vtt.style.opacity=1
+    if (captions) myCaption.style.opacity=1
     thumbSheet=0; Play()}
 
 
@@ -456,7 +466,7 @@
     let tm = myPlayer.currentTime.toFixed(1)
     if (longClick) tm = 0						// sets fav start to 0
     else if (!playing) tm = thumb.currentTime.toFixed(1)
-    inca('Favorite',tm,index,vtt.scrollTop.toFixed(0))			// includes any caption/txt scroll
+    inca('Favorite',tm,index,myCaption.scrollTop.toFixed(0))			// includes any caption/txt scroll
     document.getElementById('myFavicon'+index).innerHTML='&#10084'}	// heart symbol on htm thumb
 
 
@@ -480,7 +490,7 @@
     else {el.style.color = 'red'; el.innerHTML = x+' '+units}}
 
 
-  function sel(i) {							// highlight selected media
+  function sel(i) {							// highlight selected media in html
     if (!i || Click==2 || overText) return
     let el=document.getElementById('thumb'+i)
     if (listView) el=document.getElementById('title'+i)
@@ -496,20 +506,20 @@
 
   function context() {							// right click context menu
     if (playing == 'mpv') return
+    if (overMedia || playing) {setPic(); myPic.style.display='block'}
+    else {myPic.style.display=null; myTitle.value=''; mySelect.innerHTML='Select'}
     zoom = 1.2
     myPic.style.transform='scale('+Math.abs(skinny)*zoom+','+zoom+')'	// pop thumb out a little
-    if (overMedia || playing) myPic.style.display='block'
-    else {myPic.style.display=null; myNav.style.width=null; myTitle.value=''; mySelect.innerHTML='Select'}
     if (!playing && overMedia) {myNav.style.left=rect.left-74+'px'; myNav.style.top=rect.top-74+'px'}
     else {myNav.style.left=xpos-30+'px'; myNav.style.top=ypos-30+'px'}
-    myNav.style.display='block'; setPic()}
+    myNav.style.display='block'}
 
 
   function inca(command,value,select,address) {				// send java messages to inca.exe
     if (editing) {							// text or caption has been edited
-      el=document.getElementById('vtt'+editing)
+      el=document.getElementById('srt'+editing)
       let x=el.innerHTML.replaceAll('#', '*') 				// text cannot have # inside
-      messages=messages+'#Vtt#'+el.scrollTop.toFixed(0)+'#'+editing+'#'+x
+      messages=messages+'#capEdit#'+el.scrollTop.toFixed(0)+'#'+editing+'#'+x
       editing=0; wasEditing=1}						// used to reload html after myPlayer
     for (i=1; el=document.getElementById('thumb'+i); i++) {		// add cue edits to messages
       if (el.style.skinny) messages = messages + '#Skinny#'+el.style.skinny+'#'+i+'#'+cue
@@ -525,22 +535,22 @@
     messages=''}
 
 
-  function getParameters(i) {						// set media parameters
+  function getParameters(i) {						// get media parameters
     if (!(document.getElementById('thumb'+i))) return			// end of media list
     thumb = document.getElementById('thumb'+i)				// htm thumb element
     entry = document.getElementById('entry'+i)				// thumb and title container
     title = document.getElementById('title'+i)				// htm title element
-    vtt = document.getElementById('vtt'+i)				// txt / caption / subtitle element
+    cues = document.getElementById('cues'+i)				// media defaults and time cues
+    srt = document.getElementById('srt'+i)				// txt or caption element
     rate = defRate
     skinny = 1
-    let x = thumb['ondrag'].toString().split(',')			// trick to get media parameters from htm element
-    type = x[1].replaceAll('\'', '').trim()				// eg video, image
-    thumb.style.start=1*x[3].trim()+0.02				// smoother thumb start in chrome
-    dur = 1*x[4].trim()							// in case video is wmv, avi etc
+    let el = thumb['ondrag'].toString().split(',')			// get media parameters from htm element
+    type = el[1].replaceAll('\'', '').trim()				// eg video, image
+    thumb.style.start=1*el[2].trim()+0.02				// smoother thumb start in chrome
+    dur = 1*el[3].trim()						// in case video is wmv, avi etc
+    size = 1*el[4]							// file size
     if (index && !thumb.currentTime) thumb.currentTime=thumb.style.start
-    size = 1*x[5]							// file size
-    cueList = x[2].replaceAll('\'', '').trim()
-    if (cueList) Cues(0)   						// process 0:00 cues - width, speed etc.
+    if (cues = cues.innerHTML) myCues(0)				// process default 0:00 cues - width, speed etc.
     if (x=1*thumb.style.rate) rate=x					// custom css variable - rate edited
     if (x=1*thumb.style.skinny) skinny=x				// get any live width edits
     thumb.style.transform='scale('+skinny+',1)' 			// set thumb width
@@ -594,13 +604,13 @@
         if (x>1) {el.style.height=view/x+'em'} else el.style.height=view+'em'}}}
 
 
-  function Cues(time) {							// process media cues- captions, speed, skinny, pauses etc.
-    let x = cueList.split('#1')						// get each line entry
-    for (k=0; k<x.length; k++) {					// for each line entry
-      let el = x[k].split('#2')						// time[0] cue[1] value[2] period[3]
+  function myCues(time) {						// media scrolls, speed, skinny, pauses etc.
+    let x = cues.split(/[\r\n]/)
+    for (k=0; k<x.length; k++) {					// process each line entry
+      let el = x[k].split('|')						// time[0] cue[1] value[2] period[3]
       if (el[1] && 1*el[0] > time-0.1 && 1*el[0] < time+0.1) {
         if (el[1]=='next') {lastClick=2; clickEvent()}
-        else if (el[1]=='scroll' && time<0) vtt.scrollTo(0,el[2])
+        else if (el[1]=='scroll' && time<0) myCaption.scrollTo(0,el[2])
         else if (el[1]=='goto' && !myPlayer.paused) {myPlayer.currentTime=thumb.style.start=thumb.currentTime=1*el[2]; myPlayer.volume=0.1}
         else if (el[1]=='rate') {if (isNaN(1*el[2])) {rate=defRate} else {rate=1*el[2]}}
         else if (el[1]=='skinny') {if (isNaN(el[2])) {skinny=1} else {skinny=1*el[2]; if(time) {positionMedia(el[3])}}}
@@ -631,11 +641,11 @@
       myPlayer.muted=!myPlayer.muted; localStorage.muted = 1*myPlayer.muted}}
 
 
-  function Captions() { 						// highlight vtt Captions (from timer)
+  function Captions() { 						// highlight srt Captions (from timer)
     thumb.playbackRate = 1
     let z = myPlayer.getBoundingClientRect()
-    capMenu.style.top = z.bottom + 'px'; capMenu.style.left = mediaX -80 + 'px'
-    vtt.style.top = z.bottom +10 + 'px'; vtt.style.left = mediaX-vtt.offsetWidth/2 + 'px'
+    capMenu.style.top = z.bottom + 'px'; capMenu.style.left = mediaX -85 + 'px'
+    myCaption.style.top = z.bottom + 'px'; myCaption.style.left = mediaX-myCaption.offsetWidth/2 + 'px'
     let x = index+'-'+myPlayer.currentTime.toFixed(1)
     if (el=document.getElementById('my'+x)) {
       if (capText && el!=capText) {capText.style.color = null; capText.style.transform = 'none'}
@@ -652,17 +662,16 @@
       else if (!id.match('my')) {togglePause(); return}			// not over caption text
       else if (!editing || capText.id!=id) myPlayer.play()		// not same caption as editing
       else myPlayer.pause()
-      if (!isNaN(tm)) myPlayer.currentTime = thumb.currentTime = tm	// rest player to start of caption
-      Captions()}							// highlight caption
+      if (!isNaN(tm)) myPlayer.currentTime = thumb.currentTime = tm}	// rest player to start of caption
 
 
   function openCap() {							// show captions
     captions=1
-    vtt.style.display='block'
+    myCaption.style.display='block'
     myNav.style.display=null
-    Cues(-0.01)								// scroll to last
-    vtt.style.zIndex=Zindex
-    setTimeout(function() {vtt.style.opacity=1},100)}
+    myCues(-0.01)							// scroll to last
+    myCaption.style.zIndex=Zindex
+    setTimeout(function() {myCaption.style.opacity=1},100)}
 
 
   function joinCap() {
@@ -674,7 +683,7 @@
     editing = index}
 
 
-  function newCap(nudge) {
+  function newCap(nudge) {						// new caption or edit timestamp
     if (type=='document' || block>20) {return} else block = 40		// block rapid click re-entry
     let y = ''
     let newText = ''
@@ -706,22 +715,22 @@
     let w = thumb.currentTime.toFixed(3).toString().split('.')		// second and millisecond parts
     let t = thumb.currentTime.toFixed(1)
     let minutes = Math.floor(w[0] / 60).toFixed(0)
-    let seconds = (w[0] % 60).toFixed(0)				// create vtt style timestamp
+    let seconds = (w[0] % 60).toFixed(0)				// create srt style timestamp
     if (minutes<10) minutes='0'+minutes
     if (seconds<10) seconds='0'+seconds
-    let ww = minutes+':'+seconds+'.'+w[1]
+    let ww = minutes+':'+seconds+','+w[1]
     if (el=capText.nextElementSibling) ww = ww+' --> '+ el.innerHTML.split(' --')[0] // use start of next caption
     else ww = ww+' --> '+ww
-    if (!vtt.innerHTML) {						// first ever caption 
-      vtt.innerHTML='<d id="'+index+'-'+t+'">'+ww+'</d><e contenteditable="true" id="my'+index+'-'+t+'">'+newText+'</e>'
+    if (!myCaption.innerHTML) {						// first ever caption 
+      myCaption.innerHTML='<d id="'+index+'-'+t+'">'+ww+'</d><e contenteditable="true" id="my'+index+'-'+t+'">'+newText+'</e>'
       document.getElementById('myFavicon'+index).innerHTML='\u00a9'}
     else { 
-      for (x of vtt.innerHTML.split('</e><d id=')) {			// spool through vtt entries
+      for (x of myCaption.innerHTML.split('</e><d id=')) {			// spool through srt entries
         if (z = x.split('id="my'+index+'-')[1]) {			// when time >, splice in
           if (z.split('"')[0] > 1*t) {y = y+'<d id="'+index+'-'+t+'">'+ww+'</d><e contenteditable="true" id="my'+index+'-'+t+'">'+newText+'</e>'; t=99999}
           y=y+'<d id='+x+'</e>'}}
       if (t!=99999) y = y+'<d id="'+index+'-'+t+'">'+ww+'</d><e contenteditable="true" id="my'+index+'-'+t+'">'+newText+'</e>'
-      vtt.innerHTML = y}
+      myCaption.innerHTML = y}
     myNav.style.display = null
     if (!captions) {openCap(); Play()}
     else if (nudge) {myPlayer.play()} else myPlayer.pause()
@@ -730,18 +739,17 @@
 
   function closePlayer() {
     if (playing=='mpv') inca('closeMpv')
-    else if (editing || wasEditing) inca('Reload')			// saves edited text and reloads html
+    else if (editing || wasEditing) inca('Reload', index)		// saves edited text and reloads html
     positionMedia(0.2)
     cue=0
     Click=0								// in case browser not active
     playing=''
     captions=0
     thumbSheet=0
-    vtt.style.opacity=null
-    vtt.style.display=null
+    myCaption.style.opacity=null
+    myCaption.style.display=null
     myNav.style.display=null
     myPlayer.style.opacity=0
-    thumb.load()
     thumb.currentTime=lastStart
     myPlayer.removeEventListener('ended', nextMedia)
     setTimeout(function() {						// fadeout before close
@@ -758,7 +766,7 @@
   function flip() {skinny*=-1; scaleX*=-1; thumb.style.skinny=skinny; positionMedia(0.6); getParameters(index)()}
   function togglePause() {
     if (!thumbSheet && !longClick && playing && myPlayer.paused) {myPlayer.play()} else myPlayer.pause()
-    if (overMedia) vtt.scrollTo(0,0)}
+    if (overMedia) myCaption.scrollTo(0,0)}
 
 
 

@@ -11,6 +11,7 @@
 	SetWinDelay, 0
 	SetKeyDelay, 0
 	SetBatchLines -1
+        FileEncoding, UTF-8
 	SetTitleMatchMode, 2
 	GroupAdd, Browsers, Google Chrome	; supported browsers
 	GroupAdd, Browsers, Mozilla Firefox
@@ -133,12 +134,7 @@ if InStr(Label, "T5 EVO")
         durT := Time(dur)
         if !dur
           dur := 0
-        FileRead, cueList, %inca%\cache\cues\%media%.txt
-        cueList := StrReplace(cueList, "`r`n", "#1")			; lines
-        cueList := StrReplace(cueList, "|", "#2")			; entries
-        cueList := StrReplace(cueList, ",", "#3")			; cap punctuation...
-        cueList := StrReplace(cueList, "'", "#4")
-        StringReplace, cueList,cueList, ", #5, All
+        FileRead, cues, %inca%\cache\cues\%media%.txt
         if !playlist
           if InStr(allFav, src)
             favicon = &#x2764						; favorite heart symbol
@@ -179,29 +175,36 @@ if InStr(Label, "T5 EVO")
 
         start := Round(start,2)
         text=
+        timestamp =
         if (ext=="txt")
           FileRead, text, %src%
-        else IfExist, %inca%\cache\captions\%media%.vtt
+        else IfExist, %inca%\cache\captions\%media%.srt
             {
-            FileRead, str2, %inca%\cache\captions\%media%.vtt
+            FileRead, str2, %inca%\cache\captions\%media%.srt
             Loop, Parse, str2, `n, `r
-              if %A_LoopField%  
-                if InStr(A_LoopField, "-->")				; timestamp element
-                  {
-                  x := SubStr(A_LoopField, 1, 12)
-                  x := StrReplace(x, " --")				; in case hrs
-                  x := StrSplit(x, ":")
-                  if (!x.3)
-                    x := Round(x.1*60 + x.2,1)				; seconds format
-                  else x := Round(3600*x.1 + 60*x.2 + x.3,1)
-                  text = %text%<d id="%j%-%x%">%A_LoopField%</d>
-                  }
-                else text = %text%<e contenteditable="true" id="my%j%-%x%">%A_LoopField%</e>
+              {
+              if InStr(A_LoopField, "-->")				; timestamp element
+                {
+                x := SubStr(A_LoopField, 1, 12)
+                x := StrReplace(x, " --")				; in case no hrs in timestamp
+                x := StrReplace(x, ",", ".")
+                x := StrSplit(x, ":")
+                if (!x.3)
+                  x := Round(x.1*60 + x.2,1)				; seconds format
+                else x := Round(3600*x.1 + 60*x.2 + x.3,1)
+                text = %text%<d id="%j%-%x%">%A_LoopField%</d>
+                timestamp = true
+                continue
+                }
+              else if timestamp
+                text = %text%<e contenteditable="true" id="my%j%-%x%">%A_LoopField%</e>
+              timestamp =
+              }
             }
         if (ext=="txt")
           {
           text := StrReplace(text, "`r`n", "<br>")
-          text = <e contenteditable="true">%text%</e>
+          text = <e contenteditable="true" style='padding:0.5em'>%text%</e>
           }
 
 if text
@@ -213,12 +216,11 @@ else src=src="file:///%src%"
 if !size
   size = 0								; cannot have null size in getParameters()
 
-caption = <p id='vtt%j%' class='text' style='font-size:1.2em' onmouseover='overText=1' onmouseout='overText=0'`n oninput="if(editing&&editing!='%j%') {inca('Vtt',editing)}; editing='%j%'; myPlayer.pause()"`n ondrag="getParameters(%j%, 'document', '%cueList%', %start%, %dur%, %size%, event)">%text%</p>`n 
 
 if listView
-  mediaList = %mediaList%%fold%<table onmouseover='overThumb(%j%)'`n onmouseout="thumb%j%.style.opacity=0">`n <tr id='entry%j%' onmouseenter='if (gesture) sel(%j%)'>`n <td>%ext%`n <video id='thumb%j%' class='thumb2' ondrag="getParameters(%j%, '%type%', '%cueList%', %start%, %dur%, %size%, event)"`n %src%`n %poster%`n preload=%preload% muted loop type="video/mp4"></video></td>`n <td>%size%</td>`n <td style='min-width: 6em'>%durT%</td>`n <td>%date%</td>`n <td style='min-width: 4.4em'>%j%</td>`n <td id='myFavicon%j%' style='translate: -1.3em; font-size: 0.7em; color: salmon; min-width: 1em'>%favicon% %cc%</td>`n <td style='width: 70vw'><input id="title%j%" class='title' style='transition: 0.8s' onmouseover='overText=1' onmouseout='overText=0; Click=0' type='search' value='%media_s%'`n oninput="renamebox=this.value; lastMedia=%j%"></td>`n %fo%</tr></table>%caption%`n`n
+  mediaList = %mediaList%%fold%<table onmouseover='overThumb(%j%)'`n onmouseout="thumb%j%.style.opacity=0">`n <tr id='entry%j%' onmouseenter='if (gesture) sel(%j%)'>`n <td>%ext%`n <video id='thumb%j%' class='thumb2' ondrag="getParameters(%j%, '%type%', %start%, %dur%, %size%, event)"`n %src%`n %poster%`n preload=%preload% muted loop type="video/mp4"></video></td>`n <td>%size%</td>`n <td style='min-width: 6em'>%durT%</td>`n <td>%date%</td>`n <td style='min-width: 4.4em'>%j%</td>`n <td id='myFavicon%j%' style='translate: -1.3em; font-size: 0.7em; color: salmon; min-width: 1em'>%favicon% %cc%</td>`n <td><div id='srt%j%' class='thumbCap'>%text%</div></td>`n <td style='width: 64vw'><input id="title%j%" class='title' style='transition: 0.8s' onmouseover='overText=1' onmouseout='overText=0; Click=0' type='search' value='%media_s%'`n oninput="renamebox=this.value; lastMedia=%j%"></td>`n %fo%</tr>`n <span id='cues%j%' style='display: none'>%cues%</span></table>`n`n
 
-else mediaList = %mediaList%<div id="entry%j%" class='entry' onmouseenter='overThumb(%j%)'>`n <span id='myFavicon%j%' style='display: block; position: absolute; bottom: 0; right: 0; font-size: 0.7em; color: salmon'>%favicon% %cc%</span>`n <input id='title%j%' class='title' style='text-align: center' type='search'`n value='%media_s%'`n oninput="renamebox=this.value; lastMedia=%j%"`n onmouseover="overText=1; if((x=this.value.length/2) > view) this.style.width=x+'em'"`n onmouseout="overText=0; this.style.width='100`%'">`n <video id="thumb%j%" class='thumb' ondrag="getParameters(%j%, '%type%', '%cueList%', %start%, %dur%, %size%, event)"`n onmouseenter="if (gesture) sel(%j%)"`n onmouseout='overMedia=0; this.pause()' %src%`n %poster%`n preload=%preload% loop muted type='video/mp4'></video>`n %noIndex%</div>%caption%`n`n
+else mediaList = %mediaList%<div id="entry%j%" class='entry' onmouseenter='overThumb(%j%)'>`n<span id='myFavicon%j%' style='display: block; position: absolute; top: 7px; left: -6px; font-size: 0.7em; color: salmon'>%favicon% %cc%</span>`n <input id='title%j%' class='title' style='text-align: center' type='search'`n value='%media_s%'`n oninput="renamebox=this.value; lastMedia=%j%"`n onmouseover="overText=1; if((x=this.value.length/2) > view) this.style.width=x+'em'"`n onmouseout="overText=0; this.style.width='100`%'">`n <video id="thumb%j%" class='thumb' ondrag="getParameters(%j%, '%type%', %start%, %dur%, %size%, event)"`n onmouseenter="if (gesture) sel(%j%)"`n onmouseout='overMedia=0; this.pause()' %src%`n %poster%`n preload=%preload% loop muted type='video/mp4'></video>`n %noIndex%`n <div id='srt%j%' class='thumbCap'>%text%</div>`n <span id='cues%j%' style='display: none'>%cues%</span></div>`n`n
 }
  
 
@@ -438,20 +440,22 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1;`n global
 <a id='myIndex' onmouseup="if(myTitle.value) {inca('Index','',index)} else inca('Index','',0)">Index</a>`n
 <a id='myDelete' onmouseup="if(!event.button) inca('Delete','',index)">Delete</a>
 <a id='myCue' onmouseup='newCue(); togglePause()'>Cue</a>`n
-<a id='myCap' onmouseup='if (myTitle.value) {if(!vtt.innerHTML||captions) {newCap()} else {openCap();Play()}}'>Caption</a>`n
+<a id='myCap' onmouseup='if (myTitle.value) {if(!myCaption.innerHTML||captions) {newCap()} else {openCap();Play()}}'>Caption</a>`n
 <a id='Mp3' onmouseup="inca('mp3', myPlayer.currentTime.toFixed(2), index, cue); cue=0; myNav.style.display=null">mp3</a>`n
 <a id='Mp4' onmouseup="inca('mp4', myPlayer.currentTime.toFixed(2), index, cue); cue=0; myNav.style.display=null">mp4</a>`n
 <a></a></div>`n`n
 
 <div id='myMask' class="mask" onwheel="wheelEvent(event, id, this)"></div>`n 
 <video id="myPlayer" class='player' type="video/mp4" muted onwheel="wheelEvent(event, id, this)"></video>`n
-<span id='mySeekbar' class='seekbar'></span>`n`n
+<span id='myCaption' class='caption' onmouseover='overText=1' onmouseout='overText=0'`n oninput="if(editing&&editing!='%j%') {inca('capEdit',editing)}; editing='%j%'; myPlayer.pause()"></span>`n
+<span id='mySeekbar' class='seekbar'></span>`n
+<span id='mySeekbar2' class='seekbar'></span>`n
 <span id='mySelected' class='selected'></span>`n
-<div id='capMenu' style='position: fixed; display: none; justify-content: space-around; width: 12em; z-index: 991'>
-<span id='myCancel' class='capMenu'onmouseup="editing=0; inca('Reload',index)">&#x2715;</span>`n 
+<div id='capMenu' class='capContainer'>`n
+<span id='myCancel' class='capMenu' onmouseup="editing=0; inca('Reload',index)">&#x2715;</span>`n 
 <span id='myBack' class='capMenu' style='font-weight:bold'>&#x2212</span>`n 
 <span id='myForward' class='capMenu' style='font-weight:bold'>&#xFF0B</span>`n
-<span id='mySave' class='capMenu' onmouseup="inca('Null')">Save</span></div>`n 
+<span id='mySave' class='capMenu' onmouseup="if (!longClick) inca('Null')">Save</span></div>`n`n
 
 <div id='myContent' class='mycontent'>`n
 <div id='myView' class='myview'>`n`n`n %mediaList%</div>`n`n
@@ -819,7 +823,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1;`n global
             FileAppend, %address%|goto|%value%`r`n, %inca%\cache\cues\%media%.txt, UTF-8
             Popup("Added . . .",0,0,0)
             }
-        if (command == "Vtt")						; save browser text editing
+        if (command == "capEdit")					; save browser text editing
             {
             if !address
               return
@@ -847,16 +851,32 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1;`n global
               {
               address := StrReplace(address, "`r`n`r`n", "`r`n")
               address := StrReplace(address, "`r`n`r`n", "`r`n")
-              FileDelete, %inca%\cache\captions\%media%.vtt
-              FileAppend, %address%, %inca%\cache\captions\%media%.vtt
+              str =
+              ix := 0
+              Loop, Parse, address, `n, `r				; convert vtt back to srt format
+                {
+                if !A_LoopField
+                  continue
+                if InStr(A_LoopField, " --> ")
+                  {
+                  ix++
+                  if (ix == 1)
+                    str = %ix%`r`n%A_LoopField%`r`n
+                  else str = %str%`r`n%ix%`r`n%A_LoopField%`r`n
+                  }
+                else
+                  str = %str%%A_LoopField%`r`n
+                }         
+              FileDelete, %inca%\cache\captions\%media%.srt
+              FileAppend, %str%, %inca%\cache\captions\%media%.srt
               }
             FileRead, cues, %inca%\cache\cues\%media%.txt
             if cues
               Loop, Parse, cues, `n, `r					; each line of cues
                 if A_LoopField
-                  if !InStr(A_LoopField, "scroll")
+                  if !InStr(A_LoopField, "scroll")			; remember text scroll position
                     newCue = %newCue%%A_LoopField%`r`n
-            FileDelete, %inca%\cache\cues\%media%.txt			; for return to text scroll position
+            FileDelete, %inca%\cache\cues\%media%.txt
             FileAppend, %newCue%0.00|scroll|%value%`r`n, %inca%\cache\cues\%media%.txt
             PopUp("saved",0,0,0)
             }
@@ -885,9 +905,8 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1;`n global
             }
         if (command == "Reload")					; reload web page
             {
-            if !value
-              selected =
-            else index := value
+            selected =
+            index := value
             reload := 2
             }
         if (command == "Index")						; index folder (create thumbsheets)
@@ -944,8 +963,8 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1;`n global
             else if (type=="m3u" || type=="document" || longClick)
                 {
                 if (type!="m3u" && type!="document")
-                  ifExist, %inca%\cache\captions\%media%.vtt
-                    src=%inca%\cache\captions\%media%.vtt
+                  ifExist, %inca%\cache\captions\%media%.srt
+                    src=%inca%\cache\captions\%media%.srt
                 Run, % "notepad.exe " . src
                 }
             else
@@ -1045,7 +1064,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1;`n global
                 Runwait, %inca%\cache\apps\ffmpeg.exe -ss %value% -i "%src%" -y -vf scale=1280:1280/dar -vframes 1 "%inca%\cache\posters\%media%%A_Space%%value%.jpg",, Hide
                 }
             if address
-              FileAppend, 0.0|scroll|%address%`r`n, %inca%\cache\cues\%media%.txt	; add scroll if vtt text exists
+              FileAppend, 0.0|scroll|%address%`r`n, %inca%\cache\cues\%media%.txt	; add scroll if srt text exists
             popup("Added - New",444,0,0)
             AllFav()							; update consolidated fav list
             StrReplace(selected, ",",, x)
@@ -1766,7 +1785,7 @@ subfolders := array.11
         FileMove, %inca%\cache\durations\%media%.txt, %inca%\cache\durations\%new_name%.txt, 1
         FileMove, %inca%\cache\thumbs\%media%.jpg, %inca%\cache\thumbs\%new_name%.jpg, 1
         FileMove, %inca%\cache\posters\%media%.jpg, %inca%\cache\posters\%new_name%.jpg, 1
-        FileMove, %inca%\cache\captions\%media%.vtt, %inca%\cache\captions\%new_name%.vtt, 1
+        FileMove, %inca%\cache\captions\%media%.srt, %inca%\cache\captions\%new_name%.srt, 1
        }
 
 
