@@ -135,6 +135,7 @@ if InStr(Label, "T5 EVO")
         if !dur
           dur := 0
         FileRead, cues, %inca%\cache\cues\%media%.txt
+        cues := RegExReplace(cues, "[\r\n]")
         if !playlist
           if InStr(allFav, src)
             favicon = &#x2764						; favorite heart symbol
@@ -183,28 +184,29 @@ if InStr(Label, "T5 EVO")
             FileRead, str2, %inca%\cache\captions\%media%.srt
             Loop, Parse, str2, `n, `r
               {
-              if InStr(A_LoopField, "-->")				; timestamp element
+              str = %A_LoopField%					; remove whitespace
+              if InStr(str, "-->")					; timestamp element
                 {
-                x := SubStr(A_LoopField, 1, 12)
+                x := SubStr(str, 1, 12)
                 x := StrReplace(x, " --")				; in case no hrs in timestamp
                 x := StrReplace(x, ",", ".")
                 x := StrSplit(x, ":")
                 if (!x.3)
                   x := Round(x.1*60 + x.2,1)				; seconds format
                 else x := Round(3600*x.1 + 60*x.2 + x.3,1)
-                text = %text%<d id="%j%-%x%">%A_LoopField%</d>
+                text = %text%<d id="%j%-%x%">%str%</d>
                 timestamp = true
                 continue
                 }
               else if timestamp
-                text = %text%<e contenteditable="true" id="my%j%-%x%">%A_LoopField%</e>
+                text = %text%<e contenteditable="true" id="my%j%-%x%">%str%</e>
               timestamp =
               }
             }
         if (ext=="txt")
           {
           text := StrReplace(text, "`r`n", "<br>")
-          text = <e contenteditable="true" style='padding:0.5em'>%text%</e>
+          text = <e contenteditable="true">%text%</e>
           }
 
 if text
@@ -216,11 +218,13 @@ else src=src="file:///%src%"
 if !size
   size = 0								; cannot have null size in getParameters()
 
+caption = <div id='srt%j%' class='caption' onmouseover='overText=1' onmouseout='overText=0'`n oninput="if(editing&&editing!='%j%') {inca('capEdit',editing)}; editing=index; myPlayer.pause()">%text%</div>
 
 if listView
-  mediaList = %mediaList%%fold%<table onmouseover='overThumb(%j%)'`n onmouseout="thumb%j%.style.opacity=0">`n <tr id='entry%j%' onmouseenter='if (gesture) sel(%j%)'>`n <td>%ext%`n <video id='thumb%j%' class='thumb2' ondrag="getParameters(%j%, '%type%', %start%, %dur%, %size%, event)"`n %src%`n %poster%`n preload=%preload% muted loop type="video/mp4"></video></td>`n <td>%size%</td>`n <td style='min-width: 6em'>%durT%</td>`n <td>%date%</td>`n <td style='min-width: 4.4em'>%j%</td>`n <td id='myFavicon%j%' style='translate: -1.3em; font-size: 0.7em; color: salmon; min-width: 1em'>%favicon% %cc%</td>`n <td><div id='srt%j%' class='thumbCap'>%text%</div></td>`n <td style='width: 64vw'><input id="title%j%" class='title' style='transition: 0.8s' onmouseover='overText=1' onmouseout='overText=0; Click=0' type='search' value='%media_s%'`n oninput="renamebox=this.value; lastMedia=%j%"></td>`n %fo%</tr>`n <span id='cues%j%' style='display: none'>%cues%</span></table>`n`n
+  mediaList = %mediaList%%fold%<table onmouseover='overThumb(%j%)'`n onmouseout="thumb%j%.style.opacity=0">`n <tr id='entry%j%' onmouseenter='if (gesture) sel(%j%)'>`n <td style='min-width: 2em'>%j%</td>`n <td>%ext%`n <video id='thumb%j%' class='thumb2' ondrag="getParameters(%j%, '%type%', %start%, %dur%, %size%, event)"`n %src%`n %poster%`n preload=%preload% muted loop type="video/mp4"></video></td>`n <td>%size%</td>`n <td style='min-width: 6em'>%durT%</td>`n <td>%date%</td>`n <td id='myFavicon%j%' style='font-size: 0.7em; color: salmon; min-width: 1em'>%favicon% %cc%</td>`n <td style='width: 70vw'><input id="title%j%" class='title' style='transition: 0.8s' onmouseover='overText=1' onmouseout='overText=0; Click=0' type='search' value='%media_s%'`n oninput="renamebox=this.value; lastMedia=%j%"></td>`n %fo%</tr>`n %caption%<span id='cues%j%' style='display: none'>%cues%</span></table>`n`n
 
-else mediaList = %mediaList%<div id="entry%j%" class='entry' onmouseenter='overThumb(%j%)'>`n<span id='myFavicon%j%' style='display: block; position: absolute; top: 7px; left: -6px; font-size: 0.7em; color: salmon'>%favicon% %cc%</span>`n <input id='title%j%' class='title' style='text-align: center' type='search'`n value='%media_s%'`n oninput="renamebox=this.value; lastMedia=%j%"`n onmouseover="overText=1; if((x=this.value.length/2) > view) this.style.width=x+'em'"`n onmouseout="overText=0; this.style.width='100`%'">`n <video id="thumb%j%" class='thumb' ondrag="getParameters(%j%, '%type%', %start%, %dur%, %size%, event)"`n onmouseenter="if (gesture) sel(%j%)"`n onmouseout='overMedia=0; this.pause()' %src%`n %poster%`n preload=%preload% loop muted type='video/mp4'></video>`n %noIndex%`n <div id='srt%j%' class='thumbCap'>%text%</div>`n <span id='cues%j%' style='display: none'>%cues%</span></div>`n`n
+else mediaList = %mediaList%<div id="entry%j%" class='entry' onmouseenter='overThumb(%j%)'>`n <span id='myFavicon%j%' style='display: block; position: absolute; top: 7px; left: -6px; font-size: 0.7em; color: salmon'>%favicon% %cc%</span>`n <input id='title%j%' class='title' style='text-align: center' type='search'`n value='%media_s%'`n oninput="renamebox=this.value; lastMedia=%j%"`n onmouseover="overText=1; if((x=this.value.length/2) > view) this.style.width=x+'em'"`n onmouseout="overText=0; this.style.width='100`%'">`n <video id="thumb%j%" class='thumb' ondrag="getParameters(%j%, '%type%', %start%, %dur%, %size%, event)"`n onmouseenter="if (gesture) sel(%j%)"`n onmouseout='overMedia=0; this.pause()' %src%`n %poster%`n preload=%preload% loop muted type='video/mp4'></video>%noIndex%`n
+<span id='cues%j%' style='display: none'>%cues%</span></div>`n %caption%`n`n
 }
  
 
@@ -262,8 +266,10 @@ else mediaList = %mediaList%<div id="entry%j%" class='entry' onmouseenter='overT
         listSize := 0
         type = video							; prime for list parsing
         page_s := Setting("Page Size")
+
   ;      if (playlist || SearchTerm || listView)
   ;      page_s := 600
+
         if !reset
          Loop, Parse, list, `n, `r 					; split big list into smaller web pages
           {
@@ -288,15 +294,15 @@ else mediaList = %mediaList%<div id="entry%j%" class='entry' onmouseenter='overT
             x%A_Index% = color:red
           }
         if searchTerm
-          x20 = color:lightsalmon
+          x20 = color:red
         else if (!playlist && InStr(fol,folder))
-          x21 = color:lightsalmon
+          x21 = color:red
         else if (playlist && InStr(path,"\music\"))
-          x22 = color:lightsalmon
+          x22 = color:red
         else if (playlist && InStr(path,"\fav\"))
-          x23 = color:lightsalmon
+          x23 = color:red
         if playlist
-          order = List
+          pl = Playlist
         panelList =							; next sections fills top panel element
         scroll = Fol							; for scroll to 'fol' in top panel
         if searchTerm
@@ -440,14 +446,13 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1;`n global
 <a id='myIndex' onmouseup="if(myTitle.value) {inca('Index','',index)} else inca('Index','',0)">Index</a>`n
 <a id='myDelete' onmouseup="if(!event.button) inca('Delete','',index)">Delete</a>
 <a id='myCue' onmouseup='newCue(); togglePause()'>Cue</a>`n
-<a id='myCap' onmouseup='if (myTitle.value) {if(!myCaption.innerHTML||captions) {newCap()} else {openCap();Play()}}'>Caption</a>`n
+<a id='myCap' onmouseup='capButton()'>Caption</a>`n
 <a id='Mp3' onmouseup="inca('mp3', myPlayer.currentTime.toFixed(2), index, cue); cue=0; myNav.style.display=null">mp3</a>`n
 <a id='Mp4' onmouseup="inca('mp4', myPlayer.currentTime.toFixed(2), index, cue); cue=0; myNav.style.display=null">mp4</a>`n
 <a></a></div>`n`n
 
 <div id='myMask' class="mask" onwheel="wheelEvent(event, id, this)"></div>`n 
 <video id="myPlayer" class='player' type="video/mp4" muted onwheel="wheelEvent(event, id, this)"></video>`n
-<span id='myCaption' class='caption' onmouseover='overText=1' onmouseout='overText=0'`n oninput="if(editing&&editing!='%j%') {inca('capEdit',editing)}; editing='%j%'; myPlayer.pause()"></span>`n
 <span id='mySeekbar' class='seekbar'></span>`n
 <span id='mySeekbar2' class='seekbar'></span>`n
 <span id='mySelected' class='selected'></span>`n
@@ -482,14 +487,14 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1;`n global
 <a id='myDuration' style='%x3%' onmousedown="inca('Duration', filt)" onwheel="wheelEvent(event, id, this)"> Duration</a>`n
 <a id='myDate' style='%x4%' onmousedown="inca('Date', filt)" onwheel="wheelEvent(event, id, this)">Date</a>`n
 <a id='myAlpha' style='min-width:3em; %x2%' onmousedown="inca('Alpha', filt)" onwheel="wheelEvent(event,id,this)">Alpha</a>`n
-<a id='myList' style='%x11%' onmousedown="inca('List')">%order%</a>`n
+<a id='myPlaylist' style='color:pink; %x11%' onmousedown="inca('Playlist')">%pl%</a>`n
 <a id='myShuffle' style='%x1%' onmousedown="inca('Shuffle')">Shuffle</a>`n
 <a style='%x12%' onmousedown="inca('Pause')">Pause</a>`n
 <a style='%x10%' onmousedown="inca('Images')">Pics</a>`n
 <a style='%x9%' onmousedown="inca('Videos')">Vids</a>`n
 <a style='%x8%' onmousedown="inca('Recurse')">Subs</a>`n
 <a id='myThumbs' onmouseout='setThumbs(1,1000)' onmouseup="inca('View',0)" onwheel="wheelEvent(event, id)"></a>`n 
-<a id='myWidth' onwheel="wheelEvent(event, id)"></a>`n 
+<a id='myWidth' onwheel="wheelEvent(event, id)"></a>`n
 <a style='%x13%' onmousedown="inca('Mpv')">Mpv</a>`n
 <a id='myJoin' onmousedown="inca('Join')">Join</a>`n
 </div>`n`n
@@ -810,6 +815,20 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1;`n global
 
     ProcessMessage()							; messages from java/browser
         {
+        if (command == "saveText")					; save text snip
+          {
+          send, ^c
+          sleep 500
+          str := StrSplit(Clipboard, "`r`n").1 
+          if (StrLen(str) > 64)
+            str := SubStr(str, 1, 64)
+          str = %str%
+          str := RegExReplace(str, "[<>:""/\\|?*]")
+          FileAppend, %Clipboard%, %path%%str%.txt
+          IfExist, %path%%str%.txt
+            Popup("Saved . . .",900,0,0)
+          return
+          }
         if (command == "Null")						; used as trigger to save text editing - see Java inca()
           return
         if (command == "Settings")					; open inca source folder
@@ -907,7 +926,9 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1;`n global
             {
             selected =
             index := value
-            reload := 2
+            if value
+              reload := 3
+            else reload := 2
             }
         if (command == "Index")						; index folder (create thumbsheets)
             {
@@ -1472,11 +1493,11 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1;`n global
         if (show == 1)
             Popup(popup,0,0,0)
         StringTrimRight, list, list, 2					; remove end `r`n
-        if (InStr(toggles, "Reverse") && sort != "Date" && sort != "List")
+        if (InStr(toggles, "Reverse") && sort != "Date" && sort != "Playlist")
             reverse = R
-        if (!InStr(toggles, "Reverse") && (sort == "Date" || sort == "List"))
+        if (!InStr(toggles, "Reverse") && (sort == "Date" || sort == "Playlist"))
             reverse = R
-        if (sort == "List" && !playlist)
+        if (sort == "Playlist" && !playlist)
           sort = Shuffle
         if (sort == "Type")
             Sort, list, %reverse% Z					; alpha sort
@@ -1586,7 +1607,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1;`n global
         if (command == "SearchBox")
           sort = Duration
         if playlist							; default playlist sort
-          sort = List
+          sort = Playlist
         FileReadLine, array, %inca%\cache\html\%folder%.htm, 1		; embedded page data as top html comment
         if array
             {
@@ -1724,11 +1745,11 @@ subfolders := array.11
 
     MoveEntry()								; within playlist 
         {
-        if (sort != "List")
+        if (sort != "Playlist")
           {
           toggles =
-          sort = List
-          PopUp("List must be unSorted",900,0,0)
+          sort = Playlist
+          PopUp("Playlist must be unSorted",900,0,0)
           return
           }
         Loop, Parse, selected, `,
@@ -1912,7 +1933,7 @@ subfolders := array.11
         inca := SubStr(inca, 1, InStr(inca, "\", False, -1))
         StringTrimRight, inca, inca, 1
         EnvGet, profile, UserProfile
-        sortList = Shuffle|Alpha|Duration|Date|Size|Type|Reverse|Recurse|Videos|Images|List|Pause|Mpv
+        sortList = Shuffle|Alpha|Duration|Date|Size|Type|Reverse|Recurse|Videos|Images|Playlist|Pause|Mpv
         IniRead,config,%inca%\ini.ini,Settings,config
         IniRead,searchFolders,%inca%\ini.ini,Settings,searchFolders
         IniRead,indexFolders,%inca%\ini.ini,Settings,indexFolders
