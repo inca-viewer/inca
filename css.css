@@ -22,7 +22,7 @@ e {						/* caption text entries */
   background: #15110aaa;
   font-size: 1em;
   outline: none;
-  padding: 0.4m;
+  padding: 0.4em;
   border-radius: 1em;
   color: #826858;
   width: fit-content;
@@ -32,7 +32,7 @@ e {						/* caption text entries */
 .caption {					/* captions / txt container - vtt  */
   position: fixed;
   display: none;
-  padding: 1.2em;
+  padding: 1.4em;
   border: none;
   background: inherit;
   scroll-behavior: smooth;
@@ -197,27 +197,31 @@ e {						/* caption text entries */
   display: flex;
   font-weight: bold;
   justify-content: space-around;
-  width: 100%;
+  width: 90%;
   white-space: nowrap;
   border-radius: 1em;
   text-align: center;
   transition: 0.3s;
+margin:auto;
   font-size: 1em}
-.ribbon a {width: 6%; transition: 0.8s; border-radius: 1em}
+.ribbon a {width: 8%; transition: 0.8s; border-radius: 1em}
 .ribbon a:hover {transition: 0.2s; color: salmon}
 
 .searchbox {					/* input searchbox in htm tab */
   text-overflow: ellipsis;
   display: inline;
-  width: 54%; 
+  width: 40%; 
   translate:  0 2px;
   border-radius: 1em; 
   color: salmon;
+padding-left: 0.6em;
+//  background: #100c05;
   background: inherit;
   font-weight: bold;
   font-size: 1em;
   font-family: inherit;
-  border: none;
+ border: none;
+//  border: 0.1px solid #444444;
   height: 1.3em;
   outline: none;
   overflow: hidden;
