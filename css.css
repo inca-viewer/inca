@@ -39,13 +39,13 @@ e {						/* caption text entries */
   color: #826858;
   text-align: center;
   width: 28em;
-  height:20em;
+  height: 20em;
   font-size: 1.2em;
   line-height: 1.2em;
   font-family: inherit;
   margin: auto;
   opacity: 0;
-  transition: opacity 0.6s;
+  transition: opacity 0.6s;				/* !!! large text files freeze up in chrome if transition used */
   overflow: hidden;
   overflow-y: scroll;
   border-radius: 1em}
@@ -63,6 +63,7 @@ e {						/* caption text entries */
   background: inherit;
   color: #ffa07a44;
   font-size: 1.1em;
+  padding-left: 1em;
   font-family: inherit;
   width: 90%;
   outline: none;
@@ -80,12 +81,12 @@ e {						/* caption text entries */
   width: 12em;
   z-index: 991}
 
-.myMenu {
+.myMenu {					/* top panel container	*/
   position: fixed;
   top: 5em;
   left: 0;
   transform: translate(calc(50vw - 50%));
-  width: 70%;
+  width: 100%;
   min-width: 50em;
   max-width: 70em;
   padding-bottom: 1em;
@@ -106,9 +107,9 @@ e {						/* caption text entries */
   transform: rotate(-90deg);
   transform-origin: right top;
   background: inherit;
-  height: 60em;				/* becomes width when rotated	*/
+  height: 64em;					/* becomes width when rotated	*/
   width: 7.4em;
-  left: -4em}
+  left: -3em}
 .panel:hover {overflow-y: scroll}
 
 .p2 {						/* panel entries */
@@ -202,7 +203,7 @@ e {						/* caption text entries */
   border-radius: 1em;
   text-align: center;
   transition: 0.3s;
-margin:auto;
+  margin:auto;
   font-size: 1em}
 .ribbon a {width: 8%; transition: 0.8s; border-radius: 1em}
 .ribbon a:hover {transition: 0.2s; color: salmon}
@@ -210,18 +211,16 @@ margin:auto;
 .searchbox {					/* input searchbox in htm tab */
   text-overflow: ellipsis;
   display: inline;
-  width: 40%; 
+  width: 100%; 
   translate:  0 2px;
   border-radius: 1em; 
   color: salmon;
-padding-left: 0.6em;
-//  background: #100c05;
+  border: none;
   background: inherit;
   font-weight: bold;
   font-size: 1em;
   font-family: inherit;
- border: none;
-//  border: 0.1px solid #444444;
+
   height: 1.3em;
   outline: none;
   overflow: hidden;
