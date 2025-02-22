@@ -12,8 +12,8 @@
   table:hover {background: #1b1814}
   a {color: #826858; text-decoration: none; outline: none}	/* default text */
   c {display: block; padding-left: 1em; text-decoration: none; font-weight: bold; color: #826858bb; transition: 1s} /* panel text */
-  c:hover {transition: 0.2s; transform: scale(1.1,1.1); color: lightsalmon}
-  c:active {color: red; transform: scale(0.8,0.8)}
+  c:hover {transition: 0.2s; transform: scale(1.1,1.1); color: pink}
+  c:active {color: #15110a; transform: scale(0.8,0.8)}
   d {display: block; color: #ffa07a00; font-size: 0.8em; transition: 2s; padding:1%}	/* caption timestamps */
   d:active {color: lightsalmon}
 
@@ -24,7 +24,7 @@ e {						/* caption text entries */
   outline: none;
   padding: 0.4em;
   border-radius: 1em;
-  color: #826858;
+  color: #FFd0dB77;
   width: fit-content;
   margin:auto;
   transition: 0.6s}
@@ -38,14 +38,14 @@ e {						/* caption text entries */
   scroll-behavior: smooth;
   color: #826858;
   text-align: center;
-  width: 28em;
-  height: 20em;
+  width: 30em;
+  height: 18em;
   font-size: 1.2em;
   line-height: 1.2em;
   font-family: inherit;
   margin: auto;
   opacity: 0;
-  transition: opacity 0.6s;				/* !!! large text files freeze up in chrome if transition used */
+  transition: opacity 0.6s;
   overflow: hidden;
   overflow-y: scroll;
   border-radius: 1em}
@@ -89,7 +89,7 @@ e {						/* caption text entries */
   width: 100%;
   min-width: 50em;
   max-width: 70em;
-  padding-bottom: 1em;
+  padding-bottom: 0.1em;
   background: #15110a}
 
 .myPanel {					/* top panel element showing folders etc.*/
@@ -119,7 +119,7 @@ e {						/* caption text entries */
 
 .fadeout {					/* between top panel and scrolled thumbs */
   position: relative; 
-  margin-bottom: -2em;
+  margin-bottom: -4em;
   pointer-events: none;
   height: 1em;
   width: 100%;
@@ -138,17 +138,15 @@ e {						/* caption text entries */
 
 .capMenu {					/* buttons over caption */
   text-align: center;
-  border: 0.1px solid red;
-  border-radius: 0.8em;
-  padding-left: 0.4em;
-  padding-right: 0.5em;
-  color: salmon;
+  min-width: 1.6em;
+  color: pink;
   transition: 0.3s;
-  background: #1b1814;
-  font-size:0.9em;
+  background: inherit;
+  font-size: 1em;
+  border-radius: 0.4em;
   font-variant-caps: petite-caps}
-.capMenu:hover {border: 1px solid salmon; transform: scale(1.2,1.2)}
-.capMenu:active {background: salmon; transform: scale(0.7,0.7)}
+.capMenu:hover {color: red; transform: scale(1.8,1.8)}
+.capMenu:active {border-bottom: 1px solid red; transform: scale(1,1)}
 
 .player {					/* media player element */
   position: absolute;
@@ -168,7 +166,7 @@ e {						/* caption text entries */
   margin: auto;
   justify-content: space-around;
   flex-wrap: wrap;
-  padding-top: 18em;
+  padding-top: 17em;
   padding-bottom: 70vh}
 
 .thumb {					/* htm thumbs */
@@ -200,13 +198,15 @@ e {						/* caption text entries */
   justify-content: space-around;
   width: 90%;
   white-space: nowrap;
+  line-height: 1.1em;
   border-radius: 1em;
   text-align: center;
   transition: 0.3s;
   margin:auto;
+  padding: 0.2em;
   font-size: 1em}
 .ribbon a {width: 8%; transition: 0.8s; border-radius: 1em}
-.ribbon a:hover {transition: 0.2s; color: salmon}
+.ribbon a:hover {transition: 0.2s; color: pink}
 
 .searchbox {					/* input searchbox in htm tab */
   text-overflow: ellipsis;
@@ -214,13 +214,13 @@ e {						/* caption text entries */
   width: 100%; 
   translate:  0 2px;
   border-radius: 1em; 
-  color: salmon;
+  color: pink;
   border: none;
+  translate: 0 -2px;
   background: inherit;
   font-weight: bold;
   font-size: 1em;
   font-family: inherit;
-
   height: 1.3em;
   outline: none;
   overflow: hidden;
