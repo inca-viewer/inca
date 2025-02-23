@@ -138,7 +138,7 @@
     if (!getParameters(index)) {index=lastMedia; closePlayer(); return}			// end of media list
     if (longClick==2 && myNav.style.display) return
     if (!longClick && !playing && !overMedia && !myNav.style.display) return
-    if (longClick==1 && (!overMedia&&playing || (!playing && toggles.match('Pause')))) thumb.currentTime=thumb.style.start
+    if (longClick==1 && (!overMedia && playing || (!playing && toggles.match('Pause')))) thumb.currentTime=thumb.style.start
     else if (longClick==1 && overMedia) thumb.currentTime=0.01				// cannot be zero - see getPara.
     else if (!longClick && !myPic.matches(':hover')) {					// because thumb indexing adds 20 if dur>61
       if (thumb.style.start<2 || (dur>61 && thumb.style.start>20 && thumb.style.start<22)) thumb.currentTime=0.01
@@ -173,7 +173,7 @@
     else playing='browser'
     if (lastClick==2 && playing=='mpv') return						// inca does next/previous media
     if (type=='audio' || playlist.match('/inca/music/')) {scaleY=0.2; looping=0; myPlayer.muted=false}
-    if (!thumbSheet && type!='image' && (!toggles.match('Pause') && !captions || longClick)) myPlayer.play()
+    if (!thumbSheet && type!='image' && (!toggles.match('Pause') && !captions || longClick==1)) myPlayer.play()
     if (captions && (scaleY==0.5 || scaleY==0.2)) scaleY=0.21				// first time open use small player
     myPlayer.addEventListener('ended', nextMedia)
     if (thumb.src.slice(-3)=='txt') srt.style.padding=0
@@ -206,7 +206,7 @@
       if (myNav.style.display) {x=myNav.getBoundingClientRect(); Xref=(xpos-x.left)/skinny; Yref=ypos-x.top}}
     if (!gesture || !Click) {gesture=''; return}
     if (myNav.style.display) {myNav.style.left = xpos-Xref+"px"; myNav.style.top = ypos-Yref+"px"}  // move context menu
-    else if (playing && overMedia || !captions) {			// move myPlayer
+    else if (playing && (overMedia || !captions)) {			// move myPlayer
       mediaX += xpos - Xref
       mediaY += ypos - Yref
       Xref=xpos; Yref=ypos
@@ -449,7 +449,7 @@
 
 
   function getStart() {							// clicked thumb on 6x6 thumbsheet
-    myPlayer.style.opacity=0						// fade player up
+    if (!myNav.matches(':hover')) myPlayer.style.opacity=0		// fade player up
     positionMedia(0)
     myPlayer.poster=''
     if (skinny < 0) xm = 1-xm						// if flipped media
@@ -785,8 +785,8 @@
 
   function positionCap() {
     let rect = myPlayer.getBoundingClientRect()
-if (thumb.src.slice(-3)=='txt') srt.style.height = '24em';
-    capMenu.style.top = rect.bottom + srt.offsetHeight + 'px'; capMenu.style.left = mediaX -85 + 'px'
+    if (thumb.src.slice(-3)=='txt') srt.style.height = '24em';
+    capMenu.style.top = rect.bottom + 24 + srt.offsetHeight + 'px'; capMenu.style.left = mediaX -85 + 'px'
     srt.style.top = rect.bottom + 'px'; srt.style.left = mediaX-srt.offsetWidth/2 + 'px'}
 
 
@@ -799,7 +799,7 @@ if (thumb.src.slice(-3)=='txt') srt.style.height = '24em';
   function selectAll() {for (i=1; document.getElementById('thumb'+i); i++) {sel(i)}}
   function flip() {skinny*=-1; scaleX*=-1; thumb.style.skinny=skinny; positionMedia(0.4); getParameters(index)}
   function togglePause() {
-    if (!thumbSheet && !longClick && playing && myPlayer.paused && !(overText && type=='document')) {myPlayer.play()} else myPlayer.pause()
+    if (!thumbSheet && !longClick && playing && myPlayer.paused && !(overText && editing)) {myPlayer.play()} else myPlayer.pause()
     if (overMedia) srt.scrollTo(0,0)}
 
 

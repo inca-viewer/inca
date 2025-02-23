@@ -143,10 +143,10 @@ e {						/* caption text entries */
   transition: 0.3s;
   background: inherit;
   font-size: 1em;
-  border-radius: 0.4em;
+  border-radius: 1.6em;
   font-variant-caps: petite-caps}
 .capMenu:hover {color: red; transform: scale(1.8,1.8)}
-.capMenu:active {border-bottom: 1px solid red; transform: scale(1,1)}
+.capMenu:active {border: 0.1px solid red; background:red; transform: scale(1,1)}
 
 .player {					/* media player element */
   position: absolute;
