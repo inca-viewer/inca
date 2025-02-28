@@ -295,7 +295,9 @@
     if (myNav.style.display) el = myPic
     else if (!playing) el = thumb
     rect = el.getBoundingClientRect()
+    if (!myNav.matches(':hover')) myNav.style.display=null
     if (myNav.style.display && myTitle.value) myNav.style.width=rect.width+85+'px'
+    else myNav.style.width = 85+'px'
     xm = (xpos - rect.left) / rect.width
     ym = (ypos - rect.top) / rect.height
     if (block>=30) block-=10						// wheel blocking 
@@ -318,7 +320,6 @@
     myPage.innerHTML = page+' of '+pages
     if (myWidth.matches(':hover')) myWidth.innerHTML=myView.style.width
     else myWidth.innerHTML='Cols'
-    if (!myNav.matches(':hover')) myNav.style.display=null
     myCue.innerHTML='Cues'
     if (!myTitle.value) {								// no media under context menu
       mySkinny.innerHTML=''
@@ -330,7 +331,6 @@
     else {myMenu.style.display='none'; myMask2.style.display='none'}  			// if fullscreen hide menu 
     if (selected && !Click) mySelected.innerHTML = selected.split(',').length -1
     else if (block<25) mySelected.innerHTML = ''
-    if (!thumb) return
     if (!seekBar()) mySeekbar.style.height = mySeekbar2.style.height = null
     if (favicon.innerHTML.match('\u2764')) myFavorite.innerHTML='Fav &#x2764'
     else myFavorite.innerHTML='Fav'
@@ -451,7 +451,7 @@
   function getStart() {							// clicked thumb on 6x6 thumbsheet
     if (!myNav.matches(':hover')) myPlayer.style.opacity=0		// fade player up
     positionMedia(0)
-    myPlayer.poster=''
+    if (dur) myPlayer.poster=''
     if (skinny < 0) xm = 1-xm						// if flipped media
     let row = Math.floor(ym * 6)					// get media seek time from thumbsheet xy
     let col = Math.ceil(xm * 6)
@@ -462,8 +462,8 @@
     if (myPic.matches(':hover')) thumb.currentTime=lastStart
     else if (!longClick) thumb.currentTime=offset - (ps * offset) + dur * ps
     myPlayer.style.transform = "scale("+scaleX+","+scaleY+")"
-    if (captions) srt.style.opacity=1
-    thumbSheet=0; Play()}
+    thumbSheet=0; Play()
+    if (captions) {srt.style.opacity=1; myPlayer.play()}}
 
 
   function addFavorite() {
@@ -665,11 +665,11 @@
   function playCap() {
       let id = document.elementFromPoint(xpos,ypos).id			// caption element
       let tm = id.split('-')[1]						// timestamp
-      if (longClick==1) myPlayer.pause()				// begin editing caption
-      else if (!id.match('my')||capText.id==id) {togglePause(); return}	// not over caption text
+      if (longClick==1) myPlayer.pause()				// longclick over text triggers osk
+      else if (!id.match('my') || (capText.id==id && !editing)) {togglePause(); return}	// not over caption text
       else if (!editing || capText.id!=id) myPlayer.play()		// not same caption as editing
       else myPlayer.pause()
-      if (!isNaN(tm)) myPlayer.currentTime = thumb.currentTime = tm}	// rest player to start of caption
+      if (!isNaN(tm) && !myPlayer.paused) myPlayer.currentTime = thumb.currentTime = tm}  // set to start of caption
 
 
   function openCap() {							// show captions
@@ -799,7 +799,7 @@
   function selectAll() {for (i=1; document.getElementById('thumb'+i); i++) {sel(i)}}
   function flip() {skinny*=-1; scaleX*=-1; thumb.style.skinny=skinny; positionMedia(0.4); getParameters(index)}
   function togglePause() {
-    if (!thumbSheet && !longClick && playing && myPlayer.paused && !(overText && editing)) {myPlayer.play()} else myPlayer.pause()
+    if (!thumbSheet && !longClick && playing && myPlayer.paused) {myPlayer.play()} else myPlayer.pause()
     if (overMedia) srt.scrollTo(0,0)}
 
 

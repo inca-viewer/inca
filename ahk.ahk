@@ -93,7 +93,7 @@
         Global mpvPID
         Global cur				; window under cursor
         Global desk				; current desktop window
-        Global indexPage			; html media page to index (create thumbs)
+        Global indexSelected			; html media page to index (create thumbs)
 
 
     main:
@@ -104,9 +104,6 @@
         Clipboard = #Path###%profile%\Pictures\
       Clipboard()				; process clipboard message
       SetTimer, TimedEvents, 100, 2		; every 100mS
-      DriveGet, Label, Label, D:
-if InStr(Label, "T5 EVO")
-  run, C:\Program Files (x86)\Samsung\Portable_SSD\SamsungPortableSSD_1.0.exe
       return
 
 
@@ -936,7 +933,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1;`n global
             }
         if (command == "Index")						; index folder (create thumbsheets)
             {
-            indexPage := selected
+            indexSelected := selected
             selected =
             reload := 2
             SetTimer, indexPage, -100, -2
@@ -2060,7 +2057,7 @@ subfolders := array.11
 
     indexPage:							; create thumbsheets
     Critical Off
-    if indexPage						; force index of selected media
+    if indexSelected						; force index posters of selected media
       {
       Loop, Parse, indexPage, `,
         if getMedia(A_Loopfield)
@@ -2079,7 +2076,8 @@ subfolders := array.11
         start := StrSplit(A_Loopfield, "|").2
         detectMedia(src)
         GuiControl, Indexer:, GuiInd, indexing - %src%
-        Runwait, %inca%\cache\apps\ffmpeg.exe -ss %start% -i "%src%" -y -vf scale=1280:1280/dar -vframes 1 "%inca%\cache\posters\%media%%A_Space%%start%.jpg",, Hide
+        IfNotExist, %inca%\cache\posters\%media%%A_Space%%start%.jpg
+          Runwait, %inca%\cache\apps\ffmpeg.exe -ss %start% -i "%src%" -y -vf scale=1280:1280/dar -vframes 1 "%inca%\cache\posters\%media%%A_Space%%start%.jpg",, Hide
         }
     else 
       {
