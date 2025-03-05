@@ -11,7 +11,6 @@
 	SetWinDelay, 0
 	SetKeyDelay, 0
 	SetBatchLines -1
-        FileEncoding, UTF-8
 	SetTitleMatchMode, 2
 	GroupAdd, Browsers, Google Chrome	; supported browsers
 	GroupAdd, Browsers, Mozilla Firefox
@@ -822,7 +821,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1;`n global
             str := SubStr(str, 1, 64)
           str = %str%
           str := RegExReplace(str, "[<>:""/\\|?*]")
-          FileAppend, %Clipboard%, %path%%str%.txt
+          FileAppend, %Clipboard%, %path%%str%.txt, UTF-8
           IfExist, %path%%str%.txt
             Popup("Saved . . .",900,0,0)
           return
@@ -844,11 +843,11 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1;`n global
         if (command == "newCue2" && value)
             {
             FileDelete, %inca%\cache\cues\%media%.txt
-            FileAppend, %value%, %inca%\cache\cues\%media%.txt
+            FileAppend, %value%, %inca%\cache\cues\%media%.txt, UTF-8
             }
         if (command == "newCue")
             {
-            FileAppend, %address%|goto|%value%`r`n, %inca%\cache\cues\%media%.txt
+            FileAppend, %address%|goto|%value%`r`n, %inca%\cache\cues\%media%.txt, UTF-8
             Popup("Added . . .",0,0,0)
             }
         if (command == "capEdit")					; save browser text editing
@@ -873,7 +872,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1;`n global
             if (ext == "txt") 
               {
               FileDelete, %src%
-              FileAppend, %address%, %src%
+              FileAppend, %address%, %src%, UTF-8
               }
             else
               {
@@ -896,7 +895,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1;`n global
                   str = %str%%A_LoopField%`r`n
                 }         
               FileDelete, %inca%\cache\captions\%media%.srt
-              FileAppend, %str%, %inca%\cache\captions\%media%.srt
+              FileAppend, %str%, %inca%\cache\captions\%media%.srt, UTF-8
               }
             FileRead, cues, %inca%\cache\cues\%media%.txt
             if cues
@@ -905,7 +904,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1;`n global
                   if !InStr(A_LoopField, "0.00|scroll")			; remember text scroll position
                     newCue = %newCue%%A_LoopField%`r`n
             FileDelete, %inca%\cache\cues\%media%.txt
-            FileAppend, %newCue%0.00|scroll|%value%`r`n, %inca%\cache\cues\%media%.txt
+            FileAppend, %newCue%0.00|scroll|%value%`r`n, %inca%\cache\cues\%media%.txt, UTF-8
             PopUp("saved",0,0,0)
             }
         if (command == "Move")						; move entry within playlist
@@ -1033,7 +1032,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1;`n global
             Sort, cues, NZ						; sort cues by time entry
             FileDelete, %inca%\cache\cues\%media%.txt
             if cues
-              FileAppend, %cues%`r`n, %inca%\cache\cues\%media%.txt
+              FileAppend, %cues%`r`n, %inca%\cache\cues\%media%.txt, UTF-8
             id := StrSplit(selected, ",").1
             if !value							; current media time
               value = 0.00
@@ -1090,8 +1089,8 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1;`n global
                   Runwait, %inca%\cache\apps\ffmpeg.exe -ss %value% -i "%src%" -y -vf scale=1280:1280/dar -vframes 1 "%inca%\cache\posters\%media%%A_Space%%value%.jpg",, Hide
                 }
             if address
-              FileAppend, 0.0|scroll|%address%`r`n, %inca%\cache\cues\%media%.txt	; add scroll if srt text exists
-            popup("Added - New",444,0,0)
+              FileAppend, 0.0|scroll|%address%`r`n, %inca%\cache\cues\%media%.txt, UTF-8	; add scroll if srt text exists
+            popup("Added - New",333,0,0)
             AllFav()							; update consolidated fav list
             StrReplace(selected, ",",, x)
             selected =
@@ -1213,7 +1212,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1;`n global
               {
               FileDelete, %inca%\cache\cues\%media%.txt
               if cues
-                FileAppend, %cues%, %inca%\cache\cues\%media%.txt
+                FileAppend, %cues%, %inca%\cache\cues\%media%.txt, UTF-8
               }
             }
         if (command == "Rate")						; update any media speed edits
@@ -1243,7 +1242,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1;`n global
               {
               FileDelete, %inca%\cache\cues\%media%.txt
               if cues
-                FileAppend, %cues%, %inca%\cache\cues\%media%.txt
+                FileAppend, %cues%, %inca%\cache\cues\%media%.txt, UTF-8
               }
             }
         if (command == "Page")
@@ -1263,14 +1262,12 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1;`n global
               if getMedia(A_LoopField)
                 str = %str%file '%src%'`r`n
             FileAppend,  %str%, %inca%\cache\temp\temp1.txt, utf-8
-            Popup("Joining Media",0,0,0)
+            Popup("Joining Media",600,0,0)
             x = @echo off`r`nset `"temp=(pause & pause & pause)>nul`"`r`ntype `%1|(`%temp`% & findstr `"^`")`r`n
             FileAppend, %x%, %inca%\cache\temp\temp.bat 
             runwait, %inca%\cache\temp\temp.bat %inca%\cache\temp\temp1.txt > %inca%\cache\temp\temp.txt,,Hide
             runwait, %inca%\cache\apps\ffmpeg.exe -f concat -safe 0 -i "%inca%\cache\temp\temp.txt" -c copy "%mediaPath%\%media%- join.%ext%",,Hide
-            if (ext != "mp4")
-              runwait, %inca%\cache\apps\ffmpeg.exe -i "%mediaPath%\%media%- join.%ext%" "%mediaPath%\%media%- join.mp4",,Hide
-            src = %mediaPath%\%media%- join.mp4
+            src = %mediaPath%\%media%- join.%ext%
             FileDelete, %inca%\cache\temp\temp.bat
             FileDelete, %inca%\cache\temp\temp.txt
             FileDelete, %inca%\cache\temp\temp1.txt
@@ -2059,7 +2056,7 @@ subfolders := array.11
     Critical Off
     if indexSelected						; force index posters of selected media
       {
-      Loop, Parse, indexPage, `,
+      Loop, Parse, indexSelected, `,
         if getMedia(A_Loopfield)
           {
           index(src,1)
@@ -2117,7 +2114,7 @@ subfolders := array.11
             dur := Round(str.2*3600 + str.3*60 + str.4, 2)
             FileDelete, %inca%\meta.txt
             FileDelete, %inca%\cache\durations\%filen%.txt
-            FileAppend, %dur%, %inca%\cache\durations\%filen%.txt
+            FileAppend, %dur%, %inca%\cache\durations\%filen%.txt, UTF-8
             }
           if (med == "audio")
             return

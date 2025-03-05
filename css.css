@@ -1,6 +1,6 @@
 
   ::placeholder {color: lightsalmon}
-  ::selection {color: #cccccc}
+  ::selection {color: #cccccc; background: #222222}
   ::-webkit-search-cancel-button {appearance: none}
   ::-webkit-scrollbar {background: #15110a; width: 4px}
   ::-webkit-resizer {background: #826858}

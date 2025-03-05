@@ -1,6 +1,5 @@
 // Debugging - use mySelected.innerHTML or alert()
 
-
   let entry = 0								// current thumb htm container
   let thumb = 0								// current thumb element
   let title = 0								// title element
@@ -284,7 +283,7 @@
       if (wheelUp) {mediaX+=x*z; mediaY+=y*z; scaleY*=(1+z)}
       else if (!wheelUp && scaleY) {mediaX-=x*z; mediaY-=y*z; scaleY/=(1+z)}
       if (scaleY<0.2) scaleY=0.2
-      scaleX=skinny*scaleY; positionMedia(0); block=14}
+      scaleX=skinny*scaleY; positionMedia(0); positionCap(); block=14}
     wheel=0}
  
 
@@ -353,7 +352,7 @@
       myPlayer.playbackRate=rate
       if (cue) myCue.innerHTML = 'Goto ' + myPlayer.currentTime.toFixed(2)
       else myCue.innerHTML = 'New Cue'
-      if (cues.innerHTML) myCues(myPlayer.currentTime)
+      if (cues.innerHTML && dur) myCues(myPlayer.currentTime)
       positionMedia(0)} 
     else if (!listView && thumb.readyState===4 && thumb.duration && overMedia) {thumb.play()} else thumb.pause()}
 
@@ -513,7 +512,7 @@
     block=200
     if (overMedia || playing) {setPic(); myPic.style.display='block'; myNav.style.background='#15110acc'}
     else {myPic.style.display=null; myTitle.value=''; mySelect.innerHTML='Select'; myNav.style.background=null}
-    zoom = 1.2
+    zoom = 1.5
     myPic.style.transform='scale('+Math.abs(skinny)*zoom+','+zoom+')'	// pop thumb out a little
     if (!playing && overMedia) {myNav.style.left=rect.left-74+'px'; myNav.style.top=rect.top-74+'px'}
     else {myNav.style.left=xpos-30+'px'; myNav.style.top=ypos-30+'px'}
@@ -629,7 +628,7 @@
         if (myPlayer.src != src)  myPlayer.poster = myPlayer.src = src
         else if (src && tm != time) myPlayer.currentTime = tm
         if (block < 25) block = 100					// block jitter on src replace
-        positionMedia(4)							// fade new media in
+        positionMedia(4)						// fade new media in
         myPlayer.style.opacity=1}
       else if (!tm && myPlayer.src != thumb.src) {setPlayer(); myPlayer.currentTime=thumb.currentTime}}
 
@@ -663,13 +662,13 @@
 
 
   function playCap() {
-      let id = document.elementFromPoint(xpos,ypos).id			// caption element
-      let tm = id.split('-')[1]						// timestamp
+      let id = document.elementFromPoint(xpos,ypos).id			// element under cursor
+      let tm = id.split('-')[1]						// get timestamp
       if (longClick==1) myPlayer.pause()				// longclick over text triggers osk
-      else if (!id.match('my') || (capText.id==id && !editing)) {togglePause(); return}	// not over caption text
-      else if (!editing || capText.id!=id) myPlayer.play()		// not same caption as editing
+      else if (!id.match('my') || (capText.id==id && !editing)) {togglePause(); return}
+      else if (!editing || capText.id!=id) myPlayer.play()		// clicked different caption
       else myPlayer.pause()
-      if (!isNaN(tm) && !myPlayer.paused) myPlayer.currentTime = thumb.currentTime = tm}  // set to start of caption
+      if (!isNaN(tm) && !myPlayer.paused) myPlayer.currentTime = thumb.currentTime = tm}
 
 
   function openCap() {							// show captions
@@ -692,7 +691,7 @@
 
 
   function newCap(nudge) {						// new or edit caption
-    if (type=='document' || block>20) {return} else block = 40		// block rapid click re-entry
+    if (type=='document' || (nudge && block>20)) {return} else block = 40  // block rapid click re-entry
     let y = ''
     let newText = ''
     if (capTime) myPlayer.currentTime = 1*capTime.id.split('-')[1]	// set player to caption start
