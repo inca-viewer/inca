@@ -442,7 +442,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1;`n global
 <a id='myLoop' if(looping) {looping=0} else looping=1'>Loop</a>`n
 <a id='myIndex' onmouseup="if(myTitle.value) {inca('Index','',index)} else inca('Index','',0)">Index</a>`n
 <a id='myDelete' onmouseup="if(!event.button) inca('Delete','',index)">Delete</a>
-<a id='myCue' onmouseup='newCue()'>Cue</a>`n
+<a id='myCue' onmouseup="cueButton()">Cue</a>`n
 <a id='myCap' onmouseup='capButton()'>Caption</a>`n
 <a id='Mp3' onmouseup="inca('mp3', myPlayer.currentTime.toFixed(2), index, cue); cue=0; myNav.style.display=null">mp3</a>`n
 <a id='Mp4' onmouseup="inca('mp4', myPlayer.currentTime.toFixed(2), index, cue); cue=0; myNav.style.display=null">mp4</a>`n
@@ -778,7 +778,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1;`n global
         messages := StrReplace(Clipboard, "/", "\")
         array := StrSplit(messages,"#")
         Clipboard := lastClip
-;   tooltip %messages%							; for debug
+ ;  tooltip %messages%							; for debug
         Loop % array.MaxIndex()/4
           {
           command := array[ptr+=1]
@@ -821,6 +821,8 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1;`n global
             str := SubStr(str, 1, 64)
           str = %str%
           str := RegExReplace(str, "[<>:""/\\|?*]")
+          if !str
+            return
           FileAppend, %Clipboard%, %path%%str%.txt, UTF-8
           IfExist, %path%%str%.txt
             Popup("Saved . . .",900,0,0)
@@ -840,16 +842,13 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1;`n global
             sleep 400
             Winactivate, ahk_class CabinetWClass
             }
-        if (command == "newCue2" && value)
+        if (command == "cueText" && value)
             {
             FileDelete, %inca%\cache\cues\%media%.txt
             FileAppend, %value%, %inca%\cache\cues\%media%.txt, UTF-8
             }
-        if (command == "newCue")
-            {
-            FileAppend, %address%|goto|%value%`r`n, %inca%\cache\cues\%media%.txt, UTF-8
-            Popup("Added . . .",0,0,0)
-            }
+        if (command == "addCue")
+            FileAppend, %value%`r`n, %inca%\cache\cues\%media%.txt, UTF-8
         if (command == "capEdit")					; save browser text editing
             {
             if !address
@@ -1022,12 +1021,12 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1;`n global
             {
             if !selected
               return
-            IfNotExist, %inca%\cache\cues\%media%.txt
+            FileRead, cues, %inca%\cache\cues\%media%.txt
+            if !cues
               {
               PopUp("no cues",600,0,0)
               return
               }
-            else FileRead, cues, %inca%\cache\cues\%media%.txt
             StringTrimRight, cues, cues, 2				; remove end `r`n
             Sort, cues, NZ						; sort cues by time entry
             FileDelete, %inca%\cache\cues\%media%.txt

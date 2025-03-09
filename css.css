@@ -22,7 +22,7 @@ e {						/* caption text entries */
   background: #15110aaa;
   font-size: 1em;
   outline: none;
-  padding: 0.4em;
+  padding: 0.5em;
   border-radius: 1em;
   color: #FFd0dB77;
   width: fit-content;
@@ -51,6 +51,26 @@ e {						/* caption text entries */
   border-radius: 1em}
 .caption::-webkit-scrollbar {background: inherit; width: 6px}
 
+.capContainer {
+  position: fixed;
+  display: none;
+  padding:0.5em;
+  justify-content: space-around;
+  width: 12em;
+  z-index: 991}
+
+.capMenu {					/* buttons over caption */
+  text-align: center;
+  min-width: 1.6em;
+  color: red;
+  transition: 0.3s;
+  background: inherit;
+  font-size: 1em;
+  border-radius: 1.6em;
+  font-variant-caps: petite-caps}
+.capMenu:hover {color: red; transform: scale(1.8,1.8)}
+.capMenu:active {border: 0.1px solid red; background:red; transform: scale(1,1)}
+
 .entry {
   position: relative;
   border-radius: 1em;
@@ -72,14 +92,6 @@ e {						/* caption text entries */
   transition: 0.5s;
   border-radius: 1em}
 .title:hover {color: salmon; transition: 1.4s; overflow: visible}
-
-.capContainer {
-  position: fixed;
-  display: none;
-  padding:0.5em;
-  justify-content: space-around;
-  width: 12em;
-  z-index: 991}
 
 .myMenu {					/* top panel container	*/
   position: fixed;
@@ -135,18 +147,6 @@ e {						/* caption text entries */
   margin-left: 5em;
   margin-top: 1em;
   border-radius: 7%}
-
-.capMenu {					/* buttons over caption */
-  text-align: center;
-  min-width: 1.6em;
-  color: pink;
-  transition: 0.3s;
-  background: inherit;
-  font-size: 1em;
-  border-radius: 1.6em;
-  font-variant-caps: petite-caps}
-.capMenu:hover {color: red; transform: scale(1.8,1.8)}
-.capMenu:active {border: 0.1px solid red; background:red; transform: scale(1,1)}
 
 .player {					/* media player element */
   position: absolute;
