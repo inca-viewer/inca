@@ -1,9 +1,8 @@
 
-
   let entry = 0								// thumb container
   let thumb = 0								// thumb element
   let title = 0								// title element
-  let srt = 0								// txt or subtitle container
+  let srt = 0								// txt or subtitle element
   let favicon = ''							// favorite or cc icon
   let capTime = ''							// srt time element
   let capText = ''							// srt caption text element
@@ -17,18 +16,18 @@
   let filt = 0								// media list filter
   let playlist								// full .m3u filepath
   let captions = 0							// captions enabled
-  let type = ''								// audio, video, image, document
-  let cue = 0								// cue time point
+  let type = ''								// audio, video, image, document...
+  let cue = 0								// cue time ref
   let cues = ''								// list of cue actions at media times
   let playing = ''							// myPlayer or mpv active
   let thumbSheet = 0							// 6x6 thumbsheet mode
   let looping = 1							// play next or loop media
-  let Click = 0								// state is cleared after up
+  let Click = 0								// state is cleared after clk up
   let lastClick = 0							// state is preserved after up
   let lastStart = 0							// last myPlayer time
   let lastMedia = ''							// previous media
   let longClick = 0							// state is preserved
-  let gesture = 0							// state is preserved
+  let gesture = 0							// click and slide event
   let searchbox = ''							// search input field
   let renamebox = ''							// media rename input field
   let selected = ''							// list of selected media in page
@@ -36,9 +35,9 @@
   let overText = 0							// text input fields, allow cut paste
   let editing = 0							// editing text active
   let wasEditing = 0							// was editing text
-  let messages = ''							// history, width, speed & caption edits
-  let Zindex = 3							// element layer
-  let rect								// myPlayer dimensions
+  let messages = ''							// message digest to inca.exe
+  let Zindex = 3							// element zIndex
+  let rect								// element dimensions
   let size = 0								// file size (from inca)
   let dur = 0								// duration (from inca)
   let rate = 1								// myPlayer speed
@@ -59,12 +58,12 @@
   let ratio = 1								// media width to height ratio
   let Xoff = 0								// fullscreen offsets
   let Yoff = 0
-  let folder = ''							// browser tab name / media folder
+  let folder = ''							// browser tab name = media folder
   let defRate = 1							// default speed
+
+
   let mediaX = 1*localStorage.mediaX					// myPlayer position
   let mediaY = 1*localStorage.mediaY
-
-
   let intervalTimer = setInterval(timerEvent,90)			// background tasks every 90mS
   if (innerHeight>innerWidth) {scaleX=0.64; scaleY=0.64}		// screen is portrait
   else {scaleX=0.5; scaleY=0.5}
@@ -103,7 +102,7 @@
   function mouseUp(e) {
     if (!Click) return									// stop re-entry if new page load
     clearTimeout(clickTimer)								// longClick timer
-    if (gesture && window.getSelection()) localStorage.cue=''				// for later save text snip
+    if (gesture && window.getSelection()) localStorage.cue=''				// used for save text snip
     if (!longClick) clickEvent()							// process click event
     Click=0; wheel=0; gesture=0}
 
@@ -112,16 +111,16 @@
     if (gesture) return
     let id = document.elementFromPoint(xpos,ypos).id					// id under cursor
     if (longClick && myPanel.matches(':hover')) return					// copy files instead of move
-    if (longClick && myRibbon.matches(':hover')) return
+    if (longClick && myRibbon.matches(':hover')) return					// html sends clicks to inca.exe
     if (lastClick == 3 && !longClick) {if (yw > 0.08) context(); return}		// custom context menu
-    if (longClick==3 && type=='video' && !thumbSheet) thumbSheet=1
-    else if (lastClick && lastClick!=2 && (thumbSheet || id=='myPic')) {getStart(); return}
+    if (longClick==3 && type=='video') thumbSheet^=1					// toggle thumbsheet mode
+    else if (!longClick && lastClick && lastClick!=2 && (thumbSheet || id=='myPic')) {getStart(); return}
     if (lastClick==1 && !longClick && myNav.matches(':hover') && id!='myNav') return	// but allow togglePause()
-    if (lastClick == 1 && title.matches(':hover')) {if (!longClick) thumb.currentTime = thumb.style.start ;return}
+    if (lastClick == 1 && title.matches(':hover')) {if (!longClick) thumb.currentTime = thumb.style.start; return}
     if (!gesture && longClick == 1 && !playing && playlist && index && selected) {inca('Move', overMedia); return}
     if (playing && capText && (!capText.innerHTML || capText.innerHTML=="<br>")) {capTime.remove(); capText.remove(); capText=''; return}
     if (id=='mySave' || id=='myInput') return
-    if (id=='myForward') {newCap(0.4); return}
+    if (id=='myForward') {newCap(0.4); return}						// move caption forward in time
     if (id=='myBack') {newCap(-0.4); return}
     if (lastClick==1 && !longClick) {
       if (playing && overMedia && (ym>0.9 || yw>0.95 || type=='audio')) {myPlayer.currentTime=xm*dur; return}
@@ -138,12 +137,11 @@
     if (longClick==2 && myNav.style.display) return
     if (!longClick && !playing && !overMedia && !myNav.style.display) return
     if (longClick==1 && (!overMedia && playing || (!playing && toggles.match('Pause')))) thumb.currentTime=thumb.style.start
-    else if (longClick==1 && overMedia) thumb.currentTime=0.01				// cannot be zero - see getPara.
+    else if (longClick==1 && (overMedia || id=='myPic')) thumb.currentTime=0.01		// cannot be zero - see getPara.
     else if (!longClick && id!='myPic') {						// because thumb indexing adds 20 if dur>61
       if (thumb.style.start<2 || (dur>61 && thumb.style.start>20 && thumb.style.start<22)) thumb.currentTime=0.01
       else if (Math.abs(thumb.style.start-thumb.currentTime) < 5 || lastClick==2) thumb.currentTime=thumb.style.start}
     if (longClick==1 && cue) thumb.currentTime=cue
-    if (longClick==1) thumbSheet=0
     Play()}
 
 
@@ -279,9 +277,9 @@
     else if (!myNav.style.display) {					// zoom myPlayer
       let x=0; let y=0; let z=0
       if (!thumbSheet) z=wheel/800
-      if (overMedia && scaleY>1) {x = mediaX-xpos; y = mediaY-ypos}
+      if (overMedia && scaleY > 0.7) {x = mediaX-xpos; y = mediaY-ypos}
       if (wheelUp) {mediaX+=x*z; mediaY+=y*z; scaleY*=(1+z)}
-      else if (!wheelUp && scaleY) {mediaX-=x*z; mediaY-=y*z; scaleY/=(1+z)}
+      else if (!wheelUp) {mediaX-=x*z; mediaY-=y*z; scaleY/=(1+z)}
       if (scaleY<0.2) scaleY=0.2
       scaleX=skinny*scaleY; positionMedia(0); positionCap(); block=14}
     wheel=0}
@@ -326,7 +324,7 @@
     else {myMenu.style.display='none'; myMask2.style.display='none'}  			// if fullscreen hide menu 
     if (selected && !Click) mySelected.innerHTML = selected.split(',').length -1
     else if (block<25) mySelected.innerHTML = ''
-    if (!seekBar()) mySeekbar.style.height = mySeekbar2.style.height = null
+    if (!seekBar()) myProgress.style.height = mySeekbar.style.height = null
     if (favicon.innerHTML.match('\u2764')) myFavorite.innerHTML='Fav &#x2764'
     else myFavorite.innerHTML='Fav'
     if (looping) {myLoop.style.color='red'} else myLoop.style.color=null
@@ -337,7 +335,7 @@
     if ((","+selected).match(","+index+",")) {mySelect.style.color='red'; myPlayer.style.outline='4px solid red'}
     else {mySelect.style.color=null; myPlayer.style.outline=null}
     if (playing && scaleY <= 0.2 && playlist) myMask.style.opacity=0.74
-    else if (!playing && myNav.style.display && myTitle.value) {myMask.style.opacity=0.6}
+    else if (!playing && myNav.style.display && myTitle.value) myMask.style.opacity=0.6
     else if (playing) myMask.style.opacity=1
     else {myMask.style.opacity=0; myMask.style.pointerEvents=null}
     if (myMask.style.opacity!=0) {myMask.style.pointerEvents='auto'; myMask.style.zIndex=Zindex}
@@ -354,7 +352,7 @@
       if (cue && thumb.style.skinny) myCap.innerHTML='Cue Skinny ' + skinny
       else if (cue && thumb.style.rate) myCap.innerHTML='Cue Speed ' + rate
       else if (cue) myCap.innerHTML='GoTo ' + myPlayer.currentTime.toFixed(2)
-      if (cues.innerHTML && !thumbSheet) myCues(myPlayer.currentTime)
+      if (cues.innerHTML && !thumbSheet && type!='image') myCues(myPlayer.currentTime)
       positionMedia(0)} 
     else {
       if (!listView && thumb.readyState===4 && thumb.duration && overMedia) thumb.play() 
@@ -386,7 +384,7 @@
     if (el==myPlayer && ym<0.9 && yw<0.95 && overMedia && !cue && type!='audio') return
     let cueX = rect.left + 7
     let x = Math.round(el.currentTime*100)/100
-    mySeekbar2.style.width = rect.width * xm + 'px'
+    mySeekbar.style.width = rect.width * xm + 'px'
     let cueW = 0.95 * rect.width * el.currentTime / dur
     if (cue && cue <= x) {
       cueX = mediaX - rect.width / 2 + rect.width * cue / dur
@@ -398,13 +396,13 @@
       cueW = rect.width * (cue - x) / dur
       if (cue < 0.2 + x) {
         cueX = rect.left; cueW = rect.width * el.currentTime / dur}}
-    if (overMedia && !cue) mySeekbar.style.height = mySeekbar2.style.height = '8px'
-    else if (el == myPic) mySeekbar2.style.height = '5px'
-    else {mySeekbar.style.height = '5px'; mySeekbar2.style.height = null}
-    if (rect.bottom > innerHeight) mySeekbar.style.top = mySeekbar2.style.top = innerHeight -15 +'px'
-    else mySeekbar.style.top = mySeekbar2.style.top = (rect.top + rect.height - mySeekbar.offsetHeight) + 'px';
-    mySeekbar.style.left =  mySeekbar2.style.left = cueX +'px'
-    mySeekbar.style.width = cueW +'px'
+    if (overMedia && !cue) myProgress.style.height = mySeekbar.style.height = '8px'
+    else if (el == myPic) mySeekbar.style.height = '5px'
+    else {myProgress.style.height = '5px'; mySeekbar.style.height = null}
+    if (rect.bottom > innerHeight) myProgress.style.top = mySeekbar.style.top = innerHeight -15 +'px'
+    else myProgress.style.top = mySeekbar.style.top = (rect.top + rect.height - myProgress.offsetHeight) + 'px';
+    myProgress.style.left =  mySeekbar.style.left = cueX +'px'
+    myProgress.style.width = cueW +'px'
     return 1}
 
 
@@ -413,6 +411,7 @@
     if (type=='video') mySelect.innerHTML='Select '+index+' '+Time(dur)+' '+size+'mB'
     else mySelect.innerHTML='Select '+index+' Pic '+size+'kB'
     let x = thumb.poster.replace("/posters/", "/thumbs/")		// points to thumbsheet src folder
+    x = x.replace("/temp/history/", "/thumbs/")				// in case history playlist
     let y = x.split('%20').pop().replace('.jpg', '')			// get fav start time from poster filename
     if (!isNaN(y) && y.length > 2 && y.includes('.')) {			// very likely a 'fav' suffix timestamp
       x = x.replace('%20' + y, '')}					// so remove timestamp from filename

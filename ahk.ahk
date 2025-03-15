@@ -426,9 +426,9 @@ StringReplace, folder_s, folder, `', &apos, All				; htm cannot pass '
 
 header = <!--, %page%, %pages%, %sort%, %toggles%, %listView%, %playlist%, %path%, %searchPath%, %searchTerm%, %subfolders%, -->`n<!doctype html>`n<html>`n<head>`n<meta charset="UTF-8">`n<title>Inca - %title%</title>`n<meta name="viewport" content="width=device-width, initial-scale=1">`n<link rel="icon" type="image/x-icon" href="file:///%inca%\cache\icons\inca.ico">`n<link rel="stylesheet" type="text/css" href="file:///%inca%/css.css">`n</head>`n`n
 
-body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1;`n globals(%page%, %pages%, '%folder_s%', '%toggles%', '%sort%', %filt%, %listView%, '%selected%', '%playlist%', %index%); %scroll%.scrollIntoView()">`n`n
+body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(%page%, %pages%, '%folder_s%', '%toggles%', '%sort%', %filt%, %listView%, '%selected%', '%playlist%', %index%); %scroll%.scrollIntoView()">`n`n
 
-<div oncontextmenu="if (yw>0.08) {event.preventDefault()}">`n`n
+<div oncontextmenu="if (yw>0.08) {event.preventDefault()}">`n
 <div id='myNav' class='context' onwheel='wheelEvent(event, id, this)'>`n
 <a onmouseup="inca('Settings')">&#8230;</a>`n
 <a id='mySelect' style='word-spacing:0.8em' onmouseup="if(!longClick) {if (myTitle.value) {sel(index)} else selectAll()}"></a>`n
@@ -439,7 +439,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1;`n global
 <a id='mySpeed'></a>`n
 <a id='mySkinny'></a>`n
 <a id='myFlip' onmouseup='flip()'>Flip</a>`n
-<a id='myLoop' if(looping) {looping=0} else looping=1'>Loop</a>`n
+<a id='myLoop' onmouseup='if(looping) {looping=0} else looping=1'>Loop</a>`n
 <a id='myIndex' onmouseup="if(myTitle.value) {inca('Index','',index)} else inca('Index','',0)">Index</a>`n
 <a id='myDelete' onmouseup="if(!event.button) inca('Delete','',index)">Delete</a>
 <a id='myCue' onmouseup="cueButton()">Cue</a>`n
@@ -450,17 +450,17 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1;`n global
 
 <div id='myMask' class="mask" onwheel="wheelEvent(event, id, this)"></div>`n 
 <video id="myPlayer" class='player' type="video/mp4" muted onwheel="wheelEvent(event, id, this)"></video>`n
+<span id='myProgress' class='seekbar'></span>`n
 <span id='mySeekbar' class='seekbar'></span>`n
-<span id='mySeekbar2' class='seekbar'></span>`n
 <span id='mySelected' class='selected'></span>`n
-<div id='capMenu' class='capContainer'>`n
-<span id='myCancel' class='capMenu' onmouseup="editing=0; inca('Reload',index)">&#x2715;</span>`n 
-<span id='myBack' class='capMenu' style='font-weight:bold'>&#x2212</span>`n 
-<span id='myForward' class='capMenu' style='font-weight:bold'>&#xFF0B</span>`n
-<span id='mySave' class='capMenu' onmouseup="if (!longClick) inca('Null')">Save</span></div>`n`n
+<div id='capMenu' class='capMenu'>`n
+<span id='myCancel' class='capButton' onmouseup="editing=0; inca('Reload',index)">&#x2715;</span>`n 
+<span id='myBack' class='capButton' style='font-weight:bold'>&#x2212</span>`n 
+<span id='myForward' class='capButton' style='font-weight:bold'>&#xFF0B</span>`n
+<span id='mySave' class='capButton' onmouseup="if (!longClick) inca('Null')">Save</span></div>`n`n
 
 <div id='myContent' class='mycontent'>`n
-<div id='myView' class='myview'>`n`n`n %mediaList%</div>`n`n
+<div id='myView' class='myview'>`n`n %mediaList%</div>`n`n
 
 <div id='myMask2' style='position:fixed; pointer-events:none; height:16em; width:99.7`%; background:#15110a; top:0'></div>`n
 <div id='myMenu' class='myMenu'>
@@ -972,7 +972,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1;`n global
               mute := 1*StrSplit(address,"|").4
             if (!skinny || skinny != 1)
               skinny := -1*(1-skinny)
-            else skinny=
+            else skinny =
             if (rate != 1)
               speed = --speed=%rate%
             else speed =
@@ -1013,7 +1013,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1;`n global
                   break
                 else sleep 20
               WinActivate, ahk_class mpv
-              if (skinny>0)
+              if skinny
                 RunWait %COMSPEC% /c echo add video-scale-x %skinny% > \\.\pipe\mpv,, hide && exit
               }
             }
@@ -1627,7 +1627,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1;`n global
               searchTerm := array.10
               if searchTerm
                 folder := searchTerm
-subfolders := array.11
+              subfolders := array.11
               }
             }
         }
