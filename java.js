@@ -1,3 +1,5 @@
+// mypreview 2024 may18
+// caption between not use +- 100mS
 
   let entry = 0								// thumb container
   let thumb = 0								// thumb element
@@ -113,35 +115,37 @@
     if (longClick && myPanel.matches(':hover')) return					// copy files instead of move
     if (longClick && myRibbon.matches(':hover')) return					// html sends clicks to inca.exe
     if (lastClick == 3 && !longClick) {if (yw > 0.08) context(); return}		// custom context menu
-    if (longClick==3 && type=='video') thumbSheet^=1					// toggle thumbsheet mode
-    else if (!longClick && lastClick && lastClick!=2 && (thumbSheet || id=='myPic')) {getStart(); return}
-    if (lastClick==1 && !longClick && myNav.matches(':hover') && id!='myNav') return	// but allow togglePause()
+    if (longClick == 3 && type == 'video') thumbSheet ^= 1				// toggle thumbsheet mode
+    else if (longClick) thumbSheet = 0
+    else if (lastClick && lastClick != 2 && (thumbSheet || id == 'myPic')) {getStart(); return}
+    if (lastClick == 1 && !longClick && myNav.matches(':hover') && id!='myNav') return	// but allow togglePause()
     if (lastClick == 1 && title.matches(':hover')) {if (!longClick) thumb.currentTime = thumb.style.start; return}
     if (!gesture && longClick == 1 && !playing && playlist && index && selected) {inca('Move', overMedia); return}
     if (playing && capText && (!capText.innerHTML || capText.innerHTML=="<br>")) {capTime.remove(); capText.remove(); capText=''; return}
-    if (id=='mySave' || id=='myInput') return
-    if (id=='myForward') {newCap(0.4); return}						// move caption forward in time
-    if (id=='myBack') {newCap(-0.4); return}
-    if (lastClick==1 && !longClick) {
-      if (playing && overMedia && (ym>0.9 || yw>0.95 || type=='audio')) {myPlayer.currentTime=xm*dur; return}
+    if (id == 'mySave' || id == 'myInput') return
+    if (id == 'myForward') {newCap(0.4); return}					// move caption forward in time
+    if (id == 'myBack') {newCap(-0.4); return}
+    if (lastClick == 1 && !longClick) {
+      if (playing && overMedia && (ym > 0.9 || yw > 0.95)) {if (dur) myPlayer.currentTime = xm * dur; return}
       else if (srt.matches(':hover')) {playCap(); return}				// play at caption
       else if (playing) {togglePause(); return}
       else if (!entry.matches(':hover')) return}					// not over html thumb/media
     if (longClick && overText && lastClick==1) {myPlayer.pause(); return}
-    if (longClick==1 && !playing && !myNav.style.display && !overMedia) index = lastMedia
-    if (lastClick==2) {									// middle click
+    if (longClick == 1 && !playing && !myNav.style.display && !overMedia) index = lastMedia
+    if (lastClick == 2) {								// middle click
+      if (editing) inca('Null')
       if (!playing && !myNav.style.display) {inca('View',lastMedia); return}		// switch list/thumb view
-      else if (longClick) {index--} else index++; if (editing) inca('Null')}		// next, previous media
-    if (lastClick) myPlayer.style.opacity=0						// fade myPlayer up
-    if (!getParameters(index)) {index=lastMedia; closePlayer(); return}			// end of media list
-    if (longClick==2 && myNav.style.display) return
+      else if (longClick) {index--} else index++}					// next, previous media
+    if (lastClick) myPlayer.style.opacity = 0						// fade myPlayer up
+    if (!getParameters(index)) {index = lastMedia; closePlayer(); return}		// end of media list
+    if (longClick == 2 && myNav.style.display) return
     if (!longClick && !playing && !overMedia && !myNav.style.display) return
-    if (longClick==1 && (!overMedia && playing || (!playing && toggles.match('Pause')))) thumb.currentTime=thumb.style.start
-    else if (longClick==1 && (overMedia || id=='myPic')) thumb.currentTime=0.01		// cannot be zero - see getPara.
-    else if (!longClick && id!='myPic') {						// because thumb indexing adds 20 if dur>61
-      if (thumb.style.start<2 || (dur>61 && thumb.style.start>20 && thumb.style.start<22)) thumb.currentTime=0.01
-      else if (Math.abs(thumb.style.start-thumb.currentTime) < 5 || lastClick==2) thumb.currentTime=thumb.style.start}
-    if (longClick==1 && cue) thumb.currentTime=cue
+    if (longClick==1 && (overMedia || id == 'myPic')) thumb.currentTime = 0.01		// cannot be zero - see getPara.
+    else if (longClick==1 && (!overMedia && playing || (!playing && toggles.match('Pause')))) thumb.currentTime = thumb.style.start
+    else if (!longClick && id != 'myPic') {						// because thumb indexing adds 20 if dur>61
+      if (thumb.style.start < 2 || (dur > 61 && thumb.style.start > 20 && thumb.style.start < 22)) thumb.currentTime=0.01
+      else if (Math.abs(thumb.style.start - thumb.currentTime) < 5 || lastClick == 2) thumb.currentTime=thumb.style.start}
+    if (longClick == 1 && cue) thumb.currentTime=cue
     Play()}
 
 
@@ -154,7 +158,7 @@
       if (scaleY>1.5) scaleY=1.5}
     myPlayer.style.transition = 'opacity 0.6s'
     if (!thumbSheet) myPlayer.currentTime=thumb.currentTime
-    let para = myPlayer.currentTime+'|'+skinny+'|'+rate+'|'+1*localStorage.muted	// for if external player
+    let para = myPlayer.currentTime+'|'+skinny+'|'+rate+'|'+1*localStorage.muted	// for if mpv external player
     thumb.pause()
     myPlayer.pause()
     myPlayer.muted = 1*localStorage.muted
@@ -218,8 +222,7 @@
     wheel += Math.ceil(Math.abs(e.deltaY))
     if (Click || wheel < block) return
     block=120
-    let wheelUp=false
-    if (e.deltaY > 0) wheelUp=true
+    let wheelUp = e.deltaY > 0
     if (id=='myPage') {							// htm page
       if (wheelUp && page<pages) page++
       else if (!wheelUp && page>1) page--}
@@ -341,7 +344,7 @@
     if (myMask.style.opacity!=0) {myMask.style.pointerEvents='auto'; myMask.style.zIndex=Zindex}
     if (playing=='browser') {
       if (!myNav.style.display && !thumbSheet) lastStart=myPlayer.currentTime
-      if (type=='video' && !myPlayer.duration && myPlayer.readyState!==4 && block<25) mySelected.innerHTML='Not found or wrong type'
+      if (dur && !myPlayer.duration && myPlayer.readyState!==4 && block<25) mySelected.innerHTML='Not found or wrong type'
       if (type!='image' && !dur) dur=myPlayer.duration					// just in case
       myPlayer.playbackRate=rate
       if (type == 'document') myCap.innerHTML='Save Text'
@@ -469,14 +472,6 @@
     if (captions) {srt.style.opacity=1; myPlayer.play()}}
 
 
-  function addFavorite() {
-    let tm = myPlayer.currentTime.toFixed(1)
-    if (longClick) tm = 0						// sets fav start to 0
-    else if (!playing) tm = thumb.currentTime.toFixed(1)
-    inca('Favorite',tm,index,srt.scrollTop.toFixed(0))			// includes any caption/txt scroll
-    favicon.innerHTML='&#10084'}					// heart symbol on htm thumb
-
-
   function nextMedia() {						// after media finished playing
     if (!looping) {if (getParameters(index+=1)) {Play()} else closePlayer(); return}
     myPlayer.currentTime=thumb.style.start
@@ -552,15 +547,15 @@
     srt = document.getElementById('srt'+i)				// txt or caption element
     rate = defRate
     skinny = 1
-    let el = thumb['ondrag'].toString().split(',')			// get media parameters from htm element
-    type = el[1].replaceAll('\'', '').trim()				// eg video, image
-    thumb.style.start=1*el[2].trim()+0.02				// smoother thumb start in chrome
-    dur = 1*el[3].trim()						// in case video is wmv, avi etc
-    size = 1*el[4]							// file size
+    let params = entry.dataset.params.split(',')
+    type = params[0]							// media type eg. video
+    thumb.style.start = start = Number(params[1]) + 0.02		// start time
+    dur = Number(params[2])						// duration
+    size = Number(params[3])						// file size
     if (index && !thumb.currentTime) lastStart=thumb.currentTime=thumb.style.start
-    if (cues.innerHTML) myCues(0)					// process default 0:00 cues - width, speed etc.
-    if (x=1*thumb.style.rate) rate=x					// custom css variable - rate edited
-    if (x=1*thumb.style.skinny) skinny=x				// get any live width edits
+    if (cues && cues.innerHTML) myCues(0)				// process default 0:00 cues - width, speed etc.
+    let x = Number(thumb.style.rate); if (x) rate = x			// custom css variable - rate edited
+    x = Number(thumb.style.skinny); if (x) skinny = x			// get any live width edits
     thumb.style.transform='scale('+skinny+',1)' 			// set thumb width
     if (index) setPlayer()   						// src, poster
     return 1}
@@ -640,6 +635,7 @@
   function overThumb(id) {
     if (thumb) thumb.pause()						// pause previous thumb
     index = id
+    if (Click) return							// faster for click & slide selecting
     getParameters(id)
     thumb.style.opacity=1						// for listView
     if (thumb.readyState !== 4) thumb.load()				// first use
@@ -657,7 +653,7 @@
 
 
   function playCap() {
-    if (overText && ypos > srt.offsetTop && ypos < srt.offsetTop + 24) {srt.scrollTo(0,0); myPlayer.pause(); return}
+    if (overText && ypos > srt.offsetTop && ypos < srt.offsetTop + 12) {srt.scrollTo(0,0); myPlayer.pause(); return}
     let id = document.elementFromPoint(xpos,ypos).id			// element under cursor
     let tm = id.split('-')[1]						// get timestamp
     if (longClick==1) myPlayer.pause()					// longclick over text triggers osk
@@ -678,8 +674,10 @@
 
 
   function joinCap() {							// join to cap above
+    let text = window.getSelection().getRangeAt(0).toString()
     if (window.getSelection().anchorOffset) return			// cursor not at beginning of caption
-    if (window.getSelection().getRangeAt(0)) capText.textContent = ''	// clear any selected text
+    if (text == capText.textContent) capText.textContent = ''
+    else if (text) return
     myPlayer.currentTime=1*capTime.previousElementSibling.id.split('-')[1] // set player to previous caption
     capText.previousElementSibling.remove()				// remove timestamp
     capText.previousElementSibling.textContent+=' '+capText.textContent	// add caption to previous caption
@@ -797,6 +795,15 @@
     if (thumb.src.slice(-3)=='txt') srt.style.height = '24em';
     capMenu.style.top = rect.bottom + 24 + srt.offsetHeight + 'px'; capMenu.style.left = mediaX -85 + 'px'
     srt.style.top = rect.bottom + 'px'; srt.style.left = mediaX-srt.offsetWidth/2 + 'px'}
+
+
+  function addFavorite() {
+    let tm = myPlayer.currentTime.toFixed(1)
+    if (longClick) tm = 0						// sets fav start to 0
+    else if (!playing) tm = thumb.currentTime.toFixed(1)
+    inca('Favorite',tm,index,srt.scrollTop.toFixed(0))			// includes any caption/txt scroll
+    if (selected) {sel(index); selected=''}				// clear selected
+    favicon.innerHTML='&#10084'}					// heart symbol on htm thumb
 
 
   function mute() {

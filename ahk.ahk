@@ -220,9 +220,9 @@ if !size
 caption = <div id='srt%j%' class='caption' onmouseover='overText=1' onmouseout='overText=0'`n oninput="if(editing&&editing!='%j%') {inca('capEdit',editing)}; editing=index; myPlayer.pause()">%text%</div>
 
 if listView
-  mediaList = %mediaList%%fold%<table onmouseover='overThumb(%j%)'`n onmouseout="thumb%j%.style.opacity=0">`n <tr id='entry%j%' onmouseenter='if (gesture) sel(%j%)'>`n <td style='min-width: 2em'>%j%</td>`n <td>%ext%`n <video id='thumb%j%' class='thumb2' ondrag="getParameters(%j%, '%type%', %start%, %dur%, %size%, event)"`n %src%`n %poster%`n preload=%preload% muted loop type="video/mp4"></video></td>`n <td>%size%</td>`n <td style='min-width: 6em'>%durT%</td>`n <td>%date%</td>`n <td id='myFavicon%j%' style='font-size: 0.7em; color: salmon; min-width: 3em'>%favicon%</td>`n <td style='width: 70vw'><input id="title%j%" class='title' style='transition: 0.8s' onmouseover='overText=1' onmouseout='overText=0; Click=0' type='search' value='%media_s%'`n oninput="renamebox=this.value; lastMedia=%j%"></td>`n %fo%</tr>`n %caption%<span id='cues%j%' style='display: none'>%cues%</span></table>`n`n
+  mediaList = %mediaList%%fold%<table onmouseover='overThumb(%j%)'`n onmouseout="thumb%j%.style.opacity=0">`n <tr id='entry%j%' data-params='%type%,%start%,%dur%,%size%' onmouseenter='if (gesture) sel(%j%)'>`n <td style='min-width: 2em'>%j%</td>`n <td>%ext%`n <video id='thumb%j%' class='thumb2' %src%`n %poster%`n preload=%preload% muted loop type="video/mp4"></video></td>`n <td>%size%</td>`n <td style='min-width: 6em'>%durT%</td>`n <td>%date%</td>`n <td id='myFavicon%j%' style='font-size: 0.7em; color: salmon; min-width: 3em'>%favicon%</td>`n <td style='width: 70vw'><input id="title%j%" class='title' style='transition: 0.8s' onmouseover='overText=1' onmouseout='overText=0; Click=0' type='search' value='%media_s%'`n oninput="renamebox=this.value; lastMedia=%j%"></td>`n %fo%</tr>`n %caption%<span id='cues%j%' style='display: none'>%cues%</span></table>`n`n
 
-else mediaList = %mediaList%<div id="entry%j%" class='entry'>`n <span id='myFavicon%j%' style='display: block; position: absolute; top: 7px; left: -5px; font-size: 0.7em; color: salmon' onmouseenter='overThumb(%j%)'>%favicon%</span>`n <input id='title%j%' class='title' style='text-align: center' type='search'`n value='%media_s%'`n oninput="renamebox=this.value; lastMedia=%j%"`n onmouseover="overText=1; if((x=this.value.length/2) > view) this.style.width=x+'em'"`n onmouseout="overText=0; this.style.width='100`%'">`n <video id="thumb%j%" class='thumb' ondrag="getParameters(%j%, '%type%', %start%, %dur%, %size%, event)"`n onmouseenter="overThumb(%j%); if (gesture) sel(%j%)"`n onmouseout='this.pause()' %src%`n %poster%`n preload=%preload% loop muted type='video/mp4'></video>%noIndex%`n
+else mediaList = %mediaList%<div id="entry%j%" class='entry' data-params='%type%,%start%,%dur%,%size%'>`n <span id='myFavicon%j%' style='display: block; position: absolute; top: 7px; left: -5px; font-size: 0.7em; color: salmon' onmouseenter='overThumb(%j%)'>%favicon%</span>`n <input id='title%j%' class='title' style='text-align: center' type='search'`n value='%media_s%'`n oninput="renamebox=this.value; lastMedia=%j%"`n onmouseover="overText=1; if((x=this.value.length/2) > view) this.style.width=x+'em'"`n onmouseout="overText=0; this.style.width='100`%'">`n <video id="thumb%j%" class='thumb' onmouseenter="overThumb(%j%); if (gesture) sel(%j%)"`n onmouseout='this.pause()' %src%`n %poster%`n preload=%preload% loop muted type='video/mp4'></video>%noIndex%`n
 <span id='cues%j%' style='display: none'>%cues%</span></div>`n %caption%`n`n
 }
  
@@ -693,7 +693,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
                 incaTab =			; force new tab
                 searchTerm =
                 command = SearchBox		; search from selected text
-                address := RegExReplace(Clipboard, "[^a-zA-Z0-9._\- ]", " ")
+                address := RegExReplace(Clipboard, "[\r\n\t\v\f]", " ")  	; Remove control chars
                 ProcessMessage()
                 CreateList(1)
                 }
@@ -791,7 +791,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
           if !command
             continue
           else ProcessMessage()
-          if (command == "Text")
+ if (command != "Skinny" && command != "Rate" && command != "capEdit" && command != "History")
             break
           }
         if (reload == 1)
@@ -1070,15 +1070,15 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
               }
             GuiControl, Indexer:, GuiInd, processing - %media%
             selected =
-   ;         reload:=2
             }
         if (command == "Favorite")					; add media favorite to New.m3u
             {
             if !selected
               return
-            StringReplace selected,selected,`,,`,,UseErrorLevel		; count of selected
-            if (!value || ErrorLevel>1)
-              value = 0.0						; if multiple favs added - set time 0
+            Loop, Parse, selected, `, 
+              count := A_Index - 1
+            if (!value || count > 1)					; value is media time
+              value := 0						; if multiple favs added - set time 0
             value := Round(value, 1)
             Loop, Parse, selected, `,
               if getMedia(A_Loopfield)
@@ -1091,10 +1091,9 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
               FileAppend, 0.0|scroll|%address%`r`n, %inca%\cache\cues\%media%.txt, UTF-8	; add scroll if srt text exists
             popup("Added - New",333,0,0)
             AllFav()							; update consolidated fav list
-            StrReplace(selected, ",",, x)
             selected =
-            if (x>1)
-              reload:=2
+            if (count > 1)
+              reload := 2
             }
         if (command == "View")						; change thumb/list view
             {
@@ -1265,7 +1264,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
             x = @echo off`r`nset `"temp=(pause & pause & pause)>nul`"`r`ntype `%1|(`%temp`% & findstr `"^`")`r`n
             FileAppend, %x%, %inca%\cache\temp\temp.bat 
             runwait, %inca%\cache\temp\temp.bat %inca%\cache\temp\temp1.txt > %inca%\cache\temp\temp.txt,,Hide
-            runwait, %inca%\cache\apps\ffmpeg.exe -f concat -safe 0 -i "%inca%\cache\temp\temp.txt" -c copy "%mediaPath%\%media%- join.%ext%",,Hide
+            runwait, %inca%\cache\apps\ffmpeg.exe -f concat -safe 0 -i "%inca%\cache\temp\temp.txt" -c copy "%mediaPath%\%media%- join.%ext%",, Hide
             src = %mediaPath%\%media%- join.%ext%
             FileDelete, %inca%\cache\temp\temp.bat
             FileDelete, %inca%\cache\temp\temp.txt

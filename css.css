@@ -22,7 +22,9 @@ e {						/* caption text entries */
   background: #15110aaa;
   font-size: 1em;
   outline: none;
-  padding: 0.5em;
+  padding: 1em;
+  padding-top: 0.4em;
+  padding-bottom: 0.4em;
   border-radius: 1em;
   color: #FFd0dB77;
   width: fit-content;
