@@ -1,5 +1,7 @@
+// add server backend node.js
 // mypreview 2024 may18
-// caption between not use +- 100mS
+// maybe use wheel blocking on captions update
+
 
   let entry = 0								// thumb container
   let thumb = 0								// thumb element
@@ -116,7 +118,7 @@
     if (longClick && myRibbon.matches(':hover')) return					// html sends clicks to inca.exe
     if (lastClick == 3 && !longClick) {if (yw > 0.08) context(); return}		// custom context menu
     if (longClick == 3 && type == 'video') thumbSheet ^= 1				// toggle thumbsheet mode
-    else if (longClick) thumbSheet = 0
+    else if (longClick == 1) thumbSheet = 0
     else if (lastClick && lastClick != 2 && (thumbSheet || id == 'myPic')) {getStart(); return}
     if (lastClick == 1 && !longClick && myNav.matches(':hover') && id!='myNav') return	// but allow togglePause()
     if (lastClick == 1 && title.matches(':hover')) {if (!longClick) thumb.currentTime = thumb.style.start; return}
@@ -125,9 +127,10 @@
     if (id == 'mySave' || id == 'myInput') return
     if (id == 'myForward') {newCap(0.4); return}					// move caption forward in time
     if (id == 'myBack') {newCap(-0.4); return}
+if (lastClick == 1 && srt.matches(':hover')) {playCap(); return}				// play at caption
     if (lastClick == 1 && !longClick) {
       if (playing && overMedia && (ym > 0.9 || yw > 0.95)) {if (dur) myPlayer.currentTime = xm * dur; return}
-      else if (srt.matches(':hover')) {playCap(); return}				// play at caption
+//      else if (srt.matches(':hover')) {playCap(); return}				// play at caption
       else if (playing) {togglePause(); return}
       else if (!entry.matches(':hover')) return}					// not over html thumb/media
     if (longClick && overText && lastClick==1) {myPlayer.pause(); return}
@@ -642,25 +645,23 @@
     thumb.playbackRate=0.6}						// less busy htm thumbs
 
 
-  function Captions() {							// highlight srt Captions (from timer)
-    let time = index+'-'+myPlayer.currentTime.toFixed(1)
-    if (el=document.getElementById('my'+time)) {
-      if (el != capText && capText) {capText.style.color = null; capText.style.transform = 'none'}
-      el.style.color = 'pink'; el.style.transform = 'scale(1.1,1.2)'
-      capTime = document.getElementById(time)
-      if (el != capText && !overText) capTime.scrollIntoView()
-      capText = el}}
+  function Captions() {							// grok refactored code
+    const t = myPlayer.currentTime.toFixed(1), latest = [...document.querySelectorAll(`[id^="my${index}-"]`)]
+      .reduce((a, e) => { const x = parseFloat(e.id.split('-')[1]); return x <= t && x > (a?.time ?? -1) ? { e, x } : a}, null)
+    if (latest?.e !== capText) {
+      if (capText) [capText.style.color, capText.style.transform] = [null, 'none']
+      capText = latest?.e || ''; capTime = capText ? capText.previousElementSibling : ''
+      capText && ([capText.style.color, capText.style.transform] = ['pink', 'scale(1.1,1.2)'], !overText && srt.scrollTo(0, capText.offsetTop - 20))}}
 
 
   function playCap() {
-    if (overText && ypos > srt.offsetTop && ypos < srt.offsetTop + 12) {srt.scrollTo(0,0); myPlayer.pause(); return}
-    let id = document.elementFromPoint(xpos,ypos).id			// element under cursor
-    let tm = id.split('-')[1]						// get timestamp
-    if (longClick==1) myPlayer.pause()					// longclick over text triggers osk
-    else if (!id.match('my') || (capText.id==id && !editing)) {togglePause(); return}
-    else if (!editing || capText.id!=id) myPlayer.play()		// clicked different caption
+    if (overText && ypos > srt.offsetTop && ypos < srt.offsetTop + 12) return srt.scrollTo(0,0), myPlayer.pause()
+    const id = document.elementFromPoint(xpos,ypos).id, tm = id.split('-')[1]
+    if (!id.match('my') || (capText.id==id && !editing)) togglePause()
+    else if (!editing || capText.id!=id) myPlayer.play()
     else myPlayer.pause()
-    if (!isNaN(tm) && !myPlayer.paused) myPlayer.currentTime = thumb.currentTime = tm}
+    if (capText.id!=id && capTime.id!=id && !myPlayer.paused) myPlayer.currentTime = thumb.currentTime = tm
+    if (longClick==1) myPlayer.pause()}
 
 
   function openCap() {							// show captions

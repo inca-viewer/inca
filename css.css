@@ -14,7 +14,7 @@
   c {display: block; padding-left: 1em; text-decoration: none; font-weight: bold; color: #826858bb; transition: 1s} /* panel text */
   c:hover {transition: 0.2s; transform: scale(1.1,1.1); color: pink}
   c:active {color: #15110a; transform: scale(0.8,0.8)}
-  d {display: block; color: #ffa07a00; font-size: 0.8em; transition: 2s; padding:1%}	/* caption timestamps */
+  d {display: block; color: #ffa07a00; font-size: 0.8em; transition: 2s}	/* caption timestamps */
   d:active {color: lightsalmon}
 
 e {						/* caption text entries */
@@ -23,8 +23,8 @@ e {						/* caption text entries */
   font-size: 1em;
   outline: none;
   padding: 1em;
-  padding-top: 0.4em;
-  padding-bottom: 0.4em;
+  padding-top: 0.3em;
+  padding-bottom: 0.3em;
   border-radius: 1em;
   color: #FFd0dB77;
   width: fit-content;
