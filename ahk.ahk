@@ -163,7 +163,7 @@
           {
           preload = 'none'						; faster page load
           StringReplace, thumb, thumb, #, `%23, All			; html cannot have # in filename
-          stringlower, thumb, thumb
+ ;  stringlower, thumb, thumb
           poster = poster="file:///%thumb%"
           }
         else
@@ -229,7 +229,7 @@ else mediaList = %mediaList%<div id="entry%j%" class='entry' data-params='%type%
 
     RenderPage(reset)							; construct web page from media list
         {
-        Critical							; pause key & timer interrupts
+        Critical							; stop pause key & timer interrupts
         if !path
           return
         foldr =
@@ -431,7 +431,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
 <div oncontextmenu="if (yw>0.08) {event.preventDefault()}">`n
 <div id='myNav' class='context' onwheel='wheelEvent(event, id, this)'>`n
 <a onmouseup="inca('Settings')">&#8230;</a>`n
-<a id='mySelect' style='word-spacing:0.8em' onmouseup="if(!longClick) {if (myTitle.value) {sel(index)} else selectAll()}"></a>`n
+<a id='mySelect' style='word-spacing:0.8em' onmouseup="if(!longClick && lastClick==1) {if (myTitle.value) {sel(index)} else selectAll()}"></a>`n
 <input id='myTitle' class='title' style='color:lightsalmon; padding-left:1.2em'>`n
 <video id='myPic' muted class='pic'></video>`n
 <a id='myMute' onmouseup='mute()'>Mute</a>`n
@@ -529,7 +529,13 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
       if fullscreen
         send, {F11}
       fullscreen := 0
-      sleep 200								; time for page to load
+      Loop, 30								; wait until page loaded
+        {
+        WinGetTitle, title, A
+        If InStr(title, incaTab)
+          break
+        Sleep, 100
+        }
       PopUp("",0,0,0)
       }
 
@@ -968,6 +974,12 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
             start := Round(StrSplit(address,"|").1,2)
             skinny := Round(StrSplit(address,"|").2,2)
             rate := Round(StrSplit(address,"|").3,2)
+if (skinny < 0)
+flip := "--vf=hflip"
+else flip =
+skinny := Abs(skinny)
+
+
             if (type != "audio")
               mute := 1*StrSplit(address,"|").4
             if (!skinny || skinny != 1)
@@ -979,6 +991,9 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
             if mute
               mute = yes
             else mute = no
+            If InStr(toggles, "Pause")
+              pause = --pause
+            else pause =
             if !start
               start = 0.0
             start := Time(start)
@@ -1007,7 +1022,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
                 sleep 24
                 RunWait %COMSPEC% /c echo seek %start% absolute exact > \\.\pipe\mpv,, hide && exit
                 }
-              else Run %inca%\cache\apps\mpv --start=%start% %autofit% %geometry% %speed% --mute=%mute% --playlist-start=%mpvid% --input-ipc-server=\\.\pipe\mpv "%inca%\cache\temp\mpvPlaylist.m3u" 
+              else Run %inca%\cache\apps\mpv --start=%start% %autofit% %geometry% %speed% %pause% %flip% --mute=%mute% --playlist-start=%mpvid% --input-ipc-server=\\.\pipe\mpv "%inca%\cache\temp\mpvPlaylist.m3u"
               Loop, 20
                 if WinActive, ahk_class mpv
                   break
