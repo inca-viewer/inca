@@ -1,6 +1,3 @@
-// add server backend node.js, busybox, mongoose
-// flip mypic
-
 
   let entry = 0								// thumb container
   let thumb = 0								// thumb element
@@ -274,12 +271,12 @@
       myPic.style.transform='scale('+Math.abs(skinny)*zoom+','+zoom+')'
       block=80}
     else if ((type=='video'||type=='audio') && !thumbSheet && (!overMedia||ym>0.9||yw>0.95)) {	// seek
-      if (wheelUp && !myPlayer.paused && myPlayer.currentTime > dur-3) return
       if (dur > 120) interval = 3
       else interval = 0.5
       if (myPlayer.paused) interval = 0.1
-      if (wheelUp && myPlayer.currentTime < dur-0.05) myPlayer.currentTime += interval
-      else myPlayer.currentTime -= interval}
+      if (wheelUp && myPlayer.currentTime < myPlayer.duration - interval) myPlayer.currentTime += interval
+      else if (!wheelUp) myPlayer.currentTime -= interval
+      if (myPlayer.currentTime > myPlayer.duration - 1) myPlayer.pause()}
     else if (!myNav.style.display) {					// zoom myPlayer
       let x=0; let y=0; let z=0
       if (!thumbSheet) z=wheel/800
@@ -298,6 +295,7 @@
     if (myNav.style.display) el = myPic
     else if (!playing) el = thumb
     rect = el.getBoundingClientRect()
+    if (!thumbSheet && !myNav.matches(':hover') && myNav.style.display && playing) myPlayer.play()
     if (!myNav.matches(':hover')) myNav.style.display=null
     if (myNav.style.display && myTitle.value) myNav.style.width=rect.width+85+'px'
     else myNav.style.width = 85+'px'
@@ -349,7 +347,8 @@
     else srt.style.opacity=null
     if (playing=='browser') {
       if (!myNav.style.display && !thumbSheet) lastStart=myPlayer.currentTime
-      if (dur && !myPlayer.duration && myPlayer.readyState!==4 && block<25) mySelected.innerHTML='Not found or wrong type'
+      if (dur && !myPlayer.duration && myPlayer.readyState!==4 && type=='video' && block<25) {
+        mySelected.innerHTML='Not found or wrong type'}
       if (type!='image' && !dur) dur=myPlayer.duration					// just in case
       myPlayer.playbackRate=rate
       if (type == 'document') myCap.innerHTML='Save Text'
@@ -437,16 +436,13 @@
     el=thumb.getBoundingClientRect()
     myPic.style.height=el.height+'px'					// context menu thumb 
     myPic.style.width=el.height*ratio+'px'
-  const scaleValue = Math.abs(skinny) * zoom;
-// myPic.style.left = (skinny < 0) ? (myPic.offsetWidth + 50) + 'px' : '0px';
-// myPic.style.transform = skinny < 0 ? `scaleX(-1) scale(${scaleValue}, ${zoom})` : `scale(${scaleValue}, ${zoom})`;
     myPic.style.transform='scale('+Math.abs(skinny)*zoom+','+zoom+')'
     myPic.style.backgroundPosition = '0% 0%'				// sets to frame 1 of 6x6 thumbSheet
     if (thumbSheet) myPlayer.load()
     else if (!playing) myPlayer.currentTime=thumb.currentTime}		// fast start play
 
 
-function setPic() {							// sets context image based on cursor over myPic
+  function setPic() {							// sets context image based on cursor over myPic
     if (!myPic.matches(':hover') || type != 'video') return
     let y = myPic.getBoundingClientRect()
     let x = Math.max(0, Math.min(1, (xpos - y.left) / y.width))
@@ -497,7 +493,7 @@ function setPic() {							// sets context image based on cursor over myPic
 
 
   function sel(i) {							// highlight selected media in html
-    if (!i || Click==2 || overText) return
+    if (!i || Click==2 || overText || myPanel.matches(':hover')) return
     let el=document.getElementById('thumb'+i)
     if (listView) el=document.getElementById('title'+i)
     let x = ','+selected
@@ -660,11 +656,10 @@ function setPic() {							// sets context image based on cursor over myPic
   function playCap() {
     if (overText && ypos > srt.offsetTop && ypos < srt.offsetTop + 12) return srt.scrollTo(0,0), myPlayer.pause()
     const id = document.elementFromPoint(xpos,ypos).id, tm = id.split('-')[1]
-    if (!id.match('my') || (capText.id==id && !editing)) togglePause()
-    else if (!editing || capText.id!=id) myPlayer.play()
-    else myPlayer.pause()
-    if (capText.id!=id && capTime.id!=id && !myPlayer.paused) myPlayer.currentTime = thumb.currentTime = tm
-    if (longClick==1) myPlayer.pause()}
+    if (!id.match('my')) togglePause()					// not caption text
+    else myPlayer.currentTime = thumb.currentTime = tm			// set player to caption start
+    if (id.match('my')) if (editing) {myPlayer.pause()} else myPlayer.play()	// clicked caption text
+    if (longClick==1) myPlayer.pause()}					// osk triggered in inca
 
 
   function openCap() {							// show captions
@@ -712,8 +707,7 @@ function setPic() {							// sets context image based on cursor over myPic
       let ratio = capText.textContent.length/z.length			// ratio of text split
       let id1=1*capTime.id.split('-')[1]				// time of original caption
       let id2=1*capText.nextElementSibling.id.split('-')[1]		// time of new caption
-// alert(range.startOffset+'  '+capText.textContent.length)
-      if (range.startOffset != capText.textContent.length) myPlayer.currentTime += (id2-id1)*ratio - 0.5} // guess for new timestamp
+      if (range.startOffset != capText.textContent.length) myPlayer.currentTime = id1 + (id2-id1)*ratio} // guess for new timestamp
     if (!newText) newText = '________'
     if (playing) thumb.currentTime = myPlayer.currentTime
     let w = thumb.currentTime.toFixed(3).toString().split('.')		// second and millisecond parts
