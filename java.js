@@ -1,3 +1,5 @@
+// set 1st caption off zero
+// last mp3 start
 
   let entry = 0								// thumb container
   let thumb = 0								// thumb element
@@ -654,7 +656,7 @@
 
 
   function playCap() {
-    if (overText && ypos > srt.offsetTop && ypos < srt.offsetTop + 12) return srt.scrollTo(0,0), myPlayer.pause()
+    if (overText && ypos > srt.offsetTop && ypos < srt.offsetTop + 12) {srt.scrollTo(0,12); myPlayer.pause(); return}
     const id = document.elementFromPoint(xpos,ypos).id, tm = id.split('-')[1]
     if (!id.match('my')) togglePause()					// not caption text
     else myPlayer.currentTime = thumb.currentTime = tm			// set player to caption start
@@ -675,6 +677,7 @@
     if (window.getSelection().anchorOffset) return			// cursor not at beginning of caption
     if (text == capText.textContent) capText.textContent = ''
     else if (text) return
+    editing = index
     myPlayer.currentTime=1*capTime.previousElementSibling.id.split('-')[1] // set player to previous caption
     capText.previousElementSibling.remove()				// remove timestamp
     capText.previousElementSibling.textContent+=' '+capText.textContent	// add caption to previous caption

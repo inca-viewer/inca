@@ -884,20 +884,20 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
               address := StrReplace(address, "`r`n`r`n", "`r`n")
               address := StrReplace(address, "`r`n`r`n", "`r`n")
               str =
+              time =
               ix := 0
               Loop, Parse, address, `n, `r				; convert vtt back to srt format
                 {
                 if !A_LoopField
                   continue
                 if InStr(A_LoopField, " --> ")
+                  time = %A_LoopField%
+                else if (time && A_LoopField)
                   {
                   ix++
-                  if (ix == 1)
-                    str = %ix%`r`n%A_LoopField%`r`n
-                  else str = %str%`r`n%ix%`r`n%A_LoopField%`r`n
+                  str = %str%%ix%`r`n%time%`r`n%A_LoopField%`r`n`r`n
+                  time =
                   }
-                else
-                  str = %str%%A_LoopField%`r`n
                 }         
               FileDelete, %inca%\cache\captions\%media%.srt
               FileAppend, %str%, %inca%\cache\captions\%media%.srt, UTF-8
