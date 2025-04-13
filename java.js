@@ -1,5 +1,5 @@
-// set 1st caption off zero
-// last mp3 start
+// make mpv more native
+// use browser for notepad
 
   let entry = 0								// thumb container
   let thumb = 0								// thumb element
@@ -36,7 +36,6 @@
   let overMedia = 0							// over thumb or myPlayer
   let overText = 0							// text input fields, allow cut paste
   let editing = 0							// editing text active
-  let wasEditing = 0							// was editing text
   let messages = ''							// message digest to inca.exe
   let Zindex = 3							// element zIndex
   let rect								// element dimensions
@@ -101,7 +100,7 @@
     clickTimer = setTimeout(function() {longClick = Click; clickEvent()},260)}		// detect long click
 
 
-  function mouseUp(e) {
+  function mouseUp(e) { 
     if (!Click) return									// stop re-entry if new page load
     clearTimeout(clickTimer)								// longClick timer
     if (gesture && window.getSelection()) localStorage.cue=''				// used for save text snip
@@ -137,7 +136,7 @@
       else if (!entry.matches(':hover')) return}					// not over html thumb/media
     if (longClick && overText && lastClick==1) {myPlayer.pause(); return}
     if (lastClick == 2) {								// middle click
-      if (editing) inca('Null')
+      if (editing) inca('Null')								// save text
       if (!playing && !myNav.style.display) {inca('View',lastMedia); return}		// switch list/thumb view
       else if (longClick) {index--} else index++}					// next, previous media
     if (lastClick) myPlayer.style.opacity = 0						// fade myPlayer up
@@ -169,12 +168,12 @@
       el.style.display=null
       if (captions && srt.innerHTML && lastClick==2) openCap()}				// next/back
     lastMedia=index
-    if (lastClick==1 && (favicon.matches(':hover') || type=='document')) {
-      if (!longClick && srt.innerHTML) openCap()					// show cap or txt in browser
+    if (lastClick==1 && srt.innerHTML && (favicon.matches(':hover') || type=='document')) {
+      if (!longClick) openCap()								// show cap or txt in browser
       else {Click=0; inca('Media',0,index,para); return}}				// eg. open in notepad
+    if (lastClick==2 && playing=='mpv') return						// inca does next/previous media
     if (!thumbSheet && toggles.match('Mpv')) {playing='mpv'; scaleY=0.5; inca('Media',0,index,para); return}
     else playing='browser'
-    if (lastClick==2 && playing=='mpv') return						// inca does next/previous media
     if (type=='audio' || playlist.match('/inca/music/')) {scaleY=0.2; looping=0; myPlayer.muted=false}
     if (!thumbSheet && type!='image' && (!toggles.match('Pause') && !captions || longClick==1)) myPlayer.play()
     if (captions && (scaleY==0.5 || scaleY==0.2)) scaleY=0.21				// first time open use small player
@@ -187,7 +186,6 @@
     myPlayer.style.opacity=1
     myPlayer.volume=0.05						// triggers volume fadeup
     positionMedia(0)
-    positionCap()
     block = 60}								// allows time to detect if video can play
 
 
@@ -215,8 +213,7 @@
       Xref=xpos; Yref=ypos
       localStorage.mediaX = mediaX.toFixed(0)
       localStorage.mediaY = mediaY.toFixed(0)
-      positionMedia(0)
-      positionCap()}}
+      positionMedia(0)}}
 
 
   function wheelEvent(e, id) {
@@ -286,7 +283,7 @@
       if (wheelUp) {mediaX+=x*z; mediaY+=y*z; scaleY*=(1+z)}
       else if (!wheelUp) {mediaX-=x*z; mediaY-=y*z; scaleY/=(1+z)}
       if (scaleY<0.2) scaleY=0.2
-      scaleX=skinny*scaleY; positionMedia(0); positionCap(); block=14}
+      scaleX=skinny*scaleY; positionMedia(0); block=14}
     wheel=0}
  
 
@@ -297,7 +294,7 @@
     if (myNav.style.display) el = myPic
     else if (!playing) el = thumb
     rect = el.getBoundingClientRect()
-    if (!thumbSheet && !myNav.matches(':hover') && myNav.style.display && playing) myPlayer.play()
+ //   if (!thumbSheet && !myNav.matches(':hover') && myNav.style.display && playing) myPlayer.play()
     if (!myNav.matches(':hover')) myNav.style.display=null
     if (myNav.style.display && myTitle.value) myNav.style.width=rect.width+85+'px'
     else myNav.style.width = 85+'px'
@@ -381,8 +378,11 @@
       myPlayer.style.left = innerWidth/2 - myPlayer.offsetWidth/2 +"px"
       myPlayer.style.top = innerHeight/2 - myPlayer.offsetHeight/2 +"px"
       y=0.6*ratio*innerWidth/myPlayer.offsetWidth}
-    myPlayer.style.transition = time+'s'
-    myPlayer.style.transform = "scale("+skinny*y+","+y+")"}
+    myPlayer.style.transition = time + 's'
+    myPlayer.style.transform = "scale("+skinny*y+","+y+")"
+    y = myPlayer.getBoundingClientRect()
+    capMenu.style.top = y.bottom + 24 + srt.offsetHeight + 'px'; capMenu.style.left = mediaX -85 + 'px'
+    srt.style.top = y.bottom + 'px'; srt.style.left = mediaX-srt.offsetWidth/2 + 'px'}
 
 
   function seekBar() {									// progress bar beneath player
@@ -413,6 +413,7 @@
     myProgress.style.left =  mySeekbar.style.left = cueX +'px'
     myProgress.style.width = cueW +'px'
     return 1}
+
 
   function setPlayer() {						// sets src, poster, thumbsheet & dimensions
     myTitle.value=title.value
@@ -517,15 +518,14 @@
     myPic.style.transform='scale('+Math.abs(skinny)*zoom+','+zoom+')'	// pop thumb out a little
     if (overMedia || playing) {myNav.style.left=xpos-70-thumb.offsetWidth/2+'px'; myNav.style.top = ypos-120 + 'px'}
     else {myNav.style.left=xpos-30+'px'; myNav.style.top=ypos-30+'px'}
-    if (type!='audio' && !playlist.match('/inca/music/')) myPlayer.pause()
+ //   if (type!='audio' && !playlist.match('/inca/music/')) myPlayer.pause()
     myNav.style.display='block'}
 
 
   function inca(command,value,select,address) {				// send java messages to inca.exe
     if (editing) {							// text or caption has been edited
-      let x = document.getElementById('srt'+editing).innerHTML.replaceAll('#', '*')
-      messages += '#capEdit#' + srt.scrollTop.toFixed(0) + '#' + editing + '#' + x
-      editing = 0; wasEditing = 1}					// used to reload html after myPlayer close
+      messages += '#capEdit##' + editing + '#' + document.getElementById('srt'+editing).innerHTML.replaceAll('#', '*')
+      editing = 0}
     for (i=1; el=document.getElementById('thumb'+i); i++) {		// add cue edits to messages
       if (el.style.skinny) messages += '#Skinny#'+el.style.skinny+'#'+i+'#'+cue
       if (el.style.rate) messages += '#Rate#'+el.style.rate+'#'+i+'#'+cue}
@@ -584,7 +584,7 @@
     for (x of selected.split(',')) {if (x && !isNaN(x)) {		// highlight selected media			
       if (lv && (el=document.getElementById('title'+x))) el.style.outline = '0.1px solid red'
       else if (el=document.getElementById('thumb'+x)) el.style.outline = '1.5px solid red'}} 
-    for (index=0, n=1; getParameters(n); n++) {}			// process null cues (eg. skinny, start, rate)
+    for (n=1; getParameters(n); n++) {}					// process null cues (eg. skinny, start, rate)
     if (!ix) index=1
     else index=ix
     lastMedia=ix
@@ -615,22 +615,25 @@
     let x = cues.innerHTML.split(/[\r\n]/)
     for (k=0; k<x.length; k++) {					// process each line entry
       let el = x[k].split('|')						// time[0] cue[1] value[2] period[3]
-      if (el[1]=='scroll' && el[3] && srt.scrollTop.toFixed(0) >= 1*el[0]) {src = el[2]; tm = 1*el[3]}  // swap media
+      if (el[1]=='scroll' && !time && !srt.scrollTop) {
+        srt.scrollTo(0,el[2])						// scroll to text position
+        if (el[3]) {srt.style.width=el[3]+'px'; srt.style.height=el[4]+'px'}} // resize textarea
+      if (el[1]=='media' && el[3] && srt.scrollTop.toFixed(0) >= 1*el[0]) {src = el[2]; tm = 1*el[3]}  // swap media
       if (el[1] && 1*el[0] > time-0.1 && 1*el[0] < time+0.1) {
         if (el[1]=='next') {lastClick=2; clickEvent()}
-        else if (el[1]=='scroll' && !time && !srt.scrollTop) srt.scrollTo(0,el[2])
         else if (el[1]=='goto' && !myPlayer.paused) {myPlayer.currentTime=thumb.style.start=thumb.currentTime=1*el[2]; myPlayer.volume=0.1}
         else if (el[1]=='rate') {if (isNaN(1*el[2])) {rate=defRate} else {rate=1*el[2]}}
         else if (el[1]=='skinny') {if (isNaN(el[2])) {skinny=1} else {skinny=1*el[2]; if(time) {positionMedia(2)}}}
         else if (el[1]=='pause') {myPlayer.pause(); if (el[2]) setTimeout(function(){myPlayer.play()},1000*el[2])}}}
     if (type=='document' && playing) {
       if (myPlayer.paused && overText && tm && (myPlayer.src != src || tm != time)) {
-        myPlayer.style.opacity=0
+        myPlayer.style.opacity = 0
         if (src.match('.jpg')) type = 'image'
         if (myPlayer.src != src)  myPlayer.poster = myPlayer.src = src	// swap out media above srt
         else if (src && tm != time) myPlayer.currentTime = tm
         if (block < 25) block = 100					// block jitter on src replace
-        positionMedia(4)						// fade new media in
+        positionMedia(0)
+        positionMedia(3)						// fade new media in
         myPlayer.style.opacity=1}
       else if (!tm && myPlayer.src != thumb.src) {setPlayer(); myPlayer.currentTime=thumb.currentTime}}}
 
@@ -658,9 +661,10 @@
   function playCap() {
     if (overText && ypos > srt.offsetTop && ypos < srt.offsetTop + 12) {srt.scrollTo(0,12); myPlayer.pause(); return}
     const id = document.elementFromPoint(xpos,ypos).id, tm = id.split('-')[1]
-    if (!id.match('my')) togglePause()					// not caption text
-    else myPlayer.currentTime = thumb.currentTime = tm			// set player to caption start
-    if (id.match('my')) if (editing) {myPlayer.pause()} else myPlayer.play()	// clicked caption text
+    if (!id.match('my') || (capText.id==id && !editing)) togglePause()
+    else if (!editing || capText.id!=id) myPlayer.play()
+    else myPlayer.pause()
+    if (capText.id!=id && capTime.id!=id && !myPlayer.paused) myPlayer.currentTime = thumb.currentTime = tm
     if (longClick==1) myPlayer.pause()}					// osk triggered in inca
 
 
@@ -700,7 +704,7 @@
       let cursor = 0
       let offset = 0
       let range = window.getSelection().getRangeAt(0)
-      for (let i = 0; i < capText.childNodes.length; i++) {		// Venice.ai created this code fragment
+      for (let i = 0; i < capText.childNodes.length; i++) {		// venice refactored code
         const node = capText.childNodes[i]
         if (node === range.startContainer) {cursor += range.startOffset; break}
         if (node.nodeType === Node.TEXT_NODE) cursor += node.textContent.length}
@@ -742,9 +746,11 @@
   function closePlayer() {
     if (type == 'image') localStorage.cue = thumb.poster+'|0.01\r\n'	// for swapping media in srt/txt files
     else if (type != 'document') localStorage.cue = thumb.src+'|'+myPlayer.currentTime.toFixed(2)+'\r\n'
+    if (type=='document') messages += '#Scroll#'+srt.scrollTop.toFixed(0)+'|'+srt.offsetWidth+'|'+srt.offsetHeight+'#'+index+'#'
     if (!thumbSheet) messages += '#History#'+myPlayer.currentTime.toFixed(1)+'#'+index+'#'
-    if (playing=='mpv') inca('closeMpv')
-    else if (editing || wasEditing) inca('Reload', index)		// saves edited text and reloads html
+    if (playing != 'mpv') thumb.currentTime = lastStart
+    if (playing == 'mpv') inca('closeMpv')
+    else if (type=='document') inca('Reload', index)			// reloads html
     else inca('Null')							// just update history
     positionMedia(0.2)
     cue=0
@@ -754,7 +760,6 @@
     thumbSheet=0
     myNav.style.display=null
     myPlayer.style.opacity=0
-    thumb.currentTime=lastStart
     myPlayer.removeEventListener('ended', nextMedia)
     setTimeout(function() {						// fadeout before close
       myPlayer.style.zIndex=-1
@@ -772,8 +777,8 @@
       if (!cue) cue=Math.round(myPlayer.currentTime*100)/100
       if (thumb.style.skinny || thumb.style.rate) capButton()
       else if (type=='document' && localStorage.cue) {			// substitute media in srt/txt
-        cues.innerHTML+= srt.scrollTop.toFixed(0) +'|scroll|'+localStorage.cue
-        inca('cueText',cues.innerHTML,index)}}
+        cues.innerHTML+= srt.scrollTop.toFixed(0) +'|media|'+localStorage.cue
+        inca('cueMedia',cues.innerHTML,index)}}
     myNav.style.display=null
     if (dur) myPlayer.pause()}
 
@@ -784,16 +789,8 @@
     if (thumb.style.rate) x = cue+'|rate|'+thumb.style.rate
     thumb.style.skinny = thumb.style.rate = 0
     if (playing && type == 'document') inca('saveText')
-    else if (cue) inca('addCue', x, index)				// add skinny, rate or goto cue
-    else if (myTitle.value) if (!srt.innerHTML || captions) {newCap()} else {openCap(); Play()}
-    wasEditing=index; cue=0}
-
-
-  function positionCap() {
-    let rect = myPlayer.getBoundingClientRect()
-    if (thumb.src.slice(-3)=='txt') srt.style.height = '24em';
-    capMenu.style.top = rect.bottom + 24 + srt.offsetHeight + 'px'; capMenu.style.left = mediaX -85 + 'px'
-    srt.style.top = rect.bottom + 'px'; srt.style.left = mediaX-srt.offsetWidth/2 + 'px'}
+    else if (cue) {cue=0; messages += '#addCue#' + x + '#' + index + '#'} // add cues to media
+    else if (myTitle.value) if (!srt.innerHTML || captions) {newCap()} else {openCap(); Play()}}
 
 
   function addFavorite() {

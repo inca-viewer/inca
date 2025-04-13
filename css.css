@@ -19,7 +19,7 @@
 
 e {						/* caption text entries */
   display: block;
-  background: #15110aaa;
+  background: transparent;
   font-size: 1em;
   outline: none;
   padding: 1em;
@@ -36,7 +36,7 @@ e {						/* caption text entries */
   display: none;
   padding: 1.4em;
   border: none;
-  background: transparent;
+  background: #15110aaa;
   scroll-behavior: smooth;
   color: #826858;
   text-align: center;
@@ -48,13 +48,14 @@ e {						/* caption text entries */
   margin: auto;
   opacity: 0;
   transition: opacity 0.6s;
+resize: both;
   overflow: hidden;
   overflow-y: scroll;
-  border-radius: 1em;
+//  border-radius: 1em;
   mask-image: linear-gradient(to bottom, transparent 0%, white 4%, white 96%, transparent 100%),
     linear-gradient(to right, transparent 0%, white 4%); 
   mask-composite: intersect}
-.caption::-webkit-scrollbar {background: inherit; width: 6px}
+.caption::-webkit-scrollbar {background: transparent; width: 6px}
 
 .capMenu {
   position: fixed;
@@ -74,7 +75,7 @@ e {						/* caption text entries */
   border-radius: 1.6em;
   font-variant-caps: petite-caps}
 .capButton:hover {color: red; transform: scale(1.8,1.8)}
-.capButton:active {border: 0.1px solid red; background:red; transform: scale(1,1)}
+.capButton:active {border: 0.1px solid transparent; background:red; transform: scale(1,1)}
 
 .entry {
   position: relative;
@@ -86,7 +87,7 @@ e {						/* caption text entries */
   display: block;
   white-space: nowrap;
   background: inherit;
-  color: #ffa07a44;
+  color: #826858;
   font-size: 1.1em;
   padding-left: 1em;
   font-family: inherit;

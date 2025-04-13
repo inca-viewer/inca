@@ -85,10 +85,10 @@
         Global lastMedia
         Global panelPath			; click over top panel (folder/search paths)
         Global lastStatus			; reduce screen update flicker
-        Global mpvXpos				; external mpv player display parameters
-        Global mpvYpos
-        Global mpvWidth
-        Global mpvHeight
+        Global mediaX := 1200			; centre of mpv player window
+        Global mediaY := 800
+        Global mpvWidth := 640
+        Global mpvHeight := 480
         Global mpvPID
         Global cur				; window under cursor
         Global desk				; current desktop window
@@ -217,7 +217,7 @@ else src=src="file:///%src%"
 if !size
   size = 0								; cannot have null size in getParameters()
 
-caption = <div id='srt%j%' class='caption' onmouseover='overText=1' onmouseout='overText=0'`n oninput="if(editing&&editing!='%j%') {inca('capEdit',editing)}; editing=index; myPlayer.pause()">%text%</div>
+caption = <div id='srt%j%' class='caption' onmouseover='overText=1' onmouseout='overText=0'`n oninput="editing=index; myPlayer.pause()">%text%</div>
 
 if listView
   mediaList = %mediaList%%fold%<table onmouseover='overThumb(%j%)'`n onmouseout="thumb%j%.style.opacity=0">`n <tr id='entry%j%' data-params='%type%,%start%,%dur%,%size%' onmouseenter='if (gesture) sel(%j%)'>`n <td style='min-width: 2em'>%j%</td>`n <td>%ext%`n <video id='thumb%j%' class='thumb2' %src%`n %poster%`n preload=%preload% muted loop type="video/mp4"></video></td>`n <td>%size%</td>`n <td style='min-width: 6em'>%durT%</td>`n <td>%date%</td>`n <td id='myFavicon%j%' style='font-size: 0.7em; color: salmon; min-width: 3em'>%favicon%</td>`n <td style='width: 70vw'><input id="title%j%" class='title' style='transition: 0.8s' onmouseover='overText=1' onmouseout='overText=0; Click=0' type='search' value='%media_s%'`n oninput="renamebox=this.value; lastMedia=%j%"></td>`n %fo%</tr>`n %caption%<span id='cues%j%' style='display: none'>%cues%</span></table>`n`n
@@ -499,10 +499,10 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
 <div style='position:relative; width:100vw; height:0.6em'></div>
 <div class='fadeout'></div>`n`n 
 
-      FileDelete, %inca%\cache\html\%folder%.htm
       StringReplace, header, header, \, /, All
       StringReplace, body, body, \, /, All
       html = %header%%body%</div></div>`n<script>%java%</script>`n</body>`n</html>`n
+      FileDelete, %inca%\cache\html\%folder%.htm
       FileAppend, %html%, %inca%\cache\html\%folder%.htm, UTF-8
       new_html = file:///%inca%\cache\html\%folder%.htm			; create / update browser tab
       StringReplace, new_html, new_html, \,/, All
@@ -562,32 +562,19 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
         if (A_TickCount > timer)		; long click
           send, <				; playlist previous
         else send, >				; playlist next
+        WinActivate, ahk_group Browsers
         }
       return
 
     ~WheelUp::
-      wheel := 40
+      wheel := 0
     ~WheelDown::
       if !wheel
-        wheel := -40
+        wheel := 1
       if mpvPID
-        {
-        if (cur == mpvPID && !fullscreen)
-          {
-          ratio := mpvHeight/mpvWidth
-          if (wheel<0 || mpvWidth*ratio>A_ScreenWidth/18)
-            {
-            mpvXpos+= wheel			; mpv zoom
-            mpvYpos+= wheel*ratio
-            mpvWidth-= wheel*2
-            mpvHeight-= wheel*ratio*2
-            WinMove, ahk_class mpv,,mpvXpos,mpvYpos,mpvWidth,mpvHeight
-            }
-          }
-        else if (wheel<0) 			; mpv seek
+        if (wheel) 				; mpv seek
           send, 3
         else send, 2
-        }
       wheel := 0
       return
 
@@ -784,7 +771,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
         messages := StrReplace(Clipboard, "/", "\")
         array := StrSplit(messages,"#")
         Clipboard := lastClip
- ;  tooltip %messages%							; for debug
+;   tooltip %messages%							; for debug
         Loop % array.MaxIndex()/4
           {
           command := array[ptr+=1]
@@ -797,7 +784,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
           if !command
             continue
           else ProcessMessage()
- if (command != "Skinny" && command != "Rate" && command != "capEdit" && command != "History")
+ if (command != "Skinny" && command != "Rate" && command != "capEdit" && command != "History" && command != "Scroll")
             break
           }
         if (reload == 1)
@@ -818,6 +805,31 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
 
     ProcessMessage()							; messages from java/browser
         {
+        if (command == "Reload")					; reload web page
+            {
+            selected =
+            index := value
+            reload := 2
+            }
+        if (command == "Null")						; used as trigger to save text editing - see Java inca()
+          return
+        if (command == "Settings")					; open inca source folder
+            {
+            Run, %inca%\
+            sleep 400
+            Winactivate, ahk_class CabinetWClass
+            }
+        if (command == "Scroll")					; update scroll, width, height
+            {
+            FileRead, cues, %inca%\cache\cues\%media%.txt
+            if cues
+              Loop, Parse, cues, `n, `r					; each line of cues
+                if A_LoopField
+                  if !InStr(A_LoopField, "0.00|scroll")			; remember text scroll position
+                    newCue = %newCue%%A_LoopField%`r`n
+            FileDelete, %inca%\cache\cues\%media%.txt
+            FileAppend, %newCue%0.00|scroll|%value%`r`n, %inca%\cache\cues\%media%.txt, UTF-8
+            }
         if (command == "saveText")					; save text snip
           {
           send, ^c
@@ -834,27 +846,17 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
             Popup("Saved . . .",900,0,0)
           return
           }
-        if (command == "Reload")					; reload web page
-            {
-            selected =
-            index := value
-            reload := 2
-            }
-        if (command == "Null")						; used as trigger to save text editing - see Java inca()
-          return
-        if (command == "Settings")					; open inca source folder
-            {
-            Run, %inca%\
-            sleep 400
-            Winactivate, ahk_class CabinetWClass
-            }
-        if (command == "cueText" && value)
+        if (command == "cueMedia" && value)				; add media to text at scroll
             {
             FileDelete, %inca%\cache\cues\%media%.txt
             FileAppend, %value%, %inca%\cache\cues\%media%.txt, UTF-8
             }
-        if (command == "addCue")
+        if (command == "addCue")					; add skinny, speed, goto at scroll
+            {
             FileAppend, %value%`r`n, %inca%\cache\cues\%media%.txt, UTF-8
+            selected =
+            reload := 2
+            }
         if (command == "capEdit")					; save browser text editing
             {
             if !address
@@ -902,14 +904,6 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
               FileDelete, %inca%\cache\captions\%media%.srt
               FileAppend, %str%, %inca%\cache\captions\%media%.srt, UTF-8
               }
-            FileRead, cues, %inca%\cache\cues\%media%.txt
-            if cues
-              Loop, Parse, cues, `n, `r					; each line of cues
-                if A_LoopField
-                  if !InStr(A_LoopField, "0.00|scroll")			; remember text scroll position
-                    newCue = %newCue%%A_LoopField%`r`n
-            FileDelete, %inca%\cache\cues\%media%.txt
-            FileAppend, %newCue%0.00|scroll|%value%`r`n, %inca%\cache\cues\%media%.txt, UTF-8
             PopUp("saved",0,0,0)
             }
         if (command == "Move")						; move entry within playlist
@@ -962,24 +956,17 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
             if !getMedia(id)
               return
             mpvid := id-1
-            if !mpvXpos
-              geometry = --geometry=+50`%+50`%
-            else geometry = --geometry=+%mpvXpos%+%mpvYpos%
-            if !mpvWidth
-              x := 800
-            else if (mpvWidth > mpvHeight)
-              x := mpvWidth
-            else x := mpvHeight
-            autofit = --autofit=%x%x%x%
+            if (mpvWidth > mpvHeight)
+              z := mpvWidth
+            else z := mpvHeight
+            autofit = --autofit=%z%x%z%
             start := Round(StrSplit(address,"|").1,2)
             skinny := Round(StrSplit(address,"|").2,2)
             rate := Round(StrSplit(address,"|").3,2)
-if (skinny < 0)
-flip := "--vf=hflip"
-else flip =
-skinny := Abs(skinny)
-
-
+            if (skinny < 0)
+            flip := "--vf=hflip"
+            else flip =
+            skinny := Abs(skinny)
             if (type != "audio")
               mute := 1*StrSplit(address,"|").4
             if (!skinny || skinny != 1)
@@ -1022,14 +1009,32 @@ skinny := Abs(skinny)
                 sleep 24
                 RunWait %COMSPEC% /c echo seek %start% absolute exact > \\.\pipe\mpv,, hide && exit
                 }
-              else Run %inca%\cache\apps\mpv --start=%start% %autofit% %geometry% %speed% %pause% %flip% --mute=%mute% --playlist-start=%mpvid% --input-ipc-server=\\.\pipe\mpv "%inca%\cache\temp\mpvPlaylist.m3u"
+              else Run %inca%\cache\apps\mpv --start=%start% %autofit% %speed% %pause% %flip% --mute=%mute% --playlist-start=%mpvid% --input-ipc-server=\\.\pipe\mpv "%inca%\cache\temp\mpvPlaylist.m3u"
+
               Loop, 20
+                {
+                WinSet, Transparent, 0, ahk_exe mpv.exe
                 if WinActive, ahk_class mpv
                   break
                 else sleep 20
+                }
               WinActivate, ahk_class mpv
+
               if skinny
                 RunWait %COMSPEC% /c echo add video-scale-x %skinny% > \\.\pipe\mpv,, hide && exit
+
+              WinGetPos, x,y,mpvWidth,mpvHeight,ahk_class mpv
+              x := mediaX - mpvWidth // 2
+              y := mediaY - mpvHeight // 2
+              WinMove, ahk_exe mpv.exe, , %x%, %y%
+              Loop, 10							; fade into view
+                {
+                TransValue := A_Index * 25
+                WinSet, Transparent, %TransValue%, ahk_exe mpv.exe
+                Sleep, 10
+                }
+              WinSet, Transparent, Off, ahk_exe mpv.exe
+              WinGetPos, x,y,mpvWidth,mpvHeight,ahk_class mpv
               }
             }
         if (command == "editCue")					; open media cues in notepad
@@ -2012,7 +2017,7 @@ skinny := Abs(skinny)
         WinSet, Transparent, 0
         WinSet, ExStyle, +0x20
         gui, vol: +lastfound -Caption +ToolWindow +AlwaysOnTop -DPIScale
-        gui, vol: color, fa8072
+        gui, vol: color, ffb6c1
         Gui Status:+lastfound +AlwaysOnTop -Caption +ToolWindow
         Gui Status:Color, Black
         Gui Status:Add, Text, vGuiSta w200 h35
@@ -2188,7 +2193,15 @@ IfWinActive, Notepad
         WinGet, desk, ID , ahk_class Progman
         WinGet, mpvPID, ID , ahk_class mpv				; get mpv PID
         if (!fullscreen && mpvPID)
-          WinGetPos, mpvXpos,mpvYpos,mpvWidth,mpvHeight,ahk_class mpv
+          {
+          WinGetPos, x,y,mpvWidth,mpvHeight,ahk_class mpv	; track mpv window in case gesture moved
+          if (x<0) 
+            x := 1000
+          if (y<0)
+            y := 1000
+          mediaX := x + mpvWidth//2
+          mediaY := y + mpvHeight//2
+          }
         if incaTab
           {
           x := StrLen(Clipboard)
