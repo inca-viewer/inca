@@ -251,7 +251,7 @@ resize: both;
   width: 0;
   opacity: 0.5;
   border-radius: 8px;
-  background: red;
+  background: pink;
   transition: opacity 0.6s}
 
 .mask {						/* media player overlay of htm tab */

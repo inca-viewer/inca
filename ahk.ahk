@@ -57,9 +57,8 @@
         Global timer				; click down timer
         Global listView := 0			; list or thumb view
         Global volRef := 2
-        Global wheel
         Global playlist				; playlist - full path
-	Global xpos				; current mouse position - 100mS updated 
+	Global xpos				; current mouse position
 	Global ypos
         Global command				; java message commands to this program
         Global value				; message 1st value (selected is 2nd value)
@@ -85,14 +84,15 @@
         Global lastMedia
         Global panelPath			; click over top panel (folder/search paths)
         Global lastStatus			; reduce screen update flicker
-        Global mediaX := 1200			; centre of mpv player window
-        Global mediaY := 800
+        Global mediaX := 0			; centre of mpv player window
+        Global mediaY := 0
         Global mpvWidth := 640
         Global mpvHeight := 480
-        Global mpvPID
+        Global mpvExist
         Global cur				; window under cursor
         Global desk				; current desktop window
         Global indexSelected			; html media page to index (create thumbs)
+        Global paused := 0			; mpv paused
 
 
     main:
@@ -163,7 +163,6 @@
           {
           preload = 'none'						; faster page load
           StringReplace, thumb, thumb, #, `%23, All			; html cannot have # in filename
- ;  stringlower, thumb, thumb
           poster = poster="file:///%thumb%"
           }
         else
@@ -431,7 +430,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
 <div oncontextmenu="if (yw>0.08) {event.preventDefault()}">`n
 <div id='myNav' class='context' onwheel='wheelEvent(event, id, this)'>`n
 <a onmouseup="inca('Settings')">&#8230;</a>`n
-<a id='mySelect' style='word-spacing:0.8em' onmouseup="if(!longClick && lastClick==1) {if (myTitle.value) {sel(index)} else selectAll()}"></a>`n
+<a id='mySelect' style='word-spacing:0.8em' onmouseup="if (lastClick==1) {if (myTitle.value) {sel(index)} else selectAll()}"></a>`n
 <input id='myTitle' class='title' style='color:lightsalmon; padding-left:1.2em'>`n
 <video id='myPic' muted class='pic'></video>`n
 <a id='myMute' onmouseup='mute()'>Mute</a>`n
@@ -451,7 +450,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
 <div id='myMask' class="mask" onwheel="wheelEvent(event, id, this)"></div>`n 
 <video id="myPlayer" class='player' type="video/mp4" muted onwheel="wheelEvent(event, id, this)"></video>`n
 <span id='myProgress' class='seekbar'></span>`n
-<span id='mySeekbar' class='seekbar'></span>`n
+<span id='mySeekbar' class='seekbar' style='background:red'></span>`n
 <span id='mySelected' class='selected'></span>`n
 <div id='capMenu' class='capMenu'>`n
 <span id='myCancel' class='capButton' onmouseup="editing=0; inca('Reload',index)">&#x2715;</span>`n 
@@ -486,13 +485,13 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
 <a id='myAlpha' style='min-width:3em; %x2%' onmousedown="inca('Alpha', filt)" onwheel="wheelEvent(event,id,this)">Alpha</a>`n
 <a id='myPlaylist' style='width:11`%; %x11%' onmousedown="inca('Playlist')">%pl%</a>`n
 <a id='myShuffle' style='width:11`%; %x1%' onmousedown="inca('Shuffle')">Shuffle</a>`n
-<a style='%x12%' onmousedown="inca('Pause')">Pause</a>`n
+<a style='%x12%' onmousedown="inca('Pause','',lastMedia)">Pause</a>`n
 <a style='%x10%' onmousedown="inca('Images')">Pics</a>`n
 <a style='%x9%' onmousedown="inca('Videos')">Vids</a>`n
 <a style='%x8%' onmousedown="inca('Recurse')">Subs</a>`n
 <a id='myThumbs' onmouseout='setThumbs(1,1000)' onmouseup="inca('View',0)" onwheel="wheelEvent(event, id)"></a>`n 
 <a id='myWidth' onwheel="wheelEvent(event, id)"></a>`n
-<a style='%x13%' onmousedown="inca('Mpv')">Mpv</a>`n
+<a style='%x13%' onmousedown="inca('Mpv','',lastMedia)">Mpv</a>`n
 <a id='myJoin' onmousedown="inca('Join')">Join</a>`n
 </div>`n`n
 
@@ -548,35 +547,38 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
     ~Esc up::
       ExitApp
 
-    RButton::
+
+    ~RButton::
       panelPath =				; reset panel path
     ~LButton::					; click events
     ~MButton::
       MouseDown()
       return
 
-    MButton up::
-      if (mpvPID && !gesture)			; external mpv player
+    MButton up::				; Mbutton cannot hold down - logitech
+      if (mpvExist && !gesture)			; external mpv player
         {
+        sleep 20				; stops taskbar triggering
         WinActivate, ahk_class mpv
-        if (A_TickCount > timer)		; long click
+        if (A_TickCount > timer+20)		; long click
           send, <				; playlist previous
         else send, >				; playlist next
-        WinActivate, ahk_group Browsers
         }
       return
 
-    ~WheelUp::
-      wheel := 0
-    ~WheelDown::
-      if !wheel
-        wheel := 1
-      if mpvPID
-        if (wheel) 				; mpv seek
-          send, 3
-        else send, 2
-      wheel := 0
-      return
+
+    ~WheelUp::WheelHandler(2, 7, 4)
+    ~WheelDown::WheelHandler(3, 6, 5)
+
+    WheelHandler(seek, step, zoom)
+      {
+      if !mpvExist
+        return
+      WinActivate, ahk_class mpv
+      MouseGetPos, xpos, ypos
+      Send % (click = "" ? (paused ? step : seek) : zoom)
+      }
+
 
     Xbutton1::					; mouse "back" button
       Critical
@@ -594,7 +596,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
       if (A_TickCount > timer)
         return
       WinGet, state, MinMax, ahk_class OSKMainClass
-      if mpvPID					; mpv external player
+      if mpvExist				; mpv external player
         {
         Process, Close, mpv.exe
         sleep, 100
@@ -625,49 +627,59 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
       loop					; gesture detection
         {
         if (A_TickCount > timer)
+          {
           longClick = true
+          Critical off				; allow timer interrupts
+          }
         MouseGetPos, x, y
         x -= xpos
         y -= ypos
         if (!GetKeyState("LButton", "P") && !GetKeyState("RButton", "P") && !GetKeyState("MButton", "P"))
           {
-          if (click=="RButton" && !gesture)
-            send, {RButton}
           Gui PopUp:Cancel
-          if (mpvPID && click=="LButton" && !gesture)
+          if mpvExist
             {
-            WinActivate, ahk_class mpv
-            sleep 100
-            send, {Space}			; toggle pause
+            if (click=="LButton" && !gesture && !longClick)
+              {
+              send, {Space}
+              paused ^= 1			; toggle pause
+              }
+            if (cur == mpvExist && click=="RButton" && !gesture && !longClick)
+              {
+              Process, Close, mpv.exe
+              sleep 60						; more reliable send RButton
+              send, {RButton}
+              }
             }
+          else if (click=="RButton" && gesture)
+            loop 10
+              {
+              send, {Esc}					; clear windows context menu
+              sleep 20
+              }
+          click=
           break
           }
-        if (Abs(x)+Abs(y) > 6)			; gesture started
+        if (Abs(x)+Abs(y) > 6)					; gesture started
           {
           gesture := 1
           MouseGetPos, xpos, ypos
-          if (xpos < 15)			; gesture at screen edges
+          if (xpos < 15)					; gesture at screen edges
             xpos := 15
           if (xpos > A_ScreenWidth - 15 && click=="RButton")
             xpos := A_ScreenWidth - 15
           MouseMove, % xpos, % ypos, 0
           Gesture(x, y)
-          }
-         if (!gesture && longClick && click=="RButton")
+          if (mpvExist && click == "LButton")
             {
-            if mpvPID 
-              RunWait %COMSPEC% /c echo seek 0 absolute exact > \\.\pipe\mpv,, hide && exit
-            else send, +{Pause}			; signal to java long RClick
-            gesture := 1			; just to block re-entry
+            MediaX += x * 0.0015					; pan mpv player 
+            MediaY += y * 0.0015
+            Run %COMSPEC% /c echo no-osd set video-pan-x %MediaX%;no-osd set video-pan-y %MediaY% > \\.\pipe\mpv,, hide
             }
+          }
         if (!gesture && longClick && click=="LButton")		; click timout
           {
-          if mpvPID				; mpv external player
-            {
-            Process, Close, mpv.exe
-            send, !{Pause}			; signal java to show thumbSheet
-            }
-          else if (wasCursor == "IBeam")
+          if (wasCursor == "IBeam")
             {
             longClick =
             if WinActive("ahk_group Browsers")
@@ -695,7 +707,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
               }
             else Osk()
             }
-          break
+      break
           }
         }
       }
@@ -784,7 +796,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
           if !command
             continue
           else ProcessMessage()
- if (command != "Skinny" && command != "Rate" && command != "capEdit" && command != "History" && command != "Scroll")
+          if (command != "Skinny" && command != "Rate" && command != "capEdit" && command != "History" && command != "Scroll")
             break
           }
         if (reload == 1)
@@ -805,12 +817,14 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
 
     ProcessMessage()							; messages from java/browser
         {
+        if (command == "mpvSeek" && mpvExist)
+            RunWait %COMSPEC% /c echo seek %value% absolute exact > \\.\pipe\mpv,, hide
         if (command == "Reload")					; reload web page
-            {
-            selected =
-            index := value
-            reload := 2
-            }
+          {
+          selected =
+          index := value
+          reload := 2
+          }
         if (command == "Null")						; used as trigger to save text editing - see Java inca()
           return
         if (command == "Settings")					; open inca source folder
@@ -904,13 +918,13 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
               FileDelete, %inca%\cache\captions\%media%.srt
               FileAppend, %str%, %inca%\cache\captions\%media%.srt, UTF-8
               }
-            PopUp("saved",0,0,0)
+            PopUp("saved",600,0,0)
             }
         if (command == "Move")						; move entry within playlist
             {
             MoveEntry()
+            reload := 3
             selected =
-            reload := 3							; reload web page
             }
         if (command == "Rename")					; rename media
             {
@@ -947,9 +961,8 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
                 }
             lastMedia := src
             }
-        if (command == "closeMpv")					; close external mpv player
-            if mpvPID
-              Process, Close, mpv.exe
+        if (command == "closeMpv" && mpvExist)				; close external mpv player
+            Process, Close, mpv.exe
         if (command == "Media")						; browser tells inca to use mpv player
             {
             id := StrSplit(selected, ",").1
@@ -984,15 +997,13 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
             if !start
               start = 0.0
             start := Time(start)
+            para = --video-pan-x=%MediaX% --video-pan-y=%MediaY% --start=%start% %autofit% %speed% %pause% %flip% --mute=%mute% --playlist-start=%mpvid%
             if (ext=="pdf" || ext=="rtf" || ext=="doc")
               Run, %src%
-            else if (type=="m3u" || type=="document" || longClick)
-                {
-                if (type!="m3u" && type!="document")
-                  ifExist, %inca%\cache\captions\%media%.srt
-                    src=%inca%\cache\captions\%media%.srt
-                Run, % "notepad.exe " . src
-                }
+            else if (type=="m3u" || type=="document")
+              Run, % "notepad.exe " . src
+            else if (longClick and FileExist(inca . "\cache\captions\" . media . ".srt"))
+              Run, notepad.exe %inca%\cache\captions\%media%.srt
             else
               {
               Loop, Parse, list, `n, `r
@@ -1003,14 +1014,9 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
                 }
               FileDelete, %inca%\cache\temp\mpvPlaylist.m3u
               FileAppend, %plist%, %inca%\cache\temp\mpvPlaylist.m3u, UTF-8
-              if mpvPID							; mpv is open
-                {
-                RunWait %COMSPEC% /c echo playlist-play-index %mpvid% > \\.\pipe\mpv,, hide && exit
-                sleep 24
-                RunWait %COMSPEC% /c echo seek %start% absolute exact > \\.\pipe\mpv,, hide && exit
-                }
-              else Run %inca%\cache\apps\mpv --start=%start% %autofit% %speed% %pause% %flip% --mute=%mute% --playlist-start=%mpvid% --input-ipc-server=\\.\pipe\mpv "%inca%\cache\temp\mpvPlaylist.m3u"
-
+              if mpvExist							; mpv is already open
+                Run %COMSPEC% /c echo playlist-play-index %mpvid%;seek %start% absolute exact > \\.\pipe\mpv,, hide
+              else Run %inca%\cache\apps\mpv %para% --input-ipc-server=\\.\pipe\mpv "%inca%\cache\temp\mpvPlaylist.m3u"
               Loop, 20
                 {
                 WinSet, Transparent, 0, ahk_exe mpv.exe
@@ -1019,14 +1025,8 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
                 else sleep 20
                 }
               WinActivate, ahk_class mpv
-
               if skinny
                 RunWait %COMSPEC% /c echo add video-scale-x %skinny% > \\.\pipe\mpv,, hide && exit
-
-              WinGetPos, x,y,mpvWidth,mpvHeight,ahk_class mpv
-              x := mediaX - mpvWidth // 2
-              y := mediaY - mpvHeight // 2
-              WinMove, ahk_exe mpv.exe, , %x%, %y%
               Loop, 10							; fade into view
                 {
                 TransValue := A_Index * 25
@@ -1034,7 +1034,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
                 Sleep, 10
                 }
               WinSet, Transparent, Off, ahk_exe mpv.exe
-              WinGetPos, x,y,mpvWidth,mpvHeight,ahk_class mpv
+              paused := 0
               }
             }
         if (command == "editCue")					; open media cues in notepad
@@ -1453,8 +1453,8 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
                 filt := value
               else if (InStr(sortList, command))			; sort filter
                 {
-                if (command=="Pause")
-                  reload := 2
+                if (command=="Pause" || command=="Mpv")			; keep highlighted media
+                  reload := 2, index := selected, selected = ""
                 toggle_list = Reverse Recurse Videos Images Pause Mpv
                 if (sort != command)					; new sort
                     {
@@ -2177,7 +2177,6 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
         if (w == A_ScreenWidth)
           fullscreen := 1
         else fullscreen := 0
-
 GuiControlGet, control, Indexer:, GuiInd
 Process, Exist, ffmpeg.exe
 if InStr(control, "processing")
@@ -2191,17 +2190,7 @@ IfWinActive, Notepad
         MouseGetPos,,, id 						; get the window below the mouse 
         WinGet, cur, ID, ahk_id %id%
         WinGet, desk, ID , ahk_class Progman
-        WinGet, mpvPID, ID , ahk_class mpv				; get mpv PID
-        if (!fullscreen && mpvPID)
-          {
-          WinGetPos, x,y,mpvWidth,mpvHeight,ahk_class mpv	; track mpv window in case gesture moved
-          if (x<0) 
-            x := 1000
-          if (y<0)
-            y := 1000
-          mediaX := x + mpvWidth//2
-          mediaY := y + mpvHeight//2
-          }
+        WinGet, mpvExist, ID , ahk_class mpv				; get mpv PID
         if incaTab
           {
           x := StrLen(Clipboard)
@@ -2212,7 +2201,7 @@ IfWinActive, Notepad
             lastClip := Clipboard
           }
         Gui, background:+LastFound
-        if (incaTab || mpvPID)
+        if (incaTab || mpvExist)
             WinSet, Transparent, % Setting("Ambiance")
         else WinSet, Transparent, 0
         x := Setting("Sleep Timer") * 60000
