@@ -2,7 +2,7 @@
   ::placeholder {color: lightsalmon}
   ::selection {color: #cccccc; background: #222222}
   ::-webkit-search-cancel-button {appearance: none}
-  ::-webkit-scrollbar {background: #15110a; width: 4px}
+  ::-webkit-scrollbar {background: #15110a; width: 6px}
   ::-webkit-resizer {background: #826858}
   ::-webkit-scrollbar-corner {background: #15110a}
   ::-webkit-scrollbar-thumb {background: #2b2824; border-radius: 2px}
@@ -85,6 +85,7 @@ resize: both;
 
 .title {					/* thumb title */
   display: block;
+position: relative;
   white-space: nowrap;
   background: inherit;
   color: #826858;
@@ -97,7 +98,7 @@ resize: both;
   border: none;
   transition: 0.5s;
   border-radius: 1em}
-.title:hover {color: salmon; transition: 1.4s; overflow: visible}
+.title:hover {color: pink; background:#2b2824; transition: 1.4s; overflow: visible; z-index: 333}
 
 .myMenu {					/* top panel container	*/
   position: fixed;
@@ -157,7 +158,7 @@ resize: both;
 .player {					/* media player element */
   position: absolute;
   opacity: 0;
-  border-radius: 4%}
+  border-radius: 1em}
 
 .mycontent {
   display: block;
@@ -178,13 +179,14 @@ resize: both;
 .thumb {					/* htm thumbs */
   --rate;
   --start;
+  --pitch;
   --skinny;					/* java variables for each thumb */
   position: relative;
   max-width: 100%;
   max-height: 100%;
   outline: none;
   margin: auto;
-  border-radius: 1em}
+  border-radius: 0.6em}
 
 .thumb2 {					/* list view pop up thumbs */
   position: absolute;
@@ -249,7 +251,7 @@ resize: both;
   z-index: 999;
   height: 0;
   width: 0;
-  opacity: 0.5;
+  opacity: 0.8;
   border-radius: 8px;
   background: pink;
   transition: opacity 0.6s}
