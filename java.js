@@ -1,7 +1,7 @@
 // use browser for notepad with backups
 // select and delete at same time
-// try permanent mpv window again now mbutton is fixed
-// mpv losing toggle first use
+
+
 
   let entry = 0								// thumb container
   let thumb = 0								// thumb element
@@ -65,6 +65,8 @@
   let folder = ''							// browser tab name = media folder
   let defRate = 1							// default speed
   let muted = 0
+  let lastYpos = 0							// to block overThumb() during scrolling
+
 
   let mediaX = isNaN(1*localStorage.mediaX) ? 400 : 1*localStorage.mediaX  // myPlayer position
   let mediaY = isNaN(1*localStorage.mediaY) ? 400 : 1*localStorage.mediaY
@@ -126,9 +128,7 @@
       else if (longClick) {index--} else index++}					// next, previous media
     else if (longClick) return
     if (lastClick == 3) {								// middle click
-      if (myNav.matches(':hover')) { 
-        thumbSheet ^= 1									// toggle thumbsheet mode
-        if (!thumbSheet) myNav.style.display = null}
+      if (myNav.matches(':hover')) {thumbSheet ^= 1; myNav.style.display = null}	// toggle thumbsheet mode
       else {if (yw > 0.08) context(); return}}						// show context menu	
     if (lastClick == 1) {
       if (id == 'myNav') lastStart = 0							// over 'white space'
@@ -259,7 +259,6 @@
       localStorage.setItem('pageWidth'+folder, x)
       block=12}
     else if (id == 'mySelect' || id == 'myTitle' || thumbSheet) {	// next, previous media
- //     if (thumbSheet) myNav.style.display = null
       if (wheelUp) {index++} else if (index>1) index--
       if (!document.getElementById('entry'+index)) index--
       else if (!playing) {getParameters(index); setPic()}
@@ -327,24 +326,24 @@
     if (outerHeight-innerHeight>30) {myMenu.style.display=null; myMask2.style.display=null} 
     else {myMenu.style.display='none'; myMask2.style.display='none'}  			// if fullscreen hide menu 
     if (selected && !Click) mySelected.innerHTML = selected.split(',').length -1
-    else mySelected.innerHTML = ''							// if (block<25) 
+    else mySelected.innerHTML = ''
     if (!seekBar()) myProgress.style.height = mySeekbar.style.height = null
     if (favicon.innerHTML.match('\u2764')) myFavorite.innerHTML='Fav &#x2764'
     else myFavorite.innerHTML='Fav'
     if (looping) {myLoop.style.color='red'} else myLoop.style.color=null
     if (muted) {myMute.style.color='red'} else myMute.style.color=null
     if (skinny<0) {myFlip.style.color='red'} else myFlip.style.color=null
-    if (myPlayer.style.opacity === "0") {if (myPlayer.volume>0.01) myPlayer.volume/=2}
-    else if (myPlayer.volume < 0.8) {myPlayer.volume *= 1.25} else myPlayer.volume = 1	// fade sound in/out
     if ((","+selected).match(","+index+",")) {mySelect.style.color='red'; myPlayer.style.outline='4px solid red'}
     else {mySelect.style.color=null; myPlayer.style.outline=null}
     if (playing && scaleY <= 0.2 && (playlist || type=='audio')) myMask.style.opacity=0.74
-    else if (myNav.style.display && myTitle.value) myMask.style.opacity=0.6
+    else if (myNav.style.display) myMask.style.opacity=0.6
     else if (playing) myMask.style.opacity=1
     else {myMask.style.opacity=0; myMask.style.pointerEvents=null}
     if (myMask.style.opacity!=0) {myMask.style.pointerEvents='auto'; myMask.style.zIndex=Zindex}
     if (!thumbSheet && captions) srt.style.opacity=1
     else srt.style.opacity=null
+    if (myPlayer.style.opacity === "0") {if (myPlayer.volume>0.01) myPlayer.volume/=2}
+    else if (myPlayer.volume < 0.8) {myPlayer.volume *= 1.25} else myPlayer.volume = 1	// fade sound in/out
     if (playing=='browser') {
       if (!myNav.style.display && !thumbSheet) thumb.currentTime=myPlayer.currentTime
       if (dur && !myPlayer.duration && myPlayer.readyState!==4 && type=='video' && block<25) {
@@ -606,7 +605,7 @@
         if (x>1) {el.style.height=view/x+'em'} else el.style.height=view+'em'}}}
 
 
-  function myCues(time) {						// media scrolls, speed, skinny, pauses etc.
+  function myCues(time) { 						// media scrolls, speed, skinny, pauses etc.
     let src=''; let tm=''						// for swap out media above srt/txt
     let x = cues.innerHTML.split(/[\r\n]/)
     for (k=0; k<x.length; k++) {					// process each line entry
@@ -623,7 +622,6 @@
         else if (el[1]=='pitch') {if (isNaN(el[2])) {pitch=1} else {pitch=1*el[2]}}
         else if (el[1]=='pause') {myPlayer.pause(); if (el[2]) setTimeout(function(){myPlayer.play()},1000*el[2])}}}
     if (type=='document' && playing) {
-// mySelected.innerHTML = myPlayer.paused+'   '+src+'  '+tm
       if (myPlayer.paused && overText && tm && (myPlayer.src != src || tm != time)) {
         myPlayer.style.opacity = 0
         if (src.match('.jpg')) type = 'image'
@@ -634,16 +632,6 @@
         positionMedia(3)						// fade new media in
         myPlayer.style.opacity=1}
       else if (!tm && myPlayer.src != thumb.src) {setPlayer(); myPlayer.currentTime=thumb.currentTime}}}
-
-
-  function overThumb(id) {
-    if (thumb) thumb.pause()						// pause previous thumb
-    index = id
-    if (Click) return							// faster for click & slide selecting
-    getParameters(id)
-    thumb.style.opacity=1						// for listView
-    if (toggles.match('Pause')) thumb.pause()
-    else if (thumb.readyState !== 4) {thumb.load(); thumb.playbackRate=0.6}}	// first use
 
 
   function Captions() {							// grok refactored code
@@ -804,6 +792,17 @@
     if (!looping) {if (getParameters(index+=1)) {Play()} else closePlayer(); return}
     myPlayer.currentTime=thumb.style.start
     myPlayer.play()}
+
+
+  function overThumb(id) {
+    if (!thumb.paused) thumb.pause()					// pause previous thumb
+    index = id
+    if (Click) return							// faster for click & slide selecting
+    getParameters(id)
+    thumb.style.opacity=1						// for listView
+    if (toggles.match('Pause')) thumb.pause()
+    else if (lastYpos != ypos && !listView && thumb.readyState !== 4) {thumb.load(); thumb.playbackRate=0.6}	// first use
+    lastYpos = ypos}
 
 
   function Time(z) {if (z<0) return '0:00'; let y=Math.floor(z%60); let x=':'+y; if (y<10) {x=':0'+y}; return Math.floor(z/60)+x}
