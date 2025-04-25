@@ -93,12 +93,13 @@
         Global cur				; window under cursor
         Global desk				; current desktop window
         Global indexSelected			; html media page to index (create thumbs)
-        Global paused := 0			; mpv paused
+        Global mpvPaused := 0			; mpv paused
         Global mpvTime := 0			; mpv last time
         Global pitch := 0
         Global block := 0			; pitch block flag
         Global flush := 0			; flag to flush excess wheel buffer
-        Global mute				; mpv mute
+        Global mute				; global mute
+        Global captions := 0			; caption, so no seek off player
 
 
     main:
@@ -109,7 +110,7 @@
         Clipboard = #Path###%profile%\Pictures\
       Clipboard()				; process clipboard message
       SetTimer, TimedEvents, 50, 2		; every 50mS
-      SetTimer, CheckFfmpeg, 4999, 2		; show if ffmpeg active
+      SetTimer, CheckFfmpeg, 99, 2		; show if ffmpeg active
       return
 
 
@@ -124,8 +125,8 @@
 
     MButton::
       click = MButton
-      IfWinExist, ahk_class mpv
-        closeMpv(1)
+      longClick := 0 
+      closeMpv(1)
       send, {MButton down}
       return
 
@@ -196,12 +197,12 @@
           Gui PopUp:Cancel
           IfWinExist, ahk_class mpv
             {
-            if !longClick
-              closeMpv(0)					; just get mpvTime
-            if (click=="LButton" && !gesture && !longClick)
+            if (click=="LButton" && !gesture && !longClick && !captions)
               RunWait %COMSPEC% /c echo no-osd cycle pause > \\.\pipe\mpv,, hide
             if (click=="RButton" && !gesture && !longClick)
               closeMpv(1)
+            sleep 40
+            closeMpv(0)						; just get mpvTime
             }
           if (click == "RButton" && !gesture) 			; echo RButton
             send {RButton}
@@ -260,9 +261,20 @@
         {
         if (command == "Null")						; used as trigger to save text editing - see Java inca()
             return
+        if (command == "Mpv")						; set default player
+            {
+            reload := 2
+            config := RegExReplace(config, "Mpv/[^|]*", "Mpv/" . value*1)
+            IniWrite, %config%, %inca%\ini.ini, Settings, config
+            }
+        if (command == "Mute")						; set default player
+            {
+            config := RegExReplace(config, "Mute/[^|]*", "Mute/" . value*1)
+            IniWrite, %config%, %inca%\ini.ini, Settings, config
+            }
         if (command == "saveText")					; save text snip
             saveText()
-        if (command == "closeMpv" && mpvExist)				; close external mpv player
+        if (command == "closeMpv")					; close external mpv player
             closeMpv(1)
         if (command == "Media")						; browser tells inca to use mpv player
             Media()
@@ -320,6 +332,8 @@
             reload := 3
             selected =
             }
+        if (command == "mpvTime")
+            RunWait %COMSPEC% /c echo seek %value% absolute exact > \\.\pipe\mpv,, hide && exit
         if (command=="Path"||command=="Search"||command=="SearchBox"||InStr(sortList, command))
             Path()
         }
@@ -331,28 +345,33 @@
       if (flush || !mpvExist)
         return
       flush := 1
-      FileRead, dur, %inca%\cache\durations\%media%.txt
-      WinActivate, ahk_class mpv
-      WinGetPos, x, y, mpvWidth, mpvHeight, ahk_class mpv
-      mediaX := x + mpvWidth // 2
-      mediaY := y + mpvHeight // 2
+      if (!captions || cur == mpvExist)
+        WinActivate, ahk_class mpv
+      else WinActivate, ahk_group Browsers
       if (cur == mpvExist && !fullscreen) 				; zoom
         {
+        WinGetPos, x, y, mpvWidth, mpvHeight, ahk_class mpv
+        
+        mediaX := x + mpvWidth // 2
+        mediaY := y + mpvHeight // 2
         mpvWidth += wheel * 40
         mpvHeight += wheel * mpvHeight/mpvWidth * 40
         x := mediaX - mpvWidth // 2
         y := mediaY - mpvHeight // 2
         if ((mpvWidth > 400 || wheel == 1) && !(wheel == 1 && mpvHeight > A_ScreenHeight))
-          WinMove, ahk_class mpv,, %x%, %y%, %mpvWidth%, %mpvHeight%
+          if (x && y && mpvWidth>400)
+            WinMove, ahk_class mpv,, %x%, %y%, %mpvWidth%, %mpvHeight%
         }
       else								; seek
         {
+        FileRead, dur, %inca%\cache\durations\%media%.txt
         if (mute == "no" && !block)
             RunWait %COMSPEC% /c echo no-osd set mute yes > \\.\pipe\mpv,, hide		; mute during seeking
         if (pitch && pitch != 1 && !block)
             RunWait %COMSPEC% /c echo no-osd af set "" > \\.\pipe\mpv,, hide		; clear af because slows seeking
-        command := paused ? (wheel = 1 ? "frame-step" : "frame-back-step") : (dur < 120 ? (wheel = 1 ? "seek +0.4 exact" : "seek -0.6 exact") : (wheel = 1 ? "seek +1" : "seek -1"))
-        RunWait %COMSPEC% /c echo %command% > \\.\pipe\mpv,, hide
+        command := mpvPaused ? (wheel = 1 ? "frame-step" : "frame-back-step") : (dur < 200 ? (wheel = 1 ? "seek +0.4 exact" : "seek -0.6 exact") : (wheel = 1 ? "seek +1" : "seek -1"))
+        if (!captions || cur == mpvExist)
+          RunWait %COMSPEC% /c echo %command% > \\.\pipe\mpv,, hide
         }
       SetTimer, TimedEvents, 100							; restart timer
       block := 1									; ensure af and mute reinstated in timer
@@ -362,22 +381,26 @@
 
     closeMPV(exit)
       {
+      IfWinNotExist, ahk_class mpv
+        return
       WinGetTitle, mpvTime, ahk_exe mpv.exe
       If InStr(mpvTime, "-no")
-        paused := 1						; get mpv paused state
-      else paused := 0
+        mpvPaused := 0						; get mpv paused state
+      else mpvPaused := 1
       RegExMatch(mpvTime, "-(\d*\.\d+)", m)
       mpvTime := Format("{:0.1f}", m1)				; time for add favorite start
-      WinGetPos, x, y, mpvWidth, mpvHeight, ahk_class mpv
-      mediaX := x + mpvWidth // 2				; remember mpv position
-      mediaY := y + mpvHeight // 2
+      if !fullscreen {
+        WinGetPos, x, y, mpvWidth, mpvHeight, ahk_class mpv
+        mediaX := x + mpvWidth // 2				; remember mpv position
+        mediaY := y + mpvHeight // 2
+        }
       if !exit
         return
       Process, Close, mpv.exe
       clp := Clipboard
       Clipboard := mpvTime
-      send, ^v
-      sleep 100
+      send, ^c
+      ClipWait, 0.1
       Clipboard := clp
       }
 
@@ -496,10 +519,10 @@
       skinny := Round(StrSplit(address,"|").2,2)
       rate := Round(StrSplit(address,"|").3,2)
       pitch := Round(StrSplit(address,"|").4,2)
-      mute := 1*StrSplit(address,"|").5
-      if (!mute || type == "audio")
-        mute = no
-      else mute = yes
+      captions := 1*StrSplit(address,"|").5
+      if 1*Setting("mute")
+        mute = yes
+      else mute = no
       if (skinny < 0)
         flip := "--vf=hflip"
       else flip =
@@ -511,20 +534,18 @@
         speed = --speed=%rate%
       else speed =
       pause =
-      paused := 0
-      If InStr(toggles, "Pause")
-        {
-        paused := 1
+      if mpvPaused
         pause = --pause
-        }
       if !start
         start = 0.0
       max := (mpvWidth > mpvHeight && mpvWidth) ? mpvWidth : (mpvHeight ? mpvHeight : 999)
+      if captions
+        max := 400
       autofit = --autofit-larger=%max%x%max% --autofit=%max%
       para = %autofit% --start=%start% %speed% %pause% %flip% --mute=%mute%
       if (ext=="pdf" || ext=="rtf" || ext=="doc")
         Run, %src%
-      else if (type=="m3u" || type=="document")						; use notepad
+      else if (longClick and (type=="m3u" || type=="document"))				; use notepad
         Run, % "notepad.exe " . src
       else if (longClick and FileExist(inca . "\cache\captions\" . media . ".srt"))
         Run, notepad.exe %inca%\cache\captions\%media%.srt
@@ -550,9 +571,11 @@
           WinGetPos,,, mpvWidth, mpvHeight, ahk_class mpv
           x := mediaX - mpvWidth // 2
           y := mediaY - mpvHeight // 2
-          if (x)							; mpv can take time to get width/height
+          if captions
+            y := 600
+          if (x && mpvWidth > 300)							; mpv can take time to get width/height
             WinMove, ahk_class mpv,, %x%, %y%
-          if (A_Index > 5 && x)
+          if (A_Index > 5 && x && mpvWidth > 300)
             break
           Sleep, 20
           }
@@ -740,53 +763,39 @@
       if value is not number
         value := 0
       if (command != "Images" && command != "videos" && command != "Recurse")
-        if (command != "Pause" && command != "Mpv" && command != "Mute")
-          if (InStr(sortList, command) && sort != command)
-            {
-            StringReplace, toggles, toggles, Reverse
-            if (value == filt)
-              filt := 0
-            else filt := value
-            sort := command
-            return
-            }
+        if (InStr(sortList, command) && sort != command)		; comes here once if eg dur changed to alpha sort
+          {
+          StringReplace, toggles, toggles, Reverse			; removes reverse toggle
+          if (value == filt)
+            filt := 0
+          else filt := value
+          sort := command
+          return
+          }
       if (command != "Path")						; 'Path' uses 'value' for scroll index instead of filt
         {
         if (filt != value && value != searchTerm)			; new filter value only
           filt := value
-        else if (InStr(sortList, command))				; sort filter
-          {
-          toggle_list = Reverse Recurse Videos Images Pause Mpv Mute
-          if (sort != command)						; new sort
-            {
-            if (command != "Reverse" && !InStr(toggle_list, command))
-              StringReplace, toggles, toggles, Reverse			; remove reverse
-            }
-          else if (sort != "Shuffle")
-            command = Reverse
-          if InStr(toggle_list, command)
-            if !InStr(toggles, command)					; toggle the sort switches
-              toggles = %toggles%%command%				; add switch
-            else StringReplace, toggles, toggles, %command%
-          else sort := command
-          if (StrLen(toggles) < 3)
-            toggles =
-          if (command == "Mpv" || command == "Mute")			; handle Mpv and Mute commands
-            {
-            reload := 0
-            key := (command == "Mpv" ? "mpv" : "mute")
-            old := Setting(key)
-            new := 1*old ^ 1
-            config := StrReplace(config, key . "/" . old, key . "/" . new)
-            IniWrite, %config%, %inca%\ini.ini, Settings, config
-            if (new)
-                toggles := StrReplace(toggles, command) . command
-            else
-                StringReplace, toggles, toggles, %command%
-            if (command == "Pause" || command == "Mpv")
-              reload := 2, index := selected, selected := ""
-            }
-          }
+              else if (InStr(sortList, command))			; sort filter
+                {
+                if (command=="Pause")
+                  reload := 2
+                toggle_list = Reverse Recurse Videos Images Pause Mpv
+                if (sort != command)					; new sort
+                    {
+                    if (command != "Reverse" && !InStr(toggle_list, command))
+                        StringReplace, toggles, toggles, Reverse	; remove reverse
+                    }
+                else if (sort != "Shuffle")
+                    command = Reverse
+                if InStr(toggle_list, command)
+                    if !InStr(toggles, command)				; toggle the sort switches
+                        toggles = %toggles%%command%			; add switch
+                    else StringReplace, toggles, toggles, %command%	; remove switch
+                else sort := command
+                if (StrLen(toggles) < 3)
+                    toggles =
+                }
         }
       }
 
@@ -1006,9 +1015,9 @@
       }
 
 
-    capEdit()
+    capEdit()								; save edited text or srt file
       {
-      if !address
+      if (StrLen(address) < 10)
         return
       getMedia(selected)
       if (ext == "txt")
@@ -1021,7 +1030,7 @@
       address := StrReplace(address, "<div><br><\div>")
       address := StrReplace(address, "<\d>", "`r`n")			; d is timestamp element
       address := StrReplace(address, "<br>", "`r`n")
-      address := StrReplace(address, "-->", "-->")			; so "<.*?>" can clear out injected html
+      address := StrReplace(address, "--&gt;", "-->")
       address := RegExReplace(address, "<.*?>")				; remove everything between <>
       address := StrReplace(address, ">", ">")				; return tag back to >
       address := StrReplace(address, " ", " ")
@@ -1049,7 +1058,7 @@
             str = %str%%ix%`r`n%time%`r`n%A_LoopField%`r`n`r`n
             time =
             }
-          }         
+          }
         FileDelete, %inca%\cache\captions\%media%.srt
         FileAppend, %str%, %inca%\cache\captions\%media%.srt, UTF-8
         }
@@ -1623,7 +1632,7 @@
         inca := SubStr(inca, 1, InStr(inca, "\", False, -1))
         StringTrimRight, inca, inca, 1
         EnvGet, profile, UserProfile
-        sortList = Shuffle|Alpha|Duration|Date|Size|Type|Reverse|Recurse|Videos|Images|Playlist|Pause|Mpv|Mute
+        sortList = Shuffle|Alpha|Duration|Date|Size|Type|Reverse|Recurse|Videos|Images|Playlist
         IniRead,config,%inca%\ini.ini,Settings,config
         IniRead,searchFolders,%inca%\ini.ini,Settings,searchFolders
         IniRead,indexFolders,%inca%\ini.ini,Settings,indexFolders
@@ -1759,7 +1768,7 @@
         src := StrSplit(A_Loopfield, "|").1
         start := StrSplit(A_Loopfield, "|").2
         detectMedia(src)
-;        GuiControl, Indexer:, GuiInd, indexing - %src%
+        GuiControl, Indexer:, GuiInd, indexing - %src%
         IfNotExist, %inca%\cache\posters\%media%%A_Space%%start%.jpg
           Runwait, %inca%\cache\apps\ffmpeg.exe -ss %start% -i "%src%" -y -vf scale=1280:1280/dar -vframes 1 "%inca%\cache\posters\%media%%A_Space%%start%.jpg",, Hide
         }
@@ -1768,7 +1777,7 @@
       Loop, Files, %path%*.*, R
         index(A_LoopFileFullPath,0)
       }
-;    GuiControl, Indexer:, GuiInd
+    GuiControl, Indexer:, GuiInd
     return
 
 
@@ -1896,19 +1905,7 @@
           subfolders = 
         if InStr(fol, x) 
           showSubs = 
-        title := folder
-        if Setting("mpv")						; changes scope from local page toggles to global
-          {
-          toggles := StrReplace(toggles, "Mpv")
-          toggles .= "Mpv" ; Append "Mpv"
-          } 
-        else toggles := StrReplace(toggles, "Mpv")
-        if Setting("mute")
-          {
-          toggles := StrReplace(toggles, "Mute")
-          toggles .= "Mute" ; Append "Mute"
-          } 
-        else toggles := StrReplace(toggles, "Mute")
+        title := folder 
         FileRead, java, %inca%\java.js
         FileRead, ini, %inca%\ini.ini
         ini := StrReplace(ini, "`r`n", "|")				; java cannot accept cr in strings
@@ -2078,9 +2075,16 @@ if subfolders
   subs = ^
 StringReplace, folder_s, folder, `', &apos, All				; htm cannot pass '
 
+if 1*Setting("mpv")
+  mpv := 1
+else mpv := 0
+if 1*Setting("mute")
+  mute = yes
+else mute = no
+
 header = <!--, %page%, %pages%, %sort%, %toggles%, %listView%, %playlist%, %path%, %searchPath%, %searchTerm%, %subfolders%, -->`n<!doctype html>`n<html>`n<head>`n<meta charset="UTF-8">`n<title>Inca - %title%</title>`n<meta name="viewport" content="width=device-width, initial-scale=1">`n<link rel="icon" type="image/x-icon" href="file:///%inca%\cache\icons\inca.ico">`n<link rel="stylesheet" type="text/css" href="file:///%inca%/css.css">`n</head>`n`n
 
-body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(%page%, %pages%, '%folder_s%', '%toggles%', '%sort%', %filt%, %listView%, '%selected%', '%playlist%', %index%); %scroll%.scrollIntoView()">`n`n
+body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(%page%, %pages%, '%folder_s%', '%mute%', %mpv%, '%sort%', %filt%, %listView%, '%selected%', '%playlist%', %index%); %scroll%.scrollIntoView()">`n`n
 
 <div oncontextmenu="if (yw>0.08) {event.preventDefault()}">`n
 <div id='myNav' class='context' onwheel='wheelEvent(event)'>`n
@@ -2088,7 +2092,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
 <a id='mySelect' style='word-spacing:0.8em' onmouseup="if (lastClick==1) {if (myTitle.value) {sel(index)} else selectAll()}"></a>`n
 <input id='myTitle' class='title' style='color:lightsalmon; padding-left:1.2em'>`n
 <video id='myPic' muted class='pic'></video>`n
-<a id='myMute' onmousedown="inca('Mute'); myPlayer.volume=0.1; muted^=1">Mute</a>`n
+<a id='myMute' onmousedown="muted^=1; inca('Mute', muted); myPlayer.volume=0.1">Mute</a>`n
 <a id='myFavorite' onmouseup='addFavorite()'>Fav</a>`n
 <a id='mySpeed'></a>`n
 <a id='mySkinny'></a>`n
@@ -2141,13 +2145,12 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
 <a id='myAlpha' style='min-width:3em; %x2%' onmousedown="inca('Alpha', filt)" onwheel="wheelEvent(event)">Alpha</a>`n
 <a id='myPlaylist' style='width:11`%; %x11%' onmousedown="inca('Playlist')">%pl%</a>`n
 <a id='myShuffle' style='width:11`%; %x1%' onmousedown="inca('Shuffle')">Shuffle</a>`n
-<a style='%x12%' onmousedown="inca('Pause','',lastMedia)">Pause</a>`n
 <a style='%x10%' onmousedown="inca('Images')">Pics</a>`n
 <a style='%x9%' onmousedown="inca('Videos')">Vids</a>`n
 <a style='%x8%' onmousedown="inca('Recurse')">Subs</a>`n
 <a id='myThumbs' onmouseout='setThumbs(1,1000)' onmouseup="inca('View',0)" onwheel="wheelEvent(event)"></a>`n 
 <a id='myWidth' onwheel="wheelEvent(event)"></a>`n
-<a id='myMpv' style='%x13%' onmousedown="inca('Mpv','',lastMedia)">Mpv</a>`n
+<a id='myMpv' onmousedown="mpv^=1; inca('Mpv', mpv)">Mpv</a>`n
 <a id='myJoin' onmousedown="inca('Join')">Join</a>`n
 </div>`n`n
 

@@ -1,5 +1,17 @@
 // use browser for notepad with backups
 // select and delete at same time
+// mpv fullscreen sets width after
+// remove toggles and mute, pause, mpv
+// paused state mix up after end of media ?
+// not full reload if copyfile
+// need to ensure browser player within screen 
+
+
+// no txt icon when mpv
+// pause state mpv
+// mpv fullscreen aspect
+
+
 
 
 
@@ -16,7 +28,6 @@
   let listView = 0							// list or thumb view
   let page = 1								// html media page
   let pages = 1								// how many htm pages of media
-  let toggles = 0							// html ribbon headings
   let filt = 0								// media list filter
   let playlist								// full .m3u filepath
   let captions = 0							// captions enabled
@@ -65,7 +76,9 @@
   let folder = ''							// browser tab name = media folder
   let defRate = 1							// default speed
   let muted = 0
-  let lastYpos = 0							// to block overThumb() during scrolling
+  let lastYpos = 0							// to stop stutter scrolling thumbs
+  let paused = 0							// global paused state
+  let mpv = 0								// default player
 
 
   let mediaX = isNaN(1*localStorage.mediaX) ? 400 : 1*localStorage.mediaX  // myPlayer position
@@ -77,8 +90,8 @@
   document.addEventListener('mouseup', mouseUp)
   document.addEventListener('dragend', mouseUp)
   document.addEventListener('mousemove', mouseMove)
-  document.addEventListener('paste', function(e) {					// ahk paste mpv time
-    let time = e.clipboardData.getData('text')
+  document.addEventListener('copy', function(e) {					// ahk copy mpv time
+    let time = window.getSelection().toString()
     if (!isNaN(time) && time.trim() !== '') thumb.currentTime=time}, false)
   document.addEventListener('keydown', (e) => { 					// keyboard events
     if (e.key == 'Enter') {
@@ -87,7 +100,7 @@
       else if (captions) newCap()}
     else if (e.code == 'Space' && !srt.innerHTML) togglePause()
     else if (e.key == 'Backspace') {if (srt.innerHTML) {joinCap()} else closePlayer()}
-    else if (e.key == 'Pause') {							// inca re-map of mouse 'Back' click
+    else if (e.key == 'Pause') {							// Back click - inca re-map 
       myPic.style.transform = 'scale('+Math.abs(skinny)+',1)'				// reset context image
       if (playing) closePlayer()							// close player and send messages to inca
       else if (myContent.scrollTop > 50) myContent.scrollTo(0,0)			// else scroll to page top
@@ -121,12 +134,11 @@
     if (id == 'mySave' || id == 'myInput') return
     if (id == 'myForward') {newCap(0.4); return}					// move caption forward in time
     if (id == 'myBack') {newCap(-0.4); return}
-    if (lastClick == 2) {								// middle click
+    if (lastClick == 2) {  								// middle click
       if (editing) inca('Null')								// save text
       if (myNav.matches(':hover')) lastClick=0						// wheel seek in context menu
       if (!playing && !myNav.style.display) {inca('View',lastMedia); return}		// switch list/thumb view
       else if (longClick) {index--} else index++}					// next, previous media
-    else if (longClick) return
     if (lastClick == 3) {								// middle click
       if (myNav.matches(':hover')) {thumbSheet ^= 1; myNav.style.display = null}	// toggle thumbsheet mode
       else {if (yw > 0.08) context(); return}}						// show context menu	
@@ -151,7 +163,6 @@
       let x = thumb.style.start
       if (thumb.currentTime > x && thumb.currentTime < x + 1.2) thumb.currentTime = x
       myPlayer.currentTime=thumb.currentTime}
-    let para = myPlayer.currentTime+'|'+skinny+'|'+rate+'|'+pitch+'|'+muted		// for if mpv external player
     thumb.pause()
     myPlayer.pause()
     myPlayer.muted = muted
@@ -161,14 +172,14 @@
       el.style.display = null
       if (captions && srt.innerHTML && lastClick==2) openCap()}				// next/back
     lastMedia = index
-    if (!favicon.matches(':hover') && toggles.match('Mpv') && type!='image') {playing='mpv'} else playing='browser'
-    if (playing == 'mpv' && !thumbSheet) myPlayer.load()
-    if (lastClick==1 && srt.innerHTML && (favicon.matches(':hover') || type=='document')) {
-      if (!longClick) openCap()								// show cap or txt in browser 
-      else {Click=0; inca('Media',0,index,para); return}}				// eg. open in notepad
-    else if (playing=='mpv' && !thumbSheet) {inca('Media',0,index,para); return}
-    if (type=='audio' || playlist.match('/inca/music/')) {scaleY=0.2; looping=0; myPlayer.muted=0}
-    if (!thumbSheet && type!='image' && (!toggles.match('Pause') && !captions || longClick==1)) myPlayer.play()
+    playing='browser'
+    if (!longClick && lastClick==1 && srt.innerHTML && (favicon.matches(':hover') || type=='document')) openCap()
+    let para = myPlayer.currentTime+'|'+skinny+'|'+rate+'|'+pitch+'|'+captions		// for mpv external player
+    if (type=='audio' || playlist.match('/inca/music/')) {paused=0; scaleY=0.2; looping=0; myPlayer.muted=0}
+    else if (longClick==1) playing = ''
+    else if (mpv && type!='image') playing='mpv'
+    if (playing != 'browser' && !thumbSheet) {myPlayer.load(); Click=0; inca('Media',0,index,para); return}
+    else if (!thumbSheet && type!='image' && !paused && !captions) myPlayer.play()
     if (captions && (scaleY==0.5 || scaleY==0.2)) scaleY = 0.21				// first time open use small player
     myPlayer.addEventListener('ended', nextMedia)
     if (thumb.src.slice(-3)=='txt') srt.style.padding = 0
@@ -178,7 +189,7 @@
     if (playing != 'mpv' || thumbSheet) myPlayer.style.opacity=1
     myPlayer.volume=0.1						// triggers volume fadeup
     positionMedia(0)
-    block = 60}								// allows time to detect if video can play
+    block = 60}							// allows time to detect if video can play
 
 
   function mouseMove(e) {
@@ -290,7 +301,7 @@
   function timerEvent() { 						// every 90mS
     xw = xpos / innerWidth
     yw = ypos / innerHeight
-    let el = myPlayer
+    let top = 0; let el = myPlayer
     if (myNav.style.display) el = myPic
     else if (!playing) el = thumb
     rect = el.getBoundingClientRect()
@@ -322,7 +333,7 @@
     else {
       if (skinny>0.99 && skinny<1.01) {mySkinny.innerHTML='Skinny'} else mySkinny.innerHTML=skinny.toFixed(2)
       if (rate==1) {mySpeed.innerHTML='Speed'} else mySpeed.innerHTML=rate.toFixed(2)
-      if (toggles.match('Mpv')) {if (pitch==1) {myPitch.innerHTML='Pitch'} else myPitch.innerHTML=pitch.toFixed(2)}}
+      if (mpv) {if (pitch==1) {myPitch.innerHTML='Pitch'} else myPitch.innerHTML=pitch.toFixed(2)}}
     if (outerHeight-innerHeight>30) {myMenu.style.display=null; myMask2.style.display=null} 
     else {myMenu.style.display='none'; myMask2.style.display='none'}  			// if fullscreen hide menu 
     if (selected && !Click) mySelected.innerHTML = selected.split(',').length -1
@@ -332,6 +343,7 @@
     else myFavorite.innerHTML='Fav'
     if (looping) {myLoop.style.color='red'} else myLoop.style.color=null
     if (muted) {myMute.style.color='red'} else myMute.style.color=null
+    if (mpv) {myMpv.style.color='red'} else myMpv.style.color=null
     if (skinny<0) {myFlip.style.color='red'} else myFlip.style.color=null
     if ((","+selected).match(","+index+",")) {mySelect.style.color='red'; myPlayer.style.outline='4px solid red'}
     else {mySelect.style.color=null; myPlayer.style.outline=null}
@@ -344,10 +356,14 @@
     else srt.style.opacity=null
     if (myPlayer.style.opacity === "0") {if (myPlayer.volume>0.01) myPlayer.volume/=2}
     else if (myPlayer.volume < 0.8) {myPlayer.volume *= 1.25} else myPlayer.volume = 1	// fade sound in/out
+    if (captions && el == myPlayer) {
+      if (playing == 'browser') {top = rect.bottom} else top = 300
+      capMenu.style.top = top + 24 + srt.offsetHeight + 'px'; capMenu.style.left = mediaX -85 + 'px'
+      srt.style.top = top + 'px'; srt.style.left = mediaX-srt.offsetWidth/2 + 'px'}
     if (playing=='browser') {
       if (!myNav.style.display && !thumbSheet) thumb.currentTime=myPlayer.currentTime
       if (dur && !myPlayer.duration && myPlayer.readyState!==4 && type=='video' && block<25) {
-        mySelected.innerHTML='Not found or wrong type'}
+        mySelected.innerHTML='Try Mpv player'}
       if (type!='image' && !dur) dur=myPlayer.duration					// just in case
       myPlayer.playbackRate=rate
       if (type == 'document') myCap.innerHTML='Save Text'
@@ -379,10 +395,7 @@
       myPlayer.style.top = innerHeight/2 - myPlayer.offsetHeight/2 +"px"
       y=0.6*ratio*innerWidth/myPlayer.offsetWidth}
     myPlayer.style.transition = time + 's'
-    myPlayer.style.transform = "scale("+skinny*y+","+y+")"
-    y = myPlayer.getBoundingClientRect()
-    capMenu.style.top = y.bottom + 24 + srt.offsetHeight + 'px'; capMenu.style.left = mediaX -85 + 'px'
-    srt.style.top = y.bottom + 'px'; srt.style.left = mediaX-srt.offsetWidth/2 + 'px'}
+    myPlayer.style.transform = "scale("+skinny*y+","+y+")"}
 
 
   function seekBar() {									// progress bar beneath player
@@ -558,10 +571,10 @@
     return 1}
 
 
-  function globals(pg, ps, fo, to, so, fi, lv, se, pl, ix) {		// import globals from inca.exe
-    folder=fo; page=pg; pages=ps; toggles=to; filt=fi;
+  function globals(pg, ps, fo, mu, mv, so, fi, lv, se, pl, ix) {	// import globals from inca.exe
+    folder=fo; page=pg; pages=ps; filt=fi; mpv=mv;
     listView=lv; selected=se; playlist=pl
-    if (toggles.match('Mute')) {muted=1} else muted=0
+    if (mu=='yes') {muted=1} else muted=0
     let key = 'pageWidth'+folder
     let x = localStorage.getItem(key)
     if (isNaN(x) || x<20 || x>100) localStorage.setItem(key, 60)	// default htm width 60%
@@ -650,7 +663,9 @@
     if (!id.match('my') || (capText.id==id && !editing)) togglePause()
     else if (!editing || capText.id!=id) myPlayer.play()
     else myPlayer.pause()
-    if (capText.id!=id && capTime.id!=id && !myPlayer.paused) myPlayer.currentTime = thumb.currentTime = tm
+    if (capText.id!=id && capTime.id!=id && !myPlayer.paused) 
+    if (playing == 'mpv') inca('mpvTime', tm)
+    else myPlayer.currentTime = thumb.currentTime = tm
     if (longClick==1) myPlayer.pause()}					// osk triggered in inca
 
 
@@ -800,8 +815,7 @@
     if (Click) return							// faster for click & slide selecting
     getParameters(id)
     thumb.style.opacity=1						// for listView
-    if (toggles.match('Pause')) thumb.pause()
-    else if (lastYpos != ypos && !listView && thumb.readyState !== 4) {thumb.load(); thumb.playbackRate=0.6}	// first use
+    if (lastYpos != ypos && thumb.readyState !== 4) {thumb.load(); thumb.playbackRate=0.6}	// first use
     lastYpos = ypos}
 
 
@@ -810,7 +824,8 @@
   function flip() {skinny*=-1; scaleX*=-1; thumb.style.skinny=skinny; positionMedia(0.4); getParameters(index)}
   function togglePause() {
     if (overText && type=='document') return
-    if (!thumbSheet && playing && myPlayer.paused) {myPlayer.play()} else myPlayer.pause()}
+    if (!thumbSheet && playing && myPlayer.paused) {myPlayer.play()} else myPlayer.pause()
+    if (myPlayer.paused) {paused=1} else paused=0}
 
 
 
