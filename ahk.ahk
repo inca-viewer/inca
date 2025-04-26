@@ -106,9 +106,10 @@
       initialize()				; sets environment then waits for mouse, key or clipboard events
       WinActivate, ahk_group Browsers
       sleep 24
-      if !GetBrowser()
+      if !GetBrowser() {
         Clipboard = #Path###%profile%\Pictures\
-      Clipboard()				; process clipboard message
+        Clipboard()				; process clipboard message
+        }
       SetTimer, TimedEvents, 50, 2		; every 50mS
       SetTimer, CheckFfmpeg, 99, 2		; show if ffmpeg active
       return
@@ -206,7 +207,7 @@
             }
           if (click == "RButton" && !gesture) 			; echo RButton
             send {RButton}
-          click=
+          else click=
           break
           }
         if (Abs(x)+Abs(y) > 6)					; gesture started
@@ -260,82 +261,86 @@
     ProcessMessage()							; messages from java/browser
         {
         if (command == "Null")						; used as trigger to save text editing - see Java inca()
-            return
-        if (command == "Mpv")						; set default player
-            {
-            reload := 2
-            config := RegExReplace(config, "Mpv/[^|]*", "Mpv/" . value*1)
-            IniWrite, %config%, %inca%\ini.ini, Settings, config
-            }
-        if (command == "Mute")						; set default player
-            {
-            config := RegExReplace(config, "Mute/[^|]*", "Mute/" . value*1)
-            IniWrite, %config%, %inca%\ini.ini, Settings, config
-            }
-        if (command == "saveText")					; save text snip
-            saveText()
-        if (command == "closeMpv")					; close external mpv player
-            closeMpv(1)
-        if (command == "Media")						; browser tells inca to use mpv player
-            Media()
-        if (command == "editCue")					; open media cues in notepad
-            editCue()
-        if (command == "mp3" || command == "mp4")			; convert media to mp3 or mp4
-            mp3mp4()
-        if (command == "Favorite")					; add media favorite to New.m3u
-            Favorite()
-        if (command == "Delete")					; delete media
-            Delete()
-        if (command == "UpdateCues")					; update media cues skinny, rate, pitch
-            UpdateCues(value, media, inca)
-        if (command == "Join")						; join video files together
-            Join()
-        if (command == "Add" && address)
-            Add()
-        if (command == "History")					; maintain play history
-            History()
-        if (command == "Reload")					; reload web page
-            Reload()
-        if (command == "Settings")					; open inca source folder
-            Settings()
-        if (command == "View")						; change thumb/list view
-            View()
-        if (command == "Page")
-            Page()
-        if (command == "Scroll")					; update scroll, width, height
-            Scroll()
-        if (command == "Rename")					; rename media
-            Rename()
-        if (command == "capEdit")					; save browser text editing
-            capEdit()
-        if (command == "Index")						; index folder (create thumbsheets)
-            {
-            indexSelected := selected
-            selected =
-            reload := 2
-            SetTimer, indexPage, -100, -2
-            }
-        if (command == "cueMedia" && value)				; add media to text at scroll
-            {
-            FileDelete, %inca%\cache\cues\%media%.txt
-            FileAppend, %value%, %inca%\cache\cues\%media%.txt, UTF-8
-            }
-        if (command == "addCue")					; add skinny, speed, goto at scroll
-            {
-            FileAppend, %value%`r`n, %inca%\cache\cues\%media%.txt, UTF-8
-            selected =
-            reload := 2
-            }
-        if (command == "Move")						; move entry within playlist
-            {
-            MoveEntry()
-            reload := 3
-            selected =
-            }
-        if (command == "mpvTime")
-            RunWait %COMSPEC% /c echo seek %value% absolute exact > \\.\pipe\mpv,, hide && exit
-        if (command=="Path"||command=="Search"||command=="SearchBox"||InStr(sortList, command))
-            Path()
+          return
+        else if (command == "saveText")					; save text snip
+          saveText()
+        else if (command == "closeMpv")					; close external mpv player
+          closeMpv(1)
+        else if (command == "Media")					; browser tells inca to use mpv player
+          Media()
+        else if (command == "editCues")					; update media cues skinny, rate, pitch
+          editCues()
+        else if (command == "mp3" || command == "mp4")			; convert media to mp3 or mp4
+          mp3mp4()
+        else if (command == "Favorite")					; add media favorite to New.m3u
+          Favorite()
+        else if (command == "Delete")					; delete media
+          Delete()
+        else if (command == "Join")					; join video files together
+          Join()
+        else if (command == "Add" && address)
+          Add()
+        else if (command == "History")					; maintain play history
+          History()
+        else if (command == "Reload")					; reload web page
+          Reload()
+        else if (command == "Settings")					; open inca source folder
+          Settings()
+        else if (command == "View")					; change thumb/list view
+          View()
+        else if (command == "Page")
+          Page()
+        else if (command == "Scroll")					; update scroll, width, height
+          Scroll()
+        else if (command == "Rename")					; rename media
+          Rename()
+        else if (command == "capEdit")					; save browser text editing
+          capEdit()
+        else if (command == "Path")
+          Path()
+        else if (InStr(sortList, command))
+          Sort()
+        else if (command == "Search" || command == "SearchBox")
+          Search()
+        else if (command == "openCues")					; open media cues in notepad
+          openCues()
+        else if (command == "Index")					; index folder (create thumbsheets)
+          {
+          indexSelected := selected
+          selected =
+          reload := 2
+          SetTimer, indexPage, -100, -2
+          }
+        else if (command == "cueMedia" && value)			; add media to text at scroll
+          {
+          FileDelete, %inca%\cache\cues\%media%.txt
+          FileAppend, %value%, %inca%\cache\cues\%media%.txt, UTF-8
+          }
+        else if (command == "addCue")					; add skinny, speed, goto at scroll
+          {
+          FileAppend, `r`n%value%, %inca%\cache\cues\%media%.txt, UTF-8
+          selected =
+          reload := 2
+          }
+        else if (command == "Move")					; move entry within playlist
+          {
+          MoveEntry()
+          reload := 3
+          selected =
+          }
+        else if (command == "Mpv")					; set default player
+          {
+          reload := 2
+          config := RegExReplace(config, "Mpv/[^|]*", "Mpv/" . value*1)
+          IniWrite, %config%, %inca%\ini.ini, Settings, config
+          }
+        else if (command == "Mute")					; set default player
+          {
+          config := RegExReplace(config, "Mute/[^|]*", "Mute/" . value*1)
+          IniWrite, %config%, %inca%\ini.ini, Settings, config
+          }
+        else if (command == "mpvTime")
+          RunWait %COMSPEC% /c echo seek %value% absolute exact > \\.\pipe\mpv,, hide && exit
         }
 
 
@@ -475,7 +480,7 @@
         messages := StrReplace(Clipboard, "/", "\")
         array := StrSplit(messages,"#")
         Clipboard := lastClip
-;   tooltip %messages%, 0						; for debug
+  ; tooltip %messages%, 0						; for debug
         Loop % array.MaxIndex()/4
           {
           command := array[ptr+=1]
@@ -483,12 +488,38 @@
           value := StrReplace(value, "*", "#")
           selected := array[ptr+=1]
           address := array[ptr+=1]
+          if (command=="Path" || command=="Search" || InStr(sortList, command))
+            {
+            x := StrSplit(address,"|").2				; pointer/index from html panel entry
+            y := StrSplit(address,"|").1
+            if (x && y == "subs")
+              address := StrSplit(subfolders,"|")[x]			; uses index to get folder address
+            else if (x && y == "fol")
+              address := StrSplit(fol,"|")[x]
+            else if (x && y == "fav")
+              address := StrSplit(fav,"|")[x]
+            else if (x && y == "music")
+              address := StrSplit(music,"|")[x]
+            else if (x && y == "search")
+              address := StrSplit(search,"|")[x]
+            }
           if selected
             getMedia(StrSplit(selected, ",").1)
+          if (click == "RButton")					; right click over panel
+            {
+            panelPath = %address%
+            return
+            }
+          if (click == "MButton")					; middle click over panel
+            {
+            send, {MButton up}
+            incaTab =							; trigger open new tab
+            value =
+            }
           if !command
             continue
           else ProcessMessage()
-          if (command != "UpdateCues" && command != "capEdit" && command != "History" && command != "Scroll")
+          if (command != "editCues" && command != "capEdit" && command != "History" && command != "Scroll")
             break
           }
         if (reload == 1)
@@ -501,9 +532,6 @@
         selected = 
         PopUp("",0,0,0)
         sleep 100
-        if (command == "Settings" || command == "editCue" || command == "Media" && type=="document")
-          IfWinExist, ahk_class Notepad
-            WinActivate, ahk_class Notepad
         }
 
 
@@ -654,89 +682,110 @@
 
     Path()
       {
-      x := StrSplit(address,"|").2					; pointer/index from html panel entry
-      y := StrSplit(address,"|").1
-      if (x && y == "subs")
-        address := StrSplit(subfolders,"|")[x]				; uses index to get folder address
-      else if (x && y == "fol")
-        address := StrSplit(fol,"|")[x]
-      else if (x && y == "fav")
-        address := StrSplit(fav,"|")[x]
-      else if (x && y == "music")
-        address := StrSplit(music,"|")[x]
-      else if (x && y == "search")
-        address := StrSplit(search,"|")[x]
-      if (click == "RButton")						; right click over panel
+      reload := 1
+      lastMedia := 0
+      if (longClick && !selected)
         {
-        panelPath = %address%
+        run, %address%							; open source instead
+        send {LButton up}
         return
         }
-      if (click == "MButton")						; middle click over panel
+      if selected							; move/copy files
         {
-        send, {MButton up}
-        incaTab =							; trigger open new tab
-        value =
+        x := StrSplit(selected,",")
+        index := x[x.MaxIndex()-1]					; scroll htm to end of selection
+        MoveFiles()							; between folders or playlists
+        selected =
+        reload := 3
+        return
         }
-      if (command == "Path")
+      else if InStr(address, ".m3u")					; playlist
         {
-        lastMedia := 0
-        if (longClick && !selected)
-          {
-          run, %address%						; open source instead
-          send {LButton up}
-          return
-          }
-        if selected							; move/copy files
-          {
-          x := StrSplit(selected,",")
-          index := x[x.MaxIndex()-1]					; scroll htm to end of selection
-          MoveFiles()							; between folders or playlists
-          selected =
-          reload := 3
-          return
-          }
-        else if InStr(address, ".m3u")					; playlist
-          {
-          playlist := address
-          SplitPath, address,,path,,folder
-          path = %path%\
-          }
-        else
-          {
-          playlist =
-          path := address
-          IfNotExist, %path%
-            path := SubStr(path, 1, InStr(path, "\", False, -1))	; try one folder back
-          IfNotExist, %path%
-            {
-            PopUp("Folder Not Found",600,0,0)
-            return
-            }
-          str := StrSplit(path,"\")					; cannot use splitPath
-          folder := str[str.MaxIndex()-1]				; in case folder has .com in name
-          }
-        GetTabSettings(0)						; load previous tab basic settings from cache
-        searchTerm =
-        searchPath =
-        filt := 0
-        PopUp(folder,0,0,0)
+        playlist := address
+        SplitPath, address,,path,,folder
+        path = %path%\
         }
-
-      if (command == "Search" || command == "SearchBox")
+      else
         {
-        value := 0							; remove filt/index scroll variable
         playlist =
-        if (command == "SearchBox")
-          if longClick
-            address := StrReplace(address, " ", "+")
-          else address := StrReplace(address, "+", " ")
-        if (strlen(address) < 2)
+        path := address
+        IfNotExist, %path%
+          path := SubStr(path, 1, InStr(path, "\", False, -1))	; try one folder back
+        IfNotExist, %path%
+          {
+          reload := 0
+          PopUp("Folder Not Found",600,0,0)
           return
-        searchTerm = %address%
-        lastSearch = %address%
-        PopUp(searchTerm,0,0,0)
+          }
+        str := StrSplit(path,"\")					; cannot use splitPath
+        folder := str[str.MaxIndex()-1]					; in case folder has .com in name
         }
+      GetTabSettings(0)							; load previous tab basic settings from cache
+      searchTerm =
+      searchPath =
+      filt := 0
+      PopUp(folder,0,0,0)
+      }
+
+
+    Sort()								; 'Path' uses 'value' for scroll index instead of filt
+      {
+      if (fullscreen && folder != incaTab)
+        send, {F11}
+      page := 1
+      if value is not number
+        value := 0
+        if (sort != command)
+          value := 0
+           if (command != "Images" && command != "videos" && command != "Recurse")
+              if (InStr(sortList, command) && sort != command)		; changed sort column
+                {
+                if (value == filt)
+                  filt := 0						; clear filter
+                else filt := value					; or adopt new filt (if applied)
+                }
       reload := 1
+      if (filt != value && value != searchTerm)				; new filter value only
+        filt := value
+      else if (InStr(sortList, command))				; sort filter
+        {
+        if (command=="Pause")
+          reload := 2
+        toggle_list = Reverse Recurse Videos Images
+        if (sort != command)						; new sort
+            {
+            if (command != "Reverse" && !InStr(toggle_list, command))
+               StringReplace, toggles, toggles, Reverse			; remove reverse
+            }
+        else if (sort != "Shuffle")
+          command = Reverse
+        if InStr(toggle_list, command)
+          if !InStr(toggles, command)				; toggle the sort switches
+            toggles = %toggles%%command%			; add switch
+          else StringReplace, toggles, toggles, %command%	; remove switch
+        else sort := command
+        if (StrLen(toggles) < 3)
+          toggles =
+        }
+      if searchTerm
+        Search()							; in case sorting within search
+      }
+      
+
+    Search()
+      {
+      reload := 1
+      value := 0							; remove filt/index scroll variable
+      playlist =
+      if (command == "SearchBox")
+        if longClick
+          address := StrReplace(address, " ", "+")
+        else address := StrReplace(address, "+", " ")
+      if (strlen(address) < 2)
+        return
+      searchTerm = %address%
+      lastSearch = %address%
+      PopUp(searchTerm,0,0,0)
       if searchTerm							; search text from link or search box
         {
         folder := searchTerm
@@ -756,46 +805,6 @@
             }
         if (!InStr(sortList, command))
           filt := 0
-        }
-      if (fullscreen && folder != incaTab)
-        send, {F11}
-      page := 1
-      if value is not number
-        value := 0
-      if (command != "Images" && command != "videos" && command != "Recurse")
-        if (InStr(sortList, command) && sort != command)		; comes here once if eg dur changed to alpha sort
-          {
-          StringReplace, toggles, toggles, Reverse			; removes reverse toggle
-          if (value == filt)
-            filt := 0
-          else filt := value
-          sort := command
-          return
-          }
-      if (command != "Path")						; 'Path' uses 'value' for scroll index instead of filt
-        {
-        if (filt != value && value != searchTerm)			; new filter value only
-          filt := value
-              else if (InStr(sortList, command))			; sort filter
-                {
-                if (command=="Pause")
-                  reload := 2
-                toggle_list = Reverse Recurse Videos Images Pause Mpv
-                if (sort != command)					; new sort
-                    {
-                    if (command != "Reverse" && !InStr(toggle_list, command))
-                        StringReplace, toggles, toggles, Reverse	; remove reverse
-                    }
-                else if (sort != "Shuffle")
-                    command = Reverse
-                if InStr(toggle_list, command)
-                    if !InStr(toggles, command)				; toggle the sort switches
-                        toggles = %toggles%%command%			; add switch
-                    else StringReplace, toggles, toggles, %command%	; remove switch
-                else sort := command
-                if (StrLen(toggles) < 3)
-                    toggles =
-                }
         }
       }
 
@@ -966,34 +975,6 @@
         }
       GuiControl, Indexer:, GuiInd, processing - %media%
       selected =
-      }
-
-
-    editCue()
-      {
-      if !selected
-        return
-      FileRead, cues, %inca%\cache\cues\%media%.txt
-      if !cues
-        {
-        PopUp("no cues",600,0,0)
-        return
-        }
-      StringTrimRight, cues, cues, 2					; remove end `r`n
-      Sort, cues, NZ							; sort cues by time entry
-      FileDelete, %inca%\cache\cues\%media%.txt
-      if cues
-        FileAppend, %cues%`r`n, %inca%\cache\cues\%media%.txt, UTF-8
-      id := StrSplit(selected, ",").1
-      if !value								; current media time
-        value = 0.00
-      if (!address)							; no cue time
-        Run, %inca%\cache\cues\%media%.txt
-      else
-        {
-        FileAppend, %address%|goto|%value%`r`n, %inca%\cache\cues\%media%.txt, UTF-8
-        Popup("Added . . .",1000,0,0)
-        }
       }
 
 
@@ -1243,57 +1224,48 @@
         }
 
 
-  UpdateCues(value, media, inca) 				; Parse value (e.g., "1.00,0.97,1.00#5#0.00")
-    {
-    StringSplit, parts, value, #
-    StringSplit, vals, parts1, `,				; Grok refactored function
-    cue := parts3 is number ? Round(parts3, 2) : 0.00
-    props := { "skinny": vals1, "rate": vals2, "pitch": vals3 }	; Validate properties and track edited ones
-    constraints := { "skinny": [-1.20, 1.50], "rate": [0, 0], "pitch": [0.50, 2.00] }
-    result := {}
-    edited := {}
-    hasChanges := false
-    for type, val in props {
-        val := val is number ? Round(val, 2) : 1.00
-        if (val >= 0.98 && val <= 1.02)
-            val := 1.00
-        else if (constraints[type][1] || constraints[type][2]) {
-            if (val < constraints[type][1])
-                val := constraints[type][1]
-            if (val > constraints[type][2])
-                val := constraints[type][2]
-            }
-        result[type] := val
-        edited[type] := (val != 1.00 || vals%A_Index% != "")	; Track if explicitly edited
-        if (val != 1.00 || edited[type])
-            hasChanges := true
-        } 
-    if (!hasChanges)
-        return
-    cueFile = %inca%\cache\cues\%media%.txt			; Update cue file
-    FileRead, cues, %cueFile%
-    updatedCues := ""
-    Loop, Parse, cues, `n, `r
-        {
-        if (A_LoopField = "")
-            continue
-        StringSplit, array, A_LoopField, |
-        if (array1 = cue && edited[array2])			; Update/remove if property was edited
-            updatedCues .= (result[array2] != 1.00) ? cue . "|" . array2 . "|" . Format("{:.2f}", result[array2]) . "`r`n" : ""
-        else if (array1 != cue || array3 != "1.00")
-            updatedCues .= A_LoopField . "`r`n"
-        }
-    for type, val in result					; Add new non-default entries
-        {
-        if (val != 1.00 && edited[type] && !InStr(cues, cue . "|" . type . "|"))
-            updatedCues .= cue . "|" . type . "|" . Format("{:.2f}", val) . "`r`n"
-        }
-    if (updatedCues != cues) {					; Write if changed
-        FileDelete, %cueFile%
-        if (updatedCues)
-            FileAppend, % RegExReplace(updatedCues, "\r?\n$"), %cueFile%, UTF-8
-        }
-    }
+    editCues() 
+      {     
+      StringSplit, vals, value, `,  					; Split into rate, skinny, pitch
+      cue := "0.00"
+      cueFile := inca . "\cache\cues\" . media . ".txt"
+      updatedCues := ""
+      FileRead, cues, %cueFile%
+      Loop, Parse, cues, `n, `r
+        if (A_LoopField)
+          {
+          StringSplit, array, A_LoopField, |
+          if (array2 in rate,skinny,pitch && array1 = cue)
+            {
+            i := array2 = "rate" ? 1 : array2 = "skinny" ? 2 : 3
+            if (vals%i% = "undefined")
+              updatedCues .= A_LoopField . "`r`n"
+            } 
+          else updatedCues .= A_LoopField . "`r`n"
+          }
+        for i, type in ["rate", "skinny", "pitch"]
+          if (1*vals%i% && 1*vals%i% != 1)
+            updatedCues .= cue . "|" . type . "|" . vals%i% . "`r`n"
+      FileAppend, Input: %value%`nOutput: %updatedCues%`n, debug_log.txt
+      updatedCues := RTrim(updatedCues, "`r`n")
+      Sort, updatedCues, NZ
+      FileDelete, %cueFile%
+      if (updatedCues != cues)
+        FileAppend, % RegExReplace(updatedCues, "\r?\n$"), %cueFile%, UTF-8
+      }
+
+
+    openCues()
+      {
+      if cues
+        FileAppend, %cues%`r`n, %inca%\cache\cues\%media%.txt, UTF-8
+      if !value								; current media time
+        value = 0.00
+      FileRead, cues, %inca%\cache\cues\%media%.txt
+        if !cues
+          PopUp("no cues",600,0,0)
+        else Run, %inca%\cache\cues\%media%.txt
+      }
 
 
     GetTabSettings(all)							; from line 1 of .htm cache file

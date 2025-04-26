@@ -184,10 +184,10 @@ e {						/* caption text entries */
   padding-bottom: 70vh}
 
 .thumb {					/* htm thumbs */
+  --start;					/* java variables for each thumb */
   --rate;
-  --start;
+  --skinny;
   --pitch;
-  --skinny;					/* java variables for each thumb */
   position: relative;
   max-width: 100%;
   max-height: 100%;

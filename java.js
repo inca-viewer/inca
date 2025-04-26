@@ -1,17 +1,11 @@
 // use browser for notepad with backups
 // select and delete at same time
 // mpv fullscreen sets width after
-// remove toggles and mute, pause, mpv
 // paused state mix up after end of media ?
 // not full reload if copyfile
 // need to ensure browser player within screen 
-
-
 // no txt icon when mpv
-// pause state mpv
 // mpv fullscreen aspect
-
-
 
 
 
@@ -126,7 +120,6 @@
 
   function clickEvent() {
     let id = document.elementFromPoint(xpos,ypos).id					// id under cursor
-    if (myPanel.matches(':hover')) {Click=0; return}					// inca opens new tab
     if (longClick && overText && lastClick==1) {myPlayer.pause(); return}		// osk triggered
     if (!gesture && longClick == 1 && !playing && playlist && selected && overMedia) {inca('Move', overMedia); return}
     if (playing && capText && (!capText.innerHTML || capText.innerHTML=="<br>")) {capTime.remove(); capText.remove(); capText=''; return}
@@ -135,14 +128,18 @@
     if (id == 'myForward') {newCap(0.4); return}					// move caption forward in time
     if (id == 'myBack') {newCap(-0.4); return}
     if (lastClick == 2) {  								// middle click
+      if (myPanel.matches(':hover')) {Click=0; return}					// inca opens new tab
       if (editing) inca('Null')								// save text
       if (myNav.matches(':hover')) lastClick=0						// wheel seek in context menu
       if (!playing && !myNav.style.display) {inca('View',lastMedia); return}		// switch list/thumb view
       else if (longClick) {index--} else index++}					// next, previous media
-    if (lastClick == 3) {								// middle click
+    if (lastClick == 3) {								// right click
       if (myNav.matches(':hover')) {thumbSheet ^= 1; myNav.style.display = null}	// toggle thumbsheet mode
-      else {if (yw > 0.08) context(); return}}						// show context menu	
+      else {if (yw > 0.08) context(); return}}						// show context menu
     if (lastClick == 1) {
+      if (id == 'mySkinny') {skinny = thumb.style.skinny = 1; getParameters(index); positionMedia(0.2); return}
+      if (id == 'mySpeed') {rate = thumb.style.rate = defRate; getParameters(index); positionMedia(0.2); return}
+      if (id == 'myPitch') {pitch = thumb.style.pitch = 1; getParameters(index); positionMedia(0.2); return}
       if (id == 'myNav') lastStart = 0							// over 'white space'
       if (thumbSheet || id == 'myPic' || id == 'myNav') {getStart(); return}
       if (myNav.matches(':hover')) return
@@ -221,7 +218,7 @@
 
   function wheelEvent(e) {
     e.preventDefault()
-    let id = document.elementFromPoint(xpos,ypos).id			// id under cursor
+    let id = e.target.closest('a')?.id || e.target.id; 			// Use e.target for hover detection
     wheel += Math.ceil(Math.abs(e.deltaY))
     if (wheel < block) return
     block=120
@@ -229,7 +226,7 @@
     if (id=='myPage') {							// htm page
       if (wheelUp && page<pages) page++
       else if (!wheelUp && page>1) page--}
-    else if (id=='myAlpha'||id=='myDate'||id=='myDuration'||id=='mySize'||id=='mySearch') {	// filter
+    else if (id=='myAlpha'||id=='myDate'||id=='mySize'||id=='myDuration'||id=='mySearch') {  // filter
       if (wheelUp) filt++ 
       else if (filt) filt--
       if ((id=='myAlpha' || id=='mySearch') && filt > 25) filt=25
@@ -363,7 +360,7 @@
     if (playing=='browser') {
       if (!myNav.style.display && !thumbSheet) thumb.currentTime=myPlayer.currentTime
       if (dur && !myPlayer.duration && myPlayer.readyState!==4 && type=='video' && block<25) {
-        mySelected.innerHTML='Try Mpv player'}
+        mySelected.innerHTML='try mpv player'}
       if (type!='image' && !dur) dur=myPlayer.duration					// just in case
       myPlayer.playbackRate=rate
       if (type == 'document') myCap.innerHTML='Save Text'
@@ -402,7 +399,7 @@
     if (type=='image') return
     let el = myPlayer
     if (myPic.matches(':hover')) el=myPic
-    else if (overText || thumbSheet || !playing || playing=='mpv' || !myPlayer.duration || !cursor) return
+    else if (overText || thumbSheet || !playing || playing=='mpv' || !myPlayer.duration || (!cursor&&!cue)) return
     let cueX = rect.left + 7
     let x = Math.round(el.currentTime*100)/100
     mySeekbar.style.width = rect.width * xm + 'px'
@@ -410,21 +407,21 @@
     if (cue && cue <= x) {
       cueX = mediaX - rect.width / 2 + rect.width * cue / dur
       cueW = rect.width * (el.currentTime - cue) / dur
-      if (cue < x + 0.2 && cue > x - 0.2) {
+      if (cue < x + 1 && cue > x - 1) {
         cueW = rect.width * (dur - cue) / dur}}
     else if (cue) {
       cueX = rect.left + rect.width * el.currentTime / dur
       cueW = rect.width * (cue - x) / dur
-      if (cue < 0.2 + x) {
+      if (cue < 1 + x) {
         cueX = rect.left; cueW = rect.width * el.currentTime / dur}}
-    if (el==myPic || (overMedia && ym>0.9 && !cue)) myProgress.style.height = mySeekbar.style.height = '5px'
+    if (el==myPic || (overMedia && ym>0.9)) myProgress.style.height = mySeekbar.style.height = '5px'
     else {myProgress.style.height = '5px'; mySeekbar.style.height = null}
     if (rect.bottom > innerHeight) myProgress.style.top = mySeekbar.style.top = innerHeight -15 +'px'
     else myProgress.style.top = mySeekbar.style.top = (rect.top + rect.height - myProgress.offsetHeight) + 'px';
     myProgress.style.left =  mySeekbar.style.left = cueX +'px'
     myProgress.style.width = cueW +'px'
     if (dur - myPlayer.currentTime < 1) myProgress.style.background='red'
-    else {myProgress.style.background=null; if (myPlayer.paused) myProgress.style.height=0}
+    else {myProgress.style.background=null; if (myPlayer.paused && !cue) myProgress.style.height=0}
     return 1}
 
 
@@ -532,8 +529,8 @@
       messages += '#capEdit##' + editing + '#' + document.getElementById('srt'+editing).innerHTML.replaceAll('#', '*')
       editing = 0}
     for (i=1; el=document.getElementById('thumb'+i); i++) {		// add cue edits to messages
-     if (el.style.skinny || el.style.rate || el.style.pitch) {
-      messages += `#UpdateCues#${el.style.skinny || "1.00"},${el.style.rate || "1.00"},${el.style.pitch || "1.00"}#${i}#${cue || "0.00"}`}}
+      if (el.style.rate || el.style.skinny || el.style.pitch) {
+        messages += '#editCues#'+el.style.rate+','+el.style.skinny+','+el.style.pitch+'#'+i+'#'}}
     if (!select) {select=''} else {select=select+','}
     if (playing && command=='Favorite') select=index
     else if (selected) select=selected					// selected is super global var
@@ -774,7 +771,7 @@
 
 
   function cueButton() {						// context menu Cue button
-    if (!playing) inca('editCue',0,index,0)				// open cues in notepad
+    if (!playing) inca('openCues',0,index,0)				// open cues in notepad
     else {
       if (!cue) cue=Math.round(myPlayer.currentTime*100)/100
       if (thumb.style.skinny || thumb.style.rate) capButton()
@@ -782,6 +779,7 @@
         cues.innerHTML+= srt.scrollTop.toFixed(0) +'|media|'+localStorage.cue
         inca('cueMedia',cues.innerHTML,index)}}
     myNav.style.display=null
+    if (playing) myPlayer.style.opacity=1
     if (dur) myPlayer.pause()}
 
 
