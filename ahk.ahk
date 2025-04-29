@@ -93,11 +93,13 @@
         Global cur				; window under cursor
         Global desk				; current desktop window
         Global indexSelected			; html media page to index (create thumbs)
+        Global paused := 0			; default pause
         Global mpvPaused := 0			; mpv paused
         Global mpvTime := 0			; mpv last time
         Global pitch := 0
         Global block := 0			; pitch block flag
         Global flush := 0			; flag to flush excess wheel buffer
+        Global dur				; media duration
         Global mute				; global mute
         Global captions := 0			; caption, so no seek off player
 
@@ -111,7 +113,7 @@
         Clipboard()				; process clipboard message
         }
       SetTimer, TimedEvents, 50, 2		; every 50mS
-      SetTimer, CheckFfmpeg, 99, 2		; show if ffmpeg active
+      SetTimer, CheckFfmpeg, 999, 2		; show if ffmpeg active
       return
 
 
@@ -126,8 +128,8 @@
 
     MButton::
       click = MButton
-      longClick := 0 
-      closeMpv(1)
+      longClick := 0
+      WinMinimize, ahk_class mpv
       send, {MButton down}
       return
 
@@ -182,6 +184,10 @@
       wasCursor := A_Cursor
       timer := A_TickCount + 300				; set future timout 300mS
       MouseGetPos, xpos, ypos
+      WinGetPos, WinX, WinY, WinWidth, WinHeight, A
+      relX := (xpos - WinX) / WinWidth
+      relY := (ypos - WinY) / WinHeight
+      start := dur * relX
       StringReplace, click, A_ThisHotkey, ~,, All
       loop							; gesture detection
         {
@@ -198,8 +204,10 @@
           Gui PopUp:Cancel
           IfWinExist, ahk_class mpv
             {
-            if (click=="LButton" && !gesture && !longClick && !captions)
-              RunWait %COMSPEC% /c echo no-osd cycle pause > \\.\pipe\mpv,, hide
+            if (click=="LButton" && !gesture && !longClick)
+            if (relX > 0 && relX < 1 && relY > 0.9 && relY < 1)
+              RunWait %COMSPEC% /c echo seek %start% absolute exact > \\.\pipe\mpv,, hide
+            else RunWait %COMSPEC% /c echo no-osd cycle pause > \\.\pipe\mpv,, hide
             if (click=="RButton" && !gesture && !longClick)
               closeMpv(1)
             sleep 40
@@ -223,6 +231,12 @@
           }
         if (!gesture && longClick && click=="LButton")		; click timout
           {
+          if (cur == mpvExist)
+            {
+
+            RunWait %COMSPEC% /c echo seek 0 absolute exact > \\.\pipe\mpv,, hide
+            RunWait %COMSPEC% /c echo set pause no > \\.\pipe\mpv,, hide
+            }
           if (wasCursor == "IBeam")
             {
             longClick =
@@ -236,7 +250,7 @@
               if StrLen(ClipBoard) > 2
                 {
                 PopUp(ClipBoard,0,0,0)
-                if !incaTab					; include current path in search 
+                if !incaTab					; include current path in search
                   path =
                 value =
                 incaTab =					; force new tab
@@ -251,8 +265,7 @@
               }
             else Osk()
             }
-          if (!mpvExist) 
-            break
+ break	 ; escapes loop after longclick needed for reset start to 0 in mpv, and also for other reason non mpv 
           }
         }
       }
@@ -328,10 +341,11 @@
           reload := 3
           selected =
           }
-        else if (command == "Mpv")					; set default player
+        else if (command == "Mpv" || command == "Pause")		; set default player
           {
-          reload := 2
-          config := RegExReplace(config, "Mpv/[^|]*", "Mpv/" . value*1)
+          if (command == "Mpv")
+            config := RegExReplace(config, "Mpv/[^|]*", "Mpv/" . value*1)
+          else config := RegExReplace(config, "Pause/[^|]*", "Pause/" . value*1)
           IniWrite, %config%, %inca%\ini.ini, Settings, config
           }
         else if (command == "Mute")					; set default player
@@ -340,7 +354,10 @@
           IniWrite, %config%, %inca%\ini.ini, Settings, config
           }
         else if (command == "mpvTime")
+          {
           RunWait %COMSPEC% /c echo seek %value% absolute exact > \\.\pipe\mpv,, hide && exit
+          RunWait %COMSPEC% /c echo set pause no > \\.\pipe\mpv,, hide
+          }
         }
 
 
@@ -356,15 +373,15 @@
       if (cur == mpvExist && !fullscreen) 				; zoom
         {
         WinGetPos, x, y, mpvWidth, mpvHeight, ahk_class mpv
-        
         mediaX := x + mpvWidth // 2
         mediaY := y + mpvHeight // 2
+        currentWidth := mpvWidth
         mpvWidth += wheel * 40
-        mpvHeight += wheel * mpvHeight/mpvWidth * 40
+        mpvHeight += wheel * mpvHeight/currentWidth * 40
         x := mediaX - mpvWidth // 2
         y := mediaY - mpvHeight // 2
-        if ((mpvWidth > 400 || wheel == 1) && !(wheel == 1 && mpvHeight > A_ScreenHeight))
-          if (x && y && mpvWidth>400)
+        if ((wheel == 1 || (mpvWidth > 300 && mpvHeight > 300)) && !(wheel == 1 && mpvHeight > A_ScreenHeight))
+          if (x && y)
             WinMove, ahk_class mpv,, %x%, %y%, %mpvWidth%, %mpvHeight%
         }
       else								; seek
@@ -401,12 +418,18 @@
         }
       if !exit
         return
+      WinActivate, ahk_group Browsers
       Process, Close, mpv.exe
       clp := Clipboard
-      Clipboard := mpvTime
-      send, ^c
-      ClipWait, 0.1
+      Clipboard = %mpvTime%
+      IfWinActive, ahk_group Browsers
+        if !captions
+          send, ^v
+      sleep 20
       Clipboard := clp
+      Gui, background:+LastFound
+      WinSet, AlwaysOnTop, Off
+      WinSet, Top,,ahk_group Browsers
       }
 
 
@@ -480,7 +503,7 @@
         messages := StrReplace(Clipboard, "/", "\")
         array := StrSplit(messages,"#")
         Clipboard := lastClip
-  ; tooltip %messages%, 0						; for debug
+ ;  tooltip %messages%, 0						; for debug
         Loop % array.MaxIndex()/4
           {
           command := array[ptr+=1]
@@ -502,25 +525,21 @@
               address := StrSplit(music,"|")[x]
             else if (x && y == "search")
               address := StrSplit(search,"|")[x]
+            panelPath = %address%
+            if (click == "RButton")					; right click over panel
+              return
+            if (click == "MButton")					; middle click over panel
+              {
+              send, {MButton up}
+              incaTab =							; trigger open new tab
+              value =
+              }
             }
           if selected
             getMedia(StrSplit(selected, ",").1)
-          if (click == "RButton")					; right click over panel
-            {
-            panelPath = %address%
-            return
-            }
-          if (click == "MButton")					; middle click over panel
-            {
-            send, {MButton up}
-            incaTab =							; trigger open new tab
-            value =
-            }
           if !command
             continue
           else ProcessMessage()
-          if (command != "editCues" && command != "capEdit" && command != "History" && command != "Scroll")
-            break
           }
         if (reload == 1)
           CreateList(1)
@@ -542,12 +561,16 @@
         PopUp("File Not Found...",600,0,0)
         return
         }
+      Process, Close, mpv.exe
       mpvid := index-1
+      FileRead, dur, %inca%\cache\durations\%media%.txt
       start := Round(StrSplit(address,"|").1,2)
       skinny := Round(StrSplit(address,"|").2,2)
       rate := Round(StrSplit(address,"|").3,2)
       pitch := Round(StrSplit(address,"|").4,2)
-      captions := 1*StrSplit(address,"|").5
+      captions := StrSplit(address,"|").5
+      playing := StrSplit(address,"|").6
+      paused := 1*StrSplit(address,"|").7
       if 1*Setting("mute")
         mute = yes
       else mute = no
@@ -562,7 +585,8 @@
         speed = --speed=%rate%
       else speed =
       pause =
-      if mpvPaused
+      mpvPaused := paused
+      if (mpvPaused || captions)
         pause = --pause
       if !start
         start = 0.0
@@ -573,9 +597,9 @@
       para = %autofit% --start=%start% %speed% %pause% %flip% --mute=%mute%
       if (ext=="pdf" || ext=="rtf" || ext=="doc")
         Run, %src%
-      else if (longClick and (type=="m3u" || type=="document"))				; use notepad
+      else if (!playing and (type=="m3u" || type=="document"))				; use notepad
         Run, % "notepad.exe " . src
-      else if (longClick and FileExist(inca . "\cache\captions\" . media . ".srt"))
+      else if (!playing and FileExist(inca . "\cache\captions\" . media . ".srt"))
         Run, notepad.exe %inca%\cache\captions\%media%.srt
       else
         {
@@ -595,17 +619,23 @@
         Loop, 50
           {
           TransValue := A_Index * 51
-          WinSet, Transparent, %TransValue%, ahk_exe mpv.exe
+          WinSet, Transparent, %TransValue%, ahk_class mpv
           WinGetPos,,, mpvWidth, mpvHeight, ahk_class mpv
           x := mediaX - mpvWidth // 2
           y := mediaY - mpvHeight // 2
           if captions
             y := 600
-          if (x && mpvWidth > 300)							; mpv can take time to get width/height
+          x := (x < 0) ? 0 : (x > A_ScreenWidth - mpvWidth) ? A_ScreenWidth - mpvWidth : x
+          y := (y < 0) ? 0 : (y > A_ScreenHeight - mpvHeight) ? A_ScreenHeight - mpvHeight : y
+          if (x != "" && y != "")
             WinMove, ahk_class mpv,, %x%, %y%
           if (A_Index > 5 && x && mpvWidth > 300)
             break
           Sleep, 20
+          Gui, background:+LastFound
+          if !captions
+            WinSet, AlwaysOnTop, On
+          WinSet, Top,,ahk_class mpv
           }
         }
       }
@@ -696,7 +726,9 @@
         index := x[x.MaxIndex()-1]					; scroll htm to end of selection
         MoveFiles()							; between folders or playlists
         selected =
-        reload := 3
+        if longClick
+          reload := 2
+        else reload := 3
         return
         }
       else if InStr(address, ".m3u")					; playlist
@@ -2050,13 +2082,16 @@ StringReplace, folder_s, folder, `', &apos, All				; htm cannot pass '
 if 1*Setting("mpv")
   mpv := 1
 else mpv := 0
+if 1*Setting("Pause")
+  paused := 1
+else paused := 0
 if 1*Setting("mute")
   mute = yes
 else mute = no
 
 header = <!--, %page%, %pages%, %sort%, %toggles%, %listView%, %playlist%, %path%, %searchPath%, %searchTerm%, %subfolders%, -->`n<!doctype html>`n<html>`n<head>`n<meta charset="UTF-8">`n<title>Inca - %title%</title>`n<meta name="viewport" content="width=device-width, initial-scale=1">`n<link rel="icon" type="image/x-icon" href="file:///%inca%\cache\icons\inca.ico">`n<link rel="stylesheet" type="text/css" href="file:///%inca%/css.css">`n</head>`n`n
 
-body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(%page%, %pages%, '%folder_s%', '%mute%', %mpv%, '%sort%', %filt%, %listView%, '%selected%', '%playlist%', %index%); %scroll%.scrollIntoView()">`n`n
+body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(%page%, %pages%, '%folder_s%', '%mute%', %mpv%, %paused%, '%sort%', %filt%, %listView%, '%selected%', '%playlist%', %index%); %scroll%.scrollIntoView()">`n`n
 
 <div oncontextmenu="if (yw>0.08) {event.preventDefault()}">`n
 <div id='myNav' class='context' onwheel='wheelEvent(event)'>`n
@@ -2064,7 +2099,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
 <a id='mySelect' style='word-spacing:0.8em' onmouseup="if (lastClick==1) {if (myTitle.value) {sel(index)} else selectAll()}"></a>`n
 <input id='myTitle' class='title' style='color:lightsalmon; padding-left:1.2em'>`n
 <video id='myPic' muted class='pic'></video>`n
-<a id='myMute' onmousedown="muted^=1; inca('Mute', muted); myPlayer.volume=0.1">Mute</a>`n
+<a id='myMute' style='width:4em' onmousedown="muted^=1; inca('Mute', muted); myPlayer.volume=0.1">Mute</a>`n
 <a id='myFavorite' onmouseup='addFavorite()'>Fav</a>`n
 <a id='mySpeed'></a>`n
 <a id='mySkinny'></a>`n
@@ -2073,7 +2108,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
 <a id='myLoop' onmouseup='if(looping) {looping=0} else looping=1'>Loop</a>`n
 <a id='myIndex' onmouseup="if(myTitle.value) {inca('Index','',index)} else inca('Index','',0)">Index</a>`n
 <a id='myDelete' onmouseup="if(!event.button) inca('Delete','',index)">Delete</a>
-<a id='myCue' onmouseup="cueButton()">Cue</a>`n
+<a id='myCue' onmouseup="if (!longClick) cueButton()">Cue</a>`n
 <a id='myCap' onmouseup='capButton()'>Caption</a>`n
 <a id='Mp3' onmouseup="inca('mp3', myPlayer.currentTime.toFixed(2), index, cue); cue=0; myNav.style.display=null">mp3</a>`n
 <a id='Mp4' onmouseup="inca('mp4', myPlayer.currentTime.toFixed(2), index, cue); cue=0; myNav.style.display=null">mp4</a>`n
@@ -2117,12 +2152,13 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
 <a id='myAlpha' style='min-width:3em; %x2%' onmousedown="inca('Alpha', filt)" onwheel="wheelEvent(event)">Alpha</a>`n
 <a id='myPlaylist' style='width:11`%; %x11%' onmousedown="inca('Playlist')">%pl%</a>`n
 <a id='myShuffle' style='width:11`%; %x1%' onmousedown="inca('Shuffle')">Shuffle</a>`n
-<a style='%x10%' onmousedown="inca('Images')">Pics</a>`n
-<a style='%x9%' onmousedown="inca('Videos')">Vids</a>`n
-<a style='%x8%' onmousedown="inca('Recurse')">Subs</a>`n
+<a id='myPause' onmousedown="defPause^=1; pause^=1; inca('Pause',defPause)">Pause</a>`n
+<a id='myMpv' onmousedown="mpv^=1; inca('Mpv',mpv,lastMedia)">Mpv</a>`n
 <a id='myThumbs' onmouseout='setThumbs(1,1000)' onmouseup="inca('View',0)" onwheel="wheelEvent(event)"></a>`n 
 <a id='myWidth' onwheel="wheelEvent(event)"></a>`n
-<a id='myMpv' onmousedown="mpv^=1; inca('Mpv', mpv)">Mpv</a>`n
+<a style='%x8%' onmousedown="inca('Recurse')">Subs</a>`n
+<a style='%x10%' onmousedown="inca('Images')">Pics</a>`n
+<a style='%x9%' onmousedown="inca('Videos')">Vids</a>`n
 <a id='myJoin' onmousedown="inca('Join')">Join</a>`n
 </div>`n`n
 
@@ -2197,8 +2233,13 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
           dur := 0
         FileRead, cues, %inca%\cache\cues\%media%.txt
         if !playlist
-          if InStr(allFav, src)
-            favicon = &#x2764						; favorite heart symbol
+          Loop, Parse, allfav, `n, `r
+            if InStr(A_Loopfield, src)
+              {
+              favicon = &#x2764						; favorite heart symbol
+              start := StrSplit(A_Loopfield,"|").2
+              break
+              }
         if !start
           start = 0.0
         if (type == "video")

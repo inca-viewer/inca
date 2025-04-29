@@ -107,6 +107,32 @@ e {						/* caption text entries */
   border-radius: 1em}
 .title:hover {color: pink; background:#2b2824; transition: 1.4s; overflow: visible; z-index: 333}
 
+.thumb {					/* htm thumbs */
+  --start;					/* java variables for each thumb */
+  --rate;
+  --skinny;
+  --pitch;
+  --posted;					/* edits sent to inca	*/
+  box-sizing: border-box;
+  border: 1px solid transparent;
+  position: relative;
+  max-width: 100%;
+  max-height: 100%;
+  outline: none;
+  margin: auto;
+  border-radius: 0.6em}
+
+.thumb2 {					/* list view pop up thumbs */
+  position: absolute;
+  pointer-events: none;
+  translate: 2em;
+  max-width: 12em;
+  max-height: 11em;
+  border-radius: 1em;
+  padding: 0.3em;
+  margin: auto;
+  opacity: 0}
+
 .myMenu {					/* top panel container	*/
   position: fixed;
   top: 5em;
@@ -157,9 +183,10 @@ e {						/* caption text entries */
   background-size: 600%;
   background-repeat: no-repeat;
   transform-origin: top left;
-  transition: transform 0.2s;
+//  transition: transform 0.2s;
+    transition: opacity 0.2s;
   margin-left: 5em;
-  margin-top: 1em;
+  margin-top: 1.5em;
   border-radius: 7%}
 
 .player {					/* media player element */
@@ -182,29 +209,6 @@ e {						/* caption text entries */
   flex-wrap: wrap;
   padding-top: 17em;
   padding-bottom: 70vh}
-
-.thumb {					/* htm thumbs */
-  --start;					/* java variables for each thumb */
-  --rate;
-  --skinny;
-  --pitch;
-  position: relative;
-  max-width: 100%;
-  max-height: 100%;
-  outline: none;
-  margin: auto;
-  border-radius: 0.6em}
-
-.thumb2 {					/* list view pop up thumbs */
-  position: absolute;
-  pointer-events: none;
-  translate: 2em;
-  max-width: 12em;
-  max-height: 11em;
-  border-radius: 1em;
-  padding: 0.3em;
-  margin: auto;
-  opacity: 0}
 
 .ribbon {					/* menu, fol, fav, search ... */
   position: relative;
