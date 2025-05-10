@@ -41,7 +41,7 @@
 e {						/* caption text entries */
   display: block;
   background: transparent;
-  font-size: 1em;
+  font-size: 1.1em;
   white-space: pre-wrap;			/* preserves multiple spaces */
   outline: none;
   padding: 1em;
@@ -298,7 +298,7 @@ e {						/* caption text entries */
 
 .context a {
   display: block;
-  width: 70px;
+  width: 60px;
   height: 1.4em;
   white-space: nowrap;
   border-radius: 1.4em;

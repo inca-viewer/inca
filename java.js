@@ -1,8 +1,12 @@
 // WinSet, Transparent, 128, ahk_class mpv
 // WinSet, ExStyle, +0x20, ahk_class mpv
 // use click through to simplify ahk code
+// panel position
 
 // replace vid and pic with type list
+
+
+
 
 
 
@@ -238,7 +242,7 @@
     if (id=='myPage') {							// htm page
       if (wheelUp && page<pages) page++
       else if (!wheelUp && page>1) page--}
-    else if (id=='myAlpha'||id=='myDate'||id=='mySize'||id=='myDuration'||id=='mySearch') {  // filter
+    else if (wheel > 40 && (id=='myType'||id=='myAlpha'||id=='myDate'||id=='mySize'||id=='myDuration'||id=='mySearch')) {  // filter
       if (wheelUp) filt++ 
       else if (filt) filt--
       if ((id=='myAlpha' || id=='mySearch') && filt > 25) filt=25
@@ -307,7 +311,7 @@
     rect = el.getBoundingClientRect()
     if (!myNav.matches(':hover') && myNav.style.display) myNav.style.display=null
     if (myNav.style.display && myTitle.value) myNav.style.width=rect.width+100+'px'
-    else myNav.style.width = 90+'px'
+    else myNav.style.width = 80+'px'
     xm = (xpos - rect.left) / rect.width
     ym = (ypos - rect.top) / rect.height
     if (block>=30) block-=10						// wheel blocking 
@@ -321,11 +325,7 @@
     if ((listView && thumb.style.opacity==1) || favicon.matches(':hover')) overMedia = index
     else if (myPlayer.matches(':hover') || thumb.matches(':hover')) overMedia = index
     else overMedia = 0
-    if (myThumbs.matches(':hover')) myThumbs.innerHTML=view.toFixed(1)
-    else myThumbs.innerHTML='Size'
     myPage.innerHTML = page+' of '+pages
-    if (myWidth.matches(':hover')) myWidth.innerHTML=myView.style.width
-    else myWidth.innerHTML='Cols'
     mySkinny.innerHTML = myPitch.innerHTML = ''
     if (defRate==1) {mySpeed.innerHTML='Speed'} else mySpeed.innerHTML=defRate
     if (myTitle.value) {								// media exists
@@ -495,14 +495,16 @@
     let ch = String.fromCharCode(filt + 65)
     let el = document.getElementById('my'+ch)
     if (id == 'mySearch') {el.scrollIntoView(); return}			// search letter in top panel
-    let units=''							// eg 30 minutes, 2 months, alpha 'A'
+    let units = ''; let x = filt					// eg 30 minutes, 2 months, alpha 'A'
     el = document.getElementById(id)
-    if (id == 'myAlpha') {x = ch} else x = filt
+if (id == 'myType') {x=''; units='Audio'; if (filt==1) {units='Video'} else if (filt==2) units='Image'}
+    if (id == 'myAlpha') x = ch
     if (id == 'mySize') {x *= 10; units = " Mb"}
     if (id == 'myDate') units = " months"
     if (id == 'myDuration') units = " minutes"
-    if (!filt) {el.innerHTML = id.slice(2); el.style.color = null}
-    else {el.style.color = 'red'; el.innerHTML = x+' '+units}}
+    if (!filt) {el.innerHTML = id.slice(2); el.style.color = 'pink'}
+    else {el.style.color = 'red'; el.innerHTML = x+' '+units}
+if (myType.innerHTML != 'Type') myType.style.color = 'red'}
 
 
   function context() {							// right click context menu 
