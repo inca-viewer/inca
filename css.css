@@ -16,6 +16,18 @@
   c:active {color: #15110a; transform: scale(0.8,0.8)}
   d {display: block; color: #ffa07a00; font-size: 0.8em; transition: 2s}	/* caption timestamps */
   d:active {color: lightsalmon}
+  video::-internal-media-controls-overlay-cast-button {display: none}		/* block google casting	*/
+
+.pic {							/* context menu pic */
+  display: none;
+  position: absolute;
+  background-size: 600%;				/* for thumb extraction from thumbSheet */
+  background-repeat: no-repeat;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 1);		/* removes edge artifacts */
+  transform-origin: top left;
+  transition: opacity 0.2s;
+  margin-left: 6em;					/* position within myNav  */
+  margin-top: 1.5em}
 
 .favicon {
   color: pink;
@@ -30,6 +42,7 @@ e {						/* caption text entries */
   display: block;
   background: transparent;
   font-size: 1em;
+  white-space: pre-wrap;			/* preserves multiple spaces */
   outline: none;
   padding: 1em;
   padding-top: 0.3em;
@@ -96,11 +109,13 @@ e {						/* caption text entries */
   position: relative;
   white-space: nowrap;
   background: inherit;
+  box-sizing: border-box;
   color: #826858;
   font-size: 1.1em;
   font-family: inherit;
   width: 90%;
   outline: none;
+  outline-offset: -1px;
   height: 1.4em;
   border: none;
   transition: 0.3s;
@@ -178,18 +193,6 @@ e {						/* caption text entries */
   width: 100%;
   background: linear-gradient(#15110aff, #15110a00)}
 
-.pic {						/* context menu pic */
-  display: none;
-  position: absolute;
-  background-size: 600%;
-  background-repeat: no-repeat;
-  transform-origin: top left;
-  transition: opacity 0.2s;
-  border: 1px solid transparent;
-  margin-left: 6em;
-  margin-top: 1.5em;
-  border-radius: 5px}
-
 .player {					/* media player element */
   position: absolute;
   border: 2px solid transparent;
@@ -226,7 +229,7 @@ e {						/* caption text entries */
   margin:auto;
   padding: 0.2em;
   font-size: 1em}
-.ribbon a {width: 8%; transition: 0.8s; border-radius: 1em}
+.ribbon a {width: 10%; transition: 0.8s; border-radius: 1em}
 .ribbon a:hover {transition: 0.2s; color: pink}
 
 .searchbox {					/* input searchbox in htm tab */
