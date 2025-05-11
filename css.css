@@ -27,6 +27,7 @@
   transform-origin: top left;
   transition: opacity 0.2s;
   margin-left: 6em;					/* position within myNav  */
+// filter: blur(0.4vmin);
   margin-top: 1.5em}
 
 .favicon {
@@ -133,7 +134,6 @@ e {						/* caption text entries */
   position: relative;
   max-width: 100%;
   max-height: 100%;
-//  width: 8em;
   outline: none;
   margin: auto;
   border-radius: 0.6em}
@@ -160,24 +160,27 @@ e {						/* caption text entries */
   padding-bottom: 0.1em;
   background: #15110a}
 
-.myPanel {					/* top panel element showing folders etc.*/
+.myPanel {					/* Top panel element showing folders etc. */
   position: relative;
   font-size: 0.9em;
   white-space: nowrap;
-  padding: 0.6em;
+  padding: 0.6em 0;				/* No horizontal padding */
+  margin: 0;					/* Prevent inherited offsets */
   overflow: hidden;
-  height: 6em}
+  height: 7em;
+  width: 100%;					/* Full width of myMenu */
+  box-sizing: border-box}
 
-.panel {					/* inner rotated element of myPanel */
+.panel {					/* Inner rotated element of myPanel */
   position: absolute;
   overflow: hidden;
   scrollbar-width: none;
   transform: rotate(-90deg);
   transform-origin: right top;
   background: inherit;
-  height: 64em;					/* becomes width when rotated	*/
-  width: 7.4em;
-  left: -3em}
+  height: 70em;					/* Reduced to match myMenu’s effective width post-rotation */
+  width: 7.4em;					/* Preserve folder entry height post-rotation */
+  left: -3em}					/* Maintain original offset */
 .panel:hover {overflow-y: scroll}
 
 .p2 {						/* panel entries */

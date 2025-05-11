@@ -353,8 +353,8 @@ header = <!--, %page%, %pages%, %sort%, %toggles%, %listView%, %playlist%, %path
 body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(%page%, %pages%, '%folder_s%', %wheelDir%, '%mute%', %mpv%, %paused%, '%sort%', %filt%, %listView%, '%selected%', '%playlist%', %index%); %scroll%.scrollIntoView()">`n`n
 
 <div id='myNav' class='context' onwheel='wheelEvent(event)'>`n
-<a onmouseup="inca('Settings')">&#8230;</a>`n
-<a id='mySelect' style='width: 80`%; word-spacing:0.8e; outline-offset: -1px' onmouseup="if (lastClick==1) {if (myTitle.value) {sel(index)} else selectAll()}"></a>`n
+<a onmousedown="inca('Settings')">&hellip;</a>
+<a id='mySelect' style='width: 78`%; word-spacing:0.8e; outline-offset: -1px' onmouseup="if (lastClick==1) {if (myTitle.value) {sel(index)} else selectAll()}"></a>`n
 <input id='myTitle' class='title' style='color: lightsalmon; padding-left: 1.4em'>
 <video id='myPic' muted class='pic'></video>`n
 <a id='myMute' style='width:4em' onmousedown="muted^=1; inca('Mute', muted); myPlayer.volume=0.1">Mute</a>`n
@@ -374,7 +374,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
 <div id='myMask' class="mask" onwheel="wheelEvent(event)"></div>`n 
 <video id="myPlayer" class='player' type="video/mp4" muted onwheel="wheelEvent(event)"></video>`n
 <span id='myProgress' class='seekbar'></span>`n
-<span id='mySeekbar' class='seekbar' style='background:red'></span>`n
+<span id='mySeekbar' class='seekbar'></span>`n
 <span id='mySelected' class='selected'></span>`n
 <div id='capMenu' class='capMenu'>`n
 <span id='myCancel' class='capButton' onmouseup="editing=0; inca('Reload',index)">&#x2715;</span>`n 
@@ -405,12 +405,12 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
 <a id='myShuffle' style='width:11`%; %x1%' onmousedown="inca('Shuffle')">Shuffle</a>`n
 <a id='myDuration' style='width:13`%; %x3%' onmousedown="inca('Duration', filt)" onwheel="wheelEvent(event)"> Duration</a>`n
 <a id='myDate' style='%x4%' onmousedown="inca('Date', filt)" onwheel="wheelEvent(event)">Date</a>`n
-<a id='myPlaylist' style='width:11`%; %x12%' onmousedown="inca('Playlist')">%pl%</a>`n
+<a id='myPlaylist' style='width:11.4`%; %x12%' onmousedown="inca('Playlist')">%pl%</a>`n
 <a id='mySize' style='%x5%' onmousedown="inca('Size', filt)" onwheel="wheelEvent(event)">Size</a>`n
 <a id='myAlpha' style='min-width:3em; %x2%' onmousedown="inca('Alpha', filt)" onwheel="wheelEvent(event)">Alpha</a>`n
 <a id='myType' style='%x6%' onmousedown="inca('Type', filt)" onwheel="wheelEvent(event)">%type%</a>`n
 <a id='myMpv' onmousedown="mpv^=1; inca('Mpv',mpv,lastMedia)">Mpv</a>`n
-<a id='myThumbs' onmouseout='setThumbs(1,1000)' onmouseup="inca('View',0)" onwheel="wheelEvent(event)">Thumb</a>`n 
+<a id='myThumbs' onmouseout='setWidths(1,1000)' onmouseup="inca('View',0)" onwheel="wheelEvent(event)">Thumb</a>`n 
 <a id='myWidth' onwheel="wheelEvent(event)">Width</a>`n
 <a id='Mp3' onmouseup="inca('mp3', myPlayer.currentTime.toFixed(2), lastMedia, cue); cue=0; myNav.style.display=null">mp3</a>`n
 <a id='Mp4' onmouseup="inca('mp4', myPlayer.currentTime.toFixed(2), lastMedia, cue); cue=0; myNav.style.display=null">mp4</a>`n
@@ -579,15 +579,13 @@ else src=src="file:///%src%"
 if !size
   size = 0								; cannot have null size in getParameters()
 
-caption = <div id='srt%j%' class='caption' onmouseover='overText=1' onmouseout='overText=0'`n oninput="editing=index; myPlayer.pause()">%text%</div>
+caption = <div id='srt%j%' class='caption' onmouseover='overText=1' onmouseout='overText=0'`n oninput="editing=index; playCap(event.target.id, 1)">%text%</div>
 
 if listView
   mediaList = %mediaList%%fold%<table onmouseover='overThumb(%j%)'`n onmouseout="thumb%j%.style.opacity=0">`n <tr id='entry%j%' data-params='%type%,%start%,%dur%,%size%' onmouseenter='if (gesture) sel(%j%)'>`n <td style='min-width: 2em'>%j%</td>`n <td>%ext%`n <video id='thumb%j%' class='thumb2' %src%`n %poster%`n preload=%preload% muted loop type="video/mp4"></video></td>`n <td>%size%</td>`n <td style='min-width: 6em'>%durT%</td>`n <td>%date%</td>`n  <td><div id='myFavicon%j%' class='favicon'>%favicon%</div></td>`n <td style='width: 70vw'><input id="title%j%" class='title' style='transition: 0.8s' onmouseover='overText=1' onmouseout='overText=0; Click=0' type='search' value='%media_s%'`n oninput="renamebox=this.value; lastMedia=%j%"></td>`n %fo%</tr>`n %caption%<span id='cues%j%' style='display: none'>%cues%</span></table>`n`n
 
 else mediaList = %mediaList%<div id="entry%j%" class='entry' data-params='%type%,%start%,%dur%,%size%'>`n <span id='myFavicon%j%' class='favicon' style='display: block; position: absolute; top: 7px; left: -7px' onmouseenter='overThumb(%j%)'>%favicon%</span>`n <input id='title%j%' class='title' style='text-align: center' type='search'`n value='%media_s%'`n oninput="renamebox=this.value; lastMedia=%j%"`n onmouseover="overText=1; if((x=this.value.length/2) > view) this.style.width=x+'em'"`n onmouseout="overText=0; this.style.width='100`%'">`n <video id="thumb%j%" class='thumb' onmouseenter="overThumb(%j%); if (gesture) sel(%j%)"`n onmouseup='if(gesture)getParameters(%j%)' onmouseout='this.pause()' %src%`n %poster%`n preload=%preload% loop muted type='video/mp4'></video>%noIndex%`n <span id='cues%j%' style='display: none'>%cues%</span></div>`n %caption%`n`n
 }
-
-
 
 
 
@@ -659,15 +657,14 @@ else mediaList = %mediaList%<div id="entry%j%" class='entry' data-params='%type%
       else mpvPaused := 1
       RegExMatch(mpvTime, "-(\d*\.\d+)", m)
       mpvTime := Format("{:0.1f}", m1)					; time for add favorite start
+      if !exit
+        return
+      WinActivate, ahk_group Browsers
       clp := Clipboard
       Clipboard = %mpvTime%
-      WinActivate, ahk_group Browsers
       send, ^v
       sleep 100								; time for java to capture event
       Clipboard := clp
-      if !exit
-        return
-      WinActivate, ahk_class mpv
       WinGetPos, x,,w,, ahk_class mpv
       mpvWidth := mpvHeight := captions
       mediaX := x + w // 2
@@ -1101,7 +1098,7 @@ else mediaList = %mediaList%<div id="entry%j%" class='entry' data-params='%type%
         messages := StrReplace(Clipboard, "/", "\")
         array := StrSplit(messages,"#")
         Clipboard := lastClip
- ;  tooltip %messages%, 0						; for debug
+;   tooltip %messages%, 0						; for debug
         Loop % array.MaxIndex()/4
           {
           command := array[ptr+=1]
@@ -1285,12 +1282,10 @@ else mediaList = %mediaList%<div id="entry%j%" class='entry' data-params='%type%
         filt := 0
       if (command = "Type") {
         command := value = 1 ? "Video" : value = 2 ? "Image" : value = 3 ? "Audio" : command
-        if !value {
-          command = Type
-          if InStr(toggles, "Reverse")
-            toggle = Reverse
-          else toggles =
-          }
+        if (value || sort != "Type")
+          toggles =
+        if value
+          sort = Alpha
         value := 0
         }
       else if (InStr(sortList, command) && sort != command)		; changed sort column
@@ -2049,7 +2044,7 @@ else mediaList = %mediaList%<div id="entry%j%" class='entry' data-params='%type%
             return "video"
         if InStr("mp3 m4a wma mid", ex)
             return "audio"
-        if InStr("pdf txt rtf doc epub mobi htm html js css ini ahk vtt srt", ex)
+        if InStr("pdf txt rtf doc epub mobi htm html js css ini ahk vtt srt bat", ex)
             return "document"
         if (ex == "m3u")
             return "m3u"
