@@ -1,3 +1,4 @@
+// enpause at end of video
 
 
   let entry = 0								// thumb container
@@ -22,7 +23,6 @@
   let cues = ''								// list of cue actions at media times
   let playing = ''							// myPlayer or mpv active
   let thumbSheet = 0							// 6x6 thumbsheet mode
-  let looping = 1							// play next or loop media
   let Click = 0								// state is cleared after clk up
   let lastClick = 0							// state is preserved after up
   let lastStart = 0							// last myPlayer time
@@ -73,6 +73,8 @@
   let intervalTimer = setInterval(timerEvent,90)			// background tasks every 90mS
   if (innerHeight>innerWidth) {scaleX=0.64; scaleY=0.64}		// screen is portrait
   else {scaleX=0.5; scaleY=0.5}
+  myPlayer.addEventListener('ended', (e) => {
+    myPlayer.currentTime = dur; if (playlist.match('/inca/fav/')) {lastClick=2; clickEvent(e)}}, false)
   document.addEventListener('mousedown', mouseDown)
   document.addEventListener('mouseup', mouseUp)
   document.addEventListener('dragend', mouseUp)
@@ -140,7 +142,7 @@
       if (id == 'mySpeed') {rate = updateCue('rate',1); return}
       if (id == 'myPitch') {pitch = updateCue('pitch',1); return}
       if (id == 'myNav')  thumb.currentTime = thumb.style.start				// return start to default
-      if (longClick == 1 || thumbSheet || id == 'myPic' || id == 'myNav') {getStart(id); return}
+      if (longClick == 1 || thumbSheet || id == 'myPic' || id == 'myNav' || myPlayer.currentTime > dur-1) {getStart(id); return}
       if (myNav.matches(':hover')) return
       if (srt.matches(':hover') && dur) {playCap(id); return}				// play at caption
       if (title.matches(':hover')) {thumb.currentTime = thumb.style.start; return}
@@ -178,15 +180,13 @@
     if (play) pause = 0
     else pause = defPause
     if (!longClick && lastClick==1 && srt.innerHTML && (favicon.matches(':hover') || type=='document')) openCap()
-    if (type=='audio' || playlist.match('/inca/music/')) {pause=0; scaleY=0.2; looping=0; myPlayer.muted=0}
-    if (longClick==1 && (favicon.matches(':hover') || myCap.matches(':hover'))) playing = ''
-    else if (ext=='js' || ext=='ahk' || ext=='css' || ext=='ini') playing = ''		// so opens in notepad
+    if (type=='audio' || playlist.match('/inca/music/')) {pause=0; scaleY=0.2; myPlayer.muted=0}
+    if (longClick==1 && (favicon.matches(':hover') || myCap.matches(':hover'))) playing = ''	// so opens in notepad
     else if (mpv && type!='image' && !playlist.match('/inca/music/') && type!='document' && !thumbSheet) playing='mpv'
     let mpvPara = myPlayer.currentTime+'|'+skinny+'|'+rate+'|'+pitch+'|'+captions+'|'+playing+'|'+pause
     if (playing != 'browser' && !thumbSheet) {myPlayer.load(); Click=0; inca('Media',index,'',mpvPara); return}
     else if (!thumbSheet && type!='image' && !pause && !captions && !cue) myPlayer.play()
     if (captions && (scaleY==0.5 || scaleY==0.2)) scaleY = 0.21		// first time open use small player
-    myPlayer.addEventListener('ended', nextMedia)
     if (ext=='txt') srt.style.padding = 0
     if (ext=='mp3') myPlayer.style.borderBottom = '2px solid pink'
     else myPlayer.style.border=null
@@ -279,9 +279,8 @@
       if (dur > 200) interval = 1.2
       else interval = 0.6
       if (myPlayer.paused) interval = 0.1
-      if (wheelUp && myPlayer.currentTime < myPlayer.duration - interval) myPlayer.currentTime += interval
-      else if (!wheelUp) myPlayer.currentTime -= interval
-      if (myPlayer.currentTime > myPlayer.duration - 1) myPlayer.pause()}
+      if (wheelUp) myPlayer.currentTime += interval
+      else if (!wheelUp) myPlayer.currentTime -= interval}
     else if (!myNav.style.display) {					// zoom myPlayer
       let x=0; let y=0; let z=0
       if (!thumbSheet) z=wheel/2000
@@ -316,7 +315,7 @@
     if ((listView && thumb.style.opacity==1) || favicon.matches(':hover')) overMedia = index
     else if (myPlayer.matches(':hover') || thumb.matches(':hover')) overMedia = index
     else overMedia = 0
-    myPage.innerHTML = page+' of '+pages
+    if (pages > 1) myPage.innerHTML = page+' of '+pages
     mySkinny.innerHTML = myPitch.innerHTML = ''
     if (defRate==1) {mySpeed.innerHTML='Speed'} else mySpeed.innerHTML=defRate
     if (myTitle.value) {								// media exists
@@ -333,7 +332,6 @@
     if (selected) {myDelete.style.color='red'; myDelete.innerHTML='Delete ' + (selected.split(',').length -1)}
     else if (myTitle.value) {myDelete.style.color=null; myDelete.innerHTML='Delete'}
     else myDelete.innerHTML=''
-    if (looping) {myLoop.style.color='red'} else myLoop.style.color=null
     if (muted) {myMute.style.color='red'} else myMute.style.color=null
     if (mpv) {myMpv.style.color='red'} else myMpv.style.color=null
     if (defPause) {myPause.style.color='red'} else myPause.style.color=null
@@ -473,14 +471,15 @@
     ps = (ps - 1) / 200							// see index() in inca.ahk to explain
     if (dur > 60) offset = 20						// skip movie credits...
     if (id == 'myNav' && lastClick==1) lastStart = thumb.currentTime	// over 'white space', return to time
+    else if (myPlayer.currentTime > dur-1) thumb.currentTime = thumb.style.start
     else if (id == 'myPic') thumb.currentTime = lastStart
     else thumb.currentTime = offset - (ps * offset) + dur * ps
     myPlayer.style.transform = "scale("+scaleX+","+scaleY+")"
+    thumbSheet = 0
     if (longClick==1) thumb.currentTime = 1
-    if (lastStart != thumb.currentTime || longClick) Play(1) 
-    else Play(0)								// overide pause
-    if (captions) myPlayer.play()
-    thumbSheet = 0}
+    if (lastStart != thumb.currentTime || longClick) Play(1)		// overide pause
+    else Play(0)
+    if (captions) myPlayer.play()}
 
 
   function Filter(id) {							// for htm ribbon headings
@@ -661,7 +660,7 @@
     else if (!id.match('my') || (capText.id==id && !editing)) togglePause()
     else if (!editing || capText.id!=id) myPlayer.play()
     else myPlayer.pause()
-    if (mpv) inca('mpvTime', tm, myPlayer.paused)}
+    if (mpv) inca('mpvTime', tm, myPlayer.paused)}			// all 'oninputs' trigger messages in mpv..
 
 
   function openCap() {							// show captions
@@ -771,7 +770,6 @@
     captions=0								// in case browser not active
     thumbSheet=0
     myPlayer.style.opacity=0
-    myPlayer.removeEventListener('ended', nextMedia)
     setTimeout(function() {						// fadeout before close
       myPlayer.style.zIndex=-1
       myMask.style.opacity=0
@@ -815,12 +813,6 @@
     inca('Favorite',tm,index,srt.scrollTop.toFixed(0))			// includes any caption/txt scroll
     if (selected) {sel(index); selected=''}				// clear selected
     favicon.innerHTML='&#10084'}					// heart symbol on htm thumb
-
-
-  function nextMedia() { 						// after media finished playing
-    if (!looping) {if (getParameters(index+=1)) {Play(1)} else closePlayer(); return}
-    myPlayer.currentTime=thumb.style.start
-    myPlayer.play(1)}
 
 
   function overThumb(id) {

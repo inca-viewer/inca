@@ -104,6 +104,7 @@
         Global mediaY := 1100
         Global mpvWidth := 999
         Global mpvHeight := 999
+Global start
 
 
     middle := "MButton"  			; Set custom middle button here
@@ -364,7 +365,6 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
 <a id='myPitch'></a>`n
 <a id='myFlip' onmouseup='flip()'>Flip</a>`n
 <a id='myPause' onmousedown="defPause^=1; pause^=1; inca('Pause',defPause)">Pause</a>`n
-<a id='myLoop' onmouseup='if(looping) {looping=0} else looping=1'>Loop</a>`n
 <a id='myIndex' onmouseup="if(myTitle.value) {inca('Index','',index)} else inca('Index','',0)">Index</a>`n
 <a id='myDelete' onmouseup="if (!event.button) if (selected || myTitle.value) inca('Delete','',index)">Delete</a>
 <a id='myCue' onmouseup="if (!longClick) cueButton()">Cue</a>`n
@@ -712,14 +712,13 @@ else mediaList = %mediaList%<div id="entry%j%" class='entry' data-params='%type%
       mpvPaused := paused
       if (mpvPaused || captions)
         pause = --pause
-      if start
-        start = --start=%start%
-      else start = --start=0.0
+      if !start
+        start = 0.0
       max := Round((mpvWidth > mpvHeight && mpvWidth) ? mpvWidth : (mpvHeight ? mpvHeight : 999),0)
       if captions
         captions := max, max := 400							; reduce mpv size preserve size
       autofit = --autofit-larger=%max%x%max% --autofit=%max%
-      para = %autofit% %skinny% %start% %speed% %pause% %flip% %mute% --playlist-start=%mpvid%
+      para = %autofit% %skinny% %speed% %pause% %flip% %mute% --start=%start% --playlist-start=%mpvid%
       if (ext=="pdf" || ext=="rtf" || ext=="doc")
         Run, %src%
       else if (!playing and (type=="m3u" || type=="document"))				; use notepad
@@ -835,7 +834,7 @@ else mediaList = %mediaList%<div id="entry%j%" class='entry' data-params='%type%
         WinGetPos, mpvX, mpvY, mpvWidth, mpvHeight, ahk_class mpv	; for using seek bar
       relX := (xpos - mpvX) / mpvWidth
       relY := (ypos - mpvY) / mpvHeight
-      start := dur * relX
+      seek := dur * relX
       StringReplace, click, A_ThisHotkey, ~,, All
       loop							; gesture detection
         {
@@ -860,7 +859,7 @@ else mediaList = %mediaList%<div id="entry%j%" class='entry' data-params='%type%
               if longClick
                 RunWait %COMSPEC% /c echo seek 0 absolute exact > \\.\pipe\mpv,, hide
               else if (relX > 0 && relX < 1 && relY > 0.9 && relY < 1)
-                RunWait %COMSPEC% /c echo seek %start% absolute exact > \\.\pipe\mpv,, hide
+                RunWait %COMSPEC% /c echo seek %seek% absolute exact > \\.\pipe\mpv,, hide
               else if (!captions || cur == mpvExist) 
                 RunWait %COMSPEC% /c echo no-osd cycle pause > \\.\pipe\mpv,, hide
               }
@@ -868,6 +867,11 @@ else mediaList = %mediaList%<div id="entry%j%" class='entry' data-params='%type%
             if (click=="RButton" && !gesture && !longClick)
               closeMpv(1)
             else closeMpv(0)					; get time and pause state
+            if (1*mpvTime > dur-1)				; end of video
+              {
+              RunWait %COMSPEC% /c echo seek %start% absolute exact > \\.\pipe\mpv,, hide
+              RunWait %COMSPEC% /c echo set pause no > \\.\pipe\mpv,, hide
+              }
             }
           if (click == "RButton" && !gesture) 			; echo RButton
             send {RButton}
@@ -1284,7 +1288,7 @@ else mediaList = %mediaList%<div id="entry%j%" class='entry' data-params='%type%
         command := value = 1 ? "Video" : value = 2 ? "Image" : value = 3 ? "Audio" : command
         if (value || sort != "Type")
           toggles =
-        if value
+        if (value && sort == "Type")
           sort = Alpha
         value := 0
         }
