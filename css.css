@@ -26,9 +26,9 @@
   box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 1);		/* removes edge artifacts */
   transform-origin: top left;
   transition: opacity 0.2s;
-  margin-left: 6em;					/* position within myNav  */
 // filter: blur(0.4vmin);
-  margin-top: 1.5em}
+  margin-left: 6em}					/* position within myNav  */
+
 
 .favicon {
   color: pink;
@@ -42,7 +42,7 @@
 e {						/* caption text entries */
   display: block;
   background: transparent;
-  font-size: 1.1em;
+  font-size: 1em;
   white-space: pre-wrap;			/* preserves multiple spaces */
   outline: none;
   padding: 1em;
@@ -77,6 +77,7 @@ e {						/* caption text entries */
   mask-image: linear-gradient(to bottom, transparent 0%, white 4%, white 96%, transparent 100%),
     linear-gradient(to right, transparent 0%, white 4%); 
   mask-composite: intersect}
+
 .caption::-webkit-scrollbar {background: transparent; width: 6px}
 
 .capMenu {
@@ -96,6 +97,7 @@ e {						/* caption text entries */
   font-size: 1em;
   border-radius: 1.6em;
   font-variant-caps: petite-caps}
+
 .capButton:hover {color: red; transform: scale(1.8,1.8)}
 .capButton:active {border: 0.1px solid transparent; background:red; transform: scale(1,1)}
 
@@ -121,6 +123,7 @@ e {						/* caption text entries */
   border: none;
   transition: 0.3s;
   border-radius: 1em}
+
 .title:hover {color: pink; background:#2b2824; transition: 1.4s; overflow: visible; z-index: 333}
 
 .thumb {					/* htm thumbs */
@@ -149,20 +152,16 @@ e {						/* caption text entries */
   margin: auto;
   opacity: 0}
 
-.myMenu {					/* top panel container	*/
+.myMenu {
   position: fixed;
-  top: 5em;
-  left: 0;
-  transform: translate(calc(50vw - 50%));
-  width: 100%;
-  min-width: 50em;
-  max-width: 70em;
-  padding-bottom: 0.1em;
+  top: 5.6em;
+  left: 12%;
+  width: 76%;
   background: #15110a}
 
 .myPanel {					/* Top panel element showing folders etc. */
   position: relative;
-  font-size: 0.9em;
+  font-size: 0.85em;
   white-space: nowrap;
   padding: 0.6em 0;				/* No horizontal padding */
   margin: 0;					/* Prevent inherited offsets */
@@ -181,11 +180,13 @@ e {						/* caption text entries */
   height: 70em;					/* Reduced to match myMenu’s effective width post-rotation */
   width: 7.4em;					/* Preserve folder entry height post-rotation */
   left: -3em}					/* Maintain original offset */
+
 .panel:hover {overflow-y: scroll}
 
 .p2 {						/* panel entries */
   overflow: hidden;
   white-space: nowrap}
+
 .p2:hover {overflow: visible}
 
 .fadeout {					/* between top panel and scrolled thumbs */
@@ -231,7 +232,8 @@ e {						/* caption text entries */
   transition: 0.3s;
   margin:auto;
   padding: 0.2em;
-  font-size: 1em}
+  font-size: 0.9em}
+
 .ribbon a {width: 10%; transition: 0.8s; border-radius: 1em}
 .ribbon a:hover {transition: 0.2s; color: pink}
 
@@ -297,6 +299,7 @@ e {						/* caption text entries */
   font-size: 1em;
   border-radius: 0.7em;
   background: inherit}
+
 .context:hover {opacity: 1}
 
 .context a {
@@ -307,6 +310,7 @@ e {						/* caption text entries */
   border-radius: 1.4em;
   padding-left:1.4em;
   color: lightsalmon}
+
 .context a:hover {background: #1b1814}
 .context a:active {background: #333333}
 

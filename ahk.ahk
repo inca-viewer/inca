@@ -104,11 +104,11 @@
         Global mediaY := 1100
         Global mpvWidth := 999
         Global mpvHeight := 999
-Global start
+        Global start := 0			; mpv default start time
 
 
-    middle := "MButton"  			; Set custom middle button here
-    back   := "XButton1"   			; Set custom back button here
+    middle := "MButton"  			; Set your 'middle' button here
+    back   := "XButton1"   			; Set your 'back' button here
 
     Hotkey, %middle%, myMiddle
     Hotkey, %middle% up, myMiddleUp
@@ -127,8 +127,6 @@ Global start
       SetTimer, TimedEvents, 50, 2		; every 50mS primarily for low message latency
       SetTimer, CheckFfmpeg, 999, 2		; show if ffmpeg is processing conversions
       return
-
-
 
 
 
@@ -195,13 +193,13 @@ Global start
           if InStr(toggles, A_LoopField)
             x%A_Index% = color:red
           }
-if x11
- type = Audio
-else if x10
- type = Image
-else if x9
- type = Video
-else type = Type
+        if x11								; filter videos, images audio from ribbon
+          type = Audio
+        else if x10
+          type = Image
+        else if x9
+          type = Video
+        else type = Type
         if searchTerm
           x20 = color:red
         else if (!playlist && InStr(fol,folder))
@@ -359,7 +357,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
 <input id='myTitle' class='title' style='color: lightsalmon; padding-left: 1.4em'>
 <video id='myPic' muted class='pic'></video>`n
 <a id='myMute' style='width:4em' onmousedown="muted^=1; inca('Mute', muted); myPlayer.volume=0.1">Mute</a>`n
-<a id='myFavorite' onmousedown='addFavorite()'>Fav</a>`n
+<a id='myFavorite'>Fav</a>`n
 <a id='mySpeed'></a>`n
 <a id='mySkinny'></a>`n
 <a id='myPitch'></a>`n
@@ -389,7 +387,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
 <div id='myMenu' class='myMenu'>
 <div id='myPanel' class='myPanel'>`n <div id='panel' class='panel'>`n`n%panelList%`n</div></div>`n`n
 
-<div id='myRibbon' class='ribbon' style='width:85`%; height:1.4em; font-size:1.1em'>`n
+<div id='myRibbon1' class='ribbon' style='width:85`%; height:1.4em; font-size:1.1em'>`n
 <a style='width:12em; color:red; font-weight:bold'>%listSize%</a>`n
 <a id='myMusic' style='width:6em; %x22%' onmousedown="inca('Path','','','music|1')" onmouseover="setTimeout(function() {if(myMusic.matches(':hover'))Music.scrollIntoView()},200)">&#x266B;</a>`n
 <a id='mySub' style='width:2em; font-size:0.7em; %x8%' onmousedown="inca('Recurse')" onmouseover="setTimeout(function() {if(mySub.matches(':hover'))Sub.scrollIntoView()},200)">%subs%</a>`n
@@ -401,7 +399,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
 <a id="myPage" style='width:12em' onmousedown="inca('Page', page)" onwheel="wheelEvent(event)"></a>
 </div>`n`n
 
-<div id='myRibbon1' class='ribbon' style='width:88`%; background:#1b1814'>`n
+<div id='myRibbon2' class='ribbon' style='width:88`%; background:#1b1814'>`n
 <a id='myShuffle' style='width:11`%; %x1%' onmousedown="inca('Shuffle')">Shuffle</a>`n
 <a id='myDuration' style='width:13`%; %x3%' onmousedown="inca('Duration', filt)" onwheel="wheelEvent(event)"> Duration</a>`n
 <a id='myDate' style='%x4%' onmousedown="inca('Date', filt)" onwheel="wheelEvent(event)">Date</a>`n
@@ -477,7 +475,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
         if (searchTerm || InStr(toggles, "Recurse"))
           fo = <td style='width:5em; padding-right:3em; text-align:right'>%y%</td>
         FileRead, dur, %inca%\cache\durations\%media%.txt
-        if (dur && !playlist)						; calc. 1st thumbnail start time
+        if (dur && !playlist)						; derive 1st thumbnail start time
           {
           if (dur > 61)
             start := 20.1 + (4 * (dur - 20)/200)
@@ -536,30 +534,48 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
         timestamp =
         if (ext=="txt")
           FileRead, text, %src%
-        else IfExist, %inca%\cache\captions\%media%.srt
+else IfExist, %inca%\cache\captions\%media%.srt
+{
+    FileRead, str2, %inca%\cache\captions\%media%.srt
+    Loop, Parse, str2, `n, `r
+    {
+        str = %A_LoopField%					; remove whitespace
+        if InStr(str, "-->")				; timestamp element
+        {
+            x := SubStr(str, 1, 12)
+            x := StrReplace(x, " --")			; in case no hrs in timestamp
+            x := StrReplace(x, ",", ".")
+            x := StrSplit(x, ":")
+            if (!x.3)
+                x := Round(x.1*60 + x.2,1)		; seconds format
+            else
+                x := Round(3600*x.1 + 60*x.2 + x.3,1)
+            if (caption_lines != "")			; if there’s a previous caption
             {
-            FileRead, str2, %inca%\cache\captions\%media%.srt
-            Loop, Parse, str2, `n, `r
-              {
-              str = %A_LoopField%					; remove whitespace
-              if InStr(str, "-->")					; timestamp element
-                {
-                x := SubStr(str, 1, 12)
-                x := StrReplace(x, " --")				; in case no hrs in timestamp
-                x := StrReplace(x, ",", ".")
-                x := StrSplit(x, ":")
-                if (!x.3)
-                  x := Round(x.1*60 + x.2,1)				; seconds format
-                else x := Round(3600*x.1 + 60*x.2 + x.3,1)
-                text = %text%<d id="%j%-%x%">%str%</d>
-                timestamp = true
-                continue
-                }
-              else if timestamp
-                text = %text%<e contenteditable="true" id="my%j%-%x%">%str%</e>
-              timestamp =
-              }
+                text = %text%<e contenteditable="true" id="my%j%-%prev_x%">%caption_lines%</e>
+                caption_lines := ""				; reset caption_lines
             }
+            text = %text%<d id="%j%-%x%">%str%</d>
+            timestamp := true
+            prev_x := x						; store current timestamp for next caption
+            continue
+        }
+        else if timestamp
+        {
+            if (str != "")					; only add non-empty lines
+                caption_lines := caption_lines ? caption_lines . "<br>" . str : str
+            if (A_LoopField = "")			; empty line indicates end of caption
+            {
+                text = %text%<e contenteditable="true" id="my%j%-%prev_x%">%caption_lines%</e>
+                caption_lines := ""				; reset caption_lines
+                timestamp := false
+            }
+        }
+    }
+    ; Handle the last caption if it exists
+    if (caption_lines != "")
+        text = %text%<e contenteditable="true" id="my%j%-%prev_x%">%caption_lines%</e>
+}
         if (ext=="txt")
           {
           text := StrReplace(text, "`r`n", "<br>")
@@ -612,7 +628,7 @@ else mediaList = %mediaList%<div id="entry%j%" class='entry' data-params='%type%
         mpvHeight += wheel * mpvHeight/currentWidth * 40
         newX := mediaX - mpvWidth // 2
         newY := mediaY - mpvHeight // 2
-        if (wheel == 1 || (mpvWidth > 300 && mpvHeight > 300)) && (wheel == -1 || mpvHeight <= A_ScreenHeight)
+        if (wheel == 1 || (mpvWidth > 200 && mpvHeight > 200)) && (wheel == -1 || mpvHeight <= A_ScreenHeight)
           WinMove, ahk_class mpv,, %newX%, %newY%, %mpvWidth%, %mpvHeight%
         else if (wheel == 1)
           RunWait %COMSPEC% /c echo no-osd add video-zoom 0.1 > \\.\pipe\mpv,, hide
@@ -689,12 +705,13 @@ else mediaList = %mediaList%<div id="entry%j%" class='entry' data-params='%type%
       mpvid := index-1
       FileRead, dur, %inca%\cache\durations\%media%.txt
       start := Round(StrSplit(address,"|").1,2)
-      skinny := Round(StrSplit(address,"|").2,2)
-      rate := Round(StrSplit(address,"|").3,2)
-      pitch := Round(StrSplit(address,"|").4,2)
-      captions := StrSplit(address,"|").5
-      playing := StrSplit(address,"|").6
-      paused := 1*StrSplit(address,"|").7
+      seek := Round(StrSplit(address,"|").2,2)
+      skinny := Round(StrSplit(address,"|").3,2)
+      rate := Round(StrSplit(address,"|").4,2)
+      pitch := Round(StrSplit(address,"|").5,2)
+      captions := StrSplit(address,"|").6
+      playing := StrSplit(address,"|").7
+      paused := 1*StrSplit(address,"|").8
       if 1*Setting("mute")
         mute = --mute=yes
       else mute = --mute=no
@@ -712,13 +729,13 @@ else mediaList = %mediaList%<div id="entry%j%" class='entry' data-params='%type%
       mpvPaused := paused
       if (mpvPaused || captions)
         pause = --pause
-      if !start
-        start = 0.0
+      if !seek
+        seek = 0.0
       max := Round((mpvWidth > mpvHeight && mpvWidth) ? mpvWidth : (mpvHeight ? mpvHeight : 999),0)
       if captions
         captions := max, max := 400							; reduce mpv size preserve size
       autofit = --autofit-larger=%max%x%max% --autofit=%max%
-      para = %autofit% %skinny% %speed% %pause% %flip% %mute% --start=%start% --playlist-start=%mpvid%
+      para = %autofit% %skinny% %speed% %pause% %flip% %mute% --start=%seek% --playlist-start=%mpvid%
       if (ext=="pdf" || ext=="rtf" || ext=="doc")
         Run, %src%
       else if (!playing and (type=="m3u" || type=="document"))				; use notepad
@@ -745,7 +762,7 @@ else mediaList = %mediaList%<div id="entry%j%" class='entry' data-params='%type%
             y := 600
           if (x > 0 && y > 0 && x < A_ScreenWidth && y < A_ScreenHeight)
             WinMove, ahk_class mpv,, %x%, %y%
-          if (x && mpvWidth > 300)
+          if (x && mpvWidth > 200)
             break
           Sleep, 20
           }
@@ -828,13 +845,14 @@ else mediaList = %mediaList%<div id="entry%j%" class='entry' data-params='%type%
       MouseGetPos, xpos, ypos, id
       WinGet, cur, ID, ahk_id %id%
       WinGet, osd, ID, ahk_class OSKMainClass
+
       if (cur == osd)
         return
       IfWinActive, ahk_class mpv
         WinGetPos, mpvX, mpvY, mpvWidth, mpvHeight, ahk_class mpv	; for using seek bar
       relX := (xpos - mpvX) / mpvWidth
       relY := (ypos - mpvY) / mpvHeight
-      seek := dur * relX
+      seekBar := dur * relX
       StringReplace, click, A_ThisHotkey, ~,, All
       loop							; gesture detection
         {
@@ -859,7 +877,7 @@ else mediaList = %mediaList%<div id="entry%j%" class='entry' data-params='%type%
               if longClick
                 RunWait %COMSPEC% /c echo seek 0 absolute exact > \\.\pipe\mpv,, hide
               else if (relX > 0 && relX < 1 && relY > 0.9 && relY < 1)
-                RunWait %COMSPEC% /c echo seek %seek% absolute exact > \\.\pipe\mpv,, hide
+                RunWait %COMSPEC% /c echo seek %seekBar% absolute exact > \\.\pipe\mpv,, hide
               else if (!captions || cur == mpvExist) 
                 RunWait %COMSPEC% /c echo no-osd cycle pause > \\.\pipe\mpv,, hide
               }
@@ -867,7 +885,7 @@ else mediaList = %mediaList%<div id="entry%j%" class='entry' data-params='%type%
             if (click=="RButton" && !gesture && !longClick)
               closeMpv(1)
             else closeMpv(0)					; get time and pause state
-            if (1*mpvTime > dur-1)				; end of video
+            if (1*mpvTime >= dur-1)				; end of video
               {
               RunWait %COMSPEC% /c echo seek %start% absolute exact > \\.\pipe\mpv,, hide
               RunWait %COMSPEC% /c echo set pause no > \\.\pipe\mpv,, hide
@@ -897,9 +915,9 @@ else mediaList = %mediaList%<div id="entry%j%" class='entry' data-params='%type%
             }
         if (!gesture && longClick && click=="LButton")		; click timout
           {
-          if (cur == mpvExist)
+          IfWinExist, ahk_class mpv
             {
-            RunWait %COMSPEC% /c echo seek 0 absolute exact > \\.\pipe\mpv,, hide
+            RunWait %COMSPEC% /c echo seek %start% absolute exact > \\.\pipe\mpv,, hide
             RunWait %COMSPEC% /c echo set pause no > \\.\pipe\mpv,, hide
             }
           if (wasCursor == "IBeam")
@@ -1239,7 +1257,8 @@ else mediaList = %mediaList%<div id="entry%j%" class='entry' data-params='%type%
         x := StrSplit(selected,",")
         index := x[x.MaxIndex()-1]					; scroll htm to end of selection
         MoveFiles()							; between folders or playlists
-        }					; to stay in folder add return and else to next entry
+        reload := 3							; not show folder qty
+        }					; to stay in folder add return and else to next line
       if InStr(address, ".m3u")						; playlist
         {
         playlist := address
@@ -1383,7 +1402,7 @@ else mediaList = %mediaList%<div id="entry%j%" class='entry' data-params='%type%
 
     Join()
       {
-      str=
+      str=src=
       if !selected
         return
       Loop, Parse, selected, `,
@@ -1401,6 +1420,8 @@ else mediaList = %mediaList%<div id="entry%j%" class='entry' data-params='%type%
       FileDelete, %inca%\cache\temp\temp1.txt
       index(src,1)
       reload := 3
+if src
+  return 1 
       }
 
     Delete()
@@ -1551,54 +1572,66 @@ else mediaList = %mediaList%<div id="entry%j%" class='entry' data-params='%type%
       }
 
 
-    capEdit()								; save edited text or srt file
-      {
-      if (StrLen(address) < 10)
+capEdit() ; Save edited text or SRT file
+{
+    if (StrLen(address) < 10)
         return
-      getMedia(selected)
-      if (ext == "txt")
-        {
-        address := StrReplace(address, "<div><br><\div>","`r`n")
+    getMedia(selected)
+    
+    ; Process address string
+;    if (ext == "txt")
+;    {
+        address := StrReplace(address, "<div><br></div>", "`r`n")
         address := StrReplace(address, "<div>", "`r`n")
-        }
-      else address := StrReplace(address, "<br>")
-      address := StrReplace(address, "<\e>", "`r`n")			; e is text element - note: / is reversed in Clipboard()
-      address := StrReplace(address, "<div><br><\div>")
-      address := StrReplace(address, "<\d>", "`r`n")			; d is timestamp element
-      address := StrReplace(address, "<br>", "`r`n")
-      address := StrReplace(address, "--&gt;", "-->")
-      address := RegExReplace(address, "<.*?>")				; remove everything between <>
-      address := StrReplace(address, "&nbsp;", " ")
-      if (ext == "txt") 
-        {
+;    }
+    address := StrReplace(address, "<br>", "`r`n")
+    address := StrReplace(address, "<\e>", "`r`n") ; e is text element - note: / is reversed in Clipboard()
+    address := StrReplace(address, "<\d>", "`r`n") ; d is timestamp element
+    address := StrReplace(address, "--&gt;", "-->")
+    address := RegExReplace(address, "<.*?>") ; Remove all HTML tags
+    address := StrReplace(address, " ", " ")
+    
+    ; Save to file
+    if (ext == "txt")
+    {
         FileDelete, %src%
         FileAppend, %address%, %src%, UTF-8
-        }
-      else
-        {
-        address := StrReplace(address, "`r`n`r`n", "`r`n")
-        address := StrReplace(address, "`r`n`r`n", "`r`n")
-        str =
-        time =
+    }
+    else
+    {
+        str := ""
+        time := ""
         ix := 0
-        Loop, Parse, address, `n, `r					; convert vtt back to srt format
-          {
-          if !A_LoopField
-            continue
-          if InStr(A_LoopField, " --> ")
-            time = %A_LoopField%
-          else if (time && A_LoopField)
+        caption := ""
+        Loop, Parse, address, `n, `r
+        {
+            if !A_LoopField
             {
-            ix++
-            str = %str%%ix%`r`n%time%`r`n%A_LoopField%`r`n`r`n
-            time =
+                if (caption && time)
+                    str .= ix . "`r`n" . time . "`r`n" . Trim(caption, "`r`n") . "`r`n`r`n"
+                caption := ""
+                continue
             }
-          }
+            if InStr(A_LoopField, " --> ")
+            {
+                if (caption && time)
+                    str .= ix . "`r`n" . time . "`r`n" . Trim(caption, "`r`n") . "`r`n`r`n"
+                time := A_LoopField
+                ix++
+                caption := ""
+            }
+            else
+                caption .= A_LoopField . "`r`n"
+        }
+        if (caption && time)
+            str .= ix . "`r`n" . time . "`r`n" . Trim(caption, "`r`n") . "`r`n`r`n"
+        
         FileDelete, %inca%\cache\captions\%media%.srt
         FileAppend, %str%, %inca%\cache\captions\%media%.srt, UTF-8
-        }
-      PopUp("saved",600,0,0)
-      }
+    }
+    
+    PopUp("saved", 600, 0, 0)
+}
 
 
     Add()
