@@ -351,24 +351,6 @@ header = <!--, %page%, %pages%, %sort%, %toggles%, %listView%, %playlist%, %path
 
 body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(%page%, %pages%, '%folder_s%', %wheelDir%, '%mute%', %mpv%, %paused%, '%sort%', %filt%, %listView%, '%selected%', '%playlist%', %index%); %scroll%.scrollIntoView()">`n`n
 
-<div id='myNav' class='context' onwheel='wheelEvent(event)'>`n
-<a onmousedown="inca('Settings')">&hellip;</a>
-<a id='mySelect' style='width: 78`%; word-spacing:0.8e; outline-offset: -1px' onmouseup="if (lastClick==1) {if (myTitle.value) {sel(index)} else selectAll()}"></a>`n
-<input id='myTitle' class='title' style='color: lightsalmon; padding-left: 1.4em'>
-<video id='myPic' muted class='pic'></video>`n
-<a id='myMute' style='width:4em' onmousedown="muted^=1; inca('Mute', muted); myPlayer.volume=0.1">Mute</a>`n
-<a id='myFavorite'>Fav</a>`n
-<a id='mySpeed'></a>`n
-<a id='mySkinny'></a>`n
-<a id='myPitch'></a>`n
-<a id='myFlip' onmouseup='flip()'>Flip</a>`n
-<a id='myPause' onmousedown="defPause^=1; pause^=1; inca('Pause',defPause)">Pause</a>`n
-<a id='myIndex' onmouseup="if(myTitle.value) {inca('Index','',index)} else inca('Index','',0)">Index</a>`n
-<a id='myDelete' onmouseup="if (!event.button) if (selected || myTitle.value) inca('Delete','',index)">Delete</a>
-<a id='myCue' onmouseup="if (!longClick) cueButton()">Cue</a>`n
-<a id='myCap' onmouseup='capButton()'>Caption</a>`n
-<a></a></div>`n`n
-
 <div id='myMask' class="mask" onwheel="wheelEvent(event)"></div>`n 
 <video id="myPlayer" class='player' type="video/mp4" muted onwheel="wheelEvent(event)"></video>`n
 <span id='myProgress' class='seekbar'></span>`n
@@ -379,44 +361,58 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
 <span id='myBack' class='capButton' style='font-weight:bold'>&#x2212</span>`n 
 <span id='myForward' class='capButton' style='font-weight:bold'>&#xFF0B</span>`n
 <span id='mySave' class='capButton' onmouseup="if (!longClick) inca('Null')">Save</span></div>`n`n
+<div id='myContent' class='mycontent'>`n<div id='myView' class='myview'>`n`n %mediaList%</div></div>`n`n
 
-<div id='myContent' class='mycontent'>`n
-<div id='myView' class='myview'>`n`n %mediaList%</div>`n`n
+<div id='myNav' class='context' onwheel='wheelEvent(event)'>`n
+  <a onmousedown="inca('Settings')">&hellip;</a>
+  <a id='mySelect' style='width: 78`%; word-spacing:0.8e; outline-offset: -1px' onmouseup="if (lastClick==1) {if (myTitle.value) {sel(index)} else selectAll()}"></a>`n
+  <input id='myTitle' class='title' style='color: lightsalmon; padding-left: 1.4em'>
+  <video id='myPic' muted class='pic'></video>`n
+  <a id='myMute' style='width:4em' onmousedown="muted^=1; inca('Mute', muted); myPlayer.volume=0.1">Mute</a>`n
+  <a id='myFavorite'>Fav</a>`n
+  <a id='mySpeed'></a>`n
+  <a id='mySkinny'></a>`n
+  <a id='myPitch'></a>`n
+  <a id='myFlip' onmouseup='flip()'>Flip</a>`n
+  <a id='myPause' onmousedown="defPause^=1; pause^=1; inca('Pause',defPause)">Pause</a>`n
+  <a id='myIndex' onmouseup="if(myTitle.value) {inca('Index','',index)} else inca('Index','',0)">Index</a>`n
+  <a id='myDelete' onmouseup="if (!event.button) if (selected || myTitle.value) inca('Delete','',index)">Delete</a>
+  <a id='myCue' onmouseup="if (!longClick) cueButton()">Cue</a>`n
+  <a id='myCap' onmouseup='capButton()'>Caption</a>`n
+  <a></a></div>`n`n
 
-<div id='myMask2' style='position:fixed; pointer-events:none; height:16em; width:99`%; background:#15110a; top:0'></div>`n
-<div id='myMenu' class='myMenu'>
-<div id='myPanel' class='myPanel'>`n <div id='panel' class='panel'>`n`n%panelList%`n</div></div>`n`n
+<div id='myMenu'>
+  <div class='fade' style='top:0; height:16em'><div class='fade' style='background: linear-gradient(#15110aff, #15110a00)'></div></div>`n
+  <div class='myPanel'><div class='panel'>`n <div class='innerPanel'>`n`n%panelList%`n</div></div>`n`n
 
-<div id='myRibbon1' class='ribbon' style='width:85`%; height:1.4em; font-size:1.1em'>`n
-<a style='width:12em; color:red; font-weight:bold'>%listSize%</a>`n
-<a id='myMusic' style='width:6em; %x22%' onmousedown="inca('Path','','','music|1')" onmouseover="setTimeout(function() {if(myMusic.matches(':hover'))Music.scrollIntoView()},200)">&#x266B;</a>`n
-<a id='mySub' style='width:2em; font-size:0.7em; %x8%' onmousedown="inca('Recurse')" onmouseover="setTimeout(function() {if(mySub.matches(':hover'))Sub.scrollIntoView()},200)">%subs%</a>`n
-<a id='myFol' style='width:8.5em; %x21%' onmousedown="inca('Path','','','fol|1')" onmouseover="setTimeout(function() {if(myFol.matches(':hover'))Fol.scrollIntoView()},200)">&#x1F4BB;&#xFE0E;</a>`n
-<a id='myFav' style='width:8.5em; %x23%' onmousedown="inca('Path','','','fav|1')" onmouseover="setTimeout(function() {if(myFav.matches(':hover'))Fav.scrollIntoView()},200)">&#10084;</a>`n
-<a id='mySearch' style='width:3em; padding-left:1em; %x20%' onwheel="wheelEvent(event)" onmousedown="inca('SearchBox','','',myInput.value)" onmouseover="setTimeout(function() {if(mySearch.matches(':hover'))Filter(id)},140)">&#x1F50D;&#xFE0E;</a>`n
-<a id='Add' style='width:6em; font-size:0.8em; font-variant-caps:petite-caps' onmousedown="inca('Add','','',myInput.value)">%add%</a>`n
-<input id='myInput' class='searchbox' type='search' value='%st%' onmouseover="overText=1; this.focus(); if(!Add.innerHTML) {this.value=''; this.value='%lastSearch%'}" oninput="Add.innerHTML='Add'" onmouseout='overText=0'>
-<a id="myPage" style='width:12em' onmousedown="inca('Page', page)" onwheel="wheelEvent(event)"></a>
-</div>`n`n
+  <div id='myRibbon1' class='ribbon' style='font-size: 1.1em'>`n
+    <a style='color:red; font-weight:bold'>%listSize%</a>`n
+    <a id='myMusic' style='%x22%' onmousedown="inca('Path','','','music|1')" onmouseover="setTimeout(function() {if(myMusic.matches(':hover'))Music.scrollIntoView()},200)">&#x266B;</a>`n
+    <a id='mySub' style='font-size:0.7em; %x8%' onmousedown="inca('Recurse')" onmouseover="setTimeout(function() {if(mySub.matches(':hover'))Sub.scrollIntoView()},200)">%subs%</a>`n
+    <a id='myFol' style='%x21%' onmousedown="inca('Path','','','fol|1')" onmouseover="setTimeout(function() {if(myFol.matches(':hover'))Fol.scrollIntoView()},200)">&#x1F4BB;&#xFE0E;</a>`n
+    <a id='myFav' style='%x23%' onmousedown="inca('Path','','','fav|1')" onmouseover="setTimeout(function() {if(myFav.matches(':hover'))Fav.scrollIntoView()},200)">&#10084;</a>`n
+    <a id='mySearch' style='padding-left:1em; %x20%' onwheel="wheelEvent(event)" onmousedown="inca('SearchBox','','',myInput.value)" onmouseover="setTimeout(function() {if(mySearch.matches(':hover'))Filter(id)},140)">&#x1F50D;&#xFE0E;</a>`n
+    <a id='Add' style='font-size:0.8em; font-variant-caps:petite-caps' onmousedown="inca('Add','','',myInput.value)">%add%</a>`n
+    <input id='myInput' class='searchbox' type='search' value='%st%' onmouseover="overText=1; this.focus(); if(!Add.innerHTML) {this.value=''; this.value='%lastSearch%'}" oninput="Add.innerHTML='Add'" onmouseout='overText=0'>
+    <a id="myPage" onmousedown="inca('Page', page)" onwheel="wheelEvent(event)"></a>
+    </div>`n`n
 
-<div id='myRibbon2' class='ribbon' style='width:88`%; background:#1b1814'>`n
-<a id='myShuffle' style='width:11`%; %x1%' onmousedown="inca('Shuffle')">Shuffle</a>`n
-<a id='myDuration' style='width:13`%; %x3%' onmousedown="inca('Duration', filt)" onwheel="wheelEvent(event)"> Duration</a>`n
-<a id='myDate' style='%x4%' onmousedown="inca('Date', filt)" onwheel="wheelEvent(event)">Date</a>`n
-<a id='myPlaylist' style='width:11.4`%; %x12%' onmousedown="inca('Playlist')">%pl%</a>`n
-<a id='mySize' style='%x5%' onmousedown="inca('Size', filt)" onwheel="wheelEvent(event)">Size</a>`n
-<a id='myAlpha' style='min-width:3em; %x2%' onmousedown="inca('Alpha', filt)" onwheel="wheelEvent(event)">Alpha</a>`n
-<a id='myType' style='%x6%' onmousedown="inca('Type', filt)" onwheel="wheelEvent(event)">%type%</a>`n
-<a id='myMpv' onmousedown="mpv^=1; inca('Mpv',mpv,lastMedia)">Mpv</a>`n
-<a id='myThumbs' onmouseout='setWidths(1,1000)' onmouseup="inca('View',0)" onwheel="wheelEvent(event)">Thumb</a>`n 
-<a id='myWidth' onwheel="wheelEvent(event)">Width</a>`n
-<a id='Mp3' onmouseup="inca('mp3', myPlayer.currentTime.toFixed(2), lastMedia, cue); cue=0; myNav.style.display=null">mp3</a>`n
-<a id='Mp4' onmouseup="inca('mp4', myPlayer.currentTime.toFixed(2), lastMedia, cue); cue=0; myNav.style.display=null">mp4</a>`n
-<a id='myJoin' onmousedown="inca('Join')">Join</a>`n
-</div>`n`n
+  <div id='myRibbon2' class='ribbon' style='background:#1b1814'>`n
+    <a id='myType' style='%x6%' onmousedown="inca('Type', filt)" onwheel="wheelEvent(event)">%type%</a>`n
+    <a id='myAlpha' style='%x2%' onmousedown="inca('Alpha', filt)" onwheel="wheelEvent(event)">Alpha</a>`n
+    <a id='mySize' style='%x5%' onmousedown="inca('Size', filt)" onwheel="wheelEvent(event)">Size</a>`n
+    <a id='myPlaylist' style='%x12%' onmousedown="inca('Playlist')">%pl%</a>`n
+    <a id='myDate' style='%x4%' onmousedown="inca('Date', filt)" onwheel="wheelEvent(event)">Date</a>`n
+    <a id='myDuration' style='%x3%' onmousedown="inca('Duration', filt)" onwheel="wheelEvent(event)"> Duration</a>`n
+    <a id='myShuffle' style='%x1%' onmousedown="inca('Shuffle')">Shuffle</a>`n
+    <a id='myMpv' onmousedown="mpv^=1; inca('Mpv',mpv,lastMedia)">Mpv</a>`n
+    <a id='myThumbs' onmouseout='setWidths(1,1000)' onmouseup="inca('View',0)" onwheel="wheelEvent(event)">Thumb</a>`n 
+    <a id='myWidth' onwheel="wheelEvent(event)">Width</a>`n
+    <a id='Mp3' onmouseup="inca('mp3', myPlayer.currentTime.toFixed(2), lastMedia, cue); cue=0; myNav.style.display=null">mp3</a>`n
+    <a id='Mp4' onmouseup="inca('mp4', myPlayer.currentTime.toFixed(2), lastMedia, cue); cue=0; myNav.style.display=null">mp4</a>`n
+    <a id='myJoin' onmousedown="inca('Join')">Join</a>`n
+    </div></div>`n`n
 
-<div style='position:relative; width:100vw; height:0.6em'></div>
-<div class='fadeout'></div>`n`n 
 
       StringReplace, header, header, \, /, All
       StringReplace, body, body, \, /, All
@@ -613,9 +609,6 @@ else mediaList = %mediaList%<div id="entry%j%" class='entry' data-params='%type%
       if (flush || !mpvExist)
         return
       flush := 1
-      if (!captions || cur == mpvExist)
-        WinActivate, ahk_class mpv
-      else WinActivate, ahk_group Browsers
       MouseGetPos,, ypos
       WinGetPos, mpvX, mpvY, mpvWidth, mpvHeight, ahk_class mpv		; allow seeking over seekbar
       relY := (ypos - mpvY) / mpvHeight
@@ -628,7 +621,7 @@ else mediaList = %mediaList%<div id="entry%j%" class='entry' data-params='%type%
         mpvHeight += wheel * mpvHeight/currentWidth * 40
         newX := mediaX - mpvWidth // 2
         newY := mediaY - mpvHeight // 2
-        if (wheel == 1 || (mpvWidth > 200 && mpvHeight > 200)) && (wheel == -1 || mpvHeight <= A_ScreenHeight)
+        if (wheel == 1 || (mpvWidth > 180 && mpvHeight > 180)) && (wheel == -1 || mpvHeight <= A_ScreenHeight)
           WinMove, ahk_class mpv,, %newX%, %newY%, %mpvWidth%, %mpvHeight%
         else if (wheel == 1)
           RunWait %COMSPEC% /c echo no-osd add video-zoom 0.1 > \\.\pipe\mpv,, hide
@@ -725,6 +718,8 @@ else mediaList = %mediaList%<div id="entry%j%" class='entry' data-params='%type%
       if (rate != 1)
         speed = --speed=%rate%
       else speed =
+      if !paused
+        loop = --loop-file=yes
       pause =
       mpvPaused := paused
       if (mpvPaused || captions)
@@ -733,9 +728,9 @@ else mediaList = %mediaList%<div id="entry%j%" class='entry' data-params='%type%
         seek = 0.0
       max := Round((mpvWidth > mpvHeight && mpvWidth) ? mpvWidth : (mpvHeight ? mpvHeight : 999),0)
       if captions
-        captions := max, max := 400							; reduce mpv size preserve size
+        captions := max, max := 340							; reduce mpv size & preserve size
       autofit = --autofit-larger=%max%x%max% --autofit=%max%
-      para = %autofit% %skinny% %speed% %pause% %flip% %mute% --start=%seek% --playlist-start=%mpvid%
+      para = %autofit% %skinny% %speed% %pause% %flip% %mute% %loop% --start=%seek% --playlist-start=%mpvid%
       if (ext=="pdf" || ext=="rtf" || ext=="doc")
         Run, %src%
       else if (!playing and (type=="m3u" || type=="document"))				; use notepad
@@ -762,7 +757,7 @@ else mediaList = %mediaList%<div id="entry%j%" class='entry' data-params='%type%
             y := 600
           if (x > 0 && y > 0 && x < A_ScreenWidth && y < A_ScreenHeight)
             WinMove, ahk_class mpv,, %x%, %y%
-          if (x && mpvWidth > 200)
+          if (x && mpvWidth > 180)
             break
           Sleep, 20
           }
@@ -772,6 +767,8 @@ else mediaList = %mediaList%<div id="entry%j%" class='entry' data-params='%type%
         if !captions
           WinSet, AlwaysOnTop, On
         WinSet, Top,,ahk_class mpv
+        if captions
+          WinActivate, ahk_group Browsers
         }
       }
 
@@ -1420,8 +1417,6 @@ else mediaList = %mediaList%<div id="entry%j%" class='entry' data-params='%type%
       FileDelete, %inca%\cache\temp\temp1.txt
       index(src,1)
       reload := 3
-if src
-  return 1 
       }
 
     Delete()
@@ -1488,7 +1483,7 @@ if src
               popup(popup,0,0,0)
               }
           }
-        else DeleteEntries()
+        else DeleteEntries(0)
         x := StrSplit(selected,",")
         index := x[x.MaxIndex()-1]
         reload := 3
@@ -1694,7 +1689,8 @@ capEdit() ; Save edited text or SRT file
              {  
              source := StrSplit(A_Loopfield, "|").1
              start := StrSplit(A_Loopfield, "|").2
-             spool(source, A_Index, start)
+             if (SubStr(source, 1, 1) != "#")
+               spool(source, A_Index, start)
              }
            }
         else Loop, Parse, searchPath, `|
@@ -1979,13 +1975,13 @@ capEdit() ; Save edited text or SRT file
             }
         if (popup && !longClick)
           if (InStr(address, "inca\fav") || InStr(address, "inca\music"))
-            DeleteEntries()
+            DeleteEntries(1)
         if popup
           PopUp(popup,0,0,0) 
         }  
 
 
-    DeleteEntries()							; playlist entries
+    DeleteEntries(move)							; playlist entries
         {
         IfNotExist, %playlist%
           return
@@ -1996,9 +1992,10 @@ capEdit() ; Save edited text or SRT file
           {
           getMedia(A_LoopField)
           x = %target%`r`n
-          y = %src%`r`n
-          str := StrReplace(str, x,,,1)					; fav with start time
-          str := StrReplace(str, y,,,1)					; music with no start time
+          y = # %target%`r`n
+          if move
+            str := StrReplace(str, x,,,1)				; delete entry
+          else str := StrReplace(str, x, y,,1)				; mark entry as deleted
           }
         FileAppend, %str%, %playlist%, UTF-8
         AllFav()
@@ -2109,8 +2106,11 @@ capEdit() ; Save edited text or SRT file
         src := StrSplit(str, "/").2
         seek := StrSplit(str, "/").5
         if !seek
+          {
           seek = 0.0
-        target = %src%|%seek%
+          target = %src%
+          }
+        else target = %src%|%seek%
         if src
           return DetectMedia(src)
         }
@@ -2443,8 +2443,6 @@ capEdit() ; Save edited text or SRT file
        }
 
 
-
-
     fill(in) {  
       panelList = %panelList%<div style="height:10`%; padding:0.5em; transform:rotate(90deg)">`n%in%</div>`n
       }
@@ -2484,6 +2482,8 @@ IfWinActive, ahk_group Browsers
         WinGet, cur, ID, ahk_id %id%
         WinGet, desk, ID , ahk_class Progman
         WinGet, mpvExist, ID , ahk_class mpv				; get mpv PID
+        if (cur == mpvExist)
+          WinActivate, ahk_class mpv
         if (block && mpvExist && pitch && pitch != 1)
            RunWait %COMSPEC% /c echo no-osd af set rubberband=pitch-scale=%pitch% > \\.\pipe\mpv,, hide
         if (block && mpvExist && mute=="no")				; re-enable sound after seeking
