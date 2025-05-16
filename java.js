@@ -1,7 +1,6 @@
 // fullscreen match normal more
 // mbutton mapping off incatab
-// exit text in firefox
-// back forward in firefox
+// xymedia localstorage in firefox
 
 
   let entry = 0								// thumb container
@@ -71,8 +70,8 @@
   let mpv = 0								// default player
 
 
-  let mediaX = isNaN(1*localStorage.mediaX) ? 400 : 1*localStorage.mediaX  // myPlayer position
-  let mediaY = isNaN(1*localStorage.mediaY) ? 400 : 1*localStorage.mediaY
+  let mediaX = innerWidth/2
+  let mediaY = innerHeight/2.3
   let intervalTimer = setInterval(timerEvent,90)			// background tasks every 90mS
   if (innerHeight>innerWidth) {scaleX=0.64; scaleY=0.64}		// screen is portrait
   else {scaleX=0.5; scaleY=0.5}
@@ -98,20 +97,24 @@
     else if (e.key === 'ArrowRight' && !overText) {lastClick=5; clickEvent(e)}		// Next
     else if (e.key === 'ArrowDown' && !overText) {lastClick=4; clickEvent(e)}		// Back click
     else if (e.key == 'Pause' && e.shiftKey) {thumbSheet ^= 1; Play()}			// long RClick - show thumbsheet
-    Click=0; lastClick=0}, false) 
+    else if (e.key == 'Pause') {							// mouse Back Click - inca re-map 
+      if (myNav.style.display) {myNav.style.display=null; localStorage.cue=''}				
+      else if (playing) closePlayer()							// close player and send messages to inca
+      else if (myContent.scrollTop > 50) myContent.scrollTo(0,0)			// else scroll to page top
+      else inca('Reload')								// or finally, reload page & clear selected
+      Click=0; lastClick=0}}, false)
 
 
   function mouseDown(e) {
     longClick = gesture = 0
     Click = lastClick = e.button+1
-    if (Click == 4 || Click == 5) e.preventDefault()					// forward and back mouse buttons
+    if (Click == 2) e.preventDefault()							// forward and back mouse buttons
     timout=6; Xref=xpos; Yref=ypos
     clickTimer = setTimeout(function() {longClick = Click; clickEvent(e)},260)}		// detect long click
 
 
   function mouseUp(e) {
     if (!Click) return									// stop re-entry also if new page load
-    if (Click == 4 || Click == 5) e.preventDefault()					// forward and back mouse buttons
     clearTimeout(clickTimer)								// longClick timer
     if (!longClick) clickEvent(e)							// process click event
     Click=0; wheel=0; gesture=0}
@@ -131,13 +134,7 @@
       if (yw < 0.06) return
       if (!myNav.style.display) {context(); return}}
     if (myMenu.matches(':hover')) {Click=0; return}					// inca opens new tab
-    if (lastClick == 4) {								// Back click
-      if (myNav.style.display) {myNav.style.display=null; localStorage.cue=''}				
-      else if (playing) closePlayer()							// close player and send messages to inca
-      else if (myContent.scrollTop > 50) myContent.scrollTo(0,0)			// else scroll to page top
-      else inca('Reload') 								// or finally, reload page & clear selected
-      return}
-    if (lastClick == 5) {  								// Forward click
+    if (lastClick == 2) {  								// Forward click
       if (editing) inca('Null')								// save text
       if (!playing && !myNav.style.display) {inca('View',lastMedia); return}		// switch list/thumb view
       else if (longClick) {index--} else index++					// next, previous media
@@ -162,9 +159,6 @@
 
 
   function Play(play) {
-    if (!playing) {
-      if (!mediaX || mediaX<0 || mediaX>innerWidth) mediaX=innerWidth/2
-      if (!mediaY || mediaY<0 || mediaY>innerHeight) mediaY=innerHeight/2}
     myPlayer.style.transition = 'opacity 0.6s'
     myPlayer.style.opacity = 0
     myNav.style.display=null
@@ -222,8 +216,6 @@
       mediaX += xpos - Xref
       mediaY += ypos - Yref
       Xref=xpos; Yref=ypos
-      localStorage.mediaX = mediaX.toFixed(0)
-      localStorage.mediaY = mediaY.toFixed(0)
       positionMedia(0)}}
 
 

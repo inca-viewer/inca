@@ -130,18 +130,16 @@
       MouseDown()
       return
 
-    XButton2::					; Forward button
-      click = XButton2
+    MButton::					; Forward button
+      click = MButton
       longClick := 0
       closeMpv(2)
-      send, {XButton2 down}
-if !incaTab
-  send {MButton}
+      send, {MButton down}
       return
 
-    XButton2 up::
+    MButton up::
       click =
-      send, {XButton2 up}
+      send, {MButton up}
       return
 
     XButton1::					; Back button
@@ -168,13 +166,16 @@ if !incaTab
       else IfWinExist, ahk_class mpv		; mpv external player
         {
         closeMpv(1)
-        send, {XButton1}			; close java media player
+        send, {Pause}
         }
+      else if incaTab
+        send, {Pause}				; close java media player
       else send, {XButton1}
       sleep 100
       MouseGetPos,,, cur 			; get window under cursor
       WinActivate, ahk_id %cur%
       return
+
 
     ~WheelUp::WheelHandler(-wheelDir)
     ~WheelDown::WheelHandler(wheelDir)
@@ -201,7 +202,7 @@ if !incaTab
         mpvHeight += wheel * mpvHeight/currentWidth * 40
         newX := mediaX - mpvWidth // 2
         newY := mediaY - mpvHeight // 2
-        if (wheel == 1 || (mpvWidth > 180 && mpvHeight > 180)) && (wheel == -1 || mpvHeight <= A_ScreenHeight)
+        if (wheel == -1 ? (mpvWidth > 180 && mpvHeight > 180) : (mpvWidth < A_ScreenWidth && mpvHeight < A_ScreenHeight))
           WinMove, ahk_class mpv,, %newX%, %newY%, %mpvWidth%, %mpvHeight%
         else if (wheel == 1)
           RunWait %COMSPEC% /c echo no-osd add video-zoom 0.1 > \\.\pipe\mpv,, hide
@@ -663,9 +664,9 @@ if !incaTab
             panelPath = %address%
             if (click == "RButton")					; right click over panel
               return
-            if (click == "XButton2")					; middle click over panel
+            if (click == "MButton")					; middle click over panel
               {
-              send, {XButton2 up}
+              send, {MButton up}
               incaTab =							; trigger open new tab
               value =
               }
@@ -1504,10 +1505,7 @@ if !incaTab
           {
           getMedia(A_LoopField)
           x = %target%`r`n
-          y = # %target%`r`n
-          if (move || InStr(playlist, "\History.m3u"))
-            str := StrReplace(str, x,,,1)				; delete entry
-          else str := StrReplace(str, x, y,,1)				; mark entry as deleted
+          str := StrReplace(str, x, y,,1)				; mark entry as deleted
           }
         FileAppend, %str%, %playlist%, UTF-8
         AllFav()
