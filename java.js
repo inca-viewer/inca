@@ -1,3 +1,7 @@
+// fullscreen match normal more
+// mbutton mapping off incatab
+// exit text in firefox
+// back forward in firefox
 
 
   let entry = 0								// thumb container
@@ -53,7 +57,7 @@
   let ypos = 0
   let Xref = 0								// click cursor xy
   let Yref = 0
-  let cursor = 0							// hide cursor timout (x 100mS)
+  let timout = 0							// -- every 90mS  eg for hide cursor
   let block = 0								// block wheel timer
   let aspect = 1							// media width to height ratio
   let Xoff = 0								// fullscreen offsets
@@ -73,7 +77,7 @@
   if (innerHeight>innerWidth) {scaleX=0.64; scaleY=0.64}		// screen is portrait
   else {scaleX=0.5; scaleY=0.5}
   myPlayer.addEventListener('ended', (e) => {
-    if (playlist.match('/inca/music/')) {lastClick=2; clickEvent(e)}
+    if (playlist.match('/inca/music/')) {lastClick=5; clickEvent(e)}
     else if (!defPause) {lastClick=1; clickEvent(e)}
     else myPlayer.currentTime=dur}, false)
   document.addEventListener('mousedown', mouseDown)
@@ -88,29 +92,26 @@
     if (e.key == 'Enter') {
       if (renamebox) inca('Rename', renamebox, lastMedia)				// rename media
       else if (myInput.matches(':focus')) inca('SearchBox','','',myInput.value)}	// search media on pc
+    else if (e.key == 'Backspace' && captions && type != 'document') joinCap()
     else if (e.code == 'Space' && !overText) togglePause()
-    else if (e.key == 'Backspace') {if (overText) {joinCap()} else closePlayer()}
-    else if (e.key === 'ArrowLeft' && !overText) {longClick=lastClick=2; clickEvent(e)}
-    else if (e.key === 'ArrowRight' && !overText) {lastClick=2; clickEvent(e)}
+    else if (e.key === 'ArrowLeft' && !overText) {longClick=lastClick=5; clickEvent(e)}	// Previous
+    else if (e.key === 'ArrowRight' && !overText) {lastClick=5; clickEvent(e)}		// Next
+    else if (e.key === 'ArrowDown' && !overText) {lastClick=4; clickEvent(e)}		// Back click
     else if (e.key == 'Pause' && e.shiftKey) {thumbSheet ^= 1; Play()}			// long RClick - show thumbsheet
-    else if (e.key == 'Pause') {							// mouse Back Click - inca re-map 
-      if (myNav.style.display) {myNav.style.display=null; localStorage.cue=''}				
-      else if (playing) closePlayer()							// close player and send messages to inca
-      else if (myContent.scrollTop > 50) myContent.scrollTo(0,0)			// else scroll to page top
-      else inca('Reload')								// or finally, reload page & clear selected
-      Click=0; lastClick=0}}, false) 
+    Click=0; lastClick=0}, false) 
 
 
   function mouseDown(e) {
     longClick = gesture = 0
     Click = lastClick = e.button+1
-    cursor=6; Xref=xpos; Yref=ypos
-    if (Click == 2) e.preventDefault()							// middle click
+    if (Click == 4 || Click == 5) e.preventDefault()					// forward and back mouse buttons
+    timout=6; Xref=xpos; Yref=ypos
     clickTimer = setTimeout(function() {longClick = Click; clickEvent(e)},260)}		// detect long click
 
 
   function mouseUp(e) {
     if (!Click) return									// stop re-entry also if new page load
+    if (Click == 4 || Click == 5) e.preventDefault()					// forward and back mouse buttons
     clearTimeout(clickTimer)								// longClick timer
     if (!longClick) clickEvent(e)							// process click event
     Click=0; wheel=0; gesture=0}
@@ -126,11 +127,17 @@
     if (id == 'mySave' || id == 'myInput') return
     if (id == 'myForward') {newCap(0.4); return}					// move caption forward in time
     if (id == 'myBack') {newCap(-0.4); return}
-    if (myMenu.matches(':hover')) {Click=0; return}					// inca opens new tab
-    if (lastClick == 3) {								// right click context
-      if (yw < 0.08) return
+    if (lastClick == 3) {								// Right click context
+      if (yw < 0.06) return
       if (!myNav.style.display) {context(); return}}
-    if (lastClick == 2) {  								// middle click
+    if (myMenu.matches(':hover')) {Click=0; return}					// inca opens new tab
+    if (lastClick == 4) {								// Back click
+      if (myNav.style.display) {myNav.style.display=null; localStorage.cue=''}				
+      else if (playing) closePlayer()							// close player and send messages to inca
+      else if (myContent.scrollTop > 50) myContent.scrollTo(0,0)			// else scroll to page top
+      else inca('Reload') 								// or finally, reload page & clear selected
+      return}
+    if (lastClick == 5) {  								// Forward click
       if (editing) inca('Null')								// save text
       if (!playing && !myNav.style.display) {inca('View',lastMedia); return}		// switch list/thumb view
       else if (longClick) {index--} else index++					// next, previous media
@@ -145,8 +152,7 @@
       if (longClick && playing=='mpv') return
       if (longClick == 1 || thumbSheet || id == 'myPic' || id == 'myNav' || (dur && myPlayer.currentTime >= dur-1)) {getStart(id); return}
       if (myNav.matches(':hover')) return
-      if (overText) {playCap(id); return}						// play at caption
-      if (title.matches(':hover')) {thumb.currentTime = thumb.style.start; return}
+      if (playing && overText) {playCap(id); return}					// play at caption
       if (!playing && !overMedia && !myNav.style.display) {selected.split(',').forEach(item => sel(item)); return}
       if (playing && overMedia && (ym > 0.9 || yw > 0.95)) {if (dur) myPlayer.currentTime = xm * dur; return}
       else if (playing) {togglePause(); return}
@@ -174,7 +180,7 @@
     title.style.color = 'pink'; title.style.background = '#1b1814'
     if ((el=document.getElementById('srt'+lastMedia)) && playing && index!=lastMedia) {	// hide last caption
       el.style.display = null
-      if (captions && srt.innerHTML && lastClick==2) openCap()}		// next/back
+      if (captions && srt.innerHTML && lastClick==5) openCap()}		// next/back
     lastMedia = index
     playing='browser'
     if (play) pause = 0
@@ -198,7 +204,7 @@
   function mouseMove(e) {
     if (innerHeight==outerHeight) {xpos=e.screenX; ypos=e.screenY}	// fullscreen detection/offsets
     else {xpos=e.clientX; ypos=e.clientY}
-    cursor=6
+    timout=6
     setPic()
     if (selected && myMenu.matches(':hover')) {mySelected.innerHTML = selected.split(',').length -1; mySelected.style.fontSize='2em'}
     else {mySelected.innerHTML = ''; mySelected.style.fontSize=null}
@@ -221,7 +227,6 @@
       positionMedia(0)}}
 
 
-
   function wheelEvent(e) {
     e.preventDefault()
     let id = e.target.closest('a')?.id || e.target.id 			// Use e.target for hover detection
@@ -232,9 +237,9 @@
     if (id=='myPage') {							// htm page
       if (wheelUp && page<pages) page++
       else if (!wheelUp && page>1) page--}
-    else if (wheel > 40 && (id=='myType'||id=='myAlpha'||id=='myDate'||id=='mySize'||id=='myDuration'||id=='mySearch')) {  // filter
+    else if (wheel > 40 && (id=='myType'||id=='myAlpha'||id=='myDate'||id=='mySize'||id=='myDuration'||id=='mySearch')) {
       if (wheelUp) filt++ 
-      else if (filt) filt--
+      else if (filt) filt--						// filter
       if ((id=='myAlpha' || id=='mySearch') && filt > 25) filt=25
       Filter(id)}
     else if (id =='mySpeed') {						// rate
@@ -270,10 +275,10 @@
       if (wheelUp) {index++} else if (index>1) index--
       if (!document.getElementById('entry'+index)) index-- 		// next
       else if (!playing) {getParameters(index)}
-      else {longClick=lastClick=0; clickEvent(e)}
+      else {Click=longClick=lastClick=0; clickEvent(e)}
       positionMedia(0); setPic(); block=140}
     else if (dur && !thumbSheet && (!overMedia || yw>0.8)) {		// seek 
-      cursor = 6
+      timout = 6
       if (dur > 200) interval = 1.2
       else interval = 0.6
       if (myPlayer.paused) interval = 0.1
@@ -304,9 +309,9 @@
     ym = (ypos - rect.top) / rect.height
     if (block>=30) block-=10						// wheel blocking 
     if (wheel>=10) wheel-=10
-    if (cursor) cursor--
+    if (timout) timout--
     if (!playing || thumbSheet || overText) myBody.style.cursor=null	// show default cursor
-    else if (!cursor) myBody.style.cursor='none'			// hide cursor
+    else if (!timout) myBody.style.cursor='none'			// hide cursor
     else myBody.style.cursor='crosshair'				// moving cursor over player
     if (editing) {capMenu.style.display='flex'} else capMenu.style.display='none'
     if (captions) Captions()
@@ -322,12 +327,11 @@
       if (rate==1) {mySpeed.innerHTML='Speed'} else mySpeed.innerHTML=rate.toFixed(2)
       if (pitch==1) {myPitch.innerHTML='Pitch'} else myPitch.innerHTML=pitch.toFixed(2)}
     else mySelect.style.outline=null
-    if (outerHeight-innerHeight>30) {myMenu.style.display=null} else myMenu.style.display='none'  // if fullscreen hide menu 
     if (!seekBar()) myProgress.style.height = mySeekbar.style.height = null
     if (favicon.innerHTML.match('\u2764')) myFavorite.innerHTML='Fav &#x2764'
     else myFavorite.innerHTML='Fav'
     if (selected) {myDelete.style.color='red'; myDelete.innerHTML='Delete ' + (selected.split(',').length -1)}
-    else if (myTitle.value) {myDelete.style.color=null; myDelete.innerHTML='Delete'}
+    else if (myTitle.value || myMenu.matches(':hover')) {myDelete.style.color=null; myDelete.innerHTML='Delete'}
     else myDelete.innerHTML=''
     if (muted) {myMute.style.color='red'} else myMute.style.color=null
     if (mpv) {myMpv.style.color='red'} else myMpv.style.color=null
@@ -359,6 +363,7 @@
       positionMedia(0)} 
     else {
       if (thumb.muted) {thumb.playbackRate=0.6} else thumb.playbackRate=1
+      if (timout == 4 && overMedia && dur) if (ym>0.8 && ym<1) myPlayer.currentTime = thumb.currentTime = dur * xm
       if (!listView && thumb.readyState===4 && thumb.duration && overMedia && !defPause) thumb.play() 
       else thumb.pause()}}
 
@@ -384,7 +389,7 @@
     if (type=='image') return
     let el = myPlayer
     if (myPic.matches(':hover')) el=myPic
-    else if (Click || overText || thumbSheet || !playing || playing=='mpv' || !myPlayer.duration || (!cursor&&!cue)) return
+    else if (Click || overText || thumbSheet || !playing || playing=='mpv' || !myPlayer.duration || (!timout&&!cue)) return
     let cueX = rect.left
     let x = Math.round(el.currentTime*100)/100
     mySeekbar.style.width = rect.width * xm + 'px'
@@ -553,7 +558,7 @@
     if (mu=='yes') {muted=1} else muted=0
     let key = 'pageWidth'+folder
     let x = localStorage.getItem(key)
-    if (isNaN(x) || x<20 || x>100) localStorage.setItem(key, 60)	// default htm width 60%
+    if (isNaN(x) || x<20 || x>100) localStorage.setItem(key, 50)	// default htm width 50%
     pageWidth = 1*localStorage.getItem(key)
     myView.style.width = 1*localStorage.getItem(key)+'%'
     key = 'pageView'+folder
@@ -592,7 +597,7 @@
         if (x>1) {el.style.height=view/x+'em'} else el.style.height=view+'em'}}}
 
 
-function myCues(time) { 						// media scrolls, speed, skinny, pauses etc.
+  function myCues(time) { 						// media scrolls, speed, skinny, pauses etc.
     let src=''; let tm=''						// for swap out media above srt/txt
     let x = cues.innerHTML.split(/[\r\n]/)
     for (k=0; k<x.length; k++) {					// process each line entry
@@ -602,7 +607,7 @@ function myCues(time) { 						// media scrolls, speed, skinny, pauses etc.
         if (el[3] > 100 && el[4] < 600) {srt.style.width=el[3]+'px'; srt.style.height=el[4]+'px'}} // resize textarea
       if (el[1]=='media' && el[3] && srt.scrollTop.toFixed(0) >= 1*el[0]) {src = el[2]; tm = 1*el[3]}  // swap media
       if (el[1] && 1*el[0] > time-0.1 && 1*el[0] < time+0.1) {
-        if (el[1]=='next') {lastClick=2; clickEvent(0)}
+        if (el[1]=='next') {lastClick=5; clickEvent(0)}
         else if (el[1]=='goto' && !myPlayer.paused) {myPlayer.currentTime=thumb.style.start=thumb.currentTime=1*el[2]; myPlayer.volume=0.1}
         else if (el[1]=='rate') {if (isNaN(1*el[2])) {rate=defRate} else {rate=1*el[2]}}
         else if (el[1]=='skinny') {if (isNaN(1*el[2])) {skinny=1} else {skinny=1*el[2]; if(time) {positionMedia(2)}}}
@@ -651,8 +656,8 @@ function myCues(time) { 						// media scrolls, speed, skinny, pauses etc.
 
 
   function playCap(id, stop) {
-    if (!dur || type == 'document') return
     if (ypos > srt.offsetTop && ypos < srt.offsetTop + 12) {srt.scrollTo(0,0); myPlayer.pause(); return}
+    if (!dur || type == 'document') return
     tm = id.split('-')[1]
     if (id.match('my') && (stop || capText.id != id)) myPlayer.currentTime = thumb.currentTime = tm
     else tm=0								// mpv to 'not' reset time
@@ -683,7 +688,7 @@ function myCues(time) { 						// media scrolls, speed, skinny, pauses etc.
     capText.remove()							// remove old caption
     editing = index}
 
- 
+
   function updateCue(item, val) {					// rate, skinny, pitch cues
     val = Math.round(1000 * val) / 1000
     thumb.style[item] = val
@@ -692,7 +697,7 @@ function myCues(time) { 						// media scrolls, speed, skinny, pauses etc.
     return val}
 
 
-function newCap(nudge) {
+  function newCap(nudge) {
     editing = index
     if (type === 'document' || (nudge && block > 20)) return
     block = 40									// Block rapid click re-entry
@@ -829,7 +834,6 @@ function newCap(nudge) {
     thumb.volume=1
     thumb.style.opacity=1
     if (lastYpos != ypos && thumb.readyState !== 4) thumb.load()	// first use with scroll blocking
-    if (view > 30 && dur) {thumb.controls=1} else thumb.controls=0
     lastYpos = ypos}
 
 

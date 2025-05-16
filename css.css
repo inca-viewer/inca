@@ -284,7 +284,7 @@ e {						/* caption text entries */
   user-select: none;
   pointer-events: none;
   position: fixed;
-  transition: opacity 0.4s;
+  transition: opacity 0.3s;
   opacity: 0;
   top: 0;
   left: 0;
