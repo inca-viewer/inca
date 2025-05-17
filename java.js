@@ -1,6 +1,7 @@
-// fullscreen match normal more
-// mbutton mapping off incatab
-// xymedia localstorage in firefox
+// color theme closer to youtube
+// thumb hover effect on myPlayer?
+
+
 
 
   let entry = 0								// thumb container
@@ -70,13 +71,16 @@
   let mpv = 0								// default player
 
 
+let Zoff = 94	
+
+
   let mediaX = innerWidth/2
   let mediaY = innerHeight/2.3
   let intervalTimer = setInterval(timerEvent,90)			// background tasks every 90mS
   if (innerHeight>innerWidth) {scaleX=0.64; scaleY=0.64}		// screen is portrait
   else {scaleX=0.5; scaleY=0.5}
   myPlayer.addEventListener('ended', (e) => {
-    if (playlist.match('/inca/music/')) {lastClick=5; clickEvent(e)}
+    if (playlist.match('/inca/music/')) {lastClick=2; clickEvent(e)}
     else if (!defPause) {lastClick=1; clickEvent(e)}
     else myPlayer.currentTime=dur}, false)
   document.addEventListener('mousedown', mouseDown)
@@ -85,7 +89,7 @@
   document.addEventListener('mousemove', mouseMove)
   document.addEventListener('contextmenu', (e) => {if (yw > 0.08) e.preventDefault()})
   document.addEventListener('paste', (e) => {
-    const text = e.clipboardData.getData('text');
+    const text = e.clipboardData.getData('text')
     if (!isNaN(text)) {e.preventDefault(); thumb.currentTime = text; thumb.currentTime = text}}, false)
   document.addEventListener('keydown', (e) => { 					// keyboard events
     if (e.key == 'Enter') {
@@ -93,10 +97,10 @@
       else if (myInput.matches(':focus')) inca('SearchBox','','',myInput.value)}	// search media on pc
     else if (e.key == 'Backspace' && captions && type != 'document') joinCap()
     else if (e.code == 'Space' && !overText) togglePause()
-    else if (e.key === 'ArrowLeft' && !overText) {longClick=lastClick=5; clickEvent(e)}	// Previous
-    else if (e.key === 'ArrowRight' && !overText) {lastClick=5; clickEvent(e)}		// Next
-    else if (e.key === 'ArrowDown' && !overText) {lastClick=4; clickEvent(e)}		// Back click
-    else if (e.key == 'Pause' && e.shiftKey) {thumbSheet ^= 1; Play()}			// long RClick - show thumbsheet
+    else if (e.key === 'ArrowLeft' && !overText) {longClick=lastClick=2; clickEvent(e)}	// Previous
+    else if (e.key === 'ArrowRight' && !overText) {lastClick=2; clickEvent(e)}		// Next
+    else if (e.key === 'ArrowDown' && !overText) {longClick=lastClick=2; clickEvent(e)}	// Back click
+    else if (e.key == 'Pause' && e.shiftKey && (overMedia || playing)) {thumbSheet ^= 1; Play()}  // long RClick - show thumbsheet
     else if (e.key == 'Pause') {							// mouse Back Click - inca re-map 
       if (myNav.style.display) {myNav.style.display=null; localStorage.cue=''}				
       else if (playing) closePlayer()							// close player and send messages to inca
@@ -134,7 +138,7 @@
       if (yw < 0.06) return
       if (!myNav.style.display) {context(); return}}
     if (myMenu.matches(':hover')) {Click=0; return}					// inca opens new tab
-    if (lastClick == 2) {  								// Forward click
+    if (lastClick == 2) {  								// Middle click
       if (editing) inca('Null')								// save text
       if (!playing && !myNav.style.display) {inca('View',lastMedia); return}		// switch list/thumb view
       else if (longClick) {index--} else index++					// next, previous media
@@ -150,6 +154,7 @@
       if (longClick == 1 || thumbSheet || id == 'myPic' || id == 'myNav' || (dur && myPlayer.currentTime >= dur-1)) {getStart(id); return}
       if (myNav.matches(':hover')) return
       if (playing && overText) {playCap(id); return}					// play at caption
+      if (title.matches(':hover')) {thumb.currentTime = thumb.style.start; return}
       if (!playing && !overMedia && !myNav.style.display) {selected.split(',').forEach(item => sel(item)); return}
       if (playing && overMedia && (ym > 0.9 || yw > 0.95)) {if (dur) myPlayer.currentTime = xm * dur; return}
       else if (playing) {togglePause(); return}
@@ -174,13 +179,14 @@
     title.style.color = 'pink'; title.style.background = '#1b1814'
     if ((el=document.getElementById('srt'+lastMedia)) && playing && index!=lastMedia) {	// hide last caption
       el.style.display = null
-      if (captions && srt.innerHTML && lastClick==5) openCap()}		// next/back
+      if (captions && srt.innerHTML && lastClick==2) openCap()}		// next/back
     lastMedia = index
     playing='browser'
     if (play) pause = 0
     else pause = defPause
+    if (scaleY < 0.2) scaleY = 0.5
     if (!longClick && lastClick==1 && srt.innerHTML && (favicon.matches(':hover') || type=='document')) openCap()
-    if (captions || type=='audio' || playlist.match('/inca/music/')) {pause=0; scaleY=0.16; myPlayer.muted=0}
+    if ((captions && srt.innerHTML) || type=='audio' || playlist.match('/inca/music/')) {pause=0; scaleY=0.16; myPlayer.muted=0}
     if (longClick==1 && (favicon.matches(':hover') || myCap.matches(':hover'))) playing = ''	// so opens in notepad
     else if (mpv && type!='image' && !playlist.match('/inca/music/') && type!='document' && !thumbSheet) playing='mpv'
     let mpvPara = [thumb.style.start, myPlayer.currentTime, skinny, rate, pitch, captions, playing, pause].join('|')
@@ -246,19 +252,20 @@
       if (wheelUp) {pitch += 0.05} else if (pitch > 1) pitch -= 0.05
       pitch = updateCue('pitch',pitch)}
     else if (id=='myThumbs') { 						// thumb size
-      let x=view; let z=wheel/1000
+      let x=view; let z=wheel/1500
       if (x<98 && wheelUp) x *= 1+z
       else if (!wheelUp) x /= 1+z
       if (x<8) x=8
       view=x; localStorage.setItem('pageView'+folder, x); setWidths(index,36)
-      block=12}
+      block=8}
     else if (!playing && id=='myWidth') {				// page width
-      let x = 1*myView.style.width.slice(0,-1)
-      if (x>=12 && !wheelUp) x-=1
-      else if (wheelUp && x<=98) x+=1
-      myView.style.width = x.toFixed(0)+'%'
+      let x = 1*myView.style.width.slice(0,-2); let z=wheel/2000
+      if (wheelUp) x *= 1+z
+      else if (!wheelUp && x / 1+z > 10) x /= 1+z
+      if (x > innerWidth) x = innerWidth
+      myView.style.width = x.toFixed(2)+'px'
       localStorage.setItem('pageWidth'+folder, x)
-      block=12}
+      block=8}
     else if (id == 'myPic') {  						// zoom context pic
       if (wheelUp) {zoom*=1.1} else if (zoom>1.5) zoom*=0.9
       myPic.style.transform='scale('+Math.abs(skinny)*zoom+','+zoom+')'
@@ -290,6 +297,11 @@
   function timerEvent() { 						// every 90mS
     xw = xpos / innerWidth
     yw = ypos / innerHeight
+
+if (screenLeft) {
+  Zoff=outerHeight-innerHeight; myPanel.style.top = '50px'; myView.style.top = '200px'; z1.style.height='190px'; z2.style.top='190px'}
+else {myPanel.style.top = 44 + Zoff + 'px'; myView.style.top = '287px'; z1.style.height='277px'; z2.style.top='277px'}
+
     let top = 0; let el = myPlayer
     if (myNav.style.display) el = myPic
     else if (!playing) el = thumb
@@ -550,9 +562,9 @@
     if (mu=='yes') {muted=1} else muted=0
     let key = 'pageWidth'+folder
     let x = localStorage.getItem(key)
-    if (isNaN(x) || x<20 || x>100) localStorage.setItem(key, 50)	// default htm width 50%
+    if (isNaN(x) || x<100 || x>innerWidth) localStorage.setItem(key, 600) // default htm width em
     pageWidth = 1*localStorage.getItem(key)
-    myView.style.width = 1*localStorage.getItem(key)+'%'
+    myView.style.width = 1*localStorage.getItem(key)+'px'
     key = 'pageView'+folder
     x = localStorage.getItem(key)
     if (isNaN(x) || x<6 || x>100) localStorage.setItem(key, 10)		// default thumb size 10em
@@ -599,7 +611,7 @@
         if (el[3] > 100 && el[4] < 600) {srt.style.width=el[3]+'px'; srt.style.height=el[4]+'px'}} // resize textarea
       if (el[1]=='media' && el[3] && srt.scrollTop.toFixed(0) >= 1*el[0]) {src = el[2]; tm = 1*el[3]}  // swap media
       if (el[1] && 1*el[0] > time-0.1 && 1*el[0] < time+0.1) {
-        if (el[1]=='next') {lastClick=5; clickEvent(0)}
+        if (el[1]=='next') {lastClick=2; clickEvent(0)}
         else if (el[1]=='goto' && !myPlayer.paused) {myPlayer.currentTime=thumb.style.start=thumb.currentTime=1*el[2]; myPlayer.volume=0.1}
         else if (el[1]=='rate') {if (isNaN(1*el[2])) {rate=defRate} else {rate=1*el[2]}}
         else if (el[1]=='skinny') {if (isNaN(1*el[2])) {skinny=1} else {skinny=1*el[2]; if(time) {positionMedia(2)}}}

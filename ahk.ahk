@@ -1,5 +1,4 @@
 
-
 	; Browser Based File Explorer - Windows
 	; generates web pages of your media
 	; browser messages back using java via clipboard - see ProcessMessage()
@@ -133,7 +132,7 @@
     MButton::					; Forward button
       click = MButton
       longClick := 0
-      closeMpv(2)
+      closeMpv(1)
       send, {MButton down}
       return
 
@@ -150,14 +149,14 @@
       return
     Timer_up:					; long back key press
       if mpvExist
-        return
-      IfWinActive, ahk_group Browsers
+        closeMpv(1)
+      else IfWinActive, ahk_group Browsers
         send, ^w				; close tab
       else send, !{F4}				; or close app
       return
     XButton1 up::
       SetTimer, Timer_up, Off
-      if (A_TickCount > timer)			; longClick
+      if (A_TickCount > timer)			; longClick already done ^
         return
       IfWinExist, ahk_class OSKMainClass
         WinClose, ahk_class OSKMainClass	; close onscreen keyboard
@@ -232,12 +231,6 @@
 
     closeMpv(exit)
       {
-      if (exit == 1)
-        {
-        Gui, background:+LastFound					; close mask
-        WinSet, AlwaysOnTop, Off
-        WinSet, Top,,ahk_group Browsers
-        }
       IfWinNotExist, ahk_class mpv
         return
       WinGetTitle, mpvTime, ahk_exe mpv.exe				; get mpv time and pause state
@@ -248,11 +241,6 @@
       mpvTime := Format("{:0.1f}", m1)					; time for add favorite start
       if !exit
         return
-      clp := Clipboard
-      Clipboard = %mpvTime%
-      send, ^v
-      sleep 99								; time for java to capture event
-      Clipboard := clp
       WinGetPos, x,,w,, ahk_class mpv
       mpvWidth := mpvHeight := captions
       mediaX := x + w // 2
@@ -262,15 +250,20 @@
         mediaX := x + mpvWidth // 2
         mediaY := y + mpvHeight // 2
         }
-      WinMinimize, ahk_class mpv					; so RButton gets to browser
       WinActivate, ahk_group Browsers
+      clp := Clipboard
+      Clipboard = %mpvTime%
+      send, ^v
+      sleep 99								; time for java to capture event
+      Clipboard := clp
+      WinMinimize, ahk_class mpv					; ensure RButton gets to browser
       Process, Close, mpv.exe
       }
 
 
     Media()								; play media external to browser 
       {
-      closeMpv(2)							; just in case
+      closeMpv(1)							; just in case
       index := value
       if !getMedia(index) {
         PopUp("File Not Found...",600,0,0)
@@ -344,12 +337,7 @@
           }
         if (pitch && pitch != 1)
           RunWait %COMSPEC% /c echo no-osd af set rubberband=pitch-scale=%pitch% > \\.\pipe\mpv,, hide
-        Gui, background:+LastFound
-        if !captions
-          WinSet, AlwaysOnTop, On
-        WinSet, Top,,ahk_class mpv
-        if captions
-          WinActivate, ahk_group Browsers
+        WinMinimize, ahk_group Browsers
         }
       }
 
@@ -400,11 +388,11 @@
               else if (!captions || cur == mpvExist) 
                 RunWait %COMSPEC% /c echo no-osd cycle pause > \\.\pipe\mpv,, hide
               }
-            sleep 50						; allow time pause state to settle
+            sleep 50						; allow pause state to settle
             if (click=="RButton" && !gesture && !longClick)
               closeMpv(1)
-            else closeMpv(0)					; get time and pause state
-            if (1*mpvTime >= dur-1)				; end of video
+            else closeMpv(0)					; just get time and pause state
+            if (1*mpvTime >= dur-1)				; click at end of video - restart
               {
               RunWait %COMSPEC% /c echo seek %start% absolute exact > \\.\pipe\mpv,, hide
               RunWait %COMSPEC% /c echo set pause no > \\.\pipe\mpv,, hide
@@ -429,8 +417,8 @@
         if (!gesture && longClick && click=="RButton")
             {
             closeMpv(1)
-            send, +{Pause}
-            gesture := 1					; just to block re-entry
+            send, +{Pause}					; send long RClick to browser JS
+            break
             }
         if (!gesture && longClick && click=="LButton")		; click timout
           {
@@ -2153,25 +2141,24 @@
         if container
           fill(container)
 
-x = %searchTerm%|
-if (searchTerm && !InStr(search, x))
-  add = Add
-if subfolders
-  subs = sub
-StringReplace, folder_s, folder, `', &apos, All				; htm cannot pass '
-
-if 1*Setting("mpv")
-  mpv := 1
-else mpv := 0
-if 1*Setting("Pause")
-  paused := 1
-else paused := 0
-if 1*Setting("Mute")
-  mute = yes
-else mute = no
-if 1*Setting("WheelDir")
-  wheelDir := 1
-else wheelDir := -1
+    x = %searchTerm%|
+    if (searchTerm && !InStr(search, x))
+      add = Add
+    if subfolders
+      subs = sub
+    StringReplace, folder_s, folder, `', &apos, All				; htm cannot pass '
+    if 1*Setting("mpv")
+      mpv := 1
+    else mpv := 0
+    if 1*Setting("Pause")
+      paused := 1
+    else paused := 0
+    if 1*Setting("Mute")
+      mute = yes
+    else mute = no
+    if 1*Setting("WheelDir")
+      wheelDir := 1
+    else wheelDir := -1
 
 header = <!--, %page%, %pages%, %sort%, %toggles%, %listView%, %playlist%, %path%, %searchPath%, %searchTerm%, %subfolders%, -->`n<!doctype html>`n<html>`n<head>`n<meta charset="UTF-8">`n<title>Inca - %title%</title>`n<meta name="viewport" content="width=device-width, initial-scale=1">`n<link rel="icon" type="image/x-icon" href="file:///%inca%\cache\icons\inca.ico">`n<link rel="stylesheet" type="text/css" href="file:///%inca%/css.css">`n</head>`n`n
 
@@ -2208,8 +2195,8 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
   <a></a></div>`n`n
 
 <div id='myMenu'>
-  <div class='fade' style='top:0; height:16em'><div class='fade' style='background: linear-gradient(#15110aff, #15110a00)'></div></div>`n
-  <div class='myPanel'><div class='panel'>`n <div class='innerPanel'>`n`n%panelList%`n</div></div>`n`n
+  <div id='z1' class='fade' style='height:190px'></div><div id='z2' class='fade' style='top:190px; background: linear-gradient(#15110aff, #15110a00)'></div>`n
+  <div id='myPanel' class='myPanel'><div class='panel'>`n <div class='innerPanel'>`n`n%panelList%`n</div></div>`n`n
 
   <div id='myRibbon1' class='ribbon' style='font-size: 1.1em'>`n
     <a style='color:red; font-weight:bold'>%listSize%</a>`n
@@ -2281,16 +2268,16 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
           break
         Sleep, 100
         }
-      WinActivate, ahk_group Browsers
       if fullscreen 
         {
         send, {F11}
         sleep 300
         Gui, background:+LastFound					; close mask
         WinSet, AlwaysOnTop, Off
-        WinSet, Top,,ahk_group Browsers
         Gui, background:Color, Black
+        WinSet, Top,,ahk_group Browsers
         }
+      WinActivate, ahk_group Browsers
       PopUp("",0,0,0)
       }
 
@@ -2370,71 +2357,70 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
         timestamp =
         if (ext=="txt")
           FileRead, text, %src%
-else IfExist, %inca%\cache\captions\%media%.srt
-{
-    FileRead, str2, %inca%\cache\captions\%media%.srt
-    Loop, Parse, str2, `n, `r
-    {
-        str = %A_LoopField%					; remove whitespace
-        if InStr(str, "-->")				; timestamp element
-        {
-            x := SubStr(str, 1, 12)
-            x := StrReplace(x, " --")			; in case no hrs in timestamp
-            x := StrReplace(x, ",", ".")
-            x := StrSplit(x, ":")
-            if (!x.3)
-                x := Round(x.1*60 + x.2,1)		; seconds format
-            else
-                x := Round(3600*x.1 + 60*x.2 + x.3,1)
-            if (caption_lines != "")			; if there’s a previous caption
-            {
-                text = %text%<e contenteditable="true" id="my%j%-%prev_x%">%caption_lines%</e>
-                caption_lines := ""				; reset caption_lines
-            }
-            text = %text%<d id="%j%-%x%">%str%</d>
-            timestamp := true
-            prev_x := x						; store current timestamp for next caption
-            continue
-        }
-        else if timestamp
-        {
-            if (str != "")					; only add non-empty lines
-                caption_lines := caption_lines ? caption_lines . "<br>" . str : str
-            if (A_LoopField = "")			; empty line indicates end of caption
-            {
-                text = %text%<e contenteditable="true" id="my%j%-%prev_x%">%caption_lines%</e>
-                caption_lines := ""				; reset caption_lines
-                timestamp := false
-            }
-        }
-    }
-    ; Handle the last caption if it exists
-    if (caption_lines != "")
-        text = %text%<e contenteditable="true" id="my%j%-%prev_x%">%caption_lines%</e>
-}
-        if (ext=="txt")
+        else IfExist, %inca%\cache\captions\%media%.srt
           {
-          text := StrReplace(text, "`r`n", "<br>")
-          text = <e contenteditable="true">%text%</e>
-          }
+          FileRead, str2, %inca%\cache\captions\%media%.srt
+          Loop, Parse, str2, `n, `r
+            {
+            str = %A_LoopField%						; remove whitespace
+            if InStr(str, "-->")					; timestamp element
+              {
+              x := SubStr(str, 1, 12)
+              x := StrReplace(x, " --")					; in case no hrs in timestamp
+              x := StrReplace(x, ",", ".")
+              x := StrSplit(x, ":")
+              if (!x.3)
+                x := Round(x.1*60 + x.2,1)				; seconds format
+              else
+                x := Round(3600*x.1 + 60*x.2 + x.3,1)
+              if (caption_lines != "")					; if there’s a previous caption
+                {
+                text = %text%<e contenteditable="true" id="my%j%-%prev_x%">%caption_lines%</e>
+                caption_lines := ""					; reset caption_lines
+                }
+              text = %text%<d id="%j%-%x%">%str%</d>
+              timestamp := true
+              prev_x := x						; store current timestamp for next caption
+              continue
+              }
+            else if timestamp
+              {
+              if (str != "")						; only add non-empty lines
+                caption_lines := caption_lines ? caption_lines . "<br>" . str : str
+              if (A_LoopField = "")					; empty line indicates end of caption
+                {
+                text = %text%<e contenteditable="true" id="my%j%-%prev_x%">%caption_lines%</e>
+                caption_lines := ""					; reset caption_lines
+                timestamp := false
+                }
+              }
+            }
+          if (caption_lines != "")   					 ; Handle the last caption if it exists
+        text = %text%<e contenteditable="true" id="my%j%-%prev_x%">%caption_lines%</e>
+        }
+      if (ext=="txt")
+        {
+        text := StrReplace(text, "`r`n", "<br>")
+        text = <e contenteditable="true">%text%</e>
+        }
 
-if (listView && text && favicon)
-  favicon = %favicon% &#169
-else if (text && favicon)
-  favicon = %favicon%<br>&#169						; add caption icon
-else if text
-  favicon = &#169
+      if (listView && text && favicon)
+        favicon = %favicon% &#169
+      else if (text && favicon)
+        favicon = %favicon%<br>&#169					; add caption icon
+      else if text
+        favicon = &#169
 
-if (type=="image")
-  src =
-else src=src="file:///%src%"
-if !size
-  size = 0								; cannot have null size in getParameters()
+      if (type=="image")
+        src =
+      else src=src="file:///%src%"
+      if !size
+        size = 0							; cannot have null size in getParameters()
 
 caption = <div id='srt%j%' class='caption' onmouseover='overText=1' onmouseout='overText=0'`n oninput="editing=index; playCap(event.target.id, 1)">%text%</div>
 
 if listView
-  mediaList = %mediaList%%fold%<table onmouseover='overThumb(%j%)'`n onmouseout="thumb%j%.style.opacity=0">`n <tr id='entry%j%' data-params='%type%,%start%,%dur%,%size%' onmouseenter='if (gesture) sel(%j%)'>`n <td style='min-width: 2em'>%j%</td>`n <td>%ext%`n <video id='thumb%j%' class='thumb2' %src%`n %poster%`n preload=%preload% muted loop type="video/mp4"></video></td>`n <td>%size%</td>`n <td style='min-width: 6em'>%durT%</td>`n <td>%date%</td>`n  <td><div id='myFavicon%j%' class='favicon'>%favicon%</div></td>`n <td style='width: 70vw'><input id="title%j%" class='title' style='transition: 0.8s' onmouseover='overText=1' onmouseout='overText=0; Click=0' type='search' value='%media_s%'`n oninput="renamebox=this.value; lastMedia=%j%"></td>`n %fo%</tr>`n %caption%<span id='cues%j%' style='display: none'>%cues%</span></table>`n`n
+  mediaList = %mediaList%%fold%<table onmouseover='overThumb(%j%)'`n onmouseout="thumb%j%.style.opacity=0">`n <tr id='entry%j%' data-params='%type%,%start%,%dur%,%size%' onmouseenter='if (gesture) sel(%j%)'>`n <td style='min-width: 2em'>%j%</td>`n <td>%ext%`n <video id='thumb%j%' class='thumb2' %src%`n %poster%`n preload=%preload% muted loop type="video/mp4"></video></td>`n <td>%size%</td>`n <td style='min-width: 6em'>%durT%</td>`n <td>%date%</td>`n  <td><div id='myFavicon%j%' class='favicon'>%favicon%</div></td>`n <td style='width: 70vw'><input id="title%j%" class='title' style='opacity: 1; transition: 0.6s' onmouseover='overText=1' onmouseout='overText=0; Click=0' type='search' value='%media_s%'`n oninput="renamebox=this.value; lastMedia=%j%"></td>`n %fo%</tr>`n %caption%<span id='cues%j%' style='display: none'>%cues%</span></table>`n`n
 
 else mediaList = %mediaList%<div id="entry%j%" class='entry' data-params='%type%,%start%,%dur%,%size%'>`n <span id='myFavicon%j%' class='favicon' style='display: block; position: absolute; top: 7px; left: -7px' onmouseenter='overThumb(%j%)'>%favicon%</span>`n <input id='title%j%' class='title' style='text-align: center' type='search'`n value='%media_s%'`n oninput="renamebox=this.value; lastMedia=%j%"`n onmouseover="overText=1; if((x=this.value.length/2) > view) this.style.width=x+'em'"`n onmouseout="overText=0; this.style.width='100`%'">`n <video id="thumb%j%" class='thumb' onmouseenter="overThumb(%j%); if (gesture) sel(%j%)"`n onmouseup='if(gesture)getParameters(%j%)' onmouseout='this.pause()' %src%`n %poster%`n preload=%preload% loop muted type='video/mp4'></video>%noIndex%`n <span id='cues%j%' style='display: none'>%cues%</span></div>`n %caption%`n`n
 }
@@ -2463,15 +2449,14 @@ else mediaList = %mediaList%<div id="entry%j%" class='entry' data-params='%type%
         if (w == A_ScreenWidth)
           fullscreen := 1
         else fullscreen := 0
-x := A_ScreenWidth-487
-y := A_ScreenHeight+16
-IfWinActive, Notepad
- if (wx != 500)
-    WinMove, ahk_class Notepad,, 600, -2,,%y%
-;IfWinActive, ahk_group Browsers
-; if (incaTab && wx + w > A_ScreenWidth - 2)
-;   WinMove, ahk_group Browsers,, 500, -2, %x%, %y%
-
+        x := A_ScreenWidth-487
+        y := A_ScreenHeight+16
+        z := A_ScreenWidth-600
+        IfWinActive, ahk_group Browsers
+          if (incaTab && wx + w > A_ScreenWidth)
+            WinMove, ahk_group Browsers,, 500, -2, %x%, %y%IfWinActive, Notepad
+        if (wx != 622)
+          WinMove, ahk_class Notepad,, 622, -2, %z%, %y%
         MouseGetPos,,, id 						; get the window below the mouse
         WinGet, cur, ID, ahk_id %id%
         WinGet, desk, ID , ahk_class Progman
