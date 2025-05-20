@@ -2,18 +2,18 @@
   ::placeholder {color: lightsalmon}
   ::selection {color: #cccccc; background: #222222}
   ::-webkit-search-cancel-button {appearance: none}
-  ::-webkit-scrollbar {background: #15110a; width: 6px}
+  ::-webkit-scrollbar {background: #0e0c05; width: 6px}
   ::-webkit-resizer {background: #826858}
-  ::-webkit-scrollbar-corner {background: #15110a}
-  ::-webkit-scrollbar-thumb {background: #2b2824; border-radius: 2px}
-  @supports (not selector(::-webkit-scrollbar)) {html {scrollbar-color: #2b2824 #15110a}}
+  ::-webkit-scrollbar-corner {background: #0e0c05}
+  ::-webkit-scrollbar-thumb {background: #1b1814; border-radius: 2px}
+  @supports (not selector(::-webkit-scrollbar)) {html {scrollbar-color: #2b2824 #0e0c05}}
   td {outline: none; text-align: center; min-width: 3.8em; overflow: hidden; white-space: nowrap; border-radius :1em}
   table {color: #826858; font-size: 0.9em; border-collapse: collapse; margin: auto; border-radius: 1em; transition: color 0.3s}
   table:hover {background: #1b1814}
   a {color: #826858; text-decoration: none; outline: none}	/* default text */
   c {display: block; padding-left: 1em; text-decoration: none; font-weight: bold; color: #826858bb; transition: 1s} /* panel text */
   c:hover {transition: 0.2s; transform: scale(1.1,1.1); color: pink}
-  c:active {color: #15110a; transform: scale(0.8,0.8)}
+  c:active {color: #0e0c05; transform: scale(0.8,0.8)}
   d {display: block; color: #ffa07a00; font-size: 0.8em; transition: 2s}	/* caption timestamps */
   d:active {color: lightsalmon}
   video::-internal-media-controls-overlay-cast-button {display: none}		/* block google casting	*/
@@ -27,17 +27,21 @@
   transform-origin: top left;
   transition: opacity 0.2s;
   // filter: blur(0.4vmin);
-  margin-left: 6em}					/* position within myNav  */
+  margin-left: 7em}					/* position within myNav  */
 
 
 .favicon {
+  display: block;
+  translate: 0 -2em;
   color: pink;
+  width: 2.5em;
   line-height: 1.1em;
-  font-size: 0.7em;
-  padding: 0.2em;
+  font-size: 0.8em;
+  padding: 0.1em;
+  white-space: nowrap; 
   border-radius: 1em;
   transition: 0.4s}
-.favicon:hover {transform: scale(2,2); background:#2b2824; z-index: 334} 
+.favicon:hover {background:#00000080; color: red} 
 
 e {						/* caption text entries */
   display: block;
@@ -59,7 +63,7 @@ e {						/* caption text entries */
   display: none;
   padding: 1.4em;
   border: none;
-  background: #15110aaa;
+  background: #0e0c05aa;
   scroll-behavior: smooth;
   color: #826858;
   text-align: center;
@@ -122,7 +126,7 @@ e {						/* caption text entries */
   border: none;
   transition: 0.3s;
   border-radius: 1em}
-.title:hover {color: pink; background:#2b2824; transition: 1.4s; overflow: visible; z-index: 333; opacity: 1}
+.title:hover {color: pink; background:#2b2824; transition: 1.4s; overflow: visible; opacity: 1}
 
 .thumb {					/* htm thumbs */
   --start;					/* java variables for each thumb */
@@ -138,6 +142,7 @@ e {						/* caption text entries */
   outline: none;
   margin: auto;
   border-radius: 0.6em}
+.thumb.edited:hover {border-bottom: 0.1px solid pink}
 
 .thumb2 {					/* list view pop up thumbs */
   position: absolute;
@@ -157,7 +162,7 @@ e {						/* caption text entries */
   top: 50px;
   width: 95%;
   max-width: 67em;
-  background: #15110a}
+  background: #0e0c05}
 
 .panel {					/* Top panel element showing folders etc. */
   position: relative;
@@ -191,9 +196,9 @@ e {						/* caption text entries */
 .fade {						/* between menu and scrolled thumbs */
   position: absolute;
   display: block;
-  width: 99vw;
+  width: 99.4vw;
   height: 0.8em;
-  background: #15110a;
+  background: #0e0c05;
   pointer-events: none}
 
 .player {					/* media player element */
@@ -231,7 +236,7 @@ e {						/* caption text entries */
   width: 90%;
   margin: auto;
   white-space: nowrap;
-  line-height: 1.1em;
+  line-height: 1.2em;
   border-radius: 1em;
   text-align: center;
   transition: 0.3s;
@@ -245,7 +250,6 @@ e {						/* caption text entries */
   text-overflow: ellipsis;
   display: inline;
   width: 50%; 
-  translate:  0 2px;
   border-radius: 1em; 
   color: pink;
   border: none;
@@ -307,18 +311,18 @@ e {						/* caption text entries */
 
 .context a {
   display: block;
-  width: 60px;
+  width: 85px;
   height: 1.4em;
   white-space: nowrap;
   border-radius: 1.4em;
   padding-left:1.4em;
   color: lightsalmon}
-.context a:hover {background: #1b1814}
+.context a:hover {background: #2b2824}
 .context a:active {background: #333333}
 
 .myBody {					/* whole body element */
   font-family: 'Yu Gothic', 'Calibri Light';
-  background: #15110a;
+  background: #0e0c05;
   user-select: none;
   font-size: 0.8em;
   overflow: hidden;
