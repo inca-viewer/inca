@@ -230,7 +230,7 @@ e {						/* caption text entries */
   font-size: 1em;
   font-weight: bold;
   align-items: center; 				/* Center items vertically */
-  justify-content: space-between;
+  justify-content: space-around;
   min-width: 46em;
   max-width: 70em;
   width: 90%;
@@ -272,7 +272,7 @@ e {						/* caption text entries */
   color: red;
   height: 2em;
   transition: font-size 0.5s;
-  font-size: 1.2em}
+  font-size: 1.8em}
 
 .seekbar {					/* video progress bar */
   position: absolute;
