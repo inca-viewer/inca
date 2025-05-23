@@ -115,7 +115,7 @@
         Clipboard()				; process clipboard message
         }
       SetTimer, TimedEvents, 50, 2		; every 50mS primarily for low message latency
-      SetTimer, CheckFfmpeg, 999, 2		; show if ffmpeg is processing conversions
+      SetTimer, SlowTimer, 500, 2		; ffmpeg processing, mpv pause state
       return
 
 
@@ -163,7 +163,8 @@
       else IfWinExist, ahk_class mpv		; mpv external player
         {
         closeMpv()
-        send, {Pause}
+        send, {Pause}				; browser to close playing env.
+        send, %mpvTime%z			; post mpv time to browser
         }
       else if incaTab
         send, {Pause}				; close java media player
@@ -243,11 +244,6 @@
         }
       WinActivate, ahk_group Browsers
       WinSet, Transparent, 255, ahk_group Browsers
-      clp := Clipboard
-      Clipboard = %mpvTime%
-      send, ^v
-      sleep 99								; time for java to capture event
-      Clipboard := clp
       WinMinimize, ahk_class mpv					; ensure RButton gets to browser
       Process, Close, mpv.exe
       }
@@ -309,7 +305,6 @@
         Run, notepad.exe %inca%\cache\captions\%media%.srt
       else
         {
-
         Loop, Parse, list, `n, `r
           {
           source := StrSplit(A_LoopField, "/").2
@@ -334,7 +329,6 @@
           }
         if (pitch && pitch != 1)
           RunWait %COMSPEC% /c echo no-osd af set rubberband=pitch-scale=%pitch% > \\.\pipe\mpv,, hide
-; WinSet, Transparent, 0, ahk_group Browsers
         WinSet, Top,, ahk_class mpv
         }
       }
@@ -353,7 +347,7 @@
       if (cur == osd)
         return
       IfWinActive, ahk_class mpv
-        WinGetPos, mpvX, mpvY, mpvWidth, mpvHeight, ahk_class mpv	; for using seek bar
+        WinGetPos, mpvX, mpvY, mpvWidth, mpvHeight, ahk_class mpv ; for using seek bar
       relX := (xpos - mpvX) / mpvWidth
       relY := (ypos - mpvY) / mpvHeight
       seekBar := dur * relX
@@ -377,6 +371,12 @@
             if (click=="LButton" && gesture)
               IfWinActive, ahk_class mpv
                 WinGetPos, mpvX, mpvY, mpvWidth, mpvHeight, ahk_class mpv
+            if (click=="RButton" && !gesture && !longClick)
+              {
+              closeMpv()
+              send, {RButton}
+              send, %mpvTime%z
+              }
             if (click=="LButton" && !gesture)
               {
              if (mpvTime > dur-0.5 || (relX > 0 && relX < 0.1 && relY > 0.9 && relY < 1))
@@ -393,11 +393,8 @@
                 RunWait %COMSPEC% /c echo no-osd cycle pause > \\.\pipe\mpv,, hide
               }
             }
-          if (click=="RButton" && !gesture && !longClick)
-            {
-            closeMpv()
+          else if (click=="RButton" && !gesture && !longClick)
             send, {RButton}
-            }
           break
           }
         if (Abs(x)+Abs(y) > 6)					; gesture started
@@ -427,7 +424,7 @@
           IfWinExist, ahk_class mpv
             {
             closeMpv()
-            send, !{Pause}					; thumbSheet comman
+            send, !{Pause}					; thumbSheet command
             }
           if (wasCursor == "IBeam")
             {
@@ -2103,7 +2100,6 @@ header = <!--, %page%, %pages%, %sort%, %toggles%, %listView%, %playlist%, %path
 
 body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(%page%, %pages%, '%folder_s%', %wheelDir%, '%mute%', %mpv%, %paused%, '%sort%', %filt%, %listView%, '%selected%', '%playlist%', %index%); %scroll%.scrollIntoView()">`n`n
 
-<div id='myMask' class="mask" onwheel="wheelEvent(event)"></div>`n 
 <video id="myPlayer" class='player' type="video/mp4" muted onwheel="wheelEvent(event)"></video>`n
 <span id='myProgress' class='seekbar'></span>`n
 <span id='mySeekbar' class='seekbar'></span>`n
@@ -2133,8 +2129,8 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
 
   <div id='myRibbon1' class='ribbon' style='font-size: 1em'>`n
     <a style='color:red; font-weight:bold'>%listSize%</a>`n
-    <a id='myMusic' style='%x22%' onmousedown="inca('Path','','','music|1')" onmouseover="setTimeout(function() {if(myMusic.matches(':hover'))Music.scrollIntoView()},200)">&#x266B;</a>`n
-    <a id='mySub' style='font-size:0.7em; %x8%' onmousedown="inca('Recurse')" onmouseover="setTimeout(function() {if(mySub.matches(':hover'))Sub.scrollIntoView()},200)">%subs%</a>`n
+    <a id='myMusic' style='max-width:4em; %x22%' onmousedown="inca('Path','','','music|1')" onmouseover="setTimeout(function() {if(myMusic.matches(':hover'))Music.scrollIntoView()},200)">&#x266B;</a>`n
+    <a id='mySub' style='max-width:2em; font-size:0.7em; %x8%' onmousedown="inca('Recurse')" onmouseover="setTimeout(function() {if(mySub.matches(':hover'))Sub.scrollIntoView()},200)">%subs%</a>`n
     <a id='myFol' style='%x21%' onmousedown="inca('Path','','','fol|1')" onmouseover="setTimeout(function() {if(myFol.matches(':hover'))Fol.scrollIntoView()},200)">&#x1F4BB;&#xFE0E;</a>`n
     <a id='myFav' style='%x23%' onmousedown="inca('Path','','','fav|1')" onmouseover="setTimeout(function() {if(myFav.matches(':hover'))Fav.scrollIntoView()},200)">&#10084;</a>`n
     <a id='mySearch' style='%x20%' onwheel="wheelEvent(event)" onmousedown="inca('SearchBox','','',myInput.value)" onmouseover="setTimeout(function() {if(mySearch.matches(':hover'))Filter(id)},140)">&#x1F50D;&#xFE0E;</a>`n
@@ -2143,8 +2139,8 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
     <a id="myPage" onmousedown="inca('Page', page)" onwheel="wheelEvent(event)"></a>
     </div>`n`n
 
-  <div id='myRibbon2' class='ribbon' style='background:#1b1814' onwheel="wheelEvent(event)">`n
-    <a id='myIndex'></a>
+  <div id='myRibbon2' class='ribbon' style='background:#1b1814' onmouseover='wheel=0' onwheel="wheelEvent(event)">`n
+    <a id='myIndex' onmouseout='ix=0'></a>
     <a id='myAlpha' style='%x2%' onmousedown="inca('Alpha', filt)">Alpha</a>`n
     <a id='mySize' style='%x5%' onmousedown="inca('Size', filt)"">Size</a>`n
     <a id='myPlaylist' style='%x12%' onmousedown="inca('Playlist')">%pl%</a>`n
@@ -2157,8 +2153,8 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
     <a id='myType' style='%x6%' onmousedown="inca('Type', filt)">%type%</a>`n
     <a id='myThumbs' onmouseout='setWidths(1,1000)' onmouseup="inca('View',0)">Thumb</a>`n 
     <a id='myWidth'>Width</a>`n
-    </div></div>`n`n
-
+    </div></div></div>`n`n
+<div id='myMask' class="mask" onwheel="wheelEvent(event)"></div>`n`n
 
       StringReplace, header, header, \, /, All
       StringReplace, body, body, \, /, All
@@ -2213,7 +2209,6 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
       }
 
 
-
     SpoolList(i, j, input, sort_name, start)				; spool sorted media files into web page
         {
         Critical
@@ -2257,8 +2252,9 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
         if (type == "video" && folder == "History")
           thumb = %inca%\cache\temp\history\%media% %start%.jpg
         FileGetSize, size, %src%, K
-        if (type == "video")
-          size := Ceil(size/1000)
+        if (size < 9900)
+          size := Round(size/1000,1)
+        else size := Round(size/1000)
         FileGetTime, listId, %src%, M
         sort_date := A_Now
         sort_date -= listId, days
@@ -2348,7 +2344,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
 caption = <div id='srt%j%' class='caption' onmouseover='overText=1' onmouseout='overText=0'`n oninput="editing=index; playCap(event.target.id, 1)">%text%</div>
 
 if listView
-  mediaList = %mediaList%%fold%<table onmouseover='overThumb(%j%)'`n onmouseout="thumb%j%.style.opacity=0">`n <tr id='entry%j%' data-params='%type%,%start%,%dur%,%size%' onmouseenter='if (gesture) sel(%j%)'>`n <td style='min-width: 2em'>%j%</td>`n <td>%ext%`n <video id='thumb%j%' class='thumb2' %src%`n %poster%`n preload=%preload% muted loop type="video/mp4"></video></td>`n <td>%size%</td>`n <td style='min-width: 6em'>%durT%</td>`n <td>%date%</td>`n  <td><div id='myFavicon%j%' class='favicon' style='position:absolute; translate:1.2em -0.8em'>%favicon%</div></td>`n <td style='width: 70vw'><input id="title%j%" class='title' style='opacity: 1; transition: 0.6s' onmouseover='overText=1' onmouseout='overText=0; Click=0' type='search' value='%media_s%'`n oninput="renamebox=this.value; lastMedia=%j%"></td>`n %fo%</tr>`n %caption%<span id='cues%j%' style='display: none'>%cues%</span></table>`n`n
+  mediaList = %mediaList%%fold%<table onmouseover='overThumb(%j%)'`n onmouseout="thumb%j%.style.opacity=0">`n <tr id='entry%j%' data-params='%type%,%start%,%dur%,%size%' onmouseenter='if (gesture) sel(%j%)'>`n <td>%ext%`n <video id='thumb%j%' class='thumb2' %src%`n %poster%`n preload=%preload% muted loop type="video/mp4"></video></td>`n <td>%size%</td>`n <td style='min-width: 6em'>%durT%</td>`n <td>%date%</td>`n  <td><div id='myFavicon%j%' class='favicon' style='position:absolute; translate:1.2em -0.8em'>%favicon%</div></td>`n <td style='width: 70vw'><input id="title%j%" class='title' style='opacity: 1; transition: 0.6s' onmouseover='overText=1' onmouseout='overText=0; Click=0' type='search' value='%media_s%'`n oninput="renamebox=this.value; lastMedia=%j%"></td>`n %fo%</tr>`n %caption%<span id='cues%j%' style='display: none'>%cues%</span></table>`n`n
 
 else mediaList = %mediaList%<div id="entry%j%" class='entry' data-params='%type%,%start%,%dur%,%size%'>`n <input id='title%j%' class='title' style='text-align: center' type='search'`n value='%media_s%'`n oninput="renamebox=this.value; lastMedia=%j%"`n onmouseover="overText=1; if((x=this.value.length/2) > view) this.style.width=x+'em'"`n onmouseout="overText=0; this.style.width='100`%'">`n <video id="thumb%j%" class='thumb' onmouseenter="overThumb(%j%); if (gesture) sel(%j%)"`n onmouseup='if(gesture)getParameters(%j%)' onmouseout='this.pause()' %src%`n %poster%`n preload=%preload% loop muted type='video/mp4'></video>`n <span id='myFavicon%j%' class='favicon' onmouseenter='overThumb(%j%)'>%favicon%</span>`n %noIndex%`n <span id='cues%j%' style='display: none'>%cues%</span></div>`n %caption%`n`n
 }
@@ -2366,7 +2362,7 @@ else mediaList = %mediaList%<div id="entry%j%" class='entry' data-params='%type%
       }
 
 
-    CheckFfmpeg:
+    SlowTimer:
       mpvTime()							; get mpv time and pause state
       GuiControlGet, control, Indexer:, GuiInd
       Process, Exist, ffmpeg.exe
