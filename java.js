@@ -1,11 +1,4 @@
 
-// text scroll return a bit off
-// start time on wheel on thumbs next/back
-// add vibe to menu
-// better if previous remembers last start
-// myplayer plays in background during mpv
-
-
 
   let entry = 0								// thumb container
   let thumb = 0								// thumb element
@@ -77,9 +70,8 @@
   let mediaY = 0
   let play = 0								// force play
   let mpvTime = ''
-  let items = ['&hellip;', 'Index', 'mp4', 'mp3', 'Join']		// ribbon drop down menu
+  let items = ['&hellip;', 'Index', 'mp4', 'mp3', 'Join', 'Vibe']	// ribbon drop down menu
   let ix = 0								// index to items
-
 
 
   let intervalTimer = setInterval(timerEvent,90)			// background tasks every 90mS
@@ -140,6 +132,7 @@
       if (ix == 2) {inca('mp4', myPlayer.currentTime.toFixed(2), lastMedia, cue); cue=0}
       if (ix == 3) {inca('mp3', myPlayer.currentTime.toFixed(2), lastMedia, cue); cue=0}
       if (ix == 4) inca('Join')
+      if (ix == 5) inca('Vibe')
       selected = ''; selectAll(); selectAll()
       return}
     if (myMenu.matches(':hover')) return						// inca opens new tab
@@ -152,14 +145,15 @@
       if (!playing && !myNav.style.display) {inca('View',lastMedia); return}		// switch list/thumb view
       else if (longClick) {index--} else index++}					// next, previous media
     if (lastClick == 1) {
-      if (id == 'mySelect') {if (myTitle.value) {sel(index)} else selectAll(); return}
+      if (!longClick) {
+        if (id == 'mySelect') {if (myTitle.value) {sel(index)} else selectAll(); return}
+        if (id == 'mySkinny') {skinny = updateCue('skinny',1); return}
+        if (id == 'mySpeed') {rate = updateCue('rate',1); return}
+        if (id == 'myPitch') {pitch = updateCue('pitch',1); return}}
       if (id == title.id) {thumb.currentTime = thumb.style.start; return}
       if (!playing && !overMedia && !myNav.style.display) return
       if (playing && overText) {playCap(id); return}					// play at caption
       if (longClick && !playing && !overMedia && !myNav.style.display) return
-      if (id == 'mySkinny') {skinny = updateCue('skinny',1); return}
-      if (id == 'mySpeed') {rate = updateCue('rate',1); return}
-      if (id == 'myPitch') {pitch = updateCue('pitch',1); return}
       if (longClick && playing=='mpv') return
       if (longClick && (playing=='browser' || overMedia || myTitle.value)) thumbSheet ^= 1
       else if (!getStart(id)) return}
@@ -185,14 +179,14 @@
       let ps = 5 * ((row * 6) + col)
       ps = (ps - 1) / 200						// see index() in inca.ahk to explain
       if (!overMedia) thumb.currentTime = 0.1
-      else thumb.currentTime = offset - (ps * offset) + dur * ps}
+      else thumb.currentTime = offset - (ps * offset) + dur * ps
+      thumbSheet = 0}
     else if (playing && overMedia && (ym > 0.9 || yw > 0.95)) {
       if (xm < 0.1) myPlayer.currentTime = thumb.style.start
       else myPlayer.currentTime = xm * dur
       myPlayer.play(); return}						// return and quit
     else if (playing) {togglePause(); return}
     else if (myNav.style.display) return
-    thumbSheet = 0
     if (playing) play = 1; return 1}					// return and play
 
 
@@ -209,7 +203,7 @@
     thumb.pause()
     myPlayer.pause()
     myPlayer.muted = muted
-    if (el=document.getElementById('title'+lastMedia)) if(listView) {el.style.color=null} else el.style = null
+    if (el=document.getElementById('title'+lastMedia)) el.style.color=null
     title.style.opacity = 1; title.style.color='pink'
     if ((el=document.getElementById('srt'+lastMedia)) && playing && index!=lastMedia) {	// hide last caption
       el.style.display = null
@@ -275,7 +269,7 @@
     let wheelUp = wheelDir * e.deltaY > 0
     if (id=='myIndex') {						// index option list
       if (wheelUp) {ix++} else ix--
-      if (ix > 4) ix = 4; if (ix < 0) ix = 0
+      if (ix > 5) ix = 5; if (ix < 0) ix = 0
       myIndex.innerHTML = items[ix]}
     else if (id=='myPage') {						// htm page
       if (wheelUp && page<pages) page++
@@ -491,20 +485,20 @@
 
 
   function setPic() {							// sets context image based on cursor over myPic
-    let y = myPic.getBoundingClientRect()
-    let x = Math.max(0, Math.min(1, ((xpos - y.left) / y.width + 0.02) ** 2 - 0.02))
+    let x = Math.max(0, Math.min(1, ((xpos - rect.left) / rect.width + 0.02) ** 2 - 0.02))
     let thumbIndex = Math.ceil(x * 35)
-    const z = (5 * (thumbIndex + 1) - 1) / 200
-    const offset = dur > 60 ? 20 : 0
+    let z = (5 * (thumbIndex + 1) - 1) / 200
+    let offset = dur > 60 ? 20 : 0
     navStart = offset - (z * offset) + dur * z
     if (!thumbIndex) {
       navStart = myPic.currentTime = thumb.currentTime			// in case favorite start
+      if (ym > 0.8) navStart = myPic.currentTime = thumb.style.start
       if (myPic.src != thumb.src) {myPic.src = thumb.src; myPic.currentTime = thumb.currentTime; return}}
     else myPic.src=''
     if (myPic.matches(':hover'))
        myPic.style.backgroundPosition = `${(thumbIndex % 6) * 20}% ${Math.floor(thumbIndex / 6) * 20}%`
     myPic.style.transform = `scale(${skinny * zoom},${zoom})`
-    myPic.style.left = (skinny < 0 ? y.width : 0) + 'px'}
+    myPic.style.left = (skinny < 0 ? rect.width : 0) + 'px'}
 
 
   function filter(id) {							// for htm ribbon headings

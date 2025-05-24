@@ -123,21 +123,30 @@
       closeMpv()
       ExitApp
 
+
     RButton::
     ~LButton::					; click events
       MouseDown()
       return
 
+
     MButton::					; Forward button
+      Critical off
+      SetTimer, MTimer, 100, 2
+      While flush
+        Sleep, 20
+      flush := 1				; block wheel
       click = MButton
-      longClick =
       closeMpv()
       send, {MButton down}
       return
-
     MButton up::
       send, {MButton up}
       return
+    MTimer:
+      flush := 0				; unblock wheel
+      return
+
 
     XButton1::					; Back button
       Critical
@@ -314,7 +323,7 @@
         FileDelete, %inca%\cache\temp\mpvPlaylist.m3u
         FileAppend, %plist%, %inca%\cache\temp\mpvPlaylist.m3u, UTF-8
         Run %inca%\cache\apps\mpv %para% --input-ipc-server=\\.\pipe\mpv "%inca%\cache\temp\mpvPlaylist.m3u"
-        Loop, 40
+        Loop, 50
           {
           WinGetPos,,, mpvWidth, mpvHeight, ahk_class mpv
           x := mediaX - mpvWidth // 2
@@ -329,7 +338,6 @@
           }
         if (pitch && pitch != 1)
           RunWait %COMSPEC% /c echo no-osd af set rubberband=pitch-scale=%pitch% > \\.\pipe\mpv,, hide
-        WinSet, Top,, ahk_class mpv
         }
       }
 
@@ -480,6 +488,8 @@
           Delete()
         else if (command == "Join")					; join video files together
           Join()
+        else if (command == "Vibe")					; join video files together
+          Vibe()
         else if (command == "Add" && address)
           Add()
         else if (command == "History")					; maintain play history
@@ -507,7 +517,7 @@
         else if (command == "View")					; change thumb/list view
           {
           listView^=1
-          index := value							; for scrollToIndex() in java
+          index := value						; for scrollToIndex() in java
           reload := 2
           }
         else if (command == "Index")					; index folder (create thumbsheets)
@@ -920,6 +930,17 @@
       index(src,1)
       reload := 3
       }
+
+
+    Vibe()
+      {
+      Loop, Parse, selected, `,
+        if getMedia(A_LoopField)
+          IfNotExist, %inca%\cache\srt - original\%media%.srt
+            run %profile%\AppData\Local\vibe\vibe.exe --file "%src%" --write "%inca%\cache\srt - original\%media%.srt" --model "%profile%\AppData\Local\github.com.thewh1teagle.vibe\ggml-large-v3-turbo.bin" --format "srt"
+
+      }
+
 
     Delete()
       {
@@ -1687,7 +1708,6 @@ if (1*val[1]+1*val[2]+1*val[3] > 4)
         Gui, background:Color, Black
         Gui, background:Show, x0 y0 w%A_ScreenWidth% h%A_ScreenHeight% NA
         WinSet, Transparent, 0
-  ;      WinSet, ExStyle, +0x20
         gui, vol: +lastfound -Caption +ToolWindow +AlwaysOnTop -DPIScale
         gui, vol: color, ffb6c1
         Gui Status:+lastfound +AlwaysOnTop -Caption +ToolWindow
@@ -2279,7 +2299,6 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
           noIndex = <span style='color:red'>no index</span>`n 
         StringReplace, src, src, #, `%23, All				; html cannot have # in filename
         StringReplace, media_s, media, `', &apos;, All
-
         start := Round(start,2)
         text=
         timestamp =
@@ -2419,9 +2438,9 @@ else mediaList = %mediaList%<div id="entry%j%" class='entry' data-params='%type%
           WinSet, Transparent, % Setting("Ambiance")
         else WinSet, Transparent, 0
         if (incaTab && fullscreen)
-          WinSet, Top,,ahk_group Browsers
-        if mpvExist
-          WinSet, Top,, ahk_class mpv
+          if mpvExist
+            WinSet, Top,, ahk_class mpv
+          else WinSet, Top,,ahk_group Browsers
         ShowStatus()
         return
 
