@@ -199,7 +199,7 @@
     if (!playing && !playlist && !favicon.textContent.includes('\u2764') && dur < 200)
       thumb.currentTime = 0
     if (!thumbSheet) {
-      myPlayer.poster=thumb.poster					; replace thumbSheet
+      myPlayer.poster=thumb.poster					// replace thumbSheet
       let x = thumb.style.start
       if (thumb.currentTime > x && thumb.currentTime < x + 1.2) thumb.currentTime = x
       myPlayer.currentTime=thumb.currentTime}
