@@ -93,70 +93,20 @@
         Global mute				; global mute
         Global start := 0			; default start time
 
-Global ffprobe =
-
 
     main:
       Process, Close, node.exe
       sleep 200
       Run, cmd.exe /c cd /d "C:\inca\cache\apps" && node server.js,, Hide, UseErrorLevel
-
       initialize()				; sets environment then waits for mouse, key or clipboard events
-      message = #Path###%profile%\Downloads\
+      messages = #Path###%profile%\Downloads\
       messages()
       FileRead, downloads, %inca%\cache\html\temp.txt
-      Run, http://localhost:3000/inca/cache/html/%downloads%
+      if downloads
+        Run, http://localhost:3000/inca/cache/html/%downloads%
       SetTimer, TimedEvents, 50, 2		; every 50mS primarily for low message latency
       SetTimer, SlowTimer, 500, 2		; ffmpeg processing
       return
-
-
-
-
-    Transcode()
-      {
-      Loop, Parse, selected, `,
-        if getMedia(A_Loopfield)
-          {
-          FileMove, %src%, %mediaPath%\encode.%ext%			; FileMove = FileRename
-          RunWait, %inca%\cache\apps\encode.bat %mediaPath%\encode.%ext%
-          FileMove, %mediaPath%\encode.%ext%, %mediaPath%\%media%.%ext%
-break
-;          if playlist
-;            Run, %inca%\cache\apps\ffmpeg.exe -ss %seek% -i "%src%" -y -vf scale=1280:1280/dar -vframes 1 "%inca%\cache\posters\%media%%A_Space%%seek%.jpg",, Hide
-          }
-
-      }
-
-
-
-mediaAnalyze(src, media) {
-    FileGetSize, fileSize, %src%, M
-    cmd = C:\inca\cache\apps\ffmpeg.exe -i "%src%" 2>&1 | findstr /C:"Duration" /C:"Video:" /C:"bitrate:"
-    RunWait, %ComSpec% /c %cmd% > "c:\inca\meta.txt",, Hide
-    FileRead, MetaContent, c:\inca\meta.txt
-    FileDelete, c:\inca\meta.txt
-    if RegExMatch(MetaContent, "Duration: (\d{2}):(\d{2}):(\d{2}\.\d+)", DurMatch) {
-        Hours := DurMatch1 + 0
-        Minutes := DurMatch2 + 0
-        Seconds := DurMatch3 + 0
-        TotalMinutes := Ceil((Hours * 60) + Minutes + (Seconds / 60))
-        }
-    if RegExMatch(MetaContent, "Video: (\w+)", CodecMatch) {
-      Codec := CodecMatch1
-      }
-    if RegExMatch(MetaContent, "(\d{3,})x(\d{2,})", ResMatch) {
-      Width := ResMatch1
-      Height := ResMatch2
-      Resolution := Width "x" Height
-      }
-    if RegExMatch(MetaContent, "Stream.*?, (\d+) kb/s", BitrateMatch) {
-      Bitrate := Ceil(BitrateMatch1 / 10) "k"
-      }
-    Output := fileSize "MB " TotalMinutes " " Resolution " " Bitrate " " Codec
-;    return Output
-    }
-
 
 
 
@@ -184,8 +134,8 @@ mediaAnalyze(src, media) {
     XButton1::					; Back button
       Critical
       longClick =
-      timer := A_TickCount + 300
-      SetTimer, Timer_up, -300
+      timer := A_TickCount + 350
+      SetTimer, Timer_up, -350
       return
     Timer_up:					; long back key press
       IfWinActive, ahk_group Browsers
@@ -253,7 +203,7 @@ mediaAnalyze(src, media) {
         if (!gesture && longClick)
           {
           if (click=="RButton")
-            send, +{Pause}					; favorite command
+            send, +{Pause}					; show thumbSheet
           if (click=="LButton" && wasCursor == "IBeam")
             Osk()						; onscreen keyboard
           break
@@ -279,8 +229,7 @@ mediaAnalyze(src, media) {
         else if (command == "Join")					; join video files together
           Join()
         else if (command == "Vibe")					; create srt caption file
-Transcode()
-;          Vibe()
+          Vibe()
         else if (command == "Add" && address)
           Add()
         else if (command == "History")					; maintain play history
@@ -450,10 +399,15 @@ Transcode()
           }
         if (reload == 1)
           CreateList(1)
-        if (reload == 2)
+        else if (reload == 2)
           RenderPage()
-        if (reload == 3)
+        else if (reload == 3)
           CreateList(0)
+        else
+          {
+          FileDelete, %inca%\cache\html\temp.txt
+          FileAppend,, %inca%\cache\html\temp.txt
+          }
         longClick =
         selected = 
         PopUp("",0,0,0)
@@ -678,9 +632,6 @@ Transcode()
           Runwait, %inca%\cache\apps\ffmpeg.exe -ss %value% -i "%src%" -y -vf scale=1280:1280/dar -vframes 1 "%inca%\cache\temp\history\%media%%A_Space%%value%.jpg",, Hide
           }
       lastMedia := src
-
-ffprobe := mediaAnalyze(src, media)
-; tooltip -- %ffprobe%
       }
 
 
@@ -1347,7 +1298,7 @@ ffprobe := mediaAnalyze(src, media)
           }
         if (click=="LButton" && desk==cur && !WinExist("ahk_class Notepad"))
           {
-          WinActivate, ahk_group Browsers
+          WinActivate, ahk_group Browsers			; zoom browser page
           if (y < 0)
             send, ^0
           else send, ^{+}
@@ -1498,7 +1449,7 @@ Gui Status:Add, Text, vGuiSta w1200 h35
             vol := Round(volume,1)
         if (volume <= 0)
             vol =
-        status = %time%    %vol%   %ffprobe%
+        status = %time%    %vol%
         if (status != lastStatus && (click == "RButton" || Setting("Status Bar")))
           {
           lastStatus := status
