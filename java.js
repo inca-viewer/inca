@@ -1,13 +1,11 @@
 // server optimization security
 // ffmpeg transcode
 // maybe add a .bak to m3u, txt files saved
-// clipboard corruption and use issues?
 // process all favorites to good encoding format
 // process all files over 1280p to good format
-
 // the old batch encode works really well comapred to new one
+// thumbsheet flashing on play
 
-// page zoom
 
 
   let entry = 0								// thumb container
@@ -96,7 +94,6 @@
   document.addEventListener('dragend', mouseUp)
   document.addEventListener('mousemove', mouseMove)
   document.addEventListener('keydown', keyPress)
-  document.addEventListener('dblclick', () => {myInput.value = window.getSelection().toString()})
 
 
   function mouseDown(e) {
@@ -132,7 +129,7 @@
     if (playing && capText && (!capText.innerHTML || capText.innerHTML=="<br>")) {capTime.remove(); capText.remove(); capText=''; return}
     if (longClick==1 && (favicon.matches(':hover') || id=='myCap' || id=='myCue' || type=='document')) {
       Click=0; inca('Notepad',id,index); return}
-    if (id == 'myMute' || id == 'mySave' || id == 'myInput') return
+    if (id == 'myMute' || id == 'mySave' || id == 'myInput' || id == 'myDelete') return
     if (id == 'myForward') {newCap(0.4); return}					// move caption forward in time
     if (id == 'myBack') {newCap(-0.4); return}
     if (id == 'myIndex') {
@@ -175,6 +172,7 @@
     else if (id == 'myPic') thumb.currentTime = navStart
     else if (id == 'myNav') thumb.currentTime = 0 			// white space in context menu or thumbsheet
     else if (thumbSheet) {						// clicked thumb on 6x6 thumbsheet
+      myPlayer.poster=''
       if (skinny < 0) xm = 1-xm						// if flipped media
       let row = Math.floor(ym * 6)					// get media seek time from thumbsheet xy
       let col = Math.ceil(xm * 6)
@@ -199,7 +197,7 @@
     if (!playing && !playlist && !favicon.textContent.includes('\u2764') && dur < 200)
       thumb.currentTime = 0
     if (!thumbSheet) {
-      myPlayer.poster=thumb.poster					// replace thumbSheet
+      myPlayer.poster = thumb.poster					// swap out thumbSheet
       let x = thumb.style.start
       if (thumb.currentTime > x && thumb.currentTime < x + 1.2) thumb.currentTime = x
       myPlayer.currentTime=thumb.currentTime}
@@ -210,10 +208,10 @@
     title.style.opacity = 1; title.style.color='pink'
     if ((el=document.getElementById('srt'+lastMedia)) && playing && index!=lastMedia) {	// hide last caption
       el.style.display = null
-      if (captions && srt.innerHTML && lastClick==2) openCap()}		// next/back
+      if (captions && srt.innerHTML && lastClick==2) openCap()}		// next / back
     lastMedia = index
     pause = defPause
-    if (scaleY < 0.16) scaleY = 0.5
+    if (scaleY < 0.17) scaleY = 0.5					// return zoom after captions
     if (lastClick) myNav.style.display=null
     myMask.style.pointerEvents='auto'					// stop overThumb() triggering
     if (!longClick && lastClick==1 && srt.innerHTML && (favicon.matches(':hover') || type=='document')) openCap()
@@ -463,7 +461,7 @@
     let y = x.split('%20').pop().replace('.jpg', '')			// get fav start time from poster filename
     if (!isNaN(y) && y.length > 2 && y.includes('.')) {			// very likely a 'fav' suffix timestamp
       x = x.replace('%20' + y, '')}					// so remove timestamp from filename
-    if (type=='video') {myPlayer.poster = x} else myPlayer.poster=''	// to get the 6x6 thumbsheet file name
+    if (type=='video') {myPlayer.poster = x} else myPlayer.poster=thumb.poster	// 6x6 thumbsheet file name
     if (!thumb.src || myPlayer.src!=thumb.src) myPlayer.src=thumb.src
     if (type!='image') myPic.poster=''
     else myPic.poster=thumb.poster
@@ -797,7 +795,6 @@
     if ((thumb.style.skinny || thumb.style.rate) && !thumb.style.posted) {capButton(); cue = 0}
     else if (type=='document') {					// substitute media in srt/txt
       editing = index
-      localStorage.cue = myPlayer.src+'|'+myPlayer.currentTime.toFixed(2)+'\r\n'
       cues.innerHTML+= srt.scrollTop.toFixed(0) +'|media|'+localStorage.cue
       inca('cueMedia',cues.innerHTML,index)
       localStorage.cue =''
@@ -829,7 +826,7 @@
       myPlayer.style.opacity = 0
       positionMedia(0)
       positionMedia(3)							// fade new media in
-      myPlayer.style.opacity=1}
+      myPlayer.style.opacity = 1}
     else if (!tm && myPlayer.src != thumb.src) {setThumb(); myPlayer.currentTime=thumb.currentTime}}
 
 

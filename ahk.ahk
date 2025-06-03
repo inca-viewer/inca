@@ -1,7 +1,6 @@
 
 	; Browser Based File Explorer - Windows
-	; generates web pages of your media
-	; browser messages back using java via clipboard - see ProcessMessage()
+	; generates web pages of your media through server.js
 
 
 	#NoEnv
@@ -78,7 +77,6 @@
         Global index = 0			; scroll to index
         Global messages				; between browser java and this program
         Global gesture				; mouse gestures
-        Global lastClip				; preserve clipboard
         Global allFav				; all favorite shortcuts consolidated
         Global showSubs
         Global lastMedia
@@ -98,7 +96,7 @@
       Process, Close, node.exe
       sleep 200
       Run, cmd.exe /c cd /d "C:\inca\cache\apps" && node server.js,, Hide, UseErrorLevel
-      initialize()				; sets environment then waits for mouse, key or clipboard events
+      initialize()				; sets environment then waits for mouse, key
       messages = #Path###%profile%\Downloads\
       messages()
       FileRead, downloads, %inca%\cache\html\temp.txt
@@ -365,7 +363,6 @@
         index := 0
         messages := StrReplace(messages, "/", "\")
         array := StrSplit(messages,"#")
-        Clipboard := lastClip
 ;   tooltip %messages%, 0						; for debug
         Loop % array.MaxIndex()/4
           {
@@ -411,7 +408,6 @@
         longClick =
         selected = 
         PopUp("",0,0,0)
- ;  sleep 100
         }
 
 
@@ -1376,9 +1372,6 @@
     Initialize()
         {
         Global
-        if InStr(Clipboard, "#")
-          Clicpboard =
-        else lastClip := Clipboard
         LoadSettings()
         AllFav()							; create ..\fav\all fav.m3u
         FileDelete, %inca%\cache\temp\*.*
@@ -1416,6 +1409,7 @@
         Gui, background:Color, Black
         Gui, background:Show, x0 y0 w%A_ScreenWidth% h%A_ScreenHeight% NA
         WinSet, Transparent, 0
+        WinSet, ExStyle, +0x20
         gui, vol: +lastfound -Caption +ToolWindow +AlwaysOnTop -DPIScale
         gui, vol: color, ffb6c1
         Gui Status:+lastfound +AlwaysOnTop -Caption +ToolWindow
@@ -1857,7 +1851,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
     <a id='mySub' style='max-width:2em; font-size:0.7em; %x8%' onmousedown="inca('Recurse')" onmouseover="setTimeout(function() {if(mySub.matches(':hover'))Sub.scrollIntoView()},200)">%subs%</a>`n
     <a id='mySearch' style='%x20%' onwheel="wheelEvent(event)" onmousedown="inca('SearchBox','','',myInput.value)" onmouseover="setTimeout(function() {if(mySearch.matches(':hover'))filter(id)},140)">&#x1F50D;&#xFE0E;</a>`n
     <a id='Add' style='font-size:0.8em; font-variant-caps:petite-caps' onmousedown="inca('Add','','',myInput.value)">%add%</a>`n
-    <input id='myInput' class='searchbox' type='search' value='%st%' onmouseover="overText=1; this.focus(); if(!Add.innerHTML) {this.value=''; this.value='%lastSearch%'}" oninput="Add.innerHTML='Add'" onmouseout='overText=0'>
+    <input id='myInput' class='searchbox' type='search' autocomplete='off' value='%st%' onmouseover="overText=1; this.focus(); if(!Add.innerHTML) {this.value=''; this.value='%lastSearch%'}" oninput="Add.innerHTML='Add'" onmouseout='overText=0'>
     <a id="myPage" onmousedown="inca('Page', page)" onwheel="wheelEvent(event)"></a>
     </div>`n`n
 
@@ -1882,7 +1876,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
       FileDelete, %inca%\cache\html\%folder%.htm
       FileAppend, %html%, %inca%\cache\html\%folder%.htm, UTF-8
       FileDelete, %inca%\cache\html\temp.txt
-      FileAppend, %folder%.htm, %inca%\cache\html\temp.txt
+      FileAppend, %folder%.htm, %inca%\cache\html\temp.txt, UTF-8
       sleep, 500
       PopUp("",0,0,0)
       }
@@ -2022,12 +2016,10 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
 caption = <div id='srt%j%' class='caption' onmouseover='overText=1' onmouseout='overText=0'`n oninput="editing=index; playCap(event.target.id, 1)">%text%</div>
 
 if listView
-  mediaList = %mediaList%%fold%<table onmouseover='overThumb(%j%)'`n onmouseout="thumb%j%.style.opacity=0">`n <tr id='entry%j%' data-params='%type%,%start%,%dur%,%size%' onmouseenter='if (gesture) sel(%j%)'>`n <td>%ext%`n <video id='thumb%j%' class='thumb2' %src%`n %poster%`n preload=%preload% muted loop type="video/mp4"></video></td>`n <td>%size%</td>`n <td style='min-width: 6em'>%durT%</td>`n <td>%date%</td>`n  <td><div id='myFavicon%j%' class='favicon' style='position:absolute; translate:1.2em -0.8em'>%favicon%</div></td>`n <td style='width: 70vw'><input id="title%j%" class='title' style='opacity: 1; transition: 0.6s' onmouseover='overText=1' onmouseout='overText=0; Click=0' type='search' value='%media_s%'`n oninput="renamebox=this.value; lastMedia=%j%"></td>`n %fo%</tr>`n %caption%<span id='cues%j%' style='display: none'>%cues%</span></table>`n`n
+  mediaList = %mediaList%%fold%<table onmouseover='overThumb(%j%)'`n onmouseout="thumb%j%.style.opacity=0">`n <tr id='entry%j%' data-params='%type%,%start%,%dur%,%size%' onmouseenter='if (gesture) sel(%j%)'>`n <td>%ext%`n <video id='thumb%j%' class='thumb2' %src%`n %poster%`n preload=%preload% muted loop type="video/mp4"></video></td>`n <td>%size%</td>`n <td style='min-width: 6em'>%durT%</td>`n <td>%date%</td>`n  <td><div id='myFavicon%j%' class='favicon' style='position:absolute; translate:1.2em -0.8em'>%favicon%</div></td>`n <td style='width: 70vw'><input id="title%j%" class='title' style='opacity: 1; transition: 0.6s' onmouseover='overText=1' autocomplete='off' onmouseout='overText=0; Click=0' type='search' value='%media_s%'`n oninput="renamebox=this.value; lastMedia=%j%"></td>`n %fo%</tr>`n %caption%<span id='cues%j%' style='display: none'>%cues%</span></table>`n`n
 
 else mediaList = %mediaList%<div id="entry%j%" class='entry' data-params='%type%,%start%,%dur%,%size%'>`n <input id='title%j%' class='title' style='text-align: center' type='search'`n value='%media_s%'`n oninput="renamebox=this.value; lastMedia=%j%"`n onmouseover="overText=1; if((x=this.value.length/2) > view) this.style.width=x+'em'"`n onmouseout="overText=0; this.style.width='100`%'">`n <video id="thumb%j%" class='thumb' onmouseenter="overThumb(%j%); if (gesture) sel(%j%)"`n onmouseup='if(gesture)getParameters(%j%)' onmouseout='this.pause()' %src%`n %poster%`n preload=%preload% loop muted type='video/mp4'></video>`n <span id='myFavicon%j%' class='favicon' onmouseenter='overThumb(%j%)'>%favicon%</span>`n %noIndex%`n <span id='cues%j%' style='display: none'>%cues%</span></div>`n %caption%`n`n
 }
- 
-
 
 
     SlowTimer:
@@ -2066,7 +2058,7 @@ else mediaList = %mediaList%<div id="entry%j%" class='entry' data-params='%type%
         WinGet, desk, ID , ahk_class Progman
         if incaTab
           {
-          FileRead, messages, %inca%\cache\html\in.txt
+          FileRead, messages, *P65001 C:\inca\cache\html\in.txt		; utf codepage
           if messages
             {
             FileDelete, %inca%\cache\html\in.txt
