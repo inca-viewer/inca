@@ -107,7 +107,6 @@
       return
 
 
-
     ~Esc up::
       Process, Close, node.exe
       ExitApp
@@ -227,7 +226,7 @@
         else if (command == "Join")					; join video files together
           Join()
         else if (command == "Vibe")					; create srt caption file
-          Vibe()
+          Transcode()
         else if (command == "Add" && address)
           Add()
         else if (command == "History")					; maintain play history
@@ -1602,6 +1601,230 @@ Gui Status:Add, Text, vGuiSta w1200 h35
 
 
 
+
+
+
+
+Transcode()
+{
+    ; Read failed.txt if it exists for optional failure check
+    FileRead, FailedList, c:\inca\failed.txt
+    if (ErrorLevel)
+        FailedList := "" ; Set to empty if failed.txt doesn't exist or can't be read
+
+    Loop, Parse, selected, `,
+    {
+        tooltip %A_Index%
+        if getMedia(A_LoopField)
+        {
+            ; Store original src for file operations
+            originalSrc := src
+            
+            ; Get original file's creation and modification times
+            FileGetTime, CreationTime, %src%, C  ; Creation time
+            FileGetTime, ModifiedTime, %src%, M  ; Modification time
+            if (ErrorLevel)
+            {
+                FileAppend, Error: Failed to get timestamps for %src%`n, c:\inca\debug.txt, UTF-8
+                ; Continue processing, but log the issue (optional: could skip file here)
+            }
+            
+            ; Check if ttt - prefixed file exists
+            SplitPath, src, fileName, fileDir
+            tttFile := fileDir . "\ttt - " . fileName
+            if FileExist(tttFile)
+                continue ; Skip to next file
+            
+            ; Optional: Check if src is in failed.txt
+            if (InStr(FailedList, src . "`n"))
+            {
+                FileAppend, Skipped: %src% listed in failed.txt`n, c:\inca\debug.txt, UTF-8
+                continue ; Skip to next file
+            }
+            
+            ; Analyze media (no audio-specific checks)
+            metadata := mediaAnalyze(src)
+            if (!metadata)
+                continue ; Skip if analysis fails
+            
+            ; Extract metadata
+            Bitrate := metadata.bitrate
+            Width := metadata.width
+            Height := metadata.height
+            FrameRate := metadata.frame_rate
+            
+            ; Calculate output resolution (from batch file)
+            AspectRatio := Width / Height
+            if (AspectRatio >= 1)
+            {
+                OutWidth := Width < 1280 ? Width : 1280
+                OutHeight := Round(OutWidth / AspectRatio / 2) * 2
+            }
+            else
+            {
+                OutHeight := Height < 1280 ? Height : 1280
+                OutWidth := Round(OutHeight * AspectRatio / 2) * 2
+            }
+            Resolution := OutWidth ":" OutHeight
+            
+            ; Calculate GOP (2 seconds at frame rate)
+            GOPFrames := Round(2 * FrameRate)
+            
+            ; Set dynamic bitrate (from batch file)
+            MaxBitrate := 6000
+            BufSize := 12000
+            if (OutWidth <= 1280)
+            {
+                if (Bitrate > 0)
+                {
+                    MaxBitrate := Round(Bitrate * 3 / 2)
+                    BufSize := MaxBitrate * 2
+                }
+                else
+                {
+                    if (OutWidth <= 720)
+                    {
+                        MaxBitrate := 1500
+                        BufSize := 3000
+                    }
+                    else
+                    {
+                        MaxBitrate := 6000
+                        BufSize := 12000
+                    }
+                }
+            }
+            
+            ; Determine output path (same as src)
+            outputPath := src
+            
+            ; Determine original file's new name with ttt - prefix
+            newOriginalName := fileDir . "\ttt - " . fileName
+            
+            ; Construct FFmpeg command (single command, let FFmpeg handle audio)
+            tempOutput := fileDir . "\temp_" . fileName
+            cmd = -y -i "%src%" -c:v libx264 -profile:v high -pix_fmt yuv420p -vf scale=%Resolution% -crf 21 -preset slow -force_key_frames "expr:gte(t,n_forced*2)" -sc_threshold 0 -g %GOPFrames% -keyint_min %GOPFrames% -maxrate %MaxBitrate%k -bufsize %BufSize%k -c:a aac -b:a 128k -ar 48000 -ac 2 -map 0:v:0 -map 0:a? -map 0:s? -c:s copy -f mp4 -movflags +faststart+separate_moof "%tempOutput%"
+            
+            RunWait %COMSPEC% /c %inca%\cache\apps\ffmpeg.exe %cmd%, , Hide
+            if (ErrorLevel != 0)
+            {
+                FileAppend, Error: FFmpeg failed for %src% with command: %cmd%`n, c:\inca\debug.txt, UTF-8
+                ; Append src path to c:\inca\failed.txt
+                FileAppend, %src%`n, c:\inca\failed.txt, UTF-8
+                if (ErrorLevel)
+                    FileAppend, Error: Failed to append %src% to c:\inca\failed.txt`n, c:\inca\debug.txt, UTF-8
+                continue ; Skip to next file
+            }
+            
+            ; On success: Rename original to ttt - prefix
+            FileMove, %src%, %newOriginalName%
+            if (ErrorLevel)
+            {
+                FileAppend, Error: Failed to rename %src% to %newOriginalName%`n, c:\inca\debug.txt, UTF-8
+                FileDelete, %tempOutput% ; Clean up temp file
+                continue ; Skip to next file
+            }
+            
+            ; Move temp output to original name
+            FileMove, %tempOutput%, %outputPath%
+            if (ErrorLevel)
+            {
+                FileAppend, Error: Failed to move %tempOutput% to %outputPath%`n, c:\inca\debug.txt, UTF-8
+                ; Attempt to restore original file
+                FileMove, %newOriginalName%, %src%
+                continue ; Skip to next file
+            }
+            
+            ; Apply original timestamps to output file
+            if (CreationTime && ModifiedTime)
+            {
+                FileSetTime, %ModifiedTime%, %outputPath%, M  ; Set modification time
+                FileSetTime, %CreationTime%, %outputPath%, C  ; Set creation time
+                if (ErrorLevel)
+                    FileAppend, Error: Failed to set timestamps for %outputPath%`n, c:\inca\debug.txt, UTF-8
+            }
+            
+            FileAppend, Success: Transcoded %src% to %outputPath%, original renamed to %newOriginalName%`n, c:\inca\debug.txt, UTF-8
+        }
+    }
+}
+
+
+
+mediaAnalyze(src)
+{
+    FileGetSize, fileSize, %src%, M
+    ; Use ffprobe for metadata, no audio-specific checks
+    cmd = C:\inca\cache\apps\ffprobe.exe -v quiet -print_format json -show_streams "%src%"
+    RunWait, %ComSpec% /c %cmd% > "c:\inca\meta.txt",, Hide
+    
+    ; Debug: Check if command ran successfully
+    if (ErrorLevel != 0)
+    {
+        FileAppend, Error: ffprobe failed with command: %cmd%`n, c:\inca\debug.txt, UTF-8
+        return 0
+    }
+    
+    ; Read metadata
+    FileRead, MetaContent, c:\inca\meta.txt
+    if (!MetaContent)
+    {
+        FileAppend, Error: meta.txt is empty for command: %cmd%`n, c:\inca\debug.txt, UTF-8
+        FileDelete, c:\inca\meta.txt
+        return 0
+    }
+    FileDelete, c:\inca\meta.txt
+    
+    ; Parse JSON output (simplified for AHK v1.1.3)
+    ; Extract width, height
+    if RegExMatch(MetaContent, """width"":\s*(\d+)", WidthMatch)
+        Width := WidthMatch1 + 0
+    if RegExMatch(MetaContent, """height"":\s*(\d+)", HeightMatch)
+        Height := HeightMatch1 + 0
+    
+    ; Parse frame rate
+    if RegExMatch(MetaContent, """r_frame_rate"":\s*""(\d+)/(\d+)""", FrameRateMatch)
+    {
+        FrameRate := (FrameRateMatch1 + 0) / (FrameRateMatch2 + 0)
+    }
+    else if RegExMatch(MetaContent, """r_frame_rate"":\s*""(\d+\.?\d*)""", FrameRateMatch)
+    {
+        FrameRate := FrameRateMatch1 + 0
+    }
+    else
+    {
+        FrameRate := 25
+    }
+    
+    ; Parse bitrate
+    if RegExMatch(MetaContent, """bit_rate"":\s*""(\d+)""", BitrateMatch)
+    {
+        Bitrate := Ceil(BitrateMatch1 / 1000)
+    }
+    else
+    {
+        Bitrate := 0
+    }
+    
+    ; Debug: Log metadata (no audio info)
+    FileAppend, Metadata for %src%: Width=%Width%, Height=%Height%, FrameRate=%FrameRate%, Bitrate=%Bitrate%`n, c:\inca\debug.txt, UTF-8
+    
+    ; Return metadata object
+    if (Width && Height && FrameRate)
+    {
+        return { "bitrate": Bitrate, "width": Width, "height": Height, "frame_rate": FrameRate }
+    }
+    FileAppend, Error: Missing metadata for %src%`n, c:\inca\debug.txt, UTF-8
+    return 0
+}
+
+
+
+
+
+
+
+
     RenderPage()							; construct web page from media list
         {
         Critical							; stop pause key & timer interrupts
@@ -1832,8 +2055,9 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
   <a id='myMute' onmousedown="muted^=1; inca('Mute', muted); myPlayer.muted=muted; myPlayer.volume=0.1">Mute</a>`n
   <a id='mySkinny'></a>`n
   <a id='mySpeed'></a>`n
-  <a id='myDelete' onmouseup="inca('Delete','',index)"></a>`n
-  <a onmouseup="inca('Index','',index)">Index</a>`n
+  <a id='myPitch'></a>`n
+  <a id='myDelete' style='color:red' onmouseup="inca('Delete','',index)"></a>`n
+  <a id='myIndex' onmouseup="inca('Index','',index)"></a>`n
   <a id='myFlip' onmouseup='flip()'>Flip</a>`n
   <a id='myCue' onmouseup="if (!longClick) cueButton()">Cue</a>`n
   <a id='myCap' onmouseup='capButton()'>Caption</a>`n
@@ -1856,7 +2080,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
     </div>`n`n
 
   <div id='myRibbon2' class='ribbon' style='background:#1b1814' onwheel="wheelEvent(event)">`n
-    <a id='myIndex' onmouseout='ix=0'>&hellip;</a>
+    <a id='myMore' onmouseout='ix=0'>&hellip;</a>
     <a id='myPlaylist' style='%x12%' onmousedown="inca('Playlist')">%pl%</a>`n
     <a id='myDate' style='%x4%' onmousedown="inca('Date', filt)">Date</a>`n
     <a id='myDuration' style='%x3%' onmousedown="inca('Duration', filt)"> Duration</a>`n
@@ -1872,7 +2096,9 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
 
       StringReplace, header, header, \, /, All
       StringReplace, body, body, \, /, All
-      html = %header%%body%</div></div>`n<script src="http://localhost:3000/c:/inca/java.js"></script></body>`n</html>`n
+      script = <script src="http://localhost:3000/c:/inca/cache/apps/pitch.js">
+      script = %script%`n</script><script src="http://localhost:3000/c:/inca/java.js"></script>
+      html = %header%%body%</div></div>`n%script%`n</body>`n</html>`n
       FileDelete, %inca%\cache\html\%folder%.htm
       FileAppend, %html%, %inca%\cache\html\%folder%.htm, UTF-8
       FileDelete, %inca%\cache\html\temp.txt

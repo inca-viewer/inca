@@ -3,8 +3,9 @@
 // maybe add a .bak to m3u, txt files saved
 // process all favorites to good encoding format
 // process all files over 1280p to good format
-// the old batch encode works really well comapred to new one
 // thumbsheet flashing on play
+// slow thumb starts with server in fav
+// media loadings become jerky in txt
 
 
 
@@ -70,6 +71,7 @@
   let Zoff = 94								// top menu fullscreen offset
   let folder = ''							// browser tab name = media folder
   let defRate = 1							// default speed
+  let pitch = 0								// default pitch
   let muted = 0
   let lastYpos = 0							// to stop stutter scrolling thumbs
   let defPause = 0							// default pause state
@@ -132,8 +134,8 @@
     if (id == 'myMute' || id == 'mySave' || id == 'myInput' || id == 'myDelete') return
     if (id == 'myForward') {newCap(0.4); return}					// move caption forward in time
     if (id == 'myBack') {newCap(-0.4); return}
-    if (id == 'myIndex') {
-      if (selected && !ix) {inca('Delete','',index); return}
+    if (id == 'myPitch') {pitch=0; localStorage.setItem('pitch'+folder, 0); return}
+    if (id == 'myMore') {
       if (ix == 0) {inca('Settings'); return}
       if (ix == 1) {inca('mp4', myPlayer.currentTime.toFixed(2), lastMedia, cue); cue=0}
       if (ix == 2) {inca('mp3', myPlayer.currentTime.toFixed(2), lastMedia, cue); cue=0}
@@ -223,11 +225,12 @@
     else myPlayer.style.border=null
     observer = new IntersectionObserver(([entry]) => {if (!entry.isIntersecting) mediaX = mediaY = 500}).observe(myPlayer)
     if (lastClick && (!playing || thumbSheet)) positionMedia(0.6)	// fade up
+    if (pitch || myPlayer.context) {					// from pitch.js in inca\cache\apps
+      setupContext(myPlayer); myPlayer.jungle.setPitchOffset(semiToneTranspose(pitch))}
     myPlayer.style.opacity=1
     myPlayer.volume=0.1							// triggers volume fadeup
     myCues('scroll')							// scroll to last position in document
-    playing=1
-    play = 0; block = 60}						// allows time to detect if video can play
+    playing=1; block = 60}
 
 
   function mouseMove(e) {
@@ -262,10 +265,10 @@
     if (wheel < block) return
     block=100
     let wheelUp = wheelDir * e.deltaY > 0
-    if (id=='myIndex') {						// index option list
+    if (id=='myMore') {							// More option list
       if (wheelUp) {ix++} else ix--
       if (ix > 4) ix = 4; if (ix < 0) ix = 0
-      myIndex.innerHTML = items[ix]}
+      myMore.innerHTML = items[ix]}
     else if (id=='myPage') {						// htm page
       if (wheelUp && page<pages) page++
       else if (!wheelUp && page>1) page--}
@@ -283,6 +286,10 @@
     else if (id == 'mySkinny' && myTitle.value) {			// skinny
       if (wheelUp) {skinny -= 0.01} else skinny += 0.01
       skinny = updateCue('skinny',skinny)}
+    else if (id == 'myPitch') {						// pitch
+      if (wheelUp) {pitch += 0.1} else if (pitch) pitch -= 0.1
+      pitch = 1*pitch.toFixed(1)
+      localStorage.setItem('pitch'+folder, pitch)}
     else if (id=='myThumbs') { 						// thumb size
       let x=view; let z=wheel/1500
       if (x<98 && wheelUp) x *= 1+z
@@ -359,18 +366,18 @@
     mySkinny.innerHTML = ''
     mySkinny.style.color = null
     mySpeed.innerHTML = defRate === 1 ? 'Def. Speed' : defRate
+    myPitch.innerHTML = 'Pitch ' + pitch
     if (myTitle.value) {
-      myDelete.innerHTML = 'Delete'
       myFlip.innerHTML = 'Flip'
       mySelect.style.outline = myPlayer.style.outline = title.style.outline
       mySkinny.innerHTML = skinny === 1 ? 'Skinny' : `Skinny ${skinny.toFixed(2)}`
       mySkinny.style.color = skinny === 1 ? null : 'red'
       mySpeed.innerHTML = rate === 1 ? 'Speed' : `Speed ${rate.toFixed(2)}`}
-    else myFlip.innerHTML = myDelete.innerHTML = mySelect.style.outline = null
-    if (selected) myDelete.innerHTML = 'Delete'
+    else myFlip.innerHTML = mySelect.style.outline = null
     if (!seekBar()) myProgress.style.height = mySeekbar.style.height = null
-    if (selected && !ix) {myIndex.style.color='red'; myIndex.innerHTML='Delete ' + (selected.split(',').length -1)}
-    else {myIndex.style.color='pink'; myIndex.innerHTML = items[ix]}
+    let qty = selected.split(',').length - 1 || 1;
+    if (myTitle.value || selected) {myDelete.innerHTML='Delete ' + qty; myIndex.innerHTML='Index ' + qty}
+    else {myDelete.innerHTML = null; myIndex.innerHTML = 'Index page'}
     if (muted) {myMute.style.color='red'} else myMute.style.color=null
     if (defPause) {myPause.style.color='red'} else myPause.style.color=null
     if (skinny<0) {myFlip.style.color='red'} else myFlip.style.color=null
@@ -588,6 +595,10 @@
     x = localStorage.getItem(key)
     if (isNaN(x) || x<0.2 || x>5) localStorage.setItem(key, 1)		// default speed 1
     defRate = 1*localStorage.getItem(key)
+    key = 'pitch'+folder
+    x = 1*localStorage.getItem(key)
+    if (isNaN(x) || x<1 || x>2) localStorage.setItem(key, 0)		// default pitch 0
+    pitch = 1*localStorage.getItem(key)
     filter('my'+so)							// show filter heading in red
     for (x of selected.split(',')) {
       if(el=document.getElementById('title'+x)) {el.style.outline = '0.1px solid red'; el.style.opacity=1}}			
@@ -885,7 +896,6 @@
     if (type=='document' && !overMedia) return
     if (!thumbSheet && playing && myPlayer.paused) {myPlayer.play()} else myPlayer.pause()
     if (myPlayer.paused) {pause=1} else pause=0}
-
 
 
 
