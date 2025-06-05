@@ -1,11 +1,8 @@
 // server optimization security
-// ffmpeg transcode
 // maybe add a .bak to m3u, txt files saved
-// process all favorites to good encoding format
-// process all files over 1280p to good format
-// thumbsheet flashing on play
-// slow thumb starts with server in fav
-// media loadings become jerky in txt
+// process all files over 1280p to seeking format
+// process all h265 back to 264 for firefox etc
+// change folder structure help / apps etc
 
 
 
@@ -81,14 +78,14 @@
   let ix = 0								// index to items
   let seeked = 0							// wait for player to seek
   let observer								// see if myPlayer is visible
-
+let canPlay=0
 
   let intervalTimer = setInterval(timerEvent,90)			// background tasks every 90mS
   if (innerHeight>innerWidth) {scaleX=0.64; scaleY=0.64}		// screen is portrait
   else {scaleX=0.5; scaleY=0.5}
 
 
-//  myPlayer.addEventListener('canplay', () => {mySelected.innerHTML = myPlayer.currentTime});
+  myPlayer.addEventListener('canplay', () => {canPlay=1});
   myPlayer.addEventListener('ended', mediaEnded)
   myPlayer.addEventListener('seeked', () => {seeked=1})
   document.addEventListener('mousedown', mouseDown)
@@ -154,8 +151,8 @@
     if (lastClick == 1) {
       if (!longClick) {
         if (id == 'mySelect') {if (myTitle.value) {sel(index)} else selectAll(); return}
-        if (id == 'mySkinny') {skinny = updateCue('skinny',1); return}
-        if (id == 'mySpeed') {rate = updateCue('rate',1); return}}
+        if (id == 'mySkinny') {updateCue('skinny',1); return}
+        if (id == 'mySpeed') {updateCue('rate',1); return}}
       if (id == title.id) {thumb.currentTime = thumb.style.start; return}
       if (!playing && !overMedia && !myNav.style.display) return
       if (playing && overText) {playCap(id); return}					// play at caption
@@ -194,12 +191,13 @@
 
 
   function Play() {
+canPlay=0
     positionMedia(0)
     myPlayer.style.opacity=0
     if (!playing && !playlist && !favicon.textContent.includes('\u2764') && dur < 200)
       thumb.currentTime = 0
     if (!thumbSheet) {
-      myPlayer.poster = thumb.poster					// swap out thumbSheet
+      myPlayer.poster=''
       let x = thumb.style.start
       if (thumb.currentTime > x && thumb.currentTime < x + 1.2) thumb.currentTime = x
       myPlayer.currentTime=thumb.currentTime}
@@ -280,12 +278,10 @@
       filter(id)}
     else if (id =='mySpeed') {						// rate
       if (wheelUp) {rate -= 0.01} else rate += 0.01
-      rate = updateCue('rate',rate)
-      if (!playing && !myTitle.value) {defRate = rate; localStorage.setItem('defRate'+folder, rate)}
-      else thumb.style.rate = rate}
+      updateCue('rate',rate)}
     else if (id == 'mySkinny' && myTitle.value) {			// skinny
       if (wheelUp) {skinny -= 0.01} else skinny += 0.01
-      skinny = updateCue('skinny',skinny)}
+      updateCue('skinny',skinny)}
     else if (id == 'myPitch') {						// pitch
       if (wheelUp) {pitch += 0.1} else if (pitch) pitch -= 0.1
       pitch = 1*pitch.toFixed(1)
@@ -353,6 +349,7 @@
     if (timout) timout--
     navButtons()
     if (selected && myMenu.matches(':hover')) mySelected.innerHTML = selected.split(',').length -1
+else if (playing && block<30 && !canPlay) mySelected.innerHTML = 'cannot play'
     else mySelected.innerHTML = ''
     if (!playing || thumbSheet || overText) myBody.style.cursor=null	// show default cursor
     else if (!timout) myBody.style.cursor='none'			// hide cursor
@@ -365,9 +362,10 @@
     if (pages > 1) myPage.innerHTML = page+' of '+pages
     mySkinny.innerHTML = ''
     mySkinny.style.color = null
-    mySpeed.innerHTML = defRate === 1 ? 'Def. Speed' : defRate
-    myPitch.innerHTML = 'Pitch ' + pitch
+    mySpeed.innerHTML = defRate === 1 ? 'Speed' : 'Speed ' + defRate
+    myPitch.innerHTML = pitch === 0 ? 'Pitch' : 'Pitch ' + pitch
     if (myTitle.value) {
+      myPitch.innerHTML= null
       myFlip.innerHTML = 'Flip'
       mySelect.style.outline = myPlayer.style.outline = title.style.outline
       mySkinny.innerHTML = skinny === 1 ? 'Skinny' : `Skinny ${skinny.toFixed(2)}`
@@ -377,7 +375,7 @@
     if (!seekBar()) myProgress.style.height = mySeekbar.style.height = null
     let qty = selected.split(',').length - 1 || 1;
     if (myTitle.value || selected) {myDelete.innerHTML='Delete ' + qty; myIndex.innerHTML='Index ' + qty}
-    else {myDelete.innerHTML = null; myIndex.innerHTML = 'Index page'}
+    else {myDelete.innerHTML = null; myIndex.innerHTML = 'Index'}
     if (muted) {myMute.style.color='red'} else myMute.style.color=null
     if (defPause) {myPause.style.color='red'} else myPause.style.color=null
     if (skinny<0) {myFlip.style.color='red'} else myFlip.style.color=null
@@ -578,7 +576,7 @@
     return 1}
 
 
-  function globals(pg, ps, fo, wd, mu, pa, so, fi, lv, se, pl, ix) { // import globals from inca.exe
+  function globals(pg, ps, fo, wd, mu, pa, so, fi, lv, se, pl, ix) {	// import globals from inca.exe
     folder=fo; page=pg; pages=ps; filt=fi; wheelDir=wd;
     defPause=pa; listView=lv; selected=se; playlist=pl
     if (mu=='yes') {muted=1} else muted=0
@@ -693,8 +691,9 @@
     val = Math.round(1000 * val) / 1000
     thumb.style[item] = val
     thumb.style.posted = 0
-    if (myTitle.value) {getParameters(index); positionMedia(0.2)}
-    return val}
+    if (item=='skinny') skinny = val
+    if (myTitle.value) {getParameters(index); positionMedia(0.2); if (item=='rate') rate = val}
+    else if (item=='rate') {defRate = val; localStorage.setItem('defRate'+folder, val)}}
 
 
   function newCap(nudge) {
@@ -794,8 +793,9 @@
     let end = myPlayer.currentTime.toFixed(2)
     if (cue == end) end = dur
     if (cue) myCue.innerHTML = 'Start ' + cue +' '+ 'End '+ end
-    else if (type=='document') if (playing && localStorage.cue) {
-      myCue.innerHTML='Add Media'} else myCue.innerHTML='Show Cues'
+    else if (type=='document' && playing && localStorage.cue) myCue.innerHTML='Add Media'
+    else if (myTitle.value) myCue.innerHTML='Show Cues'
+    else myCue.innerHTML=''
     if (cue && thumb.style.skinny) myCap.innerHTML='Cue Skinny ' + skinny
     else if (cue && thumb.style.rate) myCap.innerHTML='Cue Speed ' + rate
     else if (cue && end != dur) myCap.innerHTML='GoTo ' + myPlayer.currentTime.toFixed(2)}
@@ -838,7 +838,8 @@
       positionMedia(0)
       positionMedia(3)							// fade new media in
       myPlayer.style.opacity = 1}
-    else if (!tm && myPlayer.src != thumb.src) {setThumb(); myPlayer.currentTime=thumb.currentTime}}
+    else if (!tm && myPlayer.src != thumb.src) {setThumb(); myPlayer.currentTime=thumb.currentTime}
+    positionMedia(0)}
 
 
   function sel(i) {							// highlight selected media in html

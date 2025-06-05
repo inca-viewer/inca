@@ -74,7 +74,7 @@ e {						/* caption text entries */
   font-family: inherit;
   margin: auto;
   opacity: 0;
-  transition: opacity 0.6s;
+  transition: 0.3s;
   resize: both;
   overflow: hidden;
   overflow-y: scroll;
@@ -304,13 +304,15 @@ e {						/* caption text entries */
   transition: opacity 0.6s;
   z-index: 888;
   font-size: 1em;
+  width: max-content;
   border-radius: 0.7em;
   background: inherit}
 .context:hover {opacity: 1}
 
 .context a {
   display: block;
-  width: 85px;
+  width: auto;
+  max-width: 100px;
   height: 1.4em;
   white-space: nowrap;
   border-radius: 1.4em;
