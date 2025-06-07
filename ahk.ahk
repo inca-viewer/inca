@@ -1152,7 +1152,7 @@
           {
           getMedia(A_LoopField)
           x = %target%`r`n
-          str := StrReplace(str, x,,,1)				; mark entry as deleted
+          str := StrReplace(str, x,,,1)					; mark entry as deleted
           }
         FileAppend, %str%, %playlist%, UTF-8
         AllFav()

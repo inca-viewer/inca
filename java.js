@@ -3,6 +3,15 @@
 // process all files over 1280p to seeking format
 // process all h265 back to 264 for firefox etc
 // change folder structure help / apps etc
+// ahk needs to always get and store dur
+
+// server set to 0.0.0.0 from 127.0.0.1
+// firewall wf.msc inbound rule, create ASUS hotspot and connect other machine to it
+// localhost to 192.168.137.1 in ahk
+// safari swipes etc not work and mouse back not work on windows client 
+
+
+
 
 
 
@@ -78,21 +87,22 @@
   let ix = 0								// index to items
   let seeked = 0							// wait for player to seek
   let observer								// see if myPlayer is visible
-let canPlay=0
+  let canPlay=0								// video exist and playable in browser
+
 
   let intervalTimer = setInterval(timerEvent,90)			// background tasks every 90mS
   if (innerHeight>innerWidth) {scaleX=0.64; scaleY=0.64}		// screen is portrait
   else {scaleX=0.5; scaleY=0.5}
 
 
-  myPlayer.addEventListener('canplay', () => {canPlay=1});
-  myPlayer.addEventListener('ended', mediaEnded)
-  myPlayer.addEventListener('seeked', () => {seeked=1})
   document.addEventListener('mousedown', mouseDown)
   document.addEventListener('mouseup', mouseUp)
   document.addEventListener('dragend', mouseUp)
   document.addEventListener('mousemove', mouseMove)
   document.addEventListener('keydown', keyPress)
+  myPlayer.addEventListener('ended', mediaEnded)
+  myPlayer.addEventListener('seeked', () => {seeked=1})
+  myPlayer.addEventListener('canplay', () => {canPlay=1})
 
 
   function mouseDown(e) {
@@ -108,7 +118,6 @@ let canPlay=0
     if (!Click) return							// stop re-entry also if new page load
     clearTimeout(clickTimer)						// longClick timer
     if (!longClick) clickEvent(e)					// process click event
-    if (gesture) myInput.value = window.getSelection().toString()	// add selected text to search bar
     Click=0; wheel=0; gesture=0}
 
 
@@ -171,7 +180,6 @@ let canPlay=0
     else if (id == 'myPic') thumb.currentTime = navStart
     else if (id == 'myNav') thumb.currentTime = 0 			// white space in context menu or thumbsheet
     else if (thumbSheet) {						// clicked thumb on 6x6 thumbsheet
-      myPlayer.poster=''
       if (skinny < 0) xm = 1-xm						// if flipped media
       let row = Math.floor(ym * 6)					// get media seek time from thumbsheet xy
       let col = Math.ceil(xm * 6)
@@ -191,13 +199,13 @@ let canPlay=0
 
 
   function Play() {
-canPlay=0
+    canPlay=0
     positionMedia(0)
     myPlayer.style.opacity=0
-    if (!playing && !playlist && !favicon.textContent.includes('\u2764') && dur < 200)
-      thumb.currentTime = 0
+    if (!playing && !playlist && !favicon.textContent.includes('\u2764') && dur < 200) thumb.currentTime = 0
     if (!thumbSheet) {
-      myPlayer.poster=''
+      myPlayer.poster = ''
+      myPlayer.poster=thumb.poster
       let x = thumb.style.start
       if (thumb.currentTime > x && thumb.currentTime < x + 1.2) thumb.currentTime = x
       myPlayer.currentTime=thumb.currentTime}
@@ -215,7 +223,8 @@ canPlay=0
     if (lastClick) myNav.style.display=null
     myMask.style.pointerEvents='auto'					// stop overThumb() triggering
     if (!longClick && lastClick==1 && srt.innerHTML && (favicon.matches(':hover') || type=='document')) openCap()
-    if ((captions && srt.innerHTML) || type=='audio' || playlist.match('/inca/music/')) {pause=0; scaleY=0.16; myPlayer.muted=0}
+    if ((captions && srt.innerHTML) || type=='audio' || playlist.match('/inca/music/')) scaleY=0.16
+    if (playlist.match('/inca/music/')) {pause=0; myPlayer.muted=0}
     if (!thumbSheet && dur && !pause && !cue) myPlayer.play()
     myPlayer.style.zIndex=Zindex
     if (thumb.src.slice(-3)=='txt') srt.style.padding = 0
@@ -228,7 +237,7 @@ canPlay=0
     myPlayer.style.opacity=1
     myPlayer.volume=0.1							// triggers volume fadeup
     myCues('scroll')							// scroll to last position in document
-    playing=1; block = 60}
+    playing=1; block = 160}
 
 
   function mouseMove(e) {
@@ -253,7 +262,8 @@ canPlay=0
       localStorage.mediaX = mediaX.toFixed(0)
       localStorage.mediaY = mediaY.toFixed(0)
       Xref=xpos; Yref=ypos
-      positionMedia(0)}}
+      positionMedia(0)}
+    else if (gesture) myInput.value = window.getSelection().toString()}	// paste selected text to search bar
 
 
   function wheelEvent(e) {
@@ -296,7 +306,7 @@ canPlay=0
     else if (!playing && id=='myWidth') {				// page width
       let x = 1*myView.style.width.slice(0,-2); let z=wheel/2000
       if (wheelUp) x *= 1+z
-      else if (!wheelUp && x / 1+z > 10) x /= 1+z
+      else if (!wheelUp && x / 1+z > 100) x /= 1+z
       if (x > innerWidth) x = innerWidth
       myView.style.width = x.toFixed(2)+'px'
       localStorage.setItem('pageWidth'+folder, x)
@@ -349,7 +359,7 @@ canPlay=0
     if (timout) timout--
     navButtons()
     if (selected && myMenu.matches(':hover')) mySelected.innerHTML = selected.split(',').length -1
-else if (playing && block<30 && !canPlay) mySelected.innerHTML = 'cannot play'
+    else if (type=='video' && playing && block<30 && !canPlay) mySelected.innerHTML = 'cannot play'
     else mySelected.innerHTML = ''
     if (!playing || thumbSheet || overText) myBody.style.cursor=null	// show default cursor
     else if (!timout) myBody.style.cursor='none'			// hide cursor
@@ -564,7 +574,7 @@ else if (playing && block<30 && !canPlay) mySelected.innerHTML = 'cannot play'
     srt = document.getElementById('srt'+i)				// txt or caption element
     let params = entry.dataset.params.split(',')
     type = params[0]							// media type eg. video
-    thumb.style.start = Number(params[1])				// start time
+    thumb.style.start = Number(params[1]) + 0.02			// start time
     dur = Number(params[2])						// duration
     size = Number(params[3])						// file size
     skinny = 1; rate = defRate						// reset before new cues read
