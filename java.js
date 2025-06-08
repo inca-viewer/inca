@@ -3,15 +3,11 @@
 // process all files over 1280p to seeking format
 // process all h265 back to 264 for firefox etc
 // change folder structure help / apps etc
-// ahk needs to always get and store dur
 
 // server set to 0.0.0.0 from 127.0.0.1
 // firewall wf.msc inbound rule, create ASUS hotspot and connect other machine to it
 // localhost to 192.168.137.1 in ahk
 // safari swipes etc not work and mouse back not work on windows client 
-
-
-
 
 
 
@@ -82,12 +78,9 @@
   let lastYpos = 0							// to stop stutter scrolling thumbs
   let defPause = 0							// default pause state
   let pause = 0								// current pause state
-  let play = 0								// force play
   let items = ['&hellip;', 'mp4', 'mp3', 'Join', 'Vibe']		// ribbon drop down menu
   let ix = 0								// index to items
-  let seeked = 0							// wait for player to seek
   let observer								// see if myPlayer is visible
-  let canPlay=0								// video exist and playable in browser
 
 
   let intervalTimer = setInterval(timerEvent,90)			// background tasks every 90mS
@@ -101,8 +94,6 @@
   document.addEventListener('mousemove', mouseMove)
   document.addEventListener('keydown', keyPress)
   myPlayer.addEventListener('ended', mediaEnded)
-  myPlayer.addEventListener('seeked', () => {seeked=1})
-  myPlayer.addEventListener('canplay', () => {canPlay=1})
 
 
   function mouseDown(e) {
@@ -162,14 +153,14 @@
         if (id == 'mySelect') {if (myTitle.value) {sel(index)} else selectAll(); return}
         if (id == 'mySkinny') {updateCue('skinny',1); return}
         if (id == 'mySpeed') {updateCue('rate',1); return}}
-      if (id == title.id) {thumb.currentTime = thumb.style.start; return}
+      if (id == title.id) {thumb.currentTime=thumb.style.start; return}
       if (!playing && !overMedia && !myNav.style.display) return
       if (playing && overText) {playCap(id); return}					// play at caption
       if (longClick && !playing && !overMedia && !myNav.style.display) return
-      if (longClick && myTitle.value) thumbSheet ^= 1
+      if (longClick && myTitle.value) {myPlayer.src=myPlayer.poster=''; thumbSheet ^= 1}
       else if (!getStart(id)) return}
     if (!getParameters(index)) {index = lastMedia; closePlayer(); return}		// end of media list
-    if (lastClick != 1) thumb.currentTime = thumb.style.start
+    if (lastClick != 1) thumb.currentTime = thumb.style.start				// default start time
     if (lastClick) Play()}
 
 
@@ -195,16 +186,16 @@
       myPlayer.play(); return}						// return and quit
     else if (playing) {togglePause(); return}
     else if (myNav.style.display) return
-    if (playing) play = 1; return 1}					// return and play
+    return 1}								// return and continue
 
 
   function Play() {
-    canPlay=0
+    skinny=1								// so skinny transition shows in player
     positionMedia(0)
     myPlayer.style.opacity=0
+    getParameters(index)
     if (!playing && !playlist && !favicon.textContent.includes('\u2764') && dur < 200) thumb.currentTime = 0
     if (!thumbSheet) {
-      myPlayer.poster = ''
       myPlayer.poster=thumb.poster
       let x = thumb.style.start
       if (thumb.currentTime > x && thumb.currentTime < x + 1.2) thumb.currentTime = x
@@ -231,10 +222,11 @@
     if (thumb.src.slice(-3)=='mp3') myPlayer.style.borderBottom = '2px solid pink'
     else myPlayer.style.border=null
     observer = new IntersectionObserver(([entry]) => {if (!entry.isIntersecting) mediaX = mediaY = 500}).observe(myPlayer)
-    if (lastClick && (!playing || thumbSheet)) positionMedia(0.6)	// fade up
+    if (lastClick) positionMedia(1)					// fade up
     if (pitch || myPlayer.context) {					// from pitch.js in inca\cache\apps
       setupContext(myPlayer); myPlayer.jungle.setPitchOffset(semiToneTranspose(pitch))}
-    myPlayer.style.opacity=1
+    if (type!='video' || thumbSheet) myPlayer.style.opacity=1
+    else myPlayer.addEventListener('seeked', () => {myPlayer.style.opacity = 1}, {once: true})
     myPlayer.volume=0.1							// triggers volume fadeup
     myCues('scroll')							// scroll to last position in document
     playing=1; block = 160}
@@ -293,9 +285,11 @@
       if (wheelUp) {skinny -= 0.01} else skinny += 0.01
       updateCue('skinny',skinny)}
     else if (id == 'myPitch') {						// pitch
-      if (wheelUp) {pitch += 0.1} else if (pitch) pitch -= 0.1
-      pitch = 1*pitch.toFixed(1)
-      localStorage.setItem('pitch'+folder, pitch)}
+      if (wheelUp) {pitch += 1} else pitch -= 1
+      pitch = 1*pitch.toFixed(0)
+      localStorage.setItem('pitch'+folder, pitch)
+      setupContext(myPlayer)
+      myPlayer.jungle.setPitchOffset(semiToneTranspose(pitch))}
     else if (id=='myThumbs') { 						// thumb size
       let x=view; let z=wheel/1500
       if (x<98 && wheelUp) x *= 1+z
@@ -327,10 +321,10 @@
       interval = 1
       if (dur < 121) interval = 0.5
       if (myPlayer.paused) interval = 0.0333
-      if (seeked) {							// wait for player
-        if (wheelUp) myPlayer.currentTime += interval
-        else if (!wheelUp) myPlayer.currentTime -= interval
-        seeked = 0}}
+      if (wheelUp) myPlayer.currentTime += interval
+      else if (!wheelUp) myPlayer.currentTime -= interval
+      myPlayer.addEventListener('seeked', () => {block=20}, {once: true})
+      block=250}
     else if (!myNav.style.display) {					// zoom myPlayer
       let x=0; let y=0; let z=0
       if (!thumbSheet) z=wheel/2000
@@ -359,7 +353,6 @@
     if (timout) timout--
     navButtons()
     if (selected && myMenu.matches(':hover')) mySelected.innerHTML = selected.split(',').length -1
-    else if (type=='video' && playing && block<30 && !canPlay) mySelected.innerHTML = 'cannot play'
     else mySelected.innerHTML = ''
     if (!playing || thumbSheet || overText) myBody.style.cursor=null	// show default cursor
     else if (!timout) myBody.style.cursor='none'			// hide cursor
@@ -375,7 +368,6 @@
     mySpeed.innerHTML = defRate === 1 ? 'Speed' : 'Speed ' + defRate
     myPitch.innerHTML = pitch === 0 ? 'Pitch' : 'Pitch ' + pitch
     if (myTitle.value) {
-      myPitch.innerHTML= null
       myFlip.innerHTML = 'Flip'
       mySelect.style.outline = myPlayer.style.outline = title.style.outline
       mySkinny.innerHTML = skinny === 1 ? 'Skinny' : `Skinny ${skinny.toFixed(2)}`
@@ -471,28 +463,28 @@
 
   function setThumb() {							// sets src, poster, thumbsheet & dimensions
     myTitle.value=title.value
-    let x = thumb.poster.replace("/posters/", "/thumbs/")		// points to thumbsheet src folder
-    x = x.replace("/temp/history/", "/thumbs/")				// in case history playlist
-    let y = x.split('%20').pop().replace('.jpg', '')			// get fav start time from poster filename
-    if (!isNaN(y) && y.length > 2 && y.includes('.')) {			// very likely a 'fav' suffix timestamp
-      x = x.replace('%20' + y, '')}					// so remove timestamp from filename
-    if (type=='video') {myPlayer.poster = x} else myPlayer.poster=thumb.poster	// 6x6 thumbsheet file name
+    let sheet = thumb.poster.replace("/posters/", "/thumbs/")		// points to thumbsheet src folder
+    sheet = sheet.replace("/temp/history/", "/thumbs/")			// in case history playlist
+    let time = sheet.split('%20').pop().replace('.jpg', '')		// get fav start time from poster filename
+    if (!isNaN(time) && time.length > 2 && time.includes('.')) {	// very likely a 'fav' suffix timestamp
+      sheet = sheet.replace('%20' + time, '')}				// so remove timestamp from filename
+    if (thumbSheet) {myPlayer.poster = sheet} else myPlayer.poster=''	// use 6x6 thumbsheet as poster
     if (!thumb.src || myPlayer.src!=thumb.src) myPlayer.src=thumb.src
     if (type!='image') myPic.poster=''
     else myPic.poster=thumb.poster
-    if (type=='video') myPic.style.backgroundImage = 'url(\"'+x+'\")'	// use 6x6 thumbsheet src for preview sprites
+    if (type=='video') myPic.style.backgroundImage = 'url(\"'+sheet+'\")' // use 6x6 thumbsheet for preview sprites
     else myPic.style.backgroundImage = ''
     aspect = thumb.offsetWidth/thumb.offsetHeight
-    let z = innerHeight
-    if (aspect < 1) {y=z; x=z*aspect} else {y=z/aspect; x=z}		// portrait or landscape - normalised size
+    let x = y = z = innerHeight
+    if (aspect < 1) {x=z*aspect} else y=z/aspect			// portrait or landscape - normalised size
     myPlayer.style.width = x +'px'; myPlayer.style.height = y +'px'	// normalise player size
     if (aspect < 1) {y=120; x=120*aspect} else {y=120/aspect; x=120}	// set myPic to max 180px
     myPic.style.width = x + 'px'
     myPic.style.height = y + 'px'					// context menu thumb 
     myPic.style.transform='scale('+Math.abs(skinny)*zoom+','+zoom+')'
     myPic.style.backgroundPosition = '0% 0%'				// sets to frame 1 of 6x6 thumbSheet
-    if (thumbSheet) myPlayer.load()
-    else if (!playing) myPlayer.currentTime=thumb.currentTime}		// fast start play
+    if (thumbSheet) myPlayer.load()					// show poster
+    else myPlayer.currentTime=thumb.currentTime}			// fast start play
 
 
   function setPic() {							// sets context image based on cursor over myPic
@@ -697,12 +689,12 @@
     editing = index}
 
 
-  function updateCue(item, val) {					// rate, skinny, cues
+  function updateCue(item, val) {					// rate, skinny, cues  getParameters(index); 
     val = Math.round(1000 * val) / 1000
     thumb.style[item] = val
     thumb.style.posted = 0
     if (item=='skinny') skinny = val
-    if (myTitle.value) {getParameters(index); positionMedia(0.2); if (item=='rate') rate = val}
+    if (myTitle.value) {if (!playing) getParameters(index); positionMedia(0.2); if (item=='rate') rate = val}
     else if (item=='rate') {defRate = val; localStorage.setItem('defRate'+folder, val)}}
 
 
@@ -892,9 +884,6 @@
     getParameters(id)
     thumb.volume=0.6
     thumb.style.opacity=1
-    if (skinny != 1)
-      thumb.classList.add('edited')
-    else thumb.classList.remove('edited')
     if (lastYpos != ypos && thumb.readyState !== 4) {			// first time - with scroll blocking
       thumb.load(); thumb.currentTime = thumb.style.start}
     lastYpos = ypos}

@@ -141,7 +141,6 @@ e {						/* caption text entries */
   outline: none;
   margin: auto;
   border-radius: 0.6em}
-.thumb.edited:hover {outline: 0.1px solid pink}
 
 .thumb2 {					/* list view pop up thumbs */
   position: absolute;
