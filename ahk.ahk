@@ -97,11 +97,11 @@
       sleep 200
       Run, cmd.exe /c cd /d "C:\inca\cache\apps" && node server.js,, Hide, UseErrorLevel
       initialize()				; sets environment then waits for mouse, key
-      messages = #Path###%profile%\Downloads\
+      messages = #Path###%profile%\Pictures\
       messages()
-      FileRead, downloads, %inca%\cache\html\temp.txt
-      if downloads
-        Run, http://localhost:3000/inca/cache/html/%downloads%
+      FileRead, start, %inca%\cache\html\temp.txt
+      if start
+        Run, http://localhost:3000/inca/cache/html/%start%
       SetTimer, TimedEvents, 50, 2		; every 50mS primarily for low message latency
       SetTimer, SlowTimer, 500, 2		; ffmpeg processing
       return
@@ -112,32 +112,21 @@
       ExitApp
 
 
-    RButton::
+    ~RButton::
     ~LButton::					; click events
       MouseDown()
       return
 
 
-    MButton::					; Forward button
-      click = MButton
-      send, {MButton down}
-      return
-
-    MButton up::
-      send, {MButton up}
-      return
-
-
-    XButton1::					; Back button
+    ~XButton1::					; Back button
       Critical
       longClick =
       timer := A_TickCount + 350
       SetTimer, Timer_up, -350
       return
     Timer_up:					; long back key press
-      IfWinActive, ahk_group Browsers
-        send, ^w				; close tab
-      else send, !{F4}				; or close app
+      IfWinNotActive, ahk_group Browsers
+        send, !{F4}				; close app
       return
     XButton1 up::
       SetTimer, Timer_up, Off
@@ -147,9 +136,6 @@
         WinClose, ahk_class OSKMainClass	; close onscreen keyboard
       else if WinActive("ahk_class Notepad")
         Send, {Esc}^s^w
-      else if incaTab
-        send, {Pause}				; close java media player
-      else send, {XButton1}
       sleep 100
       MouseGetPos,,, cur 			; get window under cursor
       WinActivate, ahk_id %cur%
@@ -181,9 +167,16 @@
         y -= ypos
         if (!GetKeyState("LButton", "P") && !GetKeyState("RButton", "P"))
           {
+          if (click == "RButton" && gesture)
+            {
+if !incaTab
+            loop 10
+              {
+              send, {Esc}
+              sleep 10
+              }
+            }
           Gui PopUp:Cancel
-          if (click=="RButton" && !gesture && !longClick)
-            send, {RButton}
           break
           }
         if (Abs(x)+Abs(y) > 6)					; gesture started
@@ -199,8 +192,6 @@
           }
         if (!gesture && longClick)
           {
-          if (click=="RButton")
-            send, +{Pause}					; show thumbSheet
           if (click=="LButton" && wasCursor == "IBeam")
             Osk()						; onscreen keyboard
           break
@@ -440,6 +431,8 @@
       {
       if (value == "myCue")
         Run, %inca%\cache\cues\%media%.txt
+      else if (type == "document") 
+        Run, %src%
       else Run, %inca%\cache\captions\%media%.srt
       }
 
@@ -482,7 +475,7 @@
       lastMedia := 0
       if (longClick && !selected)
         {
-        run, %address%							; open source instead
+        run, %address%							; open source instead eg m3u
         send {LButton up}
         return
         }
@@ -680,7 +673,7 @@
               popup(popup,0,0,0)
               }
           }
-        else DeleteEntries(0)
+        else DeleteEntries()
         x := StrSplit(selected,",")
         index := x[x.MaxIndex()-1]
         reload := 3
@@ -701,7 +694,8 @@
         Runwait, %inca%\cache\apps\ffmpeg.exe -ss %value% -i "%src%" -y -vf scale=1280:1280/dar -vframes 1 "%inca%\cache\posters\%media%%A_Space%%value%.jpg",, Hide
       if address
         FileAppend, 0.0|scroll|%address%`r`n, %inca%\cache\cues\%media%.txt, UTF-8	; add scroll if srt text exists
-      AllFav()								; update consolidated fav list
+      AllFav()										; update consolidated fav list
+      popup(Chr(0x2665),600,0,0)
       }
 
 
@@ -1136,21 +1130,22 @@
             }
         if (popup && !longClick)
           if (InStr(address, "inca\fav") || InStr(address, "inca\music"))
-            DeleteEntries(1)
+            DeleteEntries()
         if popup
           PopUp(popup,0,0,0) 
         }  
 
 
-    DeleteEntries(move)							; playlist entries
+    DeleteEntries()							; playlist entries
         {
         IfNotExist, %playlist%
           return
         FileRead, str, %playlist%
         FileDelete, %playlist%
         Loop, Parse, selected, `,
+         if A_LoopField
           {
-          getMedia(A_LoopField)
+          if getMedia(A_LoopField)
           x = %target%`r`n
           str := StrReplace(str, x,,,1)					; mark entry as deleted
           }
@@ -1409,8 +1404,6 @@
         Gui, background:Show, x0 y0 w%A_ScreenWidth% h%A_ScreenHeight% NA
         WinSet, Transparent, 0
         WinSet, ExStyle, +0x20
-        gui, vol: +lastfound -Caption +ToolWindow +AlwaysOnTop -DPIScale
-        gui, vol: color, ffb6c1
         Gui Status:+lastfound +AlwaysOnTop -Caption +ToolWindow
         Gui Status:Color, Black
 Gui Status:Add, Text, vGuiSta w1200 h35
@@ -1437,6 +1430,7 @@ Gui Status:Add, Text, vGuiSta w1200 h35
     ShowStatus()
         {
         FormatTime, time,, h:mm
+soundGet, volume
         vol := Round(volume)
         if (volume < 0.95)
             vol := Round(volume,1)
@@ -1451,15 +1445,12 @@ Gui Status:Add, Text, vGuiSta w1200 h35
           Gui, Status:Font, s20 cWhite, Segoe UI
           GuiControl, Status:Font, GuiSta
           GuiControl, Status:, GuiSta, %status%
-          Gui, Status:Show, NA
           }
+        if fullscreen
+          Gui, Status: hide, NA
+        else Gui, Status: Show, NA
         if (!GetKeyState("RButton", "P") && !Setting("Status Bar"))
            Gui, Status:hide, NA
-        yv := A_ScreenHeight - 3
-        xv := A_ScreenWidth * volume/101
-        if (GetKeyState("RButton", "P") && gesture)
-          gui, vol: show, x0 y%yv% w%xv% h3 NA
-        else gui, vol: hide
         }
 
 
@@ -1603,56 +1594,61 @@ Gui Status:Add, Text, vGuiSta w1200 h35
 
 
 
-
-
 Transcode()
 {
-    ; Read failed.txt if it exists for optional failure check
-    FileRead, FailedList, c:\inca\failed.txt
-    if (ErrorLevel)
-        FailedList := "" ; Set to empty if failed.txt doesn't exist or can't be read
-
     Loop, Parse, selected, `,
     {
-        tooltip %A_Index%
+        FileRead, ProcessedList, *t c:\inca\processed.txt
+        FileRead, FailedList, *t c:\inca\failed.txt
+
         if getMedia(A_LoopField)
         {
-            ; Store original src for file operations
+            tooltip %A_Index% - %src%
+
             originalSrc := src
-            
-            ; Get original file's creation and modification times
+
+            ; Check for ttt - prefixed file first
+            SplitPath, src, fileName, fileDir
+            tttFile := fileDir . "\ttt - " . fileName
+            if FileExist(tttFile)
+            {
+            if (!InStr(ProcessedList, src . "`n"))
+              FileAppend, %src%`n, c:\inca\processed.txt, UTF-8
+            continue  ; Skip if ttt - file exists (already processed)
+            }
+
+            ; Check if the original file is in processed.txt
+            if (InStr(ProcessedList, src . "`n"))
+                continue
+
+            ; Check if the original file is in failed.txt
+            if (InStr(FailedList, src . "`n"))
+                continue
+
             FileGetTime, CreationTime, %src%, C  ; Creation time
             FileGetTime, ModifiedTime, %src%, M  ; Modification time
             if (ErrorLevel)
             {
-                FileAppend, Error: Failed to get timestamps for %src%`n, c:\inca\debug.txt, UTF-8
-                ; Continue processing, but log the issue (optional: could skip file here)
+                FileAppend, Error: Failed to get timestamps for %src%`n, c:\inca\failed.txt, UTF-8
+                FileAppend, %src%`n, c:\inca\failed.txt, UTF-8
+                continue
             }
-            
-            ; Check if ttt - prefixed file exists
-            SplitPath, src, fileName, fileDir
-            tttFile := fileDir . "\ttt - " . fileName
-            if FileExist(tttFile)
-                continue ; Skip to next file
-            
-            ; Optional: Check if src is in failed.txt
-            if (InStr(FailedList, src . "`n"))
-            {
-                FileAppend, Skipped: %src% listed in failed.txt`n, c:\inca\debug.txt, UTF-8
-                continue ; Skip to next file
-            }
-            
+
             ; Analyze media (no audio-specific checks)
             metadata := mediaAnalyze(src)
             if (!metadata)
-                continue ; Skip if analysis fails
-            
+            {
+                FileAppend, Error: Failed to analyze metadata for %src%`n, c:\inca\failed.txt, UTF-8
+                FileAppend, %src%`n, c:\inca\failed.txt, UTF-8
+                continue
+            }
+
             ; Extract metadata
             Bitrate := metadata.bitrate
             Width := metadata.width
             Height := metadata.height
             FrameRate := metadata.frame_rate
-            
+
             ; Calculate output resolution (from batch file)
             AspectRatio := Width / Height
             if (AspectRatio >= 1)
@@ -1666,10 +1662,10 @@ Transcode()
                 OutWidth := Round(OutHeight * AspectRatio / 2) * 2
             }
             Resolution := OutWidth ":" OutHeight
-            
+
             ; Calculate GOP (2 seconds at frame rate)
             GOPFrames := Round(2 * FrameRate)
-            
+
             ; Set dynamic bitrate (from batch file)
             MaxBitrate := 6000
             BufSize := 12000
@@ -1694,59 +1690,69 @@ Transcode()
                     }
                 }
             }
-            
+
             ; Determine output path (same as src)
             outputPath := src
-            
+
             ; Determine original file's new name with ttt - prefix
             newOriginalName := fileDir . "\ttt - " . fileName
-            
+
             ; Construct FFmpeg command (single command, let FFmpeg handle audio)
             tempOutput := fileDir . "\temp_" . fileName
             cmd = -y -i "%src%" -c:v libx264 -profile:v high -pix_fmt yuv420p -vf scale=%Resolution% -crf 21 -preset slow -force_key_frames "expr:gte(t,n_forced*2)" -sc_threshold 0 -g %GOPFrames% -keyint_min %GOPFrames% -maxrate %MaxBitrate%k -bufsize %BufSize%k -c:a aac -b:a 128k -ar 48000 -ac 2 -map 0:v:0 -map 0:a? -map 0:s? -c:s copy -f mp4 -movflags +faststart+separate_moof "%tempOutput%"
-            
+
             RunWait %COMSPEC% /c %inca%\cache\apps\ffmpeg.exe %cmd%, , Hide
             if (ErrorLevel != 0)
             {
-                FileAppend, Error: FFmpeg failed for %src% with command: %cmd%`n, c:\inca\debug.txt, UTF-8
-                ; Append src path to c:\inca\failed.txt
+                FileAppend, Error: FFmpeg failed for %src% with command: %cmd%`n, c:\inca\failed.txt, UTF-8
                 FileAppend, %src%`n, c:\inca\failed.txt, UTF-8
                 if (ErrorLevel)
-                    FileAppend, Error: Failed to append %src% to c:\inca\failed.txt`n, c:\inca\debug.txt, UTF-8
-                continue ; Skip to next file
+                    FileAppend, Error: Failed to append %src% to c:\inca\failed.txt`n, c:\inca\failed.txt, UTF-8
+                continue
             }
-            
+
             ; On success: Rename original to ttt - prefix
             FileMove, %src%, %newOriginalName%
             if (ErrorLevel)
             {
-                FileAppend, Error: Failed to rename %src% to %newOriginalName%`n, c:\inca\debug.txt, UTF-8
+                FileAppend, Error: Failed to rename %src% to %newOriginalName%`n, c:\inca\failed.txt, UTF-8
+                FileAppend, %src%`n, c:\inca\failed.txt, UTF-8
                 FileDelete, %tempOutput% ; Clean up temp file
-                continue ; Skip to next file
+                continue
             }
-            
+
             ; Move temp output to original name
             FileMove, %tempOutput%, %outputPath%
             if (ErrorLevel)
             {
-                FileAppend, Error: Failed to move %tempOutput% to %outputPath%`n, c:\inca\debug.txt, UTF-8
-                ; Attempt to restore original file
+                FileAppend, Error: Failed to move %tempOutput% to %outputPath%`n, c:\inca\failed.txt, UTF-8
+                FileAppend, %src%`n, c:\inca\failed.txt, UTF-8
                 FileMove, %newOriginalName%, %src%
-                continue ; Skip to next file
+                continue
             }
-            
+
             ; Apply original timestamps to output file
             if (CreationTime && ModifiedTime)
             {
                 FileSetTime, %ModifiedTime%, %outputPath%, M  ; Set modification time
                 FileSetTime, %CreationTime%, %outputPath%, C  ; Set creation time
                 if (ErrorLevel)
-                    FileAppend, Error: Failed to set timestamps for %outputPath%`n, c:\inca\debug.txt, UTF-8
+                    FileAppend, Error: Failed to set timestamps for %outputPath%`n, c:\inca\failed.txt, UTF-8
             }
-            
-            FileAppend, Success: Transcoded %src% to %outputPath%, original renamed to %newOriginalName%`n, c:\inca\debug.txt, UTF-8
+
+            ; Append to processed.txt only after success
+            if (!InStr(ProcessedList, src . "`n"))
+                FileAppend, %src%`n, c:\inca\processed.txt, UTF-8
+            ; Remove from failed.txt if present
+            if (InStr(FailedList, src . "`n"))
+            {
+                newFailedList := StrReplace(FailedList, src . "`n", "")
+                FileDelete, c:\inca\failed.txt
+                FileAppend, %newFailedList%, c:\inca\failed.txt, UTF-8
+            }
         }
     }
+tooltip
 }
 
 
@@ -1761,7 +1767,7 @@ mediaAnalyze(src)
     ; Debug: Check if command ran successfully
     if (ErrorLevel != 0)
     {
-        FileAppend, Error: ffprobe failed with command: %cmd%`n, c:\inca\debug.txt, UTF-8
+        FileAppend, Error: ffprobe failed with command: %src%`n, c:\inca\failed.txt, UTF-8
         return 0
     }
     
@@ -1769,7 +1775,7 @@ mediaAnalyze(src)
     FileRead, MetaContent, c:\inca\meta.txt
     if (!MetaContent)
     {
-        FileAppend, Error: meta.txt is empty for command: %cmd%`n, c:\inca\debug.txt, UTF-8
+        FileAppend, Error: meta.txt is empty for command: %src%`n, c:\inca\failed.txt, UTF-8
         FileDelete, c:\inca\meta.txt
         return 0
     }
@@ -1805,16 +1811,13 @@ mediaAnalyze(src)
     {
         Bitrate := 0
     }
-    
-    ; Debug: Log metadata (no audio info)
-    FileAppend, Metadata for %src%: Width=%Width%, Height=%Height%, FrameRate=%FrameRate%, Bitrate=%Bitrate%`n, c:\inca\debug.txt, UTF-8
-    
+        
     ; Return metadata object
     if (Width && Height && FrameRate)
     {
         return { "bitrate": Bitrate, "width": Width, "height": Height, "frame_rate": FrameRate }
     }
-    FileAppend, Error: Missing metadata for %src%`n, c:\inca\debug.txt, UTF-8
+    FileAppend, Error: Missing metadata for %src%`n, c:\inca\failed.txt, UTF-8
     return 0
 }
 
@@ -2048,7 +2051,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
 <span id='mySave' class='capButton' onmouseup="if (!longClick) inca('Null')">Save</span></div>`n`n
 <div id='myContent' class='mycontent'>`n<div id='myView' class='myview'>`n`n %mediaList%</div></div>`n`n
 
-<div id='myNav' class='context' oncontextmenu='if (yw > 0.05) event.preventDefault()' onwheel='wheelEvent(event)'>`n
+<div id='myNav' class='context' onwheel='wheelEvent(event)'>`n
   <input id='myTitle' class='title' style='opacity: 1; color: lightsalmon; padding-left: 1.4em'>
   <video id='myPic' muted class='pic'></video>`n
   <a id='mySelect'>Select</a>`n
