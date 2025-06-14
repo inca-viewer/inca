@@ -1,17 +1,22 @@
 // server optimization security
 // maybe add a .bak to m3u, txt files saved
-// process all files over 1280p to seeking format
-// process all h265 back to 264 for firefox etc
 // change folder structure help / apps etc
-
 // server set to 0.0.0.0 from 127.0.0.1
 // firewall wf.msc inbound rule, create ASUS hotspot and connect other machine to it
 // localhost to 192.168.137.1 in ahk
 // safari swipes etc not work and mouse back not work on windows client 
-// remove all ahk key dependencies
+// need server and client ahk ?
+// ffmpeg revision h264_ahf
+// del history
+// 
+// index to inc. transcode
+// search input closer to 'add'
+// txt icon disappears
+// able to browser back
+// skinny cues missing 
 
-// firefox - back intercept  pause needed again
-// intermittent view switching chrome
+
+
 
 
 
@@ -95,7 +100,7 @@
   document.addEventListener('mouseup', mouseUp)
   document.addEventListener('dragend', mouseUp)
   document.addEventListener('mousemove', mouseMove)
-  document.addEventListener('keydown', keyPress)
+  document.addEventListener('keydown', keyDown)
   myPlayer.addEventListener('ended', mediaEnded)
   document.addEventListener('contextmenu', (e) => {if (yw > 0.05) e.preventDefault()})
 
@@ -111,15 +116,16 @@
 
   function mouseUp(e) {
     if (!Click) return							// stop re-entry also if new page load
+    if (overText) myInput.value = window.getSelection().toString()	// click to select text
     clearTimeout(clickTimer)						// longClick timer
     if (!longClick) clickEvent(e)					// process click event
     Click=0; wheel=0; gesture=0}
 
 
-  function keyPress(e) {						// keyboard events
+  function keyDown(e) {						// keyboard events
     if (e.key == 'Backspace' && captions && type != 'document') joinCap()
     else if (e.code == 'ArrowRight' && e.altKey) {lastClick=5; clickEvent(e)}
-    else if (e.code == 'ArrowLeft' && e.altKey) mouseBack()
+    else if (e.key == 'Pause' || (e.code == 'ArrowLeft' && e.altKey)) mouseBack()
     else if (e.code == 'Space' && !overText) togglePause()
     else if (e.key == 'Enter') searchBox()}
 
@@ -258,42 +264,7 @@
       localStorage.mediaY = mediaY.toFixed(0)
       Xref=xpos; Yref=ypos
       positionMedia(0)}
-    else if (y>x && Click==3 && playing && (overMedia || !captions)) {		// zoom myPlayer
-      scaleY += (ypos - Yref) / 500
-      if (scaleY < 0.16) scaleY = 0.16
-      Yref = ypos; scaleX = skinny*scaleY; positionMedia(0); block = 20}
     else if (gesture) myInput.value = window.getSelection().toString()}	// paste selected text to search bar
-
-
-
-  function mouseMove22222(e) {
-    if (innerHeight==outerHeight) {xpos=e.screenX; ypos=e.screenY}	// fullscreen detection/offsets
-    else {xpos=e.clientX; ypos=e.clientY}
-    timout=6
-    setPic()								// in context menu sets thumb sprite
-    mySelected.style.left = xpos +30 +'px'
-    mySelected.style.top = ypos -20 +'px'
-    let x = Math.abs(xpos-Xref)
-    let y = Math.abs(ypos-Yref)
-    if (x+y > 7 && Click && !gesture) {					// gesture (Click + slide)
-      gesture = 1
-      if (captions && !cues.textContent.match(srt.offsetWidth)) editing = index
-      if (!playing && overMedia) sel(index)
-      if (myNav.style.display) {x=myNav.getBoundingClientRect(); Xref=(xpos-x.left)/skinny; Yref=ypos-x.top}}
-    if (!gesture || Click!=1) {gesture=0; return}
-    if (myPic.matches(':hover')) {myNav.style.left = xpos-Xref+"px"; myNav.style.top = ypos-Yref+"px"}  // move context menu
-    else if ((y<x-5 || gesture==2) && playing && (overMedia || !captions)) {	// move myPlayer
-      gesture = 2
-      mediaX += xpos - Xref
-      mediaY += ypos - Yref
-      localStorage.mediaX = mediaX.toFixed(0)
-      localStorage.mediaY = mediaY.toFixed(0)
-      Xref=xpos; Yref=ypos; positionMedia(0)}
-    else if (y>x && playing && !overText) {			// zoom myPlayer
-      scaleY += (ypos - Yref) / 300
-      if (scaleY < 0.16) scaleY = 0.16
-      Xref=xpos; Yref=ypos; positionMedia(0)}
-    else myInput.value = window.getSelection().toString()}	// paste selected text to search bar
 
 
   function wheelEvent(e) {
@@ -354,7 +325,7 @@
       if (getParameters(index) && playing) Play()
       if (!thumbSheet) myPlayer.currentTime = thumb.style.start
       positionMedia(0); setPic(); block=140}
-    else if (dur && !thumbSheet) {					// seek 
+    else if (dur && !thumbSheet && (!overMedia || yw>0.8)) {		// seek 
       timout = 6
       interval = 2
       if (dur < 121) interval = 0.2
@@ -363,6 +334,14 @@
       else if (!wheelUp) myPlayer.currentTime -= interval
       myPlayer.addEventListener('seeked', () => {block=20}, {once: true})
       block=250}
+    else if (!myNav.style.display && overMedia) {			// zoom myPlayer
+      let x=0; let y=0; let z=0
+      z=wheel/2000
+      if (scaleY > 0.7) {x = mediaX-xpos; y = mediaY-ypos}
+      if (wheelUp) {mediaX+=x*z; mediaY+=y*z; scaleY*=(1+z)}
+      else if (!wheelUp) {mediaX-=x*z; mediaY-=y*z; scaleY/=(1+z)}
+      if (scaleY<0.16) scaleY=0.16
+      scaleX=skinny*scaleY; positionMedia(0); block=20}
     wheel=0}
 
 
@@ -579,7 +558,7 @@
       .then(data => {
         let newUrl = `http://localhost:3000${data.url}`
         if (newUrl === window.location.href) window.location.href = newUrl
-        else {window.open(newUrl, '_blank'); if (lastClick != 2) window.close()}})
+        else {window.open(newUrl, '_blank'); if (command != 'SearchBox' && lastClick != 2) window.close()}})
     messages=''}
 
 

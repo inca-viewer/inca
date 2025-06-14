@@ -2,6 +2,9 @@
 	; Browser Based File Explorer - Windows
 	; generates web pages of your media through server.js
 
+	; ahk as client used for osk, ambiance, time, volume, firefox back key
+        ; ahk as server for htm generation, transcode etc, indexing
+
 
 	#NoEnv
 	#UseHook, On
@@ -10,11 +13,11 @@
 	SetKeyDelay, 0
 	SetBatchLines -1
 	SetTitleMatchMode, 2
-	GroupAdd, Browsers, Google Chrome	; supported browsers
-	GroupAdd, Browsers, Mozilla Firefox
+	GroupAdd, Browsers, ahk_exe chrome.exe	; supported browsers
 	GroupAdd, Browsers, ahk_exe brave.exe
 	GroupAdd, Browsers, ahk_exe msedge.exe
 	GroupAdd, Browsers, ahk_exe opera.exe
+	GroupAdd, Browsers, Mozilla Firefox	; firefox blocks back mouse button
 
 	#WinActivateForce			; stops taskbar flashing up
 	#SingleInstance force			; one program instance only
@@ -80,7 +83,6 @@
         Global allFav				; all favorite shortcuts consolidated
         Global showSubs
         Global lastMedia
-        Global lastStatus			; reduce screen update flicker
         Global cur				; window under cursor
         Global desk				; current desktop window
         Global indexSelected			; html media page to index (create thumbs)
@@ -105,6 +107,21 @@
       SetTimer, TimedEvents, 50, 2		; every 50mS primarily for low message latency
       SetTimer, SlowTimer, 500, 2		; ffmpeg processing
       return
+
+
+
+
+^q::
+
+
+
+
+
+
+return
+
+
+
 
 
     ~Esc up::
@@ -132,6 +149,8 @@
       SetTimer, Timer_up, Off
       if (A_TickCount > timer)			; longClick already done ^
         return
+      if (incaTab && browser == "mozilla firefox")	; firefox blocks XButton1
+        send, {Pause}
       IfWinExist, ahk_class OSKMainClass
         WinClose, ahk_class OSKMainClass	; close onscreen keyboard
       else if WinActive("ahk_class Notepad")
@@ -169,14 +188,15 @@
           {
           if (click == "RButton" && gesture)
             {
-if !incaTab
-            loop 10
+            if !incaTab
+             loop 10
               {
               send, {Esc}
               sleep 10
               }
             }
           Gui PopUp:Cancel
+          gui, vol: hide
           break
           }
         if (Abs(x)+Abs(y) > 6)					; gesture started
@@ -397,7 +417,7 @@ if !incaTab
           }
         longClick =
         selected = 
-        PopUp("",0,0,0)
+        Gui PopUp:Cancel
         }
 
 
@@ -751,7 +771,7 @@ if !incaTab
         return
       FileAppend, %Clipboard%, %path%%str%.txt, UTF-8
       IfExist, %path%%str%.txt
-        Popup("Saved . . .",400,0,0)
+        Popup("Saved . . .",800,0,0)
       return
       }
 
@@ -1143,7 +1163,7 @@ if !incaTab
         FileRead, str, %playlist%
         FileDelete, %playlist%
         Loop, Parse, selected, `,
-         if A_LoopField
+      ;   if A_LoopField
           {
           if getMedia(A_LoopField)
           x = %target%`r`n
@@ -1283,8 +1303,15 @@ if !incaTab
           if (volume > 100)
             volume := 100
           SoundSet, volume
-          volRef := Round(volume)
-          ShowStatus()
+          if (volRef != Round(volume))
+            {
+            FormatTime, time,, h:mm
+            volRef := Round(volume)
+            GuiControl, Status:, GuiSta, %time%    %volRef%
+            }
+          yv := A_ScreenHeight - 3
+          xv := A_ScreenWidth * volume/101
+          gui, vol: show, x0 y%yv% w%xv% h1 NA
           }
         if (click=="LButton" && desk==cur && !WinExist("ahk_class Notepad"))
           {
@@ -1300,8 +1327,8 @@ if !incaTab
     PopUp(message, time, x, y)
         {
         MouseGetPos, xp, yp
-        yp -= 101
-        xp -= 65
+        yp -= 132
+        xp -= 99
         if (x || y)
             xp := A_ScreenWidth * x, yp :=  A_ScreenHeight * y
         time := Ceil(time / 20)
@@ -1404,9 +1431,11 @@ if !incaTab
         Gui, background:Show, x0 y0 w%A_ScreenWidth% h%A_ScreenHeight% NA
         WinSet, Transparent, 0
         WinSet, ExStyle, +0x20
+        gui, vol: +lastfound -Caption +ToolWindow +AlwaysOnTop -DPIScale
+        gui, vol: color, ffb6c1
         Gui Status:+lastfound +AlwaysOnTop -Caption +ToolWindow
         Gui Status:Color, Black
-Gui Status:Add, Text, vGuiSta w1200 h35
+        Gui Status:Add, Text, vGuiSta w120 h35
         Gui Status: Show, Hide
         ix := A_screenWidth * Setting("Status Bar")/100
         iy := A_ScreenHeight * 0.95
@@ -1424,33 +1453,6 @@ Gui Status:Add, Text, vGuiSta w1200 h35
         SoundGet, volume
         if (x := Setting("Indexer") * 60000)
           SetTimer, indexer, %x%, -2
-        }
-
-
-    ShowStatus()
-        {
-        FormatTime, time,, h:mm
-soundGet, volume
-        vol := Round(volume)
-        if (volume < 0.95)
-            vol := Round(volume,1)
-        if (volume <= 0)
-            vol =
-        status = %time%    %vol%
-        if (status != lastStatus && (click == "RButton" || Setting("Status Bar")))
-          {
-          lastStatus := status
-          Gui, Status:+lastfound
-          WinSet, TransColor, 0 60
-          Gui, Status:Font, s20 cWhite, Segoe UI
-          GuiControl, Status:Font, GuiSta
-          GuiControl, Status:, GuiSta, %status%
-          }
-        if fullscreen
-          Gui, Status: hide, NA
-        else Gui, Status: Show, NA
-        if (!GetKeyState("RButton", "P") && !Setting("Status Bar"))
-           Gui, Status:hide, NA
         }
 
 
@@ -1607,6 +1609,11 @@ Transcode()
 
             originalSrc := src
 
+if InStr(media, "ttt -")
+  continue
+if (type != "video")
+  continue
+
             ; Check for ttt - prefixed file first
             SplitPath, src, fileName, fileDir
             tttFile := fileDir . "\ttt - " . fileName
@@ -1622,8 +1629,8 @@ Transcode()
                 continue
 
             ; Check if the original file is in failed.txt
-            if (InStr(FailedList, src . "`n"))
-                continue
+  ;          if (InStr(FailedList, src . "`n"))
+  ;              continue
 
             FileGetTime, CreationTime, %src%, C  ; Creation time
             FileGetTime, ModifiedTime, %src%, M  ; Modification time
@@ -1663,8 +1670,7 @@ Transcode()
             }
             Resolution := OutWidth ":" OutHeight
 
-            ; Calculate GOP (2 seconds at frame rate)
-            GOPFrames := Round(2 * FrameRate)
+            GOPFrames := Round(FrameRate)	; every second
 
             ; Set dynamic bitrate (from batch file)
             MaxBitrate := 6000
@@ -1682,11 +1688,13 @@ Transcode()
                     {
                         MaxBitrate := 1500
                         BufSize := 3000
+                        Bitrate := 1000
                     }
                     else
                     {
                         MaxBitrate := 6000
                         BufSize := 12000
+                        Bitrate := 4000
                     }
                 }
             }
@@ -1699,7 +1707,16 @@ Transcode()
 
             ; Construct FFmpeg command (single command, let FFmpeg handle audio)
             tempOutput := fileDir . "\temp_" . fileName
-            cmd = -y -i "%src%" -c:v libx264 -profile:v high -pix_fmt yuv420p -vf scale=%Resolution% -crf 21 -preset slow -force_key_frames "expr:gte(t,n_forced*2)" -sc_threshold 0 -g %GOPFrames% -keyint_min %GOPFrames% -maxrate %MaxBitrate%k -bufsize %BufSize%k -c:a aac -b:a 128k -ar 48000 -ac 2 -map 0:v:0 -map 0:a? -map 0:s? -c:s copy -f mp4 -movflags +faststart+separate_moof "%tempOutput%"
+
+            cmd = -y -i "%src%" -c:v h264_amf -rc cqp -qp_i 22 -qp_p 24 -vf scale=%Resolution% -force_key_frames "expr:gte(t,n_forced*2)" -sc_threshold 0 -g %GOPFrames% -keyint_min %GOPFrames% -maxrate %MaxBitrate%k -bufsize %BufSize%k -c:a aac -b:a 128k -ar 48000 -ac 2 -map 0:v:0 -map 0:a? -map 0:s? -c:s copy -f mp4 -movflags +faststart+separate_moof "%tempOutput%"
+
+  ;  cmd = -y -i "%src%" -c:v h264_amf -profile:v high -vf scale=%Resolution% -b:v %Bitrate%k -force_key_frames "expr:gte(t,n_forced*2)" -g %GOPFrames% -keyint_min %GOPFrames% -maxrate %MaxBitrate%k -bufsize %BufSize%k -c:a aac -b:a 128k -ar 48000 -ac 2 -map 0:v:0 -map 0:a? -map 0:s? -c:s copy -f mp4 -movflags +faststart+separate_moof "%tempOutput%"
+
+  ; cmd = -y -i "%src%" -c:v h264_amf -profile:v high -pix_fmt yuv420p -vf scale=%Resolution% -b:v 6000k -force_key_frames "expr:gte(t,n_forced*2)" -g %GOPFrames% -keyint_min %GOPFrames% -maxrate %MaxBitrate%k -bufsize %BufSize%k -c:a aac -b:a 128k -ar 48000 -ac 2 -map 0:v:0 -map 0:a? -map 0:s? -c:s copy -f mp4 -movflags +faststart+separate_moof "%tempOutput%"
+
+  ; cmd = -y -i "t.mp4" -c:v h264_amf -profile:v high -pix_fmt yuv420p -vf scale=1080:1920 -b:v 3000k -force_key_frames "expr:gte(t,n_forced*2)" -g 120 -keyint_min 120 -maxrate 4500k -bufsize 4500k -c:a aac -b:a 128k -ar 48000 -ac 2 -map 0:v:0 -map 0:a? -map 0:s? -c:s copy -f mp4 -movflags +faststart+separate_moof
+
+   ;         cmd = -y -i "%src%" -c:v h264_amf -rc cqp -qp_i 18 -qp_p 20 -vf scale=%Resolution% -force_key_frames "expr:gte(t,n_forced*2)" -sc_threshold 0 -g %GOPFrames% -keyint_min %GOPFrames% -maxrate %MaxBitrate%k -bufsize %BufSize%k -c:a aac -b:a 128k -ar 48000 -ac 2 -map 0:v:0 -map 0:a? -map 0:s? -c:s copy -f mp4 -movflags +faststart+separate_moof "%tempOutput%"
 
             RunWait %COMSPEC% /c %inca%\cache\apps\ffmpeg.exe %cmd%, , Hide
             if (ErrorLevel != 0)
@@ -1761,7 +1778,7 @@ mediaAnalyze(src)
 {
     FileGetSize, fileSize, %src%, M
     ; Use ffprobe for metadata, no audio-specific checks
-    cmd = C:\inca\cache\apps\ffprobe.exe -v quiet -print_format json -show_streams "%src%"
+    cmd = C:\inca\cache\apps\ffprobe.exe -v quiet -print_format json -show_streams -select_streams v:0 "%src%"
     RunWait, %ComSpec% /c %cmd% > "c:\inca\meta.txt",, Hide
     
     ; Debug: Check if command ran successfully
@@ -2107,7 +2124,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
       FileDelete, %inca%\cache\html\temp.txt
       FileAppend, %folder%.htm, %inca%\cache\html\temp.txt, UTF-8
       sleep, 500
-      PopUp("",0,0,0)
+      Gui PopUp:Cancel
       }
 
 
@@ -2139,7 +2156,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
         FileRead, cues, %inca%\cache\cues\%media%.txt
         if !playlist
           Loop, Parse, allfav, `n, `r
-            if InStr(A_Loopfield, src)
+            if InStr(A_Loopfield, media)
               {
               favicon = &#8203 &#x2764					; favorite heart symbol
               start := StrSplit(A_Loopfield,"|").2
@@ -2263,6 +2280,13 @@ else mediaList = %mediaList%<div id="entry%j%" class='entry' data-params='%type%
         volume -= 0.2
         SoundSet, volume
         }
+      FormatTime, time,, h:mm
+      Gui, Status:+lastfound
+      WinSet, TransColor, 0 60
+      Gui, Status:Font, s20 cWhite, Segoe UI
+      GuiControl, Status:Font, GuiSta
+      GuiControl, Status:, GuiSta, %time%    %volRef%
+      Gui, Status: Show, NA
       return
 
 
@@ -2301,9 +2325,7 @@ else mediaList = %mediaList%<div id="entry%j%" class='entry' data-params='%type%
         else WinSet, Transparent, 0
         if (incaTab && fullscreen)
           WinSet, Top,,ahk_group Browsers
-        ShowStatus()
         return
-
 
 
 
