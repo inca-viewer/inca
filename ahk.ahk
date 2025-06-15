@@ -129,7 +129,7 @@ return
       ExitApp
 
 
-    ~RButton::
+     RButton::
     ~LButton::					; click events
       MouseDown()
       return
@@ -195,6 +195,8 @@ return
               sleep 10
               }
             }
+          if (click == "RButton" && !gesture)
+            send, {RButton}
           Gui PopUp:Cancel
           gui, vol: hide
           break
@@ -522,7 +524,7 @@ return
         IfNotExist, %path%
           {
           reload := 0
-          PopUp("Folder Not Found",600,0,0)
+          PopUp("Not Found",600,0,0)
           return
           }
         str := StrSplit(path,"\")					; cannot use splitPath
@@ -552,12 +554,12 @@ return
       if (sort != command)						; reset old filt if new sort (value still holds new filt)
         filt := 0
       if (command = "Type") {
-        command := value = 1 ? "Video" : value = 2 ? "Image" : value = 3 ? "Audio" : command
+        command := value = 1 ? "Video" : value = 2 ? "Image" : value = 3 ? "Audio" : value = 4 ? "Fav" : command
         if (value || sort != "Type")
           toggles =
         if (value && sort == "Type")
           sort = Alpha
-        value := 0
+value := 0
         }
       else if (InStr(sortList, command) && sort != command)		; changed sort column
           {
@@ -572,7 +574,7 @@ return
         {
         if (command=="Pause")
           reload := 2
-        toggle_list = Reverse Recurse Video Image Audio
+        toggle_list = Reverse Recurse Video Image Audio Fav
         if (sort != command)						; new sort
           {
           if (command != "Reverse" && !InStr(toggle_list, command))
@@ -707,7 +709,6 @@ return
       {
       if !selected
         return
-      popup(Chr(0x2665),0,0,0)
       value := Round(value, 1)
       FileAppend, %src%|%value%`r`n, %inca%\fav\new.m3u, UTF-8
       if (type == "audio" || type == "video")
@@ -715,7 +716,6 @@ return
       if address
         FileAppend, 0.0|scroll|%address%`r`n, %inca%\cache\cues\%media%.txt, UTF-8	; add scroll if srt text exists
       AllFav()										; update consolidated fav list
-      popup(Chr(0x2665),600,0,0)
       }
 
 
@@ -939,6 +939,8 @@ return
             if (med != "image" && InStr(toggles, "Image"))
               return
             if (med != "audio" && InStr(toggles, "Audio"))
+              return
+            if (!InStr(allfav, filen) && InStr(toggles, "Fav"))
               return
             if (count > 999999)
               {
@@ -1372,7 +1374,7 @@ return
         inca := SubStr(inca, 1, InStr(inca, "\", False, -1))
         StringTrimRight, inca, inca, 1
         EnvGet, profile, UserProfile
-        sortList = Shuffle|Alpha|Duration|Date|Size|Type|Reverse|Recurse|Video|Image|Audio|Playlist
+        sortList = Shuffle|Alpha|Duration|Date|Size|Type|Reverse|Recurse|Video|Image|Audio|Fav|Playlist
         IniRead,config,%inca%\ini.ini,Settings,config
         IniRead,searchFolders,%inca%\ini.ini,Settings,searchFolders
         IniRead,indexFolders,%inca%\ini.ini,Settings,indexFolders
@@ -1710,14 +1712,6 @@ if (type != "video")
 
             cmd = -y -i "%src%" -c:v h264_amf -rc cqp -qp_i 22 -qp_p 24 -vf scale=%Resolution% -force_key_frames "expr:gte(t,n_forced*2)" -sc_threshold 0 -g %GOPFrames% -keyint_min %GOPFrames% -maxrate %MaxBitrate%k -bufsize %BufSize%k -c:a aac -b:a 128k -ar 48000 -ac 2 -map 0:v:0 -map 0:a? -map 0:s? -c:s copy -f mp4 -movflags +faststart+separate_moof "%tempOutput%"
 
-  ;  cmd = -y -i "%src%" -c:v h264_amf -profile:v high -vf scale=%Resolution% -b:v %Bitrate%k -force_key_frames "expr:gte(t,n_forced*2)" -g %GOPFrames% -keyint_min %GOPFrames% -maxrate %MaxBitrate%k -bufsize %BufSize%k -c:a aac -b:a 128k -ar 48000 -ac 2 -map 0:v:0 -map 0:a? -map 0:s? -c:s copy -f mp4 -movflags +faststart+separate_moof "%tempOutput%"
-
-  ; cmd = -y -i "%src%" -c:v h264_amf -profile:v high -pix_fmt yuv420p -vf scale=%Resolution% -b:v 6000k -force_key_frames "expr:gte(t,n_forced*2)" -g %GOPFrames% -keyint_min %GOPFrames% -maxrate %MaxBitrate%k -bufsize %BufSize%k -c:a aac -b:a 128k -ar 48000 -ac 2 -map 0:v:0 -map 0:a? -map 0:s? -c:s copy -f mp4 -movflags +faststart+separate_moof "%tempOutput%"
-
-  ; cmd = -y -i "t.mp4" -c:v h264_amf -profile:v high -pix_fmt yuv420p -vf scale=1080:1920 -b:v 3000k -force_key_frames "expr:gte(t,n_forced*2)" -g 120 -keyint_min 120 -maxrate 4500k -bufsize 4500k -c:a aac -b:a 128k -ar 48000 -ac 2 -map 0:v:0 -map 0:a? -map 0:s? -c:s copy -f mp4 -movflags +faststart+separate_moof
-
-   ;         cmd = -y -i "%src%" -c:v h264_amf -rc cqp -qp_i 18 -qp_p 20 -vf scale=%Resolution% -force_key_frames "expr:gte(t,n_forced*2)" -sc_threshold 0 -g %GOPFrames% -keyint_min %GOPFrames% -maxrate %MaxBitrate%k -bufsize %BufSize%k -c:a aac -b:a 128k -ar 48000 -ac 2 -map 0:v:0 -map 0:a? -map 0:s? -c:s copy -f mp4 -movflags +faststart+separate_moof "%tempOutput%"
-
             RunWait %COMSPEC% /c %inca%\cache\apps\ffmpeg.exe %cmd%, , Hide
             if (ErrorLevel != 0)
             {
@@ -1737,6 +1731,8 @@ if (type != "video")
                 FileDelete, %tempOutput% ; Clean up temp file
                 continue
             }
+
+FileRecycle, %newOriginalName%
 
             ; Move temp output to original name
             FileMove, %tempOutput%, %outputPath%
@@ -1903,7 +1899,9 @@ mediaAnalyze(src)
           if InStr(toggles, A_LoopField)
             x%A_Index% = color:red
           }
-        if x11								; filter videos, images audio from ribbon
+        if x12								; filter videos, images audio from ribbon
+          type = Fav
+        else if x11
           type = Audio
         else if x10
           type = Image
@@ -2041,7 +2039,7 @@ mediaAnalyze(src)
     if (searchTerm && !InStr(search, x))
       add = Add
     if subfolders
-      subs = sub
+      subs = Sub
     StringReplace, folder_s, folder, `', &apos, All				; htm cannot pass '
     if 1*Setting("Pause")
       paused := 1
@@ -2071,6 +2069,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
 <div id='myNav' class='context' onwheel='wheelEvent(event)'>`n
   <input id='myTitle' class='title' style='opacity: 1; color: lightsalmon; padding-left: 1.4em'>
   <video id='myPic' muted class='pic'></video>`n
+  <a id='myFavorite'>Fav</a>`n
   <a id='mySelect'>Select</a>`n
   <a id='myMute' onmousedown="muted^=1; inca('Mute', muted); myPlayer.muted=muted; myPlayer.volume=0.1">Mute</a>`n
   <a id='mySkinny'></a>`n
@@ -2092,10 +2091,10 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
     <a id='myMusic' style='max-width:4em; %x22%' onmousedown="inca('Path','','','music|1')" onmouseover="setTimeout(function() {if(myMusic.matches(':hover'))Music.scrollIntoView()},200)">&#x266B;</a>`n
     <a id='myFav' style='%x23%' onmousedown="inca('Path','','','fav|1')" onmouseover="setTimeout(function() {if(myFav.matches(':hover'))Fav.scrollIntoView()},200)">&#10084;</a>`n
     <a id='myFol' style='%x21%' onmousedown="inca('Path','','','fol|1')" onmouseover="setTimeout(function() {if(myFol.matches(':hover'))Fol.scrollIntoView()},200)">&#x1F4BB;&#xFE0E;</a>`n
-    <a id='mySub' style='max-width:2em; font-size:0.7em; %x8%' onmousedown="inca('Recurse')" onmouseover="setTimeout(function() {if(mySub.matches(':hover'))Sub.scrollIntoView()},200)">%subs%</a>`n
-    <a id='mySearch' style='%x20%' onwheel="wheelEvent(event)" onmousedown="inca('SearchBox','','',myInput.value)" onmouseover="setTimeout(function() {if(mySearch.matches(':hover'))filter(id)},140)">&#x1F50D;&#xFE0E;</a>`n
-    <a id='Add' style='font-size:0.8em; font-variant-caps:petite-caps' onmousedown="inca('Add','','',myInput.value)">%add%</a>`n
+    <a id='mySub' style='max-width:3.5em; text-align:left; font-size:0.8em; font-variant-caps:petite-caps; %x8%' onmousedown="inca('Recurse')" onmouseover="setTimeout(function() {if(mySub.matches(':hover'))Sub.scrollIntoView()},200)">%subs%</a>`n
+    <a id='mySearch' style='width:2em; text-align:left; %x20%' onwheel="wheelEvent(event)" onmousedown="inca('SearchBox','','',myInput.value)" onmouseover="setTimeout(function() {if(mySearch.matches(':hover'))filter(id)},140)">&#x1F50D;&#xFE0E;</a>`n
     <input id='myInput' class='searchbox' type='search' autocomplete='off' value='%st%' onmouseover="overText=1; this.focus(); if(!Add.innerHTML) {this.value=''; this.value='%lastSearch%'}" oninput="Add.innerHTML='Add'" onmouseout='overText=0'>
+    <a id='Add' style='max-width:3em; font-size:0.8em; font-variant-caps:petite-caps' onmousedown="inca('Add','','',myInput.value)">%add%</a>`n
     <a id="myPage" onmousedown="inca('Page', page)" onwheel="wheelEvent(event)"></a>
     </div>`n`n
 

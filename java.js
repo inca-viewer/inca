@@ -6,17 +6,9 @@
 // localhost to 192.168.137.1 in ahk
 // safari swipes etc not work and mouse back not work on windows client 
 // need server and client ahk ?
-// ffmpeg revision h264_ahf
 // del history
 // 
 // index to inc. transcode
-// search input closer to 'add'
-// txt icon disappears
-// able to browser back
-// skinny cues missing 
-
-
-
 
 
 
@@ -141,6 +133,7 @@
     if (id == 'myMute' || id == 'mySave' || id == 'myInput' || id == 'myDelete' || id == 'myIndex') return
     if (id == 'myForward') {newCap(0.4); return}					// move caption forward in time
     if (id == 'myBack') {newCap(-0.4); return}
+    if (id == 'myFavorite') {addFavorite(); return}
     if (id == 'myPitch') {pitch=0; localStorage.setItem('pitch'+folder, 0); return}
     if (id == 'myMore') {
       if (ix == 0) {inca('Settings'); return}
@@ -151,7 +144,6 @@
       selected = ''; selectAll(); selectAll()
       return}
     if (lastClick == 3) {								// Right click context
-      if (longClick) {addFavorite(); return}
       if (yw < 0.06) return
       if (!myNav.style.display) {context(e); return}}
     if (lastClick == 4) {mouseBack(); return}						// Back Click
@@ -281,11 +273,11 @@
     else if (id=='myPage') {						// htm page
       if (wheelUp && page<pages) page++
       else if (!wheelUp && page>1) page--}
-    else if (wheel > 40 && (id=='myType'||id=='myAlpha'||id=='myDate'||id=='mySize'||id=='myDuration'||id=='mySearch')) {
+    else if (id=='myType'||id=='myAlpha'||id=='myDate'||id=='mySize'||id=='myDuration'||id=='mySearch') {
       if (wheelUp) filt++ 
       else if (filt) filt--						// filter
       if ((id=='myAlpha' || id=='mySearch') && filt > 25) filt=25
-      if (id=='myType' && filt > 3) filt=3
+      if (id=='myType' && filt > 4) filt=4
       filter(id)}
     else if (id =='mySpeed') {						// rate
       if (wheelUp) {rate -= 0.01} else rate += 0.01
@@ -384,6 +376,8 @@
       mySkinny.style.color = skinny === 1 ? null : 'red'
       mySpeed.innerHTML = rate === 1 ? 'Speed' : `Speed ${rate.toFixed(2)}`}
     else myFlip.innerHTML = mySelect.style.outline = null
+    if (favicon.innerHTML.match('\u2764')) myFavorite.innerHTML='Fav &#x2764'
+    else myFavorite.innerHTML='Fav'
     if (!seekBar()) myProgress.style.height = mySeekbar.style.height = null
     let qty = selected.split(',').length - 1 || 1;
     if (myTitle.value || selected) {myDelete.innerHTML='Delete ' + qty; myIndex.innerHTML='Index ' + qty}
@@ -433,7 +427,7 @@
     myPlayer.style.transition = time + 's'
     skinny = thumb.style.skinny || skinny
     let zoom = scaleY
-    if (thumbSheet) zoom = scaleY * 1.6
+    if (thumbSheet) zoom = scaleY * 2
     myPlayer.style.transform = "scale("+skinny*zoom+","+zoom+")"}
 
 
@@ -513,7 +507,7 @@
     if (id == 'mySearch') {el.scrollIntoView(); return}			// search letter in top menu
     let units = ''; let x = filt					// eg 30 minutes, 2 months, alpha 'A'
     el = document.getElementById(id)
-    if (id == 'myType') {x=''; units='Audio'; if (filt==1) {units='Video'} else if (filt==2) units='Image'}
+    if (id == 'myType') {x = ''; units = { 1: 'Video', 2: 'Image', 3: 'Audio', 4: 'Fav' }[filt] || units}
     if (id == 'myAlpha') x = ch
     if (id == 'mySize') {x *= 10; units = " Mb"}
     if (id == 'myDate') units = " months"
@@ -556,7 +550,7 @@
     fetch('http://localhost:3000/generate-html', {method: 'POST', headers: {'Content-Type': 'text/plain'}, body: messages})
       .then(response => {if (response.status === 204) {return} return response.json()})
       .then(data => {
-        let newUrl = `http://localhost:3000${data.url}`
+        let newUrl = encodeURI(`http://localhost:3000${data.url}`)
         if (newUrl === window.location.href) window.location.href = newUrl
         else {window.open(newUrl, '_blank'); if (command != 'SearchBox' && lastClick != 2) window.close()}})
     messages=''}
@@ -846,7 +840,8 @@
       positionMedia(0)
       positionMedia(3)							// fade new media in
       myPlayer.style.opacity = 1}
-    else if (!tm && myPlayer.src != thumb.src) {setThumb(); myPlayer.currentTime=thumb.currentTime}
+    else if (!tm && myPlayer.src != thumb.src) {
+      setThumb(); myPlayer.currentTime=thumb.currentTime; myPlayer.poster=thumb.poster}
     positionMedia(0)}
 
 
