@@ -58,7 +58,6 @@
         Global click				; mouse click type
         Global timer				; click down timer
         Global listView := 0			; list or thumb view
-        Global volRef := 2
         Global playlist				; playlist - full path
 	Global xpos				; current mouse position
 	Global ypos
@@ -92,6 +91,7 @@
         Global dur				; media duration
         Global mute				; global mute
         Global start := 0			; default start time
+        Global ctime
 
 
     main:
@@ -112,8 +112,6 @@
 
 
 ^q::
-
-
 
 
 
@@ -142,8 +140,9 @@ return
       SetTimer, Timer_up, -350
       return
     Timer_up:					; long back key press
-      IfWinNotActive, ahk_group Browsers
-        send, !{F4}				; close app
+      IfWinActive, ahk_group Browsers
+        send, ^w				; close tab
+      else send, !{F4}				; or close app
       return
     XButton1 up::
       SetTimer, Timer_up, Off
@@ -186,15 +185,6 @@ return
         y -= ypos
         if (!GetKeyState("LButton", "P") && !GetKeyState("RButton", "P"))
           {
-          if (click == "RButton" && gesture)
-            {
-            if !incaTab
-             loop 10
-              {
-              send, {Esc}
-              sleep 10
-              }
-            }
           if (click == "RButton" && !gesture)
             send, {RButton}
           Gui PopUp:Cancel
@@ -214,7 +204,7 @@ return
           }
         if (!gesture && longClick)
           {
-          if (click=="LButton" && wasCursor == "IBeam")
+          if (click=="LButton" && wasCursor == "IBeam" && !incaTab)
             Osk()						; onscreen keyboard
           break
           }
@@ -224,6 +214,7 @@ return
 
     ProcessMessage()							; messages from java/browser
         {
+        PopUp("...",0,0,0)
         if (command == "Null")						; used as trigger to save text editing - see Java inca()
           return
         else if (command == "saveText")					; save text snip
@@ -240,6 +231,8 @@ return
           Join()
         else if (command == "Vibe")					; create srt caption file
           Transcode()
+        else if (command == "Osk")					; create srt caption file
+          Osk()
         else if (command == "Add" && address)
           Add()
         else if (command == "History")					; maintain play history
@@ -899,7 +892,7 @@ value := 0
               if (A_LoopFileSize > 0)					; for when files are still downloading
                 if spool(A_LoopFileFullPath, A_Index, 0)
                   break 2
-                else if (show==1 && ((listSize<10000 && !Mod(listSize,1000)) || !Mod(listSize,10000)))
+                else if (show==1 && ((listSize<10000 && !Mod(listSize,100)) || !Mod(listSize,10000)))
                   PopUp(listSize,0,0,0)
         StringTrimRight, list, list, 2					; remove end `r`n
         if (InStr(toggles, "Reverse") && sort != "Date" && sort != "Playlist")
@@ -934,15 +927,13 @@ value := 0
         SplitPath, input,,,ex,filen
         if (med := DecodeExt(ex))
             {
-            if (med != "video" && InStr(toggles, "Video"))
+            if (InStr(toggles, "Video") && med != "video")
               return
-            if (med != "image" && InStr(toggles, "Image"))
+            if (InStr(toggles, "Image") && med != "image")
               return
-            if (med != "audio" && InStr(toggles, "Audio"))
+            if (InStr(toggles, "Audio") && med != "audio")
               return
-            if (!InStr(allfav, filen) && InStr(toggles, "Fav"))
-              return
-            if (count > 999999)
+            if (count > 250000)
               {
               PopUp("folder too big",800,0,0)
               return 1
@@ -995,6 +986,8 @@ value := 0
               else if (InStr(toggles, "Reverse") && filt && listId/60 > filt)
                 return
               }
+            if (InStr(toggles, "Fav") && !InStr(allfav, filen))
+              return
             listSize += 1
             list = %list%%listId%/%input%/%med%/%start%`r`n
             }
@@ -1165,9 +1158,8 @@ value := 0
         FileRead, str, %playlist%
         FileDelete, %playlist%
         Loop, Parse, selected, `,
-      ;   if A_LoopField
           {
-          if getMedia(A_LoopField)
+          getMedia(A_LoopField)
           x = %target%`r`n
           str := StrReplace(str, x,,,1)					; mark entry as deleted
           }
@@ -1290,25 +1282,25 @@ value := 0
         {
         if (click == "RButton" && Abs(x) > Abs(y))
           {
+          volRef := volume
           if x<=0
             gesture := -1
           x*=1.4
-          Static last_volume					; master volume 
-          last_volume := volume
           if volume < 10
             x /= 2						; finer adj at low volume
           if x < 100						; stop any big volume jumps
             volume += x/20
-          SoundGet, current
           if (volume < 0)
             volume := 0
           if (volume > 100)
-            volume := 100
+            volume := 99
           SoundSet, volume
           if (volRef != Round(volume))
             {
             FormatTime, time,, h:mm
             volRef := Round(volume)
+            if !volRef
+              volRef=
             GuiControl, Status:, GuiSta, %time%    %volRef%
             }
           yv := A_ScreenHeight - 3
@@ -1600,10 +1592,12 @@ value := 0
 
 Transcode()
 {
+
+ FileRead, ProcessedList, *t c:\inca\processed.txt
+ FileRead, FailedList, *t c:\inca\failed.txt
+
     Loop, Parse, selected, `,
     {
-        FileRead, ProcessedList, *t c:\inca\processed.txt
-        FileRead, FailedList, *t c:\inca\failed.txt
 
         if getMedia(A_LoopField)
         {
@@ -1973,22 +1967,6 @@ mediaAnalyze(src)
         if container
           fill(container)
 
-        container = <div id='Fol' style='font-size:2em; color:pink; text-align:center'>&#x1F4BB;&#xFE0E;</div>`n
-        container := fill(container)
-        Loop, Parse, fol, `|							; add folder list to top panel
-          if A_LoopField
-            {
-            StringTrimRight, y, A_Loopfield, 1
-            SplitPath, y,,,,x
-            if (x == folder)
-              container = %container%<c class='p2' style='color:pink' onmousedown="inca('Path','','','fol|%A_Index%')">%x%</c>`n
-            else container = %container%<c class='p2' onmousedown="inca('Path',index,'','fol|%A_Index%')">%x%</c>`n
-            if !Mod(A_Index,4)
-              container := fill(container)
-            }
-        if container
-          fill(container)
-
         if subfolders								; add list to top panel element
           {
           container = <div id='Sub' style='font-size:2em; color:pink; text-align:center'>&#x1F4BB;&#xFE0E;</div>`n
@@ -2008,6 +1986,22 @@ mediaAnalyze(src)
           if (subfolders && container)
             fill(container)
           }
+
+        container = <div id='Fol' style='font-size:2em; color:pink; text-align:center'>&#x1F4BB;&#xFE0E;</div>`n
+        container := fill(container)
+        Loop, Parse, fol, `|							; add folder list to top panel
+          if A_LoopField
+            {
+            StringTrimRight, y, A_Loopfield, 1
+            SplitPath, y,,,,x
+            if (x == folder)
+              container = %container%<c class='p2' style='color:pink' onmousedown="inca('Path','','','fol|%A_Index%')">%x%</c>`n
+            else container = %container%<c class='p2' onmousedown="inca('Path',index,'','fol|%A_Index%')">%x%</c>`n
+            if !Mod(A_Index,4)
+              container := fill(container)
+            }
+        if container
+          fill(container)
 
         ch = 
         count := 0
@@ -2039,7 +2033,7 @@ mediaAnalyze(src)
     if (searchTerm && !InStr(search, x))
       add = Add
     if subfolders
-      subs = Sub
+      subs = sub
     StringReplace, folder_s, folder, `', &apos, All				; htm cannot pass '
     if 1*Setting("Pause")
       paused := 1
@@ -2069,8 +2063,8 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
 <div id='myNav' class='context' onwheel='wheelEvent(event)'>`n
   <input id='myTitle' class='title' style='opacity: 1; color: lightsalmon; padding-left: 1.4em'>
   <video id='myPic' muted class='pic'></video>`n
-  <a id='myFavorite'>Fav</a>`n
   <a id='mySelect'>Select</a>`n
+  <a id='myFavorite'>Fav</a>`n
   <a id='myMute' onmousedown="muted^=1; inca('Mute', muted); myPlayer.muted=muted; myPlayer.volume=0.1">Mute</a>`n
   <a id='mySkinny'></a>`n
   <a id='mySpeed'></a>`n
@@ -2090,17 +2084,17 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
     <a style='color:red; font-weight:bold'>%listSize%</a>`n
     <a id='myMusic' style='max-width:4em; %x22%' onmousedown="inca('Path','','','music|1')" onmouseover="setTimeout(function() {if(myMusic.matches(':hover'))Music.scrollIntoView()},200)">&#x266B;</a>`n
     <a id='myFav' style='%x23%' onmousedown="inca('Path','','','fav|1')" onmouseover="setTimeout(function() {if(myFav.matches(':hover'))Fav.scrollIntoView()},200)">&#10084;</a>`n
+    <a id='mySub' style='max-width:3em; font-size:0.7em; %x8%' onmousedown="inca('Recurse')" onmouseover="setTimeout(function() {if(mySub.matches(':hover'))Sub.scrollIntoView()},200)">%subs%</a>`n
     <a id='myFol' style='%x21%' onmousedown="inca('Path','','','fol|1')" onmouseover="setTimeout(function() {if(myFol.matches(':hover'))Fol.scrollIntoView()},200)">&#x1F4BB;&#xFE0E;</a>`n
-    <a id='mySub' style='max-width:3.5em; text-align:left; font-size:0.8em; font-variant-caps:petite-caps; %x8%' onmousedown="inca('Recurse')" onmouseover="setTimeout(function() {if(mySub.matches(':hover'))Sub.scrollIntoView()},200)">%subs%</a>`n
-    <a id='mySearch' style='width:2em; text-align:left; %x20%' onwheel="wheelEvent(event)" onmousedown="inca('SearchBox','','',myInput.value)" onmouseover="setTimeout(function() {if(mySearch.matches(':hover'))filter(id)},140)">&#x1F50D;&#xFE0E;</a>`n
-    <input id='myInput' class='searchbox' type='search' autocomplete='off' value='%st%' onmouseover="overText=1; this.focus(); if(!Add.innerHTML) {this.value=''; this.value='%lastSearch%'}" oninput="Add.innerHTML='Add'" onmouseout='overText=0'>
+    <a id='mySearch' style='%x20%' onwheel="wheelEvent(event)" onmousedown="inca('SearchBox','','',myInput.value)" onmouseover="setTimeout(function() {if(mySearch.matches(':hover'))filter(id)},140)">&#x1F50D;&#xFE0E;</a>`n
+    <input id='myInput' class='searchbox' type='search' autocomplete='off' value='%st%' onmouseover="overText=1; this.focus()" oninput="Add.innerHTML='Add'" onmouseout='overText=0'>
     <a id='Add' style='max-width:3em; font-size:0.8em; font-variant-caps:petite-caps' onmousedown="inca('Add','','',myInput.value)">%add%</a>`n
     <a id="myPage" onmousedown="inca('Page', page)" onwheel="wheelEvent(event)"></a>
     </div>`n`n
 
   <div id='myRibbon2' class='ribbon' style='background:#1b1814' onwheel="wheelEvent(event)">`n
     <a id='myMore' onmouseout='ix=0'>&hellip;</a>
-    <a id='myPlaylist' style='%x12%' onmousedown="inca('Playlist')">%pl%</a>`n
+    <a id='myPlaylist' style='%x13%' onmousedown="inca('Playlist')">%pl%</a>`n
     <a id='myDate' style='%x4%' onmousedown="inca('Date', filt)">Date</a>`n
     <a id='myDuration' style='%x3%' onmousedown="inca('Duration', filt)"> Duration</a>`n
     <a id='myShuffle' style='%x1%' onmousedown="inca('Shuffle')">Shuffle</a>`n
@@ -2261,7 +2255,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
 caption = <div id='srt%j%' class='caption' onmouseover='overText=1' onmouseout='overText=0'`n oninput="editing=index; playCap(event.target.id, 1)">%text%</div>
 
 if listView
-  mediaList = %mediaList%%fold%<table onmouseover='overThumb(%j%)'`n onmouseout="thumb%j%.style.opacity=0">`n <tr id='entry%j%' data-params='%type%,%start%,%dur%,%size%' onmouseenter='if (gesture) sel(%j%)'>`n <td>%ext%`n <video id='thumb%j%' class='thumb2' %src%`n %poster%`n preload=%preload% muted loop type="video/mp4"></video></td>`n <td>%size%</td>`n <td style='min-width: 6em'>%durT%</td>`n <td>%date%</td>`n  <td><div id='myFavicon%j%' class='favicon' style='position:absolute; translate:1.2em -0.8em'>%favicon%</div></td>`n <td style='width: 70vw'><input id="title%j%" class='title' style='opacity: 1; transition: 0.6s' onmouseover='overText=1' autocomplete='off' onmouseout='overText=0; Click=0' type='search' value='%media_s%'`n oninput="renamebox=this.value; lastMedia=%j%"></td>`n %fo%</tr>`n %caption%<span id='cues%j%' style='display: none'>%cues%</span></table>`n`n
+  mediaList = %mediaList%%fold%<table onmouseover='overThumb(%j%)'`n onmouseout="thumb%j%.style.opacity=0">`n <tr id='entry%j%' data-params='%type%,%start%,%dur%,%size%' onmouseenter='if (gesture) sel(%j%)'>`n <td>%ext%`n <video id='thumb%j%' class='thumb2' %src%`n %poster%`n preload=%preload% muted loop type="video/mp4"></video></td>`n <td>%size%</td>`n <td style='min-width: 6em'>%durT%</td>`n <td>%date%</td>`n  <td><div id='myFavicon%j%' class='favicon' style='position:absolute; text-align: left; translate:1.2em -0.8em'>%favicon%</div></td>`n <td style='width: 70vw'><input id="title%j%" class='title' style='opacity: 1; transition: 0.6s' onmouseover='overText=1' autocomplete='off' onmouseout='overText=0; Click=0' type='search' value='%media_s%'`n oninput="renamebox=this.value; lastMedia=%j%"></td>`n %fo%</tr>`n %caption%<span id='cues%j%' style='display: none'>%cues%</span></table>`n`n
 
 else mediaList = %mediaList%<div id="entry%j%" class='entry' data-params='%type%,%start%,%dur%,%size%'>`n <input id='title%j%' class='title' style='text-align: center' type='search'`n value='%media_s%'`n oninput="renamebox=this.value; lastMedia=%j%"`n onmouseover="overText=1; if((x=this.value.length/2) > view) this.style.width=x+'em'"`n onmouseout="overText=0; this.style.width='100`%'">`n <video id="thumb%j%" class='thumb' onmouseenter="overThumb(%j%); if (gesture) sel(%j%)"`n onmouseup='if(gesture)getParameters(%j%)' onmouseout='this.pause()' %src%`n %poster%`n preload=%preload% loop muted type='video/mp4'></video>`n <span id='myFavicon%j%' class='favicon' onmouseenter='overThumb(%j%)'>%favicon%</span>`n %noIndex%`n <span id='cues%j%' style='display: none'>%cues%</span></div>`n %caption%`n`n
 }
@@ -2279,13 +2273,20 @@ else mediaList = %mediaList%<div id="entry%j%" class='entry' data-params='%type%
         volume -= 0.2
         SoundSet, volume
         }
+      volRef := Round(volume)
+      if !volRef
+        volRef =
       FormatTime, time,, h:mm
-      Gui, Status:+lastfound
-      WinSet, TransColor, 0 60
-      Gui, Status:Font, s20 cWhite, Segoe UI
-      GuiControl, Status:Font, GuiSta
-      GuiControl, Status:, GuiSta, %time%    %volRef%
-      Gui, Status: Show, NA
+      if (time != ctime)
+        {
+        ctime := time
+        Gui, Status:+lastfound
+        WinSet, TransColor, 0 60
+        Gui, Status:Font, s20 cWhite, Segoe UI
+        GuiControl, Status:Font, GuiSta
+        GuiControl, Status:, GuiSta, %time%    %volRef%
+        Gui, Status: Show, NA
+        }
       return
 
 

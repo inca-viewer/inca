@@ -5,10 +5,9 @@
 // firewall wf.msc inbound rule, create ASUS hotspot and connect other machine to it
 // localhost to 192.168.137.1 in ahk
 // safari swipes etc not work and mouse back not work on windows client 
-// need server and client ahk ?
-// del history
-// 
-// index to inc. transcode
+// server lockups
+// can favs and processed remove paths entirely
+
 
 
 
@@ -94,7 +93,7 @@
   document.addEventListener('mousemove', mouseMove)
   document.addEventListener('keydown', keyDown)
   myPlayer.addEventListener('ended', mediaEnded)
-  document.addEventListener('contextmenu', (e) => {if (yw > 0.05) e.preventDefault()})
+  document.addEventListener('contextmenu', (e) => {if (yw > 0.05 && !overText) e.preventDefault()})
 
 
   function mouseDown(e) {
@@ -108,7 +107,8 @@
 
   function mouseUp(e) {
     if (!Click) return							// stop re-entry also if new page load
-    if (overText) myInput.value = window.getSelection().toString()	// click to select text
+    if (!myInput.matches(':hover'))
+      myInput.value = window.getSelection().toString() || myInput.value	// click to select text
     clearTimeout(clickTimer)						// longClick timer
     if (!longClick) clickEvent(e)					// process click event
     Click=0; wheel=0; gesture=0}
@@ -125,12 +125,11 @@
   function clickEvent(e) {
     let id = e.target.id 								// id under cursor
     if (gesture || id == 'myFlip') return
-    if (longClick && overText && lastClick==1) {myPlayer.pause(); longClick=0}		// osk triggered
     if (!gesture && longClick == 1 && !playing && playlist && selected && overMedia) {inca('Move', overMedia); return}
     if (playing && capText && (!capText.innerHTML || capText.innerHTML=="<br>")) {capTime.remove(); capText.remove(); capText=''; return}
-    if (longClick==1 && (favicon.matches(':hover') || id=='myCap' || id=='myCue' || type=='document')) {
+    if (longClick==1 && !gesture && !overText && (favicon.matches(':hover') || id=='myCap' || id=='myCue' || type=='document')) {
       Click=0; inca('Notepad',id,index); return}
-    if (id == 'myMute' || id == 'mySave' || id == 'myInput' || id == 'myDelete' || id == 'myIndex') return
+    if (id == 'myMute' || id == 'mySave' || id == 'myDelete' || id == 'myIndex') return
     if (id == 'myForward') {newCap(0.4); return}					// move caption forward in time
     if (id == 'myBack') {newCap(-0.4); return}
     if (id == 'myFavorite') {addFavorite(); return}
@@ -144,7 +143,7 @@
       selected = ''; selectAll(); selectAll()
       return}
     if (lastClick == 3) {								// Right click context
-      if (yw < 0.06) return
+      if (yw < 0.06 || overText) return
       if (!myNav.style.display) {context(e); return}}
     if (lastClick == 4) {mouseBack(); return}						// Back Click
     if (lastClick == 2) {  								// Forward click
@@ -157,6 +156,7 @@
         if (id == 'mySelect') {if (myTitle.value) {sel(index)} else selectAll(); return}
         if (id == 'mySkinny') {updateCue('skinny',1); return}
         if (id == 'mySpeed') {updateCue('rate',1); return}}
+      else if (overText) {searchBox(); return}
       if (id == title.id) {thumb.currentTime=thumb.style.start; return}
       if (!playing && !overMedia && !myNav.style.display) return
       if (playing && overText) {playCap(id); return}					// play at caption
@@ -255,8 +255,7 @@
       localStorage.mediaX = mediaX.toFixed(0)
       localStorage.mediaY = mediaY.toFixed(0)
       Xref=xpos; Yref=ypos
-      positionMedia(0)}
-    else if (gesture) myInput.value = window.getSelection().toString()}	// paste selected text to search bar
+      positionMedia(0)}}
 
 
   function wheelEvent(e) {
@@ -276,7 +275,7 @@
     else if (id=='myType'||id=='myAlpha'||id=='myDate'||id=='mySize'||id=='myDuration'||id=='mySearch') {
       if (wheelUp) filt++ 
       else if (filt) filt--						// filter
-      if ((id=='myAlpha' || id=='mySearch') && filt > 25) filt=25
+      if ((id=='myAlpha' || id=='mySearch') && filt > 26) filt=26
       if (id=='myType' && filt > 4) filt=4
       filter(id)}
     else if (id =='mySpeed') {						// rate
@@ -319,8 +318,9 @@
       positionMedia(0); setPic(); block=140}
     else if (dur && !thumbSheet && (!overMedia || yw>0.8)) {		// seek 
       timout = 6
-      interval = 2
-      if (dur < 121) interval = 0.2
+      interval = 4
+      if (wheel < 99) interval = 0.2
+      if (dur < 121) interval = 0.1
       if (myPlayer.paused) interval = 0.0333
       if (wheelUp) myPlayer.currentTime += interval
       else if (!wheelUp) myPlayer.currentTime -= interval
@@ -391,12 +391,12 @@
     else if (myPlayer.volume < 0.8) {myPlayer.volume *= 1.25} else myPlayer.volume = 1	// fade sound in/out
     if (captions && el == myPlayer) {
       if (playing) {top = rect.bottom} else top = 300
-      capMenu.style.top = top + 24 + srt.offsetHeight + 'px'; capMenu.style.left = mediaX -85 + 'px'
-      srt.style.top = top + 'px'; srt.style.left = mediaX-srt.offsetWidth/2 + 'px'}
+      capMenu.style.top = top + 24 + srt.offsetHeight + 'px'; capMenu.style.left = mediaX - 85 + 'px'
+    srt.style.top = top + 'px'; srt.style.left = mediaX - Xoff - srt.offsetWidth / 2 + 'px'}
     if (playing) {
       positionMedia(0)
       myMask.style.pointerEvents='auto'
-      if (playlist.match('/inca/music/')) myMask.style.opacity=0.7
+      if (playlist.match('/inca/music/')) myMask.style.opacity = 0.7
       else myMask.style.opacity = 1
       if (!myNav.style.display && !thumbSheet) thumb.currentTime = myPlayer.currentTime
       if (type!='image' && !dur) dur = myPlayer.duration		// just in case
@@ -415,9 +415,22 @@
 
 
   function positionMedia(time) {					// position myPlayer in window
-    if (screenX) {							// position top menu in fullscreen
-      Zoff=outerHeight-innerHeight; myPanel.style.top = '50px'; myView.style.top = '200px'; z1.style.height='190px'; z2.style.top='190px'}
-    else {myPanel.style.top = 44 + Zoff + 'px'; myView.style.top = '287px'; z1.style.height='277px'; z2.style.top='277px'}
+    if (!screenX) {Xoff = 0; Yoff = 0; myPanel.style.top = 44 + Zoff + 'px'; myView.style.top = '287px'}
+    else {Xoff=screenX; Yoff=outerHeight-innerHeight; Zoff=outerHeight-innerHeight; myPanel.style.top='50px'; myView.style.top='200px'}
+    if (!mediaX) {mediaX = 1 * (localStorage.mediaX || 500); mediaY = 1 * (localStorage.mediaY || 400)}
+    let offset = captions && srt.innerHTML ? 140 : 0
+    myPlayer.style.left = (mediaX - Xoff) - myPlayer.offsetWidth / 2 + "px"
+    myPlayer.style.top = (mediaY - Yoff) - myPlayer.offsetHeight / 2 - offset + "px"
+    myPlayer.style.transition = time + 's'
+    skinny = thumb.style.skinny || skinny
+    let zoom = scaleY
+    if (thumbSheet) zoom = scaleY * 2
+    myPlayer.style.transform = "scale(" + skinny * zoom + "," + zoom + ")"}
+
+
+  function positionMedia222(time) {					// position myPlayer in window
+    if (!screenX) {myPanel.style.top = 44 + Zoff + 'px'; myView.style.top = '287px'}
+    else {Zoff=outerHeight-innerHeight; myPanel.style.top = '50px'; myView.style.top = '200px'}
     if (!mediaX) {mediaX = screenX + (1*localStorage.mediaX || 500); mediaY = outerHeight-innerHeight + (1*localStorage.mediaY || 400)}
     if (screenX && !Xoff) {Xoff=screenX; Yoff=outerHeight-innerHeight; mediaX-=Xoff; mediaY-=Yoff}
     else if (!screenX && Xoff) {mediaX+=Xoff; mediaY+=Yoff; Xoff=0}
@@ -508,7 +521,7 @@
     let units = ''; let x = filt					// eg 30 minutes, 2 months, alpha 'A'
     el = document.getElementById(id)
     if (id == 'myType') {x = ''; units = { 1: 'Video', 2: 'Image', 3: 'Audio', 4: 'Fav' }[filt] || units}
-    if (id == 'myAlpha') x = ch
+    if (id == 'myAlpha') x = String.fromCharCode(filt + 64)
     if (id == 'mySize') {x *= 10; units = " Mb"}
     if (id == 'myDate') units = " months"
     if (id == 'myDuration') units = " minutes"
@@ -552,7 +565,7 @@
       .then(data => {
         let newUrl = encodeURI(`http://localhost:3000${data.url}`)
         if (newUrl === window.location.href) window.location.href = newUrl
-        else {window.open(newUrl, '_blank'); if (command != 'SearchBox' && lastClick != 2) window.close()}})
+        else if (window.open(newUrl, '_blank')) if (command != 'SearchBox' && lastClick != 2) window.close()})
     messages=''}
 
 
@@ -869,12 +882,14 @@
 
   function searchBox() {
       if (renamebox) inca('Rename', renamebox, lastMedia)		// rename media
-      else if (myInput.matches(':focus')) inca('SearchBox','','',myInput.value)} // search media on pc
+      else if (longClick && !gesture && overText && !window.getSelection().toString()) inca('Osk')
+      else if (!playing && (myInput.matches(':focus') || longClick)) inca('SearchBox','','',myInput.value) // search media on pc
+      myPlayer.pause(); longClick=0}
 
 
   function mouseBack() {
-      if (longClick) window.close()
-      else if (playing) closePlayer()					// close player and send messages to inca
+      if (playing) closePlayer()					// close player and send messages to inca
+      else if (longClick) window.close()
       else if (myContent.scrollTop > 50) myContent.scrollTo(0,0)	// else scroll to page top
       else {inca('Reload'); localStorage.cue=''}}			// or finally, reload page & clear selected
 
