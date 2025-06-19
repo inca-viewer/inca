@@ -391,7 +391,7 @@
     else if (myPlayer.volume < 0.8) {myPlayer.volume *= 1.25} else myPlayer.volume = 1	// fade sound in/out
     if (captions && el == myPlayer) {
       if (playing) {top = rect.bottom} else top = 300
-      capMenu.style.top = top + 24 + srt.offsetHeight + 'px'; capMenu.style.left = mediaX - 85 + 'px'
+      capMenu.style.top = top + 24 + srt.offsetHeight + 'px'; capMenu.style.left = mediaX -Xoff - 85 + 'px'
     srt.style.top = top + 'px'; srt.style.left = mediaX - Xoff - srt.offsetWidth / 2 + 'px'}
     if (playing) {
       positionMedia(0)
@@ -424,24 +424,8 @@
     myPlayer.style.transition = time + 's'
     skinny = thumb.style.skinny || skinny
     let zoom = scaleY
-    if (thumbSheet) zoom = scaleY * 2
+    if (thumbSheet) if (scaleY<0.5) {zoom=1} else zoom = scaleY * 2
     myPlayer.style.transform = "scale(" + skinny * zoom + "," + zoom + ")"}
-
-
-  function positionMedia222(time) {					// position myPlayer in window
-    if (!screenX) {myPanel.style.top = 44 + Zoff + 'px'; myView.style.top = '287px'}
-    else {Zoff=outerHeight-innerHeight; myPanel.style.top = '50px'; myView.style.top = '200px'}
-    if (!mediaX) {mediaX = screenX + (1*localStorage.mediaX || 500); mediaY = outerHeight-innerHeight + (1*localStorage.mediaY || 400)}
-    if (screenX && !Xoff) {Xoff=screenX; Yoff=outerHeight-innerHeight; mediaX-=Xoff; mediaY-=Yoff}
-    else if (!screenX && Xoff) {mediaX+=Xoff; mediaY+=Yoff; Xoff=0}
-    let offset = captions && srt.innerHTML ? 140 : 0
-    myPlayer.style.left = mediaX - myPlayer.offsetWidth/2 + "px"
-    myPlayer.style.top = mediaY - myPlayer.offsetHeight/2 - offset + "px"
-    myPlayer.style.transition = time + 's'
-    skinny = thumb.style.skinny || skinny
-    let zoom = scaleY
-    if (thumbSheet) zoom = scaleY * 2
-    myPlayer.style.transform = "scale("+skinny*zoom+","+zoom+")"}
 
 
   function seekBar() {							// progress bar beneath player
