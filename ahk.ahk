@@ -201,7 +201,8 @@
             PopUp("Downloading",999,0,0)
             ClipBoard =
             }
-          else Osk()							; onscreen keyboard
+          else if !incaTab
+            Osk()							; onscreen keyboard
           break
           }
         }
@@ -713,7 +714,7 @@ value := 0
       {
       cue := value
       time := address
-      type := command
+      ex := command
       start := 0
       end := 0
       if !cue
@@ -722,16 +723,16 @@ value := 0
           if getMedia(A_LoopField)
             {
             GuiControl, Indexer:, GuiInd, processing - %media%
-            dest = %profile%\downloads\%media%.%command%
+            dest = %profile%\downloads\%media%.%ex%
             IfExist, %dest%
-              dest = %profile%\downloads\%media% - Copy.%command%
+              dest = %profile%\downloads\%media% - Copy.%ex%
             Transcode(start, end, src, dest)
             }
         }
       else
         {
         GuiControl, Indexer:, GuiInd, processing - %media%
-        dest = %profile%\downloads\%media% @%cue%.%type%
+        dest = %profile%\downloads\%media% @%cue%.%ex%
         if (time-cue >= 0 && time-cue < 1)
           start := time
         else if (cue-time > 0 && cue-time < 1)
@@ -894,7 +895,7 @@ value := 0
               if (A_LoopFileSize > 0)					; for when files are still downloading
                 if spool(A_LoopFileFullPath, A_Index, 0)
                   break 2
-                else if (show==1 && ((listSize<10000 && !Mod(listSize,100)) || !Mod(listSize,10000)))
+                else if (show==1 && ((listSize<10000 && !Mod(listSize,1000)) || !Mod(listSize,10000)))
                   PopUp(listSize,0,0,0)
         StringTrimRight, list, list, 2					; remove end `r`n
         if (InStr(toggles, "Reverse") && sort != "Date" && sort != "Playlist")

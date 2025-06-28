@@ -11,6 +11,7 @@
 // maybe reloads previous page to get access to previous media on long back?
 // nudge to work with txt files for new media with scroll not time
 
+// amai search
 
 
   let entry = 0								// thumb container
@@ -438,7 +439,7 @@
     let el = myPlayer
     let cueX = rect.left
     let pos = Math.round(el.currentTime*100)/100
-    let cueW = 0.95 * rect.width * pos / dur
+    let cueW = rect.width * pos / dur
     if (myPic.matches(':hover')) {el = myPic; cueW = rect.width * xm}
     else if (Click || overText || thumbSheet || !playing || !myPlayer.duration || (!timout && !cue)) return
     if (cue) myProgress.style.background = 'red'
