@@ -104,22 +104,11 @@
       FileRead, start, %inca%\cache\html\temp.txt
       if start
         Run, http://localhost:3000/inca/cache/html/%start%
-      SetTimer, TimedEvents, 50, 2		; every 50mS primarily for low message latency
-      SetTimer, SlowTimer, 500, 2		; ffmpeg processing
+      SetTimer, TimedEvents, 50			; every 50mS - process server requests
+      SetTimer, SlowTimer, 500, -2		; show ffmpeg is processing
+      if (time := Setting("Indexer") * 60000)
+        SetTimer, indexer, % time, -2		; index new media
       return
-
-
-
-
-^q::
-
-
-
-
-return
-
-
-
 
 
     ~Esc up::
@@ -202,10 +191,17 @@ return
           MouseMove, % xpos, % ypos, 0
           Gesture(x, y)
           }
-        if (!gesture && longClick)
+        if (!gesture && longClick && click == "LButton" && wasCursor == "IBeam")
           {
-          if (click=="LButton" && wasCursor == "IBeam" && !incaTab)
-            Osk()						; onscreen keyboard
+          WinGetTitle title, A
+          cmd = %inca%\cache\apps\yt-dlp.exe --cookies-from-browser firefox --no-mtime -P "%profile%\downloads" "%ClipBoard%"
+          if (InStr(title, "YouTube") && InStr(Clipboard, "https://youtu"))
+            {
+            Run %COMSPEC% /c %cmd%,, hide
+            PopUp("Downloading",999,0,0)
+            ClipBoard =
+            }
+          else Osk()							; onscreen keyboard
           break
           }
         }
@@ -230,7 +226,7 @@ return
         else if (command == "Join")					; join video files together
           Join()
         else if (command == "Vibe")					; create srt caption file
-          Transcode()
+          Vibe()
         else if (command == "Osk")					; create srt caption file
           Osk()
         else if (command == "Add" && address)
@@ -501,8 +497,9 @@ return
         index := x[x.MaxIndex()-1]					; scroll htm to end of selection
         MoveFiles()							; between folders or playlists
         reload := 3							; not show folder qty
-        }					; to stay in folder add return and else to next line
-      if InStr(address, ".m3u")						; playlist
+        return								; to go to destination folder, remove return and else
+        }
+      else if InStr(address, ".m3u")						; playlist
         {
         playlist := address
         SplitPath, address,,path,,folder
@@ -714,39 +711,44 @@ value := 0
 
     mp3mp4()
       {
-      if (selected && !address)
+      cue := value
+      time := address
+      type := command
+      start := 0
+      end := 0
+      if !cue
         {
         Loop, Parse, selected, `,
           if getMedia(A_LoopField)
             {
+            GuiControl, Indexer:, GuiInd, processing - %media%
             dest = %profile%\downloads\%media%.%command%
             IfExist, %dest%
               dest = %profile%\downloads\%media% - Copy.%command%
-            run, %inca%\cache\apps\ffmpeg.exe -i "%src%" -y "%dest%",,Hide
-
-
-; run, %inca%\cache\apps\ffmpeg.exe -i "%src%" -ss 0 -c:v libx264 -preset fast -b:v 1500k -maxrate 2000k -bufsize 4000k -g 48 -keyint_min 48 -sc_threshold 0 -vf "scale='min(1280,iw)':-2" -c:a aac -b:a 128k -movflags +faststart+separate_moof -y "%dest%",,Hide
-
-; run, %inca%\cache\apps\ffmpeg.exe -i "%src%" -ss 0 -c:v libx264 -crf 21 -preset fast -force_key_frames "expr:gte(t`,n_forced*2)" -sc_threshold 0 -vf "scale='min(1280,iw)':-2" -c:a aac -b:a 128k -movflags +faststart+separate_moof -y "%dest%",,Hide
-
-;    ffmpeg -i "!INPUT_FILE!" -c:v libx264 -profile:v high -pix_fmt !PIX_FMT! -vf scale=!RESOLUTION! -crf 21 -preset slow -force_key_frames "expr:gte(t,n_forced*2)" -sc_threshold 0 -g !GOP_FRAMES! -keyint_min !GOP_FRAMES! -maxrate !MAX_BITRATE!k -bufsize !BUF_SIZE!k -c:a aac -b:a 128k -ar 48000 -ac 2 -map 0:v:0 -map 0:a? -map 0:s? -c:s copy -f mp4 -movflags +faststart+separate_moof "!OUTPUT_FILE!"
-
-
+            Transcode(start, end, src, dest)
             }
         }
-      else if address							; cue point  
+      else
         {
-        x = @%value%							; suffix
-        y = %profile%\downloads\%media% %x%.%command%
-        if (!address || value == address || (value-address>0 && value-address<0.2))
-          run, %inca%\cache\apps\ffmpeg.exe -ss %value% -i "%src%" "%y%",,Hide
-        else if (address-value>0.01 && address-value<0.2)
-          run, %inca%\cache\apps\ffmpeg.exe -ss 0 -to %address% -i "%src%" "%y%",,Hide
-        else if (address < value)
-          run, %inca%\cache\apps\ffmpeg.exe -ss %address% -to %value% -i "%src%" "%y%",,Hide
-        else run, %inca%\cache\apps\ffmpeg.exe -ss %value% -to %address% -i "%src%" "%y%",,Hide
+        GuiControl, Indexer:, GuiInd, processing - %media%
+        dest = %profile%\downloads\%media% @%cue%.%type%
+        if (time-cue >= 0 && time-cue < 1)
+          start := time
+        else if (cue-time > 0 && cue-time < 1)
+          end := cue
+        else if (cue < time)
+          {
+          start := cue
+          end := time
+          }
+        else
+          { 
+          start := time
+          end := cue
+          }
+        Transcode(start, end, src, dest)
         }
-      GuiControl, Indexer:, GuiInd, processing - %media%
+      GuiControl, Indexer:, GuiInd
       selected =
       }
 
@@ -824,29 +826,29 @@ value := 0
 
     Add()
       {
-      popup = New Playlist
+      popup = Added
       if (InStr(playlist, "music\") && !InStr(music, address))			; new music playlist
         {
-        music = %music%%inca%\music\%address%.m3u|
+        music = |%music%%inca%\music\%address%.m3u
         FileAppend,,%inca%\music\%address%.m3u, utf-8
         IniWrite, %music%, %inca%\ini.ini,Settings,Music
         }
       else if (InStr(playlist, "fav\") && !InStr(fav, address))			; new fav playlist
         {
-        fav = %fav%%inca%\fav\%address%.m3u|
+        fav = |%fav%%inca%\fav\%address%.m3u
         FileAppend,,%inca%\fav\%address%.m3u, utf-8
         IniWrite, %fav%, %inca%\ini.ini,Settings,Fav
         }
       else if !searchTerm							; new folder
         {
         popup = New Folder
-        fol = %fol%%path%%address%\|
+        fol = |%fol%%path%%address%\
         FileCreateDir, %path%\%address%
         IniWrite, %fol%, %inca%\ini.ini,Settings,Fol
         }
       else
         {
-        popup = New Search Term
+        popup = Added
         StringUpper, searchTerm, address, T
         search = %search%%searchTerm%|
         StringReplace, search, search, |, `n, All
@@ -1445,9 +1447,40 @@ value := 0
         WinSet, TransColor, 0 140
         WinSet, ExStyle, +0x20
         SoundGet, volume
-        if (x := Setting("Indexer") * 60000)
-          SetTimer, indexer, %x%, -2
         }
+
+
+     checkPlaylist()							; in case src files moved
+       {
+       FileRead, str, %playlist%
+       Loop, Parse, str, `n, `r
+         if %A_LoopField%
+           {  
+           source := StrSplit(A_Loopfield, "|").1
+           start := StrSplit(A_Loopfield, "|").2
+           detectMedia(source)
+           x = %searchFolders%|%indexFolders%
+           IfNotExist, %source%
+             Loop, Parse, x, `|
+               IfExist, %A_LoopField%%media%.%ext%
+                   {
+                   flag := 1
+                   y = %A_LoopField%%media%.%ext%
+                   str := StrReplace(str, source, y)
+                   }
+           }
+       if flag
+         {
+         FileDelete, %playlist%
+         FileAppend, %str%, %playlist%, UTF-8
+         }
+       }
+
+
+    fill(in) {  
+      panelList = %panelList%<div style="height:10`%; padding:0.5em; transform:rotate(90deg)">`n%in%</div>`n
+      }
+
 
 
     indexPage:							; create thumbsheets
@@ -1548,290 +1581,110 @@ value := 0
                 t += (dur / 200)
                 }
             if (thumb || force)
+                {
                 Runwait %inca%\cache\apps\ffmpeg -i %inca%\cache\temp\`%d.jpg -filter_complex "tile=6x6" -y "%inca%\cache\thumbs\%filen%.jpg",, Hide
+                Transcode(0,0,source,0)
+                }
             }
           GuiControl, Indexer:, GuiInd
           }
 
 
 
-     checkPlaylist()							; in case src files moved
-       {
-       FileRead, str, %playlist%
-       Loop, Parse, str, `n, `r
-         if %A_LoopField%
-           {  
-           source := StrSplit(A_Loopfield, "|").1
-           start := StrSplit(A_Loopfield, "|").2
-           detectMedia(source)
-           x = %searchFolders%|%indexFolders%
-           IfNotExist, %source%
-             Loop, Parse, x, `|
-               IfExist, %A_LoopField%%media%.%ext%
-                   {
-                   flag := 1
-                   y = %A_LoopField%%media%.%ext%
-                   str := StrReplace(str, source, y)
-                   }
-           }
-       if flag
-         {
-         FileDelete, %playlist%
-         FileAppend, %str%, %playlist%, UTF-8
-         }
-       }
-
-
-    fill(in) {  
-      panelList = %panelList%<div style="height:10`%; padding:0.5em; transform:rotate(90deg)">`n%in%</div>`n
-      }
-
-
-
-
-
-Transcode()
-{
-
- FileRead, ProcessedList, *t c:\inca\processed.txt
- FileRead, FailedList, *t c:\inca\failed.txt
-
-    Loop, Parse, selected, `,
-    {
-
-        if getMedia(A_LoopField)
+    Transcode(start, end, src, dest)
         {
-            tooltip %A_Index% - %src%
-
-            originalSrc := src
-
-if InStr(media, "ttt -")
-  continue
-if (type != "video")
-  continue
-
-            ; Check for ttt - prefixed file first
-            SplitPath, src, fileName, fileDir
-            tttFile := fileDir . "\ttt - " . fileName
-            if FileExist(tttFile)
-            {
-            if (!InStr(ProcessedList, src . "`n"))
-              FileAppend, %src%`n, c:\inca\processed.txt, UTF-8
-            continue  ; Skip if ttt - file exists (already processed)
-            }
-
-            ; Check if the original file is in processed.txt
-            if (InStr(ProcessedList, src . "`n"))
-                continue
-
-            ; Check if the original file is in failed.txt
-  ;          if (InStr(FailedList, src . "`n"))
-  ;              continue
-
-            FileGetTime, CreationTime, %src%, C  ; Creation time
-            FileGetTime, ModifiedTime, %src%, M  ; Modification time
-            if (ErrorLevel)
-            {
-                FileAppend, Error: Failed to get timestamps for %src%`n, c:\inca\failed.txt, UTF-8
-                FileAppend, %src%`n, c:\inca\failed.txt, UTF-8
-                continue
-            }
-
-            ; Analyze media (no audio-specific checks)
-            metadata := mediaAnalyze(src)
-            if (!metadata)
-            {
-                FileAppend, Error: Failed to analyze metadata for %src%`n, c:\inca\failed.txt, UTF-8
-                FileAppend, %src%`n, c:\inca\failed.txt, UTF-8
-                continue
-            }
-
-            ; Extract metadata
-            Bitrate := metadata.bitrate
-            Width := metadata.width
-            Height := metadata.height
-            FrameRate := metadata.frame_rate
-
-            ; Calculate output resolution (from batch file)
-            AspectRatio := Width / Height
-            if (AspectRatio >= 1)
-            {
-                OutWidth := Width < 1280 ? Width : 1280
-                OutHeight := Round(OutWidth / AspectRatio / 2) * 2
-            }
-            else
-            {
-                OutHeight := Height < 1280 ? Height : 1280
-                OutWidth := Round(OutHeight * AspectRatio / 2) * 2
-            }
-            Resolution := OutWidth ":" OutHeight
-
-            GOPFrames := Round(FrameRate)	; every second
-
-            ; Set dynamic bitrate (from batch file)
-            MaxBitrate := 6000
-            BufSize := 12000
-            if (OutWidth <= 1280)
-            {
-                if (Bitrate > 0)
-                {
-                    MaxBitrate := Round(Bitrate * 3 / 2)
-                    BufSize := MaxBitrate * 2
-                }
-                else
-                {
-                    if (OutWidth <= 720)
-                    {
-                        MaxBitrate := 1500
-                        BufSize := 3000
-                        Bitrate := 1000
-                    }
-                    else
-                    {
-                        MaxBitrate := 6000
-                        BufSize := 12000
-                        Bitrate := 4000
-                    }
-                }
-            }
-
-            ; Determine output path (same as src)
-            outputPath := src
-
-            ; Determine original file's new name with ttt - prefix
-            newOriginalName := fileDir . "\ttt - " . fileName
-
-            ; Construct FFmpeg command (single command, let FFmpeg handle audio)
-            tempOutput := fileDir . "\temp_" . fileName
-
-            cmd = -y -i "%src%" -c:v h264_amf -rc cqp -qp_i 22 -qp_p 24 -vf scale=%Resolution% -force_key_frames "expr:gte(t,n_forced*2)" -sc_threshold 0 -g %GOPFrames% -keyint_min %GOPFrames% -maxrate %MaxBitrate%k -bufsize %BufSize%k -c:a aac -b:a 128k -ar 48000 -ac 2 -map 0:v:0 -map 0:a? -map 0:s? -c:s copy -f mp4 -movflags +faststart+separate_moof "%tempOutput%"
-
-            RunWait %COMSPEC% /c %inca%\cache\apps\ffmpeg.exe %cmd%, , Hide
-            if (ErrorLevel != 0)
-            {
-                FileAppend, Error: FFmpeg failed for %src% with command: %cmd%`n, c:\inca\failed.txt, UTF-8
-                FileAppend, %src%`n, c:\inca\failed.txt, UTF-8
-                if (ErrorLevel)
-                    FileAppend, Error: Failed to append %src% to c:\inca\failed.txt`n, c:\inca\failed.txt, UTF-8
-                continue
-            }
-
-            ; On success: Rename original to ttt - prefix
-            FileMove, %src%, %newOriginalName%
-            if (ErrorLevel)
-            {
-                FileAppend, Error: Failed to rename %src% to %newOriginalName%`n, c:\inca\failed.txt, UTF-8
-                FileAppend, %src%`n, c:\inca\failed.txt, UTF-8
-                FileDelete, %tempOutput% ; Clean up temp file
-                continue
-            }
-
-FileRecycle, %newOriginalName%
-
-            ; Move temp output to original name
-            FileMove, %tempOutput%, %outputPath%
-            if (ErrorLevel)
-            {
-                FileAppend, Error: Failed to move %tempOutput% to %outputPath%`n, c:\inca\failed.txt, UTF-8
-                FileAppend, %src%`n, c:\inca\failed.txt, UTF-8
-                FileMove, %newOriginalName%, %src%
-                continue
-            }
-
-            ; Apply original timestamps to output file
-            if (CreationTime && ModifiedTime)
-            {
-                FileSetTime, %ModifiedTime%, %outputPath%, M  ; Set modification time
-                FileSetTime, %CreationTime%, %outputPath%, C  ; Set creation time
-                if (ErrorLevel)
-                    FileAppend, Error: Failed to set timestamps for %outputPath%`n, c:\inca\failed.txt, UTF-8
-            }
-
-            ; Append to processed.txt only after success
-            if (!InStr(ProcessedList, src . "`n"))
-                FileAppend, %src%`n, c:\inca\processed.txt, UTF-8
-            ; Remove from failed.txt if present
-            if (InStr(FailedList, src . "`n"))
-            {
-                newFailedList := StrReplace(FailedList, src . "`n", "")
-                FileDelete, c:\inca\failed.txt
-                FileAppend, %newFailedList%, c:\inca\failed.txt, UTF-8
-            }
-        }
-    }
-tooltip
-}
-
-
-
-mediaAnalyze(src)
-{
-    FileGetSize, fileSize, %src%, M
-    ; Use ffprobe for metadata, no audio-specific checks
-    cmd = C:\inca\cache\apps\ffprobe.exe -v quiet -print_format json -show_streams -select_streams v:0 "%src%"
-    RunWait, %ComSpec% /c %cmd% > "c:\inca\meta.txt",, Hide
-    
-    ; Debug: Check if command ran successfully
-    if (ErrorLevel != 0)
-    {
-        FileAppend, Error: ffprobe failed with command: %src%`n, c:\inca\failed.txt, UTF-8
-        return 0
-    }
-    
-    ; Read metadata
-    FileRead, MetaContent, c:\inca\meta.txt
-    if (!MetaContent)
-    {
-        FileAppend, Error: meta.txt is empty for command: %src%`n, c:\inca\failed.txt, UTF-8
-        FileDelete, c:\inca\meta.txt
-        return 0
-    }
-    FileDelete, c:\inca\meta.txt
-    
-    ; Parse JSON output (simplified for AHK v1.1.3)
-    ; Extract width, height
-    if RegExMatch(MetaContent, """width"":\s*(\d+)", WidthMatch)
+        if start
+          start = -ss %start%
+        else start =
+        if end
+          end = -to %end%
+        else end = 
+        DetectMedia(src)
+        if (type == "audio" && dest)
+          run, %inca%\cache\apps\ffmpeg.exe -i "%src%" -y "%dest%",,Hide	; mp3
+        if (type != "video")
+          return
+        FileRead, ProcessedList, *t c:\inca\cache\apps\processed.txt
+        if InStr(ProcessedList, media)
+          return
+        FileGetTime, CreationTime, %src%, C
+        FileGetTime, ModifiedTime, %src%, M
+        if ErrorLevel
+          return
+      FileDelete, c:\inca\cache\temp\meta.txt
+      cmd = C:\inca\cache\apps\ffprobe.exe -v quiet -print_format json -show_streams -select_streams v:0 "%src%"
+      RunWait, %ComSpec% /c %cmd% > "c:\inca\cache\temp\meta.txt",, Hide
+      if ErrorLevel
+        return
+      FileRead, MetaContent, c:\inca\cache\temp\meta.txt
+      if RegExMatch(MetaContent, """width"":\s*(\d+)", WidthMatch)
         Width := WidthMatch1 + 0
-    if RegExMatch(MetaContent, """height"":\s*(\d+)", HeightMatch)
+      if RegExMatch(MetaContent, """height"":\s*(\d+)", HeightMatch)
         Height := HeightMatch1 + 0
-    
-    ; Parse frame rate
-    if RegExMatch(MetaContent, """r_frame_rate"":\s*""(\d+)/(\d+)""", FrameRateMatch)
-    {
+      if RegExMatch(MetaContent, """r_frame_rate"":\s*""(\d+)/(\d+)""", FrameRateMatch)
         FrameRate := (FrameRateMatch1 + 0) / (FrameRateMatch2 + 0)
-    }
-    else if RegExMatch(MetaContent, """r_frame_rate"":\s*""(\d+\.?\d*)""", FrameRateMatch)
-    {
+      else if RegExMatch(MetaContent, """r_frame_rate"":\s*""(\d+\.?\d*)""", FrameRateMatch)
         FrameRate := FrameRateMatch1 + 0
-    }
-    else
-    {
+      else
         FrameRate := 25
-    }
-    
-    ; Parse bitrate
-    if RegExMatch(MetaContent, """bit_rate"":\s*""(\d+)""", BitrateMatch)
-    {
+      if RegExMatch(MetaContent, """bit_rate"":\s*""(\d+)""", BitrateMatch)
         Bitrate := Ceil(BitrateMatch1 / 1000)
-    }
-    else
-    {
+      else
         Bitrate := 0
-    }
-        
-    ; Return metadata object
-    if (Width && Height && FrameRate)
-    {
-        return { "bitrate": Bitrate, "width": Width, "height": Height, "frame_rate": FrameRate }
-    }
-    FileAppend, Error: Missing metadata for %src%`n, c:\inca\failed.txt, UTF-8
-    return 0
-}
-
-
-
-
-
+      if (!Width || !Height || !FrameRate)
+        return
+      AspectRatio := Width / Height
+      if (AspectRatio >= 1)
+          {
+          OutWidth := Width < 1280 ? Width : 1280
+          OutHeight := Round(OutWidth / AspectRatio / 2) * 2
+          }
+      else
+          {
+          OutHeight := Height < 1280 ? Height : 1280
+          OutWidth := Round(OutHeight * AspectRatio / 2) * 2
+          }
+      Resolution := OutWidth ":" OutHeight
+      GOPFrames := Round(FrameRate)				; every second
+      MaxBitrate := 6000
+      BufSize := 12000
+      if (OutWidth <= 1280)
+          {
+          if (Bitrate > 0)
+            {
+            MaxBitrate := Round(Bitrate * 3 / 2)
+            BufSize := MaxBitrate * 2
+            }
+          else
+            {
+            if (OutWidth <= 720)
+              {
+              MaxBitrate := 1500
+              BufSize := 3000
+              Bitrate := 1000
+              }
+            else
+              {
+              MaxBitrate := 6000
+              BufSize := 12000
+              Bitrate := 4000
+              }
+            }
+          }
+        temp := mediaPath . "\temp_" . media . ".mp4"
+        cmd = -y -i "%src%" %start% %end% -c:v h264_amf -rc cqp -qp_i 22 -qp_p 24 -vf scale=%Resolution% -force_key_frames "expr:gte(t,n_forced*2)" -sc_threshold 0 -g %GOPFrames% -keyint_min %GOPFrames% -maxrate %MaxBitrate%k -bufsize %BufSize%k -c:a aac -b:a 128k -ar 48000 -ac 2 -map 0:v:0 -map 0:a? -map 0:s? -c:s copy -f mp4 -movflags +faststart+separate_moof "%temp%"
+        RunWait %COMSPEC% /c %inca%\cache\apps\ffmpeg.exe %cmd%, , Hide
+        if ErrorLevel
+          return
+        FileRecycle, %src%
+        if dest
+          FileMove, %temp%, %dest%
+        else FileMove, %temp%, %mediaPath%\%media%.mp4
+        FileSetTime, %ModifiedTime%, %mediaPath%\%media%.mp4, M
+        FileSetTime, %CreationTime%, %mediaPath%\%media%.mp4, C
+        FileAppend, %src%`n, c:\inca\cache\apps\processed.txt, UTF-8
+        return 1
+        }
 
 
 
@@ -2072,8 +1925,8 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
   <a id='myDelete' style='color:red' onmouseup="inca('Delete','',index)"></a>`n
   <a id='myIndex' onmouseup="inca('Index','',index)"></a>`n
   <a id='myFlip' onmouseup='flip()'>Flip</a>`n
-  <a id='myCue' onmouseup="if (!longClick) cueButton()">Cue</a>`n
-  <a id='myCap' onmouseup='capButton()'>Caption</a>`n
+  <a id='myCue'>Cue</a>`n
+  <a id='myCap'>Caption</a>`n
   <a></a></div>`n`n
 
 <div id='myMenu'>
@@ -2100,7 +1953,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
     <a id='myShuffle' style='%x1%' onmousedown="inca('Shuffle')">Shuffle</a>`n
     <a id='mySize' style='%x5%' onmousedown="inca('Size', filt)"">Size</a>`n
     <a id='myAlpha' style='%x2%' onmousedown="inca('Alpha', filt)">Alpha</a>`n
-    <a id='myPause' onmousedown="defPause^=1; pause^=1; inca('Pause',defPause)">Pause</a>`n
+    <a id='myPause' onmousedown="defPause^=1; inca('Pause',defPause)">Pause</a>`n
     <a id='myType' style='%x6%' onmousedown="inca('Type', filt)">%type%</a>`n
     <a id='myThumbs' onmouseout='setWidths(1,1000)' onmouseup="inca('View',0)">Thumb</a>`n 
     <a id='myWidth'>Width</a>`n
