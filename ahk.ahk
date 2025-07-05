@@ -1601,7 +1601,8 @@ value := 0
           return
         FileRead, ProcessedList, *t c:\inca\cache\apps\processed.txt
         if InStr(ProcessedList, media)
-          return
+          if (!start && !end)
+            return
         FileGetTime, CreationTime, %src%, C
         FileGetTime, ModifiedTime, %src%, M
         if ErrorLevel
