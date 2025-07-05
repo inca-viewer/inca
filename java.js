@@ -11,7 +11,14 @@
 // maybe reloads previous page to get access to previous media on long back?
 // nudge to work with txt files for new media with scroll not time
 
-// amai search
+// option for server or file - can be half each?
+// server adds complexity, delays abut allows for pitch
+// could pitch be done offline and merged
+
+// yt-dlp
+
+
+
 
 
   let entry = 0								// thumb container

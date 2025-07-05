@@ -211,7 +211,6 @@
 
     ProcessMessage()							; messages from java/browser
         {
-        PopUp("...",0,0,0)
         if (command == "Null")						; used as trigger to save text editing - see Java inca()
           return
         else if (command == "saveText")					; save text snip
@@ -256,6 +255,7 @@
           Notepad()
         else if (command == "View")					; change thumb/list view
           {
+          PopUp("...",0,0,0)
           listView^=1
           index := value						; for scrollToIndex() in java
           reload := 2
@@ -298,7 +298,8 @@
 
 
     Osk() {
-      IfWinNotExist, ahk_class OSKMainClass
+      if !gesture
+       IfWinNotExist, ahk_class OSKMainClass
         if Setting("osk")
           {
           MouseGetPos, x, y
@@ -723,16 +724,14 @@ value := 0
           if getMedia(A_LoopField)
             {
             GuiControl, Indexer:, GuiInd, processing - %media%
-            dest = %profile%\downloads\%media%.%ex%
-            IfExist, %dest%
-              dest = %profile%\downloads\%media% - Copy.%ex%
-            Transcode(start, end, src, dest)
+            if (ex == "mp3")
+              run, %inca%\cache\apps\ffmpeg.exe -i "%src%" -y "%mediaPath%\%media%.mp3",,Hide	; mp3
+            else Transcode(start, end, src)
             }
         }
       else
         {
         GuiControl, Indexer:, GuiInd, processing - %media%
-        dest = %profile%\downloads\%media% @%cue%.%ex%
         if (time-cue >= 0 && time-cue < 1)
           start := time
         else if (cue-time > 0 && cue-time < 1)
@@ -747,7 +746,7 @@ value := 0
           start := time
           end := cue
           }
-        Transcode(start, end, src, dest)
+        Transcode(start, end, src)
         }
       GuiControl, Indexer:, GuiInd
       selected =
@@ -1584,7 +1583,7 @@ value := 0
             if (thumb || force)
                 {
                 Runwait %inca%\cache\apps\ffmpeg -i %inca%\cache\temp\`%d.jpg -filter_complex "tile=6x6" -y "%inca%\cache\thumbs\%filen%.jpg",, Hide
-                Transcode(0,0,source,0)
+                Transcode(0,0,source)
                 }
             }
           GuiControl, Indexer:, GuiInd
@@ -1592,18 +1591,13 @@ value := 0
 
 
 
-    Transcode(start, end, src, dest)
+    Transcode(start, end, src)
         {
         if start
-          start = -ss %start%
-        else start =
+          ss = -ss %start%
         if end
-          end = -to %end%
-        else end = 
-        DetectMedia(src)
-        if (type == "audio" && dest)
-          run, %inca%\cache\apps\ffmpeg.exe -i "%src%" -y "%dest%",,Hide	; mp3
-        if (type != "video")
+          to = -to %end%
+        if (DetectMedia(src) != "video")
           return
         FileRead, ProcessedList, *t c:\inca\cache\apps\processed.txt
         if InStr(ProcessedList, media)
@@ -1673,17 +1667,24 @@ value := 0
             }
           }
         temp := mediaPath . "\temp_" . media . ".mp4"
-        cmd = -y -i "%src%" %start% %end% -c:v h264_amf -rc cqp -qp_i 22 -qp_p 24 -vf scale=%Resolution% -force_key_frames "expr:gte(t,n_forced*2)" -sc_threshold 0 -g %GOPFrames% -keyint_min %GOPFrames% -maxrate %MaxBitrate%k -bufsize %BufSize%k -c:a aac -b:a 128k -ar 48000 -ac 2 -map 0:v:0 -map 0:a? -map 0:s? -c:s copy -f mp4 -movflags +faststart+separate_moof "%temp%"
+        cmd = -y -i "%src%" %ss% %to% -c:v h264_amf -rc cqp -qp_i 22 -qp_p 24 -vf scale=%Resolution% -force_key_frames "expr:gte(t,n_forced*2)" -sc_threshold 0 -g %GOPFrames% -keyint_min %GOPFrames% -maxrate %MaxBitrate%k -bufsize %BufSize%k -c:a aac -b:a 128k -ar 48000 -ac 2 -map 0:v:0 -map 0:a? -map 0:s? -c:s copy -f mp4 -movflags +faststart+separate_moof "%temp%"
         RunWait %COMSPEC% /c %inca%\cache\apps\ffmpeg.exe %cmd%, , Hide
         if ErrorLevel
           return
-        FileRecycle, %src%
-        if dest
-          FileMove, %temp%, %dest%
-        else FileMove, %temp%, %mediaPath%\%media%.mp4
-        FileSetTime, %ModifiedTime%, %mediaPath%\%media%.mp4, M
-        FileSetTime, %CreationTime%, %mediaPath%\%media%.mp4, C
-        FileAppend, %src%`n, c:\inca\cache\apps\processed.txt, UTF-8
+        if (!start && !end)
+          {
+          FileAppend, %src%`n, c:\inca\cache\apps\processed.txt, UTF-8
+          FileRecycle, %src%
+          }
+        else if start
+          suffix = @%start%
+        else suffix = @%end%
+        if suffix
+          new = %mediaPath%\%media% %suffix%.mp4
+        else new = %mediaPath%\%media%.mp4
+        FileMove, %temp%, %new%
+        FileSetTime, %ModifiedTime%, %new%, M
+        FileSetTime, %CreationTime%, %new%, C
         return 1
         }
 
@@ -1918,8 +1919,8 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
   <input id='myTitle' class='title' style='opacity: 1; color: lightsalmon; padding-left: 1.4em'>
   <video id='myPic' muted class='pic'></video>`n
   <a id='mySelect'>Select</a>`n
-  <a id='myFavorite'>Fav</a>`n
   <a id='myMute' onmousedown="muted^=1; inca('Mute', muted); myPlayer.muted=muted; myPlayer.volume=0.1">Mute</a>`n
+  <a id='myFavorite'>Fav</a>`n
   <a id='mySkinny'></a>`n
   <a id='mySpeed'></a>`n
   <a id='myPitch'></a>`n
@@ -2111,7 +2112,7 @@ caption = <div id='srt%j%' class='caption' onmouseover='overText=1' onmouseout='
 if listView
   mediaList = %mediaList%%fold%<table onmouseover='overThumb(%j%)'`n onmouseout="thumb%j%.style.opacity=0">`n <tr id='entry%j%' data-params='%type%,%start%,%dur%,%size%' onmouseenter='if (gesture) sel(%j%)'>`n <td>%ext%`n <video id='thumb%j%' class='thumb2' %src%`n %poster%`n preload=%preload% muted loop type="video/mp4"></video></td>`n <td>%size%</td>`n <td style='min-width: 6em'>%durT%</td>`n <td>%date%</td>`n  <td><div id='myFavicon%j%' class='favicon' style='position:absolute; text-align: left; translate:1.2em -0.8em'>%favicon%</div></td>`n <td style='width: 70vw'><input id="title%j%" class='title' style='opacity: 1; transition: 0.6s' onmouseover='overText=1' autocomplete='off' onmouseout='overText=0; Click=0' type='search' value='%media_s%'`n oninput="renamebox=this.value; lastMedia=%j%"></td>`n %fo%</tr>`n %caption%<span id='cues%j%' style='display: none'>%cues%</span></table>`n`n
 
-else mediaList = %mediaList%<div id="entry%j%" class='entry' data-params='%type%,%start%,%dur%,%size%'>`n <input id='title%j%' class='title' style='text-align: center' type='search'`n value='%media_s%'`n oninput="renamebox=this.value; lastMedia=%j%"`n onmouseover="overText=1; if((x=this.value.length/2) > view) this.style.width=x+'em'"`n onmouseout="overText=0; this.style.width='100`%'">`n <video id="thumb%j%" class='thumb' onmouseenter="overThumb(%j%); if (gesture) sel(%j%)"`n onmouseup='if(gesture)getParameters(%j%)' onmouseout='this.pause()' %src%`n %poster%`n preload=%preload% loop muted type='video/mp4'></video>`n <span id='myFavicon%j%' class='favicon' onmouseenter='overThumb(%j%)'>%favicon%</span>`n %noIndex%`n <span id='cues%j%' style='display: none'>%cues%</span></div>`n %caption%`n`n
+else mediaList = %mediaList%<div id="entry%j%" class='entry' data-params='%type%,%start%,%dur%,%size%' onmouseenter='overThumb(%j%)'>`n <input id='title%j%' class='title' style='text-align: center' type='search'`n value='%media_s%'`n oninput="renamebox=this.value; lastMedia=%j%"`n onmouseover="overText=1; if((x=this.value.length/2) > view) this.style.width=x+'em'"`n onmouseout="overText=0; this.style.width='100`%'">`n <video id="thumb%j%" class='thumb' onmouseenter='if (gesture) sel(%j%)'`n onmouseup='if(gesture)getParameters(%j%)' onmouseout='this.pause()' %src%`n %poster%`n preload=%preload% loop muted type='video/mp4'></video>`n <span id='myFavicon%j%' class='favicon'>%favicon%</span>`n %noIndex%`n <span id='cues%j%' style='display: none'>%cues%</span></div>`n %caption%`n`n
 }
 
 
