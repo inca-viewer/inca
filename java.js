@@ -15,11 +15,6 @@
 // server adds complexity, delays abut allows for pitch
 // could pitch be done offline and merged
 
-// yt-dlp
-
-
-
-
 
   let entry = 0								// thumb container
   let thumb = 0								// thumb element
@@ -199,7 +194,7 @@
       if (!overMedia) thumb.currentTime = 0.1
       else thumb.currentTime = offset - (ps * offset) + dur * ps
       thumbSheet = 0}
-    else if (playing && overMedia && (ym > 0.9 || yw > 0.95)) {
+    else if (playing && overMedia && (ym > 0.9 || (yw > 0.95 && yw < 0.98))) {
       if (xm < 0.1) myPlayer.currentTime = thumb.style.start
       else myPlayer.currentTime = xm * dur
       myPlayer.play(); return}						// return and quit

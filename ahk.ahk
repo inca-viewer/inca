@@ -2039,11 +2039,13 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
         IfExist, %thumb%
           {
           preload = 'none'						; faster page load
+          StringReplace, thumb, thumb, `%, `%25, All			; html cannot have % in filename
           StringReplace, thumb, thumb, #, `%23, All			; html cannot have # in filename
           poster = poster="http://localhost:3000/%thumb%"
           }
         else
           noIndex = <span style='color:red'>no index</span>`n 
+        StringReplace, src, src, `%, `%25, All				; html cannot have % in filename
         StringReplace, src, src, #, `%23, All				; html cannot have # in filename
         StringReplace, media_s, media, `', &apos;, All
         start := Round(start,2)
@@ -2106,6 +2108,8 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
       else src=src="http://localhost:3000/%src%"
       if !size
         size = 0							; cannot have null size in getParameters()
+
+
 
 caption = <div id='srt%j%' class='caption' onmouseover='overText=1' onmouseout='overText=0'`n oninput="editing=index; playCap(event.target.id, 1)">%text%</div>
 
