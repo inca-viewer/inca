@@ -41,7 +41,8 @@
   white-space: nowrap; 
   border-radius: 1em;
   transition: 0.4s}
-.favicon:hover {background:#00000080; color: red} 
+.favicon:hover {background:#00000080; color: red}
+
 
 e {						/* caption text entries */
   display: block;
@@ -116,7 +117,6 @@ e {						/* caption text entries */
   background: inherit;
   box-sizing: border-box;
   color: #826858;
-  opacity:0;
   font-size: 1em;
   font-family: inherit;
   width: 100%;
@@ -126,7 +126,7 @@ e {						/* caption text entries */
   border: none;
   transition: 0.3s;
   border-radius: 1em}
-.title:hover {color: pink; background:#2b2824; transition: 1.4s; overflow: visible; opacity: 1}
+.title:hover {color: pink; background:#2b2824; transition: 1.4s; overflow: visible; z-index:999; font-size:1.2em}
 
 .thumb {					/* htm thumbs */
   --start;					/* java variables for each thumb */

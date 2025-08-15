@@ -91,19 +91,18 @@
         Global dur				; media duration
         Global mute				; global mute
         Global start := 0			; default start time
-        Global ctime
+        Global ctime				; last current time
+        Global lastClip				; clipboard
+
 
 
     main:
-      Process, Close, node.exe
-      sleep 200
-      Run, cmd.exe /c cd /d "C:\inca\cache\apps" && node server.js,, Hide, UseErrorLevel
-      initialize()				; sets environment then waits for mouse, key
-      messages = #Path###%profile%\Pictures\
-      messages()
-      FileRead, start, %inca%\cache\html\temp.txt
-      if start
-        Run, http://localhost:3000/inca/cache/html/%start%
+      initialize()				; sets environment then waits for mouse, key or clipboard events
+      WinActivate, ahk_group Browsers
+      sleep 24
+      default = #Path###%profile%\Pictures\
+      if !GetBrowser() 				; no browser open
+        Messages(default)			; process message
       SetTimer, TimedEvents, 50			; every 50mS - process server requests
       SetTimer, SlowTimer, 500, -2		; show ffmpeg is processing
       if (time := Setting("Indexer") * 60000)
@@ -112,17 +111,17 @@
 
 
     ~Esc up::
-      Process, Close, node.exe
       ExitApp
 
 
      RButton::
     ~LButton::					; click events
+    ~MButton::					; click events
       MouseDown()
       return
 
 
-    ~XButton1::					; Back button
+    XButton1::					; Back button
       Critical
       longClick =
       timer := A_TickCount + 350
@@ -137,12 +136,13 @@
       SetTimer, Timer_up, Off
       if (A_TickCount > timer)			; longClick already done ^
         return
-      if (incaTab && browser == "mozilla firefox")	; firefox blocks XButton1
-        send, {Pause}
       IfWinExist, ahk_class OSKMainClass
         WinClose, ahk_class OSKMainClass	; close onscreen keyboard
       else if WinActive("ahk_class Notepad")
         Send, {Esc}^s^w
+      else if incaTab
+        send, {Pause}				; close java media player
+      else send, {XButton1}
       sleep 100
       MouseGetPos,,, cur 			; get window under cursor
       WinActivate, ahk_id %cur%
@@ -194,7 +194,7 @@
         if (!gesture && longClick && click == "LButton" && wasCursor == "IBeam")
           {
           WinGetTitle title, A
-          cmd = %inca%\cache\apps\yt-dlp.exe --cookies-from-browser firefox --no-mtime -P "%profile%\downloads" "%ClipBoard%"
+          cmd = %inca%\cache\apps\yt-dlp.exe --no-mtime "best" -P "%profile%\downloads" "%ClipBoard%"
           if (InStr(title, "YouTube") && InStr(Clipboard, "https://youtu"))
             {
             Run %COMSPEC% /c %cmd%,, hide
@@ -267,10 +267,14 @@
           reload := 2
           SetTimer, indexPage, -100, -2
           }
-        else if (command == "cueMedia" && value)			; add media to text at scroll
+        else if (command == "cueMedia")					; add media to text at scroll
           {
           FileDelete, %inca%\cache\cues\%media%.txt
           FileAppend, %value%, %inca%\cache\cues\%media%.txt, UTF-8
+          Loop, Read, %inca%\fav\History.m3u
+            LastMedia := A_LoopReadLine
+          if address							; add last media from history
+            FileAppend, `r`n%address%|media|%lastMedia%, %inca%\cache\cues\%media%.txt, UTF-8
           }
         else if (command == "addCue")					; add skinny, speed, goto at scroll
           {
@@ -282,6 +286,7 @@
           {
           MoveEntry()
           reload := 3
+          index := value						; for scrollToIndex() in java
           selected =
           }
         else if (command == "Pause")
@@ -353,7 +358,7 @@
         }
 
 
-    Messages()								; check for messages from browser
+    Messages(input)							; check for messages from browser
         {
         selected =
         command =
@@ -364,8 +369,9 @@
         src =
         ptr := 1
         index := 0
-        messages := StrReplace(messages, "/", "\")
+        messages := StrReplace(input, "/", "\")
         array := StrSplit(messages,"#")
+        Clipboard := lastClip
 ;   tooltip %messages%, 0						; for debug
         Loop % array.MaxIndex()/4
           {
@@ -403,11 +409,6 @@
           RenderPage()
         else if (reload == 3)
           CreateList(0)
-        else
-          {
-          FileDelete, %inca%\cache\html\temp.txt
-          FileAppend,, %inca%\cache\html\temp.txt
-          }
         longClick =
         selected = 
         Gui PopUp:Cancel
@@ -723,7 +724,7 @@ value := 0
         Loop, Parse, selected, `,
           if getMedia(A_LoopField)
             {
-            GuiControl, Indexer:, GuiInd, processing - %media%
+            GuiControl, Indexer:, GuiInd, transcoding - %media%
             if (ex == "mp3")
               run, %inca%\cache\apps\ffmpeg.exe -i "%src%" -y "%mediaPath%\%media%.mp3",,Hide	; mp3
             else Transcode(start, end, src)
@@ -731,7 +732,7 @@ value := 0
         }
       else
         {
-        GuiControl, Indexer:, GuiInd, processing - %media%
+        GuiControl, Indexer:, GuiInd, transcoding - %media%
         if (time-cue >= 0 && time-cue < 1)
           start := time
         else if (cue-time > 0 && cue-time < 1)
@@ -954,9 +955,9 @@ value := 0
               {
               StringGetPos, pos, input, \, R, 1
               StringMid, 1st_char, input, % pos + 2, 1
-              if (!InStr(toggles, "Reverse") && filt && sort == "Alpha" && 1st_char < Chr(filt+65))
+              if (!InStr(toggles, "Reverse") && filt && sort == "Alpha" && 1st_char < Chr(filt+64))
                 return
-              else if (InStr(toggles, "Reverse") && filt && sort == "Alpha" && 1st_char > Chr(filt+64))
+              else if (InStr(toggles, "Reverse") && filt && sort == "Alpha" && 1st_char > Chr(filt+63))
                 return
               }
             else if (sort == "Date")
@@ -1160,11 +1161,12 @@ value := 0
         FileRead, str, %playlist%
         FileDelete, %playlist%
         Loop, Parse, selected, `,
-          {
-          getMedia(A_LoopField)
-          x = %target%`r`n
-          str := StrReplace(str, x,,,1)					; mark entry as deleted
-          }
+          if A_LoopField
+            {
+            getMedia(A_LoopField)
+            x = %target%`r`n
+            str := StrReplace(str, x,,1,1)				; mark entry as deleted
+            }
         FileAppend, %str%, %playlist%, UTF-8
         AllFav()
         }
@@ -1389,6 +1391,9 @@ value := 0
     Initialize()
         {
         Global
+        if InStr(Clipboard, "#")
+          Clicpboard =
+        else lastClip := Clipboard
         LoadSettings()
         AllFav()							; create ..\fav\all fav.m3u
         FileDelete, %inca%\cache\temp\*.*
@@ -1519,7 +1524,7 @@ value := 0
     Indexer:
     Critical Off
     GuiControlGet, control, Indexer:, GuiInd
-    if InStr(control, "processing")					; ffmpeg busy
+    if InStr(control, "transcoding")					; ffmpeg busy
       return
     if indexFolders
       Loop, Parse, indexFolders, `|
@@ -1583,7 +1588,8 @@ value := 0
             if (thumb || force)
                 {
                 Runwait %inca%\cache\apps\ffmpeg -i %inca%\cache\temp\`%d.jpg -filter_complex "tile=6x6" -y "%inca%\cache\thumbs\%filen%.jpg",, Hide
-                Transcode(0,0,source)
+                if (folder == "Downloads")
+                  Transcode(0,0,source)
                 }
             }
           GuiControl, Indexer:, GuiInd
@@ -1599,10 +1605,6 @@ value := 0
           to = -to %end%
         if (DetectMedia(src) != "video")
           return
-        FileRead, ProcessedList, *t c:\inca\cache\apps\processed.txt
-        if InStr(ProcessedList, media)
-          if (!start && !end)
-            return
         FileGetTime, CreationTime, %src%, C
         FileGetTime, ModifiedTime, %src%, M
         if ErrorLevel
@@ -1667,22 +1669,20 @@ value := 0
               }
             }
           }
-        temp := mediaPath . "\temp_" . media . ".mp4"
+        temp := "C:\Users\asus\Downloads" . "\temp_" . media . ".mp4"
         cmd = -y -i "%src%" %ss% %to% -c:v h264_amf -rc cqp -qp_i 22 -qp_p 24 -vf scale=%Resolution% -force_key_frames "expr:gte(t,n_forced*2)" -sc_threshold 0 -g %GOPFrames% -keyint_min %GOPFrames% -maxrate %MaxBitrate%k -bufsize %BufSize%k -c:a aac -b:a 128k -ar 48000 -ac 2 -map 0:v:0 -map 0:a? -map 0:s? -c:s copy -f mp4 -movflags +faststart+separate_moof "%temp%"
         RunWait %COMSPEC% /c %inca%\cache\apps\ffmpeg.exe %cmd%, , Hide
         if ErrorLevel
           return
         if (!start && !end)
-          {
-          FileAppend, %src%`n, c:\inca\cache\apps\processed.txt, UTF-8
           FileRecycle, %src%
-          }
         else if start
           suffix = @%start%
         else suffix = @%end%
         if suffix
           new = %mediaPath%\%media% %suffix%.mp4
         else new = %mediaPath%\%media%.mp4
+; new := "C:\Users\asus\Downloads\" . media . ".mp4"
         FileMove, %temp%, %new%
         FileSetTime, %ModifiedTime%, %new%, M
         FileSetTime, %CreationTime%, %new%, C
@@ -1690,12 +1690,13 @@ value := 0
         }
 
 
-
     RenderPage()							; construct web page from media list
         {
         Critical							; stop pause key & timer interrupts
         if !path
           return
+        if fullscreen							; address bar not work in fullscreen
+          send, {F11}
         foldr =
         mediaList =
         x = %folder%\
@@ -1901,7 +1902,7 @@ value := 0
       wheelDir := 1
     else wheelDir := -1
 
-header = <!--, %page%, %pages%, %sort%, %toggles%, %listView%, %playlist%, %path%, %searchPath%, %searchTerm%, %subfolders%, -->`n<!doctype html>`n<html>`n<head>`n<meta charset="UTF-8">`n<title>Inca - %title%</title>`n<meta name="viewport" content="width=device-width, initial-scale=1">`n<link rel="icon" type="image/x-icon" href="http://localhost:3000/%inca%/cache/icons/inca.ico">`n<link rel="stylesheet" type="text/css" href="http://localhost:3000/%inca%/css.css">`n`n</head>`n`n
+header = <!--, %page%, %pages%, %sort%, %toggles%, %listView%, %playlist%, %path%, %searchPath%, %searchTerm%, %subfolders%, -->`n<!doctype html>`n<html>`n<head>`n<meta charset="UTF-8">`n<title>Inca - %title%</title>`n<meta name="viewport" content="width=device-width, initial-scale=1">`n<link rel="icon" type="image/x-icon" href="file:///%inca%/cache/icons/inca.ico">`n<link rel="stylesheet" type="text/css" href="file:///%inca%/css.css">`n`n</head>`n`n
 
 body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(%page%, %pages%, '%folder_s%', %wheelDir%, '%mute%', %paused%, '%sort%', %filt%, %listView%, '%selected%', '%playlist%', %index%); %scroll%.scrollIntoView()">`n`n
 
@@ -1937,7 +1938,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
   <div id='myPanel' class='myPanel'><div class='panel'>`n <div class='innerPanel'>`n`n%panelList%`n</div></div>`n`n
 
   <div id='myRibbon1' class='ribbon' style='font-size: 1.2em'>`n
-    <a style='color:red; font-weight:bold'>%listSize%</a>`n
+    <a style='color:red; width:8em; font-weight:bold'>%listSize%</a>`n
     <a id='myMusic' style='max-width:4em; %x22%' onmousedown="inca('Path','','','music|1')" onmouseover="setTimeout(function() {if(myMusic.matches(':hover'))Music.scrollIntoView()},200)">&#x266B;</a>`n
     <a id='myFav' style='%x23%' onmousedown="inca('Path','','','fav|1')" onmouseover="setTimeout(function() {if(myFav.matches(':hover'))Fav.scrollIntoView()},200)">&#10084;</a>`n
     <a id='mySub' style='max-width:3em; font-size:0.7em; %x8%' onmousedown="inca('Recurse')" onmouseover="setTimeout(function() {if(mySub.matches(':hover'))Sub.scrollIntoView()},200)">%subs%</a>`n
@@ -1949,14 +1950,14 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
     </div>`n`n
 
   <div id='myRibbon2' class='ribbon' style='background:#1b1814' onwheel="wheelEvent(event)">`n
-    <a id='myMore' onmouseout='ix=0'>&hellip;</a>
+    <a id='myMore' style='width:1em' onmouseout='ix=0'>&hellip;</a>
+    <a id='myPause' style='width:3em' onmousedown="defPause^=1; inca('Pause',defPause)">Pause</a>`n
     <a id='myPlaylist' style='%x13%' onmousedown="inca('Playlist')">%pl%</a>`n
     <a id='myDate' style='%x4%' onmousedown="inca('Date', filt)">Date</a>`n
     <a id='myDuration' style='%x3%' onmousedown="inca('Duration', filt)"> Duration</a>`n
     <a id='myShuffle' style='%x1%' onmousedown="inca('Shuffle')">Shuffle</a>`n
     <a id='mySize' style='%x5%' onmousedown="inca('Size', filt)"">Size</a>`n
     <a id='myAlpha' style='%x2%' onmousedown="inca('Alpha', filt)">Alpha</a>`n
-    <a id='myPause' onmousedown="defPause^=1; inca('Pause',defPause)">Pause</a>`n
     <a id='myType' style='%x6%' onmousedown="inca('Type', filt)">%type%</a>`n
     <a id='myThumbs' onmouseout='setWidths(1,1000)' onmouseup="inca('View',0)">Thumb</a>`n 
     <a id='myWidth'>Width</a>`n
@@ -1965,14 +1966,46 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
 
       StringReplace, header, header, \, /, All
       StringReplace, body, body, \, /, All
-      script = <script src="http://localhost:3000/c:/inca/cache/apps/pitch.js">
-      script = %script%`n</script><script src="http://localhost:3000/c:/inca/java.js"></script>
+      FileRead, script, %inca%\java.js
+      script = <script>`n%script%`n</script>
       html = %header%%body%</div></div>`n%script%`n</body>`n</html>`n
       FileDelete, %inca%\cache\html\%folder%.htm
       FileAppend, %html%, %inca%\cache\html\%folder%.htm, UTF-8
-      FileDelete, %inca%\cache\html\temp.txt
-      FileAppend, %folder%.htm, %inca%\cache\html\temp.txt, UTF-8
-      sleep, 500
+      new_html = file:///%inca%\cache\html\%folder%.htm			; create / update browser tab
+      StringReplace, new_html, new_html, \,/, All
+      clip := clipboard
+      clipboard := new_html
+      IfWinNotExist, ahk_group Browsers
+        run, %new_html%							; open a new web tab
+      else if (folder == incaTab)					; just refresh existing tab
+        send, {F5}
+      else if (click == "MButton" || !incaTab)
+        run, %new_html%							; open a new web tab
+      else
+        {
+        send, ^l
+        sleep 54
+        send, {BS}
+        sleep 24
+        send, ^v
+        Send, {Enter}
+        }
+      sleep 100
+      clipboard := clip
+      incaTab := folder
+      Loop, 30								; wait until page loaded
+        {
+        WinGetTitle, title, A
+        If InStr(title, incaTab)
+          break
+        Sleep, 100
+        }
+      if (click == "MButton")
+        send, {MButton up}
+      if fullscreen
+        send, {F11}							; return to fullscreen
+      FileDelete, %inca%\cache\html\%folder%.htm
+      FileAppend, %html%, %inca%\cache\html\%folder%.htm, UTF-8
       Gui PopUp:Cancel
       }
 
@@ -2042,7 +2075,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
           preload = 'none'						; faster page load
           StringReplace, thumb, thumb, `%, `%25, All			; html cannot have % in filename
           StringReplace, thumb, thumb, #, `%23, All			; html cannot have # in filename
-          poster = poster="http://localhost:3000/%thumb%"
+          poster = poster="file:///%thumb%"
           }
         else
           noIndex = <span style='color:red'>no index</span>`n 
@@ -2106,11 +2139,9 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
 
       if (type=="image")
         src = &nbsp;
-      else src=src="http://localhost:3000/%src%"
+      else src=src="file:///%src%"
       if !size
         size = 0							; cannot have null size in getParameters()
-
-
 
 caption = <div id='srt%j%' class='caption' onmouseover='overText=1' onmouseout='overText=0'`n oninput="editing=index; playCap(event.target.id, 1)">%text%</div>
 
@@ -2124,7 +2155,7 @@ else mediaList = %mediaList%<div id="entry%j%" class='entry' data-params='%type%
     SlowTimer:
       GuiControlGet, control, Indexer:, GuiInd
       Process, Exist, ffmpeg.exe
-      if InStr(control, "processing")
+      if InStr(control, "transcoding")
          if !ErrorLevel
              GuiControl, Indexer:, GuiInd
       x := Setting("Sleep Timer") * 60000
@@ -2141,7 +2172,7 @@ else mediaList = %mediaList%<div id="entry%j%" class='entry' data-params='%type%
         {
         ctime := time
         Gui, Status:+lastfound
-        WinSet, TransColor, 0 60
+        WinSet, TransColor, 0 20
         Gui, Status:Font, s20 cWhite, Segoe UI
         GuiControl, Status:Font, GuiSta
         GuiControl, Status:, GuiSta, %time%    %volRef%
@@ -2171,12 +2202,12 @@ else mediaList = %mediaList%<div id="entry%j%" class='entry' data-params='%type%
         WinGet, desk, ID , ahk_class Progman
         if incaTab
           {
-          FileRead, messages, *P65001 C:\inca\cache\html\in.txt		; utf codepage
-          if messages
-            {
-            FileDelete, %inca%\cache\html\in.txt
-            Messages()
-            }
+          x := StrLen(Clipboard)
+          y := SubStr(Clipboard, 1, 1)
+          if (y=="#" && x>4 && StrSplit(clipboard,"#").MaxIndex()>4)	; very likely is a java message
+            Messages(Clipboard)
+          else if (x && !InStr(x, "#"))
+            lastClip := Clipboard
           }
         Gui, background:+LastFound
         Gui, background:Color, Black
