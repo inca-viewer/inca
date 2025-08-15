@@ -1,7 +1,7 @@
 
 # Media Viewer<br>
 Windows - Chrome, Firefox, Edge, Opera, Brave<br>
-YouTube style interface for your hard drive<br><br>
+YouTube style interface for your local media<br><br>
 <img src="screens/overview2.png" width="55%"><br>
 <img src="screens/computer arm 5.jpg" width="18%"> <img src="screens/computer arm 2.jpg" width="18%"> <img src="screens/computer arm 1.jpg" width="18%"><br><br>
 <img src="screens/Screen 1.jpg" width="25%"> <img src="screens/Screen 2.jpg" width="25%"><br>
@@ -14,23 +14,20 @@ Search, organize, edit & view media files in browser<br>
 Move, Copy, Rename files in browser<br>
 Create slideshows, favorites, clips, joins, conversions etc.<br>
 Create, edit or search captions and subtitles<br>
-Music and playlists from browser tabs<br>
+Concurrent Music and playlists from browser tabs<br>
 Sleep timer gradually lowers master volume when mouse quiet<br>
-To see if you already have a video from an outside website,<br>
-Select part of the title text, then 'long click' on it<br>
-A new tab will show all matching media files from your computer<br>
 
 Lightweight & portable (no installation)<br>
-Pure vanilla java / ahk script<br>
+Pure vanilla java / ahk script (ai check can confirm safe)<br>
 No IDE, no libraries, no external calls, no browser extensions<br> 
 Does not mess with any settings - see source code<br>
-Supports most media - mp4, wmv, avi, mpg, mkv etc.<br>
+Can convert any media to browser compatible.<br>
 Configure your settings.ini in notepad, then run compile.exe<br>
 Browser will default open in pictures folder.<br>
-Best to bookmark it<br><br>
+You need to bookmark at least one tab<br><br>
 To 'uninstall', just exit from taskbar & delete inca folder<br>
 You can edit source code in notepad<br>
-Compiles in about 3 second<br><br>
+Compiles in about 3 second<br>
 
 Middle click
 - next media (long click for previous)<br>
@@ -44,15 +41,10 @@ Back click
 Long back click
 - close browser tab or close window
 
-Long click
-- over media - start at 0
-- on nothing - return to last media
+Long left click
+- over media - show 6x6 thumb sheet
 - on selected text - find media matches on pc
 - on folder - copies selected files (instead of move)
-
-Long right click
-- show 6 x 6 thumbsheet
-- return to last media time
 
 Right click & slide
 - volume
@@ -63,6 +55,7 @@ Left click & slide
 - off browser - zoom tab
 
 6x6 thumbsheets index at about 15 videos per minute<br>
+indexing in downloads also converts video to fast play mp4
 Supports rotated screen + osk onscreen keyboard<br>
 set compile.exe to run as administrator if using osk<br>
 then click any text area for osk and back click to close<br>
