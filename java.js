@@ -6,10 +6,6 @@
 // maybe reloads previous page to get access to previous media on long back?
 // nudge to work with txt files for new media with scroll not time
 // could pitch be done offline and merged
-// skinny and transcode pictures - watch
-// longClick = 0 in mouseUp() to fix clear selected on mouseBack - watch
-// bitlocker
-// accidental mp4
 
 
   let entry = 0								// thumb container
