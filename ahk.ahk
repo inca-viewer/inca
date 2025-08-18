@@ -1,10 +1,6 @@
 
 	; Browser Based File Explorer - Windows
-	; generates web pages of your media through server.js
-
-	; ahk as client used for osk, ambiance, time, volume, firefox back key
-        ; ahk as server for htm generation, transcode etc, indexing
-
+	; generates web pages of your media
 
 	#NoEnv
 	#UseHook, On
@@ -194,7 +190,7 @@
         if (!gesture && longClick && click == "LButton" && wasCursor == "IBeam")
           {
           WinGetTitle title, A
-          cmd = %inca%\cache\apps\yt-dlp.exe --no-mtime "best" -P "%profile%\downloads" "%ClipBoard%"
+          cmd = %inca%\cache\apps\yt-dlp.exe --no-mtime -f bestvideo -P "%profile%\downloads" "%ClipBoard%"
           if (InStr(title, "YouTube") && InStr(Clipboard, "https://youtu"))
             {
             Run %COMSPEC% /c %cmd%,, hide
@@ -227,6 +223,8 @@
           Join()
         else if (command == "Vibe")					; create srt caption file
           Vibe()
+        else if (command == "Pitch")					; create srt caption file
+          Pitch()
         else if (command == "Osk")					; create srt caption file
           Osk()
         else if (command == "Add" && address)
@@ -282,7 +280,14 @@
           selected =
           reload := 2
           }
-        else if (command == "Move")					; move entry within playlist
+        else if (command == "newCap")					; create new caption file
+          {
+          x = 1`r`n00:00,000 --> 00:07,000`r`n_______________
+          FileAppend, %x%, %inca%\cache\captions\%media%.srt, UTF-8
+          FileAppend, 0.00|scroll|0|200|200, %inca%\cache\cues\%media%.txt, UTF-8
+          reload := 2
+          selected =
+          }        else if (command == "Move")				; move entry within playlist
           {
           MoveEntry()
           reload := 3
@@ -372,7 +377,7 @@
         messages := StrReplace(input, "/", "\")
         array := StrSplit(messages,"#")
         Clipboard := lastClip
-;   tooltip %messages%, 0						; for debug
+; tooltip %messages%, 0						; for debug
         Loop % array.MaxIndex()/4
           {
           command := array[ptr+=1]
@@ -444,10 +449,25 @@
     Notepad()
       {
       if (value == "myCue")
-        Run, %inca%\cache\cues\%media%.txt
-      else if (type == "document") 
-        Run, %src%
-      else Run, %inca%\cache\captions\%media%.srt
+        {
+        IfExist, %inca%\cache\cues\%media%.txt
+          Run, %inca%\cache\cues\%media%.txt
+        return
+        }
+      else if (type == "document")
+        {
+        IfExist, %src%
+          Run, %src%
+        }
+      else IfExist, %inca%\cache\captions\%media%.srt
+        Run, %inca%\cache\captions\%media%.srt
+      loop 50
+        {
+        IfWinActive, Notepad
+          break
+        WinActivate, Notepad
+        sleep 20
+        }
       }
 
 
@@ -552,7 +572,7 @@
           toggles =
         if (value && sort == "Type")
           sort = Alpha
-value := 0
+        value := 0
         }
       else if (InStr(sortList, command) && sort != command)		; changed sort column
           {
@@ -600,6 +620,7 @@ value := 0
         else address := StrReplace(address, "+", " ")
       if (strlen(address) < 2)
         return
+      address := RegExReplace(address, "^\w", Format("{:U}", SubStr(address, 1, 1)))	; fix firefox bug
       searchTerm = %address%
       lastSearch = %address%
       PopUp(searchTerm,0,0,0)
@@ -666,9 +687,48 @@ value := 0
       {
       Loop, Parse, selected, `,
         if getMedia(A_LoopField)
-          IfNotExist, %inca%\cache\srt - original\%media%.srt
-            run %profile%\AppData\Local\vibe\vibe.exe --file "%src%" --write "%inca%\cache\srt - original\%media%.srt" --model "%profile%\AppData\Local\github.com.thewh1teagle.vibe\ggml-large-v3-turbo.bin" --format "srt"
+          IfNotExist, %inca%\cache\original srt\%media%.srt
+            run %profile%\AppData\Local\vibe\vibe.exe --file "%src%" --write "%inca%\cache\original srt\%media%.srt" --model "%profile%\AppData\Local\github.com.thewh1teagle.vibe\ggml-large-v3-turbo.bin" --format "srt"
+      }
 
+
+    Pitch()
+      {
+      Loop, Parse, selected, `,
+        if getMedia(A_LoopField)
+          {
+          IfNotExist, %inca%\cache\original audio\%media%.*
+            {
+            count := A_LoopField
+            GuiControl, Indexer:, GuiInd, transcoding - %media%
+            FileGetTime, CreatedTime, %src%, C
+            FileGetTime, ModifiedTime, %src%, M
+            if (ext == "mp3" || ext == "m4a")
+              FileCopy, %src%, %inca%\cache\original audio\%media%.%ext%
+            else RunWait %inca%\cache\apps\ffmpeg.exe -i "%src%" -vn -c:a copy "%inca%\cache\original audio\%media%.m4a",, Hide
+            if ErrorLevel
+              continue
+            if (ext == "mp3")
+              RunWait %inca%\cache\apps\ffmpeg.exe -i "%src%" -af "rubberband=pitch=1.08" -y "%media%.%ext%",, Hide
+            else RunWait %inca%\cache\apps\ffmpeg.exe -i "%src%" -c:v copy -c:a aac -af "rubberband=pitch=1.08" -y "%media%.%ext%",, Hide
+            if !ErrorLevel
+              FileMove, %inca%\cache\apps\%media%.%ext%, %src%, 1
+            }
+          else
+            {
+            if (ext == "mp3" || ext == "m4a")
+              FileMove, %inca%\cache\original audio\%media%.%ext%, %src%, 1
+            else RunWait %inca%\cache\apps\ffmpeg.exe -i "%src%" -i "%inca%\cache\original audio\%media%.m4a" -c:v copy -c:a copy -map 0:v:0 -map 1:a:0 -y "%media%.%ext%",, Hide
+            FileRecycle, %inca%\cache\original audio\%media%.m4a
+            FileMove, %inca%\cache\apps\%media%.%ext%, %src%, 1
+            }
+          FileSetTime, %CreatedTime%, %src%, C
+          FileSetTime, %ModifiedTime%, %src%, M 
+          }
+      GuiControl, Indexer:, GuiInd
+      index := count						; scroll to last conversion
+      reload := 2
+      selected =
       }
 
 
@@ -794,27 +854,39 @@ value := 0
         {
         str := ""
         time := ""
-        ix := 0
+        last := ""						; detect `r`n`r`n
+        ix := 1
         caption := ""
         Loop, Parse, address, `n, `r
           {
           if !A_LoopField
             {
+            if last						; incremeent seconds of new caption
+            time := RegExReplace(time, ":\K\d+", "0" . (RegExMatch(time, ":\K\d+", minutes) ? minutes + 1 : 0))
             if (caption && time)
+              {
               str .= ix . "`r`n" . time . "`r`n" . Trim(caption, "`r`n") . "`r`n`r`n"
+              ix++
+              }
             caption := ""
-            continue
+            last = 1
             }
-          if InStr(A_LoopField, " --> ")
+          else if InStr(A_LoopField, " --> ")
             {
             if (caption && time)
+              {
               str .= ix . "`r`n" . time . "`r`n" . Trim(caption, "`r`n") . "`r`n`r`n"
+              ix++
+              }
             time := A_LoopField
-            ix++
             caption := ""
+            last =
             }
-          else
-          caption .= A_LoopField . "`r`n"
+          else 
+            {
+            caption .= A_LoopField . "`r`n"
+            last =
+            }
           }
         if (caption && time)
           str .= ix . "`r`n" . time . "`r`n" . Trim(caption, "`r`n") . "`r`n`r`n"
@@ -1682,7 +1754,6 @@ value := 0
         if suffix
           new = %mediaPath%\%media% %suffix%.mp4
         else new = %mediaPath%\%media%.mp4
-; new := "C:\Users\asus\Downloads\" . media . ".mp4"
         FileMove, %temp%, %new%
         FileSetTime, %ModifiedTime%, %new%, M
         FileSetTime, %CreationTime%, %new%, C
@@ -1912,8 +1983,6 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
 <span id='mySelected' class='selected'></span>`n
 <div id='capMenu' class='capMenu'>`n
 <span id='myCancel' class='capButton' onmouseup="editing=0; inca('Reload',index)">&#x2715;</span>`n 
-<span id='myBack' class='capButton' style='font-weight:bold'>&#x2212</span>`n 
-<span id='myForward' class='capButton' style='font-weight:bold'>&#xFF0B</span>`n
 <span id='mySave' class='capButton' onmouseup="if (!longClick) inca('Null')">Save</span></div>`n`n
 <div id='myContent' class='mycontent'>`n<div id='myView' class='myview'>`n`n %mediaList%</div></div>`n`n
 
@@ -1925,7 +1994,6 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
   <a id='myFavorite'>Fav</a>`n
   <a id='mySkinny'></a>`n
   <a id='mySpeed'></a>`n
-  <a id='myPitch'></a>`n
   <a id='myDelete' style='color:red' onmouseup="inca('Delete','',index)"></a>`n
   <a id='myIndex' onmouseup="inca('Index','',index)"></a>`n
   <a id='myFlip' onmouseup='flip()'>Flip</a>`n
@@ -1950,7 +2018,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
     </div>`n`n
 
   <div id='myRibbon2' class='ribbon' style='background:#1b1814' onwheel="wheelEvent(event)">`n
-    <a id='myMore' style='width:1em' onmouseout='ix=0'>&hellip;</a>
+    <a id='myMore' style='width:3em' onmouseout='ix=0'>&hellip;</a>
     <a id='myPause' style='width:3em' onmousedown="defPause^=1; inca('Pause',defPause)">Pause</a>`n
     <a id='myPlaylist' style='%x13%' onmousedown="inca('Playlist')">%pl%</a>`n
     <a id='myDate' style='%x4%' onmousedown="inca('Date', filt)">Date</a>`n
@@ -2136,6 +2204,8 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
 
       if (text && type!="document")
         favicon = %favicon% &#169
+      IfExist, %inca%\cache\original audio\%media%.*
+        favicon = %favicon% &#9834
 
       if (type=="image")
         src = &nbsp;

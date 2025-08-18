@@ -1,11 +1,10 @@
 
 // maybe auto add a .bak to m3u, txt files saved
 // change folder structure help / apps etc
-// creating new caption times
 // add youtube timeline functionality via history.m3u - consider
 // maybe reloads previous page to get access to previous media on long back?
 // nudge to work with txt files for new media with scroll not time
-// could pitch be done offline and merged
+// check if yt-dlp created
 
 
   let entry = 0								// thumb container
@@ -67,14 +66,14 @@
   let mediaY = 0
   let folder = ''							// browser tab name = media folder
   let defRate = 1							// default speed
-  let pitch = 0								// default pitch
   let muted = 0
   let defPause = 0							// default pause state
-  let items = ['&hellip;', 'mp4', 'mp3', 'Join', 'Vibe']		// ribbon drop down menu
+  let items = ['&hellip;', 'mp4', 'mp3', 'Join', 'Vibe', 'Pitch']	// ribbon drop down menu
   let ix = 0								// index to items
   let observer								// see if myPlayer is visible
   let swap								// last deleted media
   let end = 0								// myPlayer ended time
+  let split = ''							// caption line edit point
 
 
   let intervalTimer = setInterval(timerEvent,90)			// background tasks every 90mS
@@ -110,8 +109,7 @@
 
 
   function keyDown(e) {							// keyboard events
-    if (e.key == 'Backspace' && captions && type != 'document') joinCap()
-    else if (e.code == 'ArrowRight' && e.altKey) {lastClick=5; clickEvent(e)}
+    if (e.code == 'ArrowRight' && e.altKey) {lastClick=5; clickEvent(e)}
     else if (e.key == 'Pause' || (e.code == 'ArrowLeft' && e.altKey)) mouseBack()
     else if (e.key == 'ArrowRight' && playing) myPlayer.currentTime += 10
     else if (e.key == 'ArrowLeft' && playing) myPlayer.currentTime -= 10
@@ -125,19 +123,14 @@
     if (!gesture && longClick == 1 && !playing && playlist && selected && overMedia) {inca('Move', overMedia); return}
     if (playing && capText && (!capText.innerHTML || capText.innerHTML=="<br>")) {capTime.remove(); capText.remove(); capText=''; return}
     if (id == 'myMute' || id == 'mySave' || id == 'myDelete' || id == 'myIndex') return
-    if (id == 'myForward') {newCap(0.4); return}					// move caption forward in time
-    if (id == 'myBack') {newCap(-0.4); return}
     if (id == 'myFavorite') {addFavorite(); return}
-    if (id == 'myPitch') {pitch=0; localStorage.setItem('pitch'+folder, 0); return}
-    if (id == 'myCue' && playing) {cueButton(); return}
-    if (id == 'myCap' && playing) {capButton(); return}
-    if (id == 'myMore') {
-      if (ix == 0) inca('Settings')
-      if (selected) {
-        if (ix == 1) inca('mp4', cue, lastMedia, end)
-        if (ix == 2) inca('mp3', cue, lastMedia, end)
-        if (ix == 3) inca('Join')
-        if (ix == 4) inca('Vibe')}
+    if (id == 'myMore' && ix == 0) inca('Settings')
+    if (id == 'myMore' && (selected || cue)) {
+      if (ix == 1) inca('mp4', cue, lastMedia, end)
+      if (ix == 2) inca('mp3', cue, lastMedia, end)
+      if (ix == 3) inca('Join')
+      if (ix == 4) inca('Vibe')
+      if (ix == 5) inca('Pitch')
       cue = 0; selected = ''; selectAll(); selectAll()
       return}
     if (lastClick == 3) {								// Right click context
@@ -150,15 +143,17 @@
       if (!playing && !myNav.style.display) {inca('View',lastMedia); return}		// list/thumb view
       else if (longClick) {index--} else index++}					// next, previous media
     if (lastClick == 1) {
-      if (longClick && !playing && (type == 'document' || favicon.matches(':hover'))) {Click=0; inca('Notepad',id,index); return}
-      if (!playing && (id=='myCap' || id=='myCue')) {Click=0; inca('Notepad',id,index); return}
-      if (overMedia && thumb.src.endsWith('.pdf')) {Click=0; inca('Notepad',id,index); return}
+      if (!playing) {
+        if (id=='myCue' || (longClick && (type=='document' || favicon.matches(':hover'))) || (overMedia && thumb.src.endsWith('.pdf'))) { 
+          Click=0; inca('Notepad',id,index); return}}
       if (!longClick) {
         if (overMedia && ym > 0.8 && ym < 1 && !playing && type=='video' && !favicon.matches(':hover')) {
           thumb.currentTime = xm > 0.2 ? dur * xm : thumb.style.start; thumb.play(); return}
         if (id == 'mySelect') {if (myTitle.value) {sel(index)} else selectAll(); return}
         if (id == 'mySkinny') {updateCue('skinny',1); return}
-        if (id == 'mySpeed') {updateCue('rate',1); return}}
+        if (id == 'mySpeed') {updateCue('rate',1); return}
+        if (id == 'myCap') {capButton(); return}
+        if (id == 'myCue' && playing) {cueButton(); return}}
       else if (overText) {searchBox(); return}
       if (id == title.id) {thumb.currentTime=thumb.style.start; return}
       if (!playing && !overMedia && !myNav.style.display) return
@@ -198,7 +193,7 @@
 
   function Play() {
     positionMedia(0)
-    myPlayer.style.opacity = 0
+    if (lastClick == 1) myPlayer.style.opacity = 0			// fade in player
     if (!playing && !playlist && !favicon.textContent.includes('\u2764') && dur < 200) thumb.currentTime = 0
     if (!thumbSheet) {
       myPlayer.poster=thumb.poster
@@ -219,15 +214,16 @@
     myMask.style.pointerEvents='auto'					// stop overThumb() triggering
     if (!longClick && lastClick==1 && srt.innerHTML && (favicon.matches(':hover') || type=='document')) openCap()
     if ((captions && srt.innerHTML) || type=='audio' || playlist.match('/inca/music/')) scaleY=0.16
-    if (playlist.match('/inca/music/')) {myPlayer.play(); myPlayer.muted=0}
-    else if (!thumbSheet && dur && !defPause && !cue) myPlayer.play()
+    setTimeout(function() {						// minimise transition jitter
+      if (playlist.match('/inca/music/')) {myPlayer.play(); myPlayer.muted=0}
+      else if (!thumbSheet && dur && !defPause && !cue) myPlayer.play()
+      if (lastClick) positionMedia(0.2)
+      myPlayer.style.opacity = 1 },200)
     myPlayer.style.zIndex=Zindex
     if (thumb.src.slice(-3)=='txt') srt.style.padding = 0
     if (thumb.src.slice(-3)=='mp3') myPlayer.style.borderBottom = '2px solid pink'
     else myPlayer.style.border=null
     observer = new IntersectionObserver(([entry]) => {if (!entry.isIntersecting) mediaX = mediaY = 500}).observe(myPlayer)
-    if (lastClick) positionMedia(0.3)					// fade up
-    myPlayer.style.opacity = 1
     myPlayer.volume=0.1							// triggers volume fadeup
     myCues('scroll')							// scroll to last position in document
     playing=1; block = 160}
@@ -244,16 +240,14 @@
     let y = Math.abs(ypos-Yref)
     if (x+y > 7 && Click && !gesture) {					// gesture (Click + slide)
       gesture = 1
-      if (captions && !cues.textContent.match(srt.offsetWidth)) editing = index
       if (!playing && overMedia) sel(index)
       if (myNav.style.display) {x=myNav.getBoundingClientRect(); Xref=(xpos-x.left)/skinny; Yref=ypos-x.top}}
     if (!gesture || !Click) {gesture=''; return}
+    else if (captions && !cues.textContent.match(srt.offsetWidth)) editing = index
     if (Click==1 && myPic.matches(':hover')) {myNav.style.left = xpos-Xref+"px"; myNav.style.top = ypos-Yref+"px"}  // move context menu
     else if (Click==1 && playing && (overMedia || !captions)) {		// move myPlayer
       mediaX += xpos - Xref
       mediaY += ypos - Yref
-      localStorage.mediaX = mediaX.toFixed(0)
-      localStorage.mediaY = mediaY.toFixed(0)
       Xref=xpos; Yref=ypos
       positionMedia(0)}}
 
@@ -267,7 +261,7 @@
     let wheelUp = wheelDir * e.deltaY > 0
     if (id=='myMore') {							// More option list
       if (wheelUp) {ix++} else ix--
-      if (ix > 4) ix = 4; if (ix < 0) ix = 0
+      if (ix > 5) ix = 5; if (ix < 0) ix = 0
       myMore.innerHTML = items[ix]}
     else if (id=='myPage') {						// htm page
       if (wheelUp && page<pages) page++
@@ -284,10 +278,6 @@
     else if (id == 'mySkinny' && myTitle.value) {			// skinny
       if (wheelUp) {skinny -= 0.01} else skinny += 0.01
       updateCue('skinny',skinny)}
-    else if (id == 'myPitch') {						// pitch
-      if (wheelUp) {pitch += 1} else pitch -= 1
-      pitch = 1*pitch.toFixed(0)
-      localStorage.setItem('pitch'+folder, pitch)}
     else if (id=='myThumbs') { 						// thumb size
       let x=view; let z=wheel/1500
       if (x<98 && wheelUp) x *= 1+z
@@ -366,7 +356,6 @@
     mySkinny.innerHTML = ''
     mySkinny.style.color = null
     mySpeed.innerHTML = defRate === 1 ? 'Speed' : 'Speed ' + defRate
-    myPitch.innerHTML = pitch === 0 ? 'Pitch' : 'Pitch ' + pitch
     if (myTitle.value) {
       myFlip.innerHTML = 'Flip'
       mySelect.style.outline = myPlayer.style.outline = title.style.outline
@@ -411,7 +400,7 @@
   function positionMedia(time) {					// position myPlayer in window
     myPanel.style.top='50px'
     myView.style.top='200px'
-    if (!mediaX) {mediaX = 1 * (localStorage.mediaX || screen.width/2); mediaY = 1 * (localStorage.mediaY || screen.height/2)}
+    if (!mediaX) {mediaX = screen.width/2; mediaY = screen.height/2}
     mediaX = Math.max(0, Math.min(innerWidth, mediaX)); mediaY = Math.max(0, Math.min(innerHeight, mediaY))
     let offset = captions && srt.innerHTML ? 140 : 0
     myPlayer.style.left = (mediaX - screenX) - myPlayer.offsetWidth / 2 + "px"
@@ -581,10 +570,6 @@
     x = localStorage.getItem(key)
     if (isNaN(x) || x<0.2 || x>5) localStorage.setItem(key, 1)		// default speed 1
     defRate = 1*localStorage.getItem(key)
-    key = 'pitch'+folder
-    x = 1*localStorage.getItem(key)
-    if (isNaN(x) || x<1 || x>2) localStorage.setItem(key, 0)		// default pitch 0
-    pitch = 1*localStorage.getItem(key)
     filter('my'+so)							// show filter heading in red
     for (x of selected.split(',')) {
       if(el=document.getElementById('title'+x)) {el.style.outline = '0.1px solid red'; el.style.opacity=1}}			
@@ -620,8 +605,8 @@
       let el = x[k].split('|')						// time[0] cue[1] value[2] period[3]
       if (el[1]=='scroll' && time=='scroll') {
         if (!srt.scrollTop) srt.scrollTo(0,el[2])			// scroll to text position
-        srt.style.width = (el[3] == null || el[3] < 200) ? '200px' : el[3] + 'px'	// text area size
-        srt.style.height = (el[4] == null || el[4] < 200) ? '200px' : el[4] + 'px'}
+        srt.style.width = el[3] + 'px'
+        srt.style.height = el[4] + 'px'}
       if (el[1]=='media' && el[3] && srt.scrollTop.toFixed(0) >= 1*el[0]) {scroll = 1*el[0]; src = el[2]; tm = 1*el[3]}	// added media
       if (el[1] && 1*el[0] > time-0.1 && 1*el[0] < time+0.1) {
         if (el[1]=='next') {lastClick=2; clickEvent(0)}
@@ -661,19 +646,6 @@
     srt.style.zIndex=Zindex}
 
 
-  function joinCap() {							// join to cap above
-    let text = window.getSelection().getRangeAt(0).toString()
-    if (window.getSelection().anchorOffset) return			// cursor not at beginning of caption
-    if (text == capText.textContent) capText.textContent = ''
-    else if (text) return
-    editing = index
-    myPlayer.currentTime=1*capTime.previousElementSibling.id.split('-')[1] // set player to previous caption
-    capText.previousElementSibling.remove()				// remove timestamp
-    capText.previousElementSibling.textContent+=' '+capText.textContent	// add caption to previous caption
-    capText.remove()							// remove old caption
-    editing = index}
-
-
   function updateCue(item, val) {					// rate, skinny, cues  getParameters(index); 
     val = Math.round(1000 * val) / 1000
     thumb.style[item] = val
@@ -681,75 +653,6 @@
     if (item=='skinny') {skinny = val; thumb.style.transform='scale('+val+',1)'}
     if (myTitle.value) {if (!playing) getParameters(index); positionMedia(0.2); if (item=='rate') rate = val}
     else if (item=='rate') {defRate = val; localStorage.setItem('defRate'+folder, val)}}
-
-
-  function newCap(nudge) {
-    if (nudge && block > 20) return
-    if (type == 'document') {
-      if (nudge < 0) {swap = lastMedia; cues.textContent = cues.textContent.replace(lastMedia, '')}
-      if (nudge > 0 && swap) cues.innerHTML += srt.scrollTop.toFixed(0) + '|' + swap.split('|').slice(1).join('|') + '\r\n'
-      if (nudge) messages += '#cueMedia#' + cues.textContent + '#' + index + '#'
-      return}
-    editing = index
-    block = 40									// Block rapid click re-entry
-    let newText = ''
-    if (nudge) {								// Handle nudge (timestamp adjustment)
-      if (capTime) myPlayer.currentTime = Number(capTime.id.split('-')[1])
-      newText = capText.textContent
-      myPlayer.currentTime += nudge
-      capTime.remove()
-      capText.remove()}
-    else if (captions) { 							// Handle caption split at cursor
-      capText.style.color = null
-      capText.style.transform = 'none'
-      const range = window.getSelection().getRangeAt(0)
-      let cursor = 0
-      for (let i = 0; i < capText.childNodes.length; i++) {
-        const node = capText.childNodes[i]
-        if (node === range.startContainer) { cursor += range.startOffset; break}
-        if (node.nodeType === Node.TEXT_NODE) cursor += node.textContent.length}
-      const z = capText.textContent
-      newText = z.substring(cursor).trim()
-      capText.textContent = z.substring(0, cursor).trim()
-      const id1 = Number(capTime.id.split('-')[1])
-      const id2 = capText.nextElementSibling ? Number(capText.nextElementSibling.id.split('-')[1]) : id1 + 1
-      if (range.startOffset !== z.length) myPlayer.currentTime = id1 + (id2 - id1) * (capText.textContent.length / z.length)}
-    if (!newText) newText = '________'
-    if (playing) thumb.currentTime = myPlayer.currentTime  			// Create timestamp
-    const t = thumb.currentTime.toFixed(1);
-    const w = thumb.currentTime.toFixed(3).split('.')
-    const minutes = Math.floor(w[0] / 60).toString().padStart(2, '0')
-    const seconds = (w[0] % 60).toString().padStart(2, '0')
-    let ww = `${minutes}:${seconds},${w[1]}`
-    const nextEl = capText?.nextElementSibling
-    ww += nextEl ? ` --> ${nextEl.innerHTML.split(' --')[0]}` : ` --> ${ww}`
-    const d = document.createElement('d')					 // Create new caption elements
-    d.id = `${index}-${t}`
-    d.textContent = ww
-    const e = document.createElement('e')
-    e.id = `my${index}-${t}`
-    e.setAttribute('contenteditable', 'true')
-    e.textContent = newText; // Plain text, no tags
-    if (!srt.innerHTML) {srt.append(d, e); favicon.innerHTML = '\u00a9'}	// Insert caption in chronological order
-    else {
-      let inserted = false
-      const captions = srt.children
-      if (!captions.length && capText && (!capText.nextElementSibling||Number(capText.nextElementSibling.id.split('-')[1]) >= Number(t)))
-        {srt.insertBefore(d, capText.nextElementSibling || null); srt.insertBefore(e, capText.nextElementSibling || null); inserted=true}
-      if (!inserted) {
-        for (let i = 0; i < captions.length; i += 2) {
-          const timeId = captions[i].id.split('-')[1]
-          if (Number(timeId) >= Number(t) && captions[i] !== capTime) {
-            srt.insertBefore(d, captions[i])
-            srt.insertBefore(e, captions[i + 1] || null)
-            inserted = true
-            break}}
-        if (!inserted) srt.append(d, e)}}
-    myNav.style.display = null
-    e.focus()
-    if (!captions) {openCap(); Play()}
-    if (nudge) myPlayer.play()
-    else myPlayer.pause()}
 
 
   function closePlayer() {
@@ -803,14 +706,14 @@
     Play()}
 
 
-  function capButton() {						// context menu Cap button
-    let x = cue+'|goto|'+myPlayer.currentTime.toFixed(2)
+  function capButton() {						// context menu Caption button
+    x = cue+'|goto|'+myPlayer.currentTime.toFixed(2)
     if (thumb.style.skinny) x = cue+'|skinny|'+thumb.style.skinny
     if (thumb.style.rate) x = cue+'|rate|'+thumb.style.rate
     thumb.style.skinny = thumb.style.rate = 0
     if (playing && type == 'document') inca('saveText')
     else if (cue) {cue=0; messages += '#addCue#' + x + '#' + index + '#'} // add cues to media
-    else if (myTitle.value) if (!srt.innerHTML || captions) {newCap()} else {openCap(); Play()}
+    else if (myTitle.value) if (!srt.innerHTML || captions) {inca('newCap',0,index)} else {openCap(); Play()}
     cue = 0}
 
 
