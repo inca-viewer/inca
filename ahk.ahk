@@ -1,6 +1,5 @@
 
-	; Browser Based File Explorer - Windows
-	; generates web pages of your media
+	; Browser Based media Explorer
 
 	#NoEnv
 	#UseHook, On
@@ -190,11 +189,11 @@
         if (!gesture && longClick && click == "LButton" && wasCursor == "IBeam")
           {
           WinGetTitle title, A
-          cmd = %inca%\cache\apps\yt-dlp.exe --no-mtime -f bestvideo -P "%profile%\downloads" "%ClipBoard%"
+          cmd = %inca%\cache\apps\yt-dlp.exe --no-mtime -f bestvideo+bestaudio -P "%profile%\downloads" "%ClipBoard%"
           if (InStr(title, "YouTube") && InStr(Clipboard, "https://youtu"))
             {
             Run %COMSPEC% /c %cmd%,, hide
-            PopUp("Downloading",999,0,0)
+            PopUp("Downloaded",999,0,0)
             ClipBoard =
             }
           else if !incaTab
@@ -205,7 +204,7 @@
       }
 
 
-    ProcessMessage()							; messages from java/browser
+    ProcessMessage()							; messages from java/browser html
         {
         if (command == "Null")						; used as trigger to save text editing - see Java inca()
           return
@@ -273,6 +272,9 @@
             LastMedia := A_LoopReadLine
           if address							; add last media from history
             FileAppend, `r`n%address%|media|%lastMedia%, %inca%\cache\cues\%media%.txt, UTF-8
+          index := selected
+          selected =
+          reload := 2
           }
         else if (command == "addCue")					; add skinny, speed, goto at scroll
           {
@@ -522,7 +524,7 @@
         reload := 3							; not show folder qty
         return								; to go to destination folder, remove return and else
         }
-      else if InStr(address, ".m3u")						; playlist
+      else if InStr(address, ".m3u")					; playlist
         {
         playlist := address
         SplitPath, address,,path,,folder
@@ -596,9 +598,9 @@
         else if (sort != "Shuffle")
           command = Reverse
         if InStr(toggle_list, command)
-          if !InStr(toggles, command)				; toggle the sort switches
-            toggles = %toggles%%command%			; add switch
-          else StringReplace, toggles, toggles, %command%	; remove switch
+          if !InStr(toggles, command)					; toggle the sort switches
+            toggles = %toggles%%command%				; add switch
+          else StringReplace, toggles, toggles, %command%		; remove switch
         else sort := command
         if (StrLen(toggles) < 3)
           toggles =
@@ -697,28 +699,29 @@
       Loop, Parse, selected, `,
         if getMedia(A_LoopField)
           {
-          IfNotExist, %inca%\cache\original audio\%media%.*
+          IfNotExist, %inca%\cache\original audio\%media%.*		; make media higher pitch and normalised
             {
             count := A_LoopField
-            GuiControl, Indexer:, GuiInd, transcoding - %media%
+            GuiControl, Indexer:, GuiInd, %A_Index% - higher pitch - %media%
             FileGetTime, CreatedTime, %src%, C
             FileGetTime, ModifiedTime, %src%, M
             if (ext == "mp3" || ext == "m4a")
               FileCopy, %src%, %inca%\cache\original audio\%media%.%ext%
-            else RunWait %inca%\cache\apps\ffmpeg.exe -i "%src%" -vn -c:a copy "%inca%\cache\original audio\%media%.m4a",, Hide
+            else RunWait %inca%\cache\apps\ffmpeg.exe -i file:"%src%" -vn -c:a copy file:"%inca%\cache\original audio\%media%.m4a",, Hide
             if ErrorLevel
               continue
+            x = rubberband=pitch=1.05,loudnorm=I=-16:TP=-1.5:LRA=11
             if (ext == "mp3")
-              RunWait %inca%\cache\apps\ffmpeg.exe -i "%src%" -af "rubberband=pitch=1.08" -y "%media%.%ext%",, Hide
-            else RunWait %inca%\cache\apps\ffmpeg.exe -i "%src%" -c:v copy -c:a aac -af "rubberband=pitch=1.08" -y "%media%.%ext%",, Hide
+              RunWait %inca%\cache\apps\ffmpeg.exe -i file:"%src%" -af "%x%" -y file:"%media%.%ext%",, Hide
+            else RunWait %inca%\cache\apps\ffmpeg.exe -i file:"%src%" -c:v copy -c:a aac -af "%x%" -y file:"%media%.%ext%",, Hide
             if !ErrorLevel
               FileMove, %inca%\cache\apps\%media%.%ext%, %src%, 1
             }
-          else
+          else								; restore original audio
             {
             if (ext == "mp3" || ext == "m4a")
               FileMove, %inca%\cache\original audio\%media%.%ext%, %src%, 1
-            else RunWait %inca%\cache\apps\ffmpeg.exe -i "%src%" -i "%inca%\cache\original audio\%media%.m4a" -c:v copy -c:a copy -map 0:v:0 -map 1:a:0 -y "%media%.%ext%",, Hide
+            else RunWait %inca%\cache\apps\ffmpeg.exe -i file:"%src%" -i file:"%inca%\cache\original audio\%media%.m4a" -c:v copy -c:a copy -map 0:v:0 -map 1:a:0 -y file:"%media%.%ext%",, Hide
             FileRecycle, %inca%\cache\original audio\%media%.m4a
             FileMove, %inca%\cache\apps\%media%.%ext%, %src%, 1
             }
@@ -726,7 +729,7 @@
           FileSetTime, %ModifiedTime%, %src%, M 
           }
       GuiControl, Indexer:, GuiInd
-      index := count						; scroll to last conversion
+      index := count							; scroll to last conversion
       reload := 2
       selected =
       }
@@ -832,40 +835,41 @@
       }
 
 
-    capEdit() ; Save edited text or SRT file
+    capEdit() 						; Save edited text or SRT file
       {
-      if (StrLen(address) < 10)
-        return
+      str := address
       getMedia(selected)
-      address := StrReplace(address, "<div><br></div>", "`r`n")
-      address := StrReplace(address, "<div>", "`r`n")
-      address := StrReplace(address, "<br>", "`r`n")
-      address := StrReplace(address, "<\e>", "`r`n") ; e is text element - note: / is reversed in Messages()
-      address := StrReplace(address, "<\d>", "`r`n") ; d is timestamp element
-      address := StrReplace(address, "--&gt;", "-->")
-      address := RegExReplace(address, "<.*?>") ; Remove all HTML tags
-      address := StrReplace(address, " ", " ")
+      str := StrReplace(str, "<div><br></div>", "`r`n")
+      str := StrReplace(str, "<div>", "`r`n")
+      str := StrReplace(str, "<br>", "`r`n")
+      str := StrReplace(str, "<\e>", "`r`n") 		; e is text element - note: / is reversed in Messages()
+      str := StrReplace(str, "<\d>", "`r`n") 		; d is timestamp element
+      str := StrReplace(str, "--&gt;", "-->")
+      str := RegExReplace(str, "<.*?>") 		; Remove all HTML tags
+      str := StrReplace(str, " ", " ")
+      if (StrLen(str) < 10)
+        return
       if (ext == "txt")
         {
         FileDelete, %src%
-        FileAppend, %address%, %src%, UTF-8
+        FileAppend, %str%, %src%, UTF-8
         }
       else
         {
-        str := ""
+        str2 := ""
         time := ""
-        last := ""						; detect `r`n`r`n
+        last := ""					; detect `r`n`r`n
         ix := 1
         caption := ""
-        Loop, Parse, address, `n, `r
+        Loop, Parse, str, `n, `r
           {
           if !A_LoopField
             {
             if last						; incremeent seconds of new caption
-            time := RegExReplace(time, ":\K\d+", "0" . (RegExMatch(time, ":\K\d+", minutes) ? minutes + 1 : 0))
+              time := RegExReplace(time, ":\K\d+", Format("{:02d}", (RegExMatch(time, ":\K\d+", m) ? m + 1 : 0)))
             if (caption && time)
               {
-              str .= ix . "`r`n" . time . "`r`n" . Trim(caption, "`r`n") . "`r`n`r`n"
+              str2 .= ix . "`r`n" . time . "`r`n" . Trim(caption, "`r`n") . "`r`n`r`n"
               ix++
               }
             caption := ""
@@ -875,7 +879,7 @@
             {
             if (caption && time)
               {
-              str .= ix . "`r`n" . time . "`r`n" . Trim(caption, "`r`n") . "`r`n`r`n"
+              str2 .= ix . "`r`n" . time . "`r`n" . Trim(caption, "`r`n") . "`r`n`r`n"
               ix++
               }
             time := A_LoopField
@@ -889,10 +893,13 @@
             }
           }
         if (caption && time)
-          str .= ix . "`r`n" . time . "`r`n" . Trim(caption, "`r`n") . "`r`n`r`n"
+          str2 .= ix . "`r`n" . time . "`r`n" . Trim(caption, "`r`n") . "`r`n`r`n"
+        str := str2
         FileDelete, %inca%\cache\captions\%media%.srt
         FileAppend, %str%, %inca%\cache\captions\%media%.srt, UTF-8
         }
+      FormatTime, date, , dddd, MMMM d, yyyy h:mm:ss tt
+      FileAppend, % "`n`n" . media . "`n" . date . "`n" . str, %inca%\cache\temp\backup.txt
       PopUp("saved", 400, 0, 0)
       }
 
@@ -1660,8 +1667,6 @@
             if (thumb || force)
                 {
                 Runwait %inca%\cache\apps\ffmpeg -i %inca%\cache\temp\`%d.jpg -filter_complex "tile=6x6" -y "%inca%\cache\thumbs\%filen%.jpg",, Hide
-                if (folder == "Downloads")
-                  Transcode(0,0,source)
                 }
             }
           GuiControl, Indexer:, GuiInd
@@ -1687,6 +1692,8 @@
       if ErrorLevel
         return
       FileRead, MetaContent, c:\inca\cache\temp\meta.txt
+      if (!start && !end && InStr(MetaContent, "h264_amf"))		; already transcoded
+        return
       if RegExMatch(MetaContent, """width"":\s*(\d+)", WidthMatch)
         Width := WidthMatch1 + 0
       if RegExMatch(MetaContent, """height"":\s*(\d+)", HeightMatch)
@@ -1741,11 +1748,22 @@
               }
             }
           }
-        temp := "C:\Users\asus\Downloads" . "\temp_" . media . ".mp4"
-        cmd = -y -i "%src%" %ss% %to% -c:v h264_amf -rc cqp -qp_i 22 -qp_p 24 -vf scale=%Resolution% -force_key_frames "expr:gte(t,n_forced*2)" -sc_threshold 0 -g %GOPFrames% -keyint_min %GOPFrames% -maxrate %MaxBitrate%k -bufsize %BufSize%k -c:a aac -b:a 128k -ar 48000 -ac 2 -map 0:v:0 -map 0:a? -map 0:s? -c:s copy -f mp4 -movflags +faststart+separate_moof "%temp%"
-        RunWait %COMSPEC% /c %inca%\cache\apps\ffmpeg.exe %cmd%, , Hide
+        temp := "C:\Users\asus\Downloads\temp_" . media . ".mp4"
+        encoders := "-c:v h264_amf -rc cqp -qp_i 22 -qp_p 24|-c:v h264_nvenc -preset p5 -rc vbr -b:v %MaxBitrate%k -bufsize %BufSize%k|-c:v h264_qsv -preset medium -global_quality 23|-c:v libx264 -preset medium -crf 23 -pix_fmt yuv420p"
+        for index, encoder in StrSplit(encoders, "|")
+          {
+          try {
+            cmd = -y -i file:"%src%" %ss% %to% %encoder% -vf scale=%Resolution% -force_key_frames "expr:gte(t,n_forced*2)" -sc_threshold 0 -g %GOPFrames% -keyint_min %GOPFrames% -maxrate %MaxBitrate%k -bufsize %BufSize%k -c:a aac -b:a 128k -ar 48000 -ac 2 -map 0:v:0 -map 0:a? -map 0:s? -c:s copy -f mp4 -movflags +faststart+separate_moof file:"%temp%"
+            RunWait %COMSPEC% /c %inca%\cache\apps\ffmpeg.exe %cmd%, , Hide
+            if !ErrorLevel
+              break
+            }
+          }
         if ErrorLevel
+          {
+          PopUp("Error...",900,0,0)
           return
+          }
         if (!start && !end)
           FileRecycle, %src%
         else if start
@@ -1862,7 +1880,7 @@
         x:=SubStr(searchTerm, 1, 1)
         stringUpper, x, x
         if x is alpha
-        if searchTerm						; on load scroll top panel to search letter eg 'M'
+        if searchTerm							; on load scroll top panel to search letter eg 'M'
           scroll = my%x%
 
         container = <div id='Music' style='font-size:2em; color:pink; text-align:center'>&#x266B;</div>`n
@@ -2146,7 +2164,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
           poster = poster="file:///%thumb%"
           }
         else
-          noIndex = <span style='color:red'>no index</span>`n 
+          noIndex = <span style='color:red; transform: translateY(-1.5em); display: block'>no index</span>`n 
         StringReplace, src, src, `%, `%25, All				; html cannot have % in filename
         StringReplace, src, src, #, `%23, All				; html cannot have # in filename
         StringReplace, media_s, media, `', &apos;, All
@@ -2257,7 +2275,7 @@ else mediaList = %mediaList%<div id="entry%j%" class='entry' data-params='%type%
         if (w == A_ScreenWidth)
           fullscreen := 1
         else fullscreen := 0
-        x := A_ScreenWidth-487
+        x := A_ScreenWidth-485
         y := A_ScreenHeight+16
         z := A_ScreenWidth-600
         if (!GetKeyState("LButton", "P"))

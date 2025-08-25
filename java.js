@@ -1,10 +1,4 @@
 
-// maybe auto add a .bak to m3u, txt files saved
-// change folder structure help / apps etc
-// add youtube timeline functionality via history.m3u - consider
-// maybe reloads previous page to get access to previous media on long back?
-// nudge to work with txt files for new media with scroll not time
-// check if yt-dlp created
 
 
   let entry = 0								// thumb container
@@ -71,9 +65,7 @@
   let items = ['&hellip;', 'mp4', 'mp3', 'Join', 'Vibe', 'Pitch']	// ribbon drop down menu
   let ix = 0								// index to items
   let observer								// see if myPlayer is visible
-  let swap								// last deleted media
   let end = 0								// myPlayer ended time
-  let split = ''							// caption line edit point
 
 
   let intervalTimer = setInterval(timerEvent,90)			// background tasks every 90mS
@@ -215,8 +207,8 @@
     if (!longClick && lastClick==1 && srt.innerHTML && (favicon.matches(':hover') || type=='document')) openCap()
     if ((captions && srt.innerHTML) || type=='audio' || playlist.match('/inca/music/')) scaleY=0.16
     setTimeout(function() {						// minimise transition jitter
-      if (playlist.match('/inca/music/')) {myPlayer.play(); myPlayer.muted=0}
-      else if (!thumbSheet && dur && !defPause && !cue) myPlayer.play()
+      if (playlist.match('/inca/music/') && !thumbSheet) {myPlayer.play(); myPlayer.muted=0}
+      else if (!captions && !thumbSheet && dur && !defPause && !cue) myPlayer.play()
       if (lastClick) positionMedia(0.2)
       myPlayer.style.opacity = 1 },200)
     myPlayer.style.zIndex=Zindex
@@ -224,7 +216,6 @@
     if (thumb.src.slice(-3)=='mp3') myPlayer.style.borderBottom = '2px solid pink'
     else myPlayer.style.border=null
     observer = new IntersectionObserver(([entry]) => {if (!entry.isIntersecting) mediaX = mediaY = 500}).observe(myPlayer)
-    myPlayer.volume=0.1							// triggers volume fadeup
     myCues('scroll')							// scroll to last position in document
     playing=1; block = 160}
 
@@ -373,9 +364,6 @@
     if (defPause) {myPause.style.color='red'} else myPause.style.color=null
     if (skinny<0) {myFlip.style.color='red'} else myFlip.style.color=null
     if (!thumbSheet && captions) srt.style.opacity=1
-    else srt.style.opacity=null
-    if (myPlayer.style.opacity === "0") {if (myPlayer.volume>0.01) myPlayer.volume/=2}
-    else if (myPlayer.volume < 0.8) {myPlayer.volume *= 1.25} else myPlayer.volume = 1	// fade sound in/out
     if (captions && el == myPlayer) {
       if (playing) {top = rect.bottom} else top = 300
       capMenu.style.top = top + 24 + srt.offsetHeight + 'px'; capMenu.style.left = mediaX -screenX - 85 + 'px'
@@ -610,7 +598,7 @@
       if (el[1]=='media' && el[3] && srt.scrollTop.toFixed(0) >= 1*el[0]) {scroll = 1*el[0]; src = el[2]; tm = 1*el[3]}	// added media
       if (el[1] && 1*el[0] > time-0.1 && 1*el[0] < time+0.1) {
         if (el[1]=='next') {lastClick=2; clickEvent(0)}
-        else if (el[1]=='goto' && !myPlayer.paused) {myPlayer.currentTime=thumb.style.start=thumb.currentTime=1*el[2];myPlayer.volume=0.1}
+        else if (el[1]=='goto' && !myPlayer.paused) {myPlayer.currentTime=thumb.style.start=thumb.currentTime=1*el[2]}
         else if (el[1]=='rate') rate = 1*el[2] || defRate
         else if (el[1]=='skinny') {skinny = 1*el[2] || 1; if(time) positionMedia(2)}
         else if (el[1]=='pause') {myPlayer.pause(); if (el[2]) setTimeout(function(){myPlayer.play()},1000*el[2])}}}
@@ -666,16 +654,17 @@
     playing=0
     captions=0								// in case browser not active
     thumbSheet=0
+    srt.style=''
     myNav.style=''
+    myPlayer.muted = 1
     myPlayer.style.opacity=0
     setTimeout(function() {						// fadeout before close
       myPlayer.style.zIndex=-1
       myMask.style = ''
       myPlayer.pause()
-      srt.style=''
       if (title.getBoundingClientRect().top>innerHeight-50) {
         title.scrollIntoView()						// scroll last media into view
-        myContent.scrollBy(0,-400)}},300)}				// time for htm to render
+        myContent.scrollBy(0,-400)}},200)}				// time for htm to render
 
 
   function navButtons() {						// innerHTML values
@@ -719,7 +708,7 @@
 
   function swapMedia(src, tm, scroll) {
     if (myPlayer.paused && overText && (myPlayer.src != src || tm != myPlayer.currentTime)) {
-      myPic.src = src							// force normalise uri encoding
+      myPic.src = 'file:///' + src					// force normalise uri encoding
       myPlayer.currentTime = tm
       if (myPlayer.src != myPic.src) {
         myPlayer.poster = myPlayer.src = myPic.src			// swap out media above srt
@@ -752,7 +741,8 @@
 
 
   function mediaEnded() {						// media finished playing
-    if (playlist.match('/inca/music/')) {if (getParameters(index+=1)) {Play(); myPlayer.play()} else closePlayer(); return}
+    if (playlist.match('/inca/music/')) {
+      if (getParameters(index+=1)) {Play(); myPlayer.play()} else closePlayer(); return}
     else if (!defPause) {myPlayer.currentTime=thumb.style.start; myPlayer.play()}
     else myPlayer.currentTime=dur+2}
 
@@ -776,7 +766,6 @@
     index = id
     if (Click) return							// faster for click & slide selecting
     getParameters(id)
-    thumb.volume = 0.6
     thumb.style.opacity = 1
     if (!thumb.currentTime) {thumb.load(); thumb.currentTime = thumb.style.start}}
 
@@ -785,7 +774,7 @@
   function selectAll() {for (i=1; document.getElementById('thumb'+i); i++) {sel(i)}}
   function flip() {xpos=0; skinny*=-1; scaleX*=-1; thumb.style.skinny=skinny; getParameters(index); positionMedia(0.4); setPic()}
   function togglePause() {
-    if (type=='document' && !overMedia) return
+    if (type=='document' && overText) return
     if (!thumbSheet && playing && myPlayer.paused) {myPlayer.play()} else myPlayer.pause()}
 
 
