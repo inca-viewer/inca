@@ -28,7 +28,6 @@
         Global music				; music playlists
         Global search				; list of search words
         Global searchFolders			; default search locations
-        Global indexFolders			; to index thumb sheets
         Global searchPath			; current search paths
         Global inca				; default folder path
         Global list				; sorted media file list
@@ -99,9 +98,7 @@
       if !GetBrowser() 				; no browser open
         Messages(default)			; process message
       SetTimer, TimedEvents, 50			; every 50mS - process server requests
-      SetTimer, SlowTimer, 500, -2		; show ffmpeg is processing
-      if (time := Setting("Indexer") * 60000)
-        SetTimer, indexer, % time, -2		; index new media
+      SetTimer, SlowTimer, 1000, -2		; show ffmpeg is processing
       return
 
 
@@ -189,11 +186,11 @@
         if (!gesture && longClick && click == "LButton" && wasCursor == "IBeam")
           {
           WinGetTitle title, A
-          cmd = %inca%\cache\apps\yt-dlp.exe --no-mtime -f bestvideo+bestaudio -P "%profile%\downloads" "%ClipBoard%"
+          cmd = %inca%\cache\apps\yt-dlp.exe --no-mtime -f bestvideo+bestaudio "%ClipBoard%"
           if (InStr(title, "YouTube") && InStr(Clipboard, "https://youtu"))
             {
-            Run %COMSPEC% /c %cmd%,, hide
-            PopUp("Downloaded",999,0,0)
+            Run %COMSPEC% /c %cmd% > "%inca%\cache\temp\yt-dlp.txt" 2>&1, , Hide
+            PopUp("OK...",999,0,0)
             ClipBoard =
             }
           else if !incaTab
@@ -286,7 +283,7 @@
           {
           x = 1`r`n00:00,000 --> 00:07,000`r`n_______________
           FileAppend, %x%, %inca%\cache\captions\%media%.srt, UTF-8
-          FileAppend, 0.00|scroll|0|200|200, %inca%\cache\cues\%media%.txt, UTF-8
+          FileAppend, `r`n0.00|scroll|0|200|200, %inca%\cache\cues\%media%.txt, UTF-8
           reload := 2
           selected =
           }        else if (command == "Move")				; move entry within playlist
@@ -310,7 +307,25 @@
 
 
     Osk() {
-      if !gesture
+      if WinActive("ahk_group Browsers")
+        {
+        clp := Clipboard
+        Clipboard =
+        send, ^c
+        ClipWait, 0
+        address := Clipboard
+        Clipboard := clp
+        send, {Lbutton up}
+        if address					; selected text long clicked over
+          {
+          path =
+          reload := 1
+          cmd = #SearchBox###%address%
+          messages(cmd)					; search for files with search text
+          return
+          }
+        }
+      if !gesture					; open on screen keyboard
        IfWinNotExist, ahk_class OSKMainClass
         if Setting("osk")
           {
@@ -482,7 +497,7 @@
             if !InStr(A_LoopField, "0.00|scroll")			; remember text scroll position
               newCue = %newCue%%A_LoopField%`r`n
       FileDelete, %inca%\cache\cues\%media%.txt
-      FileAppend, %newCue%0.00|scroll|%value%`r`n, %inca%\cache\cues\%media%.txt, UTF-8
+      FileAppend, %newCue%0.00|scroll|%value%, %inca%\cache\cues\%media%.txt, UTF-8
       }
 
 
@@ -702,7 +717,7 @@
           IfNotExist, %inca%\cache\original audio\%media%.*		; make media higher pitch and normalised
             {
             count := A_LoopField
-            GuiControl, Indexer:, GuiInd, %A_Index% - higher pitch - %media%
+            GuiControl, Indexer:, GuiInd, %A_Index% - Pitch - %media%
             FileGetTime, CreatedTime, %src%, C
             FileGetTime, ModifiedTime, %src%, M
             if (ext == "mp3" || ext == "m4a")
@@ -976,6 +991,7 @@
                   break 2
                 else if (show==1 && ((listSize<10000 && !Mod(listSize,1000)) || !Mod(listSize,10000)))
                   PopUp(listSize,0,0,0)
+        PopUp(listSize-1,0,0,0)
         StringTrimRight, list, list, 2					; remove end `r`n
         if (InStr(toggles, "Reverse") && sort != "Date" && sort != "Playlist")
             reverse = R
@@ -1452,7 +1468,6 @@
         sortList = Shuffle|Alpha|Duration|Date|Size|Type|Reverse|Recurse|Video|Image|Audio|Fav|Playlist
         IniRead,config,%inca%\ini.ini,Settings,config
         IniRead,searchFolders,%inca%\ini.ini,Settings,searchFolders
-        IniRead,indexFolders,%inca%\ini.ini,Settings,indexFolders
         IniRead,fol,%inca%\ini.ini,Settings,Fol
         IniRead,search,%inca%\ini.ini,Settings,Search
         IniRead,fav,%inca%\ini.ini,Settings,Fav
@@ -1543,7 +1558,7 @@
            source := StrSplit(A_Loopfield, "|").1
            start := StrSplit(A_Loopfield, "|").2
            detectMedia(source)
-           x = %searchFolders%|%indexFolders%
+           x = %searchFolders%
            IfNotExist, %source%
              Loop, Parse, x, `|
                IfExist, %A_LoopField%%media%.%ext%
@@ -1599,17 +1614,6 @@
     GuiControl, Indexer:, GuiInd
     return
 
-
-    Indexer:
-    Critical Off
-    GuiControlGet, control, Indexer:, GuiInd
-    if InStr(control, "transcoding")					; ffmpeg busy
-      return
-    if indexFolders
-      Loop, Parse, indexFolders, `|
-        Loop, Files, %A_LoopField%*.*, R
-          index(A_LoopFileFullPath,0)
-    return
 
 
     index(source, force)						; create thumbs, posters & durations cache
@@ -1667,9 +1671,14 @@
             if (thumb || force)
                 {
                 Runwait %inca%\cache\apps\ffmpeg -i %inca%\cache\temp\`%d.jpg -filter_complex "tile=6x6" -y "%inca%\cache\thumbs\%filen%.jpg",, Hide
+                if InStr(source, "\downloads\")
+                  {
+                  GuiControl, Indexer:, GuiInd, Transcoding......
+                  Transcode(0,0,source)
+                  }
                 }
+            GuiControl, Indexer:, GuiInd
             }
-          GuiControl, Indexer:, GuiInd
           }
 
 
@@ -1692,7 +1701,7 @@
       if ErrorLevel
         return
       FileRead, MetaContent, c:\inca\cache\temp\meta.txt
-      if (!start && !end && InStr(MetaContent, "h264_amf"))		; already transcoded
+      if (!start && !end && (InStr(MetaContent, "h264_amf") || InStr(MetaContent, "Inca")))	; already transcoded so quit
         return
       if RegExMatch(MetaContent, """width"":\s*(\d+)", WidthMatch)
         Width := WidthMatch1 + 0
@@ -1753,7 +1762,7 @@
         for index, encoder in StrSplit(encoders, "|")
           {
           try {
-            cmd = -y -i file:"%src%" %ss% %to% %encoder% -vf scale=%Resolution% -force_key_frames "expr:gte(t,n_forced*2)" -sc_threshold 0 -g %GOPFrames% -keyint_min %GOPFrames% -maxrate %MaxBitrate%k -bufsize %BufSize%k -c:a aac -b:a 128k -ar 48000 -ac 2 -map 0:v:0 -map 0:a? -map 0:s? -c:s copy -f mp4 -movflags +faststart+separate_moof file:"%temp%"
+            cmd = -y -i file:"%src%" %ss% %to% %encoder% -vf scale=%Resolution% -force_key_frames "expr:gte(t,n_forced*2)" -sc_threshold 0 -g %GOPFrames% -keyint_min %GOPFrames% -maxrate %MaxBitrate%k -bufsize %BufSize%k -c:a aac -b:a 128k -ar 48000 -ac 2 -map 0:v:0 -map 0:a? -map 0:s? -c:s copy -f mp4 -movflags +faststart+separate_moof -metadata:s:v:0 handler_name=Inca file:"%temp%"
             RunWait %COMSPEC% /c %inca%\cache\apps\ffmpeg.exe %cmd%, , Hide
             if !ErrorLevel
               break
@@ -2242,10 +2251,25 @@ else mediaList = %mediaList%<div id="entry%j%" class='entry' data-params='%type%
 
     SlowTimer:
       GuiControlGet, control, Indexer:, GuiInd
+      FileGetTime, LastModified, %inca%\cache\apps, M
+      LastModified := A_Now - LastModified			; folder last modified (downloading)
+      if (!control && LastModified < 3)
+        GuiControl, Indexer:, GuiInd, Downloading...
+      else if (LastModified > 3 && InStr(control, "Downloading..."))
+        GuiControl, Indexer:, GuiInd
+      else Loop, Files, %inca%\cache\apps\*.*
+        if (A_LoopFileExt == "webm" || A_LoopFileExt == "mp4")
+          {
+          FileGetTime, FileModified, %A_LoopFileFullPath%, M
+          if (A_Now - FileModified > 2)
+            FileMove, %A_LoopFileFullPath%, %profile%\Downloads, 1
+          }
+      Loop, Files, %profile%\Downloads\*.*, R
+        index(A_LoopFileFullPath,0)
       Process, Exist, ffmpeg.exe
       if InStr(control, "transcoding")
          if !ErrorLevel
-             GuiControl, Indexer:, GuiInd
+            GuiControl, Indexer:, GuiInd
       x := Setting("Sleep Timer") * 60000
       if (volume > 0 && A_TimeIdlePhysical > x)
         {

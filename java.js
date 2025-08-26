@@ -1,6 +1,5 @@
 
 
-
   let entry = 0								// thumb container
   let thumb = 0								// thumb element
   let title = 0								// title element
@@ -93,8 +92,8 @@
 
   function mouseUp(e) {
     if (!Click) return							// stop re-entry also if new page load
-    if (!myInput.matches(':hover'))
-      myInput.value = window.getSelection().toString() || myInput.value	// click to select text
+    if (!playing && !myInput.matches(':hover'))
+      myInput.value = window.getSelection().toString() || myInput.value	// text into searchbox
     clearTimeout(clickTimer)						// longClick timer
     if (!longClick) clickEvent(e)					// process click event
     Click = longClick = wheel = gesture = 0}
@@ -194,7 +193,8 @@
       myPlayer.currentTime=thumb.currentTime}
     thumb.pause()
     myPlayer.pause()
-    myPlayer.muted = muted
+    if (playlist.match('/inca/music/')) myPlayer.muted=0
+    else myPlayer.muted = muted
     if (el=document.getElementById('title'+lastMedia)) el.style.color=null
     title.style.opacity = 1; title.style.color='pink'
     if ((el=document.getElementById('srt'+lastMedia)) && playing && index!=lastMedia) {	// hide last caption
@@ -206,9 +206,9 @@
     myMask.style.pointerEvents='auto'					// stop overThumb() triggering
     if (!longClick && lastClick==1 && srt.innerHTML && (favicon.matches(':hover') || type=='document')) openCap()
     if ((captions && srt.innerHTML) || type=='audio' || playlist.match('/inca/music/')) scaleY=0.16
-    setTimeout(function() {						// minimise transition jitter
       if (playlist.match('/inca/music/') && !thumbSheet) {myPlayer.play(); myPlayer.muted=0}
-      else if (!captions && !thumbSheet && dur && !defPause && !cue) myPlayer.play()
+    setTimeout(function() {						// minimise transition jitter
+      if (!captions && !thumbSheet && dur && !defPause && !cue) myPlayer.play()
       if (lastClick) positionMedia(0.2)
       myPlayer.style.opacity = 1 },200)
     myPlayer.style.zIndex=Zindex
@@ -656,7 +656,6 @@
     thumbSheet=0
     srt.style=''
     myNav.style=''
-    myPlayer.muted = 1
     myPlayer.style.opacity=0
     setTimeout(function() {						// fadeout before close
       myPlayer.style.zIndex=-1
