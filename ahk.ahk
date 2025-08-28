@@ -189,8 +189,8 @@
           cmd = %inca%\cache\apps\yt-dlp.exe --no-mtime -f bestvideo+bestaudio "%ClipBoard%"
           if (InStr(title, "YouTube") && InStr(Clipboard, "https://youtu"))
             {
-            Run %COMSPEC% /c %cmd% > "%inca%\cache\temp\yt-dlp.txt" 2>&1, , Hide
-            PopUp("OK...",999,0,0)
+            Run %COMSPEC% /c %cmd% > yt-dlp.txt 2>&1, , Hide
+            PopUp("trying...",999,0,0)
             ClipBoard =
             }
           else if !incaTab
@@ -265,10 +265,12 @@
           {
           FileDelete, %inca%\cache\cues\%media%.txt
           FileAppend, %value%, %inca%\cache\cues\%media%.txt, UTF-8
-          Loop, Read, %inca%\fav\History.m3u
+          Loop, Read, %inca%\fav\History.m3u				; get last media from history
             LastMedia := A_LoopReadLine
-          if address							; add last media from history
-            FileAppend, `r`n%address%|media|%lastMedia%, %inca%\cache\cues\%media%.txt, UTF-8
+          scroll := address + 1						; scroll cannot be zero
+          if InStr(address, "|media|")					; add included media
+            FileAppend, `r`n%address%, %inca%\cache\cues\%media%.txt, UTF-8
+          else FileAppend, `r`n%scroll%|media|%lastMedia%, %inca%\cache\cues\%media%.txt, UTF-8	; add history media
           index := selected
           selected =
           reload := 2
@@ -308,6 +310,7 @@
 
     Osk() {
       if WinActive("ahk_group Browsers")
+       if !incaTab
         {
         clp := Clipboard
         Clipboard =
@@ -1330,6 +1333,8 @@
         FileMove, %inca%\cache\thumbs\%media%.jpg, %inca%\cache\thumbs\%new_name%.jpg, 1
         FileMove, %inca%\cache\posters\%media%.jpg, %inca%\cache\posters\%new_name%.jpg, 1
         FileMove, %inca%\cache\captions\%media%.srt, %inca%\cache\captions\%new_name%.srt, 1
+        FileMove, %inca%\cache\original audio\%media%.m4a, %inca%\cache\original audio\%new_name%.m4a, 1
+        FileMove, %inca%\cache\original audio\%media%.mp3, %inca%\cache\original audio\%new_name%.mp3, 1
        }
 
 
@@ -1701,7 +1706,7 @@
       if ErrorLevel
         return
       FileRead, MetaContent, c:\inca\cache\temp\meta.txt
-      if (!start && !end && (InStr(MetaContent, "h264_amf") || InStr(MetaContent, "Inca")))	; already transcoded so quit
+      if (!start && !end && (InStr(MetaContent, "Lavc6") || InStr(MetaContent, "Inca")))	; already transcoded so quit
         return
       if RegExMatch(MetaContent, """width"":\s*(\d+)", WidthMatch)
         Width := WidthMatch1 + 0
@@ -2250,6 +2255,7 @@ else mediaList = %mediaList%<div id="entry%j%" class='entry' data-params='%type%
 
 
     SlowTimer:
+      Critical Off
       GuiControlGet, control, Indexer:, GuiInd
       FileGetTime, LastModified, %inca%\cache\apps, M
       LastModified := A_Now - LastModified			; folder last modified (downloading)
@@ -2261,7 +2267,7 @@ else mediaList = %mediaList%<div id="entry%j%" class='entry' data-params='%type%
         if (A_LoopFileExt == "webm" || A_LoopFileExt == "mp4")
           {
           FileGetTime, FileModified, %A_LoopFileFullPath%, M
-          if (A_Now - FileModified > 2)
+          if (A_Now - FileModified > 3)
             FileMove, %A_LoopFileFullPath%, %profile%\Downloads, 1
           }
       Loop, Files, %profile%\Downloads\*.*, R

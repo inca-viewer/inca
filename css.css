@@ -127,7 +127,7 @@ e {						/* caption text entries */
   border: none;
   transition: 0.3s;
   border-radius: 1em}
-.title:hover {color: pink; background:#2b2824; transition: 1.4s; overflow: visible; z-index:999; font-size:1.2em}
+.title:hover {color: pink; background:#2b2824; transition: 1.4s; overflow: visible; z-index:999; font-size:1.1em}
 
 .thumb {					/* htm thumbs */
   --start;					/* java variables for each thumb */

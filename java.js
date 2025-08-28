@@ -1,3 +1,4 @@
+// cannot seek fav tagged media to start time before fav time 
 
 
   let entry = 0								// thumb container
@@ -104,7 +105,7 @@
     else if (e.key == 'Pause' || (e.code == 'ArrowLeft' && e.altKey)) mouseBack()
     else if (e.key == 'ArrowRight' && playing) myPlayer.currentTime += 10
     else if (e.key == 'ArrowLeft' && playing) myPlayer.currentTime -= 10
-    else if (e.code == 'Space' && !overText) togglePause()
+    else if (e.code == 'Space' && !overText && type != 'document') togglePause()
     else if (e.key == 'Enter') searchBox()}
 
 
@@ -135,11 +136,10 @@
       else if (longClick) {index--} else index++}					// next, previous media
     if (lastClick == 1) {
       if (!playing) {
-        if (id=='myCue' || (longClick && (type=='document' || favicon.matches(':hover'))) || (overMedia && thumb.src.endsWith('.pdf'))) { 
-          Click=0; inca('Notepad',id,index); return}}
+        if (id=='myCue' || (longClick && (type=='document' || favicon.matches(':hover'))) || (overMedia && thumb.src.endsWith('.pdf'))) {
+          if (id != title.id) {
+            Click=0; inca('Notepad',id,index); return}}}
       if (!longClick) {
-        if (overMedia && ym > 0.8 && ym < 1 && !playing && type=='video' && !favicon.matches(':hover')) {
-          thumb.currentTime = xm > 0.2 ? dur * xm : thumb.style.start; thumb.play(); return}
         if (id == 'mySelect') {if (myTitle.value) {sel(index)} else selectAll(); return}
         if (id == 'mySkinny') {updateCue('skinny',1); return}
         if (id == 'mySpeed') {updateCue('rate',1); return}
@@ -231,7 +231,7 @@
     let y = Math.abs(ypos-Yref)
     if (x+y > 7 && Click && !gesture) {					// gesture (Click + slide)
       gesture = 1
-      if (!playing && overMedia) sel(index)
+      if (!playing && overMedia && !myNav.style.display) sel(index)
       if (myNav.style.display) {x=myNav.getBoundingClientRect(); Xref=(xpos-x.left)/skinny; Yref=ypos-x.top}}
     if (!gesture || !Click) {gesture=''; return}
     else if (captions && !cues.textContent.match(srt.offsetWidth)) editing = index
@@ -341,7 +341,7 @@
     if (editing) {capMenu.style.display='flex'} else capMenu.style.display='none'
     if (captions) Captions()
     if ((listView && thumb.style.opacity==1) || favicon.matches(':hover')) overMedia = index
-    else if (myPlayer.matches(':hover') || thumb.matches(':hover')) overMedia = index
+    else if (overMedia && myNav.style.display || myPlayer.matches(':hover') || thumb.matches(':hover')) overMedia = index
     else overMedia = 0
     if (pages > 1) myPage.innerHTML = page+' of '+pages
     mySkinny.innerHTML = ''
@@ -687,9 +687,9 @@
   function cueButton() {						// context menu Cue button
     if ((thumb.style.skinny || thumb.style.rate) && !thumb.style.posted) {capButton(); cue = 0}
     else if (type=='document') {					// substitute media in srt/txt
-      editing = index
-      inca('cueMedia',cues.textContent,index,srt.scrollTop.toFixed(0))
-      cue = 0}
+      newMedia = srt.scrollTop.toFixed(0)				// use history to retrieve media
+      if (overMedia) newMedia += '|media|'+myPlayer.src+'|'+myPlayer.currentTime.toFixed(1)
+      inca('cueMedia', cues.textContent, index, newMedia)}
     else if (!cue) {cue = Math.round(100*thumb.currentTime)/100; return}
     Play()}
 
@@ -707,18 +707,19 @@
 
   function swapMedia(src, tm, scroll) {
     if (myPlayer.paused && overText && (myPlayer.src != src || tm != myPlayer.currentTime)) {
-      myPic.src = 'file:///' + src					// force normalise uri encoding
-      myPlayer.currentTime = tm
-      if (myPlayer.src != myPic.src) {
+      if (!src.startsWith('file:///')) src = 'file:///' + src		// for firefox
+      myPic.src = src							// used to trigger uri encoding
+      if (myPlayer.src != myPic.src || tm != myPlayer.currentTime) {
         myPlayer.poster = myPlayer.src = myPic.src			// swap out media above srt
         myPlayer.style.height = innerHeight +'px'			// portrait or landscape - normalised size
         lastMedia = scroll+'|media|'+myPlayer.src+'|'+tm       
         if (block < 25) block = 100					// block jitter on src replace
         myPlayer.style.opacity = 0
         positionMedia(0)
-        positionMedia(2)						// fade new media in
+        positionMedia(3)						// fade new media in
         myPlayer.style.opacity = 1}}
     positionMedia(0)
+    if (overText) myPlayer.currentTime = tm
     if (srt.scrollTop < 20) myPlayer.poster=thumb.poster		// document icon
     dur = myPlayer.duration}
 
