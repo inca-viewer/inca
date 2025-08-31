@@ -76,7 +76,7 @@ e {						/* caption text entries */
   font-family: inherit;
   margin: auto;
   opacity: 0;
-  transition: 0.3s;
+  transition: opacity 0.3s;
   resize: both;
   overflow: hidden;
   overflow-y: scroll;

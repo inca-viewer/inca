@@ -1,4 +1,3 @@
-// cannot seek fav tagged media to start time before fav time 
 
 
   let entry = 0								// thumb container
@@ -60,7 +59,7 @@
   let mediaY = 0
   let folder = ''							// browser tab name = media folder
   let defRate = 1							// default speed
-  let muted = 0
+  let defMute = 0							// default mute
   let defPause = 0							// default pause state
   let items = ['&hellip;', 'mp4', 'mp3', 'Join', 'Vibe', 'Pitch']	// ribbon drop down menu
   let ix = 0								// index to items
@@ -101,12 +100,15 @@
 
 
   function keyDown(e) {							// keyboard events
-    if (e.code == 'ArrowRight' && e.altKey) {lastClick=5; clickEvent(e)}
-    else if (e.key == 'Pause' || (e.code == 'ArrowLeft' && e.altKey)) mouseBack()
-    else if (e.key == 'ArrowRight' && playing) myPlayer.currentTime += 10
-    else if (e.key == 'ArrowLeft' && playing) myPlayer.currentTime -= 10
+    longClick = 0
+    if (e.key == 'Enter') searchBox()
+    else if (e.key == 'Pause' || (e.code == 'ArrowLeft' && e.shiftKey)) mouseBack()
     else if (e.code == 'Space' && !overText && type != 'document') togglePause()
-    else if (e.key == 'Enter') searchBox()}
+    else if (!overText && !captions && playing) {
+      if (e.key == 'ArrowRight') myPlayer.currentTime += 10
+      else if (e.key == 'ArrowLeft') myPlayer.currentTime -= 10
+      else if (e.key == 'ArrowDown') {lastClick = 2; clickEvent(e)}
+      else if (e.key == 'ArrowUp') {lastClick = longClick = 2; clickEvent(e)}}}
 
 
   function clickEvent(e) {
@@ -133,11 +135,11 @@
       if (editing) inca('Null')								// save text
       if (myMenu.matches(':hover')) return
       if (!playing && !myNav.style.display) {inca('View',lastMedia); return}		// list/thumb view
-      else if (longClick) {index--} else index++}					// next, previous media
+      else {srt.style=''; if (longClick) {index--} else index++}}			// next, previous media
     if (lastClick == 1) {
       if (!playing) {
         if (id=='myCue' || (longClick && (type=='document' || favicon.matches(':hover'))) || (overMedia && thumb.src.endsWith('.pdf'))) {
-          if (id != title.id) {
+          if (id != title.id && id != myInput.id) {
             Click=0; inca('Notepad',id,index); return}}}
       if (!longClick) {
         if (id == 'mySelect') {if (myTitle.value) {sel(index)} else selectAll(); return}
@@ -194,7 +196,7 @@
     thumb.pause()
     myPlayer.pause()
     if (playlist.match('/inca/music/')) myPlayer.muted=0
-    else myPlayer.muted = muted
+    else myPlayer.muted = defMute
     if (el=document.getElementById('title'+lastMedia)) el.style.color=null
     title.style.opacity = 1; title.style.color='pink'
     if ((el=document.getElementById('srt'+lastMedia)) && playing && index!=lastMedia) {	// hide last caption
@@ -360,7 +362,7 @@
     let qty = selected.split(',').length - 1 || 1;
     if (myTitle.value || selected) {myDelete.innerHTML='Delete ' + qty; myIndex.innerHTML='Index ' + qty}
     else {myDelete.innerHTML = null; myIndex.innerHTML = 'Index'}
-    if (muted) {myMute.style.color='red'} else myMute.style.color=null
+    if (defMute) {myMute.style.color='red'} else myMute.style.color=null
     if (defPause) {myPause.style.color='red'} else myPause.style.color=null
     if (skinny<0) {myFlip.style.color='red'} else myFlip.style.color=null
     if (!thumbSheet && captions) srt.style.opacity=1
@@ -544,7 +546,7 @@
   function globals(pg, ps, fo, wd, mu, pa, so, fi, lv, se, pl, ix) {	// import globals from inca.exe
     folder=fo; page=pg; pages=ps; filt=fi; wheelDir=wd;
     defPause=pa; listView=lv; selected=se; playlist=pl
-    if (mu=='yes') {muted=1} else muted=0
+    if (mu=='yes') {defMute=1} else defMute=0
     let key = 'pageWidth'+folder
     let x = localStorage.getItem(key)
     if (isNaN(x) || x<100 || x>innerWidth) localStorage.setItem(key, 600) // default htm width em
@@ -688,7 +690,7 @@
     if ((thumb.style.skinny || thumb.style.rate) && !thumb.style.posted) {capButton(); cue = 0}
     else if (type=='document') {					// substitute media in srt/txt
       newMedia = srt.scrollTop.toFixed(0)				// use history to retrieve media
-      if (overMedia) newMedia += '|media|'+myPlayer.src+'|'+myPlayer.currentTime.toFixed(1)
+      if (overMedia) newMedia += '|media|'+myPlayer.src+'|'+myPlayer.currentTime.toFixed(1) // use current media with new time
       inca('cueMedia', cues.textContent, index, newMedia)}
     else if (!cue) {cue = Math.round(100*thumb.currentTime)/100; return}
     Play()}

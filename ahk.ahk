@@ -1140,25 +1140,27 @@
           sort = Playlist
         FileReadLine, array, %inca%\cache\html\%folder%.htm, 1		; embedded page data as top html comment
         if array
+          {
+          StringReplace, array, array, /, \, All
+          array := StrSplit(array,", ")
+          page := array.2
+          pages := array.3
+          sort := array.4
+          toggles := array.5
+          listView := array.6
+          if all
             {
-            StringReplace, array, array, /, \, All
-            array := StrSplit(array,", ")
-            page := array.2
-            pages := array.3
-            sort := array.4
-            toggles := array.5
-            listView := array.6
-            if all
-              {
-              playlist := array.7
-              path := array.8
-              searchPath := array.9
-              searchTerm := array.10
-              if searchTerm
-                folder := searchTerm
-              subfolders := array.11
-              }
+            playlist := array.7
+            path := array.8
+            searchPath := array.9
+            searchTerm := array.10
+            if searchTerm
+              folder := searchTerm
+            subfolders := array.11
             }
+          }
+        else if RegExMatch(path, "i)music|books|audio|text|pdf")
+          listView := 1
         }
 
 
@@ -1495,6 +1497,7 @@
         else lastClip := Clipboard
         LoadSettings()
         AllFav()							; create ..\fav\all fav.m3u
+        FileRecycle, %inca%\cache\temp\backup.txt
         FileDelete, %inca%\cache\temp\*.*
         FileRead, str, %inca%\fav\History.m3u
         FileDelete, %inca%\fav\History.m3u
@@ -1679,7 +1682,9 @@
                 if InStr(source, "\downloads\")
                   {
                   GuiControl, Indexer:, GuiInd, Transcoding......
-                  Transcode(0,0,source)
+                  if InStr(source, "Downloads")
+                    if Setting("Transcode")
+                      Transcode(0,0,source)
                   }
                 }
             GuiControl, Indexer:, GuiInd
@@ -2022,7 +2027,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
   <input id='myTitle' class='title' style='opacity: 1; color: lightsalmon; padding-left: 1.4em'>
   <video id='myPic' muted class='pic'></video>`n
   <a id='mySelect'>Select</a>`n
-  <a id='myMute' onmousedown="muted^=1; inca('Mute', muted); myPlayer.muted=muted; myPlayer.volume=0.1">Mute</a>`n
+  <a id='myMute' onmousedown="defMute^=1; inca('Mute', defMute); myPlayer.muted=defMute">Mute</a>`n
   <a id='myFavorite'>Fav</a>`n
   <a id='mySkinny'></a>`n
   <a id='mySpeed'></a>`n
@@ -2265,17 +2270,17 @@ else mediaList = %mediaList%<div id="entry%j%" class='entry' data-params='%type%
         GuiControl, Indexer:, GuiInd
       else Loop, Files, %inca%\cache\apps\*.*
         if (A_LoopFileExt == "webm" || A_LoopFileExt == "mp4")
-          {
-          FileGetTime, FileModified, %A_LoopFileFullPath%, M
-          if (A_Now - FileModified > 3)
+          if (LastModified > 2)
             FileMove, %A_LoopFileFullPath%, %profile%\Downloads, 1
-          }
-      Loop, Files, %profile%\Downloads\*.*, R
-        index(A_LoopFileFullPath,0)
+      FileGetTime, LastModified, %profile%\Downloads, M
+      LastModified := A_Now - LastModified
+      if (!control && LastModified > 3)
+        Loop, Files, %profile%\Downloads\*.*, R
+          index(A_LoopFileFullPath,0)
       Process, Exist, ffmpeg.exe
       if InStr(control, "transcoding")
-         if !ErrorLevel
-            GuiControl, Indexer:, GuiInd
+        if !ErrorLevel
+          GuiControl, Indexer:, GuiInd
       x := Setting("Sleep Timer") * 60000
       if (volume > 0 && A_TimeIdlePhysical > x)
         {
