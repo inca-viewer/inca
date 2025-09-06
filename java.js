@@ -1,3 +1,14 @@
+// srt editing adding br lines
+// adding media to new playlist says moving not adding
+// firefox some thumbs jumping in dimensions when hover
+
+// ffmpeg -i tttt.mp4 -vf "setsar=1:1" -c:a copy ttttt.mp4
+
+//libx264 -preset fast -crf 23
+
+// sleep2 formatting 
+//  in globals  localStorage.setItem('pageView'+folder, x); setWidths(index,36)
+
 
   let entry = 0								// thumb container
   let thumb = 0								// thumb element
@@ -58,9 +69,9 @@
   let mediaY = 0
   let folder = ''							// browser tab name = media folder
   let defRate = 1							// default speed
-  let muted = 0
+  let defMute = 0							// default mute
   let defPause = 0							// default pause state
-  let items = ['&hellip;', 'mp4', 'mp3', 'Join', 'Vibe', 'Pitch']	// ribbon drop down menu
+  let items = ['&hellip;', 'mp4', 'mp3', 'Join', 'Pitch']		// ribbon drop down menu
   let ix = 0								// index to items
   let observer								// see if myPlayer is visible
   let end = 0								// myPlayer ended time
@@ -99,12 +110,15 @@
 
 
   function keyDown(e) {							// keyboard events
-    if (e.code == 'ArrowRight' && e.altKey) {lastClick=5; clickEvent(e)}
-    else if (e.key == 'Pause' || (e.code == 'ArrowLeft' && e.altKey)) mouseBack()
-    else if (e.key == 'ArrowRight' && playing) myPlayer.currentTime += 10
-    else if (e.key == 'ArrowLeft' && playing) myPlayer.currentTime -= 10
+    longClick = 0
+    if (e.key == 'Enter') searchBox()
+    else if (e.key == 'Pause' || (e.code == 'ArrowLeft' && e.shiftKey)) mouseBack()
     else if (e.code == 'Space' && !overText && type != 'document') togglePause()
-    else if (e.key == 'Enter') searchBox()}
+    else if (!overText && !captions && playing) {
+      if (e.key == 'ArrowRight') myPlayer.currentTime += 10
+      else if (e.key == 'ArrowLeft') myPlayer.currentTime -= 10
+      else if (e.key == 'ArrowDown') {lastClick = 2; clickEvent(e)}
+      else if (e.key == 'ArrowUp') {lastClick = longClick = 2; clickEvent(e)}}}
 
 
   function clickEvent(e) {
@@ -112,15 +126,14 @@
     if (gesture || id == 'myFlip') return
     if (!gesture && longClick == 1 && !playing && playlist && selected && overMedia) {inca('Move', overMedia); return}
     if (playing && capText && (!capText.innerHTML || capText.innerHTML=="<br>")) {capTime.remove(); capText.remove(); capText=''; return}
-    if (id == 'myMute' || id == 'mySave' || id == 'myDelete' || id == 'myIndex') return
+    if (id == 'myMute' || id == 'mySave' || id == 'myCancel' || id == 'myDelete' || id == 'myIndex') return
     if (id == 'myFavorite') {addFavorite(); return}
     if (id == 'myMore' && ix == 0) inca('Settings')
     if (id == 'myMore' && (selected || cue)) {
       if (ix == 1) inca('mp4', cue, lastMedia, end)
       if (ix == 2) inca('mp3', cue, lastMedia, end)
       if (ix == 3) inca('Join')
-      if (ix == 4) inca('Vibe')
-      if (ix == 5) inca('Pitch')
+      if (ix == 4) inca('Pitch')
       cue = 0; selected = ''; selectAll(); selectAll()
       return}
     if (lastClick == 3) {								// Right click context
@@ -131,12 +144,13 @@
       if (editing) inca('Null')								// save text
       if (myMenu.matches(':hover')) return
       if (!playing && !myNav.style.display) {inca('View',lastMedia); return}		// list/thumb view
-      else if (longClick) {index--} else index++}					// next, previous media
+      else {srt.style=''; if (longClick) {index--} else index++}}			// next, previous media
     if (lastClick == 1) {
-      if (!playing) {
-        if (id=='myCue' || (longClick && (type=='document' || favicon.matches(':hover'))) || (overMedia && thumb.src.endsWith('.pdf'))) {
-          if (id != title.id) {
-            Click=0; inca('Notepad',id,index); return}}}
+      if (!playing && id != title.id) {
+        if (id=='myCue' || (overMedia && thumb.src.slice(-3)=='m3u') 
+        || (longClick && ((overMedia && type=='document')
+        || (favicon && favicon.matches(':hover')))) 
+        || (overMedia && thumb.src.endsWith('.pdf'))) {Click=0; inca('Notepad',id,index); return}}
       if (!longClick) {
         if (id == 'mySelect') {if (myTitle.value) {sel(index)} else selectAll(); return}
         if (id == 'mySkinny') {updateCue('skinny',1); return}
@@ -192,7 +206,7 @@
     thumb.pause()
     myPlayer.pause()
     if (playlist.match('/inca/music/')) myPlayer.muted=0
-    else myPlayer.muted = muted
+    else myPlayer.muted = defMute
     if (el=document.getElementById('title'+lastMedia)) el.style.color=null
     title.style.opacity = 1; title.style.color='pink'
     if ((el=document.getElementById('srt'+lastMedia)) && playing && index!=lastMedia) {	// hide last caption
@@ -250,7 +264,7 @@
     let wheelUp = wheelDir * e.deltaY > 0
     if (id=='myMore') {							// More option list
       if (wheelUp) {ix++} else ix--
-      if (ix > 5) ix = 5; if (ix < 0) ix = 0
+      if (ix > 4) ix = 4; if (ix < 0) ix = 0
       myMore.innerHTML = items[ix]}
     else if (id=='myPage') {						// htm page
       if (wheelUp && page<pages) page++
@@ -358,7 +372,7 @@
     let qty = selected.split(',').length - 1 || 1;
     if (myTitle.value || selected) {myDelete.innerHTML='Delete ' + qty; myIndex.innerHTML='Index ' + qty}
     else {myDelete.innerHTML = null; myIndex.innerHTML = 'Index'}
-    if (muted) {myMute.style.color='red'} else myMute.style.color=null
+    if (defMute) {myMute.style.color='red'} else myMute.style.color=null
     if (defPause) {myPause.style.color='red'} else myPause.style.color=null
     if (skinny<0) {myFlip.style.color='red'} else myFlip.style.color=null
     if (!thumbSheet && captions) srt.style.opacity=1
@@ -542,7 +556,7 @@
   function globals(pg, ps, fo, wd, mu, pa, so, fi, lv, se, pl, ix) {	// import globals from inca.exe
     folder=fo; page=pg; pages=ps; filt=fi; wheelDir=wd;
     defPause=pa; listView=lv; selected=se; playlist=pl
-    if (mu=='yes') {muted=1} else muted=0
+    if (mu=='yes') {defMute=1} else defMute=0
     let key = 'pageWidth'+folder
     let x = localStorage.getItem(key)
     if (isNaN(x) || x<100 || x>innerWidth) localStorage.setItem(key, 600) // default htm width em
@@ -591,8 +605,8 @@
       let el = x[k].split('|')						// time[0] cue[1] value[2] period[3]
       if (el[1]=='scroll' && time=='scroll') {
         if (!srt.scrollTop) srt.scrollTo(0,el[2])			// scroll to text position
-        srt.style.width = el[3] + 'px'
-        srt.style.height = el[4] + 'px'}
+        srt.style.width = (el[3] < 160 ? 360 : el[3]) + 'px'
+        srt.style.height = (el[4] < 60 ? 160 : el[4]) + 'px'}
       if (el[1]=='media' && el[3] && srt.scrollTop.toFixed(0) >= 1*el[0]) {scroll = 1*el[0]; src = el[2]; tm = 1*el[3]}	// added media
       if (el[1] && 1*el[0] > time-0.1 && 1*el[0] < time+0.1) {
         if (el[1]=='next') {lastClick=2; clickEvent(0)}
@@ -686,7 +700,7 @@
     if ((thumb.style.skinny || thumb.style.rate) && !thumb.style.posted) {capButton(); cue = 0}
     else if (type=='document') {					// substitute media in srt/txt
       newMedia = srt.scrollTop.toFixed(0)				// use history to retrieve media
-      if (overMedia) newMedia += '|media|'+myPlayer.src+'|'+myPlayer.currentTime.toFixed(1)
+      if (overMedia) newMedia += '|media|'+myPlayer.src+'|'+myPlayer.currentTime.toFixed(1) // use current media with new time
       inca('cueMedia', cues.textContent, index, newMedia)}
     else if (!cue) {cue = Math.round(100*thumb.currentTime)/100; return}
     Play()}

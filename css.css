@@ -54,7 +54,7 @@ e {						/* caption text entries */
   padding-top: 0.3em;
   padding-bottom: 0.3em;
   border-radius: 1em;
-  color: #FFd0dB77;
+  color: #FFd0dB99;
   width: fit-content;
   margin:auto;
   transition: 0.6s}
@@ -65,7 +65,7 @@ e {						/* caption text entries */
   box-sizing: border-box;			/* so srt.style.width == srt.offsetWidth */
   padding: 1.4em;
   border: none;
-  background: #0e0c05aa;
+  background: #0e0c05;
   scroll-behavior: smooth;
   color: #826858;
   text-align: center;
@@ -76,7 +76,7 @@ e {						/* caption text entries */
   font-family: inherit;
   margin: auto;
   opacity: 0;
-  transition: 0.3s;
+  transition: opacity 0.3s;
   resize: both;
   overflow: hidden;
   overflow-y: scroll;
@@ -127,7 +127,7 @@ e {						/* caption text entries */
   border: none;
   transition: 0.3s;
   border-radius: 1em}
-.title:hover {color: pink; background:#2b2824; transition: 1.4s; overflow: visible; z-index:999; font-size:1.2em}
+.title:hover {color: pink; background:#2b2824; transition: 1.4s; overflow: visible; z-index:999; font-size:1.1em}
 
 .thumb {					/* htm thumbs */
   --start;					/* java variables for each thumb */
