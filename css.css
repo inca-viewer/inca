@@ -14,8 +14,6 @@
   c {display: block; padding-left: 1em; text-decoration: none; font-weight: bold; color: #826858bb; transition: 1s} /* panel text */
   c:hover {transition: 0.2s; transform: scale(1.1,1.1); color: pink}
   c:active {color: #0e0c05; transform: scale(0.8,0.8)}
-  d {display: block; color: #ffa07a00; font-size: 0.8em; transition: 2s}	/* caption timestamps */
-  d:active {color: lightsalmon}
   video::-internal-media-controls-overlay-cast-button {display: none}		/* block google casting	*/
 
 .pic {							/* context menu pic */
@@ -44,21 +42,6 @@
 .favicon:hover {background:#00000080; color: red}
 
 
-e {						/* caption text entries */
-  display: block;
-  background: transparent;
-  font-size: 1em;
-  white-space: pre-wrap;			/* preserves multiple spaces */
-  outline: none;
-  padding: 1em;
-  padding-top: 0.3em;
-  padding-bottom: 0.3em;
-  border-radius: 1em;
-  color: #FFd0dB99;
-  width: fit-content;
-  margin:auto;
-  transition: 0.6s}
-
 .caption {					/* srt caption or txt container  */
   position: fixed;
   display: none;
@@ -67,7 +50,7 @@ e {						/* caption text entries */
   border: none;
   background: #0e0c05;
   scroll-behavior: smooth;
-  color: #826858;
+  color: #ffc0cbcc;
   text-align: center;
   width: 30em;
   height: 18em;
@@ -83,7 +66,6 @@ e {						/* caption text entries */
   mask-image: linear-gradient(to bottom, transparent 0%, white 4%, white 96%, transparent 100%),
     linear-gradient(to right, transparent 0%, white 4%); 
   mask-composite: intersect}
-.caption::-webkit-scrollbar {background: transparent; width: 6px}
 
 .capMenu {
   position: fixed;

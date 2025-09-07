@@ -254,26 +254,25 @@
           index := value						; for scrollToIndex() in java
           reload := 2
           }
+        else if (command == "addMedia")					; add media to text at scroll
+          {
+          Loop, Read, %inca%\fav\History.m3u				; get last media from history
+            lastMedia := A_LoopReadLine
+          lastMedia := StrReplace(lastMedia, "\", "/")
+          clp := ClipBoard
+          ClipBoard = `r`nfile:///%lastMedia%`r`n
+          ClipWait
+          if ClipBoard
+            send, ^v
+          sleep 100
+          ClipBoard := clp
+          }
         else if (command == "Index")					; index folder (create thumbsheets)
           {
           indexSelected := selected
           selected =
           reload := 2
           SetTimer, indexPage, -100, -2
-          }
-        else if (command == "cueMedia")					; add media to text at scroll
-          {
-          FileDelete, %inca%\cache\cues\%media%.txt
-          FileAppend, %value%, %inca%\cache\cues\%media%.txt, UTF-8
-          Loop, Read, %inca%\fav\History.m3u				; get last media from history
-            LastMedia := A_LoopReadLine
-          scroll := address + 1						; scroll cannot be zero
-          if InStr(address, "|media|")					; add included media
-            FileAppend, `r`n%address%, %inca%\cache\cues\%media%.txt, UTF-8
-          else FileAppend, `r`n%scroll%|media|%lastMedia%, %inca%\cache\cues\%media%.txt, UTF-8	; add history media
-          index := selected
-          selected =
-          reload := 2
           }
         else if (command == "addCue")					; add skinny, speed, goto at scroll
           {
@@ -848,15 +847,6 @@
       {
       str := address
       getMedia(selected)
-      str := StrReplace(str, "<div><br><\div><div>", "`r`n")
-      str := StrReplace(str, "<br><br><div>", "`r`n`r`n")
-      str := StrReplace(str, "<div>", "`r`n")
-      str := StrReplace(str, "<br>", "`r`n")
-      str := StrReplace(str, "<\e>", "`r`n") 		; e is text element - note: / is reversed in Messages()
-      str := StrReplace(str, "<\d>", "`r`n") 		; d is timestamp element
-      str := StrReplace(str, "--&gt;", "-->")
-      str := RegExReplace(str, "<.*?>") 		; Remove all HTML tags
-      str := StrReplace(str, "  ", " ")
       if (StrLen(str) < 10)
         return
       if (ext == "txt")
@@ -866,45 +856,28 @@
         }
       else
         {
-        str2 := ""
-        time := ""
-        last := ""					; detect `r`n`r`n
-        ix := 1
-        caption := ""
-        Loop, Parse, str, `n, `r
+        str = 
+        lineNum := 0
+        Loop, Parse, address, `n, `r
           {
-          if !A_LoopField
+          if RegExMatch(A_LoopField, "^\d+\.\d$", t)
             {
-            if last						; incremeent seconds of new caption
-              time := RegExReplace(time, ":\K\d+", Format("{:02d}", (RegExMatch(time, ":\K\d+", m) ? m + 1 : 0)))
-            if (caption && time)
-              {
-              str2 .= ix . "`r`n" . time . "`r`n" . Trim(caption, "`r`n") . "`r`n`r`n"
-              ix++
-              }
-            caption := ""
-            last = 1
+            lineNum++
+            seconds := t
+            hours := Floor(seconds / 3600)
+            seconds -= hours * 3600
+            minutes := Floor(seconds / 60)
+            seconds -= minutes * 60
+            ms := Round((seconds - Floor(seconds)) * 1000)
+            seconds := Floor(seconds)
+            timeStr := Format("{:02d}:{:02d}:{:02d},{:03d}", hours, minutes, seconds, ms)
+            str .= lineNum . "`r`n" . timeStr . " --> " . timeStr
             }
-          else if InStr(A_LoopField, " --> ")
-            {
-            if (caption && time)
-              {
-              str2 .= ix . "`r`n" . time . "`r`n" . Trim(caption, "`r`n") . "`r`n`r`n"
-              ix++
-              }
-            time := A_LoopField
-            caption := ""
-            last =
-            }
-          else 
-            {
-            caption .= A_LoopField . "`r`n"
-            last =
-            }
+          else if (A_LoopField != "")
+            str .= A_LoopField . "`r`n"
+          else if (lineNum > 0)
+            str .= "`r`n"
           }
-        if (caption && time)
-          str2 .= ix . "`r`n" . time . "`r`n" . Trim(caption, "`r`n") . "`r`n`r`n"
-        str := str2
         FileDelete, %inca%\cache\captions\%media%.srt
         FileAppend, %str%, %inca%\cache\captions\%media%.srt, UTF-8
         }
@@ -2181,74 +2154,43 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
         StringReplace, src, src, #, `%23, All				; html cannot have # in filename
         StringReplace, media_s, media, `', &apos;, All
         start := Round(start,2)
-        text=
-        timestamp =
+        text =
         if (ext=="txt")
           FileRead, text, %src%
-        else IfExist, %inca%\cache\captions\%media%.srt
+        else IfExist, %inca%\cache\captions\%media%.srt			; convert srt times to seconds
           {
-          FileRead, str2, %inca%\cache\captions\%media%.srt
-          Loop, Parse, str2, `n, `r
+          FileRead, srt, %inca%\cache\captions\%media%.srt
+          new := ""
+          Loop, Parse, srt, `n, `r
             {
-            str = %A_LoopField%						; remove whitespace
-            if InStr(str, "-->")					; timestamp element
-              {
-              x := SubStr(str, 1, 12)
-              x := StrReplace(x, " --")					; in case no hrs in timestamp
-              x := StrReplace(x, ",", ".")
-              x := StrSplit(x, ":")
-              if (!x.3)
-                x := Round(x.1*60 + x.2,1)				; seconds format
-              else
-                x := Round(3600*x.1 + 60*x.2 + x.3,1)
-              if (caption_lines != "")					; if there’s a previous caption
-                {
-                text = %text%<e contenteditable="true" id="my%j%-%prev_x%">%caption_lines%</e>
-                caption_lines := ""					; reset caption_lines
-                }
-              text = %text%<d id="%j%-%x%">%str%</d>
-              timestamp := true
-              prev_x := x						; store current timestamp for next caption
+            cap := ""
+            if RegExMatch(A_LoopField, "^\d+$")
               continue
-              }
-            else if timestamp
+            else if RegExMatch(A_LoopField, "^(?:(\d+):)?(\d{1,2}):(\d{2}),(\d{3})\s-->\s", m)
               {
-              if (str != "")						; only add non-empty lines
-                caption_lines := caption_lines ? caption_lines . "<br>" . str : str
-              if (A_LoopField = "")					; empty line indicates end of caption
-                {
-                text = %text%<e contenteditable="true" id="my%j%-%prev_x%">%caption_lines%</e>
-                caption_lines := ""					; reset caption_lines
-                timestamp := false
-                }
+              hours := m1 ? m1 : 0
+              seconds := hours*3600 + m2*60 + m3 + m4/1000
+              text .= Round(seconds, 1) . "`r`n`r`n"
               }
+            else text .= A_LoopField . "`r`n"
             }
-          if (caption_lines != "")   					 ; Handle the last caption if it exists
-        text = %text%<e contenteditable="true" id="my%j%-%prev_x%">%caption_lines%</e>
-        }
-      if (ext=="txt")
-        {
-        text := StrReplace(text, "`r`n", "<br>")
-        text = <e contenteditable="true">%text%</e>
-        }
+          }
+        if (text && type!="document")
+          favicon = %favicon% &#169
+        IfExist, %inca%\cache\original audio\%media%.*
+          favicon = %favicon% &#9834
+        if (type=="image")
+          src = &nbsp;
+        else src=src="file:///%src%"
+        if !size
+          size = 0							; cannot have null size in getParameters()
 
-      if (text && type!="document")
-        favicon = %favicon% &#169
-      IfExist, %inca%\cache\original audio\%media%.*
-        favicon = %favicon% &#9834
-
-      if (type=="image")
-        src = &nbsp;
-      else src=src="file:///%src%"
-      if !size
-        size = 0							; cannot have null size in getParameters()
-
-caption = <div id='srt%j%' class='caption' onmouseover='overText=1' onmouseout='overText=0'`n oninput="editing=index; playCap(event.target.id, 1)">%text%</div>
+caption = <textarea id='srt%j%' class='caption' onmouseover='overText=1' onmouseout='overText=0'`n oninput="editing=index">%text%</textarea>`n
 
 if listView
   mediaList = %mediaList%%fold%<table onmouseover='overThumb(%j%)'`n onmouseout="thumb%j%.style.opacity=0">`n <tr id='entry%j%' data-params='%type%,%start%,%dur%,%size%' onmouseenter='if (gesture) sel(%j%)'>`n <td>%ext%`n <video id='thumb%j%' class='thumb2' %src%`n %poster%`n preload=%preload% muted loop type="video/mp4"></video></td>`n <td>%size%</td>`n <td style='min-width: 6em'>%durT%</td>`n <td>%date%</td>`n  <td><div id='myFavicon%j%' class='favicon' style='position:absolute; text-align: left; translate:1.2em -0.8em'>%favicon%</div></td>`n <td style='width: 70vw'><input id="title%j%" class='title' style='opacity: 1; transition: 0.6s' onmouseover='overText=1' autocomplete='off' onmouseout='overText=0; Click=0' type='search' value='%media_s%' oninput="renamebox=this.value; lastMedia=%j%"></td>`n %fo%</tr></table>%caption%<span id='cues%j%' style='display: none'>%cues%</span>`n`n
 
-else mediaList = %mediaList%<div id="entry%j%" class='entry' data-params='%type%,%start%,%dur%,%size%' onmouseenter='overThumb(%j%)'>`n <input id='title%j%' class='title' style='text-align: center' type='search'`n value='%media_s%'`n oninput="renamebox=this.value; lastMedia=%j%"`n onmouseover="overText=1; if((x=this.value.length/2) > view) this.style.width=x+'em'"`n onmouseout="overText=0; this.style.width='100`%'">`n <video id="thumb%j%" class='thumb' onmouseenter='if (gesture) sel(%j%)'`n onmouseup='if(gesture)getParameters(%j%)' onmouseout='this.pause()' %src%`n %poster%`n preload=%preload% loop muted type='video/mp4'></video>`n <span id='myFavicon%j%' class='favicon'>%favicon%</span>`n %noIndex%`n <span id='cues%j%' style='display: none'>%cues%</span></div>`n %caption%`n`n
+else mediaList = %mediaList%<div id="entry%j%" class='entry' data-params='%type%,%start%,%dur%,%size%' onmouseenter='overThumb(%j%)'>`n <input id='title%j%' class='title' style='text-align: center' type='search'`n value='%media_s%'`n oninput="renamebox=this.value; lastMedia=%j%"`n onmouseover="overText=1; if((x=this.value.length/2) > view) this.style.width=x+'em'"`n onmouseout="overText=0; this.style.width='100`%'">`n <video id="thumb%j%" class='thumb' onmouseenter='if (gesture) sel(%j%)'`n onmouseup='if(gesture)getParameters(%j%)' onmouseout='this.pause()' %src%`n %poster%`n preload=%preload% loop muted type='video/mp4'></video>`n <span id='myFavicon%j%' class='favicon'>%favicon%</span>`n %noIndex%`n <span id='cues%j%' style='display: none'>%cues%</span></div>`n %caption%`n
 }
 
 
