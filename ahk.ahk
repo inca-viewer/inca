@@ -87,16 +87,27 @@
         Global start := 0			; default start time
         Global ctime				; last current time
         Global lastClip				; clipboard
-
+        Global server := "http://localhost:3000/" ;  "file:///"
 
 
     main:
       initialize()				; sets environment then waits for mouse, key or clipboard events
+      if InStr(server, "http:")
+        {
+        Process, Close, node.exe
+        sleep 200
+        Run, cmd.exe /c cd /d "C:\inca\cache\apps" && node server.js,, Hide, UseErrorLevel
+        firstPage = #Path###%profile%\Pictures\
+        messages(firstPage)			; construct html
+        FileRead, start, %inca%\cache\html\temp.txt
+        if start
+          Run, %server%inca/cache/html/%start%
+        }
       WinActivate, ahk_group Browsers
-      sleep 24
+      sleep 100
       default = #Path###%profile%\Pictures\
       if !GetBrowser() 				; no browser open
-        Messages(default)			; process message
+        Messages(default)			; message opens browser
       SetTimer, TimedEvents, 50			; every 50mS - process server requests
       SetTimer, SlowTimer, 1000, -2		; show ffmpeg is processing
       return
@@ -219,8 +230,6 @@
           Delete()
         else if (command == "Join")					; join video files together
           Join()
-        else if (command == "Pitch")					; create srt caption file
-          Pitch()
         else if (command == "Osk")					; create srt caption file
           Osk()
         else if (command == "Add" && address)
@@ -260,7 +269,7 @@
             lastMedia := A_LoopReadLine
           lastMedia := StrReplace(lastMedia, "\", "/")
           clp := ClipBoard
-          ClipBoard = `r`nfile:///%lastMedia%`r`n
+          ClipBoard = `r`n%server%%lastMedia%`r`n
           ClipWait
           if ClipBoard
             send, ^v
@@ -702,47 +711,6 @@
       }
 
 
-    Pitch()
-      {
-      Loop, Parse, selected, `,
-        if getMedia(A_LoopField)
-          {
-          IfNotExist, %inca%\cache\original audio\%media%.*		; make media higher pitch and normalised
-            {
-            count := A_LoopField
-            GuiControl, Indexer:, GuiInd, %A_Index% - Pitch - %media%
-            FileGetTime, CreatedTime, %src%, C
-            FileGetTime, ModifiedTime, %src%, M
-            if (ext == "mp3" || ext == "m4a")
-              FileCopy, %src%, %inca%\cache\original audio\%media%.%ext%
-            else RunWait %inca%\cache\apps\ffmpeg.exe -i file:"%src%" -vn -c:a copy file:"%inca%\cache\original audio\%media%.m4a",, Hide
-            if ErrorLevel
-              continue
-            x = rubberband=pitch=1.05,loudnorm=I=-16:TP=-1.5:LRA=11
-            if (ext == "mp3")
-              RunWait %inca%\cache\apps\ffmpeg.exe -i file:"%src%" -af "%x%" -y file:"%media%.%ext%",, Hide
-            else RunWait %inca%\cache\apps\ffmpeg.exe -i file:"%src%" -c:v copy -c:a aac -af "%x%" -y file:"%media%.%ext%",, Hide
-            if !ErrorLevel
-              FileMove, %inca%\cache\apps\%media%.%ext%, %src%, 1
-            }
-          else								; restore original audio
-            {
-            if (ext == "mp3" || ext == "m4a")
-              FileMove, %inca%\cache\original audio\%media%.%ext%, %src%, 1
-            else RunWait %inca%\cache\apps\ffmpeg.exe -i file:"%src%" -i file:"%inca%\cache\original audio\%media%.m4a" -c:v copy -c:a copy -map 0:v:0 -map 1:a:0 -y file:"%media%.%ext%",, Hide
-            FileRecycle, %inca%\cache\original audio\%media%.m4a
-            FileMove, %inca%\cache\apps\%media%.%ext%, %src%, 1
-            }
-          FileSetTime, %CreatedTime%, %src%, C
-          FileSetTime, %ModifiedTime%, %src%, M 
-          }
-      GuiControl, Indexer:, GuiInd
-      index := count							; scroll to last conversion
-      reload := 2
-      selected =
-      }
-
-
     Delete()
       {
       if selected
@@ -845,6 +813,7 @@
 
     capEdit() 						; Save edited text or SRT file
       {
+      address := StrReplace(address, "𝌇", "#")
       str := address
       getMedia(selected)
       if (StrLen(str) < 10)
@@ -1171,11 +1140,12 @@
               popup = Added %A_Index%
             if (InStr(address, "inca\fav") || InStr(address, "inca\music"))
                 {
+                PopUp("Added",0,0,0)
                 FileAppend, %target%`r`n, %address%, UTF-8		; add media entry to playlist
                 if (src && !InStr(path, "\inca\"))
                   Runwait, %inca%\cache\apps\ffmpeg.exe -i "%src%" -y -vf scale=1280:1280/dar -vframes 1 "%inca%\cache\posters\%media%%A_Space%0.0.jpg",, Hide
                 }
-            else if src
+            else if src							; to folder not playlist
                 {
                 FileGetSize, x, %address%%media%.%ext%			; if x, then name already exists in target folder
                 FileGetSize, y, %src%					; get source file size
@@ -1976,7 +1946,7 @@
       wheelDir := 1
     else wheelDir := -1
 
-header = <!--, %page%, %pages%, %sort%, %toggles%, %listView%, %playlist%, %path%, %searchPath%, %searchTerm%, %subfolders%, -->`n<!doctype html>`n<html>`n<head>`n<meta charset="UTF-8">`n<title>Inca - %title%</title>`n<meta name="viewport" content="width=device-width, initial-scale=1">`n<link rel="icon" type="image/x-icon" href="file:///%inca%/cache/icons/inca.ico">`n<link rel="stylesheet" type="text/css" href="file:///%inca%/css.css">`n`n</head>`n`n
+header = <!--, %page%, %pages%, %sort%, %toggles%, %listView%, %playlist%, %path%, %searchPath%, %searchTerm%, %subfolders%, -->`n<!doctype html>`n<html>`n<head>`n<meta charset="UTF-8">`n<title>Inca - %title%</title>`n<meta name="viewport" content="width=device-width, initial-scale=1">`n<link rel="icon" type="image/x-icon" href="%server%%inca%/cache/icons/inca.ico">`n<link rel="stylesheet" type="text/css" href="%server%%inca%/css.css">`n`n</head>`n`n
 
 body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(%page%, %pages%, '%folder_s%', %wheelDir%, '%mute%', %paused%, '%sort%', %filt%, %listView%, '%selected%', '%playlist%', %index%); %scroll%.scrollIntoView()">`n`n
 
@@ -1987,7 +1957,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
 <div id='capMenu' class='capMenu'>`n
 <span id='myCancel' class='capButton' onmouseup="if (this.innerHTML != 'Sure ?') {this.innerHTML = 'Sure ?'} else {editing = 0; inca('Reload',index)}" onmouseout="this.innerHTML='&#x2715;'">&#x2715;</span>`n 
 <span id='mySave' class='capButton' onmouseup="myCancel.innerHTML = 'X'; if (!longClick) inca('Null')">Save</span></div>`n`n
-<div id='myContent' class='mycontent'>`n<div id='myView' class='myview'>`n`n %mediaList%</div></div>`n`n
+<div id='myContent' class='mycontent'>`n <div id='myView' class='myview'>`n`n %mediaList%</div></div>`n`n
 
 <div id='myNav' class='context' onwheel='wheelEvent(event)'>`n
   <input id='myTitle' class='title' style='opacity: 1; color: lightsalmon; padding-left: 1.4em'>
@@ -1996,6 +1966,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
   <a id='myMute' onmousedown="defMute^=1; inca('Mute', defMute); myPlayer.muted=defMute">Mute</a>`n
   <a id='myFavorite'>Fav</a>`n
   <a id='mySkinny'></a>`n
+  <a id='myPitch'></a>`n
   <a id='mySpeed'></a>`n
   <a id='myDelete' style='color:red' onmouseup="inca('Delete','',index)"></a>`n
   <a id='myIndex' onmouseup="inca('Index','',index)"></a>`n
@@ -2006,7 +1977,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
 
 <div id='myMenu'>
   <div id='z1' class='fade' style='height:190px'></div><div id='z2' class='fade' style='top:190px; background: linear-gradient(#0e0c05ff, #0e0c0500)'></div>`n
-  <div id='myPanel' class='myPanel'><div class='panel'>`n <div class='innerPanel'>`n`n%panelList%`n</div></div>`n`n
+  <div id='myPanel' class='myPanel'><div class='panel'><div class='innerPanel'>`n`n%panelList%`n</div></div>`n`n
 
   <div id='myRibbon1' class='ribbon' style='font-size: 1.2em'>`n
     <a style='color:red; width:8em; font-weight:bold'>%listSize%</a>`n
@@ -2031,18 +2002,25 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
     <a id='myAlpha' style='%x2%' onmousedown="inca('Alpha', filt)">Alpha</a>`n
     <a id='myType' style='%x6%' onmousedown="inca('Type', filt)">%type%</a>`n
     <a id='myThumbs' onmouseout='setWidths(1,1000)' onmouseup="inca('View',0)">Thumb</a>`n 
-    <a id='myWidth'>Width</a>`n
-    </div></div></div>`n`n
+    <a id='myWidth'>Width</a></div></div></div>`n`n
 <div id='myMask' class="mask" onwheel="wheelEvent(event)"></div>`n`n
 
       StringReplace, header, header, \, /, All
       StringReplace, body, body, \, /, All
-      FileRead, script, %inca%\java.js
-      script = <script>`n%script%`n</script>
-      html = %header%%body%`n%script%`n</body>`n</html>`n
+      script = <script src="%server%c:/inca/cache/apps/pitch.js">
+      script = %script%</script>`n<script src="%server%c:/inca/java.js"></script>
+      html = %header%%body%%script%`n</body>`n</html>`n
       FileDelete, %inca%\cache\html\%folder%.htm
       FileAppend, %html%, %inca%\cache\html\%folder%.htm, UTF-8
       new_html = file:///%inca%\cache\html\%folder%.htm			; create / update browser tab
+      if InStr(server, "http:")
+        {
+        FileDelete, %inca%\cache\html\temp.txt
+        FileAppend, %folder%.htm, %inca%\cache\html\temp.txt, UTF-8
+        sleep, 500
+        Gui PopUp:Cancel
+        return
+        }
       StringReplace, new_html, new_html, \,/, All
       clip := clipboard
       clipboard := new_html
@@ -2061,7 +2039,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
         send, ^v
         Send, {Enter}
         }
-      sleep 100
+      sleep 200
       clipboard := clip
       incaTab := folder
       Loop, 30								; wait until page loaded
@@ -2073,8 +2051,6 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
         }
       if (click == "MButton")
         send, {MButton up}
-      if fullscreen
-        send, {F11}							; return to fullscreen
       FileDelete, %inca%\cache\html\%folder%.htm
       FileAppend, %html%, %inca%\cache\html\%folder%.htm, UTF-8
       Gui PopUp:Cancel
@@ -2107,9 +2083,10 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
         if !dur
           dur := 0
         FileRead, cues, %inca%\cache\cues\%media%.txt
+        x = %media%.%ext%
         if !playlist
           Loop, Parse, allfav, `n, `r
-            if InStr(A_Loopfield, media)
+            if InStr(A_Loopfield, x)
               {
               favicon = &#8203 &#x2764					; favorite heart symbol
               start := StrSplit(A_Loopfield,"|").2
@@ -2146,7 +2123,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
           preload = 'none'						; faster page load
           StringReplace, thumb, thumb, `%, `%25, All			; html cannot have % in filename
           StringReplace, thumb, thumb, #, `%23, All			; html cannot have # in filename
-          poster = poster="file:///%thumb%"
+          poster = poster="%server%%thumb%"
           }
         else
           noIndex = <span style='color:red; transform: translateY(-1.5em); display: block'>no index</span>`n 
@@ -2181,16 +2158,15 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
           favicon = %favicon% &#9834
         if (type=="image")
           src = &nbsp;
-        else src=src="file:///%src%"
         if !size
           size = 0							; cannot have null size in getParameters()
 
 caption = <textarea id='srt%j%' class='caption' onmouseover='overText=1' onmouseout='overText=0'`n oninput="editing=index">%text%</textarea>`n
 
 if listView
-  mediaList = %mediaList%%fold%<table onmouseover='overThumb(%j%)'`n onmouseout="thumb%j%.style.opacity=0">`n <tr id='entry%j%' data-params='%type%,%start%,%dur%,%size%' onmouseenter='if (gesture) sel(%j%)'>`n <td>%ext%`n <video id='thumb%j%' class='thumb2' %src%`n %poster%`n preload=%preload% muted loop type="video/mp4"></video></td>`n <td>%size%</td>`n <td style='min-width: 6em'>%durT%</td>`n <td>%date%</td>`n  <td><div id='myFavicon%j%' class='favicon' style='position:absolute; text-align: left; translate:1.2em -0.8em'>%favicon%</div></td>`n <td style='width: 70vw'><input id="title%j%" class='title' style='opacity: 1; transition: 0.6s' onmouseover='overText=1' autocomplete='off' onmouseout='overText=0; Click=0' type='search' value='%media_s%' oninput="renamebox=this.value; lastMedia=%j%"></td>`n %fo%</tr></table>%caption%<span id='cues%j%' style='display: none'>%cues%</span>`n`n
+  mediaList = %mediaList%%fold%<table onmouseover='overThumb(%j%)'`n onmouseout="thumb%j%.style.opacity=0; thumb.src=null">`n <tr id='entry%j%' data-params='%type%,%start%,%dur%,%size%' onmouseenter='if (gesture) sel(%j%)'>`n <td>%ext%`n <video id='thumb%j%' class='thumb2' data-alt-src="%server%%src%"`n %poster%`n preload=%preload% muted loop type="video/mp4"></video></td>`n <td>%size%</td>`n <td style='min-width: 6em'>%durT%</td>`n <td>%date%</td>`n  <td><div id='myFavicon%j%' class='favicon' style='position:absolute; text-align: left; translate:1.2em -0.8em'>%favicon%</div></td>`n <td style='width: 70vw'><input id="title%j%" class='title' style='opacity: 1; transition: 0.6s' onmouseover='overText=1' autocomplete='off' onmouseout='overText=0; Click=0' type='search' value='%media_s%' oninput="renamebox=this.value; lastMedia=%j%"></td>`n %fo%</tr></table>%caption%<span id='cues%j%' style='display: none'>%cues%</span>`n`n
 
-else mediaList = %mediaList%<div id="entry%j%" class='entry' data-params='%type%,%start%,%dur%,%size%' onmouseenter='overThumb(%j%)'>`n <input id='title%j%' class='title' style='text-align: center' type='search'`n value='%media_s%'`n oninput="renamebox=this.value; lastMedia=%j%"`n onmouseover="overText=1; if((x=this.value.length/2) > view) this.style.width=x+'em'"`n onmouseout="overText=0; this.style.width='100`%'">`n <video id="thumb%j%" class='thumb' onmouseenter='if (gesture) sel(%j%)'`n onmouseup='if(gesture)getParameters(%j%)' onmouseout='this.pause()' %src%`n %poster%`n preload=%preload% loop muted type='video/mp4'></video>`n <span id='myFavicon%j%' class='favicon'>%favicon%</span>`n %noIndex%`n <span id='cues%j%' style='display: none'>%cues%</span></div>`n %caption%`n
+else mediaList = %mediaList%<div id="entry%j%" class='entry' data-params='%type%,%start%,%dur%,%size%'>`n <input id='title%j%' class='title' style='text-align: center' type='search'`n value='%media_s%'`n oninput="renamebox=this.value; lastMedia=%j%"`n onmouseover="overText=1; if((x=this.value.length/2) > view) this.style.width=x+'em'"`n onmouseout="overText=0; this.style.width='100`%'">`n <video id="thumb%j%" class='thumb' onmouseenter='overThumb(%j%); if (gesture) sel(%j%)'`n onmouseup='if(gesture)getParameters(%j%)' onmouseout="thumb.src=null" data-alt-src="%server%%src%"`n %poster%`n preload=%preload% loop muted type='video/mp4'></video>`n <span id='myFavicon%j%' class='favicon'>%favicon%</span>`n %noIndex%`n <span id='cues%j%' style='display: none'>%cues%</span></div>`n %caption%`n
 }
 
 
@@ -2259,14 +2235,24 @@ else mediaList = %mediaList%<div id="entry%j%" class='entry' data-params='%type%
         WinGet, cur, ID, ahk_id %id%
         WinGet, desk, ID , ahk_class Progman
         if incaTab
-          {
-          x := StrLen(Clipboard)
-          y := SubStr(Clipboard, 1, 1)
-          if (y=="#" && x>4 && StrSplit(clipboard,"#").MaxIndex()>4)	; very likely is a java message
-            Messages(Clipboard)
-          else if (x && !InStr(x, "#"))
-            lastClip := Clipboard
-          }
+          if InStr(server, "http:")
+            {
+            FileRead, messages, *P65001 C:\inca\cache\html\in.txt		; utf codepage
+            if messages
+              {
+              FileDelete, %inca%\cache\html\in.txt
+              Messages(messages)
+              }
+            }
+          else
+            {
+            x := StrLen(Clipboard)
+            y := SubStr(Clipboard, 1, 1)
+            if (y=="#" && x>4 && StrSplit(clipboard,"#").MaxIndex()>4)	; very likely is a java message
+              Messages(Clipboard)
+            else if (x && !InStr(x, "#"))
+              lastClip := Clipboard
+            }
         Gui, background:+LastFound
         Gui, background:Color, Black
         if incaTab

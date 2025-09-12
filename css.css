@@ -50,7 +50,7 @@
   border: none;
   background: #0e0c05;
   scroll-behavior: smooth;
-  color: #ffc0cbcc;
+  color: #ffc0cbbb;
   text-align: center;
   width: 30em;
   height: 18em;
@@ -116,6 +116,7 @@
   --rate;
   --skinny;
   --posted;					/* edits sent to inca	*/
+  --media;
   box-sizing: border-box;
   border: 1px solid transparent;
   position: relative;
