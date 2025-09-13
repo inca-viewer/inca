@@ -87,27 +87,39 @@
         Global start := 0			; default start time
         Global ctime				; last current time
         Global lastClip				; clipboard
-        Global server := "http://localhost:3000/" ;  "file:///"
+        Global server := "file:///"		; default no server
 
 
     main:
       initialize()				; sets environment then waits for mouse, key or clipboard events
+      WinActivate, ahk_group Browsers
+      IfExist, %inca%\cache\apps\server.js
+        server := "http://localhost:3000/"
       if InStr(server, "http:")
         {
         Process, Close, node.exe
         sleep 200
-        Run, cmd.exe /c cd /d "C:\inca\cache\apps" && node server.js,, Hide, UseErrorLevel
-        firstPage = #Path###%profile%\Pictures\
-        messages(firstPage)			; construct html
-        FileRead, start, %inca%\cache\html\temp.txt
-        if start
-          Run, %server%inca/cache/html/%start%
+        Run, cmd.exe /c cd /d "C:\inca\cache\apps" && node server.js,, Hide
+	if GetBrowser()
+          {
+          if incaTab
+            send, ^w
+          }
+        else incaTab = Pictures
+        firstPage = #Path###%profile%\%incaTab%\
+        messages(firstPage)			; creates .htm
+        Run, %server%inca/cache/html/%incaTab%.htm
+        sleep 500
+        WinActivate, ahk_group Browsers
         }
-      WinActivate, ahk_group Browsers
-      sleep 100
-      default = #Path###%profile%\Pictures\
-      if !GetBrowser() 				; no browser open
-        Messages(default)			; message opens browser
+       else
+         {
+         WinActivate, ahk_group Browsers
+         sleep 100
+         default = #Path###%profile%\Pictures\
+         if !GetBrowser() 			; no browser open
+           Messages(default)			; message opens browser
+         }
       SetTimer, TimedEvents, 50			; every 50mS - process server requests
       SetTimer, SlowTimer, 1000, -2		; show ffmpeg is processing
       return
@@ -706,7 +718,7 @@
       FileDelete, %inca%\cache\temp\temp.bat
       FileDelete, %inca%\cache\temp\temp.txt
       FileDelete, %inca%\cache\temp\temp1.txt
-      index(src,1)
+      Index(src,1,0,0)
       reload := 3
       }
 
@@ -763,15 +775,13 @@
         Loop, Parse, selected, `,
           if getMedia(A_LoopField)
             {
-            GuiControl, Indexer:, GuiInd, transcoding - %media%
             if (ex == "mp3")
               run, %inca%\cache\apps\ffmpeg.exe -i "%src%" -y "%mediaPath%\%media%.mp3",,Hide	; mp3
-            else Transcode(start, end, src)
+            else Index(src, 1, 0, 0)
             }
         }
-      else
+      else if (ex != "mp3")
         {
-        GuiControl, Indexer:, GuiInd, transcoding - %media%
         if (time-cue >= 0 && time-cue < 1)
           start := time
         else if (cue-time > 0 && cue-time < 1)
@@ -786,9 +796,8 @@
           start := time
           end := cue
           }
-        Transcode(start, end, src)
+        Index(src, 1, start, end)
         }
-      GuiControl, Indexer:, GuiInd
       selected =
       }
 
@@ -1525,14 +1534,14 @@
 
 
 
-    indexPage:							; create thumbsheets
+    indexPage:							; create posters and thumbsheets
     Critical Off
-    if indexSelected						; force index posters of selected media
+    if indexSelected
       {
       Loop, Parse, indexSelected, `,
         if getMedia(A_Loopfield)
           {
-          index(src,1)
+          Index(src,1,0,0)					; forces index (and transcode attempt)
           if playlist
             Run, %inca%\cache\apps\ffmpeg.exe -ss %seek% -i "%src%" -y -vf scale=1280:1280/dar -vframes 1 "%inca%\cache\posters\%media%%A_Space%%seek%.jpg",, Hide
           }
@@ -1551,16 +1560,19 @@
         }
     else 
       {
-      Loop, Files, %path%*.*, R
-        index(A_LoopFileFullPath,0)
+      Loop, Files, %path%*.*
+        Index(A_LoopFileFullPath,0,0,0)					; skips existing indexed and Transcoded
       }
     GuiControl, Indexer:, GuiInd
     return
 
 
 
-    index(source, force)						; create thumbs, posters & durations cache
+    Index(source, force, start, end)					; create thumbs, posters & durations cache
           {
+          if (Setting("Transcode") && force)				; make mp4 fast seeking in browser
+             if (x := Transcode(source, start, end))
+               source := x
           SplitPath, source,,fold,ex,filen
           med := DecodeExt(ex)
           if (med != "video" && med != "audio")
@@ -1612,23 +1624,15 @@
                 t += (dur / 200)
                 }
             if (thumb || force)
-                {
                 Runwait %inca%\cache\apps\ffmpeg -i %inca%\cache\temp\`%d.jpg -filter_complex "tile=6x6" -y "%inca%\cache\thumbs\%filen%.jpg",, Hide
-                if InStr(source, "\downloads\")
-                  {
-                  GuiControl, Indexer:, GuiInd, Transcoding......
-                  if InStr(source, "Downloads")
-                    if Setting("Transcode")
-                      Transcode(0,0,source)
-                  }
-                }
             GuiControl, Indexer:, GuiInd
             }
+          return source
           }
 
 
 
-    Transcode(start, end, src)
+    Transcode(src, start, end)
         {
         if start
           ss = -ss %start%
@@ -1702,6 +1706,7 @@
               }
             }
           }
+        GuiControl, Indexer:, GuiInd, transcoding - %media%
         temp = %profile%\Downloads\temp_%media%.mp4
         encoders := "-c:v h264_amf -rc cqp -qp_i 22 -qp_p 24|-c:v h264_nvenc -preset p5 -rc vbr -b:v %MaxBitrate%k -bufsize %BufSize%k|-c:v h264_qsv -preset medium -global_quality 23|-c:v libx264 -preset medium -crf 23 -pix_fmt yuv420p"
         for index, encoder in StrSplit(encoders, "|")
@@ -1729,8 +1734,8 @@
         FileMove, %temp%, %new%
         FileSetTime, %ModifiedTime%, %new%, M
         FileSetTime, %CreationTime%, %new%, C
-; index(new,1)
-        return 1
+        GuiControl, Indexer:, GuiInd
+        return new
         }
 
 
@@ -1969,7 +1974,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
   <a id='myPitch'></a>`n
   <a id='mySpeed'></a>`n
   <a id='myDelete' style='color:red' onmouseup="inca('Delete','',index)"></a>`n
-  <a id='myIndex' onmouseup="inca('Index','',index)"></a>`n
+  <a id='myIndex' onmouseup="if (overMedia) {inca('Index','',index)} else inca('Index')"></a>`n
   <a id='myFlip' onmouseup='flip()'>Flip</a>`n
   <a id='myCue'>Cue</a>`n
   <a id='myCap'>Caption</a>`n
@@ -2173,21 +2178,19 @@ else mediaList = %mediaList%<div id="entry%j%" class='entry' data-params='%type%
     SlowTimer:
       Critical Off
       GuiControlGet, control, Indexer:, GuiInd
-      FileGetTime, LastModified, %inca%\cache\apps, M
-      LastModified := A_Now - LastModified			; folder last modified (downloading)
-      if (!control && LastModified < 3)
-        GuiControl, Indexer:, GuiInd, Downloading...
-      else if (LastModified > 3 && InStr(control, "Downloading..."))
-        GuiControl, Indexer:, GuiInd
-      else Loop, Files, %inca%\cache\apps\*.*
-        if (A_LoopFileExt == "webm" || A_LoopFileExt == "mp4")
-          if (LastModified > 2)
-            FileMove, %A_LoopFileFullPath%, %profile%\Downloads, 1
-      FileGetTime, LastModified, %profile%\Downloads, M
-      LastModified := A_Now - LastModified
-      if (!control && LastModified > 3)
-        Loop, Files, %profile%\Downloads\*.*, R
-          index(A_LoopFileFullPath,0)
+      FileGetTime, downloading, %inca%\cache\apps, M
+      downloading := A_Now - downloading			; folder last modified (downloading)
+      FileGetTime, transferred, %profile%\Downloads, M
+      transferred := A_Now - transferred
+      GuiControl, Indexer:, GuiInd
+      if (transferred > 3)
+        if (downloading < 3)
+          GuiControl, Indexer:, GuiInd, ...........................................
+        else
+          Loop, Files, %inca%\cache\apps\*.*
+            if (A_LoopFileExt == "webm" || A_LoopFileExt == "mp4")
+              if (x := Index(A_LoopFileFullPath,1,0,0))
+                FileMove, %x%, %profile%\Downloads, 1
       Process, Exist, ffmpeg.exe
       if InStr(control, "transcoding")
         if !ErrorLevel
@@ -2237,14 +2240,14 @@ else mediaList = %mediaList%<div id="entry%j%" class='entry' data-params='%type%
         if incaTab
           if InStr(server, "http:")
             {
-            FileRead, messages, *P65001 C:\inca\cache\html\in.txt		; utf codepage
+            FileRead, messages, *P65001 C:\inca\cache\html\in.txt	; utf codepage
             if messages
               {
               FileDelete, %inca%\cache\html\in.txt
               Messages(messages)
               }
             }
-          else
+          else								; non server file:///
             {
             x := StrLen(Clipboard)
             y := SubStr(Clipboard, 1, 1)

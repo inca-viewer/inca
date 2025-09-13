@@ -1,9 +1,4 @@
 // firefox some thumbs jumping in dimensions when hover
-// firefox about:config  security.fileuri.strict_origin_policy
-// otherwise pitch and localstorage do not work using file:///
-// chrome pitch not work but localstorage does work using file:///
-
-// check myPic use for thumb.start time
 
 
   let favicon = ''							// favorite or cc icon
@@ -64,7 +59,6 @@
   let items = ['&hellip;', 'mp4', 'mp3', 'Join']			// ribbon drop down menu
   let ix = 0								// index to items
   let observer								// see if myPlayer is visible
-  let end = 0								// myPlayer ended time
   let lastLine = 0							// last addMedia event
   let pitch = 0								// default pitch
 
@@ -121,13 +115,13 @@
     let id = e.target.id 								// id under cursor
     if (gesture || id == 'myFlip') return
     if (!gesture && longClick == 1 && !playing && playlist && selected && overMedia) {inca('Move', overMedia); return}
-    if (id == 'myMute' || id == 'mySave' || id == 'myCancel' || id == 'myDelete' || id == 'myIndex') return
+    if (id == 'myMute' || id == 'mySave' || id == 'myCancel' || id == 'myDelete' || id == 'myIndex' || id == title.id) return
     if (id == 'myPitch') {setPitch(0); return}
     if (id == 'myFavorite') {addFavorite(); return}
     if (id == 'myMore' && ix == 0) inca('Settings')
     if (id == 'myMore' && (selected || cue)) {
-      if (ix == 1) inca('mp4', cue, lastMedia, end)
-      if (ix == 2) inca('mp3', cue, lastMedia, end)
+      if (ix == 1) inca('mp4', cue, lastMedia, navStart)
+      if (ix == 2) inca('mp3', cue, lastMedia, navStart)
       if (ix == 3) inca('Join')
       cue = 0; selected = ''; selectAll(); selectAll()
       return}
@@ -154,13 +148,10 @@
         if (id == 'myCue' && playing) {cueButton(); return}
         if (overText && ypos < srt.offsetTop + 12) {srt.scrollTo(0,-5); return}}
       else if (overText) {searchBox(); return}
-      if (id == title.id) {myPic.currentTime=thumb.style.start; return}
-      if (!playing && !overMedia && !myNav.style.display) return
-      if (longClick && !playing && !overMedia && !myNav.style.display) return
+      if (longClick!=1 && !playing && !overMedia && !myNav.style.display) return
       if (longClick && myTitle.value) {myPlayer.src=myPlayer.poster=''; thumbSheet ^= 1}
       else if (!getStart(id)) return}
     if (!getParameters(index)) {index = lastMedia; closePlayer(); return}		// end of media list
-    if (lastClick != 1) myPic.currentTime = thumb.style.start				// default start time
     if (srt.value && (captions || favicon.matches(':hover') || type=='document')) openCap()
     if (lastClick) Play()}
 
@@ -169,9 +160,7 @@
     if (myTitle.value && !dur) return 1					// image / text
     let sheet = thumbSheet; thumbSheet = 0
     if (defPause && myPlayer.currentTime > dur-0.5) myPlayer.load()
-    if (id == 'myTitle') myPic.currentTime = thumb.style.start
-    else if (id == 'myPic') myPic.currentTime = navStart
-    else if (id == 'myNav') myPic.currentTime = 0 			// white space in context menu or thumbsheet
+    if (id == 'myPic') navStart = myPic.currentTime
     else if (sheet) {							// clicked thumb on 6x6 thumbsheet
       if (skinny < 0) xm = 1-xm						// if flipped media
       let row = Math.floor(ym * 6)					// get media seek time from thumbsheet xy
@@ -179,26 +168,23 @@
       let offset = dur > 60 ? 20 : 0					// skip movie credits...
       let ps = 5 * ((row * 6) + col)
       ps = (ps - 1) / 200						// see index() in inca.ahk to explain
-      if (!overMedia) myPic.currentTime = 0.1
-      else myPic.currentTime = offset - (ps * offset) + dur * ps}
+      if (!overMedia) navStart = 0.1
+      else navStart = offset - (ps * offset) + dur * ps}
     else if (playing && overMedia && (ym > 0.9 || (yw > 0.95 && yw < 0.98))) {
-      if (xm < 0.1) myPlayer.currentTime = thumb.style.start
+      if (xm < 0.1) myPlayer.currentTime = 0
       else myPlayer.currentTime = xm * dur
-      myPlayer.play(); return}						// return and quit
-    else if (playing) {togglePause(); return}
+      return}
     else if (myNav.style.display) return
+    else if (playing) {togglePause(); return}
+    else if (!longClick) navStart = thumb.style.start			// otherwise, resume last start
     return 1}								// return and continue
 
 
   function Play() {
     positionMedia(0)
     if (lastClick == 1) myPlayer.style.opacity = 0			// fade in player
-    if (!playing && !playlist && !favicon.textContent.includes('\u2764') && dur < 200) myPic.currentTime = 0
-    if (!thumbSheet) {
-      myPlayer.poster=thumb.poster
-      let x = thumb.style.start
-      if (myPic.currentTime > x && myPic.currentTime < x + 1.2) myPic.currentTime = x
-      myPlayer.currentTime=myPic.currentTime}
+    if (dur < 200 && !favicon.textContent.includes('\u2764')) navStart = 0.1
+    if (!thumbSheet) {myPlayer.poster=thumb.poster; myPlayer.currentTime = navStart}
     thumb.pause()
     myPlayer.pause()
     if (playlist.match('/inca/music/')) myPlayer.muted=0
@@ -383,7 +369,6 @@
       myMask.style.pointerEvents='auto'
       if (playlist.match('/inca/music/')) myMask.style.opacity = 0.7
       else myMask.style.opacity = 1
-      if (!myNav.style.display && !thumbSheet) myPic.currentTime = myPlayer.currentTime
       if (cues.innerHTML && !thumbSheet && type !='image') myCues(myPlayer.currentTime)
       myPlayer.playbackRate = rate}
     else {
@@ -458,7 +443,7 @@
     myPic.style.transform='scale('+Math.abs(skinny)*zoom+','+zoom+')'
     myPic.style.backgroundPosition = '0% 0%'				// sets to frame 1 of 6x6 thumbSheet
     if (thumbSheet) myPlayer.load()					// show poster
-    else myPlayer.currentTime=myPic.currentTime}			// fast start play
+    else myPlayer.currentTime=thumb.style.start}			// fast start play
 
 
   function setPic() {							// sets context image based on cursor over myPic
@@ -466,8 +451,8 @@
     let thumbIndex = Math.ceil(x * 35)
     let z = (5 * (thumbIndex + 1) - 1) / 200
     let offset = dur > 60 ? 20 : 0
-    navStart = offset - (z * offset) + dur * z
-    if (!thumbIndex) {myPic.poster=thumb.poster; navStart = thumb.style.start}
+    myPic.currentTime = offset - (z * offset) + dur * z
+    if (!thumbIndex) {myPic.poster=thumb.poster; myPic.currentTime = thumb.style.start}
     else if (type == 'video') myPic.poster = ''
     if (myPic.matches(':hover'))
        myPic.style.backgroundPosition = `${(thumbIndex % 6) * 20}% ${Math.floor(thumbIndex / 6) * 20}%`
@@ -629,10 +614,10 @@
 
 
   function closePlayer() {
-    end = myPlayer.currentTime.toFixed(2)
+    navStart = myPlayer.currentTime.toFixed(1)
     if (observer) observer.disconnect()
     if (captions) srt.removeEventListener('scroll', addMedia)
-    if (!thumbSheet) messages += '#History#'+myPic.currentTime.toFixed(1)+'#'+index+'#'
+    if (!thumbSheet) messages += '#History#'+navStart+'#'+index+'#'
     if (editing) inca('Reload',index)
     else inca('Null')							// just update history
     positionMedia(0.2)
@@ -658,7 +643,7 @@
     else if (!srt.value || captions) {myCap.innerHTML='New Caption'} else myCap.innerHTML='Captions'
     if (!myTitle.value) myCue.innerHTML=''
     else if (playing) {myCue.innerHTML='New Cue'} else myCue.innerHTML='Cues'
-    let end = myPlayer.currentTime.toFixed(2)
+    let end = myPlayer.currentTime.toFixed(1)
     if (cue == end) end = dur
     if (cue) myCue.innerHTML = 'Start ' + cue +' '+ 'End '+ end
     else if (type=='document' && playing) myCue.innerHTML='Add Media'
@@ -673,12 +658,12 @@
   function cueButton() {						// context menu Cue button
     if ((thumb.style.skinny || thumb.style.rate) && !thumb.style.posted) {capButton(); cue = 0}
     else if (type=='document') {srt.focus(); inca('addMedia')}		// paste last media into text file
-    else if (!cue) {cue = Math.round(100*myPic.currentTime)/100; return}
+    else if (!cue) {cue = Math.round(10*myPlayer.currentTime)/10; return}
     Play()}
 
 
   function capButton() {						// context menu Caption button
-    x = cue+'|goto|'+myPlayer.currentTime.toFixed(2)
+    x = cue+'|goto|'+myPlayer.currentTime.toFixed(1)
     if (thumb.style.skinny) x = cue+'|skinny|'+thumb.style.skinny
     if (thumb.style.rate) x = cue+'|rate|'+thumb.style.rate
     thumb.style.skinny = thumb.style.rate = 0
@@ -705,10 +690,9 @@
 
   function addFavorite() {
     if (!myTitle.value || gesture) return
-    if (!playing && !playlist && !favicon.textContent.includes('\u2764') && dur < 200)
-      myPic.currentTime = 0
-    let tm = myPic.currentTime.toFixed(2)
-    inca('Favorite',tm,index,srt.scrollTop.toFixed(0))			// includes any caption/txt scroll
+    if (!playing && !favicon.textContent.includes('\u2764') && dur < 200)
+      myPlayer.currentTime = 0
+    inca('Favorite',myPlayer.currentTime.toFixed(1),index,srt.scrollTop.toFixed(0))
     favicon.innerHTML='&#10084'}					// heart symbol on htm thumb
 
 
@@ -759,7 +743,7 @@
     getParameters(id)
     thumb.style.opacity = 1
     thumb.load()
-    myPic.currentTime = thumb.currentTime = thumb.style.start}
+    thumb.currentTime = thumb.style.start}
 
 
   function Time(z) {if (z<0) return '0:00'; let y=Math.floor(z%60); let x=':'+y; if (y<10) {x=':0'+y}; return Math.floor(z/60)+x}
