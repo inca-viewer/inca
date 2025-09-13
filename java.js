@@ -1,4 +1,3 @@
-// firefox some thumbs jumping in dimensions when hover
 
 
   let favicon = ''							// favorite or cc icon
@@ -133,7 +132,9 @@
       if (editing) inca('Null')								// save text
       if (myMenu.matches(':hover')) return
       if (!playing && !myNav.style.display) {inca('View',lastMedia); return}		// list/thumb view
-      else {srt.style=''; if (longClick) {index--} else index++}}			// next, previous media
+      else {srt.style=''; if (longClick) {index--} else index++}
+      if (!getParameters(index)) {index = lastMedia; closePlayer(); return}		// end of media list
+      navStart = thumb.style.start}							// next, previous media
     if (lastClick == 1) {
       if (!playing && id != title.id) {
         if (id=='myCue' || (overMedia && thumb.src.slice(-3)=='m3u') 
@@ -151,7 +152,7 @@
       if (longClick!=1 && !playing && !overMedia && !myNav.style.display) return
       if (longClick && myTitle.value) {myPlayer.src=myPlayer.poster=''; thumbSheet ^= 1}
       else if (!getStart(id)) return}
-    if (!getParameters(index)) {index = lastMedia; closePlayer(); return}		// end of media list
+    getParameters(index)
     if (srt.value && (captions || favicon.matches(':hover') || type=='document')) openCap()
     if (lastClick) Play()}
 
@@ -168,7 +169,7 @@
       let offset = dur > 60 ? 20 : 0					// skip movie credits...
       let ps = 5 * ((row * 6) + col)
       ps = (ps - 1) / 200						// see index() in inca.ahk to explain
-      if (!overMedia) navStart = 0.1
+      if (!overMedia) navStart = 0
       else navStart = offset - (ps * offset) + dur * ps}
     else if (playing && overMedia && (ym > 0.9 || (yw > 0.95 && yw < 0.98))) {
       if (xm < 0.1) myPlayer.currentTime = 0
@@ -176,14 +177,15 @@
       return}
     else if (myNav.style.display) return
     else if (playing) {togglePause(); return}
-    else if (!longClick) navStart = thumb.style.start			// otherwise, resume last start
+    else if (!longClick) navStart = thumb.style.start			// use default start time
+    else index = lastMedia						// resume last media
     return 1}								// return and continue
 
 
   function Play() {
     positionMedia(0)
     if (lastClick == 1) myPlayer.style.opacity = 0			// fade in player
-    if (dur < 200 && !favicon.textContent.includes('\u2764')) navStart = 0.1
+    if (dur < 200 && !playing && !playlist && !favicon.textContent.includes('\u2764')) navStart = 0
     if (!thumbSheet) {myPlayer.poster=thumb.poster; myPlayer.currentTime = navStart}
     thumb.pause()
     myPlayer.pause()
@@ -308,6 +310,7 @@
       if (wheelUp) {mediaX+=x*z; mediaY+=y*z; scaleY*=(1+z)}
       else if (!wheelUp) {mediaX-=x*z; mediaY-=y*z; scaleY/=(1+z)}
       if (scaleY<0.16) scaleY=0.16
+      if (thumbSheet && scaleY<0.4) scaleY=0.4
       scaleX=skinny*scaleY; positionMedia(0); block=20}
     wheel=0}
 
@@ -391,7 +394,7 @@
     myPlayer.style.transition = type === 'image' ? 'opacity ' + time + 's' : time + 's'
     skinny = thumb.style.skinny || skinny
     let zoom = scaleY
-    if (thumbSheet) if (scaleY<0.5) {zoom=1} else zoom = scaleY * 2
+    if (thumbSheet) zoom = scaleY * 2
     myPlayer.style.transform = "scale(" + skinny * zoom + "," + zoom + ")"}
 
 
@@ -452,7 +455,7 @@
     let z = (5 * (thumbIndex + 1) - 1) / 200
     let offset = dur > 60 ? 20 : 0
     myPic.currentTime = offset - (z * offset) + dur * z
-    if (!thumbIndex) {myPic.poster=thumb.poster; myPic.currentTime = thumb.style.start}
+    if (!thumbIndex || !myPic.matches(':hover')) {myPic.poster=thumb.poster; myPic.currentTime = thumb.style.start}
     else if (type == 'video') myPic.poster = ''
     if (myPic.matches(':hover'))
        myPic.style.backgroundPosition = `${(thumbIndex % 6) * 20}% ${Math.floor(thumbIndex / 6) * 20}%`
@@ -507,11 +510,11 @@
       media.forEach(element => {element.src = ''; element.remove()})}
     messages += '#'+command+'#'+value+'#'+select+'#'+address
     if (document.querySelector('link[rel="icon"]').href.includes('file:///')) navigator.clipboard.writeText(messages)
-    else { fetch('http://localhost:3000/generate-html', {method: 'POST', headers: {'Content-Type': 'text/plain'}, body: messages})
+    else {fetch('http://localhost:3000/generate-html', {method: 'POST', headers: {'Content-Type': 'text/plain'}, body: messages})
       .then(response => {if (response.status === 204) {return} return response.json()})
       .then(data => {
         let newUrl = encodeURI(`http://localhost:3000${data.url}`)
-        if (newUrl === window.location.href) window.location.href = newUrl
+        if (newUrl == window.location.href) window.location.href = newUrl
         else if (window.open(newUrl, '_blank')) if (command != 'SearchBox' && lastClick != 2) window.close()})}
     messages=''}
 
@@ -527,7 +530,7 @@
     thumb.src = thumb.dataset.altSrc
     let params = entry.dataset.params.split(',')
     type = params[0]							// media type eg. video
-    thumb.style.start = Number(params[1]) + 0.02			// start time
+    thumb.style.start = Number(params[1])				// start time
     dur = Number(params[2]) || thumb.duration				// duration
     size = Number(params[3])						// file size
     skinny = 1; rate = defRate						// reset before new cues read

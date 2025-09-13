@@ -100,12 +100,10 @@
         Process, Close, node.exe
         sleep 200
         Run, cmd.exe /c cd /d "C:\inca\cache\apps" && node server.js,, Hide
-	if GetBrowser()
-          {
-          if incaTab
-            send, ^w
-          }
-        else incaTab = Pictures
+	if !GetBrowser()
+          incaTab = Pictures
+        else if incaTab
+          send, ^w
         firstPage = #Path###%profile%\%incaTab%\
         messages(firstPage)			; creates .htm
         Run, %server%inca/cache/html/%incaTab%.htm
@@ -2182,7 +2180,8 @@ else mediaList = %mediaList%<div id="entry%j%" class='entry' data-params='%type%
       downloading := A_Now - downloading			; folder last modified (downloading)
       FileGetTime, transferred, %profile%\Downloads, M
       transferred := A_Now - transferred
-      GuiControl, Indexer:, GuiInd
+      if InStr(control, "..........")
+        GuiControl, Indexer:, GuiInd
       if (transferred > 3)
         if (downloading < 3)
           GuiControl, Indexer:, GuiInd, ...........................................
