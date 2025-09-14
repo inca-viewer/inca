@@ -205,6 +205,7 @@
             xpos := A_ScreenWidth - 15
           MouseMove, % xpos, % ypos, 0
           Gesture(x, y)
+SetTimer, TimedEvents, 50
           }
         if (!gesture && longClick && click == "LButton" && wasCursor == "IBeam")
           {
@@ -232,8 +233,6 @@
           saveText()
         else if (command == "editCues")					; update media cues skinny, rate
           editCues()
-        else if (command == "mp3" || command == "mp4")			; convert media to mp3 or mp4
-          mp3mp4()
         else if (command == "Favorite")					; add media favorite to New.m3u
           Favorite()
         else if (command == "Delete")					; delete media
@@ -252,6 +251,8 @@
           Settings()
         else if (command == "Page")
           Page()
+        else if (command == "Index")					; index folder (create thumbsheets)
+          indexMedia()
         else if (command == "Scroll")					; update scroll, width, height
           Scroll()
         else if (command == "Rename")					; rename media
@@ -285,13 +286,6 @@
             send, ^v
           sleep 100
           ClipBoard := clp
-          }
-        else if (command == "Index")					; index folder (create thumbsheets)
-          {
-          indexSelected := selected
-          selected =
-          reload := 2
-          SetTimer, indexPage, -100, -2
           }
         else if (command == "addCue")					; add skinny, speed, goto at scroll
           {
@@ -761,13 +755,20 @@
       }
 
 
-    mp3mp4()
+    indexMedia()
       {
       cue := value
       time := address
-      ex := command
       start := 0
       end := 0
+      if !address
+        {
+        indexSelected := selected
+        selected =
+        reload := 2
+        SetTimer, indexPage, -100, -2
+        return
+        }
       if !cue
         {
         Loop, Parse, selected, `,
@@ -778,7 +779,7 @@
             else Index(src, 1, 0, 0)
             }
         }
-      else if (ex != "mp3")
+      else
         {
         if (time-cue >= 0 && time-cue < 1)
           start := time
@@ -1277,8 +1278,6 @@
         FileMove, %inca%\cache\thumbs\%media%.jpg, %inca%\cache\thumbs\%new_name%.jpg, 1
         FileMove, %inca%\cache\posters\%media%.jpg, %inca%\cache\posters\%new_name%.jpg, 1
         FileMove, %inca%\cache\captions\%media%.srt, %inca%\cache\captions\%new_name%.srt, 1
-        FileMove, %inca%\cache\original audio\%media%.m4a, %inca%\cache\original audio\%new_name%.m4a, 1
-        FileMove, %inca%\cache\original audio\%media%.mp3, %inca%\cache\original audio\%new_name%.mp3, 1
        }
 
 
@@ -1579,18 +1578,20 @@
           if (size < 100)
             return
           dur =
-          FileRead, dur, %inca%\cache\durations\%filen%.txt
-          if (!dur || force)
-            {
-            RunWait %COMSPEC% /c %inca%\cache\apps\ffmpeg.exe -y -i "%source%" 2>&1 | find "Duration" > "%inca%\meta.txt" , , hide && exit
-            FileRead, str, %inca%\meta.txt
-            str := StrSplit(str,",")
-            str := StrSplit(str[1],":")
-            dur := Round(str.2*3600 + str.3*60 + str.4, 2)
-            FileDelete, %inca%\meta.txt
-            FileDelete, %inca%\cache\durations\%filen%.txt
-            FileAppend, %dur%, %inca%\cache\durations\%filen%.txt, UTF-8
-            }
+          FileDelete, c:\inca\cache\temp\meta.txt
+          cmd = C:\inca\cache\apps\ffprobe.exe -v quiet -print_format json -show_streams -select_streams v:0 "%source%"
+          RunWait, %ComSpec% /c %cmd% > "c:\inca\cache\temp\meta.txt",, Hide
+          if ErrorLevel
+            return
+          FileRead, MetaContent, c:\inca\cache\temp\meta.txt
+          if RegExMatch(MetaContent, """duration"":\s*""?(\d+\.?\d*)""?", n)
+            dur := n1
+          if !dur
+            return
+          if RegExMatch(MetaContent, """start_time"":\s*""?(\d+\.?\d*)""?", n)
+            start := n1
+          FileDelete, %inca%\cache\durations\%filen%.txt
+          FileAppend, %dur%, %inca%\cache\durations\%filen%.txt, UTF-8
           if (med == "audio")
             return
           thumb := 0
@@ -1605,17 +1606,18 @@
             t := 0
             if (dur > 61)
                 {
-                t := 20	      						; try to skip any video intro banners
+                t := 20 + start     						; try to skip any video intro banners
                 dur -= 20
                 }
             loop 180
                 {
-                y := Round(A_Index / 5)					; 36 video frames in thumbsheet
+                y := Round(A_Index / 5)						; 36 video frames in thumbsheet
                 if !Mod(A_Index,5)
                   {
                   runwait, %inca%\cache\apps\ffmpeg.exe -ss %t% -i "%source%" -y -vf scale=480:480/dar -vframes 1 "%inca%\cache\temp\%y%.jpg",, Hide
                   if (A_Index == 5)
                     FileCopy, %inca%\cache\temp\1.jpg, %inca%\cache\posters\%filen%.jpg, 1	; 1st thumb is poster
+                  if (A_Index == 5)
                   if (!thumb && !force)
                     break
                   }
@@ -1963,16 +1965,18 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
 <div id='myContent' class='mycontent'>`n <div id='myView' class='myview'>`n`n %mediaList%</div></div>`n`n
 
 <div id='myNav' class='context' onwheel='wheelEvent(event)'>`n
+  <a id='myInca' onmousedown="inca('Settings')">&hellip;</a>
   <input id='myTitle' class='title' style='opacity: 1; color: lightsalmon; padding-left: 1.4em'>
   <video id='myPic' muted class='pic'></video>`n
   <a id='mySelect'>Select</a>`n
   <a id='myMute' onmousedown="defMute^=1; inca('Mute', defMute); myPlayer.muted=defMute">Mute</a>`n
+  <a id='myPause' onmousedown="defPause^=1; inca('Pause',defPause); togglePause()">Pause</a>`n
   <a id='myFavorite'>Fav</a>`n
   <a id='mySkinny'></a>`n
   <a id='myPitch'></a>`n
   <a id='mySpeed'></a>`n
   <a id='myDelete' style='color:red' onmouseup="inca('Delete','',index)"></a>`n
-  <a id='myIndex' onmouseup="if (overMedia) {inca('Index','',index)} else inca('Index')"></a>`n
+  <a id='myIndex' onmouseup="if (overMedia || playing) {inca('Index',cue,index,myPlayer.currentTime)} else inca('Index')"></a>`n
   <a id='myFlip' onmouseup='flip()'>Flip</a>`n
   <a id='myCue'>Cue</a>`n
   <a id='myCap'>Caption</a>`n
@@ -1983,20 +1987,18 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
   <div id='myPanel' class='myPanel'><div class='panel'><div class='innerPanel'>`n`n%panelList%`n</div></div>`n`n
 
   <div id='myRibbon1' class='ribbon' style='font-size: 1.2em'>`n
-    <a style='color:red; width:8em; font-weight:bold'>%listSize%</a>`n
-    <a id='myMusic' style='max-width:4em; %x22%' onmousedown="inca('Path','','','music|1')" onmouseover="setTimeout(function() {if(myMusic.matches(':hover'))Music.scrollIntoView()},200)">&#x266B;</a>`n
-    <a id='myFav' style='%x23%' onmousedown="inca('Path','','','fav|1')" onmouseover="setTimeout(function() {if(myFav.matches(':hover'))Fav.scrollIntoView()},200)">&#10084;</a>`n
+    <a style='color:red; width:5em; font-weight:bold'>%listSize%</a>`n
     <a id='mySub' style='max-width:3em; font-size:0.7em; %x8%' onmousedown="inca('Recurse')" onmouseover="setTimeout(function() {if(mySub.matches(':hover'))Sub.scrollIntoView()},200)">%subs%</a>`n
-    <a id='myFol' style='%x21%' onmousedown="inca('Path','','','fol|1')" onmouseover="setTimeout(function() {if(myFol.matches(':hover'))Fol.scrollIntoView()},200)">&#x1F4BB;&#xFE0E;</a>`n
+    <a id='myMusic' style='%x22%' onmousedown="inca('Path','','','music|1')" onmouseover="setTimeout(function() {if(myMusic.matches(':hover'))Music.scrollIntoView()},200)">&#x266B;</a>`n
+     <a id='myFol' style='%x21%' onmousedown="inca('Path','','','fol|1')" onmouseover="setTimeout(function() {if(myFol.matches(':hover'))Fol.scrollIntoView()},200)">&#x1F4BB;&#xFE0E;</a>`n
+   <a id='myFav' style='%x23%' onmousedown="inca('Path','','','fav|1')" onmouseover="setTimeout(function() {if(myFav.matches(':hover'))Fav.scrollIntoView()},200)">&#10084;</a>`n
     <a id='mySearch' style='%x20%' onwheel="wheelEvent(event)" onmousedown="inca('SearchBox','','',myInput.value)" onmouseover="setTimeout(function() {if(mySearch.matches(':hover'))filter(id)},140)">&#x1F50D;&#xFE0E;</a>`n
     <input id='myInput' class='searchbox' type='search' autocomplete='off' value='%st%' onmouseover="overText=1; this.focus()" oninput="Add.innerHTML='Add'" onmouseout='overText=0'>
     <a id='Add' style='max-width:3em; font-size:0.8em; font-variant-caps:petite-caps' onmousedown="inca('Add','','',myInput.value)">%add%</a>`n
     <a id="myPage" onmousedown="inca('Page', page)" onwheel="wheelEvent(event)"></a>
     </div>`n`n
 
-  <div id='myRibbon2' class='ribbon' style='background:#1b1814' onwheel="wheelEvent(event)">`n
-    <a id='myMore' style='width:3em' onmouseout='ix=0'>&hellip;</a>
-    <a id='myPause' style='width:3em' onmousedown="defPause^=1; inca('Pause',defPause)">Pause</a>`n
+  <div id='myRibbon2' class='ribbon' style='width: 90`%; background:#1b1814' onwheel="wheelEvent(event)">`n
     <a id='myPlaylist' style='%x13%' onmousedown="inca('Playlist')">%pl%</a>`n
     <a id='myDate' style='%x4%' onmousedown="inca('Date', filt)">Date</a>`n
     <a id='myDuration' style='%x3%' onmousedown="inca('Duration', filt)"> Duration</a>`n
@@ -2157,8 +2159,6 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
           }
         if (text && type!="document")
           favicon = %favicon% &#169
-        IfExist, %inca%\cache\original audio\%media%.*
-          favicon = %favicon% &#9834
         if (type=="image")
           src = &nbsp;
         if !size
@@ -2169,7 +2169,7 @@ caption = <textarea id='srt%j%' class='caption' onmouseover='overText=1' onmouse
 if listView
   mediaList = %mediaList%%fold%<table onmouseover='overThumb(%j%)'`n onmouseout="thumb%j%.style.opacity=0; thumb.src=null">`n <tr id='entry%j%' data-params='%type%,%start%,%dur%,%size%' onmouseenter='if (gesture) sel(%j%)'>`n <td>%ext%`n <video id='thumb%j%' class='thumb2' data-alt-src="%server%%src%"`n %poster%`n preload=%preload% muted loop type="video/mp4"></video></td>`n <td>%size%</td>`n <td style='min-width: 6em'>%durT%</td>`n <td>%date%</td>`n  <td><div id='myFavicon%j%' class='favicon' style='position:absolute; text-align: left; translate:1.2em -0.8em'>%favicon%</div></td>`n <td style='width: 70vw'><input id="title%j%" class='title' style='opacity: 1; transition: 0.6s' onmouseover='overText=1' autocomplete='off' onmouseout='overText=0; Click=0' type='search' value='%media_s%' oninput="renamebox=this.value; lastMedia=%j%"></td>`n %fo%</tr></table>%caption%<span id='cues%j%' style='display: none'>%cues%</span>`n`n
 
-else mediaList = %mediaList%<div id="entry%j%" class='entry' data-params='%type%,%start%,%dur%,%size%'>`n <input id='title%j%' class='title' style='text-align: center' type='search'`n value='%media_s%'`n oninput="renamebox=this.value; lastMedia=%j%"`n onmouseover="overText=1; if((x=this.value.length/2) > view) this.style.width=x+'em'"`n onmouseout="overText=0; this.style.width='100`%'">`n <video id="thumb%j%" class='thumb' onmouseenter='overThumb(%j%); if (gesture) sel(%j%)'`n onmouseup='if(gesture)getParameters(%j%)' onmouseout="thumb.src=null" data-alt-src="%server%%src%"`n %poster%`n preload=%preload% loop muted type='video/mp4'></video>`n <span id='myFavicon%j%' class='favicon'>%favicon%</span>`n %noIndex%`n <span id='cues%j%' style='display: none'>%cues%</span></div>`n %caption%`n
+else mediaList = %mediaList%<div id="entry%j%" class='entry' data-params='%type%,%start%,%dur%,%size%'>`n <input id='title%j%' class='title' style='text-align: center' type='search'`n value='%media_s%'`n oninput="renamebox=this.value; lastMedia=%j%"`n onmouseover="overText=1; if((x=this.value.length/2) > view) this.style.width=x+'em'"`n onmouseout="overText=0; this.style.width='100`%'">`n <video id="thumb%j%" class='thumb' onmouseenter='overThumb(%j%); if (gesture) sel(%j%)'`n onmouseup='if(gesture)getParameters(%j%)' onmouseout="thumb.src=null" data-alt-src="%server%%src%"`n %poster%`n preload=%preload% loop muted type='video/mp4'></video>`n <span id='myFavicon%j%' onmouseenter='overThumb(%j%)' class='favicon'>%favicon%</span>`n %noIndex%`n <span id='cues%j%' style='display: none'>%cues%</span></div>`n %caption%`n
 }
 
 

@@ -1,4 +1,8 @@
 
+// mp3 mp4 join and nav button headings
+// new/add caption at current time feature
+
+
 
   let favicon = ''							// favorite or cc icon
   let wheel = 0								// wheel count
@@ -55,8 +59,6 @@
   let defRate = 1							// default speed
   let defMute = 0							// default mute
   let defPause = 0							// default pause state
-  let items = ['&hellip;', 'mp4', 'mp3', 'Join']			// ribbon drop down menu
-  let ix = 0								// index to items
   let observer								// see if myPlayer is visible
   let lastLine = 0							// last addMedia event
   let pitch = 0								// default pitch
@@ -114,16 +116,9 @@
     let id = e.target.id 								// id under cursor
     if (gesture || id == 'myFlip') return
     if (!gesture && longClick == 1 && !playing && playlist && selected && overMedia) {inca('Move', overMedia); return}
-    if (id == 'myMute' || id == 'mySave' || id == 'myCancel' || id == 'myDelete' || id == 'myIndex' || id == title.id) return
+    if (['myMute', 'myPause', 'mySave', 'myCancel', 'myDelete', 'myIndex', 'myInca'].includes(id)) return
     if (id == 'myPitch') {setPitch(0); return}
     if (id == 'myFavorite') {addFavorite(); return}
-    if (id == 'myMore' && ix == 0) inca('Settings')
-    if (id == 'myMore' && (selected || cue)) {
-      if (ix == 1) inca('mp4', cue, lastMedia, navStart)
-      if (ix == 2) inca('mp3', cue, lastMedia, navStart)
-      if (ix == 3) inca('Join')
-      cue = 0; selected = ''; selectAll(); selectAll()
-      return}
     if (lastClick == 3) {								// Right click context
       if (yw < 0.06) return
       if (!myNav.style.display) {context(e); return}}
@@ -147,10 +142,10 @@
         if (id == 'mySpeed') {updateCue('rate',1); return}
         if (id == 'myCap') {capButton(); return}
         if (id == 'myCue' && playing) {cueButton(); return}
-        if (overText && ypos < srt.offsetTop + 12) {srt.scrollTo(0,-5); return}}
+        if (overText && ypos < srt.offsetTop + 12) {srt.scrollTo(0,-5); return}}	// scroll to top of text
       else if (overText) {searchBox(); return}
-      if (longClick!=1 && !playing && !overMedia && !myNav.style.display) return
-      if (longClick && myTitle.value) {myPlayer.src=myPlayer.poster=''; thumbSheet ^= 1}
+      if (title.matches(':hover') || longClick!=1 && !playing && !overMedia && !myNav.style.display) return
+      if (longClick && myTitle.value) {myPlayer.src = myPlayer.poster=''; thumbSheet ^= 1}
       else if (!getStart(id)) return}
     getParameters(index)
     if (srt.value && (captions || favicon.matches(':hover') || type=='document')) openCap()
@@ -158,7 +153,6 @@
 
 
   function getStart(id) {
-    if (myTitle.value && !dur) return 1					// image / text
     let sheet = thumbSheet; thumbSheet = 0
     if (defPause && myPlayer.currentTime > dur-0.5) myPlayer.load()
     if (id == 'myPic') navStart = myPic.currentTime
@@ -175,17 +169,17 @@
       if (xm < 0.1) myPlayer.currentTime = 0
       else myPlayer.currentTime = xm * dur
       return}
-    else if (myNav.style.display) return
+    else if (myTitle.matches(':hover')) navStart = thumb.style.start
     else if (playing) {togglePause(); return}
-    else if (!longClick) navStart = thumb.style.start			// use default start time
+    else if (!longClick || myNav.style.display) navStart = thumb.style.start
     else index = lastMedia						// resume last media
     return 1}								// return and continue
 
 
   function Play() {
     positionMedia(0)
-    if (lastClick == 1) myPlayer.style.opacity = 0			// fade in player
-    if (dur < 200 && !playing && !playlist && !favicon.textContent.includes('\u2764')) navStart = 0
+    if (lastClick) myPlayer.style.opacity = 0				// fade in player
+    if (dur < 200 && !myPic.currentTime && !playing && !playlist && !longClick && !favicon.textContent.includes('\u2764')) navStart=0
     if (!thumbSheet) {myPlayer.poster=thumb.poster; myPlayer.currentTime = navStart}
     thumb.pause()
     myPlayer.pause()
@@ -199,10 +193,8 @@
     myMask.style.pointerEvents='auto'					// stop overThumb() triggering
     if (captions || type=='audio' || playlist.match('/inca/music/')) scaleY=0.16
     if (playlist.match('/inca/music/') && !thumbSheet) {myPlayer.play(); myPlayer.muted=0}
-    setTimeout(function() {						// minimise transition jitter
-      if (!captions && !thumbSheet && dur && !defPause && !cue) myPlayer.play()
-      if (lastClick) positionMedia(0.2)
-      myPlayer.style.opacity = 1 },100)
+    if (lastClick && !captions && !thumbSheet && dur && !defPause && !cue) myPlayer.play()
+    setTimeout(function() {if (lastClick) positionMedia(0.4); myPlayer.style.opacity=1},100)
     myPlayer.style.zIndex=Zindex
     if (captions) srt.addEventListener('scroll', addMedia)
     if (type == 'audio') myPlayer.style.borderBottom = '2px solid pink'
@@ -244,11 +236,7 @@
     if (wheel < block) return
     block=100
     let wheelUp = wheelDir * e.deltaY > 0
-    if (id=='myMore') {							// More option list
-      if (wheelUp) {ix++} else ix--
-      if (ix > 3) ix = 3; if (ix < 0) ix = 0
-      myMore.innerHTML = items[ix]}
-    else if (id=='myPage') {						// htm page
+    if (id=='myPage') {						// htm page
       if (wheelUp && page<pages) page++
       else if (!wheelUp && page>1) page--}
     else if (id=='myType'||id=='myAlpha'||id=='myDate'||id=='mySize'||id=='myDuration'||id=='mySearch') {
@@ -325,7 +313,7 @@
     if (!myNav.matches(':hover')) myNav.style.display = null
     else if (!myTitle.value || type=='document') myNav.style.width = 84 + 'px'
     else {myNav.style.width = rect.width + 100 + 'px'; if (myTitle.matches(':hover')) myPic.style.display='block'}
-    if (!myNav.style.display) myTitle.value = (overMedia || playing) ? title.value : ''
+    if (!myNav.style.display) {zoom=1; myTitle.value = (overMedia || playing) ? title.value : ''}
     xm = (xpos - rect.left) / rect.width
     ym = (ypos - rect.top) / rect.height
     if (block>=30) block-=10						// wheel blocking 
@@ -348,11 +336,13 @@
     myPitch.innerHTML = pitch === 0 ? 'Pitch' : 'Pitch ' + pitch
     if (myTitle.value) {
       myFlip.innerHTML = 'Flip'
+      myTitle.value = title.value
+      mySelect.innerHTML = 'Select '+index
       mySelect.style.outline = myPlayer.style.outline = title.style.outline
       mySkinny.innerHTML = skinny === 1 ? 'Skinny' : `Skinny ${skinny.toFixed(2)}`
       mySkinny.style.color = skinny === 1 ? null : 'red'
       mySpeed.innerHTML = rate === 1 ? 'Speed' : `Speed ${rate.toFixed(2)}`}
-    else myFlip.innerHTML = mySelect.style.outline = null
+    else {mySelect.innerHTML = 'Select'; myFlip.innerHTML = mySelect.style.outline = null}
     if (favicon.innerHTML.match('\u2764')) myFavorite.innerHTML='Fav &#x2764'
     else myFavorite.innerHTML='Fav'
     if (!seekBar()) myProgress.style.height = null
@@ -479,19 +469,6 @@
     if (myType.innerHTML != 'Type') myType.style.color = 'red'}
 
 
-  function context(e) {							// right click context menu 
-    block=200
-    if (!playing) myPic.style.display='block'
-    else myPic.style.display=null
-    if (overMedia || playing) {navStart = thumb.style.start; myNav.style.background='#0e0c05cc'}
-    else {myPic.style.display=null; mySelect.innerHTML='Select'; myNav.style.background=null}
-    zoom = 1.5
-    myPic.style.transform='scale('+Math.abs(skinny)*zoom+','+zoom+')'	// pop thumb out a little
-    if (myTitle.value) {myNav.style.left=xpos-60 + 'px'; myNav.style.top = ypos-28 + 'px'}
-    else {myNav.style.left=xpos-68+'px'; myNav.style.top=ypos-28+'px'}
-    myNav.style.display='block'}
-
-
   function inca(command,value,select,address) {				// send java messages to inca.exe
     if (editing && command != 'Osk') {					// text or caption has been edited
       messages += '#Scroll#'+srt.scrollTop.toFixed(0)+'|'+srt.offsetWidth+'|'+srt.offsetHeight+'#'+editing+'#'
@@ -514,8 +491,8 @@
       .then(response => {if (response.status === 204) {return} return response.json()})
       .then(data => {
         let newUrl = encodeURI(`http://localhost:3000${data.url}`)
-        if (newUrl == window.location.href) window.location.href = newUrl
-        else if (window.open(newUrl, '_blank')) if (command != 'SearchBox' && lastClick != 2) window.close()})}
+        if (command == 'SearchBox' || lastClick == 2 && command=='Path') window.open(newUrl)	// new tab
+        else window.location.href = newUrl})}				// replace tab
     messages=''}
 
 
@@ -530,7 +507,7 @@
     thumb.src = thumb.dataset.altSrc
     let params = entry.dataset.params.split(',')
     type = params[0]							// media type eg. video
-    thumb.style.start = Number(params[1])				// start time
+    thumb.style.start = Number(params[1]) + 0.01			// start time
     dur = Number(params[2]) || thumb.duration				// duration
     size = Number(params[3])						// file size
     skinny = 1; rate = defRate						// reset before new cues read
@@ -747,6 +724,13 @@
     thumb.style.opacity = 1
     thumb.load()
     thumb.currentTime = thumb.style.start}
+
+
+  function context(e) {							// right click context menu
+    block=200
+    myNav.style.display='block'
+    if (myTitle.value) {myPic.style.display='block'; myNav.style.left=xpos-76 + 'px'; myNav.style.top = ypos-42 + 'px'}
+    else {myPic.style.display=null; myNav.style.left=xpos-68+'px'; myNav.style.top=ypos-28+'px'}}
 
 
   function Time(z) {if (z<0) return '0:00'; let y=Math.floor(z%60); let x=':'+y; if (y<10) {x=':0'+y}; return Math.floor(z/60)+x}
