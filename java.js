@@ -1,6 +1,10 @@
 
 // mp3 mp4 join and nav button headings
-// new/add caption at current time feature
+// if cue, change index word to mp4?
+// when add cue, context menu goes wide
+// re think history start cache issues
+
+// can thumbsheet be made first pic = 0 if < 200 dur and fav image or first no title
 
 
 
@@ -117,6 +121,7 @@
     if (gesture || id == 'myFlip') return
     if (!gesture && longClick == 1 && !playing && playlist && selected && overMedia) {inca('Move', overMedia); return}
     if (['myMute', 'myPause', 'mySave', 'myCancel', 'myDelete', 'myIndex', 'myInca'].includes(id)) return
+    if (myOptions.matches(':hover')) return
     if (id == 'myPitch') {setPitch(0); return}
     if (id == 'myFavorite') {addFavorite(); return}
     if (lastClick == 3) {								// Right click context
@@ -341,14 +346,15 @@
       mySelect.style.outline = myPlayer.style.outline = title.style.outline
       mySkinny.innerHTML = skinny === 1 ? 'Skinny' : `Skinny ${skinny.toFixed(2)}`
       mySkinny.style.color = skinny === 1 ? null : 'red'
-      mySpeed.innerHTML = rate === 1 ? 'Speed' : `Speed ${rate.toFixed(2)}`}
-    else {mySelect.innerHTML = 'Select'; myFlip.innerHTML = mySelect.style.outline = null}
+      mySpeed.innerHTML = rate === 1 ? 'Speed' : `Speed ${rate.toFixed(2)}`
+      myOptions.style.visibility = 'visible'}
+    else {myOptions.style.visibility = 'hidden'; mySelect.innerHTML = 'Select'; myFlip.innerHTML = mySelect.style.outline = null}
     if (favicon.innerHTML.match('\u2764')) myFavorite.innerHTML='Fav &#x2764'
     else myFavorite.innerHTML='Fav'
     if (!seekBar()) myProgress.style.height = null
     let qty = selected.split(',').length - 1 || 1;
-    if (myTitle.value || selected) {myDelete.innerHTML='Delete ' + qty; myIndex.innerHTML='Index ' + qty}
-    else {myDelete.innerHTML = null; myIndex.innerHTML = 'Index'}
+    if (myTitle.value || selected) myDelete.innerHTML='Delete ' + qty
+    else myDelete.innerHTML = null
     if (defMute) {myMute.style.color='red'} else myMute.style.color=null
     if (defPause) {myPause.style.color='red'} else myPause.style.color=null
     if (skinny<0) {myFlip.style.color='red'} else myFlip.style.color=null
@@ -601,15 +607,16 @@
     if (editing) inca('Reload',index)
     else inca('Null')							// just update history
     positionMedia(0.2)
-    Click=0
-    playing=0
-    captions=0								// in case browser not active
-    thumbSheet=0
-    srt.style=''
-    myNav.style=''
-    myPlayer.style.opacity=0
+    cue = 0
+    Click = 0
+    playing = 0
+    captions = 0							// in case browser not active
+    thumbSheet = 0
+    srt.style = ''
+    myNav.style = ''
+    myPlayer.style.opacity = 0
     setTimeout(function() {						// fadeout before close
-      myPlayer.style.zIndex=-1
+      myPlayer.style.zIndex = -1
       myMask.style = ''
       myPlayer.pause()
       if (title.getBoundingClientRect().top>innerHeight-50) {
@@ -620,14 +627,14 @@
   function navButtons() {						// innerHTML values
     if (!myTitle.value) myCap.innerHTML=''
     else if (type == 'document') myCap.innerHTML='Save Text'
-    else if (!srt.value || captions) {myCap.innerHTML='New Caption'} else myCap.innerHTML='Captions'
+    else if (!srt.value || captions) {myCap.innerHTML='Add Caption'} else myCap.innerHTML='Captions'
     if (!myTitle.value) myCue.innerHTML=''
     else if (playing) {myCue.innerHTML='New Cue'} else myCue.innerHTML='Cues'
     let end = myPlayer.currentTime.toFixed(1)
     if (cue == end) end = dur
     if (cue) myCue.innerHTML = 'Start ' + cue +' '+ 'End '+ end
     else if (type=='document' && playing) myCue.innerHTML='Add Media'
-    else if (myTitle.value && playing) myCue.innerHTML='Add Cue'
+    else if (myTitle.value && playing) myCue.innerHTML='Add Cue '+myPlayer.currentTime.toFixed(2)
     else if (myTitle.value) myCue.innerHTML='Show Cues'
     else myCue.innerHTML=''
     if (cue && thumb.style.skinny) myCap.innerHTML='Cue Skinny ' + skinny
@@ -638,6 +645,7 @@
   function cueButton() {						// context menu Cue button
     if ((thumb.style.skinny || thumb.style.rate) && !thumb.style.posted) {capButton(); cue = 0}
     else if (type=='document') {srt.focus(); inca('addMedia')}		// paste last media into text file
+    else if (captions) {srt.focus(); srt.setRangeText(myPlayer.currentTime.toFixed(2))}
     else if (!cue) {cue = Math.round(10*myPlayer.currentTime)/10; return}
     Play()}
 

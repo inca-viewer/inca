@@ -95,22 +95,21 @@
       WinActivate, ahk_group Browsers
       IfExist, %inca%\cache\apps\server.js
         server := "http://localhost:3000/"
-      if InStr(server, "http:")
+      if InStr(server, "http:")			; use Node server for messaging
         {
         Process, Close, node.exe
         sleep 200
         Run, cmd.exe /c cd /d "C:\inca\cache\apps" && node server.js,, Hide
+        default = #Path###%profile%\Pictures\
 	if !GetBrowser()
-          incaTab = Pictures
-        else if incaTab
-          send, ^w
-        firstPage = #Path###%profile%\%incaTab%\
-        messages(firstPage)			; creates .htm
-        Run, %server%inca/cache/html/%incaTab%.htm
-        sleep 500
+          messages(default)			; creates .htm
+        if incaTab
+          send, {F5}
+        else Run, %server%inca/cache/html/Pictures.htm
+        sleep 600
         WinActivate, ahk_group Browsers
         }
-       else
+       else					; use ClipBoard for messaging
          {
          WinActivate, ahk_group Browsers
          sleep 100
@@ -123,7 +122,9 @@
       return
 
 
-    ~Esc up::
+
+
+    ^Esc up::
       ExitApp
 
 
@@ -141,8 +142,6 @@
       SetTimer, Timer_up, -350
       return
     Timer_up:					; long back key press
-      if incaTab
-        return
       IfWinActive, ahk_group Browsers
         send, ^w				; close tab
       else send, !{F4}				; or close app
@@ -295,9 +294,9 @@ SetTimer, TimedEvents, 50
           }
         else if (command == "newCap")					; create new caption file
           {
-          x = 1`r`n00:00,000 --> 00:07,000`r`n_______________
-          FileAppend, %x%, %inca%\cache\captions\%media%.srt, UTF-8
-          FileAppend, `r`n0.00|scroll|0|200|200, %inca%\cache\cues\%media%.txt, UTF-8
+          timeStr .= srtTime(seek) . " --> " . timeStr . "`r`ncaption"
+          FileAppend, %timeStr%, %inca%\cache\captions\%media%.srt, UTF-8
+          FileAppend, `r`n%seek%|scroll|0|300|100, %inca%\cache\cues\%media%.txt, UTF-8
           reload := 2
           selected =
           }        else if (command == "Move")				; move entry within playlist
@@ -757,30 +756,28 @@ SetTimer, TimedEvents, 50
 
     indexMedia()
       {
-      cue := value
       time := address
-      start := 0
-      end := 0
-      if !address
+      cue := StrSplit(value, "|").1
+      id := StrSplit(value, "|").2
+      if (id == "myIndex")
         {
         indexSelected := selected
         selected =
         reload := 2
         SetTimer, indexPage, -100, -2
-        return
         }
-      if !cue
+      else if (!cue && InStr(id, "myMp"))
         {
         Loop, Parse, selected, `,
           if getMedia(A_LoopField)
-            {
-            if (ex == "mp3")
-              run, %inca%\cache\apps\ffmpeg.exe -i "%src%" -y "%mediaPath%\%media%.mp3",,Hide	; mp3
-            else Index(src, 1, 0, 0)
-            }
+            if InStr(id, "mp3")
+              run, %inca%\cache\apps\ffmpeg.exe -i "%src%" -y "%mediaPath%\%media%.mp3",,Hide	; audio
+            else Index(src, 1, 0, 0)								; video
         }
-      else
+      else					; trim media using cue and current player time
         {
+        start := 0
+        end := 0
         if (time-cue >= 0 && time-cue < 1)
           start := time
         else if (cue-time > 0 && cue-time < 1)
@@ -795,7 +792,9 @@ SetTimer, TimedEvents, 50
           start := time
           end := cue
           }
-        Index(src, 1, start, end)
+        if InStr(id, "mp3")
+          run, %inca%\cache\apps\ffmpeg.exe -i "%src%" -y "%mediaPath%\%media%.mp3",,Hide	; audio
+        else Index(src, 1, start, end)
         }
       selected =
       }
@@ -840,14 +839,7 @@ SetTimer, TimedEvents, 50
           if RegExMatch(A_LoopField, "^\d+\.\d$", t)
             {
             lineNum++
-            seconds := t
-            hours := Floor(seconds / 3600)
-            seconds -= hours * 3600
-            minutes := Floor(seconds / 60)
-            seconds -= minutes * 60
-            ms := Round((seconds - Floor(seconds)) * 1000)
-            seconds := Floor(seconds)
-            timeStr := Format("{:02d}:{:02d}:{:02d},{:03d}", hours, minutes, seconds, ms)
+            timeStr := srtTime(t)
             str .= lineNum . "`r`n" . timeStr . " --> " . timeStr
             }
           else if (A_LoopField != "")
@@ -932,7 +924,7 @@ SetTimer, TimedEvents, 50
           Loop, Files, %A_LoopField%*.*, F%recurse%
             if A_LoopFileAttrib not contains H,S
               if (A_LoopFileSize > 0)					; for when files are still downloading
-                if spool(A_LoopFileFullPath, A_Index, 0)
+                if spool(A_LoopFileFullPath, A_Index, start)
                   break 2
                 else if (show==1 && ((listSize<10000 && !Mod(listSize,1000)) || !Mod(listSize,10000)))
                   PopUp(listSize,0,0,0)
@@ -962,8 +954,6 @@ SetTimer, TimedEvents, 50
 
     Spool(input, count, start)						; sorting and search filters
         {
-        if !start
-          start := 0
         SplitPath, input,,,ex, filen
         if (ex == "lnk")
             FileGetShortcut, %input%, input
@@ -1032,6 +1022,15 @@ SetTimer, TimedEvents, 50
             if (InStr(toggles, "Fav") && !InStr(allfav, filen))
               return
             listSize += 1
+            if !playlist
+              {
+              FileRead, dur, %inca%\cache\durations\%filen%.txt
+              if (dur && !playlist && med=="video")				; derive 1st thumbnail start time
+                if (dur > 61)
+                  start := 20.1 + (4 * (dur - 20)/200)
+                else start := 4 * dur / 200
+              }
+            start := Round(start,1)
             list = %list%%listId%/%input%/%med%/%start%`r`n
             }
         }
@@ -1117,6 +1116,19 @@ SetTimer, TimedEvents, 50
         if (x < 600)
             FormatTime, in, %year%, m:ss
         return in
+        }
+
+
+    srtTime(in)
+        {
+        seconds := in
+        hours := Floor(seconds / 3600)
+        seconds -= hours * 3600
+        minutes := Floor(seconds / 60)
+        seconds -= minutes * 60
+        ms := Round((seconds - Floor(seconds)) * 1000)
+        seconds := Floor(seconds)
+        return Format("{:02d}:{:02d}:{:02d},{:03d}", hours, minutes, seconds, ms)
         }
 
 
@@ -1590,6 +1602,7 @@ SetTimer, TimedEvents, 50
             return
           if RegExMatch(MetaContent, """start_time"":\s*""?(\d+\.?\d*)""?", n)
             start := n1
+          dur := Round(dur,2)
           FileDelete, %inca%\cache\durations\%filen%.txt
           FileAppend, %dur%, %inca%\cache\durations\%filen%.txt, UTF-8
           if (med == "audio")
@@ -1976,11 +1989,10 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
   <a id='myPitch'></a>`n
   <a id='mySpeed'></a>`n
   <a id='myDelete' style='color:red' onmouseup="inca('Delete','',index)"></a>`n
-  <a id='myIndex' onmouseup="if (overMedia || playing) {inca('Index',cue,index,myPlayer.currentTime)} else inca('Index')"></a>`n
   <a id='myFlip' onmouseup='flip()'>Flip</a>`n
   <a id='myCue'>Cue</a>`n
   <a id='myCap'>Caption</a>`n
-  <a></a></div>`n`n
+  <div id='myOptions' class='title' style='display: flex; justify-content: space-evenly' onmouseup="let target=cue+'|'+event.target.id; inca('Index',target,selected,myPlayer.currentTime)"><span id='myIndex'>index</span><span id='myMp3'>mp3</span><span id='myMp4'>mp4</span><span id='myJoin'>join</span></div></div>`n`n
 
 <div id='myMenu'>
   <div id='z1' class='fade' style='height:190px'></div><div id='z2' class='fade' style='top:190px; background: linear-gradient(#0e0c05ff, #0e0c0500)'></div>`n
@@ -2078,12 +2090,6 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
         if (searchTerm || InStr(toggles, "Recurse"))
           fo = <td style='width:5em; padding-right:3em; text-align:right'>%y%</td>
         FileRead, dur, %inca%\cache\durations\%media%.txt
-        if (dur && !playlist)						; derive 1st thumbnail start time
-          {
-          if (dur > 61)
-            start := 20.1 + (4 * (dur - 20)/200)
-          else start := 4 * dur / 200
-          }
         durT := Time(dur)
         if !dur
           dur := 0
@@ -2097,8 +2103,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
               start := StrSplit(A_Loopfield,"|").2
               break
               }
-        if !start
-          start = 0.0
+start := Round(start,1)
         if (type == "video")
           IfExist, %inca%\cache\posters\%media% %start%.jpg		; replace poster with fav poster
             thumb = %inca%\cache\posters\%media% %start%.jpg
@@ -2180,7 +2185,7 @@ else mediaList = %mediaList%<div id="entry%j%" class='entry' data-params='%type%
       downloading := A_Now - downloading			; folder last modified (downloading)
       FileGetTime, transferred, %profile%\Downloads, M
       transferred := A_Now - transferred
-      if InStr(control, "..........")
+      if (transferred > 4 && InStr(control, ".........."))
         GuiControl, Indexer:, GuiInd
       if (transferred > 3)
         if (downloading < 3)
