@@ -204,7 +204,6 @@
             xpos := A_ScreenWidth - 15
           MouseMove, % xpos, % ypos, 0
           Gesture(x, y)
-SetTimer, TimedEvents, 50
           }
         if (!gesture && longClick && click == "LButton" && wasCursor == "IBeam")
           {
@@ -228,16 +227,12 @@ SetTimer, TimedEvents, 50
         {
         if (command == "Null")						; used as trigger to save text editing - see Java inca()
           return
-        else if (command == "saveText")					; save text snip
-          saveText()
         else if (command == "editCues")					; update media cues skinny, rate
           editCues()
         else if (command == "Favorite")					; add media favorite to New.m3u
           Favorite()
         else if (command == "Delete")					; delete media
           Delete()
-        else if (command == "Join")					; join video files together
-          Join()
         else if (command == "Osk")					; create srt caption file
           Osk()
         else if (command == "Add" && address)
@@ -299,19 +294,20 @@ SetTimer, TimedEvents, 50
           FileAppend, `r`n%seek%|scroll|0|300|100, %inca%\cache\cues\%media%.txt, UTF-8
           reload := 2
           selected =
-          }        else if (command == "Move")				; move entry within playlist
+          }
+        else if (command == "Move")					; move entry within playlist
           {
           MoveEntry()
           reload := 3
           index := value						; for scrollToIndex() in java
           selected =
           }
-        else if (command == "Pause")
+        else if (command == "Pause")					; set default paused
           {
           config := RegExReplace(config, "Pause/[^|]*", "Pause/" . value)
           IniWrite, %config%, %inca%\ini.ini, Settings, config
           }
-        else if (command == "Mute")					; set default player
+        else if (command == "Mute")					; set default mute
           {
           config := RegExReplace(config, "Mute/[^|]*", "Mute/" . value)
           IniWrite, %config%, %inca%\ini.ini, Settings, config
@@ -694,9 +690,9 @@ SetTimer, TimedEvents, 50
       {
       str=
       src=
-      if !selected
+      if !indexSelected
         return
-      Loop, Parse, selected, `,
+      Loop, Parse, indexSelected, `,
         if getMedia(A_LoopField)
           str = %str%file '%src%'`r`n
       FileAppend,  %str%, %inca%\cache\temp\temp1.txt, utf-8
@@ -759,62 +755,39 @@ SetTimer, TimedEvents, 50
       time := address
       cue := StrSplit(value, "|").1
       id := StrSplit(value, "|").2
+      start := 0
+      end := 0
+      if (time > cue + 1)
+        start := cue, end := time
+      else if (time < cue - 1) 
+        start := time, end := cue
+      else if (time >= cue) 
+        start := cue
+      else start := 0, end := cue
+      indexSelected := selected
+      selected =
       if (id == "myIndex")
         {
-        indexSelected := selected
-        selected =
         reload := 2
-        SetTimer, indexPage, -100, -2
+        SetTimer, indexSelected, -100, -2
         }
-      else if (!cue && InStr(id, "myMp"))
-        {
-        Loop, Parse, selected, `,
-          if getMedia(A_LoopField)
-            if InStr(id, "mp3")
-              run, %inca%\cache\apps\ffmpeg.exe -i "%src%" -y "%mediaPath%\%media%.mp3",,Hide	; audio
-            else Index(src, 1, 0, 0)								; video
-        }
-      else					; trim media using cue and current player time
-        {
-        start := 0
-        end := 0
-        if (time-cue >= 0 && time-cue < 1)
-          start := time
-        else if (cue-time > 0 && cue-time < 1)
-          end := cue
-        else if (cue < time)
+      else if InStr(id, "join") 
+        Join()
+      else Loop, Parse, indexSelected, `,
+        if getMedia(A_LoopField)
           {
-          start := cue
-          end := time
+          if !cue
+            FileRead, end, %inca%\cache\durations\%media%.txt
+          if start
+            ss = -ss %start%
+          if end
+            to = -to %end%
+          if InStr(id, "mp3")
+            run, %inca%\cache\apps\ffmpeg.exe -i %ss% %to% "%src%" -y "%mediaPath%\%media%.mp3",,Hide
+          else Index(src, 1, start, end)
+          if cue
+            break
           }
-        else
-          { 
-          start := time
-          end := cue
-          }
-        if InStr(id, "mp3")
-          run, %inca%\cache\apps\ffmpeg.exe -i "%src%" -y "%mediaPath%\%media%.mp3",,Hide	; audio
-        else Index(src, 1, start, end)
-        }
-      selected =
-      }
-
-
-    saveText()
-      {
-      send, ^c
-      sleep 500
-      str := StrSplit(Clipboard, "`r`n").1 
-      if (StrLen(str) > 64)
-        str := SubStr(str, 1, 64)
-      str = %str%
-      str := RegExReplace(str, "[<>:""/\\|?*]")
-      if !str
-        return
-      FileAppend, %Clipboard%, %path%%str%.txt, UTF-8
-      IfExist, %path%%str%.txt
-        Popup("Saved . . .",800,0,0)
-      return
       }
 
 
@@ -852,7 +825,7 @@ SetTimer, TimedEvents, 50
         }
       FormatTime, date, , dddd, MMMM d, yyyy h:mm:ss tt
       FileAppend, % "`n`n" . media . "`n" . date . "------------------------`n" . str, %inca%\cache\temp\backup.txt
-      PopUp("saved", 400, 0, 0)
+      PopUp("saved", 700, 0, 0)
       }
 
 
@@ -1025,7 +998,7 @@ SetTimer, TimedEvents, 50
             if !playlist
               {
               FileRead, dur, %inca%\cache\durations\%filen%.txt
-              if (dur && !playlist && med=="video")				; derive 1st thumbnail start time
+              if (dur && !playlist && med=="video")			; derive 1st thumbnail start time
                 if (dur > 61)
                   start := 20.1 + (4 * (dur - 20)/200)
                 else start := 4 * dur / 200
@@ -1341,7 +1314,6 @@ SetTimer, TimedEvents, 50
         {
         if (click == "RButton" && Abs(x) > Abs(y))
           {
-          volRef := volume
           if x<=0
             gesture := -1
           x*=1.4
@@ -1353,18 +1325,15 @@ SetTimer, TimedEvents, 50
             volume := 0
           if (volume > 100)
             volume := 99
-          SoundSet, volume
-          if (volRef != Round(volume))
-            {
-            FormatTime, time,, h:mm
-            volRef := Round(volume)
-            if !volRef
-              volRef=
-            GuiControl, Status:, GuiSta, %time%    %volRef%
-            }
+          soundGet, volRef
+          FormatTime, time,, h:mm
+          x =
+          if volume
+            x := Round(volume)
+          GuiControl, Status:, GuiSta, %time%    %x%
           yv := A_ScreenHeight - 3
           xv := A_ScreenWidth * volume/101
-          gui, vol: show, x0 y%yv% w%xv% h1 NA
+          gui, vol: show, x0 y%yv% w%xv% h3 NA
           }
         if (click=="LButton" && desk==cur && !WinExist("ahk_class Notepad"))
           {
@@ -1452,17 +1421,26 @@ SetTimer, TimedEvents, 50
         AllFav()							; create ..\fav\all fav.m3u
         FileRecycle, %inca%\cache\temp\backup.txt
         FileDelete, %inca%\cache\temp\*.*
-        FileRead, str, %inca%\fav\History.m3u
+        FileRead, history, %inca%\fav\History.m3u
         FileDelete, %inca%\fav\History.m3u
-        Loop, Parse, str, `n, `r
+        Loop, Parse, history, `n, `r					; garbage collection
           count++
         if (count > 300)
           count -= 300
         else count = 0
-        Loop, Parse, str, `n, `r					; keep history below 300 entries
+        Loop, Parse, history, `n, `r					; keep history below 300 entries
           if (A_Loopfield && A_Index >= count)
-            str2 = %str2%%A_Loopfield%`r`n
-        FileAppend, %str2%, %inca%\fav\History.m3u, UTF-8		; clean up html cache
+            {
+            str = %str%%A_Loopfield%`r`n
+            media := RegExReplace(A_Loopfield, "\.[^.]*\|[^|]*$")	; and also remove their start poster jpg
+            media := RegExReplace(media, "^.*\\")
+            start := RegExReplace(A_Loopfield, ".*\|(\d+\.\d+)$", "$1")
+            match := media . " " . start . ".jpg"
+            FileMove, %inca%\cache\temp\history\%match%, %inca%\cache\temp\
+            }
+        FileAppend, %str%, %inca%\fav\History.m3u, UTF-8		; clean up html cache
+        FileDelete, %inca%\cache\temp\history\*.jpg
+        FileMove, %inca%\cache\temp\*.jpg, %inca%\cache\temp\history
         str = %fol%,%fav%,%music%,%search%				; keep any recognized htm pages
         Loop, Files, %inca%\cache\html\*.htm, FD			; htm pages hold page settings in 1st comment line
           {
@@ -1543,10 +1521,8 @@ SetTimer, TimedEvents, 50
 
 
 
-    indexPage:							; create posters and thumbsheets
-    Critical Off
-    if indexSelected
-      {
+    indexSelected:						; create posters and thumbsheets
+      Critical Off
       Loop, Parse, indexSelected, `,
         if getMedia(A_Loopfield)
           {
@@ -1555,33 +1531,14 @@ SetTimer, TimedEvents, 50
             Run, %inca%\cache\apps\ffmpeg.exe -ss %seek% -i "%src%" -y -vf scale=1280:1280/dar -vframes 1 "%inca%\cache\posters\%media%%A_Space%%seek%.jpg",, Hide
           }
       return
-      }
-    FileRead, str7, %playlist%
-    if playlist
-      Loop, Parse, str7, `n, `r
-        {
-        src := StrSplit(A_Loopfield, "|").1
-        start := StrSplit(A_Loopfield, "|").2
-        detectMedia(src)
-        GuiControl, Indexer:, GuiInd, indexing - %src%
-        IfNotExist, %inca%\cache\posters\%media%%A_Space%%start%.jpg
-          Runwait, %inca%\cache\apps\ffmpeg.exe -ss %start% -i "%src%" -y -vf scale=1280:1280/dar -vframes 1 "%inca%\cache\posters\%media%%A_Space%%start%.jpg",, Hide
-        }
-    else 
-      {
-      Loop, Files, %path%*.*
-        Index(A_LoopFileFullPath,0,0,0)					; skips existing indexed and Transcoded
-      }
-    GuiControl, Indexer:, GuiInd
-    return
 
 
 
-    Index(source, force, start, end)					; create thumbs, posters & durations cache
+    Index(source, force, start, end)				; create thumbs, posters & durations cache
           {
-          if (Setting("Transcode") && force)				; make mp4 fast seeking in browser
-             if (x := Transcode(source, start, end))
-               source := x
+          if (Setting("Transcode") && force)			; make mp4 fast seeking in browser
+            if (x := Transcode(source, start, end))
+              source := x
           SplitPath, source,,fold,ex,filen
           med := DecodeExt(ex)
           if (med != "video" && med != "audio")
@@ -1992,7 +1949,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
   <a id='myFlip' onmouseup='flip()'>Flip</a>`n
   <a id='myCue'>Cue</a>`n
   <a id='myCap'>Caption</a>`n
-  <div id='myOptions' class='title' style='display: flex; justify-content: space-evenly' onmouseup="let target=cue+'|'+event.target.id; inca('Index',target,selected,myPlayer.currentTime)"><span id='myIndex'>index</span><span id='myMp3'>mp3</span><span id='myMp4'>mp4</span><span id='myJoin'>join</span></div></div>`n`n
+  <div id='myOptions' class='title' style='display: flex; justify-content: space-evenly' onmouseup="let target=cue+'|'+event.target.id; inca('Index',target,index,myPlayer.currentTime.toFixed(1))"><span id='myIndex'>index</span><span id='myMp3'>mp3</span><span id='myMp4'>mp4</span><span id='myJoin'>join</span></div></div>`n`n
 
 <div id='myMenu'>
   <div id='z1' class='fade' style='height:190px'></div><div id='z2' class='fade' style='top:190px; background: linear-gradient(#0e0c05ff, #0e0c0500)'></div>`n
@@ -2103,7 +2060,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
               start := StrSplit(A_Loopfield,"|").2
               break
               }
-start := Round(start,1)
+        start := Round(start,1)
         if (type == "video")
           IfExist, %inca%\cache\posters\%media% %start%.jpg		; replace poster with fav poster
             thumb = %inca%\cache\posters\%media% %start%.jpg
@@ -2205,9 +2162,6 @@ else mediaList = %mediaList%<div id="entry%j%" class='entry' data-params='%type%
         volume -= 0.2
         SoundSet, volume
         }
-      volRef := Round(volume)
-      if !volRef
-        volRef =
       FormatTime, time,, h:mm
       if (time != ctime)
         {
@@ -2216,7 +2170,7 @@ else mediaList = %mediaList%<div id="entry%j%" class='entry' data-params='%type%
         WinSet, TransColor, 0 20
         Gui, Status:Font, s20 cWhite, Segoe UI
         GuiControl, Status:Font, GuiSta
-        GuiControl, Status:, GuiSta, %time%    %volRef%
+        GuiControl, Status:, GuiSta, %time%    %volume%
         Gui, Status: Show, NA
         }
       return
@@ -2267,6 +2221,9 @@ else mediaList = %mediaList%<div id="entry%j%" class='entry' data-params='%type%
         else WinSet, Transparent, 0
         if (incaTab && fullscreen)
           WinSet, Top,,ahk_group Browsers
+        SoundGet, volRef
+        if (volume != volRef)
+          SoundSet, volume
         return
 
 
