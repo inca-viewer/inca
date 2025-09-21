@@ -16,6 +16,12 @@
   c:active {color: #0e0c05; transform: scale(0.8,0.8)}
   video::-internal-media-controls-overlay-cast-button {display: none}		/* block google casting	*/
 
+
+#myOptions {display: flex; flex-wrap: wrap; justify-content: space-evenly}
+#myOptions > span {min-width: 3.6em; text-align:center}
+#myOptions > span:hover {color: red}
+
+
 .pic {							/* context menu pic */
   display: none;
   position: absolute;
@@ -35,7 +41,7 @@
   width: 2.5em;
   line-height: 1.1em;
   font-size: 0.7em;
-  opacity: 0.5;
+  opacity: 0.7;
   padding: 0.1em;
   white-space: nowrap; 
   border-radius: 1em;
@@ -304,6 +310,7 @@
   color: lightsalmon}
 .context a:hover {background: #2b2824}
 .context a:active {background: #333333}
+.context a:empty {visibility: hidden; height: 0}
 
 .myBody {					/* whole body element */
   font-family: 'Yu Gothic', 'Calibri Light';
