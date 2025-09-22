@@ -126,7 +126,6 @@
       if (!getParameters(index)) {index = lastMedia; closePlayer(); return}		// end of media list
       navStart = thumb.style.start}
     if (lastClick == 1) {
-      if (playing && type=='document') return
       if (!playing && id != title.id) {
         if (!overText && longClick && myPanel.matches(':hover')) return 
         if (id=='myCue' || (overMedia && thumb.src.slice(-3)=='m3u')
@@ -144,6 +143,7 @@
       if (title.matches(':hover') || longClick!=1 && !playing && !overMedia && !myNav.style.display) return
       if (longClick && myTitle.value) thumbSheet ^= 1
       else if (!getStart(id)) return}
+    if (playing && lastClick==1 && type=='document') return
     getParameters(index)
     if (srt.value && (captions || favicon.matches(':hover') || type=='document')) openCap()
     if (lastClick) Play()}
@@ -291,7 +291,7 @@
     else if (!myNav.style.display) {					// zoom myPlayer
       let x=0; let y=0; let z=0
       z=wheel/2000
-      if (scaleY > 0.7) {x = rect.left+rect.width/2-xpos; y = rect.top+rect.height/2-ypos}
+      if (scaleY > 0.5) {x = rect.left+rect.width/2-xpos; y = rect.top+rect.height/2-ypos}
       if (wheelUp) {mediaX+=x*z; mediaY+=y*z; scaleY*=(1+z)}
       else if (!wheelUp) {mediaX-=x*z; mediaY-=y*z; scaleY/=(1+z)}
       if (scaleY<0.16) scaleY=0.16
