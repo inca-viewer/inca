@@ -1,11 +1,4 @@
 
-// panel losing orientation until scroll signal
-// media not play if no dur
-// re index allfavs
-// zoom not center is offset
-// index no selected does folder no force
-// escape from indexing
-
 
   let wheel = 0								// wheel count
   let wheelDir = 0		 					// wheel direction
@@ -128,11 +121,12 @@
       if (editing) {inca('Null'); return}						// save text
       if (myMenu.matches(':hover')) return
       if (!playing && !myNav.style.display) {inca('View',lastMedia); return}		// list/thumb view
-      if (!thumbSheet) messages += '#History#'+thumb.style.start.toFixed(1)+'#'+index+'#'
+      if (!thumbSheet && lastClick) messages += '#History#'+thumb.style.start.toFixed(1)+'#'+index+'#'
       if (longClick) {index--} else index++						// next, previous media
-      srt.style=''
-      if (!getParameters(index)) {index = lastMedia; closePlayer(); return}}		// end of media list
+      if (!getParameters(index)) {index = lastMedia; closePlayer(); return}		// end of media list
+      navStart = thumb.style.start}
     if (lastClick == 1) {
+      if (playing && type=='document') return
       if (!playing && id != title.id) {
         if (!overText && longClick && myPanel.matches(':hover')) return 
         if (id=='myCue' || (overMedia && thumb.src.slice(-3)=='m3u')
@@ -151,7 +145,6 @@
       if (longClick && myTitle.value) thumbSheet ^= 1
       else if (!getStart(id)) return}
     getParameters(index)
-    if (playing && type=='document') return
     if (srt.value && (captions || favicon.matches(':hover') || type=='document')) openCap()
     if (lastClick) Play()}
 
@@ -159,7 +152,7 @@
   function getStart(id) {
     let sheet = thumbSheet; thumbSheet = 0
     if (!dur) return 1
-    if (defPause && myPlayer.currentTime > dur-0.5) myPlayer.load()
+    if (defPause && myPlayer.currentTime > dur-0.5) myPlayer.load()	// restart media at default
     if (sheet) {							// clicked thumb on 6x6 thumbsheet
       if (skinny < 0) xm = 1-xm						// if flipped media
       let row = Math.floor(ym * 6)					// get media seek time from thumbsheet xy
@@ -172,6 +165,7 @@
       if (xm < 0.1) myPlayer.currentTime = 0
       else myPlayer.currentTime = xm * dur
       return}
+    else if (id=='myTitle') return 1
     else if (id!='myPic' && playing) {togglePause(); return}
     else if (longClick==1) {index = lastMedia; navStart = lastSeek}	// resume last media
     return 1}								// return and continue
@@ -179,12 +173,12 @@
 
   function Play() {
     positionMedia(0)
+    thumb.pause()
+    myPlayer.pause()
     if (lastClick) myPlayer.style.opacity = 0				// fade in player
     if (dur < 200 && !navStart && !playing && !playlist && !longClick && !favicon.textContent.includes('\u2764')) navStart=0
     else if (!navStart && !longClick) navStart = thumb.style.start
-    if (!thumbSheet) {myPlayer.poster = thumb.poster; myPlayer.currentTime = navStart}
-    thumb.pause()
-    myPlayer.pause()
+    if (!thumbSheet) myPlayer.currentTime = navStart
     if (playlist.match('/inca/music/')) myPlayer.muted=0
     else myPlayer.muted = defMute
     if (el=document.getElementById('title'+lastMedia)) el.style.color=null
@@ -195,9 +189,6 @@
     myMask.style.pointerEvents='auto'					// stop overThumb() triggering
     if (captions || type=='audio' || playlist.match('/inca/music/')) scaleY=0.16
     if (playlist.match('/inca/music/') && !thumbSheet) {myPlayer.play(); myPlayer.muted=0}
-    if (lastClick && !captions && !thumbSheet && dur && !defPause && !cue) myPlayer.play()
-    setTimeout(function() {if (lastClick) positionMedia(0.4); myPlayer.style.opacity=1},100)
-    myPlayer.style.zIndex=Zindex
     if (captions) srt.addEventListener('scroll', addMedia)
     if (type == 'audio') myPlayer.style.borderBottom = '2px solid pink'
     else myPlayer.style.border=null
@@ -205,7 +196,12 @@
     if (pitch || myPlayer.context) {					// from pitch.js in inca\cache\apps
       setupContext(myPlayer); myPlayer.jungle.setPitchOffset(semiToneTranspose(pitch))}
     myCues('scroll')							// scroll to last position in document
-    playing=1; block = 160}
+    playing=1; block = 160
+    setTimeout(function() {
+      if (lastClick && !captions && !thumbSheet && dur && !defPause && !cue) myPlayer.play()
+      if (lastClick) positionMedia(0.4)
+      myPlayer.style.zIndex=Zindex
+      myPlayer.style.opacity=1},100)}
 
 
   function mouseMove(e) {
@@ -295,7 +291,7 @@
     else if (!myNav.style.display) {					// zoom myPlayer
       let x=0; let y=0; let z=0
       z=wheel/2000
-      if (scaleY > 0.7) {x = mediaX-xpos; y = mediaY-ypos}
+      if (scaleY > 0.7) {x = rect.left+rect.width/2-xpos; y = rect.top+rect.height/2-ypos}
       if (wheelUp) {mediaX+=x*z; mediaY+=y*z; scaleY*=(1+z)}
       else if (!wheelUp) {mediaX-=x*z; mediaY-=y*z; scaleY/=(1+z)}
       if (scaleY<0.16) scaleY=0.16
@@ -348,7 +344,7 @@
     else myFavorite.innerHTML='Fav'
     if (!seekBar()) myProgress.style.height = null
     let qty = selected.split(',').length - 1 || 1;
-    if (myTitle.value || selected) myDelete.innerHTML='Delete ' + qty
+    if (selected) myDelete.innerHTML='Delete ' + qty
     else myDelete.innerHTML = null
     if (defMute) {myMute.style.color='red'} else myMute.style.color=null
     if (defPause) {myPause.style.color='red'} else myPause.style.color=null
@@ -418,16 +414,18 @@
 
 
   function setThumb() {							// sets src, poster, thumbsheet & dimensions
-    let sheet = thumb.poster.replace("/posters/", "/thumbs/")		// points to thumbsheet src folder
-    sheet = sheet.replace("/temp/history/", "/thumbs/")			// in case history playlist
-    let time = sheet.split('%20').pop().replace('.jpg', '')		// get fav start time from poster filename
-    if (!isNaN(time) && time.length > 2 && time.includes('.')) {	// very likely a 'fav' suffix timestamp
-      sheet = sheet.replace('%20' + time, '')}				// so remove timestamp from filename
-    if (thumbSheet) myPlayer.poster = sheet				// use 6x6 thumbsheet as poster
-    else if (type=='image') myPlayer.src = myPic.poster = thumb.poster
-    else if (myPlayer.src != thumb.src) {myPlayer.src = thumb.src; myPic.poster = thumb.poster}
-    if (type=='video') myPic.style.backgroundImage='url(\"'+sheet+'\")' // use 6x6 thumbsheet for preview sprites
-    else myPic.style.backgroundImage = ''
+    myPic.poster = thumb.poster
+    if (type=='image') myPlayer.poster = thumb.poster
+    else if (type == 'video') {
+      let filename = thumb.src.match(/\/([^\/]+?)(?:\.[^.]*?)?$/)[1]
+      let path = thumb.poster.replace(/\/(posters|temp\/history)\//, '/thumbs/').replace(/\/[^\/]*$/, '')
+      let sheet = path + '/' + filename + '.jpg'
+      if (thumbSheet) {myPlayer.poster = sheet; myPlayer.load()}
+      else myPlayer.poster=null
+      if (myPlayer.src != thumb.src) myPlayer.src = thumb.src
+      myPic.style.backgroundImage='url(\"'+sheet+'\")'}			// use 6x6 thumbsheet as poster
+    else myPlayer.src=null
+    if (!thumbSheet && type != 'image') myPlayer.currentTime=thumb.style.start
     aspect = thumb.offsetWidth/thumb.offsetHeight
     let x = y = z = innerHeight
     if (aspect < 1) {x=z*aspect} else y=z/aspect			// portrait or landscape - normalised size
@@ -436,9 +434,7 @@
     myPic.style.width = x + 'px'
     myPic.style.height = y + 'px'					// context menu thumb 
     myPic.style.transform='scale('+Math.abs(skinny)*zoom+','+zoom+')'
-    myPic.style.backgroundPosition = '0% 0%'				// sets to frame 1 of 6x6 thumbSheet
-    if (thumbSheet) myPlayer.load()					// show poster
-    else myPlayer.currentTime=thumb.style.start}			// fast start play
+    myPic.style.backgroundPosition = '0% 0%'}				// sets to frame 1 of 6x6 thumbSheet
 
 
   function setPic() {							// sets context image based on cursor over myPic
@@ -498,6 +494,7 @@
 
 
   function getParameters(i) {						// get media parameters
+    srt.style='' 
     if (!(document.getElementById('thumb'+i))) return			// end of media list
     if (!(favicon=document.getElementById('myFavicon'+i))) favicon=''	// fav or cc icon
     thumb = document.getElementById('thumb'+i)				// htm thumb element
@@ -516,7 +513,7 @@
     let x = Number(thumb.style.rate); if (x) rate = x			// custom css holds edits
     x = Number(thumb.style.skinny); if (x) skinny = x
     thumb.style.transform='scale('+skinny+',1)' 			// set thumb width
-    if (index) setThumb()   						// src, poster
+    if (index) setThumb()   						// src, thumbSheet
     return 1}
 
 

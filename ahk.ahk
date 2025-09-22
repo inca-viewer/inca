@@ -768,7 +768,7 @@
         return
       if (ext == "txt")
         {
-        FileDelete, %src%
+        FileRecycle, %src%
         FileAppend, %str%, %src%, UTF-8
         }
       else
@@ -788,11 +788,9 @@
           else if (lineNum > 0)
             str .= "`r`n"
           }
-        FileDelete, %inca%\cache\captions\%media%.srt
+        FileRecycle, %inca%\cache\captions\%media%.srt
         FileAppend, %str%, %inca%\cache\captions\%media%.srt, UTF-8
         }
-      FormatTime, date, , dddd, MMMM d, yyyy h:mm:ss tt
-      FileAppend, % "`n`n" . media . "`n" . date . "------------------------`n" . str, %inca%\cache\temp\backup.txt
       PopUp("saved", 0, 0, 0)
       }
 
@@ -1386,7 +1384,6 @@
         else lastClip := Clipboard
         LoadSettings()
         AllFav()							; create ..\fav\all fav.m3u
-        FileRecycle, %inca%\cache\temp\backup.txt
         FileDelete, %inca%\cache\temp\*.*
         FileRead, history, %inca%\fav\History.m3u
         FileDelete, %inca%\fav\History.m3u
@@ -1890,21 +1887,21 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
 <div id='myContent' class='mycontent'>`n <div id='myView' class='myview'>`n`n %mediaList%</div></div>`n`n
 
 <div id='myNav' class='context' onwheel='wheelEvent(event)'>`n
-  <a id='myInca' onmousedown="inca('Settings')">&hellip;</a>
+  <a id='myInca' style='width: 4.5em' onmousedown="inca('Settings')">&hellip;</a>
   <input id='myTitle' class='title' style='opacity: 1; color: lightsalmon; padding-left: 1.4em'>
   <video id='myPic' muted class='pic'></video>`n
   <a id='mySelect'>Select</a>`n
+  <a id='myDelete' style='color:red' onmouseup="inca('Delete','',index)"></a>`n
   <a id='myMute' onmousedown="defMute^=1; inca('Mute', defMute); myPlayer.muted=defMute">Mute</a>`n
   <a id='myPause' onmousedown="defPause^=1; inca('Pause',defPause); togglePause()">Pause</a>`n
   <a id='myFavorite'>Fav</a>`n
   <a id='mySkinny'></a>`n
   <a id='mySpeed'></a>`n
   <a id='myPitch'></a>`n
-  <a id='myDelete' style='color:red' onmouseup="inca('Delete','',index)"></a>`n
   <a id='myFlip' onmouseup='flip()'>Flip</a>`n
   <a id='myCue'>Cue</a>`n
   <a id='myCap'>Caption</a>`n
-  <div id='myOptions' class='title' onmouseup="let target=cue+'|'+event.target.id; let x = selected || overMedia || 0; inca('Options',target,x,myPlayer.currentTime.toFixed(1))"><span id='myIndex'>index</span><span id='myMp4'>mp4</span><span id='myMp3'>mp3</span><span id='myJoin'>join</span></div><a></a></div>`n`n
+  <a id='myOptions' class='context' onmouseup="let target=cue+'|'+event.target.id; let x = selected || overMedia || 0; inca('Options',target,x,myPlayer.currentTime.toFixed(1))"><span id='myIndex'>index</span><span id='myMp4'>mp4</span><span id='myMp3'>mp3</span><span id='myJoin'>join</span><a><a></a></div>`n`n
 
 <div id='myMenu'>
   <div id='z1' class='fade' style='height:190px'></div><div id='z2' class='fade' style='top:190px; background: linear-gradient(#0e0c05ff, #0e0c0500)'></div>`n
@@ -2090,7 +2087,7 @@ else mediaList = %mediaList%<div id="entry%j%" class='entry' data-params='%type%
 }
 
 
-    Options:
+    Options: 
       Critical Off
       serverTimout := A_TickCount
       time := address
@@ -2112,30 +2109,20 @@ else mediaList = %mediaList%<div id="entry%j%" class='entry' data-params='%type%
         else start := 0, end := cue
       if InStr(el_id, "Join")
         Join()
-      else if (plist && el_id == "myIndex" && !lastSelect)
-        {
-        Loop, Parse, plist, `n, `r
-          if A_LoopField
-            Index(A_LoopField, 0, A_Index, 1)
-        }
-      else if (!plist && el_id == "myIndex" && !lastSelect)
+      else if (el_id == "myIndex" && !lastSelect)
         Loop, files, %mediaPath%\*.*
           Index(A_LoopFileFullPath, 0, A_Index, 0)
       else Loop, Parse, lastSelect, `,
        if A_LoopField
         {
-        if plist
-          FileReadLine, source, %playlist%, A_LoopField
-        else
-          {
-          ix := Abs(A_Loopfield) + Setting("Page Size") * (page - 1)
-          FileReadLine, str, %inca%\cache\temp\%ix_folder%.txt, Abs(ix)
-          source := StrSplit(str, "/").2
-          seek := StrSplit(str, "/").4
-          }
+        ix := Abs(A_Loopfield) + Setting("Page Size") * (page - 1)
+        FileReadLine, str, %inca%\cache\temp\%ix_folder%.txt, Abs(ix)
+        source := StrSplit(str, "/").2
+        seek := StrSplit(str, "/").4
         if InStr(el_id, "Index")
           Index(source, 1, A_Index, plist)
-        else Transcode(el_id, source, start, end, A_Index)
+        else if Transcode(el_id, source, start, end, A_Index)
+               Index(source, 1, A_Index, plist)
         }
       CreateList(0)
         if InStr(server, "http:")
