@@ -121,7 +121,6 @@
       return
 
 
-
     ^Esc up::
       ExitApp
 
@@ -437,7 +436,7 @@
         if (reload == 1)
           CreateList(1)
         else if (reload == 2)
-          RenderPage()
+          RenderPage(0)
         else if (reload == 3)
           CreateList(0)
         longClick =
@@ -554,9 +553,9 @@
         index := x[x.MaxIndex()-1]					; scroll htm to end of selection
         MoveFiles()							; between folders or playlists
         reload := 3							; not show folder qty
-        return								; to go to destination folder, remove return and else
-        }
-      else if InStr(address, ".m3u")					; playlist
+        CreateList(2)							; silently update old htm page
+        }								; to stay in this folder add return above and else below
+      if InStr(address, ".m3u")						; playlist
         {
         playlist := address
         SplitPath, address,,path,,folder
@@ -866,7 +865,8 @@
                   break 2
                 else if (show==1 && ((listSize<10000 && !Mod(listSize,1000)) || !Mod(listSize,10000)))
                   PopUp(listSize,0,0,0)
-        PopUp(listSize-1,0,0,0)
+        if (show==1)
+          PopUp(listSize-1,0,0,0)
         StringTrimRight, list, list, 2					; remove end `r`n
         if (InStr(toggles, "Reverse") && sort != "Date" && sort != "Playlist")
             reverse = R
@@ -885,8 +885,7 @@
         FileDelete, %inca%\cache\temp\%folder%.txt
         FileAppend, %list%, %inca%\cache\temp\%folder%.txt, UTF-8
         selected =
-        if (show != 2)
-          RenderPage()
+        RenderPage(show)
         }
 
 
@@ -1459,9 +1458,8 @@
            source := StrSplit(A_Loopfield, "|").1
            start := StrSplit(A_Loopfield, "|").2
            detectMedia(source)
-           x = %searchFolders%
            IfNotExist, %source%
-             Loop, Parse, x, `|
+             Loop, Parse, searchFolders, `|
                IfExist, %A_LoopField%%media%.%ext%
                    {
                    flag := 1
@@ -1660,7 +1658,7 @@ else source := src
         }
 
 
-    RenderPage()							; construct web page from media list
+    RenderPage(show)							; construct web page from media list
         {
         Critical							; stop pause key & timer interrupts
         if !path
@@ -1919,6 +1917,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
     </div>`n`n
 
   <div id='myRibbon2' class='ribbon' style='width: 90`%; background:#1b1814' onwheel="wheelEvent(event)">`n
+    <a style='width: 3em; font-size: 1.8em' onmousedown='window.history.back()'>&#129028;</a>`n
     <a id='myPlaylist' style='%x13%' onmousedown="inca('Playlist')">%pl%</a>`n
     <a id='myDate' style='%x4%' onmousedown="inca('Date', filt)">Date</a>`n
     <a id='myDuration' style='%x3%' onmousedown="inca('Duration', filt)"> Duration</a>`n
@@ -1937,6 +1936,8 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
       html = %header%%body%%script%`n</body>`n</html>`n
       FileDelete, %inca%\cache\html\%folder%.htm
       FileAppend, %html%, %inca%\cache\html\%folder%.htm, UTF-8
+      if (show == 2)
+        return
       new_html = file:///%inca%\cache\html\%folder%.htm			; create / update browser tab
       if InStr(server, "http:")
         {
@@ -1976,8 +1977,6 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
         }
       if (click == "MButton")
         send, {MButton up}
-      FileDelete, %inca%\cache\html\%folder%.htm
-      FileAppend, %html%, %inca%\cache\html\%folder%.htm, UTF-8
       Gui PopUp:Cancel
       }
 
@@ -2153,11 +2152,12 @@ else mediaList = %mediaList%<div id="entry%j%" class='entry' data-params='%type%
         if (ytdlp < 3)
           GuiControl, Indexer:, GuiInd, ...........................................
         else Loop, Files, %inca%\cache\apps\*.*
-          if (A_LoopFileExt == "webm" || A_LoopFileExt == "mp4")
+          if (A_LoopFileExt == "webm" || A_LoopFileExt == "mp4" || A_LoopFileExt == "mkv")
             if (new := Transcode("Mp4", A_LoopFileFullPath,0,0,""))
               {
               Index(new,1,"")
               FileMove, %new%, %profile%\Downloads, 1
+              CreateList(2)				; silently update htm
               }
             else FileRecycle, %A_LoopFileFullPath%
       Process, Exist, ffmpeg.exe

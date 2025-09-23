@@ -307,8 +307,8 @@
 .context a:empty {visibility: hidden; height: 0}
 
 #myOptions {display: flex; flex-wrap: wrap; justify-content: space-between}
-#myOptions > span {width: 100%; transition: 0.3s}
-#myOptions > span:hover {color: red; padding-left: 0.2em}
+#myOptions > span {  border-radius: 1.4em; width: 100%; transition: 0.3s}
+#myOptions > span:hover {background: #2b2824; color: red; padding-left: 0.2em}
 
 .myBody {					/* whole body element */
   font-family: 'Yu Gothic', 'Calibri Light';

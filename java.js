@@ -1,4 +1,6 @@
 
+// goto time cue in music
+// random pause?
 
   let wheel = 0								// wheel count
   let wheelDir = 0		 					// wheel direction
@@ -72,6 +74,7 @@
   document.addEventListener('keydown', keyDown)
   myPlayer.addEventListener('ended', mediaEnded)
   document.addEventListener('contextmenu', (e) => {if (yw > 0.05) e.preventDefault()})
+  document.addEventListener('focus', () => {if (folder=='Downloads') location.reload()})
   if (innerHeight>innerWidth) {scaleY=0.64} else scaleY=0.5		// screen is portrait
 
 
@@ -188,7 +191,7 @@
     if (lastClick) myNav.style.display=null
     myMask.style.pointerEvents='auto'					// stop overThumb() triggering
     if (captions || type=='audio' || playlist.match('/inca/music/')) scaleY=0.16
-    if (playlist.match('/inca/music/') && !thumbSheet) {myPlayer.play(); myPlayer.muted=0}
+    if (playlist.match('/inca/music/') && !thumbSheet) {myPlayer.currentTime=0; myPlayer.play(); myPlayer.muted=0}
     if (captions) srt.addEventListener('scroll', addMedia)
     if (type == 'audio') myPlayer.style.borderBottom = '2px solid pink'
     else myPlayer.style.border=null
@@ -290,10 +293,10 @@
       block=250}
     else if (!myNav.style.display) {					// zoom myPlayer
       let x=0; let y=0; let z=0
-      z=wheel/2000
+      if (overMedia) z=wheel/2000
       if (scaleY > 0.5) {x = rect.left+rect.width/2-xpos; y = rect.top+rect.height/2-ypos}
-      if (wheelUp) {mediaX+=x*z; mediaY+=y*z; scaleY*=(1+z)}
-      else if (!wheelUp) {mediaX-=x*z; mediaY-=y*z; scaleY/=(1+z)}
+      if (wheelUp) {mediaX+=x*z; mediaY+=y*z; scaleY*=(1+wheel/2000)}
+      else if (!wheelUp) {mediaX-=x*z; mediaY-=y*z; scaleY/=(1+wheel/2000)}
       if (scaleY<0.16) scaleY=0.16
       if (thumbSheet && scaleY<0.4) scaleY=0.4
       positionMedia(0); block=20}
@@ -495,7 +498,7 @@
 
 
   function getParameters(i) {						// get media parameters
-    srt.style='' 
+    srt.style=''; myPlayer.poster=null 
     if (!(document.getElementById('thumb'+i))) return			// end of media list
     if (!(favicon=document.getElementById('myFavicon'+i))) favicon=''	// fav or cc icon
     thumb = document.getElementById('thumb'+i)				// htm thumb element
@@ -599,14 +602,8 @@
     if (editing) inca('Reload',index)
     else inca('Null')							// just update history
     positionMedia(0.2)
-    cue = 0
-    Click = 0
-    playing = 0
-    navStart = 0
-    captions = 0							// in case browser not active
-    thumbSheet = 0
-    srt.style = ''
-    myNav.style = ''
+    cue = Click = playing = navStart = captions = thumbSheet = 0
+    srt.style = myNav.style = ''
     myPlayer.style.opacity = 0
     setTimeout(function() {						// fadeout before close
       myPlayer.style.zIndex = -1
@@ -667,11 +664,11 @@
 
 
   function setPitch(val) {
-      pitch = val
-      settings.pitch = String(val)
-      localStorage.setItem(folder, JSON.stringify(settings))
-      setupContext(myPlayer)
-      myPlayer.jungle.setPitchOffset(semiToneTranspose(val))}
+    pitch = val
+    settings.pitch = String(val)
+    localStorage.setItem(folder, JSON.stringify(settings))
+    setupContext(myPlayer)
+    myPlayer.jungle.setPitchOffset(semiToneTranspose(val))}
 
 
   function addFavorite() {
@@ -710,17 +707,17 @@
 
 
   function searchBox() {
-      if (renamebox) inca('Rename', renamebox, lastMedia)		// rename media
-      else if (longClick && !gesture && overText && !window.getSelection().toString()) inca('Osk')
-      else if (!playing && (myInput.matches(':focus') || longClick)) inca('SearchBox','',index,myInput.value) // search media on pc
-      myPlayer.pause(); longClick=0}
+    if (renamebox) inca('Rename', renamebox, lastMedia)			// rename media
+    else if (longClick && !gesture && overText && !window.getSelection().toString()) inca('Osk')
+    else if (!playing && (myInput.matches(':focus') || longClick)) inca('SearchBox','',index,myInput.value) // search media on pc
+    myPlayer.pause(); longClick=0}
 
 
   function mouseBack() {
-      if (playing) closePlayer()					// close player and send messages to inca
-      else if (longClick) window.close()
-      else if (myContent.scrollTop > 50) myContent.scrollTo(0,0)	// else scroll to page top
-      else inca('Reload')}						// or finally, reload page & clear selected
+    if (playing) closePlayer()						// close player and send messages to inca
+    else if (longClick) window.close()
+    else if (myContent.scrollTop > 50) myContent.scrollTo(0,0)	// else scroll to page top
+    else inca('Reload')}						// or finally, reload page & clear selected
 
 
   function overThumb(id) {
