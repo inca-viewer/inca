@@ -17,11 +17,6 @@
   video::-internal-media-controls-overlay-cast-button {display: none}		/* block google casting	*/
 
 
-  #myOptions {display: flex; flex-wrap: wrap; justify-content: space-between}
-  #myOptions > span {width: 100%; transition: 0.3s}
-  #myOptions > span:hover {color: red; padding-left: 0.5em}
-
-
 .pic {							/* context menu pic */
   display: none;
   position: absolute;
@@ -32,7 +27,6 @@
   transition: opacity 0.2s;
   // filter: blur(0.4vmin);
   margin-left: 7em}					/* position within myNav  */
-
 
 .favicon {
   display: block;
@@ -47,7 +41,6 @@
   border-radius: 1em;
   transition: 0.4s}
 .favicon:hover {background:#00000080; color: red}
-
 
 .caption {					/* srt caption or txt container  */
   position: fixed;
@@ -307,10 +300,15 @@
   white-space: nowrap;
   border-radius: 1.4em;
   padding-left:1.4em;
+  transition: 0.3s;
   color: lightsalmon}
-.context a:hover {background: #2b2824}
+.context a:hover {background: #2b2824; padding-left: 1.6em}
 .context a:active {background: #333333}
 .context a:empty {visibility: hidden; height: 0}
+
+#myOptions {display: flex; flex-wrap: wrap; justify-content: space-between}
+#myOptions > span {width: 100%; transition: 0.3s}
+#myOptions > span:hover {color: red; padding-left: 0.2em}
 
 .myBody {					/* whole body element */
   font-family: 'Yu Gothic', 'Calibri Light';

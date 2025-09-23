@@ -86,7 +86,6 @@
         Global mute				; global mute
         Global start := 0			; default start time
         Global ctime				; last current time
-        Global lastClip				; clipboard
         Global server := "file:///"		; default no server
 
 
@@ -120,6 +119,7 @@
       SetTimer, TimedEvents, 50			; every 50mS - process server requests
       SetTimer, SlowTimer, 1000, -2		; show ffmpeg is processing
       return
+
 
 
     ^Esc up::
@@ -402,7 +402,6 @@
         serverTimout := A_TickCount
         messages := StrReplace(input, "/", "\")
         array := StrSplit(messages,"#")
-        Clipboard := lastClip
 ; tooltip %messages%, 0						; for debug
         Loop % array.MaxIndex()/4
           {
@@ -715,7 +714,7 @@
       FileDelete, %inca%\cache\temp\temp.bat
       FileDelete, %inca%\cache\temp\temp.txt
       FileDelete, %inca%\cache\temp\temp1.txt
-      Index(src,1,"",0)
+      Index(src,1,"")
       reload := 3
       }
 
@@ -1381,7 +1380,6 @@
         Global
         if InStr(Clipboard, "#")
           Clicpboard =
-        else lastClip := Clipboard
         LoadSettings()
         AllFav()							; create ..\fav\all fav.m3u
         FileDelete, %inca%\cache\temp\*.*
@@ -1484,13 +1482,15 @@
       }
 
 
-    Index(source, force, index, plist)				; create thumbs, posters & durations cache
+    Index(src, force, index)				; create thumbs, posters & durations cache
           {
-if plist
+if InStr(src, "|")
   {
-seek := StrSplit(source, "|").2
-source := StrSplit(source, "|").1
+  seek := StrSplit(src, "|").2
+  source := StrSplit(src, "|").1
   }
+else source := src
+
           SplitPath, source,,fold,ex,filen
           med := DecodeExt(ex)
           if (med != "video" && med != "audio")
@@ -1532,8 +1532,8 @@ source := StrSplit(source, "|").1
                   {
                   runwait, %inca%\cache\apps\ffmpeg.exe -ss %t% -i "%source%" -y -vf scale=480:480/dar -vframes 1 "%inca%\cache\temp\%y%.jpg",, Hide
                   if (A_Index == 5)
-                    if plist
-                      Run, %inca%\cache\apps\ffmpeg.exe -ss %seek% -i "%source%" -y -vf scale=1280:1280/dar -vframes 1 "%inca%\cache\posters\%media%%A_Space%%seek%.jpg",, Hide
+                    if InStr(src, "|")
+                      Run, %inca%\cache\apps\ffmpeg.exe -ss %seek% -i "%source%" -y -vf scale=1280:1280/dar -vframes 1 "%inca%\cache\posters\%filen%%A_Space%%seek%.jpg",, Hide
                     else FileCopy, %inca%\cache\temp\1.jpg, %inca%\cache\posters\%filen%.jpg, 1	; 1st thumb is poster
                   if (A_Index == 5)
                   if (!thumb && !force)
@@ -1551,6 +1551,7 @@ source := StrSplit(source, "|").1
 
     Transcode(id, src, start, end, index)
         {
+        local cmd, temp, new
         if start
           ss = -ss %start%
         if end
@@ -1655,8 +1656,6 @@ source := StrSplit(source, "|").1
         FileSetTime, %ModifiedTime%, %new%, M
         FileSetTime, %CreationTime%, %new%, C
         GuiControl, Indexer:, GuiInd
-        if (start || end)
-          Index(new,1,"",0)
         return new
         }
 
@@ -1901,7 +1900,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
   <a id='myFlip' onmouseup='flip()'>Flip</a>`n
   <a id='myCue'>Cue</a>`n
   <a id='myCap'>Caption</a>`n
-  <a id='myOptions' class='context' onmouseup="let target=cue+'|'+event.target.id; let x = selected || overMedia || 0; inca('Options',target,x,myPlayer.currentTime.toFixed(1))"><span id='myIndex'>index</span><span id='myMp4'>mp4</span><span id='myMp3'>mp3</span><span id='myJoin'>join</span><a><a></a></div>`n`n
+  <a id='myOptions' class='context' onmouseup="let target=cue+'|'+event.target.id; let x = selected || overMedia || playing || 0; inca('Options',target,x,myPlayer.currentTime.toFixed(1))"><span id='myIndex'>index</span><span id='myMp4'>mp4</span><span id='myMp3'>mp3</span><span id='myJoin'>join</span><a><a></a></div>`n`n
 
 <div id='myMenu'>
   <div id='z1' class='fade' style='height:190px'></div><div id='z2' class='fade' style='top:190px; background: linear-gradient(#0e0c05ff, #0e0c0500)'></div>`n
@@ -1914,7 +1913,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
    <a id='myFav' style='%x23%' onmousedown="inca('Path','','','fav|1')" onmouseover="setTimeout(function() {if(myFav.matches(':hover'))Fav.scrollIntoView()},200)">&#10084;</a>`n
      <a id='myFol' style='%x21%' onmousedown="inca('Path','','','fol|1')" onmouseover="setTimeout(function() {if(myFol.matches(':hover'))Fol.scrollIntoView()},200)">&#x1F4BB;&#xFE0E;</a>`n
     <a id='mySearch' style='%x20%' onwheel="wheelEvent(event)" onmousedown="inca('SearchBox','','',myInput.value)" onmouseover="setTimeout(function() {if(mySearch.matches(':hover'))filter(id)},140)">&#x1F50D;&#xFE0E;</a>`n
-    <input id='myInput' class='searchbox' type='search' autocomplete='off' value='%st%' onmouseover="overText=1; this.focus()" oninput="Add.innerHTML='Add'" onmouseout='overText=0'>
+    <input id='myInput' class='searchbox' type='search' autocomplete='off' value='%st%' onmouseenter="this.value='%lastSearch%'" onmouseover="overText=1; this.focus()" oninput="Add.innerHTML='Add'" onmouseout='overText=0'>
     <a id='Add' style='max-width:3em; font-size:0.8em; font-variant-caps:petite-caps' onmousedown="inca('Add','','',myInput.value)">%add%</a>`n
     <a id="myPage" onmousedown="inca('Page', page)" onwheel="wheelEvent(event)"></a>
     </div>`n`n
@@ -2096,6 +2095,9 @@ else mediaList = %mediaList%<div id="entry%j%" class='entry' data-params='%type%
       ix_folder := folder				; preserve folder source
       if playlist
         FileRead, plist, %playlist%
+      lastList =					; list of media in htm src and seek
+      Loop, Parse, list, `n, `r
+        lastList .= StrSplit(A_LoopField, "/").2 . "|" . Round(StrSplit(A_LoopField, "/").4,1) . "`r`n"
       selected =
       start := 0
       end := 0
@@ -2110,8 +2112,14 @@ else mediaList = %mediaList%<div id="entry%j%" class='entry' data-params='%type%
       if InStr(el_id, "Join")
         Join()
       else if (el_id == "myIndex" && !lastSelect)
-        Loop, files, %mediaPath%\*.*
-          Index(A_LoopFileFullPath, 0, A_Index, 0)
+        if playlist
+          Loop, Parse, plist, `n, `r
+            Index(A_Loopfield, 0, A_Index)
+        else if searchTerm
+          Loop, Parse, lastList, `n, `r
+            Index(A_Loopfield, 0, A_Index)
+        else Loop, files, %mediaPath%\*.*
+          Index(A_LoopFileFullPath, 0, A_Index)
       else Loop, Parse, lastSelect, `,
        if A_LoopField
         {
@@ -2120,9 +2128,9 @@ else mediaList = %mediaList%<div id="entry%j%" class='entry' data-params='%type%
         source := StrSplit(str, "/").2
         seek := StrSplit(str, "/").4
         if InStr(el_id, "Index")
-          Index(source, 1, A_Index, plist)
-        else if Transcode(el_id, source, start, end, A_Index)
-               Index(source, 1, A_Index, plist)
+          Index(source, 1, A_Index)
+        else if (new := Transcode(el_id, source, start, end, A_Index))
+          Index(new, 1, A_Index)
         }
       CreateList(0)
         if InStr(server, "http:")
@@ -2146,10 +2154,10 @@ else mediaList = %mediaList%<div id="entry%j%" class='entry' data-params='%type%
           GuiControl, Indexer:, GuiInd, ...........................................
         else Loop, Files, %inca%\cache\apps\*.*
           if (A_LoopFileExt == "webm" || A_LoopFileExt == "mp4")
-            if (mp4 := Transcode("Mp4", A_LoopFileFullPath,0,0,""))
+            if (new := Transcode("Mp4", A_LoopFileFullPath,0,0,""))
               {
-              Index(mp4,1,"",0)
-              FileMove, %mp4%, %profile%\Downloads, 1
+              Index(new,1,"")
+              FileMove, %new%, %profile%\Downloads, 1
               }
             else FileRecycle, %A_LoopFileFullPath%
       Process, Exist, ffmpeg.exe
@@ -2213,9 +2221,11 @@ else mediaList = %mediaList%<div id="entry%j%" class='entry' data-params='%type%
             x := StrLen(Clipboard)
             y := SubStr(Clipboard, 1, 1)
             if (y=="#" && x>4 && StrSplit(clipboard,"#").MaxIndex()>4)	; very likely is a java message
+              {
               Messages(Clipboard)
-            else if (x && !InStr(x, "#"))
-              lastClip := Clipboard
+              ClipBoard := lastClip
+              }
+            else lastClip := Clipboard
             }
         Gui, background:+LastFound
         Gui, background:Color, Black

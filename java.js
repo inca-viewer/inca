@@ -196,7 +196,7 @@
     if (pitch || myPlayer.context) {					// from pitch.js in inca\cache\apps
       setupContext(myPlayer); myPlayer.jungle.setPitchOffset(semiToneTranspose(pitch))}
     myCues('scroll')							// scroll to last position in document
-    playing=1; block = 160
+    playing=index; block = 160
     setTimeout(function() {
       if (lastClick && !captions && !thumbSheet && dur && !defPause && !cue) myPlayer.play()
       if (lastClick) positionMedia(0.4)
@@ -344,7 +344,7 @@
     else myFavorite.innerHTML='Fav'
     if (!seekBar()) myProgress.style.height = null
     let qty = selected.split(',').length - 1 || 1;
-    if (selected) myDelete.innerHTML='Delete ' + qty
+    if (overMedia || selected) myDelete.innerHTML='Delete ' + qty
     else myDelete.innerHTML = null
     if (defMute) {myMute.style.color='red'} else myMute.style.color=null
     if (defPause) {myPause.style.color='red'} else myPause.style.color=null
@@ -424,6 +424,7 @@
       else myPlayer.poster=null
       if (myPlayer.src != thumb.src) myPlayer.src = thumb.src
       myPic.style.backgroundImage='url(\"'+sheet+'\")'}			// use 6x6 thumbsheet as poster
+    else if (type == 'audio') myPlayer.src=thumb.src
     else myPlayer.src=null
     if (!thumbSheet && type != 'image') myPlayer.currentTime=thumb.style.start
     aspect = thumb.offsetWidth/thumb.offsetHeight
@@ -480,7 +481,7 @@
     if (!value) value = ''
     if (!address) address = ''
     if (isNaN(value)) value=value.replaceAll('#', '*')			// because # is used as delimiter
-    if (command=='Delete' || command=='Rename' || (select && command=='Path')) {
+    if (command=='Delete' || command=='Rename' || value.toString().includes('|myMp4') || (select && command=='Path')) {
       for (x of select.split(',')) if (el=document.getElementById('thumb'+x)) el.remove()}	// release media
     messages += '#'+command+'#'+value+'#'+select+'#'+address
     if (document.querySelector('link[rel="icon"]').href.includes('file:///')) navigator.clipboard.writeText(messages)
