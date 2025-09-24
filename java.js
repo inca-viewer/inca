@@ -72,7 +72,8 @@
   document.addEventListener('keydown', keyDown)
   myPlayer.addEventListener('ended', mediaEnded)
   document.addEventListener('contextmenu', (e) => {if (yw > 0.05) e.preventDefault()})
-  document.addEventListener('focus', () => {if (folder=='Downloads') location.reload()})
+  window.addEventListener('beforeunload', (e) => {if (editing) e.preventDefault()})
+  document.addEventListener('visibilitychange', () => {if (folder=='Downloads') location.reload()})
   if (innerHeight>innerWidth) {scaleY=0.64} else scaleY=0.5		// screen is portrait
 
 

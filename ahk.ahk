@@ -295,7 +295,7 @@
         else if (command == "Move")					; move entry within playlist
           {
           MoveEntry()
-          reload := 3
+          reload := 2
           index := value						; for scrollToIndex() in java
           selected =
           }
@@ -326,7 +326,7 @@
         if address					; selected text long clicked over
           {
           path =
-          reload := 1
+          reload := 2
           cmd = #SearchBox###%address%
           messages(cmd)					; search for files with search text
           return
@@ -381,7 +381,10 @@
             GetTabSettings(1)						; get htm parameters
             FileRead, list, %inca%\cache\temp\%incaTab%.txt
             if !list
+              {
               CreateList(1)
+              RenderPage(1)						; silent refresh htm
+              }
             }
         return incaTab
         }
@@ -433,12 +436,12 @@
             continue
           else ProcessMessage()
           }
-        if (reload == 1)
+        if (reload == 2)
           CreateList(1)
-        else if (reload == 2)
-          RenderPage(0)
         else if (reload == 3)
           CreateList(0)
+        if reload
+          RenderPage(0)
         longClick =
         selected = 
         Gui PopUp:Cancel
@@ -532,7 +535,7 @@
         }
       Popup(popup,0,0,0)
       index := StrSplit(selected, ",").1
-      reload := 3
+      reload := 2
       selected =
       }
 
@@ -546,14 +549,15 @@
         send {LButton up}
         return
         }
-      reload := 1
+      reload := 3							; show folder size
       if selected							; move/copy files
         {
         x := StrSplit(selected,",")
         index := x[x.MaxIndex()-1]					; scroll htm to end of selection
         MoveFiles()							; between folders or playlists
-        reload := 3							; not show folder qty
-        CreateList(2)							; silently update old htm page
+        reload := 2
+        CreateList(1)
+        RenderPage(1)							; silently update old htm page
         }								; to stay in this folder add return above and else below
       if InStr(address, ".m3u")						; playlist
         {
@@ -613,13 +617,11 @@
             filt := 0							; clear filter
           else filt := value						; or adopt new filt (if applied)
           }
-      reload := 1
+      reload := 3
       if (filt != value && value != searchTerm)				; new filter value only
         filt := value
       else if InStr(sortList, command)					; sort filter
         {
-        if (command=="Pause")
-          reload := 2
         toggle_list = Reverse Recurse Video Image Audio Fav
         if (sort != command)						; new sort
           {
@@ -646,7 +648,7 @@
       page := 1
       playlist =
       value := 0							; remove filt/index scroll variable
-      reload := 1
+      reload := 3
       if (command == "SearchBox")
         if longClick
           address := StrReplace(address, " ", "+")
@@ -714,7 +716,7 @@
       FileDelete, %inca%\cache\temp\temp.txt
       FileDelete, %inca%\cache\temp\temp1.txt
       Index(src,1,"")
-      reload := 3
+      reload := 2
       }
 
 
@@ -737,7 +739,7 @@
         else DeleteEntries()
         x := StrSplit(selected,",")
         index := x[x.MaxIndex()-1]
-        reload := 3
+        reload := 2
         }
       selected =
       return
@@ -831,7 +833,7 @@
       }
 
 
-   CreateList(show)							; list of files in path
+   CreateList(silent)								; list of files in path
         {
         Critical
         if !searchPath
@@ -863,9 +865,9 @@
               if (A_LoopFileSize > 0)					; for when files are still downloading
                 if spool(A_LoopFileFullPath, A_Index, start)
                   break 2
-                else if (show==1 && ((listSize<10000 && !Mod(listSize,1000)) || !Mod(listSize,10000)))
+                else if (!silent && ((listSize<10000 && !Mod(listSize,1000)) || !Mod(listSize,10000)))
                   PopUp(listSize,0,0,0)
-        if (show==1)
+        if !silent
           PopUp(listSize-1,0,0,0)
         StringTrimRight, list, list, 2					; remove end `r`n
         if (InStr(toggles, "Reverse") && sort != "Date" && sort != "Playlist")
@@ -885,7 +887,6 @@
         FileDelete, %inca%\cache\temp\%folder%.txt
         FileAppend, %list%, %inca%\cache\temp\%folder%.txt, UTF-8
         selected =
-        RenderPage(show)
         }
 
 
@@ -1658,7 +1659,7 @@ else source := src
         }
 
 
-    RenderPage(show)							; construct web page from media list
+    RenderPage(silent)							; construct web page from media list
         {
         Critical							; stop pause key & timer interrupts
         if !path
@@ -1935,7 +1936,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
       html = %header%%body%%script%`n</body>`n</html>`n
       FileDelete, %inca%\cache\html\%folder%.htm
       FileAppend, %html%, %inca%\cache\html\%folder%.htm, UTF-8
-      if (show == 2)
+      if silent
         return
       new_html = file:///%inca%\cache\html\%folder%.htm			; create / update browser tab
       if InStr(server, "http:")
@@ -2107,6 +2108,8 @@ else mediaList = %mediaList%<div id="entry%j%" class='entry' data-params='%type%
         else if (time >= cue)
           start := cue
         else start := 0, end := cue
+      end := Round(end,1)
+      start := Round(start,1)
       if InStr(el_id, "Join")
         Join()
       else if (el_id == "myIndex" && !lastSelect)
@@ -2130,10 +2133,11 @@ else mediaList = %mediaList%<div id="entry%j%" class='entry' data-params='%type%
         else if (new := Transcode(el_id, source, start, end, A_Index))
           Index(new, 1, A_Index)
         }
-      CreateList(0)
-        if InStr(server, "http:")
-          if (A_TickCount - serverTimout > 8000)			; server timout
-            send, {F5}
+      CreateList(1)
+      RenderPage(0)
+      if InStr(server, "http:")
+        if (A_TickCount - serverTimout > 8000)		; server timout
+          send, {F5}
       return
 
 
@@ -2156,7 +2160,8 @@ else mediaList = %mediaList%<div id="entry%j%" class='entry' data-params='%type%
               {
               Index(new,1,"")
               FileMove, %new%, %profile%\Downloads, 1
-              CreateList(2)				; silently update htm
+              CreateList(1)
+              RenderPage(1)				; silently update htm
               }
             else FileRecycle, %A_LoopFileFullPath%
       Process, Exist, ffmpeg.exe
