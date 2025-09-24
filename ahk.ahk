@@ -1908,9 +1908,8 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
     <a style='color:red; width:5em; font-weight:bold'>%listSize%</a>`n
     <a id='mySub' style='max-width:3em; font-size:0.7em; %x8%' onmousedown="inca('Recurse')" onmouseover="setTimeout(function() {if(mySub.matches(':hover'))Sub.scrollIntoView()},200)">%subs%</a>`n
     <a id='myMusic' style='%x22%' onmousedown="inca('Path','','','music|1')" onmouseover="setTimeout(function() {if(myMusic.matches(':hover'))Music.scrollIntoView()},200)">&#x266B;</a>`n
-   <a id='myFav' style='%x23%' onmousedown="inca('Path','','','fav|1')" onmouseover="setTimeout(function() {if(myFav.matches(':hover'))Fav.scrollIntoView()},200)">&#10084;</a>`n
      <a id='myFol' style='%x21%' onmousedown="inca('Path','','','fol|1')" onmouseover="setTimeout(function() {if(myFol.matches(':hover'))Fol.scrollIntoView()},200)">&#x1F4BB;&#xFE0E;</a>`n
-    <a id='mySearch' style='%x20%' onwheel="wheelEvent(event)" onmousedown="inca('SearchBox','','',myInput.value)" onmouseover="setTimeout(function() {if(mySearch.matches(':hover'))filter(id)},140)">&#x1F50D;&#xFE0E;</a>`n
+   <a id='myFav' style='%x23%' onmousedown="inca('Path','','','fav|1')" onmouseover="setTimeout(function() {if(myFav.matches(':hover'))Fav.scrollIntoView()},200)">&#10084;</a>`n    <a id='mySearch' style='%x20%' onwheel="wheelEvent(event)" onmousedown="inca('SearchBox','','',myInput.value)" onmouseover="setTimeout(function() {if(mySearch.matches(':hover'))filter(id)},140)">&#x1F50D;&#xFE0E;</a>`n
     <input id='myInput' class='searchbox' type='search' autocomplete='off' value='%st%' onmouseenter="this.value='%lastSearch%'" onmouseover="overText=1; this.focus()" oninput="Add.innerHTML='Add'" onmouseout='overText=0'>
     <a id='Add' style='max-width:3em; font-size:0.8em; font-variant-caps:petite-caps' onmousedown="inca('Add','','',myInput.value)">%add%</a>`n
     <a id="myPage" onmousedown="inca('Page', page)" onwheel="wheelEvent(event)"></a>

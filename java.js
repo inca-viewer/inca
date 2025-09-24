@@ -1,6 +1,4 @@
 
-// goto time cue in music
-// random pause?
 
   let wheel = 0								// wheel count
   let wheelDir = 0		 					// wheel direction
@@ -178,7 +176,7 @@
     positionMedia(0)
     thumb.pause()
     myPlayer.pause()
-    if (lastClick) myPlayer.style.opacity = 0				// fade in player
+    if (lastClick==1) myPlayer.style.opacity = 0			// fade in player
     if (dur < 200 && !navStart && !playing && !playlist && !longClick && !favicon.textContent.includes('\u2764')) navStart=0
     else if (!navStart && !longClick) navStart = thumb.style.start
     if (!thumbSheet) myPlayer.currentTime = navStart
@@ -359,7 +357,7 @@
     srt.style.top = top + 'px'; srt.style.left = mediaX - screenX - srt.offsetWidth / 2 + 'px'}
     if (playing) {
       positionMedia(0)
-      if (!thumbSheet) dur = myPlayer.duration
+      if (myPlayer.duration) dur = myPlayer.duration
       myMask.style.pointerEvents='auto'
       if (playlist.match('/inca/music/')) myMask.style.opacity = 0.7
       else myMask.style.opacity = 1
@@ -369,7 +367,6 @@
       myMask.style.pointerEvents = null
       if (myNav.style.display) myMask.style.opacity = 0.5
       else myMask.style.opacity = 0
-      if (thumb.muted) {thumb.playbackRate = 0.7} else thumb.playbackRate = 1
       if (!listView && thumb.readyState===4 && thumb.duration && overMedia) thumb.play()
       else thumb.pause()}}
 
@@ -641,7 +638,7 @@
   function cueButton() {						// context menu Cue button
     if ((thumb.style.skinny || thumb.style.rate) && !thumb.style.posted) {capButton(); cue = 0}
     else if (type=='document') {srt.focus(); inca('addMedia')}		// paste last media into text file
-    else if (!cue) {cue = Math.round(10*myPlayer.currentTime)/10; return}
+    else if (!cue) {cue = 0.1 + Math.round(10*myPlayer.currentTime)/10; return}
     Play()}
 
 
