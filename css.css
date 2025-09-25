@@ -232,7 +232,7 @@
   text-overflow: ellipsis;
   display: inline;
   width: 50%; 
-  border-radius: 1em; 
+  border-radius: 0.3em; 
   color: pink;
   border: none;
   translate: 0 -2px;

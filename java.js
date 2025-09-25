@@ -1,3 +1,6 @@
+// add ctrl F in ahk to search texterea on longclick word
+// editing was set after movefiles from downloads to tiktok
+// when move files fails, needs to stay in orig folder and better popup
 
 
   let wheel = 0								// wheel count
@@ -283,7 +286,7 @@
       positionMedia(0); setPic(); block=140}
     else if (dur && !thumbSheet && (!overMedia || yw>0.8)) {		// seek 
       timout = 6
-      let interval = 1
+      let interval = 0.4
       if (dur < 121) interval = 0.1
       if (myPlayer.paused) interval = 0.0333
       if (wheelUp) myPlayer.currentTime += interval
@@ -472,7 +475,8 @@
   function inca(command,value,select,address) {				// send java messages to inca.exe
     if (editing && command != 'Osk') {					// text or caption has been edited
       messages += '#Scroll#'+srt.scrollTop.toFixed(0)+'|'+srt.offsetWidth+'|'+srt.offsetHeight+'#'+editing+'#'
-      messages += '#capEdit##' + editing + '#' + document.getElementById('srt'+editing).value.replaceAll('#', '𝌇')
+      let x = document.getElementById('thumb'+editing).dataset.altSrc + '|' + document.getElementById('srt'+editing).value
+      messages += '#capEdit##' + editing + '#' + x.replace('http://localhost:3000/','').replaceAll('#', '𝌇')
       editing = 0}
     for (i=1; el=document.getElementById('thumb'+i); i++) {		// add cue edits to messages
       if ((el.style.rate || el.style.skinny) && !el.style.posted) {
