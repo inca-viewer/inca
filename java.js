@@ -1,7 +1,3 @@
-// add ctrl F in ahk to search texterea on longclick word
-// editing was set after movefiles from downloads to tiktok
-// when move files fails, needs to stay in orig folder and better popup
-
 
   let wheel = 0								// wheel count
   let wheelDir = 0		 					// wheel direction
@@ -75,8 +71,9 @@
   document.addEventListener('keydown', keyDown)
   myPlayer.addEventListener('ended', mediaEnded)
   document.addEventListener('contextmenu', (e) => {if (yw > 0.05) e.preventDefault()})
-  window.addEventListener('beforeunload', (e) => {if (editing) e.preventDefault()})
-  document.addEventListener('visibilitychange', () => {if (folder=='Downloads') location.reload()})
+  window.addEventListener('beforeunload', (e) => {if (playing && editing) e.preventDefault()})
+  document.addEventListener('visibilitychange', function() {
+    if (document.visibilityState=='visible' && folder=='Downloads') inca('Reload',index)})
   if (innerHeight>innerWidth) {scaleY=0.64} else scaleY=0.5		// screen is portrait
 
 
@@ -223,7 +220,7 @@
       if (!playing && overMedia && !myNav.style.display) sel(index)
       if (myNav.style.display) {x=myNav.getBoundingClientRect(); Xref=(xpos-x.left)/skinny; Yref=ypos-x.top}}
     if (!gesture || !Click) {gesture=''; return}
-    else if (captions && !cues.textContent.match(srt.offsetWidth)) editing = index
+    else if (captions && !cues.textContent.match(srt.offsetWidth)) editing = index	// textarea size changed
     if (Click==1 && myPic.matches(':hover')) {myNav.style.left = xpos-Xref+"px"; myNav.style.top = ypos-Yref+"px"}  // move context menu
     else if (Click==1 && playing && (overMedia || !captions)) {		// move myPlayer
       mediaX += xpos - Xref
@@ -371,8 +368,7 @@
       myMask.style.pointerEvents = null
       if (myNav.style.display) myMask.style.opacity = 0.5
       else myMask.style.opacity = 0
-      if (!listView && thumb.readyState===4 && thumb.duration && overMedia) thumb.play()
-      else thumb.pause()}}
+      if (!listView && thumb.readyState===4 && thumb.duration && overMedia) thumb.play()}}
 
 
   function positionMedia(time) {					// position myPlayer in window
@@ -473,7 +469,7 @@
 
 
   function inca(command,value,select,address) {				// send java messages to inca.exe
-    if (editing && command != 'Osk') {					// text or caption has been edited
+    if (editing && command != 'Find') {					// text or caption has been edited
       messages += '#Scroll#'+srt.scrollTop.toFixed(0)+'|'+srt.offsetWidth+'|'+srt.offsetHeight+'#'+editing+'#'
       let x = document.getElementById('thumb'+editing).dataset.altSrc + '|' + document.getElementById('srt'+editing).value
       messages += '#capEdit##' + editing + '#' + x.replace('http://localhost:3000/','').replaceAll('#', '𝌇')
@@ -492,10 +488,7 @@
     if (document.querySelector('link[rel="icon"]').href.includes('file:///')) navigator.clipboard.writeText(messages)
     else {fetch('http://localhost:3000/generate-html', {method: 'POST', headers: {'Content-Type': 'text/plain'}, body: messages})
       .then(response => {if (response.status === 204) {return} return response.json()})
-      .then(data => {
-        let newUrl = encodeURI(`http://localhost:3000${data.url}`)
-        if (command == 'SearchBox' || lastClick == 2 && command=='Path') window.open(newUrl)	// new tab
-        else window.location.href = newUrl})}							// replace tab
+      .then(data => {window.location.href = encodeURI(`http://localhost:3000${data.url}`)})}
     messages=''}
 
 
@@ -709,8 +702,9 @@
 
 
   function searchBox() {
+    let text = window.getSelection().toString()
     if (renamebox) inca('Rename', renamebox, lastMedia)			// rename media
-    else if (longClick && !gesture && overText && !window.getSelection().toString()) inca('Osk')
+    else if (longClick && !gesture && overText && playing) inca('Find', text)	// trigger browser find or osk
     else if (!playing && (myInput.matches(':focus') || longClick)) inca('SearchBox','',index,myInput.value) // search media on pc
     myPlayer.pause(); longClick=0}
 
