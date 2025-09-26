@@ -101,9 +101,7 @@
         Run, cmd.exe /c cd /d "C:\inca\cache\apps" && node server.js,, Hide
         GetBrowser()				; eg chrome, firefox etc
         default = #Path###%profile%\Pictures\
-        if incaTab
-          send {F5}
-        else messages(default)			; create and open Pictures.htm
+        messages(default)			; create and open Pictures.htm
         }
       else					; use ClipBoard for messaging
         {
@@ -203,11 +201,11 @@
           gui, vol: hide
           break
           }
-        if (Abs(x)+Abs(y) > 6)						; gesture started
+        if (Abs(x)+Abs(y) > 6)					; gesture started
           {
           gesture := 1
           MouseGetPos, xpos, ypos
-          if (xpos < 15)						; gesture at screen edges
+          if (xpos < 15)					; gesture at screen edges
             xpos := 15
           if (xpos > A_ScreenWidth - 15 && click=="RButton")
             xpos := A_ScreenWidth - 15
@@ -215,8 +213,7 @@
           Gesture(x, y)
           }
         if (!gesture && longClick && click == "LButton" && wasCursor == "IBeam" && !incaTab)
-          if !Find()							; file search from non incaTab
-            Osk()
+          Osk()							; onscreen keyboard
         }
       }
 
@@ -230,11 +227,17 @@
         else if (command == "Favorite")					; add media favorite to New.m3u
           Favorite()
         else if (command == "Delete")					; delete media
-          Delete() 
+          Delete()
+        else if (command == "Osk")					; create srt caption file
+          Osk()
         else if (command == "Add" && address)
           Add()
         else if (command == "History")					; maintain play history
           History()
+        else if (command == "Reload")					; reload web page
+          Reload()
+        else if (command == "Settings")					; open inca source folder
+          Settings()
         else if (command == "Page")
           Page()
         else if (command == "Options")					; index folder (create thumbsheets)
@@ -253,26 +256,6 @@
           Search()
         else if (command == "Notepad")					; open media cues in notepad
           Notepad()
-        else if (command == "Reload")					; reload web page
-          {
-          index := value
-          selected =
-          reload := 2
-          }
-        else if (command == "Settings")					; open inca source folder
-          {
-          Run, %inca%\
-          sleep 400
-          Winactivate, ahk_class CabinetWClass
-          }
-        else if (command == "Find")
-          if value
-            {
-            send ^f							; browser to find text in textarea
-            sleep 300
-            send %value%
-            }
-          else Osk()							; open on screen keyboard
         else if (command == "View")					; change thumb/list view
           {
           PopUp("...",0,0,0)
@@ -281,11 +264,32 @@
           index := value						; for scrollToIndex() in java
           reload := 2
           }
+        else if (command == "addMedia")					; add media to text at scroll
+          {
+          Loop, Read, %inca%\fav\History.m3u				; get last media from history
+            lastMedia := A_LoopReadLine
+          lastMedia := StrReplace(lastMedia, "\", "/")
+          clp := ClipBoard
+          ClipBoard = `r`n%server%%lastMedia%`r`n`r`n
+          ClipWait
+          if ClipBoard
+            send, ^v
+          sleep 100
+          ClipBoard := clp
+          }
         else if (command == "addCue")					; add skinny, speed, goto at scroll
           {
           FileAppend, `r`n%value%, %inca%\cache\cues\%media%.txt, UTF-8
           selected =
           reload := 2
+          }
+        else if (command == "newCap")					; create new caption file
+          {
+          timeStr .= srtTime(seek) . " --> " . timeStr . "`r`ncaption"
+          FileAppend, %timeStr%, %inca%\cache\captions\%media%.srt, UTF-8
+          FileAppend, `r`n%seek%|scroll|0|300|100, %inca%\cache\cues\%media%.txt, UTF-8
+          reload := 2
+          selected =
           }
         else if (command == "Move")					; move entry within playlist
           {
@@ -304,33 +308,12 @@
           config := RegExReplace(config, "Mute/[^|]*", "Mute/" . value)
           IniWrite, %config%, %inca%\ini.ini, Settings, config
           }
-        else if (command == "newCap")					; create new caption file
-          {
-          timeStr .= srtTime(seek) . " --> " . timeStr . "`r`ncaption"
-          FileAppend, %timeStr%, %inca%\cache\captions\%media%.srt, UTF-8
-          FileAppend, `r`n%seek%|scroll|0|300|100, %inca%\cache\cues\%media%.txt, UTF-8
-          reload := 2
-          selected =
-          }
-        else if (command == "addMedia")					; add media to text at scroll
-          {
-          Loop, Read, %inca%\fav\History.m3u				; get last media from history
-            lastMedia := A_LoopReadLine
-          lastMedia := StrReplace(lastMedia, "\", "/")
-          clp := ClipBoard
-          ClipBoard = `r`n%server%%lastMedia%`r`n`r`n
-          ClipWait
-          if ClipBoard
-            send, ^v
-          sleep 100
-          ClipBoard := clp
-          }
         }
 
 
-    Find() 
-      {
+    Osk() {
       if WinActive("ahk_group Browsers")
+       if !incaTab
         {
         clp := Clipboard
         Clipboard =
@@ -339,19 +322,15 @@
         address := Clipboard
         Clipboard := clp
         send, {Lbutton up}
-        if !address					; selected text long clicked over
+        if address					; selected text long clicked over
+          {
+          path =
+          reload := 2
+          cmd = #SearchBox###%address%
+          messages(cmd)					; search for files with search text
           return
-        path =
-        reload := 2
-        cmd = #SearchBox###%address%
-        messages(cmd)					; search for files matching text
-        return 1
+          }
         }
-      }
-
-
-    Osk() 
-      {
       if !gesture					; open on screen keyboard
        IfWinNotExist, ahk_class OSKMainClass
         if Setting("osk")
@@ -475,6 +454,22 @@
         }
 
 
+    Reload()
+      {
+      selected =
+      index := value
+      reload := 2
+      }
+
+
+    Settings()
+      {
+      Run, %inca%\
+      sleep 400
+      Winactivate, ahk_class CabinetWClass
+      }
+
+
     Page()
       {
       if (command == "Page")
@@ -558,12 +553,11 @@
         {
         x := StrSplit(selected,",")
         index := x[x.MaxIndex()-1]					; scroll htm to end of selection
-        if MoveFiles()							; between folders or playlists
-          return							; failed so stay in folder
+        MoveFiles()							; between folders or playlists
         reload := 2
-        CreateList(1)							; silently update old htm page
-        RenderPage(1)							; to stay in this folder add return
-        }
+        CreateList(1)
+        RenderPage(1)							; silently update old htm page
+        }								; to stay in this folder add return above and else below
       if InStr(address, ".m3u")						; playlist
         {
         playlist := address
@@ -1147,11 +1141,8 @@
         if (popup && !longClick)
           if (InStr(address, "inca\fav") || InStr(address, "inca\music"))
             DeleteEntries()
-        if fail
-          PopUp("failed",900,0,0)
-        else if popup
-          PopUp(popup,900,0,0)
-        return fail
+        if popup
+          PopUp(popup,0,0,0) 
         }  
 
 
@@ -1954,19 +1945,15 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
       else if (incaTab == folder) 
         send {F5}
       else if InStr(server, "http:")					; use http://
-        FileAppend, %folder%.htm, %inca%\cache\html\temp.txt, UTF-8	; for server polling
+        FileAppend, %folder%.htm, %inca%\cache\html\temp.txt, UTF-8	; server polling
       else								; use file://
         {
-        clp := clipboard
-        clipboard := htm
         send, ^l
         sleep 54
         send, {BS}
         sleep 24
-        send, ^v
+        send, %htm%
         Send, {Enter}
-        sleep 24
-        clipboard := clp
         }
       sleep 200
       WinActivate, ahk_group Browsers
@@ -1974,7 +1961,6 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
       Loop, 30								; wait until page loaded
         {
         WinGetTitle, title, A
-
         If InStr(title, incaTab)
           break
         Sleep, 100
@@ -2083,7 +2069,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
       if listView
         mediaList = %mediaList%%fold%<table onmouseover='overThumb(%j%)'`n onmouseout="thumb%j%.style.opacity=0; thumb.src=null">`n <tr id='entry%j%' data-params='%type%,%start%,%dur%,%size%' onmouseenter='if (gesture) sel(%j%)'>`n <td>%ext%`n <video id='thumb%j%' class='thumb2' data-alt-src="%server%%src%"`n %poster%`n preload=%preload% muted loop type="video/mp4"></video></td>`n <td>%size%</td>`n <td style='min-width: 6em'>%durT%</td>`n <td>%date%</td>`n  <td><div id='myFavicon%j%' class='favicon' style='position:absolute; text-align: left; translate:1.2em -0.8em'>%favicon%</div></td>`n <td style='width: 70vw'><input id="title%j%" class='title' style='opacity: 1; transition: 0.6s' onmouseover='overText=1' autocomplete='off' onmouseout='overText=0; Click=0' type='search' value='%media_s%' oninput="renamebox=this.value; lastMedia=%j%"></td>`n %fo%</tr></table>%caption%<span id='cues%j%' style='display: none'>%cues%</span>`n`n
 
-      else mediaList = %mediaList%<div id="entry%j%" class='entry' data-params='%type%,%start%,%dur%,%size%'>`n <input id='title%j%' class='title' style='text-align: center' type='search'`n value='%media_s%'`n oninput="renamebox=this.value; lastMedia=%j%"`n onmouseover="overText=1; if((x=this.value.length/2) > view) this.style.width=x+'em'"`n onmouseout="overText=0; this.style.width='100`%'">`n <video id="thumb%j%" class='thumb' onmouseenter='overThumb(%j%); if (gesture) sel(%j%)'`n onmouseup='if(gesture)getParameters(%j%)' onmouseout='thumb.src=null' data-alt-src="%server%%src%"`n %poster%`n preload=%preload% loop muted type='video/mp4'></video>`n <span id='myFavicon%j%' onmouseenter='overThumb(%j%)' class='favicon'>%favicon%</span>`n %noIndex%`n <span id='cues%j%' style='display: none'>%cues%</span></div>`n %caption%`n
+      else mediaList = %mediaList%<div id="entry%j%" class='entry' data-params='%type%,%start%,%dur%,%size%'>`n <input id='title%j%' class='title' style='text-align: center' type='search'`n value='%media_s%'`n oninput="renamebox=this.value; lastMedia=%j%"`n onmouseover="overText=1; if((x=this.value.length/2) > view) this.style.width=x+'em'"`n onmouseout="overText=0; this.style.width='100`%'">`n <video id="thumb%j%" class='thumb' onmouseenter='overThumb(%j%); if (gesture) sel(%j%)'`n onmouseup='if(gesture)getParameters(%j%)' onmouseout="thumb.src=null" data-alt-src="%server%%src%"`n %poster%`n preload=%preload% loop muted type='video/mp4'></video>`n <span id='myFavicon%j%' onmouseenter='overThumb(%j%)' class='favicon'>%favicon%</span>`n %noIndex%`n <span id='cues%j%' style='display: none'>%cues%</span></div>`n %caption%`n
       }
 
 
@@ -2163,6 +2149,8 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
               {
               Index(new,1,"")
               FileMove, %new%, %profile%\Downloads, 1
+              CreateList(1)
+              RenderPage(1)				; silently update htm
               }
             else FileRecycle, %A_LoopFileFullPath%
       Process, Exist, ffmpeg.exe
