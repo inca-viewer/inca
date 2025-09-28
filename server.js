@@ -1,3 +1,4 @@
+
 const http = require('http');
 const fs = require('fs');
 const fsPromises = require('fs').promises;
@@ -75,26 +76,12 @@ const server = http.createServer(async (req, res) => {
             '.webp': 'image/webp',
             '.gif': 'image/gif',
             '.mp4': 'video/mp4',
-            '.wmv': 'video/x-ms-wmv',
-            '.avi': 'video/x-msvideo',
             '.mov': 'video/quicktime',
             '.webm': 'video/webm',
-            '.mpg': 'video/mpeg',
-            '.mpeg': 'video/mpeg',
-            '.flv': 'video/x-flv',
-            '.divx': 'video/divx',
-            '.mkv': 'video/x-matroska',
-            '.asf': 'video/x-ms-asf',
             '.m4v': 'video/x-m4v',
             '.mvb': 'video/x-mvb',
-            '.rmvb': 'video/rmvb',
-            '.vob': 'video/dvd',
-            '.rm': 'application/vnd.rn-realmedia',
-            '.ts': 'video/mp2t',
             '.mp3': 'audio/mpeg',
             '.m4a': 'audio/mp4',
-            '.wma': 'audio/x-ms-wma',
-            '.mid': 'audio/midi',
             '.pdf': 'application/pdf',
             '.txt': 'text/plain',
             '.rtf': 'application/rtf',
@@ -156,20 +143,12 @@ async function serveHtmlFile(res, startTime) {
         const tempFilePath = 'C:\\inca\\cache\\html\\temp.txt';
         const fileContent = await fsPromises.readFile(tempFilePath, 'utf8');
         if (!fileContent.trim()) {
-            res.writeHead(204);
+            res.writeHead(200);
             res.end();
             return;
         }
-        const filename = fileContent.trim();
-        if (!filename.match(/\.(htm|html)$/i)) {
-            res.end();
-            return;
-        }
-        const filepath = path.join('C:\\inca\\cache\\html', filename);
-        const url = `/inca/cache/html/${filename}`;
-        await fsPromises.access(filepath);
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ url }));
+        res.writeHead(200, { 'Content-Type': 'application/text' });
+        res.end(fileContent);
     } catch (err) {
         res.end();
     }

@@ -1,6 +1,3 @@
-// add ctrl F in ahk to search texterea on longclick word
-// editing was set after movefiles from downloads to tiktok
-// when move files fails, needs to stay in orig folder and better popup
 
 
   let wheel = 0								// wheel count
@@ -75,8 +72,9 @@
   document.addEventListener('keydown', keyDown)
   myPlayer.addEventListener('ended', mediaEnded)
   document.addEventListener('contextmenu', (e) => {if (yw > 0.05) e.preventDefault()})
-  window.addEventListener('beforeunload', (e) => {if (editing) e.preventDefault()})
-  document.addEventListener('visibilitychange', () => {if (folder=='Downloads') location.reload()})
+  window.addEventListener('beforeunload', (e) => {if (playing && editing) e.preventDefault()})
+  document.addEventListener('visibilitychange', function() {
+    if (document.visibilityState=='visible' && folder=='Downloads' && !selected && !editing) inca('Reload',index)})
   if (innerHeight>innerWidth) {scaleY=0.64} else scaleY=0.5		// screen is portrait
 
 
@@ -138,6 +136,7 @@
         || (favicon && favicon.matches(':hover')))) 
         || (overMedia && thumb.src.endsWith('.pdf'))) {Click=0; inca('Notepad',id,index); return}}
       if (!longClick) {
+if (playing && type =='image') {closePlayer(); return}
         if (id == 'mySelect') {if (myTitle.value) {sel(index)} else selectAll(); return}
         if (id == 'mySkinny') {updateCue('skinny',1); return}
         if (id == 'mySpeed') {updateCue('rate',1); return}
@@ -183,7 +182,7 @@
     if (lastClick==1) myPlayer.style.opacity = 0			// fade in player
     if (dur < 200 && !navStart && !playing && !playlist && !longClick && !favicon.textContent.includes('\u2764')) navStart=0
     else if (!navStart && !longClick) navStart = thumb.style.start
-    if (!thumbSheet) myPlayer.currentTime = navStart
+    if (!thumbSheet) {myPlayer.poster=thumb.poster; myPlayer.currentTime = navStart}
     if (playlist.match('/inca/music/')) myPlayer.muted=0
     else myPlayer.muted = defMute
     if (el=document.getElementById('title'+lastMedia)) el.style.color=null
@@ -201,9 +200,10 @@
     if (pitch || myPlayer.context) {					// from pitch.js in inca\cache\apps
       setupContext(myPlayer); myPlayer.jungle.setPitchOffset(semiToneTranspose(pitch))}
     myCues('scroll')							// scroll to last position in document
-    playing=index; block = 160
+    playing=index
+    block = 150
     setTimeout(function() {
-      if (lastClick && !captions && !thumbSheet && dur && !defPause && !cue) myPlayer.play()
+      if (!captions && !thumbSheet && dur && !defPause && !cue) myPlayer.play()
       if (lastClick) positionMedia(0.4)
       myPlayer.style.zIndex=Zindex
       myPlayer.style.opacity=1},100)}
@@ -223,7 +223,7 @@
       if (!playing && overMedia && !myNav.style.display) sel(index)
       if (myNav.style.display) {x=myNav.getBoundingClientRect(); Xref=(xpos-x.left)/skinny; Yref=ypos-x.top}}
     if (!gesture || !Click) {gesture=''; return}
-    else if (captions && !cues.textContent.match(srt.offsetWidth)) editing = index
+    else if (captions && !cues.textContent.match(srt.offsetWidth)) editing = index	// textarea size changed
     if (Click==1 && myPic.matches(':hover')) {myNav.style.left = xpos-Xref+"px"; myNav.style.top = ypos-Yref+"px"}  // move context menu
     else if (Click==1 && playing && (overMedia || !captions)) {		// move myPlayer
       mediaX += xpos - Xref
@@ -278,16 +278,15 @@
       myPic.style.transform='scale('+Math.abs(skinny)*zoom+','+zoom+')'
       block=80}
     else if (id == 'mySelect' || id == 'myTitle') {
+      Click = longClick = lastClick = 0; block = 150
       if (wheelUp) {index++} else if (index>1) index--
       if (!document.getElementById('entry'+index)) index-- 		// next - previous
-      Click = longClick = lastClick = 0
       if (getParameters(index) && playing) Play()
       if (!thumbSheet) myPlayer.currentTime = thumb.style.start
-      positionMedia(0); setPic(); block=140}
+      positionMedia(0); setPic()}
     else if (dur && !thumbSheet && (!overMedia || yw>0.8)) {		// seek 
       timout = 6
-      let interval = 0.4
-      if (dur < 121) interval = 0.1
+      let interval = 0.1
       if (myPlayer.paused) interval = 0.0333
       if (wheelUp) myPlayer.currentTime += interval
       else if (!wheelUp) myPlayer.currentTime -= interval
@@ -362,6 +361,7 @@
     if (playing) {
       positionMedia(0)
       if (myPlayer.duration) dur = myPlayer.duration
+      else if ((type=='video' || type=='audio') && block<130) mySelected.innerHTML = 'media not found'
       myMask.style.pointerEvents='auto'
       if (playlist.match('/inca/music/')) myMask.style.opacity = 0.7
       else myMask.style.opacity = 1
@@ -371,8 +371,7 @@
       myMask.style.pointerEvents = null
       if (myNav.style.display) myMask.style.opacity = 0.5
       else myMask.style.opacity = 0
-      if (!listView && thumb.readyState===4 && thumb.duration && overMedia) thumb.play()
-      else thumb.pause()}}
+      if (!listView && thumb.readyState===4 && thumb.duration && overMedia) thumb.play()}}
 
 
   function positionMedia(time) {					// position myPlayer in window
@@ -473,7 +472,7 @@
 
 
   function inca(command,value,select,address) {				// send java messages to inca.exe
-    if (editing && command != 'Osk') {					// text or caption has been edited
+    if (editing && command != 'Find') {					// text or caption has been edited
       messages += '#Scroll#'+srt.scrollTop.toFixed(0)+'|'+srt.offsetWidth+'|'+srt.offsetHeight+'#'+editing+'#'
       let x = document.getElementById('thumb'+editing).dataset.altSrc + '|' + document.getElementById('srt'+editing).value
       messages += '#capEdit##' + editing + '#' + x.replace('http://localhost:3000/','').replaceAll('#', '𝌇')
@@ -706,8 +705,9 @@
 
 
   function searchBox() {
+    let text = window.getSelection().toString()
     if (renamebox) inca('Rename', renamebox, lastMedia)			// rename media
-    else if (longClick && !gesture && overText && !window.getSelection().toString()) inca('Osk')
+    else if (longClick && !gesture && overText) inca('Find', text)	// trigger browser find or osk
     else if (!playing && (myInput.matches(':focus') || longClick)) inca('SearchBox','',index,myInput.value) // search media on pc
     myPlayer.pause(); longClick=0}
 
@@ -724,8 +724,9 @@
     if (Click) return							// faster for click & slide selecting
     getParameters(id)
     thumb.style.opacity = 1
-    thumb.load()
-    thumb.currentTime = thumb.style.start + 0.04}
+    if (!listView) {
+      thumb.load()
+      thumb.currentTime = thumb.style.start + 0.04}}
 
 
   function context(e) {							// right click context menu
