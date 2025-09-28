@@ -46,7 +46,6 @@
         Global ext				; file extension
         Global incaTab				; browser tab title/folder only when tab open and active
         Global volume
-        Global page := 1			; current page within list
         Global sort				; eg by date, dur, shuffle, size, alpha, ext...
 	Global filt := 0			; secondary search filter eg. date, duration, Alpha letter
         Global click				; mouse click type
@@ -61,11 +60,10 @@
         Global skinny				; edited media width
         Global seek
         Global target				; folder path
-        Global reload
+        Global reload := 2
         Global browser				; current browser
         Global longClick
         Global fullscreen
-        Global pages				; file list is broken down into smaller html pages
         Global poster				; htm thumbnail
         Global mediaList			; html of media content
         Global panelList			; html of top panel
@@ -87,6 +85,7 @@
         Global start := 0			; default start time
         Global ctime				; last current time
         Global server := "file:///"		; default no server
+        Global lastIndex := 0			; continuous scrolling
 
 
     main:
@@ -99,9 +98,8 @@
         Process, Close, node.exe
         sleep 200
         Run, cmd.exe /c cd /d "C:\inca\cache\apps" && node server.js,, Hide
-        GetBrowser()				; eg chrome, firefox etc
         default = #Path###%profile%\Pictures\
-        if incaTab
+        if GetBrowser()				; eg chrome, firefox etc
           send {F5}
         else messages(default)			; create and open Pictures.htm
         }
@@ -237,8 +235,6 @@
           Add()
         else if (command == "History")					; maintain play history
           History()
-        else if (command == "Page")
-          Page()
         else if (command == "Options")					; index folder (create thumbsheets)
           SetTimer, Options, -10, -2					; run asynchromously
         else if (command == "Scroll")					; update scroll, width, height
@@ -255,6 +251,8 @@
           Search()
         else if (command == "Notepad")					; open media cues in notepad
           Notepad()
+        else if (command == "Page")					; continuous scrolling
+            RenderPage(1)
         else if (command == "Reload")					; reload web page
           {
           index := value
@@ -464,6 +462,11 @@
           CreateList(0)
         if reload
           RenderPage(0)
+        if (!reload && command != "Page")
+          {
+          FileDelete, %inca%\cache\html\temp.txt
+          FileAppend,, %inca%\cache\html\temp.txt			; stop server waiting
+          }
         longClick =
         selected = 
         Gui PopUp:Cancel
@@ -475,16 +478,6 @@
             WinActivate, ahk_group Browsers
             }
         }
-
-
-    Page()
-      {
-      if (command == "Page")
-        page := value
-      popup = Page %value%
-      Popup(popup,0,0,0)
-      reload := 2
-      }
 
 
     Notepad()
@@ -596,7 +589,6 @@
       searchTerm =
       searchPath =
       filt := 0
-      page := 1
       index := 0
       PopUp(folder,0,0,0)
       }
@@ -652,7 +644,6 @@
 
     Search()
       {
-      page := 1
       playlist =
       value := 0							; remove filt/index scroll variable
       reload := 3
@@ -851,7 +842,7 @@
             path = %searchTerm%\
           else path = %profile%\Pictures\
         list =
-        listSize := 1
+        listSize := 0
         if (InStr(toggles, "Recurse") || searchTerm)
             recurse = R
         if (playlist && !searchTerm)
@@ -859,7 +850,7 @@
            checkPlaylist()
            FileRead, str, %playlist%
            Loop, Parse, str, `n, `r
-            if %A_LoopField%
+            if A_LoopField
              {  
              source := StrSplit(A_Loopfield, "|").1
              start := StrSplit(A_Loopfield, "|").2
@@ -873,10 +864,10 @@
               if (A_LoopFileSize > 0)					; for when files are still downloading
                 if spool(A_LoopFileFullPath, A_Index, start)
                   break 2
-                else if (!silent && ((listSize<10000 && !Mod(listSize,1000)) || !Mod(listSize,10000)))
+                else if (!silent && listSize && ((listSize<10000 && !Mod(listSize,1000)) || !Mod(listSize,10000)))
                   PopUp(listSize,0,0,0)
         if !silent
-          PopUp(listSize-1,0,0,0)
+          PopUp(listSize,0,0,0)
         StringTrimRight, list, list, 2					; remove end `r`n
         if (InStr(toggles, "Reverse") && sort != "Date" && sort != "Playlist")
             reverse = R
@@ -1017,7 +1008,6 @@
     GetTabSettings(all)							; from line 1 of .htm cache file
         {
         listView := 0
-        page := 1							; default view settings if no html data
         filt := 0
         toggles =
         sort = Shuffle
@@ -1030,20 +1020,18 @@
           {
           StringReplace, array, array, /, \, All
           array := StrSplit(array,", ")
-          page := array.2
-          pages := array.3
-          sort := array.4
-          toggles := array.5
-          listView := array.6
+          sort := array.2
+          toggles := array.3
+          listView := array.4
           if all
             {
-            playlist := array.7
-            path := array.8
-            searchPath := array.9
-            searchTerm := array.10
+            playlist := array.5
+            path := array.6
+            searchPath := array.7
+            searchTerm := array.8
             if searchTerm
               folder := searchTerm
-            subfolders := array.11
+            subfolders := array.9
             }
           }
         else if RegExMatch(path, "i)music|books|audio|text|pdf")
@@ -1274,8 +1262,7 @@
         {
         if !id
           return
-        id := Abs(id) + Setting("Page Size") * (page - 1)
-        FileReadLine, str, %inca%\cache\temp\%folder%.txt, Abs(id)
+        FileReadLine, str, %inca%\cache\temp\%folder%.txt, id
         src := StrSplit(str, "/").2
         seek := Round(StrSplit(str, "/").4,1)
         target = %src%|%seek%
@@ -1465,7 +1452,7 @@
        {
        FileRead, str, %playlist%
        Loop, Parse, str, `n, `r
-         if %A_LoopField%
+         if A_LoopField
            {  
            source := StrSplit(A_Loopfield, "|").1
            start := StrSplit(A_Loopfield, "|").2
@@ -1675,7 +1662,31 @@
         if !path
           return
         foldr =
+        menu_item =
         mediaList =
+        if (command != "Page")
+          lastIndex := 0
+        type = video							; prime for list parsing
+        page_s := Round(Setting("Page Size"),0)
+        Loop, Parse, list, `n, `r 					; split big list into smaller web pages
+          if (A_Index > lastIndex && A_Index < lastIndex + page_s + 1)
+            {
+            item := StrSplit(A_LoopField, "/")				; sort filter \ src \ media type \ ext
+            id := item.1
+            source := item.2
+            type := item.3
+            start := item.4
+            mediaList(A_Index, source, start)				; append mediaList
+            }
+        lastIndex += page_s
+        if (command == "Page")						; continuous scrolling
+          {
+          FileDelete, %inca%\cache\html\temp.txt			; server polling file
+          if (lastIndex - listSize < page_s && listSize > page_s)
+            FileAppend, %mediaList%, %inca%\cache\html\temp.txt, UTF-8
+          else lastIndex := listSize
+          return
+          }
         x = %folder%\
         if (InStr(fol, x) || playlist)
           showSubs =
@@ -1702,23 +1713,6 @@
         ini := StrReplace(ini, "`r`n", "|")				; java cannot accept cr in strings
         ini := StrReplace(ini, "'", ">")				; java cannot accept ' in strings
         max_height := Floor(A_ScreenHeight * 0.34)			; max image height in web page
-        menu_item =
-        count:=0
-        listSize := 0
-        type = video							; prime for list parsing
-        page_s := Setting("Page Size")
-        Loop, Parse, list, `n, `r 					; split big list into smaller web pages
-          {
-          item := StrSplit(A_LoopField, "/")				; sort filter \ src \ media type \ ext
-          id := item.1
-          source := item.2
-          type := item.3
-          start := item.4
-          listSize += 1
-          if ((listSize > (page-1) * page_s) && (listSize <= page * page_s))
-            SpoolList(listSize, count+=1, source, start)
-          }
-        pages := ceil(listSize/page_s)
         Loop, Parse, sortList, `|					; html ribbon highlighting
           {
           if InStr(A_LoopField, sort)
@@ -1880,9 +1874,9 @@
       wheelDir := 1
     else wheelDir := -1
 
-header = <!--, %page%, %pages%, %sort%, %toggles%, %listView%, %playlist%, %path%, %searchPath%, %searchTerm%, %subfolders%, -->`n<!doctype html>`n<html>`n<head>`n<meta charset="UTF-8">`n<title>Inca - %title%</title>`n<meta name="viewport" content="width=device-width, initial-scale=1">`n<link rel="icon" type="image/x-icon" href="%server%%inca%/cache/icons/inca.ico">`n<link rel="stylesheet" type="text/css" href="%server%%inca%/css.css">`n</head>`n`n
+header = <!--, %sort%, %toggles%, %listView%, %playlist%, %path%, %searchPath%, %searchTerm%, %subfolders%, -->`n<!doctype html>`n<html>`n<head>`n<meta charset="UTF-8">`n<title>Inca - %title%</title>`n<meta name="viewport" content="width=device-width, initial-scale=1">`n<link rel="icon" type="image/x-icon" href="%server%%inca%/cache/icons/inca.ico">`n<link rel="stylesheet" type="text/css" href="%server%%inca%/css.css">`n</head>`n`n
 
-body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(%page%, %pages%, '%folder_s%', %wheelDir%, '%mute%', %paused%, '%sort%', %filt%, %listView%, '%selected%', '%playlist%', %index%); %scroll%.scrollIntoView()">`n`n
+body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals('%folder_s%', %wheelDir%, '%mute%', %paused%, '%sort%', %filt%, %listView%, '%selected%', '%playlist%', %index%); %scroll%.scrollIntoView()">`n`n
 
 <video id="myPlayer" class='player' type="video/mp4" muted onwheel="wheelEvent(event)"></video>`n
 <span id='myProgress' class='seekbar'></span>`n
@@ -1922,7 +1916,6 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
     <a id='myFav' style='min-width:5em; %x23%' onmousedown="inca('Path','','','fav|1')" onmouseover="setTimeout(function() {if(myFav.matches(':hover'))Fav.scrollIntoView()},200)">&#10084;</a>`n    <a id='mySearch' style='%x20%' onwheel="wheelEvent(event)" onmousedown="inca('SearchBox','','',myInput.value)" onmouseover="setTimeout(function() {if(mySearch.matches(':hover'))filter(id)},140)">&#x1F50D;&#xFE0E;</a>`n
     <input id='myInput' class='searchbox' type='search' autocomplete='off' value='%st%' onmouseenter="if (this.value=='%st%') this.value='%lastSearch%'; this.select()" onmouseover="overText=1; this.focus()" onmouseout='overText=0'>
     <a id='Add' style='max-width:3em; font-size:1.2em; color: red' onmousedown="inca('Add','','',myInput.value)">%add%</a>`n
-    <a id="myPage" onmousedown="myContent.scrollTo(0,0); inca('Page', page)" onwheel="wheelEvent(event)"></a>
     </div>`n`n
 
   <div id='myRibbon2' class='ribbon' style='width: 90`%; background:#1b1814' onwheel="wheelEvent(event)">`n
@@ -1934,7 +1927,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
     <a id='mySize' style='%x5%' onmousedown="inca('Size', filt)">Size</a>`n
     <a id='myAlpha' style='%x2%' onmousedown="inca('Alpha', filt)">Alpha</a>`n
     <a id='myType' style='%x6%' onmousedown="inca('Type', filt)">%type%</a>`n
-    <a id='myThumbs' onmouseout='setWidths(1,1000)' onmouseup="inca('View',0)">Thumb</a>`n 
+    <a id='myThumbs' onmouseup="inca('View',0)">Thumb</a>`n 
     <a id='myWidth'>Width</a></div></div></div>`n`n
 <div id='myMask' class="mask" onwheel="wheelEvent(event)"></div>`n`n
 
@@ -1945,17 +1938,17 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
       htm = %header%%body%%script%`n</body>`n</html>`n
       FileDelete, %inca%\cache\html\%folder%.htm
       FileAppend, %htm%, %inca%\cache\html\%folder%.htm, UTF-8
-      FileDelete, %inca%\cache\html\temp.txt				; server polling file
       htm = %server%%inca%\cache\html\%folder%.htm
       StringReplace, htm, htm, \,/, All
       if silent
         return
+      FileDelete, %inca%\cache\html\temp.txt				; server polling file
       if (!incaTab || !WinExist("ahk_group Browsers") || click=="MButton")
         run, %htm%
       else if (incaTab == folder) 
         send {F5}
       else if InStr(server, "http:")					; use http://
-        FileAppend, %folder%.htm, %inca%\cache\html\temp.txt, UTF-8	; for server polling
+        FileAppend, %htm%, %inca%\cache\html\temp.txt, UTF-8
       else								; use file://
         {
         clp := clipboard
@@ -1975,7 +1968,6 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
       Loop, 30								; wait until page loaded
         {
         WinGetTitle, title, A
-
         If InStr(title, incaTab)
           break
         Sleep, 100
@@ -1984,7 +1976,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
       }
 
 
-    SpoolList(i, j, input, start)					; spool sorted media files into web page
+    mediaList(j, input, start)						; spool sorted media files into web page
         {
         Critical
         poster =
@@ -2084,7 +2076,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
       if listView
         mediaList = %mediaList%%fold%<table onmouseover='overThumb(%j%)'`n onmouseout="thumb%j%.style.opacity=0; thumb.src=null">`n <tr id='entry%j%' data-params='%type%,%start%,%dur%,%size%' onmouseenter='if (gesture) sel(%j%)'>`n <td>%ext%`n <video id='thumb%j%' class='thumb2' data-alt-src="%server%%src%"`n %poster%`n preload=%preload% muted loop type="video/mp4"></video></td>`n <td>%size%</td>`n <td style='min-width: 6em'>%durT%</td>`n <td>%date%</td>`n  <td><div id='myFavicon%j%' class='favicon' style='position:absolute; text-align: left; translate:1.2em -0.8em'>%favicon%</div></td>`n <td style='width: 70vw'><input id="title%j%" class='title' style='opacity: 1; transition: 0.6s' onmouseover='overText=1' autocomplete='off' onmouseout='overText=0; Click=0' type='search' value='%media_s%' oninput="renamebox=this.value; lastMedia=%j%"></td>`n %fo%</tr></table>%caption%<span id='cues%j%' style='display: none'>%cues%</span>`n`n
 
-      else mediaList = %mediaList%<div id="entry%j%" class='entry' data-params='%type%,%start%,%dur%,%size%'>`n <input id='title%j%' class='title' style='text-align: center' type='search'`n value='%media_s%'`n oninput="renamebox=this.value; lastMedia=%j%"`n onmouseover="overText=1; if((x=this.value.length/2) > view) this.style.width=x+'em'"`n onmouseout="overText=0; this.style.width='100`%'">`n <video id="thumb%j%" class='thumb' onmouseenter='overThumb(%j%); if (gesture) sel(%j%)'`n onmouseup='if(gesture)getParameters(%j%)' onmouseout='thumb.src=null' data-alt-src="%server%%src%"`n %poster%`n preload=%preload% loop muted type='video/mp4'></video>`n <span id='myFavicon%j%' onmouseenter='overThumb(%j%)' class='favicon'>%favicon%</span>`n %noIndex%`n <span id='cues%j%' style='display: none'>%cues%</span></div>`n %caption%`n
+      else mediaList = %mediaList%<div id="entry%j%" class='entry' data-params='%type%,%start%,%dur%,%size%'>`n <span id='myFavicon%j%' onmouseenter='overThumb(%j%)' class='favicon'>%favicon%</span>`n <input id='title%j%' class='title' type='search'`n value='%media_s%'`n oninput="renamebox=this.value; lastMedia=%j%"`n onmouseover="overText=1"`n onmouseout="overText=0">`n <video id="thumb%j%" class='thumb' onmouseenter='overThumb(%j%); if (gesture) sel(%j%)'`n onmouseup='if(gesture)getParameters(%j%)' onmouseout='thumb.src=null' data-alt-src="%server%%src%"`n %poster%`n preload=%preload% loop muted type='video/mp4'></video>`n %noIndex%`n <span id='cues%j%' style='display: none'>%cues%</span></div>`n %caption%`n
       }
 
 
@@ -2128,8 +2120,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
       else Loop, Parse, lastSelect, `,
        if A_LoopField
         {
-        ix := Abs(A_Loopfield) + Setting("Page Size") * (page - 1)
-        FileReadLine, str, %inca%\cache\temp\%ix_folder%.txt, Abs(ix)
+        FileReadLine, str, %inca%\cache\temp\%ix_folder%.txt, A_LoopField
         entry := StrSplit(str, "/").2 . "|" . Round(StrSplit(str, "/").4,1)	; src | seek
         source := StrSplit(str, "/").2
         if InStr(el_id, "Index")

@@ -1,12 +1,15 @@
 
+// make thumb width landscape thinner and portrait shorter by clipping so thumb layout improves
+// check txt files again for | in past
+// startup getbrowser
+// text thumb title pos
+// title width lview
+// losing txt scroll on return
 
   let wheel = 0								// wheel count
   let wheelDir = 0		 					// wheel direction
   let index = 1								// thumb index (e.g. thumb14)
-  let view = 14								// thumb size (em)
   let listView = 0							// list or thumb view
-  let page = 1								// html media page
-  let pages = 1								// how many htm pages of media
   let filt = 0								// media list filter
   let playlist								// full .m3u filepath
   let captions = 0							// captions enabled
@@ -46,7 +49,7 @@
   let Xref = 0								// click cursor xy
   let Yref = 0
   let timout = 0							// -- every 94mS  eg for hide cursor
-  let block = 0								// block wheel timer
+  let block = 0								// block timer events
   let aspect = 1							// media width to height ratio
   let mediaX = 0							// centre of myPlayer
   let mediaY = 0
@@ -57,6 +60,8 @@
   let observer								// see if myPlayer is visible
   let lastLine = 0							// last addMedia event
   let pitch = 0								// default pitch
+  let loadMore = 0							// continuous scrolling
+
 
   let srt = document.createElement('div')				// . txt or subtitle element
   let entry = document.createElement('div')				// dummy thumb container
@@ -136,7 +141,7 @@
         || (favicon && favicon.matches(':hover')))) 
         || (overMedia && thumb.src.endsWith('.pdf'))) {Click=0; inca('Notepad',id,index); return}}
       if (!longClick) {
-if (playing && type =='image') {closePlayer(); return}
+        if (playing && type =='image') {closePlayer(); return}
         if (id == 'mySelect') {if (myTitle.value) {sel(index)} else selectAll(); return}
         if (id == 'mySkinny') {updateCue('skinny',1); return}
         if (id == 'mySpeed') {updateCue('rate',1); return}
@@ -239,10 +244,7 @@ if (playing && type =='image') {closePlayer(); return}
     if (wheel < block) return
     block=100
     let wheelUp = wheelDir * e.deltaY > 0
-    if (id=='myPage') {							// htm page
-      if (wheelUp && page<pages) page++
-      else if (!wheelUp && page>1) page--}
-    else if (id=='myType'||id=='myAlpha'||id=='myDate'||id=='mySize'||id=='myDuration'||id=='mySearch') {
+    if (id=='myType'||id=='myAlpha'||id=='myDate'||id=='mySize'||id=='myDuration'||id=='mySearch') {
       if (wheelUp) filt++ 
       else if (filt) filt--						// filter
       if ((id=='myAlpha' || id=='mySearch') && filt > 26) filt=26
@@ -259,11 +261,14 @@ if (playing && type =='image') {closePlayer(); return}
       pitch = 1*pitch.toFixed(0)
       setPitch(pitch)}
     else if (id=='myThumbs') { 						// thumb size
-      let x=view; let z=wheel/1500
-      if (x<98 && wheelUp) x *= 1+z
-      else if (!wheelUp) x /= 1+z
-      if (x<8) x=8
-      view=x; settings.view = String(x); localStorage.setItem(folder, JSON.stringify(settings)); setWidths(index,36)
+      let z=wheel/1500
+      let view = settings.view
+      if (view < 98 && wheelUp) view *= 1+z
+      else if (!wheelUp) view /= 1+z
+      if (view < 8) view = 8
+      settings.view = String(view)
+      myView.style.setProperty('--max-size', view + 'em')
+      localStorage.setItem(folder, JSON.stringify(settings))
       block=8}
     else if (!playing && id=='myWidth') {				// page width
       let x = 1*myView.style.width.slice(0,-2); let z=wheel/2000
@@ -311,6 +316,10 @@ if (playing && type =='image') {closePlayer(); return}
     if (myNav.style.display) el = myPic
     else if (!playing) el = thumb
     rect = el.getBoundingClientRect()
+    let trigger = 1600
+    if (listView) trigger = 1200
+      if (myContent.scrollHeight && myContent.scrollTop && myContent.scrollTop > myContent.scrollHeight - trigger)
+        if (!loadMore) {loadMore = 1; inca('Page')}
     if (!myNav.matches(':hover')) myNav.style.display = null
     else if (!myTitle.value || type=='document') myNav.style.width = 84 + 'px'
     else {myNav.style.width = rect.width + 100 + 'px'; if (myTitle.matches(':hover')) myPic.style.display='block'}
@@ -330,7 +339,6 @@ if (playing && type =='image') {closePlayer(); return}
     if ((listView && thumb.style.opacity==1) || favicon.matches(':hover')) overMedia = index
     else if (overMedia && myNav.style.display || myPlayer.matches(':hover') || thumb.matches(':hover')) overMedia = index
     else overMedia = 0
-    if (pages > 1) myPage.innerHTML = page+' of '+pages
     mySkinny.innerHTML = null
     mySkinny.style.color = null
     mySpeed.innerHTML = defRate === 1 ? 'Speed' : 'Speed ' + defRate
@@ -490,8 +498,10 @@ if (playing && type =='image') {closePlayer(); return}
     messages += '#'+command+'#'+value+'#'+select+'#'+address
     if (document.querySelector('link[rel="icon"]').href.includes('file:///')) navigator.clipboard.writeText(messages)
     else {fetch('http://localhost:3000/generate-html', {method: 'POST', headers: {'Content-Type': 'text/plain'}, body: messages})
-      .then(response => {if (response.status === 204) {return} return response.json()})
-      .then(data => {window.location.href = encodeURI(`http://localhost:3000${data.url}`)})}
+      .then(response => {if (response.status === 204) {return} return response.text()})
+      .then(data => { if (data) {
+        if (command=='Page') {myView.insertAdjacentHTML('beforeend', data); loadMore=0; for (n=1; getParameters(n); n++) {}}
+        else window.location.href = data}})}
     messages=''}
 
 
@@ -515,13 +525,12 @@ if (playing && type =='image') {closePlayer(); return}
     let x = Number(thumb.style.rate); if (x) rate = x			// custom css holds edits
     x = Number(thumb.style.skinny); if (x) skinny = x
     thumb.style.transform='scale('+skinny+',1)' 			// set thumb width
-    if (index) setThumb()   						// src, thumbSheet
+    setThumb()   							// src, thumbSheet
     return 1}
 
 
-  function globals(pg, ps, fo, wd, mu, pa, so, fi, lv, se, pl, ix) {	// import globals from inca.exe
-    folder=fo; page=pg; pages=ps; filt=fi; wheelDir=wd;
-    defPause=pa; listView=lv; selected=se; playlist=pl
+  function globals(fo, wd, mu, pa, so, fi, lv, se, pl, ix) {		// import globals from inca.exe
+    folder=fo; filt=fi; wheelDir=wd; defPause=pa; listView=lv; selected=se; playlist=pl
     if (mu=='yes') {defMute=1} else defMute=0
     settings = JSON.parse(localStorage.getItem(folder) || '{}')
     settings.pageWidth = (isNaN(settings.pageWidth) || settings.pageWidth > innerWidth) ? '600' : settings.pageWidth
@@ -529,34 +538,22 @@ if (playing && type =='image') {closePlayer(); return}
     settings.defRate = (isNaN(settings.defRate) || settings.defRate < 0.2 || settings.defRate > 5) ? '1' : settings.defRate
     settings.pitch = (isNaN(settings.pitch) || settings.pitch < -2 || settings.pitch > 2) ? '0' : settings.pitch
     myView.style.width = parseFloat(settings.pageWidth) + 'px'
-    view = parseFloat(settings.view)
+    myView.style.setProperty('--max-size', settings.view + 'em')
     defRate = parseFloat(settings.defRate)
     pitch = parseFloat(settings.pitch)
     filter('my'+so)							// show filter heading in red
     for (x of selected.split(',')) {
-      if(el=document.getElementById('title'+x)) {el.style.outline = '0.1px solid red'; el.style.opacity=1}}			
-    for (index=0, n=1; getParameters(n); n++) {}			// process null cues (eg. skinny, start, rate)
+      if(el=document.getElementById('title'+x)) {el.style.outline = '0.1px solid red'; el.style.opacity=1}}
+    for (n=1; getParameters(n); n++) {}					// process null cues (eg. skinny, start, rate)		
     if (!ix) index=1
     else index=ix
-    lastMedia=ix
-    setWidths(1,1000)							// set htm thumb widths and heights 
+    lastMedia=ix							// set htm thumb widths and heights 
     getParameters(index)						// initialise current media
     if (ix && title) {							// eg. after switch thumbs/listview
       title.style.opacity=1						// highlight thumb
       title.style.color='pink'
       title.scrollIntoView()						// scroll to thumb
       myContent.scrollBy(0,-400)}}
-
-
-  function setWidths(start, qty) {					// set thumb sizes in htm
-    if (listView) return
-    if (start<16) start=1
-    for (i=start; el=document.getElementById('entry'+i); i++) {		// until end of list
-      if (i-start>qty) break
-      el2 = document.getElementById('thumb'+i)
-      x = el2.offsetWidth/el2.offsetHeight				// for portrait/landscape thumb layout
-      if (x>1) el.style.width=view+'em'
-      else el.style.width=x*view+'em'}}
 
 
   function myCues(time) { 						// media scrolls, speed, skinny, pauses etc.

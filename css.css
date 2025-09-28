@@ -17,6 +17,71 @@
   video::-internal-media-controls-overlay-cast-button {display: none}		/* block google casting	*/
 
 
+
+.title {					/* thumb title */
+  display: block;
+  position: relative;
+  background: inherit;
+  box-sizing: border-box;
+  color: #826858;
+  font-size: 1em;
+  font-family: inherit;
+  width: auto;
+  margin: auto;
+  max-width: calc(var(--max-size) * 0.45);
+  outline: none;
+  white-space: nowrap;
+  outline-offset: -1px;
+  height: 1.4em;
+  border: none;
+  transition: 0.3s;
+  border-radius: 1em}
+
+.entry {
+  max-width: var(--max-size);
+  max-height: var(--max-size);
+  width: fit-content;
+  display: inline-block;
+  margin: auto;
+  padding: 0.3em;
+  margin-bottom: 1em;
+  overflow: hidden;
+  position: relative;
+  box-sizing: border-box;}
+
+.thumb {
+  --start;					/* java variables for each thumb */
+  --rate;
+  --skinny;
+  --posted;					/* edits sent to inca	*/
+  --media;
+  max-width: var(--max-size);
+  max-height: var(--max-size);
+  width: auto;
+  height: auto; // calc(var(--max-size) * 0.9);
+  object-fit: contain;
+  display: inline-block;
+  border: 1px solid transparent;
+  border-radius: 0.6em;}
+
+.myview {
+  --max-size;
+  position: relative;
+  display: flex;
+  margin: auto;
+  justify-content: space-around;
+  flex-wrap: wrap;
+  top: 200px;
+  padding-bottom: 50vh}
+
+.mycontent {
+  display: block;
+  position: absolute;
+  margin: auto;
+  overflow-x: hidden; 
+  height: 100%;
+  width: 100%}
+
 .pic {							/* context menu pic */
   display: none;
   position: absolute;
@@ -30,17 +95,17 @@
 
 .favicon {
   display: block;
-  translate: 0 -0.6em;
+  translate: -0.8em 0.3em;
   color: pink;
   width: 2.5em;
-  line-height: 1.1em;
+  height:0;
   font-size: 0.7em;
   opacity: 0.7;
   padding: 0.1em;
   white-space: nowrap; 
   border-radius: 1em;
   transition: 0.4s}
-.favicon:hover {background:#00000080; color: red}
+.favicon:hover {color: red}
 
 .caption {					/* srt caption or txt container  */
   position: fixed;
@@ -85,45 +150,6 @@
   border-radius: 1.6em}
 .capButton:hover {color: red; transform: scale(1.8,1.8)}
 .capButton:active {border: 0.1px solid transparent; background:red; transform: scale(1,1)}
-
-.entry {
-  position: relative;
-  border-radius: 1em;
-  padding: 0.5%;
-  padding-bottom: 3em}
-
-.title {					/* thumb title */
-  display: block;
-  position: relative;
-  white-space: nowrap;
-  background: inherit;
-  box-sizing: border-box;
-  color: #826858;
-  font-size: 1em;
-  font-family: inherit;
-  width: 100%;
-  outline: none;
-  outline-offset: -1px;
-  height: 1.4em;
-  border: none;
-  transition: 0.3s;
-  border-radius: 1em}
-.title:hover {color: pink; background:#2b2824; transition: 1.4s; z-index:999; overflow: visible; font-size:1.1em}
-
-.thumb {					/* htm thumbs */
-  --start;					/* java variables for each thumb */
-  --rate;
-  --skinny;
-  --posted;					/* edits sent to inca	*/
-  --media;
-  box-sizing: border-box;
-  border: 1px solid transparent;
-  position: relative;
-  max-width: 100%;
-  max-height: 100%;
-  outline: none;
-  margin: auto;
-  border-radius: 0.6em}
 
 .thumb2 {					/* list view pop up thumbs */
   position: absolute;
@@ -187,23 +213,6 @@
   border: 2px solid transparent;
   opacity: 0;
   border-radius: 1em}
-
-.mycontent {
-  display: block;
-  position: absolute;
-  margin: auto;
-  overflow-x: hidden; 
-  height: 100%;
-  width: 100%}
-
-.myview {
-  position: relative;
-  display: flex;
-  margin: auto;
-  justify-content: space-around;
-  flex-wrap: wrap;
-  top: 200px;
-  padding-bottom: 70vh}
 
 .ribbon {					/* menu, fol, fav, search ... */
   position: relative;
