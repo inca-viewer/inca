@@ -1,10 +1,11 @@
 
 // make thumb width landscape thinner and portrait shorter by clipping so thumb layout improves
-// check txt files again for | in past
-// startup getbrowser
 // text thumb title pos
 // title width lview
-// losing txt scroll on return
+// losing txt scroll pos on return
+// make Type on ribbon down arrow or ...
+// check create poster from pictures if fav exist and if not
+
 
   let wheel = 0								// wheel count
   let wheelDir = 0		 					// wheel direction
@@ -60,8 +61,7 @@
   let observer								// see if myPlayer is visible
   let lastLine = 0							// last addMedia event
   let pitch = 0								// default pitch
-  let loadMore = 0							// continuous scrolling
-
+  let list = 0								// list size (last index +1)
 
   let srt = document.createElement('div')				// . txt or subtitle element
   let entry = document.createElement('div')				// dummy thumb container
@@ -317,16 +317,16 @@
     else if (!playing) el = thumb
     rect = el.getBoundingClientRect()
     let trigger = 1600
-    if (listView) trigger = 1200
-      if (myContent.scrollHeight && myContent.scrollTop && myContent.scrollTop > myContent.scrollHeight - trigger)
-        if (!loadMore) {loadMore = 1; inca('Page')}
+    if (listView) trigger = 1200					// continuous scrolling
+    if (block<30 && list <= myList.innerHTML && myContent.scrollHeight && myContent.scrollTop)
+      if (myContent.scrollTop > myContent.scrollHeight - trigger) inca('More')
     if (!myNav.matches(':hover')) myNav.style.display = null
     else if (!myTitle.value || type=='document') myNav.style.width = 84 + 'px'
     else {myNav.style.width = rect.width + 100 + 'px'; if (myTitle.matches(':hover')) myPic.style.display='block'}
     if (!myNav.style.display) {zoom=1; myTitle.value = (overMedia || playing) ? title.value : ''}
     xm = (xpos - rect.left) / rect.width
     ym = (ypos - rect.top) / rect.height
-    if (block>=30) block-=10						// wheel blocking 
+    if (block>=30) block-=10						// wheel/timer blocking 
     if (wheel>=10) wheel-=10
     if (timout) timout--
     navButtons()
@@ -480,6 +480,7 @@
 
 
   function inca(command,value,select,address) {				// send java messages to inca.exe
+    block = 60								// temp block continuous scrolling
     if (editing && command != 'Find') {					// text or caption has been edited
       messages += '#Scroll#'+srt.scrollTop.toFixed(0)+'|'+srt.offsetWidth+'|'+srt.offsetHeight+'#'+editing+'#'
       let x = document.getElementById('thumb'+editing).dataset.altSrc + '|' + document.getElementById('srt'+editing).value
@@ -496,12 +497,11 @@
     if (command=='Delete' || command=='Rename' || value.toString().includes('|myMp4') || (select && command=='Path')) {
       for (x of select.split(',')) if (el=document.getElementById('thumb'+x)) el.remove()}	// release media
     messages += '#'+command+'#'+value+'#'+select+'#'+address
-    if (document.querySelector('link[rel="icon"]').href.includes('file:///')) navigator.clipboard.writeText(messages)
-    else {fetch('http://localhost:3000/generate-html', {method: 'POST', headers: {'Content-Type': 'text/plain'}, body: messages})
+    fetch('http://localhost:3000/generate-html', {method: 'POST', headers: {'Content-Type': 'text/plain'}, body: messages})
       .then(response => {if (response.status === 204) {return} return response.text()})
       .then(data => { if (data) {
-        if (command=='Page') {myView.insertAdjacentHTML('beforeend', data); loadMore=0; for (n=1; getParameters(n); n++) {}}
-        else window.location.href = data}})}
+        if (command=='More') {myView.insertAdjacentHTML('beforeend', data); for (list=1; getParameters(list); list++) {}}
+        else window.location.href = data}})
     messages=''}
 
 
@@ -544,7 +544,7 @@
     filter('my'+so)							// show filter heading in red
     for (x of selected.split(',')) {
       if(el=document.getElementById('title'+x)) {el.style.outline = '0.1px solid red'; el.style.opacity=1}}
-    for (n=1; getParameters(n); n++) {}					// process null cues (eg. skinny, start, rate)		
+    for (list=1; getParameters(list); list++) {}			// process null cues (eg. skinny, start, rate)		
     if (!ix) index=1
     else index=ix
     lastMedia=ix							// set htm thumb widths and heights 

@@ -192,13 +192,13 @@
   max-height: 65em;				/* critical	*/
   height: 90vw;
   width: 7em}
-.innerPanel:hover {overflow-y: scroll}
+.innerPanel:hover {overflow-y: scroll; width:7.01em}	/* firefox bug	*/
 
 .p2 {						/* panel entries */
   overflow: hidden;
   line-height: 1.5em;
   white-space: nowrap}
-.p2:hover {overflow: visible}
+ .p2:hover {overflow: visible}
 
 .fade {						/* between menu and scrolled thumbs */
   position: absolute;

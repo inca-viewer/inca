@@ -84,33 +84,22 @@
         Global mute				; global mute
         Global start := 0			; default start time
         Global ctime				; last current time
-        Global server := "file:///"		; default no server
         Global lastIndex := 0			; continuous scrolling
+        Global server := "http://localhost:3000/"
 
 
     main:
       initialize()				; sets environment then waits for mouse, key or clipboard events
       WinActivate, ahk_group Browsers
-      IfExist, %inca%\cache\apps\server.js
-        server := "http://localhost:3000/"
-      if InStr(server, "http:")			; use Node server for messaging
-        {
-        Process, Close, node.exe
-        sleep 200
-        Run, cmd.exe /c cd /d "C:\inca\cache\apps" && node server.js,, Hide
-        default = #Path###%profile%\Pictures\
-        if GetBrowser()				; eg chrome, firefox etc
-          send {F5}
-        else messages(default)			; create and open Pictures.htm
-        }
-      else					; use ClipBoard for messaging
-        {
-        WinActivate, ahk_group Browsers
-        sleep 100
-        default = #Path###%profile%\Pictures\
-        GetBrowser()
-        Messages(default)			; create and opens Pictures.htm
-        }
+      Process, Close, node.exe
+      sleep 200
+      Run, cmd.exe /c cd /d "C:\inca\cache\apps" && node server.js,, Hide
+      startPage = #Path###%profile%\Pictures\
+      if GetBrowser()
+        startPage = #Path###%path%
+      if playlist
+        startPage = #Path###%playlist%
+      messages(startPage)			; create and open Pictures.htm
       SetTimer, TimedEvents, 50			; every 50mS - process server requests
       SetTimer, SlowTimer, 1000, -2		; show ffmpeg is processing
       return
@@ -251,8 +240,8 @@
           Search()
         else if (command == "Notepad")					; open media cues in notepad
           Notepad()
-        else if (command == "Page")					; continuous scrolling
-            RenderPage(1)
+        else if (command == "More")					; continuous scrolling
+          reload := 1
         else if (command == "Reload")					; reload web page
           {
           index := value
@@ -279,7 +268,7 @@
           listView^=1
           click =							; clear middle click
           index := value						; for scrollToIndex() in java
-          reload := 2
+          reload := 1
           }
         else if (command == "addCue")					; add skinny, speed, goto at scroll
           {
@@ -400,11 +389,6 @@
             folder := incaTab
             GetTabSettings(1)						; get htm parameters
             FileRead, list, %inca%\cache\temp\%incaTab%.txt
-            if !list
-              {
-              CreateList(1)
-              RenderPage(1)						; silent refresh htm
-              }
             }
         return incaTab
         }
@@ -462,7 +446,7 @@
           CreateList(0)
         if reload
           RenderPage(0)
-        if (!reload && command != "Page")
+        if (!reload && command != "More")
           {
           FileDelete, %inca%\cache\html\temp.txt
           FileAppend,, %inca%\cache\html\temp.txt			; stop server waiting
@@ -470,13 +454,12 @@
         longClick =
         selected = 
         Gui PopUp:Cancel
-        if InStr(server, "http:")
-          if (A_TickCount - serverTimout > 9999)			; server timout
-            {
-            Run, %server%inca/cache/html/%folder%.htm
-            sleep 600
-            WinActivate, ahk_group Browsers
-            }
+        if (A_TickCount - serverTimout > 9999)				; server timed out
+          {
+          Run, %server%inca/cache/html/%folder%.htm
+          sleep 600
+          WinActivate, ahk_group Browsers
+          }
         }
 
 
@@ -1068,12 +1051,6 @@
 
     MoveFiles()								; or playlist .m3u entries
         {
-        if longClick
-          PopUp("Copying",500,0,0)
-        else
-          {
-          PopUp("Moving",500,0,0)
-          }
         if (A_TickCount < timer || !GetKeyState("LButton", "P"))
           longClick =
         else longClick = true
@@ -1664,7 +1641,7 @@
         foldr =
         menu_item =
         mediaList =
-        if (command != "Page")
+        if (command != "More")
           lastIndex := 0
         type = video							; prime for list parsing
         page_s := Round(Setting("Page Size"),0)
@@ -1679,7 +1656,7 @@
             mediaList(A_Index, source, start)				; append mediaList
             }
         lastIndex += page_s
-        if (command == "Page")						; continuous scrolling
+        if (command == "More")						; continuous scrolling
           {
           FileDelete, %inca%\cache\html\temp.txt			; server polling file
           if (lastIndex - listSize < page_s && listSize > page_s)
@@ -1909,7 +1886,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
   <div id='myPanel' class='myPanel'><div class='panel'><div class='innerPanel'>`n`n%panelList%`n</div></div>`n`n
 
   <div id='myRibbon1' class='ribbon' style='font-size: 1.2em'>`n
-    <a style='color:red; min-width:5.8em; font-weight:bold'>%listSize%</a>`n
+    <a id='myList' style='color:red; min-width:5.8em; font-weight:bold'>%listSize%</a>`n
     <a id='myMusic' style='max-width:3em; %x22%' onmousedown="inca('Path','','','music|1')" onmouseover="setTimeout(function() {if(myMusic.matches(':hover'))Music.scrollIntoView()},200)">&#x266B;</a>`n
     <a id='mySub' style='max-width:1.3em; font-size:0.7em; %x8%' onmousedown="inca('Recurse')" onmouseover="setTimeout(function() {if(mySub.matches(':hover'))Sub.scrollIntoView()},200)">%subs%</a>`n
     <a id='myFol' style='%x21%' onmousedown="inca('Path','','','fol|1')" onmouseover="setTimeout(function() {if(myFol.matches(':hover'))Fol.scrollIntoView()},200)">&#x1F4BB;&#xFE0E;</a>`n
@@ -1947,21 +1924,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
         run, %htm%
       else if (incaTab == folder) 
         send {F5}
-      else if InStr(server, "http:")					; use http://
-        FileAppend, %htm%, %inca%\cache\html\temp.txt, UTF-8
-      else								; use file://
-        {
-        clp := clipboard
-        clipboard := htm
-        send, ^l
-        sleep 54
-        send, {BS}
-        sleep 24
-        send, ^v
-        Send, {Enter}
-        sleep 24
-        clipboard := clp
-        }
+      else FileAppend, %htm%, %inca%\cache\html\temp.txt, UTF-8		; trigger node server
       sleep 200
       WinActivate, ahk_group Browsers
       incaTab := folder
@@ -2130,9 +2093,8 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
         }
       CreateList(1)
       RenderPage(0)
-      if InStr(server, "http:")
-        if (A_TickCount - serverTimout > 9999)		; server timout
-          send, {F5}
+      if (A_TickCount - serverTimout > 9999)		; server timout
+        send, {F5}
       return
 
 
@@ -2204,26 +2166,14 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
         WinGet, cur, ID, ahk_id %id%
         WinGet, desk, ID , ahk_class Progman
         if incaTab
-          if InStr(server, "http:")
+          {
+          FileRead, messages, *P65001 C:\inca\cache\html\in.txt		; utf codepage
+          if messages
             {
-            FileRead, messages, *P65001 C:\inca\cache\html\in.txt	; utf codepage
-            if messages
-              {
-              FileDelete, %inca%\cache\html\in.txt
-              Messages(messages)
-              }
+            FileDelete, %inca%\cache\html\in.txt
+            Messages(messages)
             }
-          else								; non server file:///
-            {
-            x := StrLen(Clipboard)
-            y := SubStr(Clipboard, 1, 1)
-            if (y=="#" && x>4 && StrSplit(clipboard,"#").MaxIndex()>4)	; very likely is a java message
-              {
-              Messages(Clipboard)
-              ClipBoard := lastClip
-              }
-            else lastClip := Clipboard
-            }
+          }
         Gui, background:+LastFound
         Gui, background:Color, Black
         if incaTab
