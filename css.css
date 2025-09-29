@@ -17,70 +17,61 @@
   video::-internal-media-controls-overlay-cast-button {display: none}		/* block google casting	*/
 
 
-
 .title {					/* thumb title */
   display: block;
-  position: relative;
-  background: inherit;
+  position: absolute;
+  top: -1em;
+  left: 1.3em;
+  padding: 0.3em;
+  white-space: nowrap;
+  background: transparent;
   box-sizing: border-box;
   color: #826858;
   font-size: 1em;
   font-family: inherit;
-  width: auto;
-  margin: auto;
-  max-width: calc(var(--max-size) * 0.45);
+  width: 75%;
   outline: none;
-  white-space: nowrap;
   outline-offset: -1px;
   height: 1.4em;
   border: none;
+  margin: auto;
   transition: 0.3s;
   border-radius: 1em}
+.title:hover {color: pink; background:#2b2824; width:300%; transition: 1.4s; z-index:999; overflow: visible; font-size: 1.2em}
 
 .entry {
   max-width: var(--max-size);
   max-height: var(--max-size);
-  width: fit-content;
-  display: inline-block;
-  margin: auto;
-  padding: 0.3em;
-  margin-bottom: 1em;
-  overflow: hidden;
   position: relative;
-  box-sizing: border-box;}
+  border-radius: 1em;
+  overflow: visible;
+  padding: 0.5%;
+  padding-bottom: 2.6em}
 
-.thumb {
+.thumb {					/* htm thumbs */
   --start;					/* java variables for each thumb */
   --rate;
   --skinny;
   --posted;					/* edits sent to inca	*/
   --media;
+  box-sizing: border-box;
+  border: 1px solid transparent;
+  position: relative;
   max-width: var(--max-size);
   max-height: var(--max-size);
-  width: auto;
-  height: auto; // calc(var(--max-size) * 0.9);
-  object-fit: contain;
-  display: inline-block;
-  border: 1px solid transparent;
-  border-radius: 0.6em;}
+  outline: none;
+  border-radius: 0.6em}
 
-.myview {
-  --max-size;
-  position: relative;
-  display: flex;
-  margin: auto;
-  justify-content: space-around;
-  flex-wrap: wrap;
-  top: 200px;
-  padding-bottom: 50vh}
-
-.mycontent {
-  display: block;
+.thumb2 {					/* list view pop up thumbs */
   position: absolute;
+  pointer-events: none;
+  translate: 2em;
+  max-width: 12em;
+  max-height: 11em;
+  border-radius: 1em;
+  padding: 0.3em;
   margin: auto;
-  overflow-x: hidden; 
-  height: 100%;
-  width: 100%}
+  opacity: 0}
 
 .pic {							/* context menu pic */
   display: none;
@@ -95,12 +86,16 @@
 
 .favicon {
   display: block;
-  translate: -0.8em 0.3em;
-  color: pink;
-  width: 2.5em;
+  position: absolute;
+  direction: rtl;
+  overflow: visible;
+  width: 1em;
   height:0;
+  top: -1.3em;
+  left: 0.8em;
+  color: pink;
   font-size: 0.7em;
-  opacity: 0.7;
+  opacity: 0.9;
   padding: 0.1em;
   white-space: nowrap; 
   border-radius: 1em;
@@ -151,17 +146,6 @@
 .capButton:hover {color: red; transform: scale(1.8,1.8)}
 .capButton:active {border: 0.1px solid transparent; background:red; transform: scale(1,1)}
 
-.thumb2 {					/* list view pop up thumbs */
-  position: absolute;
-  pointer-events: none;
-  translate: 2em;
-  max-width: 12em;
-  max-height: 11em;
-  border-radius: 1em;
-  padding: 0.3em;
-  margin: auto;
-  opacity: 0}
-
 .myPanel {
   position: fixed;
   left: 50%; 
@@ -192,13 +176,13 @@
   max-height: 65em;				/* critical	*/
   height: 90vw;
   width: 7em}
-.innerPanel:hover {overflow-y: scroll; width:7.01em}	/* firefox bug	*/
+.innerPanel:hover {overflow-y: scroll}
 
 .p2 {						/* panel entries */
   overflow: hidden;
   line-height: 1.5em;
   white-space: nowrap}
- .p2:hover {overflow: visible}
+.p2:hover {overflow: visible}
 
 .fade {						/* between menu and scrolled thumbs */
   position: absolute;
@@ -213,6 +197,25 @@
   border: 2px solid transparent;
   opacity: 0;
   border-radius: 1em}
+
+.mycontent {
+  display: block;
+  position: absolute;
+  margin: auto;
+  overflow-x: hidden; 
+  height: 100%;
+  width: 100%}
+
+.myview {
+  --max-size;
+  position: relative;
+  display: flex;
+  margin: auto;
+  justify-content: space-around;
+  flex-wrap: wrap;
+  top: 200px;
+padding-top:1em;
+  padding-bottom: 70vh}
 
 .ribbon {					/* menu, fol, fav, search ... */
   position: relative;

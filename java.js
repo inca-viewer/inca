@@ -1,11 +1,4 @@
-
-// make thumb width landscape thinner and portrait shorter by clipping so thumb layout improves
-// text thumb title pos
-// title width lview
-// losing txt scroll pos on return
-// make Type on ribbon down arrow or ...
-// check create poster from pictures if fav exist and if not
-
+// indexing wrong folder after transcode
 
   let wheel = 0								// wheel count
   let wheelDir = 0		 					// wheel direction
@@ -204,11 +197,11 @@
     observer = new IntersectionObserver(([entry]) => {if (!entry.isIntersecting) mediaX = mediaY = 500}).observe(myPlayer)
     if (pitch || myPlayer.context) {					// from pitch.js in inca\cache\apps
       setupContext(myPlayer); myPlayer.jungle.setPitchOffset(semiToneTranspose(pitch))}
-    myCues('scroll')							// scroll to last position in document
     playing=index
     block = 150
     setTimeout(function() {
       if (!captions && !thumbSheet && dur && !defPause && !cue) myPlayer.play()
+      myCues('scroll')							// scroll to last position in document
       if (lastClick) positionMedia(0.4)
       myPlayer.style.zIndex=Zindex
       myPlayer.style.opacity=1},100)}
@@ -345,13 +338,13 @@
     myPitch.innerHTML = pitch === 0 ? 'Pitch' : 'Pitch ' + pitch
     if (myTitle.value) {
       myFlip.innerHTML = 'Flip'
-      myTitle.value = title.value
+      myTitle.style.visibility = null
       mySelect.innerHTML = 'Select '+index
       mySelect.style.outline = myPlayer.style.outline = title.style.outline
       mySkinny.innerHTML = skinny === 1 ? 'Skinny' : `Skinny ${skinny.toFixed(2)}`
       mySkinny.style.color = skinny === 1 ? null : 'red'
       mySpeed.innerHTML = rate === 1 ? 'Speed' : `Speed ${rate.toFixed(2)}`}
-    else {mySelect.innerHTML = 'Select'; myFlip.innerHTML = mySelect.style.outline = null}
+    else {myTitle.style.visibility='hidden'; mySelect.innerHTML = 'Select'; myFlip.innerHTML = mySelect.style.outline = null}
     if (favicon.innerHTML.match('\u2764')) myFavorite.innerHTML='Fav &#x2764'
     else myFavorite.innerHTML='Fav'
     if (!seekBar()) myProgress.style.height = null
@@ -704,8 +697,8 @@
   function searchBox() {
     let text = window.getSelection().toString()
     if (renamebox) inca('Rename', renamebox, lastMedia)			// rename media
+    else if (!playing && text && (myInput.matches(':focus') || longClick)) inca('SearchBox','',index,myInput.value) // search media on pc
     else if (longClick && !gesture && overText) inca('Find', text)	// trigger browser find or osk
-    else if (!playing && (myInput.matches(':focus') || longClick)) inca('SearchBox','',index,myInput.value) // search media on pc
     myPlayer.pause(); longClick=0}
 
 
