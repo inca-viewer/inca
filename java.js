@@ -80,7 +80,7 @@
     longClick = gesture = 0
     Click = lastClick = e.button+1
     if (Click == 2) e.preventDefault()					// forward and back mouse buttons
-    timout=6; Xref=xpos; Yref=ypos
+    Xref=xpos; Yref=ypos
     clickTimer = setTimeout(function() {				// detect long click
       longClick = Click; clickEvent(e)},300)}
 
@@ -180,7 +180,7 @@
     if (lastClick==1) myPlayer.style.opacity = 0			// fade in player
     if (dur < 200 && !navStart && !playing && !playlist && !longClick && !favicon.textContent.includes('\u2764')) navStart=0
     else if (!navStart && !longClick) navStart = thumb.style.start
-    if (!thumbSheet) {myPlayer.poster=thumb.poster; myPlayer.currentTime = navStart}
+    if (!thumbSheet || type == 'image') {myPlayer.poster=thumb.poster; myPlayer.currentTime = navStart}
     if (playlist.match('/inca/music/')) myPlayer.muted=0
     else myPlayer.muted = defMute
     if (el=document.getElementById('title'+lastMedia)) el.style.color=null
@@ -196,9 +196,9 @@
     observer = new IntersectionObserver(([entry]) => {if (!entry.isIntersecting) mediaX = mediaY = 500}).observe(myPlayer)
     if (pitch || myPlayer.context) {					// from pitch.js in inca\cache\apps
       setupContext(myPlayer); myPlayer.jungle.setPitchOffset(semiToneTranspose(pitch))}
+    playing = index
     block = 150
-    playing=index
-    myCues('scroll')							// scroll to last position in document
+    myCues(1)								// scroll to last position in document
     if (captions && type != 'document') getTimestamps()
     setTimeout(function() {
       if (!captions && !thumbSheet && dur && !defPause && !cue) myPlayer.play()
@@ -211,7 +211,7 @@
   function mouseMove(e) {
     if (innerHeight==outerHeight) {xpos=e.screenX; ypos=e.screenY}	// fullscreen detection/offsets
     else {xpos=e.clientX; ypos=e.clientY}
-    timout=6
+    timout=12
     if (myNav.style.display) setPic()					// in context menu sets thumb sprite
     mySelected.style.left = xpos +30 +'px'
     mySelected.style.top = ypos -20 +'px'
@@ -283,14 +283,13 @@
       if (getParameters(index) && playing) Play()
       if (!thumbSheet) myPlayer.currentTime = thumb.style.start
       positionMedia(0); setPic()}
-    else if (dur && !thumbSheet && (!overMedia || yw>0.8)) {		// seek 
-      timout = 6
+    else if (dur && !thumbSheet && (!overMedia || yw>0.8)) {		// seek
       let interval = 0.1
       if (myPlayer.paused) interval = 0.0333
       if (wheelUp) myPlayer.currentTime += interval
       else if (!wheelUp) myPlayer.currentTime -= interval
       myPlayer.addEventListener('seeked', () => {block=20}, {once: true})
-      block=250}
+      timout=3; block=250}
     else if (!myNav.style.display) {					// zoom myPlayer
       let x=0; let y=0; let z=0
       if (overMedia) z=wheel/2000
@@ -349,7 +348,7 @@
     else {myTitle.style.visibility='hidden'; mySelect.innerHTML = 'Select'; myFlip.innerHTML = mySelect.style.outline = null}
     if (favicon.innerHTML.match('\u2764')) myFavorite.innerHTML='Fav &#x2764'
     else myFavorite.innerHTML='Fav'
-    if (!dur || !progressBar()) myProgress.style.display = null
+    if (!dur || !progressBar()) myProgress.style.opacity = null
     else myProgress.innerHTML = formatTime(dur)+' - '+formatTime(myPlayer.currentTime)
     let qty = selected.split(',').length - 1 || 1;
     if (selected) myDelete.innerHTML='Delete ' + qty
@@ -371,7 +370,7 @@
       if (captions && !overText && !editing || myPlayer.currentTime == navStart) for (let i = 0; i < timestamps.length; i++) {
         if (timestamps[i][0] > myPlayer.currentTime) {srt.scrollTo(0, timestamps[i-1][1]); break}}
       if (myPlayer.duration) dur = myPlayer.duration
-      else if ((type=='video' || type=='audio') && block<130) mySelected.innerHTML = 'media not found'
+      else if (!thumb.dataset.altSrc) mySelected.innerHTML = 'media not found'
       if (cues.innerHTML && !thumbSheet && type !='image') myCues(myPlayer.currentTime)}
     else {
       myMask.style.pointerEvents = null
@@ -401,9 +400,7 @@
     let cueW = rect.width * pos / dur
     if (myPic.matches(':hover')) {el = myPic; cueW = rect.width * xm}
     else if (Click || !playing || !timout) return
-    myProgress.style.display = 'block'
-    if (cue) myProgress.style.background = 'red'
-    else myProgress.style.background = null
+    myProgress.style.opacity = 0.8
     if (cue && cue <= pos) {
       cueX = rect.left + rect.width * cue / dur
       cueW = rect.width * (pos - cue) / dur
@@ -417,6 +414,9 @@
     else myProgress.style.top = (rect.top + rect.height - myProgress.offsetHeight) + 'px';
     myProgress.style.left = cueX + 'px'
     myProgress.style.width = cueW + 'px'
+    if (!playing && !myPic.matches(':hover')) myProgress.style.background = 'none'
+    else if (cue) myProgress.style.background = 'red'
+    else myProgress.style.background = null
     return 1}
 
 
@@ -514,7 +514,7 @@
     thumb.src = thumb.dataset.altSrc
     let params = entry.dataset.params.split(',')
     type = params[0]							// media type eg. video
-    thumb.style.start = Number(params[1])				// start time
+    thumb.style.start = Number(params[1]) + (thumb.style.start ? 0.04 : 0) // smoother start
     dur = Number(params[2]) || thumb.duration || 0			// duration
     size = Number(params[3])						// file size
     skinny = 1; rate = defRate						// reset before new cues read
@@ -557,8 +557,8 @@
     let x = cues.innerHTML.split(/[\r\n]/)
     for (k=0; k<x.length; k++) {					// process each line entry
       let el = x[k].split('|')						// time[0] cue[1] value[2] period[3]
-      if (el[1]=='scroll' && time=='scroll') {
-        if (type == 'document' && !srt.scrollTop) srt.scrollTo(0,el[2])	// scroll to text position
+      if (el[1]=='scroll') {
+        if (type == 'document' && time == 1) srt.scrollTo(0,el[2])	// scroll to text position once only
         srt.style.width = (el[3] < 160 ? 360 : el[3]) + 'px'
         srt.style.height = (el[4] < 60 ? 160 : el[4]) + 'px'}
       if (el[1] && 1*el[0] > time-0.1 && 1*el[0] < time+0.1) {
@@ -695,7 +695,7 @@
     thumb.style.opacity = 1
     if (!listView) {
       thumb.load()
-      thumb.currentTime = thumb.style.start + 0.04}}
+      thumb.currentTime = thumb.style.start}}
 
 
   function context(e) {							// right click context menu
@@ -715,7 +715,7 @@
   function capTime() {							// from srt scroll listener
     if (overText && myPlayer.paused) {					// set player time to scrolled caption
       for (let i = 0; i < timestamps.length; i++) {
-        if (timestamps[i][1] > srt.scrollTop) {myPlayer.currentTime = timestamps[i][0]; break}}}}
+        if (timestamps[i][1] > srt.scrollTop) {myPlayer.currentTime = timestamps[i][0]; timout=3; break}}}}
 
 
   function formatTime(seconds) {

@@ -615,6 +615,8 @@
       playlist =
       value := 0							; remove filt/index scroll variable
       reload := 3
+      if (longClick || command == "SearchBox")
+        click = MButton							; open search in new tab
       if !address
         return
       address = %address%						; trims whitespace
@@ -1944,7 +1946,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
           fo = <td style='width:5em; padding-right:3em; text-align:right'>%thisFolder%</td>
         FileRead, dur, %inca%\cache\durations\%media%.txt
         durT := Time(dur)
-        if !dur
+        if (type == "document" || type == "image" || !dur)
           dur := 0
         FileRead, cues, %inca%\cache\cues\%media%.txt
         favicon =
@@ -1991,9 +1993,6 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
           }
         else
           noIndex = <span style='color:red; transform: translateY(-1.5em); display: block'>no index</span>`n 
-        StringReplace, src, src, `%, `%25, All				; html cannot have % in filename
-        StringReplace, src, src, #, `%23, All				; html cannot have # in filename
-        StringReplace, media_s, media, `', &apos;, All
         start := Round(start,3)
         text =
         if (ext=="txt")
@@ -2017,18 +2016,22 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
             }
           }
         if (text && type!="document")
-          favicon = %favicon% &#169
-        if (type=="image")
-          src = &nbsp;
+          favicon = %favicon% &#169 
+        IfExist, %src%
+          src = %server%%src%
+        else src = 
+        StringReplace, src, src, `%, `%25, All				; html cannot have % in filename
+        StringReplace, src, src, #, `%23, All				; html cannot have # in filename
+        StringReplace, media_s, media, `', &apos;, All
         if !size
           size = 0							; cannot have null size in getParameters()
 
       caption = <textarea id='srt%j%' class='caption' onmouseover='overText=1' onmouseout='overText=0'`n oninput="editing=index">%text%</textarea>`n
 
       if listView
-        mediaList = %mediaList%%fold%<table onmouseover='overThumb(%j%)'`n onmouseout="thumb%j%.style.opacity=0; thumb.src=null">`n <tr id='entry%j%' data-params='%type%,%start%,%dur%,%size%' onmouseenter='if (gesture) sel(%j%)'>`n <td>%ext%`n <video id='thumb%j%' class='thumb2' data-alt-src="%server%%src%"`n %poster%`n preload=%preload% muted loop type="video/mp4"></video></td>`n <td>%size%</td>`n <td style='min-width: 6em'>%durT%</td>`n <td>%date%</td>`n <td style='width:3em' ><div id='myFavicon%j%' class='favicon' style='position: relative; text-align: left; translate:2em 0.4em'>%favicon%</div></td>`n <td style='width: 80vw'><input id="title%j%" class='title' style='opacity: 1; position: relative; width:100`%; left:-0.2em' onmouseover='overText=1' autocomplete='off' onmouseout='overText=0; Click=0' type='search' value='%media_s%' oninput="renamebox=this.value; lastMedia=%j%"></td>`n %fo%</tr></table>%caption%<span id='cues%j%' style='display: none'>%cues%</span>`n`n
+        mediaList = %mediaList%%fold%<table onmouseover='overThumb(%j%)'`n onmouseout="thumb%j%.style.opacity=0; thumb.src=null">`n <tr id='entry%j%' data-params='%type%,%start%,%dur%,%size%' onmouseenter='if (gesture) sel(%j%)'>`n <td>%ext%`n <video id='thumb%j%' class='thumb2' data-alt-src="%src%"`n %poster%`n preload=%preload% muted loop type="video/mp4"></video></td>`n <td>%size%</td>`n <td style='min-width: 6em'>%durT%</td>`n <td>%date%</td>`n <td style='width:3em' ><div id='myFavicon%j%' class='favicon' style='position: relative; text-align: left; translate:2em 0.4em'>%favicon%</div></td>`n <td style='width: 80vw'><input id="title%j%" class='title' style='opacity: 1; position: relative; width:100`%; left:-0.2em' onmouseover='overText=1' autocomplete='off' onmouseout='overText=0; Click=0' type='search' value='%media_s%' oninput="renamebox=this.value; lastMedia=%j%"></td>`n %fo%</tr></table>%caption%<span id='cues%j%' style='display: none'>%cues%</span>`n`n
 
-      else mediaList = %mediaList%<div id="entry%j%" class='entry' data-params='%type%,%start%,%dur%,%size%'>`n <span id='myFavicon%j%' onmouseenter='overThumb(%j%)' class='favicon'>%favicon%</span>`n <input id='title%j%' class='title' style='top:-1.1em' type='search'`n value='%media_s%'`n oninput="renamebox=this.value; lastMedia=%j%"`n onmouseover="overText=1"`n onmouseout="overText=0">`n <video id="thumb%j%" class='thumb' onmouseenter='overThumb(%j%); if (gesture) sel(%j%)'`n onmouseup='if(gesture)getParameters(%j%)' onmouseout='thumb.src=null' data-alt-src="%server%%src%"`n %poster%`n preload=%preload% loop muted type='video/mp4'></video>`n %noIndex%`n <span id='cues%j%' style='display: none'>%cues%</span></div>`n %caption%`n
+      else mediaList = %mediaList%<div id="entry%j%" class='entry' data-params='%type%,%start%,%dur%,%size%'>`n <span id='myFavicon%j%' onmouseenter='overThumb(%j%)' class='favicon'>%favicon%</span>`n <input id='title%j%' class='title' style='top:-1.1em' type='search'`n value='%media_s%'`n oninput="renamebox=this.value; lastMedia=%j%"`n onmouseover="overText=1"`n onmouseout="overText=0">`n <video id="thumb%j%" class='thumb' onmouseenter='overThumb(%j%); if (gesture) sel(%j%)'`n onmouseup='if(gesture)getParameters(%j%)' onmouseout='thumb.src=null' data-alt-src="%src%"`n %poster%`n preload=%preload% loop muted type='video/mp4'></video>`n %noIndex%`n <span id='cues%j%' style='display: none'>%cues%</span></div>`n %caption%`n
       }
 
 
