@@ -115,7 +115,7 @@
     if (['myIndex', 'myMp4', 'myMp3', 'myJoin'].includes(id)) {Ffmpeg(id); return}
     if (id == 'myFlip') {Flip(); return}
     if (id == 'myCancel') {Cancel(); return}
-    if (id == 'mySave') {myCancel.innerHTML = 'X'; if (!longClick) saveText(); return}
+    if (id == 'mySave') {myCancel.innerHTML = 'X'; if (!longClick) saveText(0); return}
     if (id == 'myMute') {defMute^=1; inca('Mute', defMute); myPlayer.muted=defMute; return}
     if (id == 'myPause') {defPause^=1; inca('Pause',defPause); togglePause(); return}
     if (id == 'myDelete') {if (longClick==1) inca('Delete','',index); return}
@@ -132,8 +132,7 @@
       if (!playing && !myNav.style.display) {inca('View',lastMedia); return}		// list/thumb view
       if (!thumbSheet && lastClick) messages += '#History#'+start.toFixed(1)+'#'+index+'#'
       if (longClick) {index--} else index++						// next, previous media
-      if (!getParameters(index)) {index = lastMedia; closePlayer(); return}		// end of media list
-      if (myNav.style.display) return}
+      if (!getParameters(index)) {index = lastMedia; closePlayer(); return}}		// end of media list
     if (lastClick == 1) {
       if (!playing && id != title.id) {
         if (!overText && longClick && myPanel.matches(':hover')) return 
@@ -198,7 +197,7 @@
     title.style.opacity = 1; title.style.color='pink'
     lastMedia = index
     if (scaleY < 0.17) scaleY = 0.5					// return zoom after captions
-    if (lastClick) myNav.style.display=null
+    if (lastClick == 1) myNav.style.display=null
     myMask.style.pointerEvents='auto'					// stop overThumb() triggering
     if (captions || type=='audio' || playlist.match('/inca/music/')) scaleY=0.16
     if (playlist.match('/inca/music/') && !thumbSheet) {myPlayer.currentTime=0; myPlayer.play(); myPlayer.muted=0}
@@ -278,7 +277,7 @@
       let x = 1*myView.style.width.slice(0,-2); let z=wheel/2000
       if (wheelUp) x *= 1+z
       else if (!wheelUp && x / 1+z > 100) x /= 1+z
-      if (x > innerWidth) x = innerWidth
+      if (x > innerWidth-20) x = innerWidth - 20
       myView.style.width = x.toFixed(2)+'px'
       settings.pageWidth = String(x); localStorage.setItem(folder, JSON.stringify(settings))
       block=8}
@@ -296,7 +295,7 @@
     else if (dur && (!overMedia || myNav.style.display || yw>0.8 || ym>0.9 && ym<1)) {	// seek
       let interval = 0.1
       if (ym>0.9 && ym<1) interval = 4
-      if (myPlayer.paused) interval = 0.0333
+      else if (myPlayer.paused) interval = 0.0333
       if (wheelUp) myPlayer.currentTime += interval
       else if (!wheelUp) myPlayer.currentTime -= interval
       myPlayer.addEventListener('seeked', () => {block=20}, {once: true})
@@ -601,7 +600,8 @@
     if (observer) observer.disconnect()
     if (captions) srt.removeEventListener('scroll', capTime)
     if (!thumbSheet) messages += '#History#'+lastSeek.toFixed(1)+'#'+index+'#'
-    if (editing) saveText()						// text file or caption has been edited
+    if (editing) saveText(1)						// text file or caption has been edited
+    else if (captions) inca('Null',1)					// just reload tab
     positionMedia(0.2)
     cue = Click = playing = start = captions = thumbSheet = 0
     srt.style = myNav.style = ''
@@ -725,12 +725,12 @@
         if (timestamps[i][1] > srt.scrollTop) {myPlayer.currentTime = timestamps[i][0]; timout=3; break}}}}
 
 
-  function saveText() {
+  function saveText(reload) {
     srt.value = srt.value.replaceAll('#', '𝌇')							// because # is used as delimiter
     messages += '#Scroll#'+editing.toFixed(0)+'|'+srt.offsetWidth+'|'+srt.offsetHeight+'#'+index+'#'
     messages += '#capEdit#' + srt.value + '#' + index + '#'		// edited text
     editing = 0
-    inca('Null')}							// send messages
+    inca('Null',reload)}						// send messages
 
 
   function formatTime(seconds) {

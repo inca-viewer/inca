@@ -86,9 +86,6 @@
 .player {					/* media player element */
   position: absolute;
   opacity: 0;
-  mask-image: linear-gradient(to top, black calc(100% - 15px), transparent 100%), linear-gradient(to left, black calc(100% - 15px), transparent 100%), linear-gradient(to right, black calc(100% - 15px), transparent 100%), linear-gradient(to bottom, black calc(100% - 15px), transparent 100%);
-  border: 2px solid transparent;
-  mask-composite: intersect;
   border-radius: 2.2em}
 
 .pic {							/* context menu pic */

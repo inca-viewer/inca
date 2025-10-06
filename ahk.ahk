@@ -215,7 +215,7 @@
     ProcessMessage()							; messages from java/browser html
         {
         if (command == "Null")						; used as trigger to save text editing - see Java inca()
-          return
+          reload := value
         else if (command == "editCues")					; update media cues skinny, rate
           editCues()
         else if (command == "Favorite")					; add media favorite to New.m3u
@@ -1922,6 +1922,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
         Sleep, 100
         }
       Gui PopUp:Cancel
+      click =
       }
 
 
@@ -2089,7 +2090,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
           }
       transcoding =
       CreateList(1)
-      if (folder == fld)
+      if (folder == fld)				; if in same tab after processing
         RenderPage(0)
       if (A_TickCount - serverTimout > 9999)		; server timout
         send, {F5}
