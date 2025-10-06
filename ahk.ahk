@@ -226,8 +226,8 @@
           Add()
         else if (command == "History")					; maintain play history
           History()
-        else if (command == "Options")					; index folder (create thumbsheets)
-          SetTimer, Options, -10, -2					; run asynchromously
+        else if (command == "Ffmpeg")					; index folder (create thumbsheets)
+          SetTimer, Ffmpeg, -10, -2					; run asynchromously
         else if (command == "Scroll")					; update scroll, width, height
           Scroll()
         else if (command == "Rename")					; rename media
@@ -397,7 +397,7 @@
           {
           command := array[ptr+=1]
           value := array[ptr+=1]
-          value := StrReplace(value, "*", "#")
+          StringReplace, value, value, % Chr(0x1D307), #, All		; re insert # char
           selected := array[ptr+=1]
           address := array[ptr+=1]
           if (command=="Path" || command=="Search" || InStr(sortList, command))	; get top menu panel path
@@ -729,22 +729,18 @@
 
     capEdit() 						; Save edited text or SRT file
       {
-      address := StrReplace(address, "𝌇", "#")
-      DetectMedia(StrSplit(address, "|").1)
-      pos := InStr(address, "|")
-      text := SubStr(address, pos + 1)
-      if (StrLen(text) < 5)
+      if (StrLen(value) < 5)
         return
       if (ext == "txt")
         {
         FileRecycle, %src%
-        FileAppend, %text%, %src%, UTF-8
+        FileAppend, %value%, %src%, UTF-8
         }
       else
         {
         str = 
         lineNum := 0
-        Loop, Parse, text, `n, `r
+        Loop, Parse, value, `n, `r
           {
           if RegExMatch(A_LoopField, "^\d+\.\d$", t)
             {
@@ -760,7 +756,8 @@
         FileRecycle, %inca%\cache\captions\%media%.srt
         FileAppend, %str%, %inca%\cache\captions\%media%.srt, UTF-8
         }
-      PopUp("saved", 0, 0, 0)
+      RenderPage(1)
+      PopUp("saved", 400, 0, 0)
       }
 
 
@@ -1846,29 +1843,29 @@ header = <!--, %sort%, %toggles%, %listView%, %playlist%, %path%, %searchPath%, 
 body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals('%folder_s%', %wheelDir%, '%mute%', %paused%, '%sort%', %filt%, %listView%, '%keepSelected%', '%playlist%', %index%); %scroll%.scrollIntoView()">`n`n
 
 <video id="myPlayer" class='player' type="video/mp4" muted onwheel="wheelEvent(event)"></video>`n
-<span id='myProgress' class='progress'></span>`n
+<div id='mySeek' class='seekbar'><span id='myDur'></span></div>`n
 <span id='mySelected' class='selected'></span>`n
 <div id='capMenu' class='capMenu'>`n
-<span id='myCancel' class='capButton' onmouseup="if (this.innerHTML != 'Sure ?') {this.innerHTML = 'Sure ?'} else {editing = 0; inca('Reload',index)}" onmouseout="this.innerHTML='&#x2715;'">&#x2715;</span>`n 
-<span id='mySave' class='capButton' onmouseup="myCancel.innerHTML = 'X'; if (!longClick) inca('Null')">Save</span></div>`n`n
+<span id='myCancel' class='capButton' onmouseout="this.innerHTML='&#x2715;'">&#x2715;</span>`n 
+<span id='mySave' class='capButton'>Save</span></div>`n`n
 <div id='myContent' class='mycontent'>`n <div id='myView' class='myview'>`n`n %mediaList%</div></div>`n`n
 
 <div id='myNav' class='context' onwheel='wheelEvent(event)'>`n
-  <a id='myInca' style='width: 4.5em' onmousedown="inca('Settings')">&hellip;</a>
+  <a id='myInca' style='width: 4.5em'>&hellip;</a>
   <input id='myTitle' class='title' style='opacity: 1; color: lightsalmon; padding-left: 1.4em'>
   <video id='myPic' muted class='pic'></video>`n
   <a id='mySelect'>Select</a>`n
-  <a id='myDelete' style='color:red' onmouseup="inca('Delete','',index)"></a>`n
-  <a id='myMute' onmousedown="defMute^=1; inca('Mute', defMute); myPlayer.muted=defMute">Mute</a>`n
-  <a id='myPause' onmousedown="defPause^=1; inca('Pause',defPause); togglePause()">Pause</a>`n
+  <a id='myDelete' style='color:red'></a>`n
+  <a id='myMute'>Mute</a>`n
+  <a id='myPause'>Pause</a>`n
   <a id='myFavorite'>Fav</a>`n
   <a id='mySkinny'></a>`n
   <a id='mySpeed'></a>`n
   <a id='myPitch'></a>`n
-  <a id='myFlip' onmouseup='flip()'>Flip</a>`n
+  <a id='myFlip'>Flip</a>`n
   <a id='myCue'>Cue</a>`n
   <a id='myCap'>Caption</a>`n
-  <a id='myOptions' class='context' onmouseup="let target=cue+'|'+event.target.id; let x = selected || overMedia || playing || 0; inca('Options',target,x,myPlayer.currentTime.toFixed(1))"><span id='myIndex'>index</span><span id='myMp4'>mp4</span><span id='myMp3'>mp3</span><span id='myJoin'>join</span><a><a></a></div>`n`n
+  <a id='myOptions' class='context'><span id='myIndex'>index</span><span id='myMp4'>mp4</span><span id='myMp3'>mp3</span><span id='myJoin'>join</span><a><a></a></div>`n`n
 
 <div id='myMenu'>
   <div id='z1' class='fade' style='height:190px'></div><div id='z2' class='fade' style='top:190px; background: linear-gradient(#0e0c05ff, #0e0c0500)'></div>`n
@@ -1967,7 +1964,9 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
         if (type == "video" && folder == "History")
           thumb = %inca%\cache\temp\history\%media% %seek%.jpg
         FileGetSize, size, %src%, K
-        if (size < 9900)
+        if (type=="document")
+          size := Round(size)
+        else if (size < 9900)
           size := Round(size/1000,1)
         else size := Round(size/1000)
         FileGetTime, listId, %src%, M
@@ -1993,7 +1992,9 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
           }
         else
           noIndex = <span style='color:red; transform: translateY(-1.5em); display: block'>no index</span>`n 
-        start := Round(start,3)
+        if !start 
+          start = 0.000
+        else start := Round(start,3)
         text =
         if (ext=="txt")
           FileRead, text, %src%
@@ -2026,7 +2027,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
         if !size
           size = 0							; cannot have null size in getParameters()
 
-      caption = <textarea id='srt%j%' class='caption' onmouseover='overText=1' onmouseout='overText=0'`n oninput="editing=index">%text%</textarea>`n
+      caption = <textarea id='srt%j%' class='caption' onmouseover='overText=1' onmouseout='overText=0'`n oninput="editing=srt.scrollTop||1">%text%</textarea>`n
 
       if listView
         mediaList = %mediaList%%fold%<table onmouseover='overThumb(%j%)'`n onmouseout="thumb%j%.style.opacity=0; thumb.src=null">`n <tr id='entry%j%' data-params='%type%,%start%,%dur%,%size%' onmouseenter='if (gesture) sel(%j%)'>`n <td>%ext%`n <video id='thumb%j%' class='thumb2' data-alt-src="%src%"`n %poster%`n preload=%preload% muted loop type="video/mp4"></video></td>`n <td>%size%</td>`n <td style='min-width: 6em'>%durT%</td>`n <td>%date%</td>`n <td style='width:3em' ><div id='myFavicon%j%' class='favicon' style='position: relative; text-align: left; translate:2em 0.4em'>%favicon%</div></td>`n <td style='width: 80vw'><input id="title%j%" class='title' style='opacity: 1; position: relative; width:100`%; left:-0.2em' onmouseover='overText=1' autocomplete='off' onmouseout='overText=0; Click=0' type='search' value='%media_s%' oninput="renamebox=this.value; lastMedia=%j%"></td>`n %fo%</tr></table>%caption%<span id='cues%j%' style='display: none'>%cues%</span>`n`n
@@ -2035,8 +2036,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
       }
 
 
-    Options: 							; async processing 
-  ;    Critical Off
+    Ffmpeg: 							; async processing 
       transcoding =
       select := selected					; preserve selected
       selected =
