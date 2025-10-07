@@ -115,7 +115,7 @@
     if (['myIndex', 'myMp4', 'myMp3', 'myJoin'].includes(id)) {Ffmpeg(id); return}
     if (id == 'myFlip') {Flip(); return}
     if (id == 'myCancel') {Cancel(); return}
-    if (id == 'mySave') {myCancel.innerHTML = 'X'; if (!longClick) saveText(0); return}
+    if (id == 'mySave') {myCancel.innerHTML = 'X'; if (!longClick) saveText(); return}
     if (id == 'myMute') {defMute^=1; inca('Mute', defMute); myPlayer.muted=defMute; return}
     if (id == 'myPause') {defPause^=1; inca('Pause',defPause); togglePause(); return}
     if (id == 'myDelete') {if (longClick==1) inca('Delete','',index); return}
@@ -151,6 +151,7 @@
       if (title.matches(':hover') || longClick!=1 && !playing && !overMedia && !myNav.style.display) return}
     if (longClick==1 && myTitle.value) thumbSheet ^= 1					// toggle thumbSheet
     else if (!getStart(id)) return
+    if (!playing && lastClick==2) return
     if (playing && lastClick==1 && type=='document') return
     getParameters(index)
     if (srt.value && (captions || favicon.matches(':hover') || type=='document')) openCap()
@@ -162,7 +163,7 @@
     if (id != 'myPic') {
       start = defStart							// start from context click
       if (dur < 200 && !playlist && !favicon.textContent.includes('\u2764')) start = 0}
-    if (defPause && myPlayer.currentTime > dur-0.5) myPlayer.load()	// restart media at default
+    if (myPlayer.currentTime > dur-0.5) myPlayer.load()			// restart media
     if (thumbSheet && id != 'myPic') {					// clicked thumb on 6x6 thumbsheet
       if (skinny < 0) xm = 1-xm						// if flipped media
       let row = Math.floor(ym * 6)					// get media seek time from thumbsheet xy
@@ -171,7 +172,7 @@
       let ps = 5 * ((row * 6) + col)
       ps = (ps - 1) / 200						// see index() in inca.ahk to explain
       if (overMedia) start = (offset - (ps * offset) + dur * ps)}
-    else if (playing && overMedia && (ym > 0.9 || (yw > 0.95 && yw < 0.98))) {
+    else if (ym>0.95 && ym<1.1 && xm>0 && xm<1 || (yw > 0.95 && yw < 0.98)) {
       if (xm < 0.1) myPlayer.currentTime = 0
       else myPlayer.currentTime = xm * dur
       return}
@@ -214,6 +215,8 @@
       if (captions) srt.addEventListener('scroll', capTime)
       if (lastClick) positionMedia(0.4)
       myPlayer.style.zIndex = Zindex
+      myVig.style.zIndex = Zindex+1
+      myVig.style.opacity = 1
       myPlayer.style.opacity=1},100)}
 
 
@@ -292,13 +295,13 @@
       if (getParameters(index) && playing) {getStart(id); Play()}
       if (!thumbSheet) myPlayer.currentTime = start
       positionMedia(0); setPic()}
-    else if (dur && (!overMedia || myNav.style.display || yw>0.8 || ym>0.9 && ym<1)) {	// seek
+    else if (dur && (!overMedia || myNav.style.display || yw>0.8 || ym>0.95 && ym<1.1)) {	// seek
       let interval = 0.1
-      if (ym>0.9 && ym<1) interval = 4
+      if (ym>0.95 && ym<1.1) interval = 1
       else if (myPlayer.paused) interval = 0.0333
       if (wheelUp) myPlayer.currentTime += interval
       else if (!wheelUp) myPlayer.currentTime -= interval
-      myPlayer.addEventListener('seeked', () => {block=20}, {once: true})
+      myPlayer.addEventListener('seeked', () => {block=40}, {once: true})
       timout=3; block=250}
     else if (!myNav.style.display) {					// zoom myPlayer
       let x=0; let y=0; let z=0
@@ -319,14 +322,14 @@
     if (myNav.style.display) el = myPic
     else if (!playing) el = thumb
     rect = el.getBoundingClientRect()
+    myTitle.value = (overMedia || playing) ? title.value : ''
     let trigger = 1600
     if (listView) trigger = 1200					// continuous scrolling
     if (block<30 && list <= myList.innerHTML && myContent.scrollHeight && myContent.scrollTop)
       if (myContent.scrollTop > myContent.scrollHeight - trigger) inca('More')
-    if (!myNav.matches(':hover')) {myNav.style.display = null; if (!playing) mySeek.style = null}
+    if (!myNav.matches(':hover')) myNav.style.display = null
     else if (!myTitle.value || type=='document') myNav.style.width = 84 + 'px'
     else {myNav.style.width = rect.width + 100 + 'px'; if (myTitle.matches(':hover')) myPic.style.display='block'}
-    if (!myNav.style.display) {zoom=1; myTitle.value = (overMedia || playing) ? title.value : ''}
     xm = (xpos - rect.left) / rect.width
     ym = (ypos - rect.top) / rect.height
     if (block>=30) block-=10						// wheel/timer blocking 
@@ -396,13 +399,13 @@
     myView.style.top='200px'
     if (!mediaX) {mediaX = screen.width/2; mediaY = screen.height/2}
     let offset = captions && srt.value ? 140 : 0
-    myPlayer.style.left = (mediaX - screenX) - myPlayer.offsetWidth / 2 + "px"
-    myPlayer.style.top = (mediaY - (outerHeight-innerHeight)) - myPlayer.offsetHeight / 2 - offset + "px"
-    myPlayer.style.transition = type === 'image' ? 'opacity ' + time + 's' : time + 's'
+    myPlayer.style.left = myVig.style.left = (mediaX - screenX) - myPlayer.offsetWidth / 2 + "px"
+    myPlayer.style.top = myVig.style.top = (mediaY - (outerHeight-innerHeight)) - myPlayer.offsetHeight / 2 - offset + "px"
+    myPlayer.style.transition = myVig.style.transition = 'opacity ' + time + 's, transform ' + time + 's'
     skinny = thumb.style.skinny || skinny
-    let zoom = scaleY
-    if (thumbSheet) zoom = scaleY * 2
-    myPlayer.style.transform = "scale(" + skinny * zoom + "," + zoom + ")"}
+    let z = scaleY
+    if (thumbSheet) z = scaleY * 2
+    myPlayer.style.transform = myVig.style.transform = "scale(" + skinny * z + "," + z + ")"}
 
 
   function seekbar() {							// seekbar bar beneath player
@@ -422,15 +425,14 @@
       cueW = rect.width * (cue - pos) / dur
       if (cue < 1 + pos) {cueX = rect.left; cueW = rect.width * pos / dur}}
     if (rect.bottom > innerHeight) mySeek.style.top = innerHeight - 15 +'px'
-    else mySeek.style.top = (rect.top + rect.height - mySeek.offsetHeight) + 1 + 'px';
+    else mySeek.style.top = rect.top + rect.height + 'px'
     mySeek.style.left = cueX + 'px'
     mySeek.style.width = cueW + 'px'
-    if (ym>0.9 && ym<1 && !myNav.style.display) mySeek.style.height = '9px'
+    if (ym>0.95 && ym<1.1 && !myNav.style.display) mySeek.style.height = '9px'
     else mySeek.style.height = null
     if (!playing && !myPic.matches(':hover')) mySeek.style.background = 'none'
     else if (cue) mySeek.style.background = 'red'
     else mySeek.style.background = null
-    mySeek.style.transition = '0.3s'
     mySeek.style.opacity = 0.8
     return 1}
 
@@ -453,6 +455,7 @@
     let x = y = z = innerHeight
     if (aspect < 1) {x=z*aspect} else y=z/aspect			// portrait or landscape - normalised size
     myPlayer.style.width = x +'px'; myPlayer.style.height = y +'px'	// normalise player size
+    myVig.style.width = x +'px'; myVig.style.height = y +'px'		// vignette
     if (aspect < 1) {y=150; x=150*aspect} else {y=150/aspect; x=150}	// initial context image size
     myPic.style.width = x + 'px'
     myPic.style.height = y + 'px'					// context menu thumb 
@@ -603,7 +606,12 @@
     if (editing) saveText(1)						// text file or caption has been edited
     else if (captions) inca('Null',1)					// just reload tab
     positionMedia(0.2)
+    mySeek.style.height = 0
+    myVig.style.opacity = 0
+    if (thumbSheet) {zoom = 1.8} else zoom = 0.8
+    myPlayer.style.transform = myVig.style.transform = 'scale('+scaleY*skinny*zoom+','+scaleY*zoom+')'
     cue = Click = playing = start = captions = thumbSheet = 0
+    myDur.innerHTML = ''
     srt.style = myNav.style = ''
     myPlayer.style.opacity = 0
     setTimeout(function() {						// fadeout before close
@@ -678,8 +686,8 @@
   function mediaEnded() {						// media finished playing
     if (playlist.match('/inca/music/')) {
       if (getParameters(index+=1)) {Play(); myPlayer.play()} else closePlayer(); return}
-    else if (!defPause) {myPlayer.currentTime=start; myPlayer.play()}
-    else myPlayer.currentTime=dur+2}
+    else if (block<30) {myPlayer.currentTime=start; myPlayer.play()}
+    else {myPlayer.currentTime=dur+2; myPlayer.pause(); block=60}}
 
 
   function searchBox() {
@@ -709,7 +717,9 @@
 
   function context(e) {							// right click context menu
     block=200
+    zoom = 1
     myNav.style.display='block'
+    mouseMove(e)
     if (myTitle.value) {myPic.style.display='block'; myNav.style.left=xpos-70 + 'px'; myNav.style.top = ypos-24 + 'px'}
     else {myPic.style.display=null; myNav.style.left=xpos-68+'px'; myNav.style.top=ypos-28+'px'}}
 

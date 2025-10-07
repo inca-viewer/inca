@@ -214,9 +214,7 @@
 
     ProcessMessage()							; messages from java/browser html
         {
-        if (command == "Null")						; used as trigger to save text editing - see Java inca()
-          reload := value
-        else if (command == "editCues")					; update media cues skinny, rate
+        if (command == "editCues")					; update media cues skinny, rate
           editCues()
         else if (command == "Favorite")					; add media favorite to New.m3u
           Favorite()
@@ -244,6 +242,11 @@
           Notepad()
         else if (command == "More")					; continuous scrolling
           reload := 1
+        else if (command == "Null")					; used as trigger to save text editing - see Java inca()
+          {
+          click =
+          reload := value
+          }
         else if (command == "Reload")					; reload web page
           {
           index := value
@@ -1842,6 +1845,7 @@ header = <!--, %sort%, %toggles%, %listView%, %playlist%, %path%, %searchPath%, 
 
 body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals('%folder_s%', %wheelDir%, '%mute%', %paused%, '%sort%', %filt%, %listView%, '%keepSelected%', '%playlist%', %index%); %scroll%.scrollIntoView()">`n`n
 
+<div id='myVig' class='vig'></div>`n
 <video id="myPlayer" class='player' type="video/mp4" muted onwheel="wheelEvent(event)"></video>`n
 <div id='mySeek' class='seekbar'><span id='myDur'></span></div>`n
 <span id='mySelected' class='selected'></span>`n
@@ -2050,8 +2054,6 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
       FileRead, str, %inca%\cache\temp\%folder%.txt		; list of media in htm
       Loop, Parse, str, `n, `r
         fileList .= StrSplit(A_LoopField, "/").2 . "|" . Round(StrSplit(A_LoopField, "/").4,1) . "`r`n"
-      if playlist
-        FileRead, fileList, %playlist%				; already src | seek format
       if (select && !InStr(el_id, "Index"))
         Loop, Parse, select, `,					; index selected files
           transcoding .= StrSplit(fileList,"`r`n")[A_LoopField]	; media to lock
