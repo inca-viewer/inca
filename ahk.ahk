@@ -245,7 +245,8 @@
         else if (command == "Null")					; used as trigger to save text editing - see Java inca()
           {
           click =
-          reload := value
+          index := value
+          reload := address
           }
         else if (command == "Reload")					; reload web page
           {
@@ -749,7 +750,7 @@
             {
             lineNum++
             timeStr := srtTime(t)
-            str .= lineNum . "`r`n" . timeStr . " --> " . timeStr
+            str .= lineNum . "`r`n" . timeStr . " --> " . timeStr . "`r`n"
             }
           else if (A_LoopField != "")
             str .= A_LoopField . "`r`n"
@@ -1349,10 +1350,10 @@
         FileDelete, %inca%\fav\History.m3u
         Loop, Parse, history, `n, `r					; garbage collection
           count++
-        if (count > 300)
-          count -= 300
+        if (count > 250)
+          count -= 250
         else count = 0
-        Loop, Parse, history, `n, `r					; keep history below 300 entries
+        Loop, Parse, history, `n, `r					; keep history below 250 entries
           if (A_Loopfield && A_Index >= count)
             {
             str = %str%%A_Loopfield%`r`n
@@ -1631,7 +1632,9 @@
         if (command != "More")
           lastIndex := 0
         type = video							; prime for list parsing
-        page := 90							; media entries per chunk
+        if playlist
+          page := 300
+        else page := 90							; media entries per chunk
         FileRead, list, %inca%\cache\temp\%folder%.txt
         Loop, Parse, list, `n, `r 					; split big list into smaller web pages
           if (A_Index > lastIndex && A_Index < lastIndex + page + 1)
@@ -1850,8 +1853,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
 <div id='mySeek' class='seekbar'><span id='myDur'></span></div>`n
 <span id='mySelected' class='selected'></span>`n
 <div id='capMenu' class='capMenu'>`n
-<span id='myCancel' class='capButton' onmouseout="this.innerHTML='&#x2715;'">&#x2715;</span>`n 
-<span id='mySave' class='capButton'>Save</span></div>`n`n
+<span id='myCancel' class='capButton' onmouseout="this.innerHTML='&#x2715;'">&#x2715;</span></div>`n`n 
 <div id='myContent' class='mycontent'>`n <div id='myView' class='myview'>`n`n %mediaList%</div></div>`n`n
 
 <div id='myNav' class='context' onwheel='wheelEvent(event)'>`n
@@ -1861,11 +1863,11 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
   <a id='mySelect'>Select</a>`n
   <a id='myDelete' style='color:red'></a>`n
   <a id='myMute'>Mute</a>`n
+  <a id='myPitch'>Pitch</a>`n
   <a id='myPause'>Pause</a>`n
   <a id='myFavorite'>Fav</a>`n
   <a id='mySkinny'></a>`n
   <a id='mySpeed'></a>`n
-  <a id='myPitch'></a>`n
   <a id='myFlip'>Flip</a>`n
   <a id='myCue'>Cue</a>`n
   <a id='myCap'>Caption</a>`n
@@ -1996,43 +1998,31 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
           poster = poster="%server%%thumb%"
           }
         else
-          noIndex = <span style='color:red; transform: translateY(-1.5em); display: block'>no index</span>`n 
+          noIndex = <span class='warning'>no index</span>`n 
         if !start 
           start = 0.000
         else start := Round(start,3)
-        text =
+        txt =
         if (ext=="txt")
-          FileRead, text, %src%
+          txt = %src%
         else IfExist, %inca%\cache\captions\%media%.srt			; convert srt times to seconds
-          {
-          FileRead, srt, %inca%\cache\captions\%media%.srt
-          new := ""
-          Loop, Parse, srt, `n, `r
-            {
-            cap := ""
-            if RegExMatch(A_LoopField, "^\d+$")
-              continue
-            else if RegExMatch(A_LoopField, "^(?:(\d+):)?(\d{1,2}):(\d{2}),(\d{3})\s-->\s", m)
-              {
-              hours := m1 ? m1 : 0
-              seconds := hours*3600 + m2*60 + m3 + m4/1000
-              text .= Round(seconds, 1) . "`r`n`r`n"
-              }
-            else text .= A_LoopField . "`r`n"
-            }
-          }
-        if (text && type!="document")
+          txt = %inca%/cache/captions/%media%.srt
+        if (txt && type!="document")
           favicon = %favicon% &#169 
-        IfExist, %src%
-          src = %server%%src%
-        else src = 
+        IfNotExist, %src%
+          noIndex = <span class='warning'>no media</span>`n 
+        src = %server%%src%
         StringReplace, src, src, `%, `%25, All				; html cannot have % in filename
         StringReplace, src, src, #, `%23, All				; html cannot have # in filename
+        StringReplace, media_s, media, `', &apos;, All
+        txt = %server%%txt%
+        StringReplace, txt, txt, `%, `%25, All				; html cannot have % in filename
+        StringReplace, txt, txt, #, `%23, All				; html cannot have # in filename
         StringReplace, media_s, media, `', &apos;, All
         if !size
           size = 0							; cannot have null size in getParameters()
 
-      caption = <textarea id='srt%j%' class='caption' onmouseover='overText=1' onmouseout='overText=0'`n oninput="editing=srt.scrollTop||1">%text%</textarea>`n
+      caption = <object id="dat%j%" style='display: none' type="text/plain" data="%txt%"></object>`n <textarea id='srt%j%' class='caption' onmouseover='overText=1' onmouseout='overText=0'`n oninput="editing=srt.scrollTop||1"></textarea>`n
 
       if listView
         mediaList = %mediaList%%fold%<table onmouseover='overThumb(%j%)'`n onmouseout="thumb%j%.style.opacity=0; thumb.src=null">`n <tr id='entry%j%' data-params='%type%,%start%,%dur%,%size%' onmouseenter='if (gesture) sel(%j%)'>`n <td>%ext%`n <video id='thumb%j%' class='thumb2' data-alt-src="%src%"`n %poster%`n preload=%preload% muted loop type="video/mp4"></video></td>`n <td>%size%</td>`n <td style='min-width: 6em'>%durT%</td>`n <td>%date%</td>`n <td style='width:3em' ><div id='myFavicon%j%' class='favicon' style='position: relative; text-align: left; translate:2em 0.4em'>%favicon%</div></td>`n <td style='width: 80vw'><input id="title%j%" class='title' style='opacity: 1; position: relative; width:100`%; left:-0.2em' onmouseover='overText=1' autocomplete='off' onmouseout='overText=0; Click=0' type='search' value='%media_s%' oninput="renamebox=this.value; lastMedia=%j%"></td>`n %fo%</tr></table>%caption%<span id='cues%j%' style='display: none'>%cues%</span>`n`n
