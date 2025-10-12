@@ -20,7 +20,7 @@
 .player, .vig {
   position: absolute;
   opacity: 0;
-  transition: opacity 0.2s, transform 0.2s;
+  padding: 0.1em;
   border-radius: 2.4em}
 
 .vig {
@@ -59,7 +59,7 @@
   margin: auto;
   transition: 0.3s;
   border-radius: 0.6em}
-.title:hover {color: pink; background:#2b2824; width:24em; transition: 1.4s; z-index:999; overflow: visible}
+.title:hover {color: pink; background:#2b2824; transition: 1.4s; z-index:999; overflow: visible}
 
 .entry {
   max-width: var(--max-size);
@@ -242,7 +242,7 @@
   top: 200px;
   width: 40%;
   padding-top:1em;
-  padding-bottom: 70vh}
+  padding-bottom: 80vh}
 
 .ribbon {					/* menu, fol, fav, search ... */
   position: relative;
@@ -299,9 +299,9 @@
   pointer-events: none;
   white-space: nowrap;
   overflow: visible;
-  z-index: 999;
   width: 0;
   height: 1px;
+  z-index: 998;
   opacity: 0;
   border-radius: 8px;
   background: pink;
@@ -312,7 +312,7 @@
   user-select: none;
   pointer-events: none;
   position: fixed;
-  transition: opacity 0.2s;
+  transition: opacity 0.4s;
   opacity: 0;
   top: 0;
   left: 0;
@@ -323,6 +323,7 @@
 .warning {
   color:red;
   text-align: center;
+  pointer-events: none;
   transform: translateY(-2.1em);
   display: block}
 
