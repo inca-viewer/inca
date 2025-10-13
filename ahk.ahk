@@ -52,8 +52,8 @@
   Global timer					; click down timer
   Global listView := 0				; list or thumb view
   Global playlist				; playlist - full path
-  Global xpos					; current mouse position
-  Global ypos
+  Global xRef					; current mouse position
+  Global yRef
   Global command				; java message commands to this program
   Global value					; message 1st value (selected is 2nd value)
   Global address				; message 3rd value (can be extended eg. ,,,)
@@ -85,6 +85,7 @@
   Global lastIndex := 0				; continuous scrolling
   Global server := "http://localhost:3000/"
   Global transcoding				; media is being transcoded async
+  Global wheel
 
 
   main:
@@ -117,6 +118,8 @@
     MouseDown()
     return
 
+  ~WheelUp::wheel++
+  ~WheelDown::wheel++
 
   XButton1::					; Back button
     Critical
@@ -146,77 +149,54 @@
     return
 
 
-  ~WheelUp::Wheel(1)
-  ~WheelDown::Wheel(-1)
-
-  Wheel(dir)
-    {
-    Critical off
-    if (xpos < 100 || xpos > A_ScreenWidth-100)
-      Volume(dir)
-    IfWinActive, ahk_group Browsers
-      if (!incaTab && click)
-        {
-        gesture := 1
-        if (dir > 0)
-          send, ^0
-        else send, ^{+}
-        sleep 244
-        }
-    }
-     
-
   MouseDown()
     {
     Critical								; pause timed events
+    wheel =
     longClick := gesture := 0
     wasCursor := A_Cursor
     timer := A_TickCount + 300						; set future timout 300mS
-    MouseGetPos, xpos, ypos
+    MouseGetPos, xRef, yRef
     StringReplace, click, A_ThisHotkey, ~,, All
     lastClick := click
     loop
       {
+      Gesture() 
       if (A_TickCount > timer)
         {
         longClick = true
         Critical off							; allow timer interrupts
         }
-    MouseGetPos, x, y
-    x -= xpos
-    y -= ypos
-    if (Abs(x)+Abs(y) > 4)						; gesture detected
-      gesture := 1
-    if (click == "LButton" && !longClick)				; see if youtube download request
-      {
-      WinGetTitle title, A
-      if InStr(title, "YouTube")
+      if (click == "LButton" && !longClick)				; see if youtube download request
         {
-        clp := ClipBoard
-        ClipBoard =
-        ClipWait, 0.2
-        cmd = %inca%\cache\apps\yt-dlp.exe --no-mtime -f bestvideo+bestaudio "%ClipBoard%"
-        if InStr(Clipboard, "https://youtu")
+        WinGetTitle title, A
+        if InStr(title, "YouTube")
           {
-          Run %COMSPEC% /c %cmd% > yt-dlp.txt 2>&1, , Hide
-          click =
+          clp := ClipBoard
+          ClipBoard =
+          ClipWait, 0.2
+          cmd = %inca%\cache\apps\yt-dlp.exe --no-mtime -f bestvideo+bestaudio "%ClipBoard%"
+          if InStr(Clipboard, "https://youtu")
+            {
+            Run %COMSPEC% /c %cmd% > yt-dlp.txt 2>&1, , Hide
+            click =
+            }
+          ClipBoard := clp
           }
-        ClipBoard := clp
         }
+      if (!gesture && longClick && click == "LButton" && wasCursor == "IBeam")
+        Find()								; file search selected text (or osk)
+      if (!GetKeyState("LButton", "P") && !GetKeyState("RButton", "P"))
+        break
       }
-    if (!gesture && longClick && click == "LButton" && wasCursor == "IBeam")
-      Find()								; file search selected text (or osk)
-    if (!GetKeyState("LButton", "P") && !GetKeyState("RButton", "P"))
-      break
-    }
-    click =
-    if (!incaTab && gesture && lastClick == "RButton")
+    if (!incaTab && click == "RButton" && (longClick || gesture))	; close false context menu
       Loop, 10
         {
         Send, {Esc}
         Sleep, 40
         }
     Gui PopUp:Cancel
+    click = 
     }
 
 
@@ -521,8 +501,9 @@
       reload := 3
       CreateList(1)							; silently update old htm page
       RenderPage(1)							; to stay in this folder add return
+      return
       }
-    if InStr(address, ".m3u")						; playlist
+    else if InStr(address, ".m3u")					; playlist
       {
       playlist := address
       SplitPath, address,,path,,folder
@@ -992,6 +973,57 @@
     }
 
 
+  Gesture()
+    {
+    MouseGetPos, x, y
+    x -= xRef
+    y -= yRef
+    value := Abs(x) + Abs(y)
+    if (value < 6)
+      return
+    gesture := value
+    MouseGetPos, xRef, yRef					; new ref
+    if (click == "RButton")
+      {
+      if (xRef < 6)						; gesture at screen edges
+        xRef := 9
+      if (xRef > A_ScreenWidth - 6)
+        xRef := A_ScreenWidth - 9
+      if (xRef == 9 || xRef == A_ScreenWidth - 9)		; gesture at screen edges
+        edge := 1
+      }
+    MouseMove, % xRef, % yRef, 0
+    if (click == "RButton" && Abs(wheel) < 10)
+      {
+      if (x > 0)
+        dir := 1
+      else dir = -1
+      x*=1.4
+      if volume < 10
+        x /= 2							; finer adj at low volume
+      if x < 100						; stop any big volume jumps
+        volume += x/20
+      if edge
+        volume += dir
+      if (volume < 0)
+        volume := 0
+      if (volume > 100)
+        volume := 100
+      yv := A_ScreenHeight - 3
+      xv := A_ScreenWidth * volume/100
+      Gui, vol: show, x0 y%yv% w%xv% h3 NA
+      }
+    if (click=="LButton" && desk==cur && !WinExist("ahk_class Notepad"))
+      {
+      WinActivate, ahk_group Browsers				; zoom browser page
+      if (y < 0)
+        send, ^0
+      else send, ^{+}
+      sleep 111
+      }
+    }
+
+
   Time(in)
     {
     year = 2017
@@ -1214,21 +1246,6 @@
     target = %src%|%seek%
     if src
       return DetectMedia(src)
-    }
-
-
-  Volume(dir)
-    {
-    SoundGet, volume
-    volume -= 0.3*dir
-    if (volume < 0)
-      volume := 0
-    if (volume > 100)
-      volume := 100
-    SoundSet, volume
-    yv := A_ScreenHeight - 3
-    xv := A_ScreenWidth * volume/101
-    gui, vol: show, x0 y%yv% w%xv% h3 NA
     }
 
 
@@ -2102,11 +2119,9 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
     else WinSet, Transparent, 0
     if (incaTab && fullscreen)
       WinSet, Top,,ahk_group Browsers
-    MouseGetPos, xpos
     FormatTime, time,, h:mm
-    if (xpos < 100 || xpos > A_ScreenWidth-100 || time != ctime)
+    if (click || time != ctime)
       {
-      SoundGet, volume
       x =
       if volume
       x := Round(volume)
@@ -2118,7 +2133,10 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
       GuiControl, Status:, GuiSta, %time%  %x%
       Gui, Status: Show, NA
       }
-    else gui, vol: hide
+    if (!click || Abs(wheel) > 24)
+      gui, vol: hide
+    SoundSet, volume + 1		; windows bug
+    SoundSet, volume
     return
 
 

@@ -1,4 +1,7 @@
-
+// vig on screens too deep
+// music highlight not follow next
+// lomngclick block myplayer zoom to edge - make better
+// longclick advances on timer or click does 
 
   let wheel = 0								// wheel count
   let wheelDir = 0		 					// wheel direction
@@ -38,10 +41,10 @@
   let yw = 0.5
   let xm = 0								// cursor over media ratio
   let ym = 0
-  let xpos = 0								// cursor xy in pixels
-  let ypos = 0
-  let Xref = 0								// click cursor xy
-  let Yref = 0
+  let xPos = 0								// cursor xy in pixels
+  let yPos = 0
+  let xRef = 0								// click cursor xy
+  let yRef = 0
   let timout = 0							// -- every 94mS  eg for hide cursor
   let block = 0								// block timer events
   let aspect = 1							// media width to height ratio
@@ -84,7 +87,7 @@
     longClick = gesture = 0
     Click = lastClick = e.button+1
     if (Click == 2) e.preventDefault()					// forward and back mouse buttons
-    Xref = xpos; Yref = ypos
+    xRef = xPos; yRef = yPos
     clickTimer = setTimeout(function() {
       longClick = Click; clickEvent(e)},300)}				// detect long click
 
@@ -95,7 +98,7 @@
       myInput.value = window.getSelection().toString() || myInput.value	// paste last search into myInput 
     clearTimeout(clickTimer)						// longClick timer
     if (!longClick) clickEvent(e)					// process click event
-    Click = longClick = wheel = gesture = 0}
+    Click = longClick = wheel = gesture = block = 0}
 
 
   function keyDown(e) {							// keyboard events
@@ -149,7 +152,7 @@
         if (id == 'mySpeed') {updateCue('rate',1); return}
         if (id == 'myCap') {capButton(); return}
         if (id == 'myCue' && playing) {cueButton(); return}
-        if (overText && ypos < srt.offsetTop + 12) {srt.scrollTo(0,-5); return}}	// scroll to top of text
+        if (overText && yPos < srt.offsetTop + 12) {srt.scrollTo(0,-5); return}}	// scroll to top of text
       if (title.matches(':hover') || longClick != 1 && !playing && !overMedia && !myNav.style.display) return}
     if (lastClick == 3 && !longClick) {thumbSheet ^= 1; myNav.style.display = null; lastSeek = myPlayer.currentTime}
     else if (!getStart(id)) return
@@ -162,7 +165,7 @@
 
   function getStart(id) {
     start = defStart
-    if (!dur || longClick == 2) return 1
+    if (overMedia && !dur || longClick == 2) return 1				// show image or text files
     if (!longClick && id != 'myPic' && dur < 200 && !playlist && !favicon.textContent.includes('\u2764')) start = 0
     if (myPlayer.currentTime > dur-0.5) myPlayer.load()			// restart media
     if (thumbSheet && id != 'myPic') {					// clicked thumb on 6x6 thumbsheet
@@ -178,10 +181,9 @@
       if (xm < 0.1) {if (longClick) {myPlayer.currentTime = 0} else myPlayer.currentTime = defStart}
       else {myPlayer.currentTime = xm * dur; timout = 8}
       return}
-    else if (id == 'myTitle') return 1
     else if (!longClick && lastClick == 1 && id != 'myPic' && playing) {Pause(); return}
-    else if (longClick && !gesture && !playing) {if (!overMedia) {index = lastMedia; start = lastSeek} else start = 0}
-    else if (!playing && !overMedia || longClick) return
+    else if (longClick == 1 && !gesture && !playing) {if (!overMedia) {index = lastMedia; start = lastSeek} else start = 0}
+    else if (!myTitle.value || !playing && !overMedia || longClick) return
     if (lastClick && lastClick != 2) thumbSheet = 0
     return 1}								// return and continue
 
@@ -208,7 +210,6 @@
     observer = new IntersectionObserver(([entry]) => {if (!entry.isIntersecting) mediaX = mediaY = 500}).observe(myPlayer)
     if (pitch || myPlayer.context) {setupContext(myPlayer); myPlayer.jungle.setPitchOffset(semiToneTranspose(pitch))}
     playing = index
-    block = 150
     setTimeout(function() {
       if (captions) {convertSrt(); myCues(999); srt.addEventListener('scroll', capTime)}
       else if (!thumbSheet && dur && !defPause && !cue) myPlayer.play()
@@ -220,26 +221,27 @@
 
 
   function mouseMove(e) {
-    if (innerHeight == outerHeight) {xpos = e.screenX; ypos = e.screenY} // fullscreen detection/offsets
-    else {xpos = e.clientX; ypos = e.clientY}
+    if (innerHeight == outerHeight) {xPos = e.screenX; yPos = e.screenY} // fullscreen detection/offsets
+    else {xPos = e.clientX; yPos = e.clientY}
     timout = 8
     if (myNav.style.display) setPic()					// in context menu sets thumb sprite
-    mySelected.style.left = xpos +30 +'px'
-    mySelected.style.top = ypos -20 +'px'
-    let x = Math.abs(xpos-Xref)
-    let y = Math.abs(ypos-Yref)
-    if (x+y > 3 && Click && !gesture) {					// gesture (Click + slide)
+    mySelected.style.left = xPos +30 +'px'
+    mySelected.style.top = yPos -20 +'px'
+    let x = Math.abs(xPos-xRef)
+    let y = Math.abs(yPos-yRef)
+    if (x+y > 3 && !gesture && Click) {					// gesture (Click + slide)
       gesture = 1
       if (!playing && overMedia && !myNav.style.display) sel(index)
-      if (myNav.style.display) {x = myNav.getBoundingClientRect(); Xref = (xpos-x.left)/skinny; Yref = ypos-x.top}}
+      if (myNav.style.display) {x = myNav.getBoundingClientRect(); xRef = (xPos-x.left)/skinny; yRef = yPos-x.top}}
     if (!gesture || !Click) {gesture = ''; return}
     else if (captions && !cues.textContent.match(srt.offsetWidth)) editing = 1	// textarea size changed
-    if (Click && myNav.style.display) {myNav.style.left = xpos-Xref+"px"; myNav.style.top = ypos-Yref+"px"}  // move context menu
-    else if (Click && playing && !overText) {			// move myPlayer
-      mediaX += xpos - Xref
-      mediaY += ypos - Yref
-      Xref = xpos; Yref = ypos
-      positionMedia(0)}}
+    if (Click == 1 || (Click && block == 1)) {
+      if (myNav.style.display) {myNav.style.left = xPos-xRef+"px"; myNav.style.top = yPos-yRef+"px"}  // move context menu
+      else if (playing && !overText) {					// move myPlayer
+        mediaX += xPos - xRef
+        mediaY += yPos - yRef
+        xRef = xPos; yRef = yPos
+        positionMedia(0)}}}
 
 
   function wheelEvent(e) {
@@ -292,14 +294,13 @@
       positionMedia(0)}
     else if (!dur || thumbSheet || Click && !myNav.style.display) {	// zoom myPlayer
       let x = 0; let y = 0; let z = 0
-      gesture = 1
-      if (overMedia) z = wheel/2000
-      if (scaleY > 0.5) {x = rect.left+rect.width/2-xpos; y = rect.top+rect.height / 2 - ypos}
+      if (longClick && overMedia) z = wheel/2000
+      if (scaleY > 0.5) {x = rect.left+rect.width/2-xPos; y = rect.top+rect.height / 2 - yPos}
       if (wheelUp) {mediaX += x*z; mediaY += y*z; scaleY *= (1 + wheel / 2000)}
       else if (!wheelUp) {mediaX -= x*z; mediaY -= y*z; scaleY /= (1 + wheel / 2000)}
       if (scaleY<0.16) scaleY = 0.16
       if (thumbSheet && scaleY<0.4) scaleY = 0.4
-      positionMedia(0); block = 20}
+      positionMedia(0); xRef = xPos; yRef = yPos; block = 1}		// 1 - allows move player
     else if (dur && !thumbSheet) {					// seek
       let interval = 0.1
       if (dur > 200 && ym>0.95 && ym<1.05) interval = 1
@@ -312,8 +313,8 @@
 
 
   function timerEvent() { 						// every 94mS
-    xw = xpos / innerWidth
-    yw = ypos / innerHeight
+    xw = xPos / innerWidth
+    yw = yPos / innerHeight
     let top = 0; let el = myPlayer
     if (myNav.style.display) el = myPic
     else if (!playing) el = thumb
@@ -326,8 +327,8 @@
     if (!myNav.matches(':hover')) myNav.style.display = null
     else if (!myTitle.value || type == 'document') myNav.style.width = 84 + 'px'
     else {myNav.style.width = rect.width + 100 + 'px'; if (myTitle.matches(':hover')) myPic.style.display = 'block'}
-    xm = (xpos - rect.left) / rect.width
-    ym = (ypos - rect.top) / rect.height
+    xm = (xPos - rect.left) / rect.width
+    ym = (yPos - rect.top) / rect.height
     if (block >= 30) block -= 10					// wheel/timer blocking 
     if (wheel >= 10) wheel -= 10
     if (timout) timout--
@@ -460,7 +461,7 @@
 
 
   function setPic() {							// sets context image based on cursor over myPic
-    let x = Math.max(0, Math.min(1, ((xpos - rect.left) / rect.width + 0.02) ** 2 - 0.02))
+    let x = Math.max(0, Math.min(1, ((xPos - rect.left) / rect.width + 0.02) ** 2 - 0.02))
     let thumbIndex = Math.ceil(x * 35)
     let z = (5 * (thumbIndex + 1) - 1) / 200
     let offset = dur > 60 ? 20 : 0
@@ -715,8 +716,8 @@
     zoom = 1
     myNav.style.display = 'block'
     mouseMove(e)
-    if (myTitle.value) {myPic.style.display = 'block'; myNav.style.left = xpos-70 + 'px'; myNav.style.top = ypos-24 + 'px'}
-    else {myPic.style.display = null; myNav.style.left = xpos-68+'px'; myNav.style.top = ypos-28+'px'}}
+    if (myTitle.value) {myPic.style.display = 'block'; myNav.style.left = xPos-70 + 'px'; myNav.style.top = yPos-24 + 'px'}
+    else {myPic.style.display = null; myNav.style.left = xPos-68+'px'; myNav.style.top = yPos-28+'px'}}
 
   function Ffmpeg(id) {
     let target = cue + '|' + id
@@ -785,7 +786,7 @@
 
 
   function Cancel() {if (myCancel.innerHTML != 'Sure ?') {myCancel.innerHTML = 'Sure ?'} else {editing = 0; inca('Reload',index)}}
-  function Flip() {xpos = 0; skinny *=- 1; thumb.style.skinny = skinny; getParameters(index); positionMedia(0.4)}
+  function Flip() {xPos = 0; skinny *=- 1; thumb.style.skinny = skinny; getParameters(index); positionMedia(0.4)}
   function Time(z) {if (z<0) return '0:00'; let y = Math.floor(z%60); let x = ':'+y; if (y<10) {x = ':0'+y}; return Math.floor(z/60)+x}
   function selectAll() {for (i = 1; document.getElementById('thumb'+i); i++) {sel(i)}}
   function Pause() {if (!(editing && overText) && !thumbSheet && playing && myPlayer.paused) {myPlayer.play()} else myPlayer.pause()}
