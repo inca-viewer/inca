@@ -1,7 +1,3 @@
-// vig on screens too deep
-// music highlight not follow next
-// lomngclick block myplayer zoom to edge - make better
-// longclick advances on timer or click does 
 
   let wheel = 0								// wheel count
   let wheelDir = 0		 					// wheel direction
@@ -26,6 +22,7 @@
   let renamebox = ''							// media rename input field
   let selected = ''							// list of selected media in page
   let overMedia = 0							// over thumb or myPlayer
+  let wasMedia = 0							// was over thumb or myPlayer
   let overText = 0							// text input fields, allow cut paste
   let editing = 0							// editing text active
   let messages = ''							// message digest to inca.exe
@@ -85,7 +82,9 @@
 
   function mouseDown(e) {
     longClick = gesture = 0
-    Click = lastClick = e.button+1
+    wasMedia = overMedia
+    if (e.key == 'Pause' && e.shiftKey) Click = lastClick = 3
+    else Click = lastClick = e.button + 1
     if (Click == 2) e.preventDefault()					// forward and back mouse buttons
     xRef = xPos; yRef = yPos
     clickTimer = setTimeout(function() {
@@ -98,7 +97,7 @@
       myInput.value = window.getSelection().toString() || myInput.value	// paste last search into myInput 
     clearTimeout(clickTimer)						// longClick timer
     if (!longClick) clickEvent(e)					// process click event
-    Click = longClick = wheel = gesture = block = 0}
+    Click = longClick = wheel = gesture = 0}
 
 
   function keyDown(e) {							// keyboard events
@@ -106,7 +105,8 @@
     if (e.key == 'Enter' && !playing) {
       if (renamebox) inca('Rename', renamebox, lastMedia)		// rename media
       else inca('SearchBox','','',myInput.value)}			// search for media
-    if (e.key == 'Pause' || (e.code == 'ArrowLeft' && e.shiftKey)) mouseBack()
+    else if (e.key == 'Pause' && e.shiftKey) mouseDown(e)
+    else if (e.key == 'Pause' || (e.code == 'ArrowLeft' && e.shiftKey)) mouseBack()
     else if (!overText && !captions && playing) {
       if (e.key == 'ArrowRight') myPlayer.currentTime += 10
       else if (e.key == 'ArrowLeft') myPlayer.currentTime -= 10
@@ -168,24 +168,24 @@
     if (overMedia && !dur || longClick == 2) return 1				// show image or text files
     if (!longClick && id != 'myPic' && dur < 200 && !playlist && !favicon.textContent.includes('\u2764')) start = 0
     if (myPlayer.currentTime > dur-0.5) myPlayer.load()			// restart media
-    if (thumbSheet && id != 'myPic') {					// clicked thumb on 6x6 thumbsheet
+    if (!longClick && thumbSheet && id != 'myPic') {			// clicked thumb on 6x6 thumbsheet
       if (skinny < 0) xm = 1-xm						// if flipped media
       let row = Math.floor(ym * 6)					// get media seek time from thumbsheet xy
       let col = Math.ceil(xm * 6)
       let offset = dur > 60 ? 20 : 0					// skip movie credits...
       let ps = 5 * ((row * 6) + col)
       ps = (ps - 1) / 200						// see index() in inca.ahk to explain
-      if (longClick) start = lastSeek
-      else if (overMedia) start = (offset - (ps * offset) + dur * ps)}
+      if (!overMedia) start = lastSeek
+      else start = (offset - (ps * offset) + dur * ps)}
     else if (ym>0.95 && ym<1.05 && xm>0 && xm<1 || (yw > 0.95 && yw < 0.99)) {
       if (xm < 0.1) {if (longClick) {myPlayer.currentTime = 0} else myPlayer.currentTime = defStart}
       else {myPlayer.currentTime = xm * dur; timout = 8}
       return}
     else if (!longClick && lastClick == 1 && id != 'myPic' && playing) {Pause(); return}
-    else if (longClick == 1 && !gesture && !playing) {if (!overMedia) {index = lastMedia; start = lastSeek} else start = 0}
+    else if (longClick == 1 && !playing) {if (!overMedia) {index = lastMedia; start = lastSeek} else start = 0}
     else if (!myTitle.value || !playing && !overMedia || longClick) return
     if (lastClick && lastClick != 2) thumbSheet = 0
-    return 1}								// return and continue
+    if (!gesture) return 1}						// return and continue
 
 
   function Play() {
@@ -210,10 +210,11 @@
     observer = new IntersectionObserver(([entry]) => {if (!entry.isIntersecting) mediaX = mediaY = 500}).observe(myPlayer)
     if (pitch || myPlayer.context) {setupContext(myPlayer); myPlayer.jungle.setPitchOffset(semiToneTranspose(pitch))}
     playing = index
+    block = 150
     setTimeout(function() {
       if (captions) {convertSrt(); myCues(999); srt.addEventListener('scroll', capTime)}
       else if (!thumbSheet && dur && !defPause && !cue) myPlayer.play()
-      if (lastClick) positionMedia(0.4)
+      if (lastClick) positionMedia(0.2)
       myPlayer.style.zIndex = Zindex
       myVig.style.zIndex = Zindex+1
       myPlayer.style.opacity = 0.99					// chrome transition bug
@@ -221,27 +222,27 @@
 
 
   function mouseMove(e) {
-    if (innerHeight == outerHeight) {xPos = e.screenX; yPos = e.screenY} // fullscreen detection/offsets
+    if (innerHeight == outerHeight) {xPos = e.screenX; yPos = e.screenY} 	// fullscreen detection/offsets
     else {xPos = e.clientX; yPos = e.clientY}
     timout = 8
-    if (myNav.style.display) setPic()					// in context menu sets thumb sprite
+    if (myNav.style.display) setPic()						// in context menu sets thumb sprite
     mySelected.style.left = xPos +30 +'px'
     mySelected.style.top = yPos -20 +'px'
     let x = Math.abs(xPos-xRef)
     let y = Math.abs(yPos-yRef)
-    if (x+y > 3 && !gesture && Click) {					// gesture (Click + slide)
-      gesture = 1
+    if (x + y > 7 && !gesture && Click) {gesture = 1				// gesture (Click + slide)
       if (!playing && overMedia && !myNav.style.display) sel(index)
       if (myNav.style.display) {x = myNav.getBoundingClientRect(); xRef = (xPos-x.left)/skinny; yRef = yPos-x.top}}
-    if (!gesture || !Click) {gesture = ''; return}
+    if (!gesture || !Click) {gesture = 0; return}
     else if (captions && !cues.textContent.match(srt.offsetWidth)) editing = 1	// textarea size changed
-    if (Click == 1 || (Click && block == 1)) {
+    if (y > x + 1) gesture = 2							// enable player move
+    if (Click == 1 || gesture == 2) {
       if (myNav.style.display) {myNav.style.left = xPos-xRef+"px"; myNav.style.top = yPos-yRef+"px"}  // move context menu
-      else if (playing && !overText) {					// move myPlayer
+      else if (playing && !overText) {						// move myPlayer
         mediaX += xPos - xRef
         mediaY += yPos - yRef
-        xRef = xPos; yRef = yPos
-        positionMedia(0)}}}
+        positionMedia(0)}}
+    if (gesture) xRef = xPos; yRef = yPos}
 
 
   function wheelEvent(e) {
@@ -294,16 +295,16 @@
       positionMedia(0)}
     else if (!dur || thumbSheet || Click && !myNav.style.display) {	// zoom myPlayer
       let x = 0; let y = 0; let z = 0
-      if (longClick && overMedia) z = wheel/2000
+      if (wasMedia) z = wheel/2000
       if (scaleY > 0.5) {x = rect.left+rect.width/2-xPos; y = rect.top+rect.height / 2 - yPos}
       if (wheelUp) {mediaX += x*z; mediaY += y*z; scaleY *= (1 + wheel / 2000)}
       else if (!wheelUp) {mediaX -= x*z; mediaY -= y*z; scaleY /= (1 + wheel / 2000)}
       if (scaleY<0.16) scaleY = 0.16
       if (thumbSheet && scaleY<0.4) scaleY = 0.4
-      positionMedia(0); xRef = xPos; yRef = yPos; block = 1}		// 1 - allows move player
-    else if (dur && !thumbSheet) {					// seek
+      positionMedia(0); block = 20}
+    else if (dur && !thumbSheet) {
       let interval = 0.1
-      if (dur > 200 && ym>0.95 && ym<1.05) interval = 1
+      if (dur > 200 && ym>0.95 && ym<1.05) interval = 1			// seek
       else if (myPlayer.paused) interval = 0.0333
       if (wheelUp) myPlayer.currentTime += interval
       else if (!wheelUp) myPlayer.currentTime -= interval
@@ -334,7 +335,7 @@
     if (timout) timout--
     navButtons()
     if (selected) mySelected.innerHTML = selected.split(',').length -1
-    else mySelected.innerHTML = ''
+//    else mySelected.innerHTML = ''
     if (!playing || thumbSheet || overText) myBody.style.cursor = null	// show default cursor
     else if (!timout) myBody.style.cursor = 'none'			// hide cursor
     else myBody.style.cursor = 'crosshair'				// moving cursor over player
@@ -402,6 +403,7 @@
     skinny = thumb.style.skinny || skinny
     let z = scaleY
     if (thumbSheet) z = scaleY * 2
+    myVig.style.setProperty('--scale', 20/z + 'px')			// vignette to scale with player
     myPlayer.style.transform = myVig.style.transform = "scale(" + skinny * z + "," + z + ")"}
 
 
@@ -667,7 +669,7 @@
 
 
   function sel(i) {							// highlight selected media in html
-    if (!i || !Click || (gesture && Click == 3) || overText) return
+    if (!i || !Click || overText || (gesture && Click == 3)) return
     let x = ','+selected; el = document.getElementById('title' + i);
     if (x.match(','+i+',')) {selected = x.replace(','+i+',',',').slice(1); el.style.outline = null}
     else {selected = selected+i+','; el.style.outline = '1px solid red'; el.style.opacity = 1}}
@@ -718,6 +720,7 @@
     mouseMove(e)
     if (myTitle.value) {myPic.style.display = 'block'; myNav.style.left = xPos-70 + 'px'; myNav.style.top = yPos-24 + 'px'}
     else {myPic.style.display = null; myNav.style.left = xPos-68+'px'; myNav.style.top = yPos-28+'px'}}
+
 
   function Ffmpeg(id) {
     let target = cue + '|' + id

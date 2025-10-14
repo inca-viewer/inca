@@ -73,8 +73,9 @@
   Global allFav					; all favorite shortcuts consolidated
   Global showSubs
   Global lastMedia
-  Global cur					; window under cursor
-  Global desk					; current desktop window
+  Global cur					; window under cursor id
+  Global desk					; current desktop window id
+  Global brow					; current browser id
   Global paused := 0				; default pause
   Global block := 0				; block flag
   Global flush := 0				; flag to flush excess wheel buffer
@@ -85,7 +86,6 @@
   Global lastIndex := 0				; continuous scrolling
   Global server := "http://localhost:3000/"
   Global transcoding				; media is being transcoded async
-  Global wheel
 
 
   main:
@@ -103,8 +103,9 @@
     if playlist
     startPage = #Path###%playlist%
     messages(startPage)				; opens browser
-    SetTimer, TimedEvents, 50			; every 50mS - process server requests
-    SetTimer, SlowTimer, 1000, -2		; show ffmpeg is processing
+    SetTimer, TimedEvents, 49			; every 49mS - process server requests
+    SetTimer, SlowTimer, 999, -2		; show ffmpeg is processing
+    SetTimer, VolTimer, 6666, -2		; stops windows vol lag
     return
 
 
@@ -112,14 +113,12 @@
     ExitApp
 
 
-  ~RButton::
+  RButton::
   ~LButton::					; click events
   ~MButton::					; click events
     MouseDown()
     return
 
-  ~WheelUp::wheel++
-  ~WheelDown::wheel++
 
   XButton1::					; Back button
     Critical
@@ -152,12 +151,14 @@
   MouseDown()
     {
     Critical								; pause timed events
-    wheel =
     longClick := gesture := 0
     wasCursor := A_Cursor
     timer := A_TickCount + 300						; set future timout 300mS
     MouseGetPos, xRef, yRef
     StringReplace, click, A_ThisHotkey, ~,, All
+    if (incaTab && click == "RButton")
+      send, +{Pause}							; tell browser Rbutton down
+    id := cur								; remember window clicked
     lastClick := click
     loop
       {
@@ -187,14 +188,15 @@
       if (!gesture && longClick && click == "LButton" && wasCursor == "IBeam")
         Find()								; file search selected text (or osk)
       if (!GetKeyState("LButton", "P") && !GetKeyState("RButton", "P"))
-        break
-      }
-    if (!incaTab && click == "RButton" && (longClick || gesture))	; close false context menu
-      Loop, 10
         {
-        Send, {Esc}
-        Sleep, 40
+        if (click == "RButton" && id == cur)  
+          if (incaTab && cur == brow)
+            send, {RButton up}
+          else if (!gesture && !longClick) 
+            send, {RButton}
+        break
         }
+      }
     Gui PopUp:Cancel
     click = 
     }
@@ -979,9 +981,14 @@
     x -= xRef
     y -= yRef
     value := Abs(x) + Abs(y)
-    if (value < 6)
+    if (value < 4)
       return
-    gesture := value
+    if !gesture
+      if (Abs(y) > Abs(x))
+        gesture := -1
+      else gesture := 1
+    if (Abs(y) > Abs(x) + 4)
+      gesture := -1						; more y than x direction
     MouseGetPos, xRef, yRef					; new ref
     if (click == "RButton")
       {
@@ -991,18 +998,15 @@
         xRef := A_ScreenWidth - 9
       if (xRef == 9 || xRef == A_ScreenWidth - 9)		; gesture at screen edges
         edge := 1
+      MouseMove, % xRef, % yRef, 0
       }
-    MouseMove, % xRef, % yRef, 0
-    if (click == "RButton" && Abs(wheel) < 10)
+    if (click == "RButton" && gesture > 0)
       {
       if (x > 0)
         dir := 1
       else dir = -1
-      x*=1.4
-      if volume < 10
-        x /= 2							; finer adj at low volume
-      if x < 100						; stop any big volume jumps
-        volume += x/20
+      if x < 100
+        volume += 1.4 * x / 20
       if edge
         volume += dir
       if (volume < 0)
@@ -1012,6 +1016,7 @@
       yv := A_ScreenHeight - 3
       xv := A_ScreenWidth * volume/100
       Gui, vol: show, x0 y%yv% w%xv% h3 NA
+      SoundSet, volume
       }
     if (click=="LButton" && desk==cur && !WinExist("ahk_class Notepad"))
       {
@@ -2050,6 +2055,12 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
     return
 
 
+  VolTimer:
+    SoundSet, volume + 0.1
+    SoundSet, volume
+    return
+
+
   SlowTimer:
     Critical Off
     GuiControlGet, control, Indexer:, GuiInd
@@ -2103,6 +2114,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
     MouseGetPos,,, id 							; get the window below the mouse 
     WinGet, cur, ID, ahk_id %id%
     WinGet, desk, ID , ahk_class Progman
+    WinGet, brow, ID , ahk_group Browsers
     if incaTab
       {
       FileRead, messages, *P65001 C:\inca\cache\html\in.txt		; utf codepage
@@ -2133,10 +2145,8 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
       GuiControl, Status:, GuiSta, %time%  %x%
       Gui, Status: Show, NA
       }
-    if (!click || Abs(wheel) > 24)
+    if (!click || gesture < 0)
       gui, vol: hide
-    SoundSet, volume + 1		; windows bug
-    SoundSet, volume
     return
 
 
