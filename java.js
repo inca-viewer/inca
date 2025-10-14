@@ -154,7 +154,7 @@
         if (id == 'myCue' && playing) {cueButton(); return}
         if (overText && yPos < srt.offsetTop + 12) {srt.scrollTo(0,-5); return}}	// scroll to top of text
       if (title.matches(':hover') || longClick != 1 && !playing && !overMedia && !myNav.style.display) return}
-    if (lastClick == 3 && !longClick) {thumbSheet ^= 1; myNav.style.display = null; lastSeek = myPlayer.currentTime}
+    if (lastClick == 3 || longClick == 3) {thumbSheet ^= 1; myNav.style.display = null; lastSeek = myPlayer.currentTime}
     else if (!getStart(id)) return
     if (!playing && lastClick == 2) return
     if (playing && lastClick == 1 && type == 'document') return
@@ -164,19 +164,18 @@
 
 
   function getStart(id) {
-    start = defStart
+    if (!thumbSheet) start = defStart
     if (overMedia && !dur || longClick == 2) return 1				// show image or text files
     if (!longClick && id != 'myPic' && dur < 200 && !playlist && !favicon.textContent.includes('\u2764')) start = 0
     if (myPlayer.currentTime > dur-0.5) myPlayer.load()			// restart media
-    if (!longClick && thumbSheet && id != 'myPic') {			// clicked thumb on 6x6 thumbsheet
+    if (longClick != 1 && thumbSheet && id != 'myPic') {		// clicked thumb on 6x6 thumbsheet
       if (skinny < 0) xm = 1-xm						// if flipped media
       let row = Math.floor(ym * 6)					// get media seek time from thumbsheet xy
       let col = Math.ceil(xm * 6)
       let offset = dur > 60 ? 20 : 0					// skip movie credits...
       let ps = 5 * ((row * 6) + col)
       ps = (ps - 1) / 200						// see index() in inca.ahk to explain
-      if (!overMedia) start = lastSeek
-      else start = (offset - (ps * offset) + dur * ps)}
+      if (overMedia) start = (offset - (ps * offset) + dur * ps)}
     else if (ym>0.95 && ym<1.05 && xm>0 && xm<1 || (yw > 0.95 && yw < 0.99)) {
       if (xm < 0.1) {if (longClick) {myPlayer.currentTime = 0} else myPlayer.currentTime = defStart}
       else {myPlayer.currentTime = xm * dur; timout = 8}
@@ -335,7 +334,7 @@
     if (timout) timout--
     navButtons()
     if (selected) mySelected.innerHTML = selected.split(',').length -1
-//    else mySelected.innerHTML = ''
+    else mySelected.innerHTML = ''
     if (!playing || thumbSheet || overText) myBody.style.cursor = null	// show default cursor
     else if (!timout) myBody.style.cursor = 'none'			// hide cursor
     else myBody.style.cursor = 'crosshair'				// moving cursor over player
