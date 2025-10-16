@@ -151,14 +151,14 @@
   MouseDown()
     {
     Critical								; pause timed events
+    id := cur								; remember window clicked
     longClick := gesture := 0
     wasCursor := A_Cursor
     timer := A_TickCount + 300						; set future timout 300mS
     MouseGetPos, xRef, yRef
     StringReplace, click, A_ThisHotkey, ~,, All
-    if (incaTab && click == "RButton")
+    if (incaTab && click == "RButton" && cur == brow && yRef > 100)
       send, +{Pause}							; tell browser Rbutton down
-    id := cur								; remember window clicked
     lastClick := click
     loop
       {
@@ -189,11 +189,12 @@
         Find()								; file search selected text (or osk)
       if (!GetKeyState("LButton", "P") && !GetKeyState("RButton", "P"))
         {
-        if (click == "RButton" && id == cur)  
-          if (incaTab && cur == brow)
-            send, {RButton up}
-          else if (!gesture && !longClick) 
-            send, {RButton}
+        if (click == "RButton")
+          if (cur == id)  
+            if (incaTab && cur == brow && yRef > 200)
+              send, {RButton up}
+            else if (!gesture && !longClick) 
+              send, {RButton}
         break
         }
       }
@@ -289,27 +290,24 @@
 
   Find() 
     {
-    if WinActive("ahk_group Browsers")
+    clp := Clipboard
+    Clipboard =
+    send, ^c
+    sleep 24
+    address := Clipboard
+    Clipboard := clp
+    send, {Lbutton up}
+    if (address && WinActive("ahk_group Browsers"))			;  long clicked selected text    
       {
-      clp := Clipboard
-      Clipboard =
-      send, ^c
-      sleep 24
-      address := Clipboard
-      Clipboard := clp
-      send, {Lbutton up}
-      if address							;  long clicked selected text
-       {
-        path =
-        reload := 2
-        cmd = #SearchBox###%address%
-        messages(cmd)							; search for files matching text
-        return
-        }
+      path =
+      click =
+      reload := 2
+      cmd = #SearchBox###%address%
+      messages(cmd)							; search for files matching text
       }
-    IfWinExist, ahk_class OSKMainClass
+    else IfWinExist, ahk_class OSKMainClass
       return
-    if Setting("osk")							; open osk
+    else if Setting("osk")						; open osk
       {
       MouseGetPos, x, y
       x-=300
@@ -418,6 +416,12 @@
       }
     longClick =
     Gui PopUp:Cancel
+    if (A_TickCount - serverTimout > 9999)				; server timed out
+      {
+      Run, %server%inca/cache/html/%folder%.htm
+      sleep 600
+      WinActivate, ahk_group Browsers
+      }
     }
 
 
@@ -1369,7 +1373,7 @@
     Gui, Indexer:Font, s11 c806a5c, Segoe UI
     GuiControl, Indexer:Font, GuiInd
     iy := A_ScreenHeight * 0.966
-    Gui, Indexer:Show, x600 y%iy%, NA
+    Gui, Indexer:Show, x500 y%iy%, NA
     WinSet, TransColor, ffffff 0
     WinSet, TransColor, 0 140
     WinSet, ExStyle, +0x20
@@ -1991,7 +1995,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
     caption = <pre id="dat%j%" style='display: none' type="text/plain" data=%data%></pre>`n <textarea id='srt%j%' class='caption' onmouseover='overText=1' onmouseout='overText=0'`n oninput="editing=srt.scrollTop||1"></textarea>`n
 
     if listView
-      mediaList = %mediaList%%fold%<table onmouseover='overThumb(%j%)'`n onmouseout="thumb%j%.style.opacity=0; thumb.src=null">`n <tr id='entry%j%' data-params='%type%,%start%,%dur%,%size%' onmouseenter='if (gesture) sel(%j%)'>`n <td>%ext%`n <video id='thumb%j%' class='thumb2' data-alt-src=%src%`n %poster%`n preload=%preload% muted loop type="video/mp4"></video></td>`n <td>%size%</td>`n <td style='min-width: 6em'>%durT%</td>`n <td>%date%</td>`n <td style='width:3em' ><div id='myFavicon%j%' class='favicon' style='position: relative; text-align: left; translate:2em 0.4em'>%favicon%</div></td>`n <td style='width: 80vw'><input id="title%j%" class='title' style='opacity: 1; position: relative; width:100`%; left:-0.2em' onmouseover='overText=1' autocomplete='off' onmouseout='overText=0; Click=0' type='search' value='%media_s%' oninput="renamebox=this.value; lastMedia=%j%"></td>`n %fo%</tr></table>%caption%<span id='cues%j%' style='display: none'>%cues%</span>`n`n
+      mediaList = %mediaList%%fold%<table id='entry%j%' data-params='%type%,%start%,%dur%,%size%' onmouseenter='if (gesture) sel(%j%)' onmouseover='overThumb(%j%)'`n onmouseout="thumb%j%.style.opacity=0; thumb.src=null">`n <tr><td><video id='thumb%j%' class='thumb2' data-alt-src=%src%`n %poster%`n preload=%preload% muted loop type="video/mp4"></video></td>`n <td>%ext%</td><td>%size%</td><td style='min-width: 6em'>%durT%</td><td>%date%</td><td style='width:3em'>`n <div id='myFavicon%j%' class='favicon' style='position: relative; text-align: left; translate:2em 0.4em'>%favicon%</div></td>`n <td style='width: 80vw'><input id="title%j%" class='title' style='opacity: 1; position: relative; width:100`%; left:-0.2em' onmouseover='overText=1' autocomplete='off' onmouseout='overText=0; Click=0' type='search' value='%media_s%' oninput="renamebox=this.value; lastMedia=%j%"></td>`n %fo%</tr></table>%caption%<span id='cues%j%' style='display: none'>%cues%</span>`n`n
 
     else mediaList = %mediaList%<div id="entry%j%" class='entry' data-params='%type%,%start%,%dur%,%size%'>`n <span id='myFavicon%j%' onmouseenter='overThumb(%j%)' class='favicon'>%favicon%</span>`n <input id='title%j%' class='title' style='top:-1.1em' type='search'`n value='%media_s%'`n oninput="renamebox=this.value; lastMedia=%j%"`n onmouseover="overText=1; this.style.width=1+this.value.length/2+'em'"`n onmouseout="overText=0; this.style.width=null">`n <video id="thumb%j%" class='thumb' onmouseenter='overThumb(%j%); if (gesture) sel(%j%)'`n onmouseup='if (gesture) getParameters(%j%)' onmouseout="thumb.src=null" data-alt-src=%src%`n %poster%`n preload=%preload% loop muted type='video/mp4'></video> %noIndex%`n <span id='cues%j%' style='display: none'>%cues%</span></div>`n %caption%`n
     }

@@ -89,9 +89,9 @@
 .thumb2 {					/* thumbs in list view  */
   position: absolute;
   pointer-events: none;
-  translate: 2em;
-  max-width: 12em;
-  max-height: 11em;
+  translate: 6em -1em;
+  max-width: 14em;
+  max-height: 15em;
   border-radius: 1em;
   padding: 0.3em;
   margin: auto;
