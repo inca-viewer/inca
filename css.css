@@ -71,17 +71,17 @@
   padding-bottom: 1.5em}
 
 .thumb {					/* htm thumbs */
+  --size;
   --rate;
   --skinny;
   --posted;					/* edits sent to inca	*/
-  --media;
   box-sizing: border-box;
   border: 1px solid transparent;
   position: relative;
   margin: 0.4em;				/* do not use padding   */
   max-width: var(--max-size);
   max-height: var(--max-size);
-  mask-image: linear-gradient(to top, black calc(100% - 6px), transparent 100%), linear-gradient(to left, black calc(100% - 6px), transparent 100%), linear-gradient(to right, black calc(100% - 6px), transparent 100%), linear-gradient(to bottom, black calc(100% - 6px), transparent 100%);
+  mask-image: linear-gradient(to top, black calc(100% - 8px), transparent 100%), linear-gradient(to left, black calc(100% - 8px), transparent 100%), linear-gradient(to right, black calc(100% - 8px), transparent 100%), linear-gradient(to bottom, black calc(100% - 8px), transparent 100%);
   mask-composite: intersect;
   outline: none;
   border-radius: 0.9em}
@@ -98,17 +98,20 @@
   opacity: 0}
 
 .pic {						/* context menu pic */
+  z-index: -1;
+  opacity: 0;
   display: none;
   position: absolute;
   background-size: 600%;			/* for thumb extraction from thumbSheet */
   background-repeat: no-repeat;
-  box-shadow: inset 0 0 9px 9px rgba(14, 12, 5, 1);	/* also removes edge artifacts */
+  box-shadow: inset 0 0 6px 6px rgba(14, 12, 5, 1);	/* also removes edge artifacts */
   outline: 3px solid #0e0c05;
   transform-origin: top left;
-  transition: opacity 0.2s, transform 0.4s;
+//  transition-delay: opacity 1.2s;
+  transition: opacity 0.5s, transform 0.4s;
   // filter: blur(0.4vmin);
-  border-radius: 0.9em;
-  margin-left: 7em}				/* position within myNav  */
+// pointer-events: none;
+  border-radius: 0.9em}
 
 .favicon {
   display: block;
@@ -302,11 +305,11 @@
   overflow: visible;
   width: 0;
   height: 1px;
-  z-index: 998;
+  z-index: 999;
   opacity: 0;
   border-radius: 8px;
   background: pink;
-  transition: all 0.2s, left 0s, top 0s, opacity 0.8s}
+  transition: all 0.2s, left 0s, top 0s, opacity 1s}
 
 .mask {						/* media player overlay of htm tab */
   display: flex;
@@ -335,10 +338,10 @@
   transition: opacity 0.3s;
   z-index: 888;
   font-size: 1em;
-  width: max-content;
+  width: 120px;
   border-radius: 0.7em;
   background: inherit}
-.context:hover {opacity: 1}
+ .context:hover {opacity: 1}
 
 .context a {
   display: block;
