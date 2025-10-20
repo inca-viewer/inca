@@ -68,6 +68,7 @@
   position: relative;
   border-radius: 1em;
   overflow: visible;
+  padding-right: 0.2em;
   padding-bottom: 1.5em}
 
 .thumb {					/* htm thumbs */
@@ -100,7 +101,8 @@
 .pic {						/* context menu pic */
   z-index: -1;
   opacity: 0;
-  display: none;
+  display: block;
+  visibility: hidden;
   position: absolute;
   background-size: 600%;			/* for thumb extraction from thumbSheet */
   background-repeat: no-repeat;
@@ -316,7 +318,7 @@
   user-select: none;
   pointer-events: none;
   position: fixed;
-  transition: opacity 0.4s;
+  transition: opacity 0.8s;
   opacity: 0;
   top: 0;
   left: 0;

@@ -1,12 +1,7 @@
 
-// use wheel to scan through myPic not mouse move ??
-// context
-// onmouseout of thumb needs to set media.src to null or '' for server
-// close server streams again
-// cue seekbar
-// vig on thumb
-// not reentering thumbs reliably index freeze
-
+// use wheel to scan through myPic not mouse move ?
+// cue seekbar size
+// context - cannot use skinny over thumb
 
   let wheel = 0								// wheel count
   let wheelDir = 0		 					// wheel direction
@@ -137,13 +132,14 @@
     if (id == 'myFlip') {Flip(); return}
     if (id == 'myCancel') {Cancel(); return}
     if (lastClick == 3 && !longClick) {
-      if (yw < 0.06) return								// default context menu
-      if (!myNav.style.display) {context(e); return}}					// custom context menu
+      if (yw < 0.06) return								// browser context menu
+      if (!myNav.style.display) {context(e); return}}					// my context menu
     if (lastClick == 4) {mouseBack(); return}						// Back Click
     if (lastClick == 2) {  								// Middle click
       if (editing) {inca('Null'); return}						// save text
       if (myMenu.matches(':hover')) return
-      if (!playing && !myNav.style.display) {inca('View',lastMedia); return}		// list/thumb view
+      if (zoom > 1) mouseBack()
+      else if (!playing && !myNav.style.display) {inca('View',lastMedia); return} // list/thumb view
       if (!thumbSheet && lastClick) messages += '#History#'+start.toFixed(1)+'#'+index+'#'
       if (longClick) {index--} else index++						// next, previous media
       if (!getParameters(index)) {index = lastMedia; closePlayer(); return}}		// end of media list
@@ -185,7 +181,7 @@
       ps = (ps - 1) / 200						// see index() in inca.ahk to explain
       if (overMedia && yw < 0.9) start = (offset - (ps * offset) + dur * ps)
       else start = 0}
-    else if (playing && ym>0.95 && ym<1.05 && xm>0 && xm<1 || yw > 0.98) {
+    else if (playing && ym > 0.8 && overMedia || yw > 0.98) {
       if (xm < 0.1) {if (longClick) {myPlayer.currentTime = 0} else myPlayer.currentTime = defStart}
       else {myPlayer.currentTime = xm * dur; timout = 8}
       return}
@@ -222,7 +218,6 @@
     playing = index
     timout = 0
     zoom = 1
-    myPic.style.display = null
     setTimeout(function() {
       if (captions) {convertSrt(); myCues(999); srt.addEventListener('scroll', capTime)}
       else if (!thumbSheet && dur && !defPause && !cue) myPlayer.play()
@@ -236,22 +231,6 @@
 
 
   function mouseMove(e) {
-    if (!playing && dur) {
-myPic.style.display = 'block'			// otherwise jarring transitions
-      if (overMedia) {
-        if (!Click && ym > 0.8) {
-          myPic.style.left = rect.left + 'px'
-          myPic.style.top = rect.top + 'px'
-          myPic.style.opacity = 1
-         setPic()}
-        else { myPic.style.opacity = 0; start = thumb.currentTime}
-        myPic.style.zIndex = index + 1}
-      else {
-  //      myPic.style.display = null
-  //      myPic.style.zIndex = -1
-        myPic.style.opacity = 0
-   //     zoom = 1
-}}
     if (innerHeight == outerHeight) {xPos = e.screenX; yPos = e.screenY} 	// fullscreen detection/offsets
     else {xPos = e.clientX; yPos = e.clientY}
     timout = 8
@@ -274,7 +253,6 @@ myPic.style.display = 'block'			// otherwise jarring transitions
 
   function wheelEvent(e) {
     if (Click || dur && zoom > 1) e.preventDefault()			// stop html scrolling
-    if (zoom == 1)  myPic.style.display = null
     let id = e.target.id 						// faster hover detection 
     wheel += Math.ceil(Math.abs(e.deltaY))
     if (wheel < block) return
@@ -301,7 +279,6 @@ myPic.style.display = 'block'			// otherwise jarring transitions
       if (zoom > 1) thumb.style.zIndex = index
       else thumb.style.zIndex = null
       start = thumb.currentTime
-      thumb.pause()
       block = 8}
     else if (id == 'myThumbs' || (!playing && Click)) { 		// zoom all thumbs
       let z = wheel/1500
@@ -344,10 +321,10 @@ myPic.style.display = 'block'			// otherwise jarring transitions
       if (zoom > 1 && !playing) {					// seek on thumb
         if (wheelUp) start = thumb.currentTime += 0.0333
         else if (!wheelUp) start = thumb.currentTime -= 0.0333
-        block = 40}
+        thumb.pause(); block = 40}
       else if (playing) {						// seek on player
         let interval = 0.1
-        if (dur > 200 && ym>0.95 && ym<1.05) interval = 1	
+        if (dur > 200 && ym>0.9) interval = 1	
         else if (myPlayer.paused) interval = 0.0333
         if (wheelUp) myPlayer.currentTime += interval
         else if (!wheelUp) myPlayer.currentTime -= interval
@@ -359,8 +336,8 @@ myPic.style.display = 'block'			// otherwise jarring transitions
   function timerEvent() { 						// every 94mS
     xw = xPos / innerWidth
     yw = yPos / innerHeight
-    let top = 0; let el = myPlayer
-    if (!playing) el = thumb
+    let top = 0; let el = thumb
+    if (playing) el = myPlayer
     rect = el.getBoundingClientRect()
     myTitle.value = (overMedia || playing) ? title.value : ''
     let trigger = 1600
@@ -398,10 +375,10 @@ myPic.style.display = 'block'			// otherwise jarring transitions
     else {myTitle.style.visibility='hidden'; mySelect.innerHTML = 'Select'; myFlip.innerHTML = mySelect.style.outline = null}
     if (favicon.innerHTML.match('\u2764')) myFavorite.innerHTML = 'Fav &#x2764'
     else myFavorite.innerHTML = 'Fav'
-    if (gesture || !dur || !seekbar()) mySeek.style.opacity = null
+    if (gesture || !dur || !seekbar()) mySeek.style.opacity = myPic.style.opacity = null
     else if (cue) myDur.innerHTML = formatTime(time)+' - '+formatTime(end)
-    else if (zoom > 1) myDur.innerHTML = formatTime(dur)+' - '+formatTime(start)
     else if (playing) myDur.innerHTML = formatTime(dur)+' - '+formatTime(myPlayer.currentTime)
+    else myDur.innerHTML = formatTime(dur)
     let qty = selected.split(',').length - 1 || 1;
     if (myTitle.value || selected) myDelete.innerHTML = 'Delete ' + qty
     else myDelete.innerHTML = null
@@ -427,10 +404,9 @@ myPic.style.display = 'block'			// otherwise jarring transitions
       if (cues.innerHTML && !thumbSheet && type !='image') myCues(myPlayer.currentTime)}
     else {
       myMask.style.pointerEvents = null
-      if (zoom > 1 && overMedia) myMask.style.opacity = 0.6
+      if (zoom > 1 && overMedia) myMask.style.opacity = 0.9
       else myMask.style.opacity = 0
-      if (!listView && thumb.readyState === 4 && thumb.duration && overMedia && zoom == 1) thumb.play()
-      else thumb.pause()}}
+if (!listView && thumb.readyState === 4 && !myNav.style.display && overMedia && zoom == 1) thumb.play()}}
 
 
   function positionMedia(time) {					// position myPlayer in window
@@ -454,9 +430,9 @@ myPic.style.display = 'block'			// otherwise jarring transitions
   function seekbar() {							// seekbar bar beneath player
     let cueX = rect.left
     let pos = Math.round(myPlayer.currentTime*10)/10
-if (!playing) pos = thumb.currentTime
+    if (!playing) pos = thumb.currentTime
     let cueW = rect.width * pos / dur
-    if (myPic.matches(':hover') && ym > 0.8) cueW = rect.width * xm
+    if (!playing && ym > 0.8 && overMedia) cueW = rect.width * xm
     mySeek.style.width = cueW + 'px'
     if (cue && cue <= pos) {
       cueX = rect.left + rect.width * cue / dur
@@ -470,12 +446,14 @@ if (!playing) pos = thumb.currentTime
     if (rect.bottom > innerHeight) mySeek.style.top = innerHeight - 15 +'px'
     else mySeek.style.top = rect.top + rect.height - 6 + 'px'
     mySeek.style.left = cueX + 'px'
-    let isInRange = yw > 0.98 || ym > 0.95 && ym < 1.05 && xm > 0 && xm < 1
-    if (cue || isInRange || block > 20 || overMedia) {
-      mySeek.style.height = (playing && isInRange) ? '6px' : null
+    if (cue || block > 20 || ym > 0.8 && overMedia) {
+      mySeek.style.height = (playing && overMedia && ym > 0.9) ? '6px' : null
       mySeek.style.background = cue ? 'red' : null
       mySeek.style.opacity = 0.8
-      return 1}}
+      myPic.style.visibility = 'visible'
+      if (ym > 0.8) setPic()
+      return 1}
+    else {myPic.style.visibility = 'hidden'; start = thumb.currentTime}}
 
 
   function setThumb() {							// sets src, poster, thumbsheet & dimensions
@@ -502,7 +480,12 @@ if (!playing) pos = thumb.currentTime
     myPic.style.backgroundPosition = '0% 0%'}				// sets to frame 1 of 6x6 thumbSheet
 
 
+
   function setPic() {							// sets context image based on cursor over myPic
+    myPic.style.zIndex = index + 1
+    myPic.style.top = rect.top + 'px'
+    myPic.style.left = rect.left + 'px'
+    if (!Click && ym > 0.8) myPic.style.opacity = 1
     let x = Math.max(0, Math.min(1, ((xPos - rect.left) / rect.width + 0.02) ** 2 - 0.02))
     let thumbIndex = Math.ceil(x * 35)
     let z = (5 * (thumbIndex + 1) - 1) / 200
@@ -514,8 +497,8 @@ if (!playing) pos = thumb.currentTime
     else if (type == 'video') {
       myPic.style.backgroundSize = null
       myPic.style.backgroundImage = 'url(\"'+sheet+'\")'
-      myPic.style.backgroundPosition = `${(thumbIndex % 6) * 20}% ${Math.floor(thumbIndex / 6) * 20}%`}}
-//    myPic.style.left = (skinny < 0 ? rect.width : 0) + 'px'		// for flip
+      myPic.style.backgroundPosition = `${(thumbIndex % 6) * 20}% ${Math.floor(thumbIndex / 6) * 20}%`}
+    if (skinny < 0) myPic.style.left = rect.left + rect.width + 'px'}	// media flipped
 
 
   function filter(id) {							// for htm ribbon headings
@@ -544,7 +527,7 @@ if (!playing) pos = thumb.currentTime
     if (!value) value = ''
     if (!address) address = ''
     if (command == 'Delete' || command == 'Rename' || value.toString().includes('|myMp4') || (select && command == 'Path')) {
-      selected = ''
+      selected = ''; myPic.style.display = 'none'
       for (x of select.split(',')) if (el = document.getElementById('thumb'+x)) el.remove()}	// release media
     messages += '#'+command+'#'+value+'#'+select+'#'+address
     fetch('http://localhost:3000/generate-html', {method: 'POST', headers: {'Content-Type': 'text/plain'}, body: messages})
@@ -567,7 +550,8 @@ if (!playing) pos = thumb.currentTime
     let params = entry.dataset.params.split(',')
     type = params[0]							// media type eg. video
     defStart = Number(params[1])
-    if (thumb.currentSrc === '') thumb.src = thumb.dataset.altSrc
+    myPlayer.src = thumb.dataset.altSrc
+    if (myPlayer.src != thumb.src) thumb.src = thumb.dataset.altSrc
     dur = Number(params[2]) || thumb.duration || 0			// duration
     size = Number(params[3])						// file size
     skinny = 1; rate = defRate						// reset before new cues read
@@ -697,8 +681,8 @@ if (!playing) pos = thumb.currentTime
 
   function addFavorite() {
     if (!myTitle.value || gesture) return
-    start = myPlayer.currentTime
-    if (!playing) if (dur < 200) {start = 0.0} else start = defStart
+    if (playing) start = myPlayer.currentTime
+    if (!playing && zoom == 1) if (dur < 200) {start = 0.0} else start = defStart
     inca('Favorite', start.toFixed(1), index,srt.scrollTop.toFixed(0))
     favicon.innerHTML = '&#10084'}					// heart symbol on htm thumb
 
@@ -778,7 +762,7 @@ if (!playing) pos = thumb.currentTime
 
   function mouseBack() {
     if (playing) closePlayer()						// close player and send messages to inca
-    else if (zoom > 1) {zoom = 1; myPic.style.display = thumb.style.zIndex = null; thumb.style.size = 1; getParameters(index)}
+    else if (zoom > 1) {zoom = 1; thumb.style.zIndex = null; thumb.style.size = 1; getParameters(index)}
     else if (longClick) window.close()
     else if (myContent.scrollTop > 50) myContent.scrollTo(0,0)		// else scroll to page top
     else inca('Reload')}						// or finally, reload page & clear selected
@@ -789,7 +773,7 @@ if (!playing) pos = thumb.currentTime
     if (Click) return							// faster for click & slide selecting
     getParameters(id)
     thumb.style.opacity = 1
-    if (!listView && zoom == 1) {thumb.load(); thumb.playbackRate = 0.7; thumb.currentTime = defStart + 0.04}}
+    if (zoom == 1) {thumb.load(); thumb.playbackRate = 0.7; thumb.currentTime = defStart + 0.04}}
 
 
   function closePlayer() {
@@ -800,11 +784,11 @@ if (!playing) pos = thumb.currentTime
     Click = playing = start = captions = thumbSheet = cue = 0
     mySeek.style.height = myVig.style.opacity = myPlayer.style.opacity = overText = 0
     myMask.style = srt.style = myDur.innerHTML = myPlayer.src = ''
-    myPic.style.display = thumb.style.zIndex = null; thumb.style.size = 1; getParameters(index)
+    thumb.style.zIndex = null; thumb.style.size = 1; getParameters(index)
     myPlayer.style.zIndex = -1; zoom = 1}
 
 
-  function context(e) {myNav.style.display = 'block'; myNav.style.left = xPos-68+'px'; myNav.style.top = yPos-28+'px'}
+  function context(e) {myNav.style.display = 'block'; myNav.style.left = xPos-68+'px'; myNav.style.top = yPos-28+'px'; thumb.pause()}
   function Cancel() {if (myCancel.innerHTML != 'Sure ?') {myCancel.innerHTML = 'Sure ?'} else {editing = 0; inca('Reload',index)}}
   function Flip() {xPos = 0; skinny *=- 1; thumb.style.skinny = skinny; getParameters(index); positionMedia(0.4)}
   function Time(z) {if (z<0) return '0:00'; let y = Math.floor(z%60); let x = ':'+y; if (y<10) {x = ':0'+y}; return Math.floor(z/60)+x}
