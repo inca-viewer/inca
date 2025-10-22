@@ -11,6 +11,7 @@
   GroupAdd, Browsers, ahk_exe brave.exe
   GroupAdd, Browsers, ahk_exe msedge.exe
   GroupAdd, Browsers, ahk_exe opera.exe
+  GroupAdd, Browsers, Mozilla Firefox Nightly
   GroupAdd, Browsers, Mozilla Firefox		; firefox blocks back mouse button
 
   #WinActivateForce				; stops taskbar flashing up
@@ -91,21 +92,20 @@
   main:
     initialize()				; sets environment then waits for mouse, key or clipboard events
     WinActivate, ahk_group Browsers
-    Process, Close, node.exe
-    sleep 300
-    Run, cmd.exe /c cd /d "C:\inca\cache\apps" && helpers\node\node.exe server.js, , Hide
-    sleep 300
     startPage = #Path###%profile%\Pictures\	; default start page
     if GetBrowser()				; gets incaTab settings
-    startPage = #Path###%path%
+      startPage = #Path###%path%
     if searchTerm
-    startPage = #Search###%searchTerm%
+      startPage = #Search###%searchTerm%
     if playlist
-    startPage = #Path###%playlist%
+      startPage = #Path###%playlist%
     messages(startPage)				; opens browser
     SetTimer, TimedEvents, 49			; every 49mS - process server requests
-    SetTimer, SlowTimer, 999, -2		; show ffmpeg is processing
-    SetTimer, VolTimer, 6666, -2		; stops windows vol lag
+    SetTimer, SlowTimer, 999, -2		; check on youtube downloads
+    SetTimer, VolTimer, 6666, -2		; stops windows vol jitter
+    Process, Close, node.exe
+    sleep 999
+    Run, cmd.exe /c cd /d "C:\inca\cache\apps" && helpers\node\node.exe server.js, , Hide
     return
 
 
@@ -337,6 +337,8 @@
     else incaTab =
     if InStr(title, "Mozilla Firefox",1)     
       browser = mozilla firefox
+    else if InStr(title, "Firefox Nightly",1)     
+      browser = mozilla nightly
     else if InStr(title, "Google Chrome",1)     
       browser = google chrome
     else if InStr(title, "Brave",1)     
@@ -531,9 +533,9 @@
       folder := str[str.MaxIndex()-1]					; in case folder has .com in name
       }
     if selected
-    if playlist
-      sort = Playlist
-    else sort = Date
+      if playlist
+        sort = Playlist
+      else sort = Date
     else GetTabSettings(0)						; load previous tab basic settings from cache
     searchTerm =
     searchPath =
@@ -563,7 +565,7 @@
     else if (InStr(sortList, command) && sort != command)		; changed sort column
       {
       if (value == filt)
-      filt := 0								; clear filter
+        filt := 0							; clear filter
       else filt := value						; or adopt new filt (if applied)
       }
     reload := 3
@@ -588,7 +590,7 @@
         toggles =
       }
     if searchTerm
-    Search()								; in case sorting within search
+      Search()								; in case sorting within search
     }
  
 
@@ -670,7 +672,7 @@
           {
           FileRecycle, %src%
           if ErrorLevel
-          popup = Error %A_Index%
+            popup = Error %A_Index%
           else popup = Deleted %A_Index%
           popup(popup,0,0,0)
           }
@@ -1350,7 +1352,7 @@
       t2 := A_Now
       t2 -= t1, days
       if (!InStr(str, x) && t2 > 30)					; only keep for 30 days for non known pages
-      FileDelete, %A_LoopFileFullPath%
+        FileDelete, %A_LoopFileFullPath%
       }
     CoordMode, Mouse, Screen
     Gui, background:+lastfound -Caption +ToolWindow -DPIScale
@@ -1434,7 +1436,7 @@
       return
     FileRead, MetaContent, c:\inca\cache\temp\meta.txt
     if RegExMatch(MetaContent, """duration"":\s*""?(\d+\.?\d*)""?", n)
-    dur := n1
+      dur := n1
     if !dur
       return
     if RegExMatch(MetaContent, """start_time"":\s*""?(\d+\.?\d*)""?", n)
@@ -1814,17 +1816,17 @@ header = <!--, %sort%, %toggles%, %listView%, %playlist%, %path%, %searchPath%, 
 
 body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals('%folder_s%', %wheelDir%, '%mute%', %paused%, '%sort%', %filt%, %listView%, '%keepSelected%', '%playlist%', %index%); %scroll%.scrollIntoView()">`n`n
 
-<div id='myVig' onwheel='wheelEvent(event)' class='vig'></div>`n
-<video id='myPic' onmouseout='thumb.pause()' onwheel='wheelEvent(event)' class='pic' muted></video>`n
+<div id='myVig' class='vig'></div>`n
+<video id='myPic' class='pic' muted onwheel='wheelEvent(event)' onmouseout='thumb.pause()'></video>`n
 <video id="myPlayer" class='player' type="video/mp4" muted onwheel='wheelEvent(event)'></video>`n
 <div id='mySeek' class='seekbar'><span id='myDur'></span></div>`n
 <span id='mySelected' class='selected'></span>`n
 <div id='capMenu' class='capMenu'>`n
 <span id='myCancel' class='capButton' onmouseout="this.innerHTML='&#x2715;'">&#x2715;</span></div>`n`n 
-<div id='myContent' class='mycontent' onwheel='wheelEvent(event)'>`n <div id='myView' class='myview'>`n`n %mediaList%</div></div>`n`n
+<div id='myContent' class='mycontent' onwheel='if (Click) wheelEvent(event)'>`n <div id='myView' class='myview'>`n`n %mediaList%</div></div>`n`n
 
 <div id='myNav' class='context' onwheel='wheelEvent(event)'>`n
-  <a id='myInca' style='width: 4.5em'>&hellip;</a>
+  <a id='myInca'>&hellip;</a>
   <input id='myTitle' class='title' style='opacity: 1; color: lightsalmon; padding-left: 1.4em'>
   <a id='mySelect'>Select</a>`n
   <a id='myFavorite'>Fav</a>`n
@@ -1877,23 +1879,23 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
     htm = %server%%inca%\cache\html\%folder%.htm
     StringReplace, htm, htm, \,/, All
     if silent
-    return
+      return
     FileDelete, %inca%\cache\html\temp.txt				; server polling file
     if (!incaTab || !WinExist("ahk_group Browsers") || lastClick=="MButton")
-    run, %htm%
+      run, %htm%
     else if (incaTab == folder) 
-    send {F5}
+      send {F5}
     else FileAppend, %htm%, %inca%\cache\html\temp.txt, UTF-8		; trigger node server
     sleep 200
     WinActivate, ahk_group Browsers
     incaTab := folder
     Loop, 30								; wait until page loaded
-    {
-    WinGetTitle, title, A
-    If InStr(title, incaTab)
-      break
-    Sleep, 100
-    }
+      {
+      WinGetTitle, title, A
+      If InStr(title, incaTab)
+        break
+      Sleep, 100
+      }
     Gui PopUp:Cancel
     lastClick =
     }
@@ -1934,7 +1936,9 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
     if (type == "video")
       IfExist, %inca%\cache\posters\%media% %seek%.jpg			; replace poster with fav poster
         thumb = %inca%\cache\posters\%media% %seek%.jpg
-      else thumb =  %inca%\cache\posters\%media%.jpg
+      else IfExist, %inca%\cache\posters\%media%.jpg
+        thumb = %inca%\cache\posters\%media%.jpg
+      else thumb = %inca%\cache\icons\no link.png
     FileGetSize, size, %src%, K
     if (type=="document")
       size := Round(size)
@@ -1964,7 +1968,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
       }
     else
       noIndex = <span class='warning'>no index</span>`n 
-    if !start 
+    if !start
       start = 0.000
     else start := Round(start,3)
     data =
@@ -1979,12 +1983,11 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
     src = %src%
     StringReplace, src, src, `%, `%25, All				; html cannot have % in filename
     StringReplace, src, src, #, `%23, All				; html cannot have # in filename
-    StringReplace, media_s, media, `', &apos;, All
     StringReplace, data, data, `%, `%25, All
     StringReplace, data, data, #, `%23, All
     StringReplace, media_s, media, `', &apos;, All
     if !size
-      size = 0								; cannot have null size in getParameters()
+      size = 0								; cannot have null size in Param()
 
     if (ext=="txt")
       src = "%server%%poster%"
@@ -1995,13 +1998,13 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
     caption = <pre id="dat%j%" style='display: none' type="text/plain" data=%data%></pre>`n <textarea id='srt%j%' class='caption' onmouseover='overText=1' onmouseout='overText=0'`n oninput="editing=srt.scrollTop||1"></textarea>`n
 
     if listView
-      mediaList = %mediaList%%fold%<table id='entry%j%' data-params='%type%,%start%,%dur%,%size%' onmouseenter='if (gesture) sel(%j%)' onmouseover='overThumb(%j%)'`n onmouseout="thumb%j%.style.opacity=0; thumb.src=''">`n <tr><td><video id='thumb%j%' class='thumb2' data-alt-src=%src%`n %poster%`n preload=%preload% muted loop type="video/mp4"></video></td>`n <td>%ext%</td><td>%size%</td><td style='min-width: 6em'>%durT%</td><td>%date%</td><td style='width:3em'>`n <div id='myFavicon%j%' class='favicon' style='position: relative; text-align: left; translate:2em 0.4em'>%favicon%</div></td>`n <td style='width: 80vw'><input id="title%j%" class='title' style='opacity: 1; position: relative; width:100`%; left:-0.2em' onmouseover='overText=1' autocomplete='off' onmouseout='overText=0; Click=0' type='search' value='%media_s%' oninput="renamebox=this.value; lastMedia=%j%"></td>`n %fo%</tr></table>%caption%<span id='cues%j%' style='display: none'>%cues%</span>`n`n
+      mediaList = %mediaList%%fold%<table id='entry%j%' data-params='%type%,%start%,%dur%,%size%' onmouseenter='if (gesture) sel(%j%)' onmouseover='overThumb(%j%)'`n onmouseout="thumb%j%.style.opacity=0; thumb.src=''">`n <tr><td><video id='thumb%j%' class='thumb2' onwheel='if (zoom > 1) wheelEvent(event)' %poster%`n preload=%preload% muted loop type="video/mp4"></video>`n <video id="vid%j%" style='display: none' src=%src% preload='none' type='video/mp4'></video></td>`n <td>%ext%</td><td>%size%</td><td style='min-width: 6em'>%durT%</td><td>%date%</td><td style='width:3em'>`n <div id='myFavicon%j%' class='favicon' style='position: relative; text-align: left; translate:2em 0.4em'>%favicon%</div></td>`n <td style='width: 80vw'><input id="title%j%" class='title' style='opacity: 1; position: relative; width:100`%; left:-0.2em' onmouseover='overText=1' autocomplete='off' onmouseout='overText=0; Click=0' type='search' value='%media_s%' oninput="renamebox=this.value; lastMedia=%j%"></td>`n %fo%</tr></table>%caption%<span id='cues%j%' style='display: none'>%cues%</span>`n`n
 
-    else mediaList = %mediaList%<div id="entry%j%" class='entry' data-params='%type%,%start%,%dur%,%size%'>`n <span id='myFavicon%j%' onmouseenter='overThumb(%j%)' class='favicon'>%favicon%</span>`n <input id='title%j%' class='title' style='top:-1.1em' type='search'`n value='%media_s%'`n oninput="renamebox=this.value; lastMedia=%j%"`n onmouseover="overText=1; this.style.width=1+this.value.length/2+'em'"`n onmouseout="overText=0; this.style.width=null">`n <video id="thumb%j%" class='thumb' onmouseenter="overThumb(%j%); if (gesture) sel(%j%)"`n onmouseout="thumb.pause(); if (zoom==1) thumb.src=''" onmouseup='if (gesture) getParameters(%j%)' data-alt-src=%src%`n %poster%`n preload=%preload% loop muted type='video/mp4'></video> %noIndex%`n <span id='cues%j%' style='display: none'>%cues%</span></div>`n %caption%`n
+    else mediaList = %mediaList%<div id="entry%j%" class='entry' data-params='%type%,%start%,%dur%,%size%'>`n <span id='myFavicon%j%' onmouseenter='overThumb(%j%)' class='favicon'>%favicon%</span>`n <input id='title%j%' class='title' style='top:-1.1em' type='search'`n value='%media_s%'`n oninput="renamebox=this.value; lastMedia=%j%"`n onmouseover="overText=1; this.style.width=1+this.value.length/2+'em'"`n onmouseout="overText=0; this.style.width=null">`n <video id="thumb%j%" class='thumb' onwheel='if (zoom > 1) wheelEvent(event)' onmouseenter="overThumb(%j%); if (gesture) sel(%j%)"`n onmouseout="thumb.pause()" onmouseup='if (gesture) Param(%j%)' %poster%`n preload=%preload% loop muted type='video/mp4'></video>`n <video id="vid%j%" style='display: none' src=%src% preload='none' type='video/mp4'></video>%noIndex%`n <span id='cues%j%' style='display: none'>%cues%</span></div>`n %caption%`n
     }
 
 
-  Ffmpeg: 								; async processing 
+  Ffmpeg: 								; mp3, mp4, indexing - async processing
     transcoding =
     select := selected							; preserve selected
     selected =
@@ -2015,8 +2018,8 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
     Loop, Parse, str, `n, `r
     fileList .= StrSplit(A_LoopField, "/").2 . "|" . Round(StrSplit(A_LoopField, "/").4,1) . "`r`n"
     if (select && !InStr(el_id, "Index"))
-    Loop, Parse, select, `,						; index selected files
-      transcoding .= StrSplit(fileList,"`r`n")[A_LoopField]		; media to lock
+      Loop, Parse, select, `,						; index selected files
+        transcoding .= StrSplit(fileList,"`r`n")[A_LoopField]		; media to lock
     RenderPage(1)							; silent update htm
     send, {F5}								; clear selected on tab
     Critical Off
@@ -2035,9 +2038,9 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
     if InStr(el_id, "Join")
       Join()
     else if (el_id == "myIndex" && !select)				; index whole folder
-    if (playlist || searchTerm)
-      Loop, Parse, filelist, `n, `r
-        Index(A_Loopfield, 0, A_Index)
+      if (playlist || searchTerm)
+        Loop, Parse, filelist, `n, `r
+          Index(A_Loopfield, 0, A_Index)
     else Loop, files, %path%*.*
       Index(A_LoopFileFullPath, 0, A_Index)
     else Loop, Parse, select, `,					; index selected files
@@ -2046,16 +2049,18 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
         entry := StrSplit(fileList, "`r`n")[A_LoopField]
         source := StrSplit(entry, "|").1
         if InStr(el_id, "Index")
-        Index(entry, 1, A_Index)
+          Index(entry, 1, A_Index)
         else if (new := Transcode(el_id, source, sta, end, A_Index))
-        Index(new, 1, A_Index)
+          Index(new, 1, A_Index)
         }
     transcoding =
     CreateList(1)
     if (folder == fld)							; if in same tab after processing
+      {
       RenderPage(0)
-    if (A_TickCount - serverTimout > 9999)				; server timout
-      send, {F5}
+      if (A_TickCount - serverTimout > 9999)				; server timout
+        send, {F5}
+      }
     return
 
 
@@ -2076,8 +2081,8 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
     if (ytdlp > 4 && downloads > 4 && InStr(control, ".........."))
       GuiControl, Indexer:, GuiInd
     if (downloads > 3)							; stop re-triggering control message
-    if (ytdlp < 3)
-      GuiControl, Indexer:, GuiInd, ...........................................
+      if (ytdlp < 3)
+        GuiControl, Indexer:, GuiInd, ...........................................
     else Loop, Files, %inca%\cache\apps\*.*
       if (A_LoopFileExt == "webm" || A_LoopFileExt == "mp4" || A_LoopFileExt == "mkv")
         if (encoded := Transcode("myMp4", A_LoopFileFullPath,0,0,""))
@@ -2140,7 +2145,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
       {
       x =
       if volume
-      x := Round(volume)
+        x := Round(volume)
       ctime := time
       Gui, Status:+lastfound
       WinSet, TransColor, 0 20
