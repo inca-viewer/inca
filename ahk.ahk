@@ -11,8 +11,8 @@
   GroupAdd, Browsers, ahk_exe brave.exe
   GroupAdd, Browsers, ahk_exe msedge.exe
   GroupAdd, Browsers, ahk_exe opera.exe
-  GroupAdd, Browsers, Mozilla Firefox Nightly
-  GroupAdd, Browsers, Mozilla Firefox		; firefox blocks back mouse button
+  GroupAdd, Browsers, ahk_exe firefox.exe
+  GroupAdd, Browsers, ahk_exe nightly.exe
 
   #WinActivateForce				; stops taskbar flashing up
   #SingleInstance force				; one program instance only
@@ -91,8 +91,12 @@
 
   main:
     initialize()				; sets environment then waits for mouse, key or clipboard events
+    Process, Close, node.exe
+    sleep 200
+    Run, cmd.exe /c cd /d "C:\inca\cache\apps" && helpers\node\node.exe server.js, , Hide
     WinActivate, ahk_group Browsers
-    startPage = #Path###%profile%\Pictures\	; default start page
+    path = %profile%\Pictures\
+    startPage = #Path###%path%			; default start page
     if GetBrowser()				; gets incaTab settings
       startPage = #Path###%path%
     if searchTerm
@@ -103,13 +107,11 @@
     SetTimer, TimedEvents, 49			; every 49mS - process server requests
     SetTimer, SlowTimer, 999, -2		; check on youtube downloads
     SetTimer, VolTimer, 6666, -2		; stops windows vol jitter
-    Process, Close, node.exe
-    sleep 999
-    Run, cmd.exe /c cd /d "C:\inca\cache\apps" && helpers\node\node.exe server.js, , Hide
     return
 
 
   ^Esc up::
+    Process, Close, node.exe
     ExitApp
 
 
@@ -122,7 +124,8 @@
 
   XButton1::					; Back button
     Critical
-    longClick =
+    longClick = 
+    lastClick = 
     timer := A_TickCount + 350
     SetTimer, Timer_up, -350
     return
@@ -338,7 +341,7 @@
     if InStr(title, "Mozilla Firefox",1)     
       browser = mozilla firefox
     else if InStr(title, "Firefox Nightly",1)     
-      browser = mozilla nightly
+      browser = Firefox Nightly
     else if InStr(title, "Google Chrome",1)     
       browser = google chrome
     else if InStr(title, "Brave",1)     
@@ -349,6 +352,8 @@
       browser = Profile 1 - Microsoft
     StringGetPos, pos, incaTab, %browser%, R
     StringLeft, incaTab, incaTab, % pos - 3
+    if InStr(incaTab, "Original profile")
+      incaTab := SubStr(incaTab, 1, StrLen(incaTab) - 19)
     if (incaTab && folder != incaTab)					; has inca tab changed
       {
       subfolders =
@@ -1437,8 +1442,8 @@
     FileRead, MetaContent, c:\inca\cache\temp\meta.txt
     if RegExMatch(MetaContent, """duration"":\s*""?(\d+\.?\d*)""?", n)
       dur := n1
-    if !dur
-      return
+    if !dur								; try to fix duration missing
+      runwait, %inca%\cache\apps\ffmpeg.exe -c copy -map 0 -fflags +genpts "%source%" -y "%source%",, Hide
     if RegExMatch(MetaContent, """start_time"":\s*""?(\d+\.?\d*)""?", n)
       offset := n1
     dur := Round(dur,2)
@@ -1822,8 +1827,9 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
 <div id='mySeek' class='seekbar'><span id='myDur'></span></div>`n
 <span id='mySelected' class='selected'></span>`n
 <div id='capMenu' class='capMenu'>`n
-<span id='myCancel' class='capButton' onmouseout="this.innerHTML='&#x2715;'">&#x2715;</span></div>`n`n 
-<div id='myContent' class='mycontent' onwheel='if (Click) wheelEvent(event)'>`n <div id='myView' class='myview'>`n`n %mediaList%</div></div>`n`n
+  <span id='myCancel' class='capButton' onmouseout="this.innerHTML='&#x2715;'">&#x2715;</span></div>`n`n 
+<div id='myContent' class='mycontent' onwheel='if (Click) wheelEvent(event)'>`n 
+  <div id='myView' class='myview'>`n`n %mediaList%</div></div>`n`n
 
 <div id='myNav' class='context' onwheel='wheelEvent(event)'>`n
   <a id='myInca'>&hellip;</a>

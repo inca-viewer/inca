@@ -60,7 +60,7 @@
   margin: auto;
   transition: 0.3s;
   border-radius: 0.6em}
-.title:hover {color: pink; background:#2b2824; transition: 1.4s; z-index:999; overflow: visible}
+.title:hover {color: pink; background:#2b2824; transition: 1.4s; z-index: 99; overflow: visible}
 
 .entry {
   max-width: var(--max-size);
@@ -167,8 +167,7 @@
   display: none;
   padding:0.5em;
   justify-content: space-around;
-  width: 12em;
-  z-index: 991}
+  width: 12em}
 
 .capButton {					/* buttons over caption */
   text-align: center;
@@ -290,7 +289,6 @@
   display: block; 
   position: absolute;
   pointer-events: none;
-  z-index: 999;
   top: -100px;
   color: red;
   height: 2em;
@@ -304,10 +302,9 @@
   overflow: visible;
   width: 0;
   height: 1px;
-  z-index: 888;
   opacity: 0;
   background: pink;
-  transition: all 0.2s, left 0s, top 0s, opacity 1s}
+  transition: all 0s, opacity 1s}
 
 .mask {						/* media player overlay of htm tab */
   display: flex;
@@ -334,9 +331,9 @@
   position: fixed;
   opacity: 0;
   transition: opacity 0.3s;
-  z-index: 999;
   font-size: 1em;
   width: 120px;
+  z-index: 200;
   border-radius: 0.7em;
   background: inherit}
  .context:hover {opacity: 1}
