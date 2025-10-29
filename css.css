@@ -98,7 +98,6 @@
   opacity: 0}
 
 .pic {						/* context menu pic */
-  z-index: -1;
   opacity: 0;
   display: block;
   position: absolute;
@@ -109,7 +108,7 @@
   transform-origin: top left;
   transition: opacity 0.6s, transform 0.6s;
   // filter: blur(0.4vmin);
- pointer-events: none;
+  pointer-events: none;
   border-radius: 0.9em}
 
 .favicon {
@@ -292,6 +291,7 @@
   top: -100px;
   color: red;
   height: 2em;
+  z-index: 501;
   transition: font-size 0.5s;
   font-size: 1.8em}
 
@@ -304,7 +304,7 @@
   height: 1px;
   opacity: 0;
   background: pink;
-  transition: all 0s, opacity 1s}
+  transition: opacity 1s}
 
 .mask {						/* media player overlay of htm tab */
   display: flex;
@@ -333,7 +333,7 @@
   transition: opacity 0.3s;
   font-size: 1em;
   width: 120px;
-  z-index: 200;
+  z-index: 500;
   border-radius: 0.7em;
   background: inherit}
  .context:hover {opacity: 1}

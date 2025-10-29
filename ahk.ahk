@@ -114,13 +114,14 @@
     Process, Close, node.exe
     ExitApp
 
-
   RButton::
   ~LButton::					; click events
   ~MButton::					; click events
     MouseDown()
     return
 
+  ~WheelUp::Wheel(1)
+  ~WheelDown::Wheel(-1)
 
   XButton1::					; Back button
     Critical
@@ -154,7 +155,7 @@
   MouseDown()
     {
     Critical								; pause timed events
-    id := cur								; remember window clicked
+    startId := cur								; remember window clicked
     longClick := gesture := 0
     wasCursor := A_Cursor
     timer := A_TickCount + 300						; set future timout 300mS
@@ -165,7 +166,7 @@
     lastClick := click
     loop
       {
-      Gesture() 
+      Gesture()
       if (A_TickCount > timer)
         {
         longClick = true
@@ -189,20 +190,20 @@
           }
         }
       if (!gesture && longClick && click == "LButton" && wasCursor == "IBeam")
-        Find()								; file search selected text (or osk)
-      if (!GetKeyState("LButton", "P") && !GetKeyState("RButton", "P"))
+        Find()
+      if (!GetKeyState("LButton", "P") && !GetKeyState("RButton", "P"))	; click up
         {
         if (click == "RButton")
-          if (cur == id)  
+          if (cur == startId)
             if (incaTab && cur == brow && yRef > 200)
               send, {RButton up}
-            else if (!gesture && !longClick) 
+            else if (!gesture && !longClick)
               send, {RButton}
         break
         }
       }
     Gui PopUp:Cancel
-    click = 
+    click =
     }
 
 
@@ -243,7 +244,9 @@
     else if (command == "Reload")					; reload web page
       {
       index := value
-      reload := 1
+      if InStr(path, profile)
+        reload := 2
+      else reload := 1
       }
     else if (command == "Settings")					; open inca source folder
       {
@@ -640,27 +643,30 @@
     }
 
 
-  Join()
+  Join(select)
     {
-    str=
-    src=
-    if !StrSplit(selected, ",").2					; more that one video
+    if !StrSplit(select, ",").2						; more that one video
       return
-    Loop, Parse, selected, `,
-    if getMedia(A_LoopField)
-      str = %str%file '%src%'`r`n
-    FileAppend,  %str%, %inca%\cache\temp\temp1.txt, utf-8
+ ;   FileDelete, c:\inca\cache\temp\meta.txt
+ ;   Loop, Parse, select, `,						; normalise videos to first selected
+ ;     if getMedia(A_LoopField)
+ ;       if (type == "video")
+ ;         Transcode(0, src, 0, 0, "", 1)				; 1 = use last meta data to encode
     Popup("Joining Media",600,0,0)
-    x = @echo off`r`nset `"temp=(pause & pause & pause)>nul`"`r`ntype `%1|(`%temp`% & findstr `"^`")`r`n
-    FileAppend, %x%, %inca%\cache\temp\temp.bat 
-    runwait, %inca%\cache\temp\temp.bat %inca%\cache\temp\temp1.txt > %inca%\cache\temp\temp.txt,,Hide
-    runwait, %inca%\cache\apps\ffmpeg.exe -f concat -safe 0 -i "%inca%\cache\temp\temp.txt" -c copy "%mediaPath%\%media%- join.%ext%",, Hide
+    Loop, Parse, select, `,
+      if getMedia(A_LoopField)
+        fileList .= src . "|"
+    if fileList
+      fileList := SubStr(fileList, 1, -1)
+;    cmd := inca . "\cache\apps\ffmpeg.exe -i concat:" . fileList . " -c copy " . mediaPath . "\" . media . "-join." . ext
+ cmd := """" . inca . "\cache\apps\ffmpeg.exe"" -i ""concat:" . fileList . """ -c copy """ . mediaPath . "\" . media . "-join." . ext . """"
+;cmd := """" . inca . "\cache\apps\ffmpeg.exe"" -f concat -safe 0 -i """ . fileList . """ -c copy """ . mediaPath . "\" . media . "-join." . ext . """"
+
+RunWait, %cmd%,, Hide
+
     if ErrorLevel
       PopUp("failed",900,0,0)
-    src = %mediaPath%\%media%- join.%ext%
-    FileDelete, %inca%\cache\temp\temp.bat
-    FileDelete, %inca%\cache\temp\temp.txt
-    FileDelete, %inca%\cache\temp\temp1.txt
+    src = %mediaPath%\%media%-join.%ext%
     Index(src,1,"")
     reload := 2
     }
@@ -738,8 +744,9 @@
       FileRecycle, %inca%\cache\captions\%media%.srt
       FileAppend, %str%, %inca%\cache\captions\%media%.srt, UTF-8
       }
-    RenderPage(1)
-    PopUp("saved", 400, 0, 0)
+    index := selected
+    PopUp("saving...", 999, 0, 0)
+    RenderPage(0)
     }
 
 
@@ -1029,14 +1036,6 @@
       Gui, vol: show, x0 y%yv% w%xv% h3 NA
       SoundSet, volume
       }
-    if (click=="LButton" && desk==cur && !WinExist("ahk_class Notepad"))
-      {
-      WinActivate, ahk_group Browsers				; zoom browser page
-      if (y < 0)
-        send, ^0
-      else send, ^{+}
-      sleep 111
-      }
     }
 
 
@@ -1074,8 +1073,6 @@
     fail =
     if (playlist && !InStr(address, "\inca\") && !longClick)
       popup = Cannot Move Shortcuts . . .
-    else if (path == address && !longClick)
-      popup = Same folder . . .
     else Loop, Parse, selected, `,
       {
       if A_LoopField is not number
@@ -1414,6 +1411,20 @@
      }
 
 
+  Wheel(dir)					; browser zoom
+    {
+    Critical off
+    IfWinActive, ahk_group Browsers
+      if (!incaTab && click && !gesture)
+        {
+        if (dir > 0)
+          send, ^0
+        else send, ^{+}
+        sleep 100
+        }
+    }
+
+
   fill(in) {  
     panelList = %panelList%<div style="height:10`%; padding:0.5em; transform:rotate(90deg)">`n%in%</div>`n
     }
@@ -1432,10 +1443,12 @@
     if (med != "video" && med != "audio")
       return
     FileGetSize, size, %source%, K
-    if (size < 100)
+    if (med == "video" && size < 100)
       return
     dur =
-    cmd = C:\inca\cache\apps\ffprobe.exe -v quiet -print_format json -show_streams -select_streams v:0 "%source%"
+    if (med == "video")
+      cmd = C:\inca\cache\apps\ffprobe.exe -v quiet -print_format json -show_streams -select_streams v:0 "%source%"
+    else cmd = C:\inca\cache\apps\ffprobe.exe -v quiet -print_format json -show_streams -select_streams a:0 "%source%"
     RunWait, %ComSpec% /c %cmd% > "c:\inca\cache\temp\meta.txt",, Hide
     if ErrorLevel
       return
@@ -1484,111 +1497,118 @@
     }
 
 
-  Transcode(id, src, start, end, index)
+  Transcode(id, src, start, end, index, join)			; join means use last media dimensions etc
     {
     local cmd, temp, new, type, filen, foldr
     if start
       ss = -ss %start%
     if end
       to = -to %end%
+    if start
+      suffix = @%start%
+    else if end 
+      suffix = @%end%
     SplitPath, src, , foldr, type, filen
     FileGetTime, CreationTime, %src%, C
     FileGetTime, ModifiedTime, %src%, M
     if ErrorLevel
       return
+    GuiControl, Indexer:, GuiInd, %index% - transcoding - %filen%
     if (id == "myMp3")
-      {
-      FileRecycle, %foldr%\%filen%.mp3
-      RunWait, %inca%\cache\apps\ffmpeg.exe %ss% %to% -i "%src%" -y "%foldr%\%filen%.mp3",,Hide
-      return
-      }
-    if (DecodeExt(type) != "video")
-      return
-    cmd = C:\inca\cache\apps\ffprobe.exe -v quiet -print_format json -show_streams -select_streams v:0 "%src%"
-    RunWait, %ComSpec% /c %cmd% > "c:\inca\cache\temp\meta.txt",, Hide
-    if ErrorLevel
-      return
-    FileRead, MetaContent, c:\inca\cache\temp\meta.txt
-    if (!start && !end && InStr(MetaContent, "Inca"))		; already transcoded
-      return
-    if RegExMatch(MetaContent, """width"":\s*(\d+)", WidthMatch)
-      Width := WidthMatch1 + 0
-    if RegExMatch(MetaContent, """height"":\s*(\d+)", HeightMatch)
-      Height := HeightMatch1 + 0
-    if RegExMatch(MetaContent, """r_frame_rate"":\s*""(\d+)/(\d+)""", FrameRateMatch)
-      FrameRate := (FrameRateMatch1 + 0) / (FrameRateMatch2 + 0)
-    else if RegExMatch(MetaContent, """r_frame_rate"":\s*""(\d+\.?\d*)""", FrameRateMatch)
-      FrameRate := FrameRateMatch1 + 0
-    else FrameRate := 25
-    if RegExMatch(MetaContent, """bit_rate"":\s*""(\d+)""", BitrateMatch)
-      Bitrate := Ceil(BitrateMatch1 / 1000)
-    else Bitrate := 0
-    if (!Width || !Height || !FrameRate)
-      return
-    AspectRatio := Width / Height
-    if (AspectRatio >= 1)
-      {
-      OutWidth := Width < 1280 ? Width : 1280
-      OutHeight := Round(OutWidth / AspectRatio / 2) * 2
-      }
+      ext = mp3
+    else ext = mp4
+    temp = %foldr%\temp_%filen%.%ext%
+    if (id == "myMp3")
+      RunWait, %inca%\cache\apps\ffmpeg.exe %ss% %to% -i "%src%" -y file:"%temp%",,Hide
     else
       {
-      OutHeight := Height < 1280 ? Height : 1280
-      OutWidth := Round(OutHeight * AspectRatio / 2) * 2
-      }
-    Resolution := OutWidth ":" OutHeight
-    GOPFrames := Round(FrameRate)					; every second
-    MaxBitrate := 6000
-    BufSize := 12000
-    if (OutWidth <= 1280)
-      {
-      if (Bitrate > 0)
+      if (DecodeExt(type) != "video")
+        return
+      cmd = C:\inca\cache\apps\ffprobe.exe -v quiet -print_format json -show_streams -select_streams v:0 "%src%"
+      if (!join || !FileExist("c:\inca\cache\temp\meta.txt"))
+        RunWait, %ComSpec% /c %cmd% > "c:\inca\cache\temp\meta.txt",, Hide	; get media meta data
+      if ErrorLevel
+        return
+      FileRead, MetaContent, c:\inca\cache\temp\meta.txt
+      if (!join && !start && !end && InStr(MetaContent, "Inca"))		; already transcoded
+        return
+      if RegExMatch(MetaContent, """width"":\s*(\d+)", WidthMatch)
+        Width := WidthMatch1 + 0
+      if RegExMatch(MetaContent, """height"":\s*(\d+)", HeightMatch)
+        Height := HeightMatch1 + 0
+      if RegExMatch(MetaContent, """r_frame_rate"":\s*""(\d+)/(\d+)""", FrameRateMatch)
+        FrameRate := (FrameRateMatch1 + 0) / (FrameRateMatch2 + 0)
+      else if RegExMatch(MetaContent, """r_frame_rate"":\s*""(\d+\.?\d*)""", FrameRateMatch)
+        FrameRate := FrameRateMatch1 + 0
+      else FrameRate := 25
+      if RegExMatch(MetaContent, """bit_rate"":\s*""(\d+)""", BitrateMatch)
+        Bitrate := Ceil(BitrateMatch1 / 1000)
+      else Bitrate := 0
+      if (!Width || !Height || !FrameRate)
+        return
+      AspectRatio := Width / Height
+      if (AspectRatio >= 1)
         {
-        MaxBitrate := Round(Bitrate * 3 / 2)
-        BufSize := MaxBitrate * 2
+        OutWidth := Width < 1280 ? Width : 1280
+        OutHeight := Round(OutWidth / AspectRatio / 2) * 2
         }
       else
         {
-        if (OutWidth <= 720)
+        OutHeight := Height < 1280 ? Height : 1280
+        OutWidth := Round(OutHeight * AspectRatio / 2) * 2
+        }
+      Resolution := OutWidth ":" OutHeight
+      GOPFrames := Round(FrameRate)					; every second
+      MaxBitrate := 6000
+      BufSize := 12000
+      if (OutWidth <= 1280)
+        {
+        if (Bitrate > 0)
           {
-          MaxBitrate := 1500
-          BufSize := 3000
-          Bitrate := 1000
+          MaxBitrate := Round(Bitrate * 3 / 2)
+          BufSize := MaxBitrate * 2
           }
         else
           {
-          MaxBitrate := 6000
-          BufSize := 12000
-          Bitrate := 4000
+          if (OutWidth <= 720)
+            {
+            MaxBitrate := 1500
+            BufSize := 3000
+            Bitrate := 1000
+            }
+          else
+            {
+            MaxBitrate := 6000
+            BufSize := 12000
+            Bitrate := 4000
+            }
           }
         }
+      encoders := "-c:v h264_amf -rc cqp -qp_i 22 -qp_p 24|-c:v h264_nvenc -preset p5 -rc vbr -b:v %MaxBitrate%k -bufsize %BufSize%k|-c:v h264_qsv -preset medium -global_quality 23|-c:v libx264 -preset medium -crf 23 -pix_fmt yuv420p"
+      for index, encoder in StrSplit(encoders, "|")
+        {
+        try
+          {
+          cmd = -y -i file:"%src%" %ss% %to% %encoder% -vf scale=%Resolution%,setsar=1:1 -force_key_frames "expr:gte(t,n_forced*2)" -sc_threshold 0 -g %GOPFrames% -keyint_min %GOPFrames% -maxrate %MaxBitrate%k -bufsize %BufSize%k -c:a aac -b:a 128k -ar 48000 -ac 2 -map 0:v:0 -map 0:a? -map 0:s? -c:s copy -f mp4 -movflags +faststart+separate_moof -metadata:s:v:0 handler_name=Inca file:"%temp%"
+          RunWait %COMSPEC% /c %inca%\cache\apps\ffmpeg.exe %cmd%, , Hide
+          if !ErrorLevel
+            break
+          }
+        }
+      if ErrorLevel
+        return
       }
-    GuiControl, Indexer:, GuiInd, %index% - transcoding - %filen%
-    temp = %foldr%\temp_%filen%.mp4
-    encoders := "-c:v h264_amf -rc cqp -qp_i 22 -qp_p 24|-c:v h264_nvenc -preset p5 -rc vbr -b:v %MaxBitrate%k -bufsize %BufSize%k|-c:v h264_qsv -preset medium -global_quality 23|-c:v libx264 -preset medium -crf 23 -pix_fmt yuv420p"
-    for index, encoder in StrSplit(encoders, "|")
-      {
-      try {
-      cmd = -y -i file:"%src%" %ss% %to% %encoder% -vf scale=%Resolution%,setsar=1:1 -force_key_frames "expr:gte(t,n_forced*2)" -sc_threshold 0 -g %GOPFrames% -keyint_min %GOPFrames% -maxrate %MaxBitrate%k -bufsize %BufSize%k -c:a aac -b:a 128k -ar 48000 -ac 2 -map 0:v:0 -map 0:a? -map 0:s? -c:s copy -f mp4 -movflags +faststart+separate_moof -metadata:s:v:0 handler_name=Inca file:"%temp%"
-      RunWait %COMSPEC% /c %inca%\cache\apps\ffmpeg.exe %cmd%, , Hide
-      if !ErrorLevel
-        break
-      }
-      }
-    if ErrorLevel
-      return
-    if (!start && !end)
+    if (!start && !end && ext != "mp3")
       FileRecycle, %src%
-    if start
-      suffix = @%start%
-    else if end 
-      suffix = @%end%
     if suffix
-      new = %foldr%\%filen% %suffix%.mp4
-    else new = %foldr%\%filen%.mp4
+      new = %foldr%\%filen% %suffix%.%ext%
+    else new = %foldr%\%filen%.%ext%
     FileMove, %temp%, %new%
-    FileSetTime, %ModifiedTime%, %new%, M
-    FileSetTime, %CreationTime%, %new%, C
+    if (!suffix && ext != "mp3")
+      {
+      FileSetTime, %ModifiedTime%, %new%, M
+      FileSetTime, %CreationTime%, %new%, C
+      }
     GuiControl, Indexer:, GuiInd
     return new
     }
@@ -1722,21 +1742,6 @@
     if container
       fill(container)
 
-    container = <div id='Fav' style='font-size:1.8em; color:pink; text-align:center'>&#10084;</div>`n
-    container := fill(container)
-    Loop, Parse, fav, `|						; add favorites to top panel
-      if A_LoopField
-        {
-        SplitPath, A_Loopfield,,,,x
-        if (x == folder)
-          container = %container%<c class='p2' style='color:pink; font-size:0.9em; margin-left:0.2em' onmousedown="inca('Path','','','fav|%A_Index%')">%x%</c>`n
-        else container = %container%<c class='p2' onmousedown="inca('Path',index,'','fav|%A_Index%')">%x%</c>`n
-        if !Mod(A_Index,4)
-          container := fill(container)
-        }
-    if container
-      fill(container)
-
     if subfolders							; add list to top panel element
       {
       container = <div id='Sub' style='font-size:2em; color:pink; text-align:center'>&#x1F4BB;&#xFE0E;</div>`n
@@ -1767,6 +1772,21 @@
         if (x == folder)
           container = %container%<c class='p2' style='color:pink' onmousedown="inca('Path','','','fol|%A_Index%')">%x%</c>`n
         else container = %container%<c class='p2' onmousedown="inca('Path',index,'','fol|%A_Index%')">%x%</c>`n
+        if !Mod(A_Index,4)
+          container := fill(container)
+        }
+    if container
+      fill(container)
+
+    container = <div id='Fav' style='font-size:1.8em; color:pink; text-align:center'>&#9825;</div>`n
+    container := fill(container)
+    Loop, Parse, fav, `|						; add favorites to top panel
+      if A_LoopField
+        {
+        SplitPath, A_Loopfield,,,,x
+        if (x == folder)
+          container = %container%<c class='p2' style='color:pink; font-size:0.9em; margin-left:0.2em' onmousedown="inca('Path','','','fav|%A_Index%')">%x%</c>`n
+        else container = %container%<c class='p2' onmousedown="inca('Path',index,'','fav|%A_Index%')">%x%</c>`n
         if !Mod(A_Index,4)
           container := fill(container)
         }
@@ -1817,7 +1837,7 @@
   if (command == "View")
     keepSelected := selected
 
-header = <!--, %sort%, %toggles%, %listView%, %playlist%, %path%, %searchPath%, %searchTerm%, %subfolders%, -->`n<!doctype html>`n<html>`n<head>`n<meta charset="UTF-8">`n<title>Inca - %title%</title>`n<meta name="viewport" content="width=device-width, initial-scale=1">`n<link rel="icon" type="image/x-icon" href="%server%%inca%/cache/icons/inca.ico">`n<link rel="stylesheet" type="text/css" href="%server%%inca%/css.css">`n</head>`n`n
+header = <!--, %sort%, %toggles%, %listView%, %playlist%, %path%, %searchPath%, %searchTerm%, %subfolders%, -->`n<!doctype html>`n<html>`n<head>`n<meta charset="UTF-8">`n<title>Inca - %title%</title>`n<meta name="viewport" content="width=device-width, initial-scale=1">`n<link rel="icon" href="%server%c:/inca/cache/icons/inca.ico">`n<link rel="stylesheet" href="%server%c:/inca/css.css">`n</head>`n`n
 
 body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals('%folder_s%', %wheelDir%, '%mute%', %paused%, '%sort%', %filt%, %listView%, '%keepSelected%', '%playlist%', %index%); %scroll%.scrollIntoView()">`n`n
 
@@ -1833,7 +1853,6 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
 
 <div id='myNav' class='context' onwheel='wheelEvent(event)'>`n
   <a id='myInca'>&hellip;</a>
-  <input id='myTitle' class='title' style='opacity: 1; color: lightsalmon; padding-left: 1.4em'>
   <a id='mySelect'>Select</a>`n
   <a id='myFavorite'>Fav</a>`n
   <a id='myMute'>Mute</a>`n
@@ -1842,10 +1861,9 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
   <a id='mySkinny'></a>`n
   <a id='mySpeed'></a>`n
   <a id='myFlip'>Flip</a>`n
-  <a id='myDelete' style='color:red'></a>`n
   <a id='myCue'>Cue</a>`n
   <a id='myCap'>Caption</a>`n
-  <a id='myOptions' class='context'><span id='myIndex'>index</span><span id='myMp4'>mp4</span><span id='myMp3'>mp3</span><span id='myJoin'>join</span><a><a></a></div>`n`n
+  <a id='myOptions' class='context'><span id='myIndex'>index</span><span id='myMp4'>mp4</span><span id='myMp3'>mp3</span><span id='myJoin'>join</span><span id='myJpg'>jpg</span><a><a></a></div>`n`n
 
 <div id='myMenu'>
   <div id='z1' class='fade' style='height:190px'></div><div id='z2' class='fade' style='top:190px; background: linear-gradient(#0e0c05ff, #0e0c0500)'></div>`n
@@ -1856,7 +1874,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
   <a id='myMusic' style='max-width:1.8em; %x22%' onmousedown="inca('Path','','','music|1')" onmouseover="setTimeout(function() {if(myMusic.matches(':hover'))Music.scrollIntoView()},200)">&#x266B;</a>`n
   <a id='mySub' style='max-width:2em; font-size:0.7em; %x8%' onmousedown="inca('Recurse')" onmouseover="setTimeout(function() {if(mySub.matches(':hover'))Sub.scrollIntoView()},200)">%subs%</a>`n
   <a id='myFol' style='max-width:2.8em; %x21%' onmousedown="inca('Path','','','fol|1')" onmouseover="setTimeout(function() {if(myFol.matches(':hover'))Fol.scrollIntoView()},200)">&#x1F4BB;&#xFE0E;</a>`n
-  <a id='myFav' style='%x23%' onmousedown="inca('Path','','','fav|1')" onmouseover="setTimeout(function() {if(myFav.matches(':hover'))Fav.scrollIntoView()},200)">&#10084;</a>`n
+  <a id='myFav' style='translate: 0 0.1em; %x23%' onmousedown="inca('Path','','','fav|1')" onmouseover="setTimeout(function() {if(myFav.matches(':hover'))Fav.scrollIntoView()},200)">&#9825;</a>`n
   <a id='mySearch' style='max-width:2.8em; %x20%' onwheel="wheelEvent(event)" onmousedown="inca('SearchBox','','',myInput.value)" onmouseover="setTimeout(function() {if(mySearch.matches(':hover'))filter(id)},140)">&#x1F50D;&#xFE0E;</a>`n
   <input id='myInput' class='searchbox' type='search' autocomplete='off' value='%st%' onmouseenter="if (this.value=='%st%') this.value='%lastSearch%'; this.select()" onmouseover="overText=1; this.focus()" onmouseout='overText=0'>
   <a id='Add' style='max-width:3em; font-size:1.2em; color: red' onmousedown="inca('Add','','',myInput.value)">%add%</a>`n
@@ -2042,7 +2060,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
     end := Round(end,1)
     sta := Round(sta,1)
     if InStr(el_id, "Join")
-      Join()
+      Join(select)
     else if (el_id == "myIndex" && !select)				; index whole folder
       if (playlist || searchTerm)
         Loop, Parse, filelist, `n, `r
@@ -2056,7 +2074,19 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
         source := StrSplit(entry, "|").1
         if InStr(el_id, "Index")
           Index(entry, 1, A_Index)
-        else if (new := Transcode(el_id, source, sta, end, A_Index))
+        else if InStr(el_id, "myJpg")
+          {
+          SplitPath, source,,,,med
+          if !end
+            {
+            FileRead, end, %inca%\cache\durations\%med%.txt
+            end -= 0.1
+            }
+          runwait, %inca%\cache\apps\ffmpeg.exe -ss %end% -i "%source%" -y -vframes 1 "%profile%\Downloads\%med% end.jpg",, Hide
+          if sta
+            runwait, %inca%\cache\apps\ffmpeg.exe -ss %sta% -i "%source%" -y -vframes 1 "%profile%\Downloads\%med% start.jpg",, Hide
+          }
+        else if (new := Transcode(el_id, source, sta, end, A_Index, 0))
           Index(new, 1, A_Index)
         }
     transcoding =
@@ -2091,7 +2121,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
         GuiControl, Indexer:, GuiInd, ...........................................
     else Loop, Files, %inca%\cache\apps\*.*
       if (A_LoopFileExt == "webm" || A_LoopFileExt == "mp4" || A_LoopFileExt == "mkv")
-        if (encoded := Transcode("myMp4", A_LoopFileFullPath,0,0,""))
+        if (encoded := Transcode("myMp4", A_LoopFileFullPath,0,0,"",0))
           {
           Index(encoded, 1, "")
           FileMove, %encoded%, %profile%\Downloads, 1
