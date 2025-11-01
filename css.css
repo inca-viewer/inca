@@ -220,7 +220,7 @@
 .fade {						/* between menu and scrolled thumbs */
   position: absolute;
   display: block;
-  width: 99.4vw;
+  width: 99.25vw;
   height: 0.8em;
   background: #0e0c05;
   pointer-events: none}

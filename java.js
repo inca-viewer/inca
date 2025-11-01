@@ -1,5 +1,4 @@
 
-//  getVoice(Sarah, text).then(audioUrl => {if (audioUrl) {new Audio(audioUrl).play()}})
 
   let wheel = 0								// wheel count
   let wheelDir = 0		 					// wheel direction
@@ -109,7 +108,8 @@
     if (e.key == 'Enter' && !playing) {
       if (renamebox) inca('Rename', renamebox, lastMedia)		// rename media
       else inca('SearchBox','','',myInput.value)}			// search for media
-    else if (e.key == 'Pause' && e.shiftKey) mouseDown(e)
+    else if (e.key == 'Pause' && e.shiftKey) mouseDown(e)		// R click down
+    else if (e.key == 'Pause' && e.altKey) mouseUp(e)			// R click up
     else if (e.key == 'Pause' || (e.code == 'ArrowLeft' && e.shiftKey)) mouseBack()
     else if (!overText && !captions && playing) {
       if (e.key == 'ArrowRight') myPlayer.currentTime += 10
@@ -137,8 +137,7 @@
       if (!myNav.style.display) {context(e); return}}			// my context menu
     if (lastClick == 4) {mouseBack(); return}				// Back Click
     if (lastClick == 2) {  						// Middle click
-      if (editing) {inca('Null'); return}				// save text
-      if (myMenu.matches(':hover')) return
+      if (editing || myMenu.matches(':hover')) return
       if (zoom > 1) {Play(); return}
       else if (!playing && !myNav.style.display) {inca('View',lastMedia); return} // list/thumb view
       if (!thumbSheet && lastClick) messages += '#History#'+start.toFixed(1)+'#'+index+'#'
@@ -540,7 +539,7 @@
     messages = ''}
 
 
-  function Param(i) {						// get media parameters
+  function Param(i) {							// get media parameters
     i ||= index
     srt.style = myPlayer.poster = myPlayer.src = ''
     if (!(document.getElementById('thumb'+i))) return			// end of media list
@@ -782,6 +781,7 @@
 
 
   function getVoice(voice, text) {					// elevenlabs.ai text to voice call
+//  getVoice(Sarah, text).then(audioUrl => {if (audioUrl) {new Audio(audioUrl).play()}})
     let api = ""
     let endpoint = "https://api.elevenlabs.io/v1/text-to-speech/" + voice + "?output_format=mp3_44100_128"
     return fetch(endpoint, {

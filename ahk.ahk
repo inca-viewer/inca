@@ -194,11 +194,10 @@
       if (!GetKeyState("LButton", "P") && !GetKeyState("RButton", "P"))	; click up
         {
         if (click == "RButton")
-          if (cur == startId)
-            if (incaTab && cur == brow && yRef > 200)
-              send, {RButton up}
-            else if (!gesture && !longClick)
-              send, {RButton}
+          if (incaTab && yRef > 200)
+            send, !{Pause}
+          else if (!gesture && !longClick)
+            send, {RButton}
         break
         }
       }
@@ -647,26 +646,25 @@
     {
     if !StrSplit(select, ",").2						; more that one video
       return
- ;   FileDelete, c:\inca\cache\temp\meta.txt
- ;   Loop, Parse, select, `,						; normalise videos to first selected
- ;     if getMedia(A_LoopField)
- ;       if (type == "video")
- ;         Transcode(0, src, 0, 0, "", 1)				; 1 = use last meta data to encode
-    Popup("Joining Media",600,0,0)
     Loop, Parse, select, `,
       if getMedia(A_LoopField)
-        fileList .= src . "|"
-    if fileList
-      fileList := SubStr(fileList, 1, -1)
-;    cmd := inca . "\cache\apps\ffmpeg.exe -i concat:" . fileList . " -c copy " . mediaPath . "\" . media . "-join." . ext
- cmd := """" . inca . "\cache\apps\ffmpeg.exe"" -i ""concat:" . fileList . """ -c copy """ . mediaPath . "\" . media . "-join." . ext . """"
-;cmd := """" . inca . "\cache\apps\ffmpeg.exe"" -f concat -safe 0 -i """ . fileList . """ -c copy """ . mediaPath . "\" . media . "-join." . ext . """"
-
-RunWait, %cmd%,, Hide
-
+        {
+        Run, cmd /c mklink /H "c:\inca\cache\temp\%A_Index%.lnk" "%src%"
+        str = %str%file 'c:\inca\cache\temp\%A_Index%.lnk'`r`n
+        }
+    FileAppend,  %str%, %inca%\cache\temp\temp1.txt, utf-8
+    Popup("Joining Media",600,0,0)
+    x = @echo off`r`nset `"temp=(pause & pause & pause)>nul`"`r`ntype `%1|(`%temp`% & findstr `"^`")`r`n
+    FileAppend, %x%, %inca%\cache\temp\temp.bat 
+    runwait, %inca%\cache\temp\temp.bat %inca%\cache\temp\temp1.txt > %inca%\cache\temp\temp.txt,,Hide
+    runwait, %inca%\cache\apps\ffmpeg.exe -f concat -safe 0 -i "%inca%\cache\temp\temp.txt" -c copy "%mediaPath%\%media%- join.%ext%",, Hide
     if ErrorLevel
       PopUp("failed",900,0,0)
-    src = %mediaPath%\%media%-join.%ext%
+    src = %mediaPath%\%media%- join.%ext%
+    FileDelete, %inca%\cache\temp\temp.bat
+    FileDelete, %inca%\cache\temp\temp.txt
+    FileDelete, %inca%\cache\temp\temp1.txt
+    FileDelete, %inca%\cache\temp\*.lnk
     Index(src,1,"")
     reload := 2
     }
@@ -1018,7 +1016,7 @@ RunWait, %cmd%,, Hide
         edge := 1
       MouseMove, % xRef, % yRef, 0
       }
-    if (click == "RButton" && gesture > 0)
+    if (click == "RButton" && (gesture > 0 || !incaTab))
       {
       if (x > 0)
         dir := 1
@@ -1497,7 +1495,7 @@ RunWait, %cmd%,, Hide
     }
 
 
-  Transcode(id, src, start, end, index, join)			; join means use last media dimensions etc
+  Transcode(id, src, start, end, index)
     {
     local cmd, temp, new, type, filen, foldr
     if start
@@ -1525,8 +1523,7 @@ RunWait, %cmd%,, Hide
       if (DecodeExt(type) != "video")
         return
       cmd = C:\inca\cache\apps\ffprobe.exe -v quiet -print_format json -show_streams -select_streams v:0 "%src%"
-      if (!join || !FileExist("c:\inca\cache\temp\meta.txt"))
-        RunWait, %ComSpec% /c %cmd% > "c:\inca\cache\temp\meta.txt",, Hide	; get media meta data
+      RunWait, %ComSpec% /c %cmd% > "c:\inca\cache\temp\meta.txt",, Hide	; get media meta data
       if ErrorLevel
         return
       FileRead, MetaContent, c:\inca\cache\temp\meta.txt
@@ -2072,21 +2069,12 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
         {
         entry := StrSplit(fileList, "`r`n")[A_LoopField]
         source := StrSplit(entry, "|").1
+        SplitPath, source,,,,med
         if InStr(el_id, "Index")
           Index(entry, 1, A_Index)
         else if InStr(el_id, "myJpg")
-          {
-          SplitPath, source,,,,med
-          if !end
-            {
-            FileRead, end, %inca%\cache\durations\%med%.txt
-            end -= 0.1
-            }
-          runwait, %inca%\cache\apps\ffmpeg.exe -ss %end% -i "%source%" -y -vframes 1 "%profile%\Downloads\%med% end.jpg",, Hide
-          if sta
-            runwait, %inca%\cache\apps\ffmpeg.exe -ss %sta% -i "%source%" -y -vframes 1 "%profile%\Downloads\%med% start.jpg",, Hide
-          }
-        else if (new := Transcode(el_id, source, sta, end, A_Index, 0))
+          runwait, %inca%\cache\apps\ffmpeg.exe -ss %time% -i "%source%" -y -vframes 1 "%profile%\Downloads\%med% @%time%.jpg",, Hide
+        else if (new := Transcode(el_id, source, sta, end, A_Index))
           Index(new, 1, A_Index)
         }
     transcoding =
@@ -2121,7 +2109,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
         GuiControl, Indexer:, GuiInd, ...........................................
     else Loop, Files, %inca%\cache\apps\*.*
       if (A_LoopFileExt == "webm" || A_LoopFileExt == "mp4" || A_LoopFileExt == "mkv")
-        if (encoded := Transcode("myMp4", A_LoopFileFullPath,0,0,"",0))
+        if (encoded := Transcode("myMp4", A_LoopFileFullPath,0,0,""))
           {
           Index(encoded, 1, "")
           FileMove, %encoded%, %profile%\Downloads, 1
