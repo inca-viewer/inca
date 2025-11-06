@@ -161,7 +161,7 @@
     timer := A_TickCount + 300						; set future timout 300mS
     MouseGetPos, xRef, yRef
     StringReplace, click, A_ThisHotkey, ~,, All
-    if (incaTab && click == "RButton" && cur == brow && yRef > 100)
+    if (incaTab && click == "RButton" && cur == brow && yRef > 400)
       send, +{Pause}							; tell browser Rbutton down
     lastClick := click
     loop
@@ -194,7 +194,7 @@
       if (!GetKeyState("LButton", "P") && !GetKeyState("RButton", "P"))	; click up
         {
         if (click == "RButton")
-          if (incaTab && yRef > 200)
+          if (incaTab && yRef > 400 && yRef < A_ScreenHeight - 100)
             send, !{Pause}
           else if (!gesture && !longClick)
             send, {RButton}
@@ -715,33 +715,8 @@
 
   capEdit() 								; Save edited text or SRT file
     {
-    if (StrLen(value) < 5)
-      return
-    if (ext == "txt")
-      {
-      FileRecycle, %src%
-      FileAppend, %value%, %src%, UTF-8
-      }
-    else
-      {
-      str = 
-      lineNum := 0
-      Loop, Parse, value, `n, `r
-        {
-        if RegExMatch(A_LoopField, "^\d+\.\d$", t)
-          {
-          lineNum++
-          timeStr := srtTime(t)
-          str .= lineNum . "`r`n" . timeStr . " --> " . timeStr . "`r`n"
-          }
-        else if (A_LoopField != "")
-          str .= A_LoopField . "`r`n"
-        else if (lineNum > 0)
-          str .= "`r`n"
-        }
-      FileRecycle, %inca%\cache\captions\%media%.srt
-      FileAppend, %str%, %inca%\cache\captions\%media%.srt, UTF-8
-      }
+    FileRecycle, %inca%\cache\captions\%media%.json
+    FileAppend, %value%, %inca%\cache\captions\%media%.json, UTF-8
     index := selected
     PopUp("saving...", 999, 0, 0)
     RenderPage(0)
@@ -1892,8 +1867,9 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
 
     StringReplace, header, header, \, /, All
     StringReplace, body, body, \, /, All
-    script = <script src="%server%c:/inca/cache/apps/pitch.js">
-    script = %script%</script>`n<script src="%server%c:/inca/java.js"></script>
+    script = <script src="%server%c:/inca/cache/apps/pitch.js"></script>`n
+    script = %script%<script src="%server%c:/inca/captions.js"></script>`n
+    script = %script%<script src="%server%c:/inca/java.js"></script>`n
     htm = %header%%body%%script%`n</body>`n</html>`n
     FileDelete, %inca%\cache\html\%folder%.htm
     FileAppend, %htm%, %inca%\cache\html\%folder%.htm, UTF-8
@@ -1995,8 +1971,10 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
     data =
     if (ext=="txt")
       data = %src%
-    else IfExist, %inca%\cache\captions\%media%.srt			; convert srt times to seconds
+    else IfExist, %inca%\cache\captions\%media%.srt
       data = %inca%/cache/captions/%media%.srt
+ IfExist, %inca%\cache\captions\%media%.json
+  data = %inca%/cache/captions/%media%.json
     if (data && type!="document")
       favicon = %favicon% &#169 
     IfNotExist, %src%
