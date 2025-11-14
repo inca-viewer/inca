@@ -243,9 +243,9 @@
     else if (command == "Reload")					; reload web page
       {
       index := value
-      if InStr(path, profile)
-        reload := 2
-      else reload := 1
+      if (sort == "Shuffle")
+        reload := 1
+      else reload := 2
       }
     else if (command == "Settings")					; open inca source folder
       {
@@ -282,13 +282,6 @@
       {
       config := RegExReplace(config, "Mute/[^|]*", "Mute/" . value)
       IniWrite, %config%, %inca%\ini.ini, Settings, config
-      }
-    else if (command == "newCap")					; create new caption file
-      {
-      timeStr .= srtTime(seek) . " --> " . timeStr . "`r`ncaption"
-      FileAppend, %timeStr%, %inca%\cache\captions\%media%.srt, UTF-8
-      FileAppend, `r`n%seek%|scroll|0|300|100, %inca%\cache\cues\%media%.txt, UTF-8
-      reload := 2
       }
     }
 
@@ -379,7 +372,8 @@
     ptr := 1
     index := 0
     serverTimout := A_TickCount
-    messages := StrReplace(input, "/", "\")
+    messages := input
+;    messages := StrReplace(input, "/", "\")
     array := StrSplit(messages,"#")
 ; tooltip %messages%, 0							; for debug
     Loop % array.MaxIndex()/4
@@ -448,8 +442,10 @@
       IfExist, %src%
         Run, %src%
       }
-    else IfExist, %inca%\cache\captions\%media%.srt
-    Run, %inca%\cache\captions\%media%.srt
+    else IfExist, %inca%\cache\json\%media%.json
+      Run, %inca%\cache\json\%media%.json
+    else IfExist, %inca%\cache\srt\%media%.srt
+      Run, %inca%\cache\srt\%media%.srt
     loop 50
       {
       IfWinActive, Notepad
@@ -649,7 +645,7 @@
     Loop, Parse, select, `,
       if getMedia(A_LoopField)
         {
-        Run, cmd /c mklink /H "c:\inca\cache\temp\%A_Index%.lnk" "%src%"
+        Run, cmd /c mklink "c:\inca\cache\temp\%A_Index%.lnk" "%src%",, Hide
         str = %str%file 'c:\inca\cache\temp\%A_Index%.lnk'`r`n
         }
     FileAppend,  %str%, %inca%\cache\temp\temp1.txt, utf-8
@@ -704,8 +700,6 @@
     else FileAppend, %src%|%value%`r`n, %inca%\fav\new.m3u, UTF-8
     if (type == "audio" || type == "video")
       Runwait, %inca%\cache\apps\ffmpeg.exe -ss %value% -i "%src%" -y -vf scale=1280:1280/dar -vframes 1 "%inca%\cache\posters\%media%%A_Space%%value%.jpg",, Hide
-    if address
-      FileAppend, 0.0|scroll|%address%`r`n, %inca%\cache\cues\%media%.txt, UTF-8	; add scroll if srt text exists
     AllFav()										; update consolidated fav list
     index := StrSplit(selected, ",").1 + 1
     if playlist
@@ -715,8 +709,8 @@
 
   capEdit() 								; Save edited text or SRT file
     {
-    FileRecycle, %inca%\cache\captions\%media%.json
-    FileAppend, %value%, %inca%\cache\captions\%media%.json, UTF-8
+    FileRecycle, %inca%\cache\json\%media%.json
+    FileAppend, %value%, %inca%\cache\json\%media%.json, UTF-8
     index := selected
     PopUp("saving...", 999, 0, 0)
     RenderPage(0)
@@ -1190,7 +1184,7 @@
     FileMove, %inca%\cache\durations\%media%.txt, %inca%\cache\durations\%new_name%.txt, 1
     FileMove, %inca%\cache\thumbs\%media%.jpg, %inca%\cache\thumbs\%new_name%.jpg, 1
     FileMove, %inca%\cache\posters\%media%.jpg, %inca%\cache\posters\%new_name%.jpg, 1
-    FileMove, %inca%\cache\captions\%media%.srt, %inca%\cache\captions\%new_name%.srt, 1
+    FileMove, %inca%\cache\json\%media%.json, %inca%\cache\json\%new_name%.json, 1
      }
 
 
@@ -1502,8 +1496,8 @@
       if ErrorLevel
         return
       FileRead, MetaContent, c:\inca\cache\temp\meta.txt
-      if (!join && !start && !end && InStr(MetaContent, "Inca"))		; already transcoded
-        return
+ ;     if (!join && !start && !end && InStr(MetaContent, "Inca"))		; already transcoded
+ ;       return
       if RegExMatch(MetaContent, """width"":\s*(\d+)", WidthMatch)
         Width := WidthMatch1 + 0
       if RegExMatch(MetaContent, """height"":\s*(\d+)", HeightMatch)
@@ -1818,8 +1812,6 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
 <video id="myPlayer" class='player' type="video/mp4" muted onwheel='wheelEvent(event)'></video>`n
 <div id='mySeek' class='seekbar'><span id='myDur'></span></div>`n
 <span id='mySelected' class='selected'></span>`n
-<div id='capMenu' class='capMenu'>`n
-  <span id='myCancel' class='capButton' onmouseout="this.innerHTML='&#x2715;'">&#x2715;</span></div>`n`n 
 <div id='myContent' class='mycontent' onwheel='if (Click) wheelEvent(event)'>`n 
   <div id='myView' class='myview'>`n`n %mediaList%</div></div>`n`n
 
@@ -1835,7 +1827,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
   <a id='myFlip'>Flip</a>`n
   <a id='myCue'>Cue</a>`n
   <a id='myCap'>Caption</a>`n
-  <a id='myOptions' class='context'><span id='myIndex'>index</span><span id='myMp4'>mp4</span><span id='myMp3'>mp3</span><span id='myJoin'>join</span><span id='myJpg'>jpg</span><a><a></a></div>`n`n
+  <a id='myOptions' class='context'><span id='myIndex'>index</span><span id='myMp3'>mp3</span><span id='myMp4'>mp4</span><span id='myJoin'>join</span><span id='myJpg'>jpg</span><a><a></a></div>`n`n
 
 <div id='myMenu'>
   <div id='z1' class='fade' style='height:190px'></div><div id='z2' class='fade' style='top:190px; background: linear-gradient(#0e0c05ff, #0e0c0500)'></div>`n
@@ -1971,10 +1963,10 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
     data =
     if (ext=="txt")
       data = %src%
-    else IfExist, %inca%\cache\captions\%media%.srt
-      data = %inca%/cache/captions/%media%.srt
- IfExist, %inca%\cache\captions\%media%.json
-  data = %inca%/cache/captions/%media%.json
+    else IfExist, %inca%\cache\srt\%media%.srt
+      data = %inca%/cache/srt/%media%.srt
+ IfExist, %inca%\cache\json\%media%.json
+  data = %inca%/cache/json/%media%.json
     if (data && type!="document")
       favicon = %favicon% &#169 
     IfNotExist, %src%
@@ -1994,7 +1986,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
     poster = poster="%server%%poster%"
     data = "%server%%data%"
 
-    caption = <pre id="dat%j%" style='display: none' type="text/plain" data=%data%></pre>`n <textarea id='srt%j%' class='caption' onmouseover='overText=1' onmouseout='overText=0'`n oninput="editing=srt.scrollTop||1"></textarea>`n
+    caption = <pre id="dat%j%" style='display: none' type="text/plain" data=%data%></pre>`n
 
     if listView
       mediaList = %mediaList%%fold%<table id='entry%j%' data-params='%type%,%start%,%dur%,%size%' onmouseenter='if (gesture) sel(%j%)' onmouseover='overThumb(%j%)'`n onmouseout="thumb%j%.style.opacity=0; thumb.src=''">`n <tr><td><video id='thumb%j%' class='thumb2' onwheel='if (zoom > 1) wheelEvent(event)' %poster%`n preload=%preload% muted loop type="video/mp4"></video>`n <video id="vid%j%" style='display: none' src=%src% preload='none' type='video/mp4'></video></td>`n <td>%ext%</td><td>%size%</td><td style='min-width: 6em'>%durT%</td><td>%date%</td><td style='width:3em'>`n <div id='myFavicon%j%' class='favicon' style='position: relative; text-align: left; translate:2em 0.4em'>%favicon%</div></td>`n <td style='width: 80vw'><input id="title%j%" class='title' style='opacity: 1; position: relative; width:100`%; left:-0.2em' onmouseover='overText=1' autocomplete='off' onmouseout='overText=0; Click=0' type='search' value='%media_s%' oninput="renamebox=this.value; lastMedia=%j%"></td>`n %fo%</tr></table>%caption%<span id='cues%j%' style='display: none'>%cues%</span>`n`n
@@ -2011,6 +2003,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
     time := address
     cue := StrSplit(value, "|").1
     el_id := StrSplit(value, "|").2
+    skinny := StrSplit(value, "|").3
     fld := folder
     fileList =
     FileRead, str, %inca%\cache\temp\%folder%.txt			; list of media in htm
@@ -2048,10 +2041,14 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
         entry := StrSplit(fileList, "`r`n")[A_LoopField]
         source := StrSplit(entry, "|").1
         SplitPath, source,,,,med
+        output = %profile%\Downloads\%med% @%time%.jpg
+        if (DetectMedia(source) == "image")
+          cmd = %inca%\cache\apps\ffmpeg.exe -i "%source%" -vf "scale=iw*%skinny%:ih" -y "%output%"
+        else cmd = %inca%\cache\apps\ffmpeg.exe -ss %time% -i "%source%" -vf "scale=iw*%skinny%:ih" -y -vframes 1 "%output%"
         if InStr(el_id, "Index")
           Index(entry, 1, A_Index)
         else if InStr(el_id, "myJpg")
-          runwait, %inca%\cache\apps\ffmpeg.exe -ss %time% -i "%source%" -y -vframes 1 "%profile%\Downloads\%med% @%time%.jpg",, Hide
+          runwait, %cmd%,, Hide
         else if (new := Transcode(el_id, source, sta, end, A_Index))
           Index(new, 1, A_Index)
         }
@@ -2091,6 +2088,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
           {
           Index(encoded, 1, "")
           FileMove, %encoded%, %profile%\Downloads, 1
+          FileAppend, %encoded%|0.0`n, C:\inca\fav\history.m3u
           }
         else FileRecycle, %A_LoopFileFullPath%
     Process, Exist, ffmpeg.exe

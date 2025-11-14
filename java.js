@@ -1,5 +1,8 @@
-
-
+// history sometimes shows no link image if favorite and time not start
+// open json files
+// maybe not load after fav
+// cue bar times display
+// mp4 uses wrong time? 24.5s fails
 
   let wheel = 0								// wheel count
   let wheelDir = 0		 					// wheel direction
@@ -62,7 +65,6 @@
   let Sarah = "mJVDL3Jf4JW01l7hCyjI"					// Sarah voice id
   let text = "hi, it's Sarah here."
 
-  let srt = document.createElement('textarea')				// . txt or subtitle element
   let entry = document.createElement('div')				// dummy thumb container
   let thumb = document.createElement('div')				// . thumb element
   let title = document.createElement('div')				// . title element
@@ -118,11 +120,11 @@
 
   function clickEvent(e) {
     let id = e.target.id						// id under cursor
-    if (!playing && longClick && zoom == 1 && overMedia && !gesture) {thumb.style.size = 1.1; Param()}
+block=240
     if (!playing && longClick && !gesture && overMedia) thumb.style.zIndex = Zindex += 1
     if (lastClick != 3 && (gesture || id == 'myInput')) return
     if (longClick == 1 && !playing && playlist && selected && overMedia) {inca('Move', overMedia); return}
-    if (['myIndex', 'myMp4', 'myMp3', 'myJoin', 'myJpg'].includes(id)) {Ffmpeg(id); return}
+    if (['myIndex', 'myMp3', 'myMp4', 'myJoin', 'myJpg'].includes(id)) {Ffmpeg(id); return}
     if (id == 'myInca') {if (selected || type) {inca('Delete','',index)} else inca('Settings'); return}
     if (id == 'myFavorite') {addFavorite(); return}
     if (id == 'myMute') {defMute ^= 1; inca('Mute', defMute); myPlayer.muted = defMute; return}
@@ -147,14 +149,14 @@
         if (id == 'myCue' || (overMedia && thumb.src.slice(-3) == 'm3u')
         || (longClick && ((overMedia && type == 'document')
         || (favicon && favicon.matches(':hover')))) 
-        || (overMedia && thumb.src.endsWith('.pdf'))) {Click = 0; inca('Notepad',id,index); return}}
+        || (overMedia && thumb.src.endsWith('.pdf'))) {Click = 0; inca('Notepad',id,index); return}
+      if (!playing && longClick && zoom == 1 && overMedia && !gesture) {thumb.style.size = 1.1; Param()}}
       if (!longClick) {
         if (id == 'mySelect') {if (type) {sel(index)} else selectAll(); return}
         if (id == 'mySkinny') {updateCue('skinny',1); return}
         if (id == 'mySpeed') {updateCue('rate',1); return}
         if (id == 'myCap') {capButton(); return}
-        if (id == 'myCue' && playing) {cue = Math.round(100*myPlayer.currentTime)/100; return}
-        if (overText && yPos < srt.offsetTop + 12) {srt.scrollTo(0,-5); return}}	// scroll to top of text
+        if (id == 'myCue' && playing) {cue = Math.round(100*myPlayer.currentTime)/100; return}}
       if (title.matches(':hover') || longClick != 1 && !playing && !overMedia && !myNav.style.display) return}
     if (myNav.style.display && Click == 3) {thumbSheet ^= 1; myNav.style.display = null; start = lastSeek}
     else if (!getStart(id)) return
@@ -222,8 +224,6 @@
       myMask.style.zIndex = Zindex += 1
       myPlayer.style.zIndex = Zindex + 2
       myVig.style.zIndex = Zindex + 3
-      srt.style.zIndex = Zindex + 4
-      capMenu.style.zIndex = Zindex + 5
       myPlayer.style.opacity = 0.99						// chrome transition bug
       myVig.style.opacity = 1},100)}
 
@@ -240,7 +240,7 @@
     if (x + y > 9 && !gesture && Click) {gesture=1; if (!longClick&&zoom==1 && !playing && overMedia && !myNav.style.display) sel(index)}
     if (!gesture || !Click) {gesture = 0; return}
     if (y > x + 1) gesture = 2							// enable player move
-if (editor.style.display) editing = 1
+    if (editor.style.display) editing = 1
     if (!playing && overMedia && zoom > 1) {
       thumb.style.left = parseInt(thumb.style.left || 0) + xPos - xRef + 'px'	// move thumb
       thumb.style.top =  parseInt(thumb.style.top || 0) + yPos - yRef + 'px'}
@@ -267,7 +267,7 @@ if (editor.style.display) editing = 1
       if ((id == 'myAlpha' || id == 'mySearch') && filt > 26) filt = 26
       if (id == 'myType' && filt > 4) filt = 4
       filter(id); block = 80}
-    else if (id == 'mySpeed') {						// rate
+    else if (id == 'mySpeed' && dur) {					// rate
       if (wheelUp) {rate -= 0.01} else rate += 0.01
       updateCue('rate',rate); block = 80}
     else if (id == 'mySkinny' && type) {				// skinny
@@ -349,7 +349,7 @@ if (editor.style.display) editing = 1
     if (fade) fade--
     if (cursor) cursor--
     navButtons()
-    if (selected) mySelected.innerHTML = selected.split(',').length -1
+    if (selected) mySelected.innerHTML = selected // .split(',').length -1
     else mySelected.innerHTML = ''
     if (!playing || thumbSheet || overText) myBody.style.cursor = null	// show default cursor
     else if (!cursor) myBody.style.cursor = 'none'			// hide cursor
@@ -384,12 +384,7 @@ if (editor.style.display) editing = 1
     myPitch.style.color = pitch ? 'red' : null
     myPause.style.color = defPause ? 'red' : null
     myMute.style.color = defMute ? 'red' : null
-    if (!thumbSheet && captions) srt.style.opacity = 1
-    if (captions && el == myPlayer) {
-      if (playing) {top = rect.bottom} else top = 300
-      capMenu.style.top = top + 24 + srt.offsetHeight + 'px'; capMenu.style.left = mediaX -screenX - 85 + 'px'
-    srt.style.top = top + 'px'; srt.style.left = mediaX - screenX - srt.offsetWidth / 2 + 'px'}
-    if (!overMedia || overMedia && ym < 0.8) if  (playing) {fade = 3} else fade = 4
+    if (!overMedia || overMedia && ym < 0.8) fade = 2
     seekbar()
     if (playing) {
       positionMedia(0)
@@ -413,7 +408,7 @@ if (editor.style.display) editing = 1
     if (!mediaX) {mediaX = screen.width/2; mediaY = screen.height/2; xyz = [mediaX, mediaY, 1]}
     let x = mediaX; let y = mediaY; let z = scaleY
     if (thumbSheet) {x = xyz[0]; y = xyz[1]; z = xyz[2]}
-    let offset = captions && srt.value ? 240 : 0			// media moved up to fit captions
+    let offset = editor.style.display ? 240 : 0				// media moved up to fit captions
     myPlayer.style.left = myVig.style.left = (x - screenX) - myPlayer.offsetWidth / 2 + "px"
     myPlayer.style.top = myVig.style.top = (y - (outerHeight-innerHeight)) - myPlayer.offsetHeight / 2 - offset + "px"
     myPlayer.style.transition = 'opacity ' + time + 's, transform ' + time + 's'
@@ -538,14 +533,13 @@ if (editor.style.display) editing = 1
 
   function Param(i) {							// get media parameters
     i ||= index
-    srt.style = myPlayer.poster = myPlayer.src = ''
+    myPlayer.poster = myPlayer.src = ''
     if (!(document.getElementById('thumb'+i))) return			// end of media list
     if (!(favicon = document.getElementById('myFavicon'+i))) favicon = '' // fav or cc icon
     thumb = document.getElementById('thumb'+i)				// htm thumb element
     entry = document.getElementById('entry'+i)				// thumb and title container
     title = document.getElementById('title'+i)				// htm title element
     cues = document.getElementById('cues'+i)				// media defaults and time cues
-    srt = document.getElementById('srt'+i)				// txt or caption element
     let vid = document.getElementById('vid'+i)
     let params = entry.dataset.params.split(',')
     type = params[0]							// media type eg. video
@@ -553,7 +547,8 @@ if (editor.style.display) editing = 1
     if (thumb.src != vid.src) thumb.src = vid.src
     dur = Number(params[2]) || thumb.duration || 0			// duration
     size = Number(params[3])						// file size
-    skinny = 1; rate = defRate						// reset before new cues read
+    skinny = 1
+    rate = dur ? defRate : 1
     if (cues && cues.innerHTML) myCues(0)				// get 0:00 cues - width, speed etc.
     let x = Number(thumb.style.rate); if (x) rate = x			// custom css holds edits
     x = Number(thumb.style.skinny); if (x) skinny = x
@@ -577,11 +572,11 @@ if (editor.style.display) editing = 1
     filter('my'+so)							// show filter heading in red
     for (x of selected.split(',')) {
       if(el = document.getElementById('title'+x)) {el.style.outline = '1px solid red'; el.style.opacity = 1}}
-    for (list = 1; Param(list); list++) {}			// process null cues (eg. skinny, start, rate)		
+    for (list = 1; Param(list); list++) {}				// process null cues (eg. skinny, start, rate)		
     if (!ix) index = 1
     else index = ix
     lastMedia = index							// set htm thumb widths and heights 
-    Param()						// initialise current media
+    Param()								// initialise current media
     if (ix && title) {							// eg. after switch thumbs/listview
       title.style.opacity = 1						// highlight thumb
       title.style.color = 'pink'
@@ -593,10 +588,6 @@ if (editor.style.display) editing = 1
     let x = cues.innerHTML.split(/[\r\n]/)
     for (k = 0; k<x.length; k++) {					// process each line entry
       let el = x[k].split('|')						// time[0] cue[1] value[2] period[3]
-      if (el[1] == 'scroll' && time == 999) {
-        if (type == 'document') srt.scrollTo(0,el[2])			// scroll to text position once only
-        srt.style.width = (el[3] < 160 ? 360 : el[3]) + 'px'
-        srt.style.height = (el[4] < 60 ? 160 : el[4]) + 'px'}
       if (el[1] && 1*el[0] > time-0.1 && 1*el[0] < time+0.1) {
         if (el[1] == 'next') {lastClick = 2; clickEvent(0)}
         else if (el[1] == 'goto' && !myPlayer.paused) {myPlayer.currentTime = start = 1*el[2]}
@@ -611,8 +602,7 @@ if (editor.style.display) editing = 1
     captions = 1
     fetch(src)								// txt or caption text
       .then(response => response.text())
-      .then(data => {srt.value = data || ''; CaptionEditor.open(data)})
- //   srt.style.display = 'block'
+      .then(data => {CaptionEditor.open(data)})
     myNav.style.display = null}
 
 
@@ -649,7 +639,7 @@ if (editor.style.display) editing = 1
     if (thumb.style.rate) x = cue+'|rate|'+thumb.style.rate
     thumb.style.skinny = thumb.style.rate = 0
     if (cue) {cue = 0; messages += '#addCue#' + x + '#' + index + '#'} // add cues to media
-    else if (type) if (!srt.value || captions) {inca('newCap',0,index)} else {openCap(); Play()}
+    else {captions = 1; Play()}
     cue = 0}
 
 
@@ -672,12 +662,14 @@ if (editor.style.display) editing = 1
     if (!type || gesture) return
     if (playing) start = myPlayer.currentTime
     if (!playing && zoom == 1) if (dur < 200) {start = 0.0} else start = defStart
-    inca('Favorite', start.toFixed(1), index,srt.scrollTop.toFixed(0))
+
+messages += '#Favorite#'+start.toFixed(1)+'#'+index+'#'
+//    inca('Favorite', start.toFixed(1), index)
     favicon.innerHTML = '&#10084'}					// heart symbol on htm thumb
 
 
   function Ffmpeg(id) {
-    let target = cue + '|' + id
+    let target = cue + '|' + id + '|' + skinny
     let select = selected || overMedia || playing || 0
     inca('Ffmpeg', target, select, myPlayer.currentTime.toFixed(2))}
 
@@ -725,16 +717,16 @@ if (editor.style.display) editing = 1
 
 
   function closePlayer() {
-CaptionEditor.close()
+    if (editor.style.display) CaptionEditor.close()
     if (observer) observer.disconnect()
     if (!thumbSheet) messages += '#History#'+lastSeek.toFixed(1)+'#'+index+'#'
-if (editing) {
+    if (editing) {
       editing = editing.replaceAll('#', '𝌇')							// because # is used as delimiter
       inca('capEdit', editing, index)					// save edited text
       editing = 0}
     Click = playing = start = captions = thumbSheet = cue = 0
     myVig.style.opacity = myPlayer.style.opacity = overText = 0
-    myMask.style = srt.style = myDur.innerHTML = myPlayer.src = ''
+    myMask.style = myDur.innerHTML = myPlayer.src = ''
     myPlayer.style.zIndex = -1}
 
 

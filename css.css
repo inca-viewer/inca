@@ -130,44 +130,6 @@
 .favicon:hover {color: red}
 .favicon:empty {display:none}
 
-
-.caption {					/* srt caption or txt container  */
-  position: fixed;
-  display: none;
-  box-sizing: border-box;			/* so srt.style.width == srt.offsetWidth */
-  padding: 1em;					/* warning - effects caption timing	*/
-  border: none;
-  background: #0e0c05;
-  scroll-behavior: smooth;
-  color: #ffc0cbbb;
-  text-align: center;
-  width: 30em;
-  height: 18em;
-  font-size: 1.2em;
-  line-height: 20px;
-  font-family: inherit;
-  margin: auto;
-  margin-top: 1em;
-  opacity: 0;
-  transition: opacity 0.3s;
-  resize: both;
-  overflow: hidden;
-  overflow-y: scroll;
-  box-shadow: inset 0 0 9px 9px rgba(0, 0, 0, 1);
-  mask-image: linear-gradient(
-  to bottom,
-  transparent 0%,
-  black 10%,
-  black 90%,
-  transparent 100%)}
-
-.capMenu {
-  position: fixed;
-  display: none;
-  padding:0.5em;
-  justify-content: space-around;
-  width: 12em}
-
 .capButton {					/* buttons over caption */
   text-align: center;
   min-width: 1.6em;
@@ -242,7 +204,7 @@
   flex-wrap: wrap;
   top: 200px;
   width: 40%;
-  padding-top:1em;
+  padding-top:4em;
   padding-bottom: 80vh}
 
 .ribbon {					/* menu, fol, fav, search ... */
@@ -311,7 +273,7 @@
   user-select: none;
   pointer-events: none;
   position: fixed;
-  transition: opacity 0.6s;
+  transition: opacity 0.4s;
   opacity: 0;
   top: 0;
   left: 0;

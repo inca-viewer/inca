@@ -9,24 +9,24 @@
       #caption-editor-module * { box-sizing:border-box; margin:0; padding:0; }
       #caption-editor-module #editor {
         display:none; flex-direction:column; width:560px; max-width:100%; height:400px;
-        background:#11111180; border-radius:12px; overflow:hidden;
+        background: #1a1a1a20; border-radius:12px; overflow:hidden;
         box-shadow:0 12px 32px rgba(0,0,0,0.6); position:fixed; left:50%; top:50%;
         transform:translate(-50%,-50%); min-width:300px; min-height:300px;
         resize:both; max-height:80vh; z-index:9999;
       }
       #caption-editor-module #ribbon {
-        background:#1a1a1a40; padding:6px 10px; display:flex; gap:6px;
+        background:#1a1a1a20; padding:6px 10px; display:flex; gap:6px;
         align-items:center; flex-wrap:wrap; user-select:none;
         flex-shrink:0; position:relative; z-index:10; justify-content:center;
       }
       #caption-editor-module .dropdown-header { position:relative; display:inline-block; }
       #caption-editor-module .dropdown-header > div:first-child {
-        background:#1a1a1ac0; color:#ffc0cb99; border-radius:4px; padding:3px 6px;
+        background:#1a1a1a80; color:#ffc0cb99; border-radius:4px; padding:3px 6px;
         font-size:12px; white-space:nowrap; position:relative; z-index:2;
         display:flex; align-items:center; gap:4px;
       }
       #caption-editor-module .dropdown-content {
-        position:absolute; bottom:100%; left:0; min-width:100%; background:#222;
+        position:absolute; bottom:100%; left:0; min-width:100%; background: #1a1a1a;
         border:1px solid #444; border-radius:4px; box-shadow:0 4px 12px rgba(0,0,0,0.5);
         display:none; z-index:1; padding-bottom:8px;
       }
@@ -34,20 +34,20 @@
         padding:4px 8px; font-size:12px; white-space:nowrap;
         border-radius:4px;
       }
-      #caption-editor-module .dropdown-content > div:hover { background:#00ff88; color:#000; }
+      #ribbon .dropdown-header:nth-of-type(4) > div:first-child {
+        width: 12em; overflow: hidden; text-overflow: ellipsis;
+        white-space: nowrap; display: flex; justify-content: center;
+      }
+      #caption-editor-module .dropdown-content > div:hover { background: #1a1a1a;}
       #caption-editor-module .caption-viewport {
         flex:1; overflow-y:auto; overflow-x:hidden; padding:16px;
-        background:#1a1a1a40; display:flex; flex-direction:column; gap:16px; min-height:0;
+        background: #1a1a1a20; display:flex; flex-direction:column; gap:16px; min-height:0;
         scrollbar-width: thin; scrollbar-color: #ffc0cb30 transparent;
       }
       #caption-editor-module .text-block {
-        padding:12px; background:#1a1a1a30; border-radius:6px;
-        white-space:pre-wrap; word-wrap:break-word; font-size:15px;
+        background: transparent; border-radius:6px; text-align: center;
+        white-space:pre-wrap; word-wrap:break-word; font-size:1em; font-family: 'Yu Gothic';
         line-height:1.5; color:#ffc0cb99; outline:none;
-      }
-      .text-block.editing {
-        background: #1a1a1a90 !important;
-        border-radius: 6px;
       }
       /* ID display */
       #id-header > div:first-child {
@@ -57,23 +57,15 @@
         background:transparent; border:none; color:#ffc0cb99; font-size:12px;
         outline:none; min-width:34px;
       }
-      #time-header > div:first-child { cursor:text; }
-      #time-field {
+      #time-header > div:first-child { cursor:pointer; }
+      #time-display {
         flex:1; width:70px;
         background:inherit; color:#ffc0cb99; border:none;
         outline:none; text-align:center;
         font-size:12px; font-family:inherit;
-        border-radius:4px;
+        border-radius:4px; padding:2px 0;
+        user-select:none;
       }
-      /* Nudge */
-      #nudge-header > div:first-child { justify-content:center; }
-      #nudge-wrapper { display:flex; gap:2px; }
-      #nudge-wrapper button {
-        width:12px; height:12px; font-size:12px; line-height:1;
-        padding:0; border:none; background:#1a1a1ac0; color:#ffc0cb99;
-        border-radius:2px;
-      }
-      #nudge-wrapper button:hover { background:#00ff88; color:#000; }
     </style>
     <div id="editor">
       <div class="caption-viewport" id="viewport"></div>
@@ -86,42 +78,31 @@
           <div id="id-display">--</div>
         </div>
         <div class="dropdown-header" id="time-header">
-        <input type="text" id="time-field" placeholder="- : -- . -">
-        </div>
-        <div class="dropdown-header" id="nudge-header">
-          <div id="nudge-wrapper">
-            <button id="nudge-down" type="button">-</button>
-            <button id="nudge-up" type="button">+</button>
-          </div>
+          <div id="time-display">- : -- . -</div>
         </div>
       </div>
     </div>
   `;
+
   document.body.appendChild(container);
+
   const editor = container.querySelector('#editor');
   const ribbon = container.querySelector('#ribbon');
   const viewport = container.querySelector('#viewport');
   const idDisplay = container.querySelector('#id-display');
-  const timeField = container.querySelector('#time-field');
-  const nudgeDown = container.querySelector('#nudge-down');
-  const nudgeUp = container.querySelector('#nudge-up');
+  const timeDisplay = container.querySelector('#time-display');
   let blocks = [];
   let editingBlock = null;
-  let originalSRT = '';  // For potential future use
-
-  // Simple observer: Just sets flag to 1 on changes
-const observer = new MutationObserver(() => { if (editingBlock) editing = 1});
-
-  observer.observe(viewport, {
-    childList: true, // Catches adds/removes (splits/merges)
-    subtree: true, // Deep-watch blocks
-    characterData: true, // Text edits/typing
-  });
+  let originalSRT = '';
+  let originalPlayerSrc = '';
+  let projectMedia = { defaultSrc: null, defaultName: null };
+  const mediaHeader = container.querySelector('.dropdown-header:nth-of-type(4)');
+  const mediaHeaderDiv = mediaHeader.querySelector('div:first-child');
 
   /* --------------------------------------------------------------
      1. DROPDOWNS
      -------------------------------------------------------------- */
-  container.querySelectorAll('.dropdown-header:not(#id-header):not(#time-header):not(#nudge-header)').forEach(header => {
+  container.querySelectorAll('.dropdown-header:not(#id-header):not(#time-header)').forEach(header => {
     const content = header.querySelector('.dropdown-content');
     header.addEventListener('mouseenter', () => {
       container.querySelectorAll('.dropdown-content').forEach(d => d.style.display = 'none');
@@ -131,6 +112,7 @@ const observer = new MutationObserver(() => { if (editingBlock) editing = 1});
       if (content) content.style.display = 'none';
     });
   });
+
   /* --------------------------------------------------------------
      2. TIME HELPERS
      -------------------------------------------------------------- */
@@ -157,27 +139,30 @@ const observer = new MutationObserver(() => { if (editingBlock) editing = 1});
     return `${h}:${m}:${s}.${ms}`;
   }
   function shortFormatTime(sec) {
+    if (!sec || sec === 0) return '-- : - . -'
     const m = Math.floor(sec / 60);
     const s = (sec % 60).toFixed(1).padStart(4, '0');
     return `${m} : ${s.replace('.', ' . ')}`;
   }
-  function msToSec(ms) { return ms / 1000; }
+
   /* --------------------------------------------------------------
      3. BLOCK CREATION
      -------------------------------------------------------------- */
   function addBlock(num, startSec, text, cues = {}) {
-    const block = document.createElement('div');
+    const block = document.createElement('pre');
     block.className = 'text-block';
     block.dataset.num = num;
     block.dataset.start = startSec;
     block.contentEditable = true;
     block.textContent = text;
     block._cues = cues;
+    block._media = cues.media || null;
     attachBlockListeners(block);
     viewport.appendChild(block);
     blocks.push(block);
     return block;
   }
+
   /* --------------------------------------------------------------
      4. PARSING
      -------------------------------------------------------------- */
@@ -185,9 +170,9 @@ const observer = new MutationObserver(() => { if (editingBlock) editing = 1});
     viewport.innerHTML = '';
     blocks = [];
     if (!rawText.trim()) {
-      addBlock(1, 0, 'No text provided.');
+      addBlock(1, 0, 'new caption', {});
       idDisplay.textContent = '--';
-      timeField.value = '';
+      timeDisplay.textContent = '';
       rebuild();
       return;
     }
@@ -240,22 +225,53 @@ const observer = new MutationObserver(() => { if (editingBlock) editing = 1});
     requestAnimationFrame(() => viewport.scrollTop = 0);
     rebuild();
   }
+
   /* --------------------------------------------------------------
      5. EDITING HELPERS
      -------------------------------------------------------------- */
   function createTextBlock(startSec, text, cues = {}) {
-    const block = document.createElement('div');
+    const block = document.createElement('pre');
     block.className = 'text-block';
     block.dataset.num = null;
     block.dataset.start = startSec;
     block.contentEditable = true;
     block.textContent = text;
     block._cues = cues;
+    block._media = cues.media || null;
     attachBlockListeners(block);
     return block;
   }
+  function getEffectiveMedia(forBlock = null) {
+    if (forBlock && forBlock._media && forBlock._media.src) {
+      return forBlock._media;
+    }
+    return projectMedia.defaultSrc ? { src: projectMedia.defaultSrc, name: projectMedia.defaultName } : null;
+  }
+
+function updateMediaHeader(block = null) {
+  const label = document.querySelector('#ribbon .dropdown-header:nth-of-type(4) div:first-child');
+  if (!label) return;
+  const titleText = ((title?.value || '').trim().substring(0, 24) + (title?.value?.trim()?.length > 24 ? '…' : ''));
+  const mediaName = (block?._media?.name || projectMedia.defaultName || '').replace(/\.[^.]+$/, '');
+  label.textContent = mediaName || titleText;
+}
+
+  function swapPlayerMedia(newSrc, startSec) {
+    const isImage = /\.(jpe?g|png|gif|webp)$/i.test(newSrc);
+    if (isImage) {
+      myPlayer.src = '';
+      myPlayer.poster = newSrc.replace(/%/g, '%25').replace(/#/g, '%23').replace(/&/g, '%26');
+      myPlayer.load();
+    } else {
+      myPlayer.poster = ''
+      if (newSrc != decodeURIComponent(myPlayer.src)) {
+        myPlayer.src = newSrc.replace(/%/g, '%25').replace(/#/g, '%23').replace(/&/g, '%26');
+        myPlayer.load();
+      }
+      myPlayer.currentTime = startSec;
+    }
+  }
   function attachBlockListeners(block) {
-    // CLICK: Enter editing mode
     block.addEventListener('click', e => {
       e.stopPropagation();
       document.querySelectorAll('.text-block.editing').forEach(b => b.classList.remove('editing'));
@@ -264,51 +280,63 @@ const observer = new MutationObserver(() => { if (editingBlock) editing = 1});
       const num = block.dataset.num;
       const start = parseFloat(block.dataset.start) || 0;
       idDisplay.textContent = num;
-      timeField.value = shortFormatTime(start);
-      myPlayer.currentTime = start;
+      timeDisplay.textContent = shortFormatTime(start);
+      const eff = getEffectiveMedia(block);
+      const src = eff ? eff.src : originalPlayerSrc;
+      swapPlayerMedia(src, start);
+      updateMediaHeader(editingBlock);
     });
-    // BACKSPACE MERGE
-    block.addEventListener('keydown', e => {
-      if (e.key !== 'Backspace') return;
-      const sel = window.getSelection();
-      if (sel.rangeCount === 0 || !sel.isCollapsed) return;
-      const range = sel.getRangeAt(0);
-      const testRange = document.createRange();
-      testRange.selectNodeContents(block);
-      testRange.setEnd(range.startContainer, range.startOffset);
-      if (testRange.toString() !== '') return;
-      const prevBlock = block.previousElementSibling;
-      if (!prevBlock || !prevBlock.classList.contains('text-block')) return;
-      e.preventDefault();
-      const currentText = block.textContent.trim();
-      if (currentText) {
-        const prevText = prevBlock.textContent;
-        prevBlock.textContent = prevText + '\n' + currentText;
-      }
-      const newRange = document.createRange();
-      newRange.selectNodeContents(prevBlock);
-      newRange.collapse(false);
-      sel.removeAllRanges();
-      sel.addRange(newRange);
-      block.remove();
-      blocks = blocks.filter(b => b !== block);
-      renumberBlocks();
-      rebuild();
-    });
-    // SPLIT ON MOUSELEAVE (skip if editing)
+
+
+
+block.addEventListener('keydown', e => {
+  if (e.key !== 'Backspace') return;
+  if (window.getSelection().toString() !== '') document.execCommand('delete')
+  const range = window.getSelection().getRangeAt(0);
+  const charBefore = range.startContainer.textContent[document.getSelection().getRangeAt(0).startOffset - 1]
+  if (charBefore === '\n') { document.execCommand('delete'); document.execCommand('insertText', false, '  ')}
+  if (range.rangeCount === 0) return;
+  const testRange = document.createRange();
+  testRange.selectNodeContents(block);
+  testRange.setEnd(range.startContainer, range.startOffset);
+  if (testRange.toString() !== '') return;
+  const prev = block.previousElementSibling;
+  if (!prev?.classList.contains('text-block')) return;
+  e.preventDefault();
+  const prevText = prev.innerText.trim();
+  const currText = block.innerText.trim();
+  prev.innerText = prevText + '\n' + currText;
+  prev.innerHTML = prev.innerText;  // ← Strips all tags, keeps \n
+  block.remove();
+  blocks = blocks.filter(b => b !== block);
+  renumberBlocks();
+  editingBlock = prev;
+  editingBlock.focus();
+  const r = document.getSelection().getRangeAt(0);
+  r.setStart(r.startContainer, prevText.length + 1);
+  idDisplay.textContent = prev.dataset.num;
+  timeDisplay.textContent = shortFormatTime(+prev.dataset.start || 0);
+  updateMediaHeader(prev);
+  requestAnimationFrame(rebuild);
+});
+
+
+
     block.addEventListener('mouseleave', () => {
       const html = block.innerHTML;
-      const text = block.textContent.trim();
+      const text = block.innerText.trim();
       if (!text) {
         block.remove();
         blocks = blocks.filter(b => b !== block);
         renumberBlocks();
-        rebuild();
+        requestAnimationFrame(rebuild);
         return;
       }
       const normalized = html
         .replace(/<br[^>]*>/gi, '\n')
-        .replace(/<\/?div[^>]*>/gi, '')
+        .replace(/&#10;/g, '\n')
+        .replace(/<(div|p)[^>]*>/gi, '\n')
+        .replace(/<\/(div|p)>/gi, '')
         .replace(/\n\s*\n/g, '\n\n');
       const fullParts = normalized.split('\n\n').map(p => p.trim());
       const hasTrailingEmpty = normalized.endsWith('\n\n');
@@ -323,19 +351,20 @@ const observer = new MutationObserver(() => { if (editingBlock) editing = 1});
       let insertAfterThis = null;
       parts.forEach((part, i) => {
         const estSec = estimateSplitTime(startSec, i, parts.length, text);
-        const newBlock = createTextBlock(i === 0 ? startSec : estSec, part);
+        const newBlock = createTextBlock(i === 0 ? startSec : estSec, part, block._cues);
         viewport.insertBefore(newBlock, nextSibling);
         blocks.splice(idx + i, 0, newBlock);
         insertAfterThis = newBlock;
+        newBlock.focus()
       });
       if (hasTrailingEmpty) {
-        const newCaptionBlock = createTextBlock(0, 'new caption');
+        const newCaptionBlock = createTextBlock(0, 'new caption', {});
         const newNext = insertAfterThis ? insertAfterThis.nextSibling : nextSibling;
         viewport.insertBefore(newCaptionBlock, newNext);
         blocks.splice(idx + parts.length, 0, newCaptionBlock);
       }
       renumberBlocks();
-      rebuild();
+      requestAnimationFrame(rebuild);
     });
   }
   function estimateSplitTime(originalSec, partIndex, totalParts, originalText) {
@@ -346,9 +375,18 @@ const observer = new MutationObserver(() => { if (editingBlock) editing = 1});
   function renumberBlocks() {
     blocks.forEach((b, i) => b.dataset.num = i + 1);
   }
+
   /* --------------------------------------------------------------
-     6. VIEWPORT & EDITING CHECK
+     6. VIEWPORT & HOVER
      -------------------------------------------------------------- */
+
+
+let isCursorOverEditor = false;
+
+editor.addEventListener('mouseenter', () => {isCursorOverEditor = true;});
+editor.addEventListener('mouseleave', () => {isCursorOverEditor = false;});
+
+
   function isElementInViewport(el, container) {
     const r = el.getBoundingClientRect(), c = container.getBoundingClientRect();
     return r.top >= c.top && r.bottom <= c.bottom;
@@ -362,7 +400,10 @@ const observer = new MutationObserver(() => { if (editingBlock) editing = 1});
   });
   let timestamps = [], isHovering = false;
   viewport.addEventListener('mouseenter', () => isHovering = true);
-  viewport.addEventListener('mouseleave', () => isHovering = false);
+  viewport.addEventListener('mouseleave', () => {
+    isHovering = false;
+    hoverBlock = null;
+  });
   const rebuild = () => {
     timestamps = blocks.map(b => ({
       sec: parseFloat(b.dataset.start) || 0,
@@ -373,65 +414,246 @@ const observer = new MutationObserver(() => { if (editingBlock) editing = 1});
   const origInit = initContent;
   initContent = txt => { origInit(txt); rebuild(); };
   let hoverBlock = null;
+
+
+let isScrolling = false;
+
+function scrollToNearestCaption() {
+  if (isScrolling || myPlayer.src != originalPlayerSrc || isCursorOverEditor) return;
+  const current = myPlayer.currentTime;
+  const nearest = timestamps.reduce((prev, curr) =>
+    Math.abs(curr.sec - current) < Math.abs(prev.sec - current) ? curr : prev
+  );
+  const offset = viewport.clientHeight / 2 - nearest.block.offsetHeight / 2;
+  viewport.scrollTo({
+    top: Math.max(0, nearest.top - offset),
+    behavior: 'smooth'
+  });
+isScrolling = true;
+  setTimeout(() => { isScrolling = false; }, 1000);
+}
+
+
+  /* --------------------------------------------------------------
+     PLAYER PAUSE-STATE PRESERVATION
+     -------------------------------------------------------------- */
+  let userWantsPlay = !myPlayer.paused;
+
+  myPlayer.addEventListener('play', () => userWantsPlay = true);
+  myPlayer.addEventListener('pause', () => userWantsPlay = false);
+  myPlayer.addEventListener('timeupdate', scrollToNearestCaption);
+
   viewport.addEventListener('mousemove', e => {
     if (editingBlock) return;
     const block = e.target.closest('.text-block');
     if (block && block !== hoverBlock) {
       hoverBlock = block;
       idDisplay.textContent = block.dataset.num;
-      timeField.value = shortFormatTime(parseFloat(block.dataset.start) || 0);
-      myPlayer.currentTime = parseFloat(block.dataset.start) || 0;
+      const start = parseFloat(block.dataset.start) || 0;
+      timeDisplay.textContent = shortFormatTime(start);
+      const eff = getEffectiveMedia(block);
+      const src = eff ? eff.src : originalPlayerSrc;
+      swapPlayerMedia(src, start);
+      if (userWantsPlay) myPlayer.play().catch(() => {});
+      updateMediaHeader(block);
     }
   });
-  viewport.addEventListener('mouseleave', () => { hoverBlock = null; });
-  /* --------------------------------------------------------------
-     7. TIME & NUDGE — USING <input>
-     -------------------------------------------------------------- */
-  function commitTime() {
-    if (!editingBlock) return;
-    const timeStr = timeField.value.replace(/[^\d:.]/g, '');
-    let sec = 0;
-    try {
-      sec = parseShortTime(timeStr) || 0;
-    } catch (_) {}
-    editingBlock.dataset.start = sec;
-    idDisplay.textContent = editingBlock.dataset.num;
-    timeField.value = shortFormatTime(sec);
-    rebuild();
-  }
-  timeField.addEventListener('keydown', e => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      timeField.blur();
-    }
-  });
-  timeField.addEventListener('blur', commitTime);
-  function nudge(ms) {
-    if (!editingBlock) return;
-    let sec = parseFloat(editingBlock.dataset.start) || 0;
-    sec = Math.max(0, sec + msToSec(ms));
-    editingBlock.dataset.start = sec;
-    idDisplay.textContent = editingBlock.dataset.num;
-    timeField.value = shortFormatTime(sec);
-    myPlayer.currentTime = sec;
-    rebuild();
-  }
-  nudgeDown.addEventListener('click', e => { e.stopPropagation(); nudge(-100); });
-  nudgeUp.addEventListener('click', e => { e.stopPropagation(); nudge(+100); });
 
-  // Helper to serialize current state to JSON string
+  viewport.addEventListener('mouseleave', () => {
+    hoverBlock = null;
+  });
+
+  /* --------------------------------------------------------------
+     7. TIME DISPLAY (LIVE) + CLICK TO SET BLOCK
+     -------------------------------------------------------------- */
+
+  ['play', 'pause', 'seeked', 'timeupdate', 'loadedmetadata'].forEach(evt =>
+    myPlayer.addEventListener(evt, updateTimeDisplay));
+
+  function updateTimeDisplay() {
+    if (dur && myPlayer.paused && editingBlock && myPlayer.currentTime != editingBlock.dataset.start) timeDisplay.style.color = 'red'
+    else timeDisplay.style.color = null
+    timeDisplay.textContent = (myPlayer.currentTime && myPlayer.src) ? shortFormatTime(myPlayer.currentTime) : '- : -- . -'
+  }
+
+  timeDisplay.addEventListener('click', () => {
+    timeDisplay.style.color = null
+    if (!editingBlock) return;
+    const current = myPlayer.currentTime;
+    editingBlock.dataset.start = current;
+    timeDisplay.textContent = shortFormatTime(current);
+    requestAnimationFrame(rebuild);
+    editing = 1;
+  });
+
+  /* --------------------------------------------------------------
+     MEDIA DROPDOWN
+     -------------------------------------------------------------- */
+  let mediaCache = null;
+  let currentPreviewItem = null;
+  const mediaContent = mediaHeader.querySelector('.dropdown-content');
+
+  mediaHeader.addEventListener('mouseenter', async () => {
+    container.querySelectorAll('.dropdown-content').forEach(d => d.style.display = 'none');
+    mediaContent.style.display = 'block';
+    try {
+      const resp = await fetch('/inca/fav/History.m3u');
+      if (!resp.ok) {
+        mediaContent.innerHTML = '<div style="color:#ffc0cb66;padding:4px 8px;">Failed to load</div>';
+        return;
+      }
+      const text = await resp.text();
+      const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+      if (!lines.length) {
+        mediaContent.innerHTML = '<div style="color:#ffc0cb66;padding:4px 8px;">No media</div>';
+        return;
+      }
+      const allItems = lines.slice(-20).map(line => {
+        const [fullPath, startStr] = line.split('|');
+        const startSec = parseFloat(startStr) || 0;
+        const name = fullPath.split(/[\\/]/).pop();
+        const short = name.length > 22 ? name.slice(0, 24) + '...' : name;
+        const httpPath = 'http://localhost:3000/' + fullPath.replace(/\\/g, '/');
+        return { path: httpPath, startSec, name, short };
+      })
+      .filter(m => m.path && m.name)
+      .filter(m => !m.name.endsWith('.txt') && !m.name.endsWith('.m3u'))
+      .filter((() => {
+        let titleSeen = false;
+        return m => m.name.includes(title.value) ? !titleSeen && (titleSeen = true) : true;
+      })());
+      const list = allItems.slice(-6);
+      mediaContent.innerHTML = '';
+      if (!list.length) {
+        mediaContent.innerHTML = '<div style="color:#ffc0cb66;padding:4px 8px;">No media</div>';
+        return;
+      }
+      mediaContent.insertAdjacentHTML('beforeend', '<div style="margin-left:1.7em">None</div>');
+      mediaContent.lastChild.onclick = () => {
+        if (editingBlock) editingBlock._media = null;
+        else projectMedia.defaultSrc = projectMedia.defaultName = null;
+        updateMediaHeader(editingBlock);
+        swapPlayerMedia(originalPlayerSrc, myPlayer.currentTime);
+        mediaContent.style.display = 'none';
+        editing = 1;
+      };
+
+      list.forEach(media => {
+        const row = document.createElement('div');
+        row.style.display = 'flex';
+        row.style.alignItems = 'center';
+        row.style.gap = '6px';
+        row.style.padding = '2px 4px';
+        row.style.borderRadius = '4px';
+        row.style.cursor = 'default';
+        const muteBtn = document.createElement('span');
+        muteBtn.textContent = '🔇';
+        muteBtn.style.fontSize = '14px';
+        muteBtn.style.cursor = 'pointer';
+        muteBtn.dataset.muted = 'true';
+        const nameSpan = document.createElement('span');
+        nameSpan.textContent = `${media.short} @ ${media.startSec.toFixed(1)}s`;
+        nameSpan.style.flex = '1';
+        nameSpan.style.cursor = 'pointer';
+        nameSpan.style.userSelect = 'none';
+        row.appendChild(muteBtn);
+        row.appendChild(nameSpan);
+        mediaContent.appendChild(row);
+        row.addEventListener('mouseenter', () => {
+          if (currentPreviewItem === row) return;
+          currentPreviewItem = row;
+          const isImage = /\.(jpe?g|png|gif|webp)$/i.test(media.path);
+          if (isImage) myPlayer.poster = media.path.replace(/%/g, '%25').replace(/#/g, '%23').replace(/&/g, '%26');
+          else myPlayer.src = media.path.replace(/%/g, '%25').replace(/#/g, '%23').replace(/&/g, '%26');
+          myPlayer.load();
+          if (!isImage) {
+            myPlayer.muted = (muteBtn.dataset.muted === 'true');
+            myPlayer.currentTime = media.startSec;
+            myPlayer.play().catch(() => {});
+          }
+        });
+        row.addEventListener('mouseleave', () => {
+          if (currentPreviewItem !== row) return;
+          myPlayer.src = originalPlayerSrc;
+          myPlayer.poster = ''
+          myPlayer.load();
+          myPlayer.pause();
+          currentPreviewItem = null;
+        });
+        muteBtn.addEventListener('click', e => {
+          e.stopPropagation();
+          const willBeMuted = muteBtn.dataset.muted !== 'true';
+          muteBtn.dataset.muted = willBeMuted;
+          muteBtn.textContent = willBeMuted ? '🔇' : '🔊';
+          if (currentPreviewItem === row) {
+            myPlayer.muted = willBeMuted;
+            if (willBeMuted) myPlayer.pause();
+            else myPlayer.play().catch(() => {});
+          }
+        });
+        nameSpan.addEventListener('click', () => {
+          const selectedMediaObj = { src: media.path, name: media.short };
+          let applyStart = media.startSec;
+          if (editingBlock) {
+            editingBlock._media = selectedMediaObj;
+            const newStart = media.startSec;
+            editingBlock.dataset.start = newStart;
+            timeDisplay.textContent = shortFormatTime(newStart);
+            idDisplay.textContent = editingBlock.dataset.num;
+            applyStart = newStart;
+            requestAnimationFrame(rebuild);
+            if (media.path == originalPlayerSrc) editingBlock._media = null;
+            editingBlock = null;
+            editing = 1;
+          } else {
+            projectMedia.defaultSrc = selectedMediaObj.src;
+            projectMedia.defaultName = selectedMediaObj.name;
+            updateMediaHeader();
+          }
+          swapPlayerMedia(selectedMediaObj.src, applyStart);
+          myPlayer.muted = (muteBtn.dataset.muted === 'true');
+          if (!myPlayer.muted) myPlayer.play().catch(() => {});
+          updateMediaHeader(editingBlock);
+          mediaContent.style.display = 'none';
+        });
+      });
+      mediaCache = list;
+    } catch (_) {
+      mediaContent.innerHTML = '<div style="color:#ffc0cb66;padding:4px 8px;">No media</div>';
+    }
+
+  });
+
+  mediaHeader.addEventListener('mouseleave', () => {
+    mediaContent.style.display = 'none';
+    if (currentPreviewItem) {
+      myPlayer.src = originalPlayerSrc;
+      myPlayer.load();
+      myPlayer.pause();
+      currentPreviewItem = null;
+    }
+  });
+
+  function normalizePathForJSON(path) {
+    return path ? path.replace(/\\/g, '/') : path;
+  }
   function makeProjectJSON() {
     const project = {
       blocks: blocks.map(b => ({
         number: parseInt(b.dataset.num),
-        startTime: parseFloat(b.dataset.start),
-        text: b.textContent.trim(),
-        extras: b._cues || {}
+        startTime: b._media?.src ? parseFloat(b.dataset.start) : null,
+        text: b.innerText.trim(),
+        extras: {
+          ...(b._cues || {}),
+          media: b._media ? { src: normalizePathForJSON(b._media.src), name: b._media.name } : null
+        }
       })),
-
-        lastSelectedId: editingBlock ? parseInt(editingBlock.dataset.num) : 0,
-
-      ui: {  // NEW: Save size/position
+      defaultMedia: projectMedia.defaultSrc ? {
+        src: normalizePathForJSON(projectMedia.defaultSrc),
+        name: projectMedia.defaultName
+      } : null,
+      lastSelectedId: editingBlock ? parseInt(editingBlock.dataset.num) : 0,
+      ui: {
         width: editor.style.width,
         height: editor.style.height,
         left: editor.style.left,
@@ -446,62 +668,60 @@ const observer = new MutationObserver(() => { if (editingBlock) editing = 1});
      8. GLOBAL API
      -------------------------------------------------------------- */
   window.CaptionEditor = {
-open(source = '') {
-  editor.style.display = 'flex';
-  const center = () => {
-    editor.style.left = '50%';
-    editor.style.top = '50%';
-    editor.style.transform = 'translate(-50%,-50%)';
-  };
-  center();
-  window.addEventListener('resize', center);
-  
-if (source.trim().startsWith('{')) {
-  const data = JSON.parse(source);
-  viewport.innerHTML = '';  // Just clear, no initContent
-  blocks = [];  // Reset array
-  data.blocks.forEach(({ number, startTime, text, extras }) => {
-    addBlock(number, startTime, text, extras || {});
-  });
-  if (data.lastSelectedId) {
-    const selected = blocks.find(b => parseInt(b.dataset.num) === data.lastSelectedId);
-    selected.scrollIntoView({ behavior: 'smooth', block: 'center' })
-    }
-  if (data.ui) {
-    Object.assign(editor.style, data.ui);
-  }
-} else {
-    originalSRT = source;
-    initContent(source);
-    editor.style.width = '560px';
-    editor.style.height = '400px';
-    editor.style.left = '50%';
-    editor.style.top = '50%';
-    editor.style.transform = 'translate(-50%,-50%)';
-  }
-  
-  idDisplay.textContent = '--';
-  timeField.value = '';
-  editing = 0;
-  editor._resize = center;
-},
-    close() {
-      if (editing === 1) {
-        editing = makeProjectJSON();  // Set to full JSON string
-      } else if (editing === 0) {
-        editing = '';  // Clean: Empty
+    open(source = '') {
+      editor.style.display = 'flex';
+      originalPlayerSrc = decodeURIComponent(myPlayer.src || '');
+      const center = () => {
+        editor.style.left = '50%';
+        editor.style.top = '50%';
+        editor.style.transform = 'translate(-50%,-50%)';
+      };
+      center();
+      window.addEventListener('resize', center);
+      if (source.trim().startsWith('{')) {
+        const data = JSON.parse(source);
+        viewport.innerHTML = '';
+        blocks = [];
+        data.blocks.forEach(({ number, startTime, text, extras }) => {
+          addBlock(number, startTime, text, extras);
+        });
+        projectMedia.defaultSrc = data.defaultMedia?.src || null;
+        projectMedia.defaultName = data.defaultMedia?.name || null;
+        updateMediaHeader();
+        if (data.lastSelectedId) {
+          const selected = blocks.find(b => parseInt(b.dataset.num) === data.lastSelectedId);
+          if (selected) {
+            selected.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            setTimeout(() => { selected.click(); selected.focus(); myPlayer.play()}, 600);
+          }
+        }
+        if (data.ui) Object.assign(editor.style, data.ui);
+        if (projectMedia.defaultSrc && myPlayer.src !== projectMedia.defaultSrc) {
+          swapPlayerMedia(projectMedia.defaultSrc, 0);
+        }
+      } else {
+        originalSRT = source;
+        initContent(source);
+        editor.style.width = '560px';
+        editor.style.height = '400px';
+        editor.style.left = '50%';
+        editor.style.top = '50%';
+        editor.style.transform = 'translate(-50%,-50%)';
       }
-      editor.style.display = 'none';
-      if (editor._resize) window.removeEventListener('resize', editor._resize);
+      const options = { childList: true, subtree: true, characterData: true };
+      const observer = new MutationObserver(() => { editing = 1});
+      observer.observe(viewport, options);
+      setTimeout(() => editing = 0, 100);
+      idDisplay.textContent = '--';
+      timeDisplay.textContent = '';
+      updateTimeDisplay();
+      editor._resize = center;
     },
-    save(filename = 'project.cue.json') {
-      const jsonText = makeProjectJSON();
-      const blob = new Blob([jsonText], { type: 'application/json' });
-      const link = document.createElement('a');
-      link.href = URL.createObjectURL(blob);
-      link.download = filename;
-      link.click();
-      URL.revokeObjectURL(link.href);
+    close() {
+      if (editing === 1) { editing = makeProjectJSON() }
+      else editing = 0
+      editor.style.display = null;
+      if (editor._resize) window.removeEventListener('resize', editor._resize);
     }
   };
   blocks.forEach(attachBlockListeners);
