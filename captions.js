@@ -47,12 +47,11 @@
       #caption-editor-module .text-block {
         background: transparent; border-radius:6px; text-align: center;
         white-space:pre-wrap; word-wrap:break-word; font-size:1em; font-family: 'Yu Gothic';
-        line-height:1.5; color:#ffc0cb99; outline:none;
+        line-height:1.5; color:#ffc0cb99; outline:none
       }
-      /* ID display */
-      #id-header > div:first-child {
-        display: flex; justify-content: center; align-items: center; cursor: default;
-      }
+      #caption-editor-module .text-block.editing { border-right: 0.1px solid pink; }
+      #caption-editor-module .text-block:not(.editing) { border-left: none }
+      #id-header > div:first-child {display: flex; justify-content: center; align-items: center; cursor: default; }
       #id-display {
         background:transparent; border:none; color:#ffc0cb99; font-size:12px;
         outline:none; min-width:34px;
@@ -522,7 +521,7 @@ isScrolling = true;
         let titleSeen = false;
         return m => m.name.includes(title.value) ? !titleSeen && (titleSeen = true) : true;
       })());
-      const list = allItems.slice(-6);
+      const list = allItems.slice(-9);
       mediaContent.innerHTML = '';
       if (!list.length) {
         mediaContent.innerHTML = '<div style="color:#ffc0cb66;padding:4px 8px;">No media</div>';
@@ -692,7 +691,7 @@ isScrolling = true;
           const selected = blocks.find(b => parseInt(b.dataset.num) === data.lastSelectedId);
           if (selected) {
             selected.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            setTimeout(() => { selected.click(); selected.focus(); myPlayer.play()}, 600);
+            setTimeout(() => { selected.focus()}, 600);
           }
         }
         if (data.ui) Object.assign(editor.style, data.ui);

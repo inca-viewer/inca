@@ -1,8 +1,5 @@
-// history sometimes shows no link image if favorite and time not start
-// open json files
-// maybe not load after fav
-// cue bar times display
-// mp4 uses wrong time? 24.5s fails
+
+
 
   let wheel = 0								// wheel count
   let wheelDir = 0		 					// wheel direction
@@ -80,7 +77,7 @@
   document.addEventListener('contextmenu', (e) => {if (yw > 0.05) e.preventDefault()})
   window.addEventListener('beforeunload', (e) => {if (playing && editing) e.preventDefault()})
   document.addEventListener('visibilitychange', function() {
-    if (document.visibilityState=='visible' && folder=='Downloads' && !selected && !editing) inca('Reload',index)})
+    if (document.visibilityState=='visible' && folder=='Downloads' && !selected && !playing) inca('Reload',index)})
   if (innerHeight>innerWidth) {scaleY=0.64} else scaleY=0.5		// screen is portrait
 
 
@@ -120,11 +117,11 @@
 
   function clickEvent(e) {
     let id = e.target.id						// id under cursor
-block=240
+    block = 240								// block wheel input straight after click
     if (!playing && longClick && !gesture && overMedia) thumb.style.zIndex = Zindex += 1
     if (lastClick != 3 && (gesture || id == 'myInput')) return
     if (longClick == 1 && !playing && playlist && selected && overMedia) {inca('Move', overMedia); return}
-    if (['myIndex', 'myMp3', 'myMp4', 'myJoin', 'myJpg'].includes(id)) {Ffmpeg(id); return}
+    if (['myIndex', 'myMp3', 'myMp4', 'myJoin', 'myJpg', 'mySrt'].includes(id)) {Ffmpeg(id); return}
     if (id == 'myInca') {if (selected || type) {inca('Delete','',index)} else inca('Settings'); return}
     if (id == 'myFavorite') {addFavorite(); return}
     if (id == 'myMute') {defMute ^= 1; inca('Mute', defMute); myPlayer.muted = defMute; return}
@@ -348,8 +345,7 @@ block=240
     if (wheel >= 10) wheel -= 10
     if (fade) fade--
     if (cursor) cursor--
-    navButtons()
-    if (selected) mySelected.innerHTML = selected // .split(',').length -1
+    if (selected) mySelected.innerHTML = selected.split(',').length -1
     else mySelected.innerHTML = ''
     if (!playing || thumbSheet || overText) myBody.style.cursor = null	// show default cursor
     else if (!cursor) myBody.style.cursor = 'none'			// hide cursor
@@ -371,12 +367,8 @@ block=240
       myFlip.innerHTML = mySelect.style.outline = null}
     if (favicon.innerHTML.match('\u2764')) myFavorite.innerHTML = 'Fav &#x2764'
     else myFavorite.innerHTML = 'Fav'
-    if (cue) myDur.innerHTML = formatTime(time)+' - '+formatTime(end)
-    else if (dur && playing) myDur.innerHTML = formatTime(dur)+' - '+formatTime(myPlayer.currentTime)
-    else if (dur) myDur.innerHTML = formatTime(dur)
-    else myDur.innerHTML = ''
     let qty = selected.split(',').length - 1 || 1
-    if (selected || type) myInca.innerHTML = `Delete ${qty}`
+    if (selected || type) myInca.innerHTML = ` &hellip; Delete ${qty}`
     else myInca.innerHTML = '&hellip;'
     myInca.style.color = selected || type ? 'red' : null
     mySkinny.style.color = skinny == 1 ? null : 'red'
@@ -399,7 +391,7 @@ block=240
       myMask.style.pointerEvents = null
       if (zoom > 1 && overMedia) myMask.style.opacity = 0.3 * zoom
       else myMask.style.opacity = 0
-    if (!listView && thumb.readyState === 4 && ym < 0.8 && overMedia && zoom == 1) thumb.play()}}
+    if (!myNav.style.display && !listView && thumb.readyState === 4 && ym < 0.8 && overMedia && zoom == 1) thumb.play()}}
 
 
   function positionMedia(time) {					// position myPlayer in window
@@ -421,6 +413,7 @@ block=240
 
 
   function seekbar() {							// seekbar bar beneath player
+    navButtons()
     let cueX = rect.left
     let pos = playing ? myPlayer.currentTime : thumb.currentTime
     let cueW = rect.width * pos / dur
@@ -442,7 +435,7 @@ block=240
       myPic.style.zIndex = Zindex + 10
       mySeek.style.zIndex = Zindex + 11
       if (dur) mySeek.style.opacity = 1
-      if (xm>0 && xm<1 && ym > 0.8 && ym<1) myPic.style.opacity = 1
+      if (xm>0 && xm<1 && ym > 0.8 && ym<1 && !thumbSheet) myPic.style.opacity = 1
       else myPic.style.opacity = 0
       if (playing || zoom > 1) {
         myPic.style.top = mySeek.offsetTop - thumb.offsetHeight + 'px'
@@ -470,9 +463,8 @@ block=240
     let x = y = z = innerHeight
     if (aspect < 1) {x = z*aspect} else y = z/aspect			// portrait or landscape - normalised size
     myPlayer.style.width = x +'px'; myPlayer.style.height = y +'px'	// normalise player size
-    if (aspect < 1) {y = 150; x = 150*aspect} else {y = 150/aspect; x = 150}	// initial context image size
     myVig.style.width = myPic.style.width = thumb.offsetWidth + 'px'
-    myVig.style.height = myPic.style.height = thumb.offsetHeight + 'px'	// context menu thumb
+    myVig.style.height = myPic.style.height = thumb.offsetHeight + 'px'
     thumb.style.transform = 'scale('+skinny*zoom+','+zoom+')'
     myPic.style.transform = 'scale('+skinny+',1)'
     myPic.style.backgroundPosition = '0% 0%'}				// sets to frame 1 of 6x6 thumbSheet
@@ -630,7 +622,11 @@ block=240
     myCue.innerHTML = (playing && dur) ? 'Add Cue '+formatTime(myPlayer.currentTime) : 'Show Cues'
     if (cue && thumb.style.skinny) myCap.innerHTML = 'Cue Skinny ' + skinny
     else if (cue && thumb.style.rate) myCap.innerHTML = 'Cue Speed ' + rate
-    else if (cue && end != dur) myCap.innerHTML = 'GoTo ' + formatTime(end)}
+    else if (cue && end != dur) myCap.innerHTML = 'GoTo ' + formatTime(end)
+    if (cue) myDur.innerHTML = formatTime(time)+' - '+formatTime(end)
+    else if (dur && playing) myDur.innerHTML = formatTime(myPlayer.currentTime)+' - '+formatTime(dur)
+    else if (dur) myDur.innerHTML = formatTime(dur)
+    else myDur.innerHTML = ''}
 
 
   function capButton() {						// context menu Caption button
@@ -662,16 +658,14 @@ block=240
     if (!type || gesture) return
     if (playing) start = myPlayer.currentTime
     if (!playing && zoom == 1) if (dur < 200) {start = 0.0} else start = defStart
-
-messages += '#Favorite#'+start.toFixed(1)+'#'+index+'#'
-//    inca('Favorite', start.toFixed(1), index)
+    messages += '#Favorite#'+start.toFixed(1)+'#'+index+'#'
     favicon.innerHTML = '&#10084'}					// heart symbol on htm thumb
 
 
   function Ffmpeg(id) {
     let target = cue + '|' + id + '|' + skinny
     let select = selected || overMedia || playing || 0
-    inca('Ffmpeg', target, select, myPlayer.currentTime.toFixed(2))}
+    inca('Ffmpeg', target, select, (myPlayer.currentTime === dur ? dur - 0.1 : myPlayer.currentTime).toFixed(2))}
 
 
   function formatTime(seconds) {
@@ -742,7 +736,7 @@ messages += '#Favorite#'+start.toFixed(1)+'#'+index+'#'
       .then(blob => URL.createObjectURL(blob))}
 
 
-  function context(e) {myNav.style.display = 'block'; myNav.style.left = xPos-90+'px'; myNav.style.top = yPos-28+'px'}
+  function context(e) {myNav.style.display = 'block'; myNav.style.left = xPos-90+'px'; myNav.style.top = yPos-32+'px'}
   function closePic() {thumb.style.size = 1; myPic.style = thumb.style = ''; Param()}
   function Cancel() {if (myCancel.innerHTML != 'Sure ?') {myCancel.innerHTML = 'Sure ?'} else {editing = 0; inca('Reload',index)}}
   function Flip() {xPos = 0; skinny *=- 1; thumb.style.skinny = skinny; Param(); positionMedia(0.4)}

@@ -1197,7 +1197,7 @@
       return "video"
     if InStr("mp3 m4a wma mid", ex)
       return "audio"
-    if InStr("pdf txt rtf doc epub mobi htm html js css ini ahk vtt srt bat", ex)
+    if InStr("pdf txt rtf doc epub mobi htm html js css ini ahk vtt srt bat json", ex)
       return "document"
     if (ex == "m3u")
       return "m3u"
@@ -1815,19 +1815,33 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
 <div id='myContent' class='mycontent' onwheel='if (Click) wheelEvent(event)'>`n 
   <div id='myView' class='myview'>`n`n %mediaList%</div></div>`n`n
 
-<div id='myNav' class='context' onwheel='wheelEvent(event)'>`n
-  <a id='myInca'>&hellip;</a>
-  <a id='mySelect'>Select</a>`n
-  <a id='myFavorite'>Fav</a>`n
-  <a id='myMute'>Mute</a>`n
-  <a id='myPitch'>Pitch</a>`n
-  <a id='myPause'>Pause</a>`n
-  <a id='mySkinny'></a>`n
-  <a id='mySpeed'></a>`n
-  <a id='myFlip'>Flip</a>`n
-  <a id='myCue'>Cue</a>`n
-  <a id='myCap'>Caption</a>`n
-  <a id='myOptions' class='context'><span id='myIndex'>index</span><span id='myMp3'>mp3</span><span id='myMp4'>mp4</span><span id='myJoin'>join</span><span id='myJpg'>jpg</span><a><a></a></div>`n`n
+<div id="myNav" class="context">
+  <div class="trigger">
+    <a id="myInca">...</a>
+
+    <div class="menu alt">
+      <a id="myIndex">index</a>
+      <a id="myMp3">mp3</a>
+      <a id="myMp4">mp4</a>
+      <a id="myJoin">join</a>
+      <a id="myJpg">jpg</a>
+      <a id="mySrt">srt</a>
+    </div>
+  </div>
+
+  <div class="menu default" onwheel='wheelEvent(event)'>
+    <a id="mySelect">Select</a>
+    <a id="myFavorite">Fav</a>
+    <a id="myMute">Mute</a>
+    <a id="myPitch">Pitch</a>
+    <a id="myPause">Pause</a>
+    <a id="mySpeed"></a>
+    <a id="mySkinny"></a>
+    <a id="myFlip">Flip</a>
+    <a id="myCue">Cue</a>
+    <a id="myCap">Caption</a>
+  </div>
+</div>
 
 <div id='myMenu'>
   <div id='z1' class='fade' style='height:190px'></div><div id='z2' class='fade' style='top:190px; background: linear-gradient(#0e0c05ff, #0e0c0500)'></div>`n
@@ -1927,7 +1941,13 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
         thumb = %inca%\cache\posters\%media% %seek%.jpg
       else IfExist, %inca%\cache\posters\%media%.jpg
         thumb = %inca%\cache\posters\%media%.jpg
-      else thumb = %inca%\cache\icons\no link.png
+      else 
+        {
+        cmd = %inca%\cache\apps\ffmpeg.exe -i "%thumb%" -y "%inca%\cache\temp\%media%.jpg"
+        runwait, %cmd%,, Hide
+        thumb = %inca%\cache\temp\%media%.jpg
+        noIndex = <span class='warning'>no index</span>`n 
+        }
     FileGetSize, size, %src%, K
     if (type=="document")
       size := Round(size)
@@ -2042,15 +2062,19 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
         source := StrSplit(entry, "|").1
         SplitPath, source,,,,med
         output = %profile%\Downloads\%med% @%time%.jpg
-        if (DetectMedia(source) == "image")
+        buzz = C:\Program Files (x86)\buzz\buzz.exe
+        if InStr(el_id, "mySrt")
+          run, "%buzz%" add --model-size tiny --srt --hide-gui "%source%", hide
+        else if (DetectMedia(source) == "image")
           cmd = %inca%\cache\apps\ffmpeg.exe -i "%source%" -vf "scale=iw*%skinny%:ih" -y "%output%"
         else cmd = %inca%\cache\apps\ffmpeg.exe -ss %time% -i "%source%" -vf "scale=iw*%skinny%:ih" -y -vframes 1 "%output%"
         if InStr(el_id, "Index")
           Index(entry, 1, A_Index)
         else if InStr(el_id, "myJpg")
           runwait, %cmd%,, Hide
-        else if (new := Transcode(el_id, source, sta, end, A_Index))
-          Index(new, 1, A_Index)
+        else if (InStr(el_id, "myMp3") || InStr(el_id, "myMp4"))
+          if (new := Transcode(el_id, source, sta, end, A_Index))
+            Index(new, 1, A_Index)
         }
     transcoding =
     CreateList(1)
