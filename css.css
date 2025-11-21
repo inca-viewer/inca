@@ -297,8 +297,7 @@
   width: 105px;
   z-index: 500;
   border-radius: 0.7em;
-  background: #2b282410;}
-#myNav[style*="display: block"] {opacity: 1; pointer-events: auto;}
+  background: #121010c0;}
 
 .context a {
   display: block;
@@ -310,13 +309,15 @@
   overflow: hidden;
   border-radius: 1.3em;
   text-overflow: ellipsis;}
-.context a:hover { background: #2b2824; }
-.context a:active { border-left: 1px solid red; }
-.menu { display: none; }
-#myNav[style*="display: block"] .default {display: block;}
-.trigger:hover .alt { display: block; }
-.trigger:hover ~ .default { display: none !important; }
-#myNav:not([style*="display: block"]) .trigger {pointer-events: none !important;}
+
+#myNav[style*="display: block"] {opacity: 1; pointer-events: auto;}
+.context a:hover {background: #23202180;}
+.context a:active {border-left: 1px solid red; border-right: 1px solid red;}
+.menu {display: none;}
+#myNav[style*="display: block"]:not(.editor-mode) .default {display: block;}
+#myNav[style*="display: block"].editor-mode .editor {display: block;}
+.trigger:hover .alt {display: block; position: relative; z-index: 10;}
+.trigger:hover ~ .menu {display: none !important;}
 
 .myBody {					/* whole body element */
   font-family: 'Yu Gothic', 'Calibri Light';

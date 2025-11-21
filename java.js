@@ -1,4 +1,5 @@
-
+// dont add caption versions
+// have an x if media is edited and to wuit like before
 
 
   let wheel = 0								// wheel count
@@ -59,8 +60,12 @@
   let list = 0								// computed list size (last index +1)
   let end = 0
   let sheet = ''
+  let lastId = ''
+  let overEditor = false
+
   let Sarah = "mJVDL3Jf4JW01l7hCyjI"					// Sarah voice id
   let text = "hi, it's Sarah here."
+
 
   let entry = document.createElement('div')				// dummy thumb container
   let thumb = document.createElement('div')				// . thumb element
@@ -74,12 +79,10 @@
   document.addEventListener('mousemove', mouseMove)
   document.addEventListener('keydown', keyDown)
   myPlayer.addEventListener('ended', mediaEnded)
-  document.addEventListener('contextmenu', (e) => {if (yw > 0.05) e.preventDefault()})
   window.addEventListener('beforeunload', (e) => {if (playing && editing) e.preventDefault()})
   document.addEventListener('visibilitychange', function() {
     if (document.visibilityState=='visible' && folder=='Downloads' && !selected && !playing) inca('Reload',index)})
   if (innerHeight>innerWidth) {scaleY=0.64} else scaleY=0.5		// screen is portrait
-
 
 
   function mouseDown(e) {
@@ -117,8 +120,9 @@
 
   function clickEvent(e) {
     let id = e.target.id						// id under cursor
-    block = 240								// block wheel input straight after click
+    block = 100								// block wheel input straight after click
     if (!playing && longClick && !gesture && overMedia) thumb.style.zIndex = Zindex += 1
+    if (['myCut', 'myCopy', 'myPaste'].includes(id)) {myNav.style.display=null; lastId.focus(); inca('CutCopyPaste',id); return}
     if (lastClick != 3 && (gesture || id == 'myInput')) return
     if (longClick == 1 && !playing && playlist && selected && overMedia) {inca('Move', overMedia); return}
     if (['myIndex', 'myMp3', 'myMp4', 'myJoin', 'myJpg', 'mySrt'].includes(id)) {Ffmpeg(id); return}
@@ -131,13 +135,12 @@
     if (id == 'myCancel') {Cancel(); return}
     if (lastClick == 3) {
       if (longClick) return
-      if (!myNav.style.display) {context(e); return}}			// my context menu
+      if (!myNav.style.display) {lastId = e.target; context(e); return}} // my context menu
     if (lastClick == 4) {mouseBack(); return}				// Back Click
     if (lastClick == 2) {  						// Middle click
       if (editing || myMenu.matches(':hover')) return
       if (zoom > 1) {Play(); return}
       else if (!playing && !myNav.style.display) {inca('View',lastMedia); return} // list/thumb view
-      if (!thumbSheet && lastClick) messages += '#History#'+start.toFixed(1)+'#'+index+'#'
       if (longClick) {index--} else index++				// next, previous media
       if (!Param()) {index = lastMedia; closePlayer(); return}}		// end of media list
     if (lastClick == 1) {
@@ -210,6 +213,7 @@
     if (playlist.match('/inca/music/') && !thumbSheet) {myPlayer.currentTime = 0; myPlayer.play(); myPlayer.muted = 0}
     if (type == 'audio') myPlayer.style.borderBottom = '2px solid pink'
     else myPlayer.style.border = null
+    if (!thumbSheet) inca('History',start.toFixed(1),index)
     observer = new IntersectionObserver(([entry]) => {if (!entry.isIntersecting) mediaX = mediaY = 500}).observe(myPlayer)
     if (pitch || myPlayer.context) {setupContext(myPlayer); myPlayer.jungle.setPitchOffset(semiToneTranspose(pitch))}
     playing = index
@@ -297,7 +301,7 @@
       myView.style.width = x.toFixed(2)+'px'
       settings.pageWidth = String(x); localStorage.setItem(folder, JSON.stringify(settings))
       block = 8}
-    else if (id == 'mySelect') {
+    else if (id == 'mySelect' && !captions) {
       Click = longClick = lastClick = 0; block = 150
       if (wheelUp) {index++} else if (index>1) index--
       if (!document.getElementById('entry'+index)) index-- 		// next - previous
@@ -368,9 +372,8 @@
     if (favicon.innerHTML.match('\u2764')) myFavorite.innerHTML = 'Fav &#x2764'
     else myFavorite.innerHTML = 'Fav'
     let qty = selected.split(',').length - 1 || 1
-    if (selected || type) myInca.innerHTML = ` &hellip; Delete ${qty}`
-    else myInca.innerHTML = '&hellip;'
-    myInca.style.color = selected || type ? 'red' : null
+    if (myInca.matches(':hover') && (selected || type)) {myInca.innerHTML = `Delete ${qty}`; myInca.style.color = 'red'}
+    else {myInca.innerHTML = '&hellip;'; myInca.style.color = null}
     mySkinny.style.color = skinny == 1 ? null : 'red'
     mySpeed.style.color = rate == 1 ? null : 'red'
     myPitch.style.color = pitch ? 'red' : null
@@ -428,14 +431,14 @@
     if (rect.bottom > innerHeight) mySeek.style.top = innerHeight - 15 +'px'
     else mySeek.style.top = rect.top + rect.height - 6 + 'px'
     mySeek.style.left = cueX + 'px'
-    if (cue || block > 20 && playing || ym > 0.8 && overMedia && !fade && dur) {
+    if (cue || block > 20 && playing && dur || ym > 0.8 && overMedia && !fade && dur) {
       mySeek.style.background = cue ? 'red' : null
       if (!playing && xm<1) cueW = rect.width * xm
       mySeek.style.width = cueW + 'px'
       myPic.style.zIndex = Zindex + 10
       mySeek.style.zIndex = Zindex + 11
       if (dur) mySeek.style.opacity = 1
-      if (xm>0 && xm<1 && ym > 0.8 && ym<1 && !thumbSheet) myPic.style.opacity = 1
+      if (xm>0 && xm<1 && ym > 0.8 && ym<1 && !thumbSheet && block < 30) myPic.style.opacity = 1
       else myPic.style.opacity = 0
       if (playing || zoom > 1) {
         myPic.style.top = mySeek.offsetTop - thumb.offsetHeight + 'px'
@@ -513,6 +516,7 @@
     if (!address) address = ''
     if (command == 'Delete' || command == 'Rename' || value.toString().includes('|myMp4') || (select && command == 'Path')) {
       selected = ''
+      if (command == 'Rename') value = value.replaceAll('#', '𝌇')
       for (x of select.split(',')) if (el = document.getElementById('thumb'+x)) el.remove()}	// release media
     messages += '#'+command+'#'+value+'#'+select+'#'+address
     fetch('http://localhost:3000/generate-html', {method: 'POST', headers: {'Content-Type': 'text/plain'}, body: messages})
@@ -713,7 +717,6 @@
   function closePlayer() {
     if (editor.style.display) CaptionEditor.close()
     if (observer) observer.disconnect()
-    if (!thumbSheet) messages += '#History#'+lastSeek.toFixed(1)+'#'+index+'#'
     if (editing) {
       editing = editing.replaceAll('#', '𝌇')							// because # is used as delimiter
       inca('capEdit', editing, index)					// save edited text
@@ -736,7 +739,9 @@
       .then(blob => URL.createObjectURL(blob))}
 
 
-  function context(e) {myNav.style.display = 'block'; myNav.style.left = xPos-90+'px'; myNav.style.top = yPos-32+'px'}
+  function context(e) {
+    if (overEditor) {myNav.classList.add('editor-mode')} else myNav.classList.remove('editor-mode')
+myNav.style.display = 'block'; myNav.style.left = xPos-90+'px'; myNav.style.top = yPos-32+'px'}
   function closePic() {thumb.style.size = 1; myPic.style = thumb.style = ''; Param()}
   function Cancel() {if (myCancel.innerHTML != 'Sure ?') {myCancel.innerHTML = 'Sure ?'} else {editing = 0; inca('Reload',index)}}
   function Flip() {xPos = 0; skinny *=- 1; thumb.style.skinny = skinny; Param(); positionMedia(0.4)}

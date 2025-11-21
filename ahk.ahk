@@ -93,7 +93,7 @@
     initialize()				; sets environment then waits for mouse, key or clipboard events
     Process, Close, node.exe
     sleep 200
-    Run, cmd.exe /c cd /d "C:\inca\cache\apps" && helpers\node\node.exe server.js, , Hide
+    Run, cmd.exe /c cd /d "C:\inca\cache\apps" && node\node.exe server.js, , Hide
     WinActivate, ahk_group Browsers
     path = %profile%\Pictures\
     startPage = #Path###%path%			; default start page
@@ -234,6 +234,15 @@
       Sort()
     else if (command == "Search" || command == "SearchBox")
       Search()
+    if (command == "CutCopyPaste")
+      {
+      if (value == "myCut")
+        send, ^x
+      if (value == "myCopy")
+        send, ^c
+      if (value == "myPaste")
+        send, ^v
+      }
     else if (command == "Null")						; used as trigger to save text editing - see Java inca()
       {
       lastClick =
@@ -661,7 +670,9 @@
     FileDelete, %inca%\cache\temp\temp.txt
     FileDelete, %inca%\cache\temp\temp1.txt
     FileDelete, %inca%\cache\temp\*.lnk
-    Index(src,1,"")
+    if !ErrorLevel
+      if (new := Transcode("myMp4", src, 0, 0))
+        Index(new, 1)
     reload := 2
     }
 
@@ -937,7 +948,7 @@
     if playlist								; default playlist sort
       sort = Playlist
     FileReadLine, array, %inca%\cache\html\%folder%.htm, 1		; embedded page data as top html comment
-    if array
+    if (array && SubStr(array, 1, 4) = "<!--")
       {
       StringReplace, array, array, /, \, All
       array := StrSplit(array,", ")
@@ -1397,7 +1408,7 @@
     }
 
 
-  Index(src, force, index)						; create thumbs, posters & durations cache
+  Index(src, force)							; create thumbs, posters & durations cache
     {
     if InStr(src, "|")
       {
@@ -1434,7 +1445,6 @@
     thumb := 0
     IfNotExist, %inca%\cache\thumbs\%filen%.jpg
       thumb := 1
-    GuiControl, Indexer:, GuiInd, %index% - indexing - %filen%
     t := 0
     if (dur > 61)
       {
@@ -1459,12 +1469,11 @@
       }
     if (thumb || force)
       Runwait %inca%\cache\apps\ffmpeg -i %inca%\cache\temp\`%d.jpg -filter_complex "tile=6x6" -y "%inca%\cache\thumbs\%filen%.jpg",, Hide
-    GuiControl, Indexer:, GuiInd
     return 1
     }
 
 
-  Transcode(id, src, start, end, index)
+  Transcode(id, src, start, end)
     {
     local cmd, temp, new, type, filen, foldr
     if start
@@ -1480,7 +1489,6 @@
     FileGetTime, ModifiedTime, %src%, M
     if ErrorLevel
       return
-    GuiControl, Indexer:, GuiInd, %index% - transcoding - %filen%
     if (id == "myMp3")
       ext = mp3
     else ext = mp4
@@ -1575,7 +1583,6 @@
       FileSetTime, %ModifiedTime%, %new%, M
       FileSetTime, %CreationTime%, %new%, C
       }
-    GuiControl, Indexer:, GuiInd
     return new
     }
 
@@ -1819,29 +1826,42 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
   <div class="trigger">
     <a id="myInca">...</a>
 
-    <div class="menu alt">
-      <a id="myIndex">index</a>
-      <a id="myMp3">mp3</a>
-      <a id="myMp4">mp4</a>
-      <a id="myJoin">join</a>
-      <a id="myJpg">jpg</a>
-      <a id="mySrt">srt</a>
+
+    <div class="menu alt">`n
+      <a id="myCut">cut</a>`n
+      <a id="myCopy">copy</a>`n
+      <a id="myPaste">paste</a>`n
+      <a id="myIndex">index</a>`n
+      <a id="myMp3">mp3</a>`n
+      <a id="myMp4">mp4</a>`n
+      <a id="myJoin">join</a>`n
+      <a id="myJpg">jpg</a>`n
+      <a id="mySrt">srt</a>`n
     </div>
+  </div>`n
+
+  <div class="menu editor">`n
+    <a>New Voice</a>`n
+    <a>New Video</a>`n
+    <a>New Media</a>`n
+    <a>Clone Voice</a>`n
+    <a>Top Tail jpg</a>`n
+    <a>Duplicate</a>
   </div>
 
-  <div class="menu default" onwheel='wheelEvent(event)'>
-    <a id="mySelect">Select</a>
-    <a id="myFavorite">Fav</a>
-    <a id="myMute">Mute</a>
-    <a id="myPitch">Pitch</a>
-    <a id="myPause">Pause</a>
-    <a id="mySpeed"></a>
-    <a id="mySkinny"></a>
-    <a id="myFlip">Flip</a>
-    <a id="myCue">Cue</a>
-    <a id="myCap">Caption</a>
+  <div class="menu default" onwheel='wheelEvent(event)'>`n
+    <a id="mySelect">Select</a>`n
+    <a id="myFavorite">Fav</a>`n
+    <a id="myMute">Mute</a>`n
+    <a id="myPitch">Pitch</a>`n
+    <a id="myPause">Pause</a>`n
+    <a id="mySpeed"></a>`n
+    <a id="mySkinny"></a>`n
+    <a id="myFlip">Flip</a>`n
+    <a id="myCue">Cue</a>`n
+    <a id="myCap">Caption</a>`n
   </div>
-</div>
+</div>`n`n
 
 <div id='myMenu'>
   <div id='z1' class='fade' style='height:190px'></div><div id='z2' class='fade' style='top:190px; background: linear-gradient(#0e0c05ff, #0e0c0500)'></div>`n
@@ -2052,33 +2072,35 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
     else if (el_id == "myIndex" && !select)				; index whole folder
       if (playlist || searchTerm)
         Loop, Parse, filelist, `n, `r
-          Index(A_Loopfield, 0, A_Index)
+          Index(A_Loopfield, 0)
     else Loop, files, %path%*.*
-      Index(A_LoopFileFullPath, 0, A_Index)
+      Index(A_LoopFileFullPath, 0)
     else Loop, Parse, select, `,					; index selected files
       if A_LoopField
         {
         entry := StrSplit(fileList, "`r`n")[A_LoopField]
         source := StrSplit(entry, "|").1
         SplitPath, source,,,,med
+        GuiControl, Indexer:, GuiInd, %A_Index% - processing - %med%
         output = %profile%\Downloads\%med% @%time%.jpg
-        buzz = C:\Program Files (x86)\buzz\buzz.exe
+        whisper = %inca%\cache\apps\Faster-Whisper-XXL\faster-whisper-xxl.exe
         if InStr(el_id, "mySrt")
-          run, "%buzz%" add --model-size tiny --srt --hide-gui "%source%", hide
+        runwait, "%whisper%" "%source%" --model tiny.en --language en --output_format srt --output_dir "%inca%\cache\srt", , Hide
         else if (DetectMedia(source) == "image")
           cmd = %inca%\cache\apps\ffmpeg.exe -i "%source%" -vf "scale=iw*%skinny%:ih" -y "%output%"
         else cmd = %inca%\cache\apps\ffmpeg.exe -ss %time% -i "%source%" -vf "scale=iw*%skinny%:ih" -y -vframes 1 "%output%"
         if InStr(el_id, "Index")
-          Index(entry, 1, A_Index)
+          Index(entry, 1)
         else if InStr(el_id, "myJpg")
           runwait, %cmd%,, Hide
         else if (InStr(el_id, "myMp3") || InStr(el_id, "myMp4"))
-          if (new := Transcode(el_id, source, sta, end, A_Index))
-            Index(new, 1, A_Index)
+          if (new := Transcode(el_id, source, sta, end))
+            Index(new, 1)
+        GuiControl, Indexer:, GuiInd
         }
     transcoding =
     CreateList(1)
-    if (folder == fld)							; if in same tab after processing
+    if (incaTab && folder == fld)					; if in same tab after processing
       {
       RenderPage(0)
       if (A_TickCount - serverTimout > 9999)				; server timout
@@ -2108,11 +2130,13 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
         GuiControl, Indexer:, GuiInd, ...........................................
     else Loop, Files, %inca%\cache\apps\*.*
       if (A_LoopFileExt == "webm" || A_LoopFileExt == "mp4" || A_LoopFileExt == "mkv")
-        if (encoded := Transcode("myMp4", A_LoopFileFullPath,0,0,""))
+        if (encoded := Transcode("myMp4", A_LoopFileFullPath,0,0))
           {
-          Index(encoded, 1, "")
+          GuiControl, Indexer:, GuiInd, %A_LoopFileFullPath%.................................................................
+          Index(encoded, 1)
           FileMove, %encoded%, %profile%\Downloads, 1
           FileAppend, %encoded%|0.0`n, C:\inca\fav\history.m3u
+          GuiControl, Indexer:, GuiInd
           }
         else FileRecycle, %A_LoopFileFullPath%
     Process, Exist, ffmpeg.exe

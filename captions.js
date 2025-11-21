@@ -9,10 +9,10 @@
       #caption-editor-module * { box-sizing:border-box; margin:0; padding:0; }
       #caption-editor-module #editor {
         display:none; flex-direction:column; width:560px; max-width:100%; height:400px;
-        background: #1a1a1a20; border-radius:12px; overflow:hidden;
+        background: #1a1a1a20; border-radius:12px;
         box-shadow:0 12px 32px rgba(0,0,0,0.6); position:fixed; left:50%; top:50%;
         transform:translate(-50%,-50%); min-width:300px; min-height:300px;
-        resize:both; max-height:80vh; z-index:9999;
+        resize:both; max-height:80vh; z-index:490; overflow: hidden;
       }
       #caption-editor-module #ribbon {
         background:#1a1a1a20; padding:6px 10px; display:flex; gap:6px;
@@ -28,17 +28,18 @@
       #caption-editor-module .dropdown-content {
         position:absolute; bottom:100%; left:0; min-width:100%; background: #1a1a1a;
         border:1px solid #444; border-radius:4px; box-shadow:0 4px 12px rgba(0,0,0,0.5);
-        display:none; z-index:1; padding-bottom:8px;
+        display:none; z-index:1; padding-bottom:8px; max-height:96px;
+        overflow-y:auto; display:flex; flex-direction:column; gap:2px;
       }
       #caption-editor-module .dropdown-content > div {
         padding:4px 8px; font-size:12px; white-space:nowrap;
         border-radius:4px;
       }
-      #ribbon .dropdown-header:nth-of-type(4) > div:first-child {
+      #ribbon .dropdown-header:nth-of-type(2) > div:first-child {
         width: 12em; overflow: hidden; text-overflow: ellipsis;
         white-space: nowrap; display: flex; justify-content: center;
       }
-      #caption-editor-module .dropdown-content > div:hover { background: #1a1a1a;}
+      #caption-editor-module .dropdown-content > div:hover { background: #2a2a2a;}
       #caption-editor-module .caption-viewport {
         flex:1; overflow-y:auto; overflow-x:hidden; padding:16px;
         background: #1a1a1a20; display:flex; flex-direction:column; gap:16px; min-height:0;
@@ -69,17 +70,17 @@
     <div id="editor">
       <div class="caption-viewport" id="viewport"></div>
       <div id="ribbon">
+        <div class="dropdown-header" id="id-header"><div id="id-display">--</div></div>
+        <div class="dropdown-header"><div>Media</div><div class="dropdown-content"><div>No media</div></div></div>
+        <div class="dropdown-header" id="time-header"><div id="time-display">- : -- . -</div></div>
         <div class="dropdown-header"><div>Voice</div><div class="dropdown-content"><div>Sarah</div><div>Tracy</div><div>Michelle</div><div>Brian</div></div></div>
         <div class="dropdown-header"><div>Video</div><div class="dropdown-content"><div>No videos yet</div></div></div>
         <div class="dropdown-header"><div>Style</div><div class="dropdown-content"><div>Normal</div></div></div>
-        <div class="dropdown-header"><div>Media</div><div class="dropdown-content"><div>No media</div></div></div>
-        <div class="dropdown-header" id="id-header">
-          <div id="id-display">--</div>
-        </div>
-        <div class="dropdown-header" id="time-header">
-          <div id="time-display">- : -- . -</div>
-        </div>
       </div>
+    </div>
+    <div id="editor-context">
+      <a id="editor-new-voice">New Voice</a>
+      <a id="editor-paste-text">Paste as new blocks</a>
     </div>
   `;
 
@@ -95,8 +96,11 @@
   let originalSRT = '';
   let originalPlayerSrc = '';
   let projectMedia = { defaultSrc: null, defaultName: null };
-  const mediaHeader = container.querySelector('.dropdown-header:nth-of-type(4)');
+  const mediaHeader = container.querySelector('.dropdown-header:nth-of-type(2)');
   const mediaHeaderDiv = mediaHeader.querySelector('div:first-child');
+  const voiceDropdownContent = container.querySelector('#ribbon .dropdown-header:nth-of-type(4) .dropdown-content');
+  const voiceHeaderText = container.querySelector('#ribbon .dropdown-header:nth-of-type(4) > div:first-child'); // the "Voice" button text
+  let currentVoiceName = 'Voice'; // default
 
   /* --------------------------------------------------------------
      1. DROPDOWNS
@@ -107,10 +111,57 @@
       container.querySelectorAll('.dropdown-content').forEach(d => d.style.display = 'none');
       if (content) content.style.display = 'block';
     });
-    header.addEventListener('mouseleave', () => {
-      if (content) content.style.display = 'none';
-    });
+    header.addEventListener('click', () => {if (content) content.style.display = 'none';});
+    header.addEventListener('mouseleave', () => {if (content) content.style.display = 'none';});
   });
+
+
+async function loadVoices() {
+  try {
+    const resp = await fetch('/inca/assets/voices.json');
+    if (!resp.ok) throw '';
+    const data = await resp.json();
+    voiceDropdownContent.innerHTML = '';
+    const noneDiv = document.createElement('div');
+    noneDiv.textContent = 'None';
+    noneDiv.style.color = '#ffc0cb88';
+    noneDiv.onclick = () => {
+      if (!editingBlock) return;
+      delete editingBlock._voice;
+      voiceHeaderText.textContent = 'Voice';
+      editing = 1;
+    };
+    voiceDropdownContent.appendChild(noneDiv);
+    data.voices.forEach(v => {
+      const div = document.createElement('div');
+      div.textContent = v.name;
+      div.dataset.voiceId = v.id;
+      div.style.padding = '4px 8px';
+      div.style.cursor = 'default';
+      div.onclick = () => {
+        if (!editingBlock) return;
+        const text = editingBlock.innerText.trim();
+        if (!text) return;
+
+        editingBlock._voice = { id: v.id, name: v.name };
+        voiceHeaderText.textContent = v.name;
+        editing = 1;
+        // inca('ElevenVoice', ...);
+      };
+      voiceDropdownContent.appendChild(div);
+    });
+  } catch (e) {
+    voiceDropdownContent.innerHTML = '<div style="color:#ffc0cb66;padding:8px;">voices.json not found</div>';
+  }
+}
+
+function updateVoiceHeader(block) {
+  if (block?._voice?.name) {
+    voiceHeaderText.textContent = block._voice.name;
+  } else {
+    voiceHeaderText.textContent = 'Voice';
+  }
+}
 
   /* --------------------------------------------------------------
      2. TIME HELPERS
@@ -169,7 +220,7 @@
     viewport.innerHTML = '';
     blocks = [];
     if (!rawText.trim()) {
-      addBlock(1, 0, 'new caption', {});
+      addBlock(1, 0, ' ', {});
       idDisplay.textContent = '--';
       timeDisplay.textContent = '';
       rebuild();
@@ -248,7 +299,7 @@
   }
 
 function updateMediaHeader(block = null) {
-  const label = document.querySelector('#ribbon .dropdown-header:nth-of-type(4) div:first-child');
+  const label = document.querySelector('#ribbon .dropdown-header:nth-of-type(2) div:first-child');
   if (!label) return;
   const titleText = ((title?.value || '').trim().substring(0, 24) + (title?.value?.trim()?.length > 24 ? '…' : ''));
   const mediaName = (block?._media?.name || projectMedia.defaultName || '').replace(/\.[^.]+$/, '');
@@ -270,6 +321,7 @@ function updateMediaHeader(block = null) {
       myPlayer.currentTime = startSec;
     }
   }
+
   function attachBlockListeners(block) {
     block.addEventListener('click', e => {
       e.stopPropagation();
@@ -283,9 +335,10 @@ function updateMediaHeader(block = null) {
       const eff = getEffectiveMedia(block);
       const src = eff ? eff.src : originalPlayerSrc;
       swapPlayerMedia(src, start);
+      myPlayer.currentTime = start
+      if (userWantsPlay) myPlayer.play()
       updateMediaHeader(editingBlock);
     });
-
 
 
 block.addEventListener('keydown', e => {
@@ -319,7 +372,7 @@ block.addEventListener('keydown', e => {
   requestAnimationFrame(rebuild);
 });
 
-
+block.addEventListener('input', () => {myPlayer.pause()});
 
     block.addEventListener('mouseleave', () => {
       const html = block.innerHTML;
@@ -379,11 +432,11 @@ block.addEventListener('keydown', e => {
      6. VIEWPORT & HOVER
      -------------------------------------------------------------- */
 
-
-let isCursorOverEditor = false;
-
-editor.addEventListener('mouseenter', () => {isCursorOverEditor = true;});
-editor.addEventListener('mouseleave', () => {isCursorOverEditor = false;});
+editor.addEventListener('mouseenter', () => {overEditor = true;});
+editor.addEventListener('mouseleave', () => {
+  overEditor = false;
+  document.querySelectorAll('.text-block.editing').forEach(b => {b.classList.remove('editing')});
+});
 
 
   function isElementInViewport(el, container) {
@@ -418,7 +471,7 @@ editor.addEventListener('mouseleave', () => {isCursorOverEditor = false;});
 let isScrolling = false;
 
 function scrollToNearestCaption() {
-  if (isScrolling || myPlayer.src != originalPlayerSrc || isCursorOverEditor) return;
+  if (decodeURIComponent(myPlayer.src) != originalPlayerSrc || isScrolling || overEditor) return;
   const current = myPlayer.currentTime;
   const nearest = timestamps.reduce((prev, curr) =>
     Math.abs(curr.sec - current) < Math.abs(prev.sec - current) ? curr : prev
@@ -455,6 +508,7 @@ isScrolling = true;
       swapPlayerMedia(src, start);
       if (userWantsPlay) myPlayer.play().catch(() => {});
       updateMediaHeader(block);
+      updateVoiceHeader(block);
     }
   });
 
@@ -507,7 +561,7 @@ isScrolling = true;
         mediaContent.innerHTML = '<div style="color:#ffc0cb66;padding:4px 8px;">No media</div>';
         return;
       }
-      const allItems = lines.slice(-20).map(line => {
+      const allItems = lines.map(line => {
         const [fullPath, startStr] = line.split('|');
         const startSec = parseFloat(startStr) || 0;
         const name = fullPath.split(/[\\/]/).pop();
@@ -521,7 +575,7 @@ isScrolling = true;
         let titleSeen = false;
         return m => m.name.includes(title.value) ? !titleSeen && (titleSeen = true) : true;
       })());
-      const list = allItems.slice(-9);
+      const list = allItems;
       mediaContent.innerHTML = '';
       if (!list.length) {
         mediaContent.innerHTML = '<div style="color:#ffc0cb66;padding:4px 8px;">No media</div>';
@@ -569,6 +623,7 @@ isScrolling = true;
             myPlayer.muted = (muteBtn.dataset.muted === 'true');
             myPlayer.currentTime = media.startSec;
             myPlayer.play().catch(() => {});
+          updateVoiceHeader(editingBlock);
           }
         });
         row.addEventListener('mouseleave', () => {
@@ -578,6 +633,7 @@ isScrolling = true;
           myPlayer.load();
           myPlayer.pause();
           currentPreviewItem = null;
+          updateVoiceHeader(editingBlock);
         });
         muteBtn.addEventListener('click', e => {
           e.stopPropagation();
@@ -640,11 +696,12 @@ isScrolling = true;
     const project = {
       blocks: blocks.map(b => ({
         number: parseInt(b.dataset.num),
-        startTime: b._media?.src ? parseFloat(b.dataset.start) : null,
+        startTime: b.dataset.start ? parseFloat(b.dataset.start) : null,
         text: b.innerText.trim(),
         extras: {
           ...(b._cues || {}),
-          media: b._media ? { src: normalizePathForJSON(b._media.src), name: b._media.name } : null
+          media: b._media ? { src: normalizePathForJSON(b._media.src), name: b._media.name } : null,
+          voice: b._voice ? { id: b._voice.id, name: b._voice.name } : null   // ← ADD THIS LINE
         }
       })),
       defaultMedia: projectMedia.defaultSrc ? {
@@ -668,6 +725,7 @@ isScrolling = true;
      -------------------------------------------------------------- */
   window.CaptionEditor = {
     open(source = '') {
+      container.querySelectorAll('.dropdown-content').forEach(d => d.style.display = 'none');
       editor.style.display = 'flex';
       originalPlayerSrc = decodeURIComponent(myPlayer.src || '');
       const center = () => {
@@ -677,13 +735,18 @@ isScrolling = true;
       };
       center();
       window.addEventListener('resize', center);
+      loadVoices();
       if (source.trim().startsWith('{')) {
         const data = JSON.parse(source);
         viewport.innerHTML = '';
         blocks = [];
-        data.blocks.forEach(({ number, startTime, text, extras }) => {
-          addBlock(number, startTime, text, extras);
-        });
+data.blocks.forEach(({ number, startTime, text, extras }) => {
+  const block = addBlock(number, startTime, text, extras || {});
+  if (extras?.media) block._media = extras.media;
+  if (extras?.voice) {
+    block._voice = extras.voice;
+  }
+});
         projectMedia.defaultSrc = data.defaultMedia?.src || null;
         projectMedia.defaultName = data.defaultMedia?.name || null;
         updateMediaHeader();
