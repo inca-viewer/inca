@@ -1,5 +1,3 @@
-// dont add caption versions
-// have an x if media is edited and to wuit like before
 
 
   let wheel = 0								// wheel count
@@ -66,7 +64,6 @@
   let Sarah = "mJVDL3Jf4JW01l7hCyjI"					// Sarah voice id
   let text = "hi, it's Sarah here."
 
-
   let entry = document.createElement('div')				// dummy thumb container
   let thumb = document.createElement('div')				// . thumb element
   let title = document.createElement('div')				// . title element
@@ -83,6 +80,10 @@
   document.addEventListener('visibilitychange', function() {
     if (document.visibilityState=='visible' && folder=='Downloads' && !selected && !playing) inca('Reload',index)})
   if (innerHeight>innerWidth) {scaleY=0.64} else scaleY=0.5		// screen is portrait
+  myInca.addEventListener('mouseenter', () => {				// toggle context menus
+    const isAlt = myAlt.style.display === 'block'
+    myAlt.style.display = isAlt ? '' : 'block'
+    myDefault.style.display = isAlt ? 'block' : 'none'})
 
 
   function mouseDown(e) {
@@ -196,6 +197,7 @@
     positionMedia(0)
     thumb.pause()
     myPlayer.pause()
+    if (defPause && !playing) start = defStart
     if (!playing && !start) start = lastClick == 1 ? 0.04 : 0.12		 // smoother start
     if (!thumbSheet && type != 'image' && lastClick) myPlayer.style.opacity = 0	 // fade in player
     if (!thumbSheet || type == 'image') {myPlayer.poster = thumb.poster; myPlayer.currentTime = start}
@@ -241,7 +243,7 @@
     if (x + y > 9 && !gesture && Click) {gesture=1; if (!longClick&&zoom==1 && !playing && overMedia && !myNav.style.display) sel(index)}
     if (!gesture || !Click) {gesture = 0; return}
     if (y > x + 1) gesture = 2							// enable player move
-    if (editor.style.display) editing = 1
+    if (editor.style.display && Click == 1) editing = 1
     if (!playing && overMedia && zoom > 1) {
       thumb.style.left = parseInt(thumb.style.left || 0) + xPos - xRef + 'px'	// move thumb
       thumb.style.top =  parseInt(thumb.style.top || 0) + yPos - yRef + 'px'}
@@ -350,7 +352,7 @@
     if (fade) fade--
     if (cursor) cursor--
     if (selected) mySelected.innerHTML = selected.split(',').length -1
-    else mySelected.innerHTML = ''
+    else mySelected.innerHTML = editor.style.display
     if (!playing || thumbSheet || overText) myBody.style.cursor = null	// show default cursor
     else if (!cursor) myBody.style.cursor = 'none'			// hide cursor
     else myBody.style.cursor = 'crosshair'				// moving cursor over player
@@ -385,6 +387,7 @@
       positionMedia(0)
       myPlayer.playbackRate = rate
       myMask.style.pointerEvents = 'auto'
+      if (editing) {myCancel.style.visibility = 'visible'} else myCancel.style.visibility = 'hidden'
       if (dur && !thumbSheet) lastSeek = myPlayer.currentTime
       if (playlist.match('/inca/music/')) myMask.style.opacity = 0.7
       else myMask.style.opacity = 1
@@ -596,9 +599,10 @@
     let src = document.getElementById('dat'+index).getAttribute('data')
     if (!src) return
     captions = 1
+    CaptionEditor.close()
     fetch(src)								// txt or caption text
       .then(response => response.text())
-      .then(data => {CaptionEditor.open(data)})
+      .then(data => {CaptionEditor.open(src, data)})
     myNav.style.display = null}
 
 
@@ -719,9 +723,8 @@
     if (observer) observer.disconnect()
     if (editing) {
       editing = editing.replaceAll('#', '𝌇')							// because # is used as delimiter
-      inca('capEdit', editing, index)					// save edited text
-      editing = 0}
-    Click = playing = start = captions = thumbSheet = cue = 0
+      inca('capEdit', editing, index)}					// save edited text
+    Click = playing = start = captions = thumbSheet = cue = editing = 0
     myVig.style.opacity = myPlayer.style.opacity = overText = 0
     myMask.style = myDur.innerHTML = myPlayer.src = ''
     myPlayer.style.zIndex = -1}
@@ -739,15 +742,15 @@
       .then(blob => URL.createObjectURL(blob))}
 
 
-  function context(e) {
-    if (overEditor) {myNav.classList.add('editor-mode')} else myNav.classList.remove('editor-mode')
-myNav.style.display = 'block'; myNav.style.left = xPos-90+'px'; myNav.style.top = yPos-32+'px'}
+  function context(e) { if (overEditor) {myNav.classList.add('editor-mode')} else myNav.classList.remove('editor-mode')
+    myNav.style.display = 'block'; myNav.style.left = xPos-90+'px'; myNav.style.top = yPos-32+'px'}
   function closePic() {thumb.style.size = 1; myPic.style = thumb.style = ''; Param()}
   function Cancel() {if (myCancel.innerHTML != 'Sure ?') {myCancel.innerHTML = 'Sure ?'} else {editing = 0; inca('Reload',index)}}
   function Flip() {xPos = 0; skinny *=- 1; thumb.style.skinny = skinny; Param(); positionMedia(0.4)}
   function Time(z) {if (z < 0) return '0:00'; let y = Math.floor(z%60); let x = ':'+y; if (y<10) {x = ':0'+y}; return Math.floor(z/60)+x}
   function selectAll() {for (i = 1; document.getElementById('thumb'+i); i++) {sel(i)}}
-  function Pause() {if (!editor.matches(':hover') && !thumbSheet && playing && myPlayer.paused) {myPlayer.play()} else myPlayer.pause()}
+  function Pause() { if (!editor.matches(':hover') && !thumbSheet && playing && myPlayer.paused) {
+    myPlayer.play(); myPic.play()} else {myPlayer.pause(); myPic.pause()}}
 
 
 

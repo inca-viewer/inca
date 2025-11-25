@@ -316,8 +316,6 @@
 .menu {display: none;}
 #myNav[style*="display: block"]:not(.editor-mode) .default {display: block;}
 #myNav[style*="display: block"].editor-mode .editor {display: block;}
-.trigger:hover .alt {display: block; position: relative; z-index: 10;}
-.trigger:hover ~ .menu {display: none !important;}
 
 .myBody {					/* whole body element */
   font-family: 'Yu Gothic', 'Calibri Light';

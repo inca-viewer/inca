@@ -73,7 +73,6 @@
   Global messages				; between browser java and this program
   Global allFav					; all favorite shortcuts consolidated
   Global showSubs
-  Global lastMedia
   Global cur					; window under cursor id
   Global desk					; current desktop window id
   Global brow					; current browser id
@@ -87,6 +86,7 @@
   Global lastIndex := 0				; continuous scrolling
   Global server := "http://localhost:3000/"
   Global transcoding				; media is being transcoded async
+  Global lastMedia				; last/current media played in browser
 
 
   main:
@@ -280,8 +280,12 @@
       reload := 2
       index := value							; for scrollToIndex() in java
       }
-    else if (command == "History" && folder != "History")		; maintain play history
-      FileAppend, %src%|%value%`r`n, %inca%\fav\History.m3u, UTF-8
+    else if (command == "History")					; maintain play history
+      {
+      lastMedia := src
+      if (folder != "History")
+        FileAppend, %src%|%value%`r`n, %inca%\fav\History.m3u, UTF-8
+      }
     else if (command == "Pause")					; set default paused
       {
       config := RegExReplace(config, "Pause/[^|]*", "Pause/" . value)
@@ -980,11 +984,9 @@
     if (value < 4)
       return
     if !gesture
-      if (Abs(y) > Abs(x))
+      if (Abs(y) > Abs(x)+4)
         gesture := -1
       else gesture := 1
-    if (Abs(y) > Abs(x) + 4)
-      gesture := -1						; more y than x direction
     MouseGetPos, xRef, yRef					; new ref
     if (click == "RButton")
       {
@@ -1206,7 +1208,7 @@
       return "image"
     if InStr("mp4 wmv avi mov webm mpg mpeg flv divx mkv asf m4v mvb rmvb vob rm ts", ex)
       return "video"
-    if InStr("mp3 m4a wma mid", ex)
+    if InStr("mp3 m4a wma mid wav", ex)
       return "audio"
     if InStr("pdf txt rtf doc epub mobi htm html js css ini ahk vtt srt bat json", ex)
       return "document"
@@ -1637,7 +1639,6 @@
               subfolders = %subfolders%|%A_LoopFileFullPath%\
             else subfolders = %A_LoopFileFullPath%\
       }
-    WinActivate, ahk_group Browsers
     if (playlist || searchTerm)
       subfolders = 
     if InStr(fol, x) 
@@ -1751,7 +1752,7 @@
     if container
       fill(container)
 
-    container = <div id='Fav' style='font-size:1.8em; color:pink; text-align:center'>&#9825;</div>`n
+    container = <div id='Fav' style='font-size:1.8em; color:pink; text-align:center'>&#10084;</div>`n
     container := fill(container)
     Loop, Parse, fav, `|						; add favorites to top panel
       if A_LoopField
@@ -1826,8 +1827,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
   <div class="trigger">
     <a id="myInca">...</a>
 
-
-    <div class="menu alt">`n
+    <div id='myAlt' class="menu alt">`n
       <a id="myCut">cut</a>`n
       <a id="myCopy">copy</a>`n
       <a id="myPaste">paste</a>`n
@@ -1840,26 +1840,28 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
     </div>
   </div>`n
 
-  <div class="menu editor">`n
-    <a>New Voice</a>`n
-    <a>New Video</a>`n
-    <a>New Media</a>`n
-    <a>Clone Voice</a>`n
-    <a>Top Tail jpg</a>`n
-    <a>Duplicate</a>
-  </div>
+  <div id='myDefault'>
+    <div class="menu editor">`n
+      <a>New Voice</a>`n
+      <a>New Video</a>`n
+      <a>New Media</a>`n
+      <a>Clone Voice</a>`n
+      <a>Top Tail jpg</a>`n
+      <a>Duplicate</a>
+    </div>
 
-  <div class="menu default" onwheel='wheelEvent(event)'>`n
-    <a id="mySelect">Select</a>`n
-    <a id="myFavorite">Fav</a>`n
-    <a id="myMute">Mute</a>`n
-    <a id="myPitch">Pitch</a>`n
-    <a id="myPause">Pause</a>`n
-    <a id="mySpeed"></a>`n
-    <a id="mySkinny"></a>`n
-    <a id="myFlip">Flip</a>`n
-    <a id="myCue">Cue</a>`n
-    <a id="myCap">Caption</a>`n
+    <div class="menu default" onwheel='wheelEvent(event)'>`n
+      <a id="mySelect">Select</a>`n
+      <a id="myFavorite">Fav</a>`n
+      <a id="myMute">Mute</a>`n
+      <a id="myPitch">Pitch</a>`n
+      <a id="myPause">Pause</a>`n
+      <a id="mySpeed"></a>`n
+      <a id="mySkinny"></a>`n
+      <a id="myFlip">Flip</a>`n
+      <a id="myCue">Cue</a>`n
+      <a id="myCap">Caption</a>`n
+    </div>
   </div>
 </div>`n`n
 
@@ -1872,7 +1874,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
   <a id='myMusic' style='max-width:1.8em; %x22%' onmousedown="inca('Path','','','music|1')" onmouseover="setTimeout(function() {if(myMusic.matches(':hover'))Music.scrollIntoView()},200)">&#x266B;</a>`n
   <a id='mySub' style='max-width:2em; font-size:0.7em; %x8%' onmousedown="inca('Recurse')" onmouseover="setTimeout(function() {if(mySub.matches(':hover'))Sub.scrollIntoView()},200)">%subs%</a>`n
   <a id='myFol' style='max-width:2.8em; %x21%' onmousedown="inca('Path','','','fol|1')" onmouseover="setTimeout(function() {if(myFol.matches(':hover'))Fol.scrollIntoView()},200)">&#x1F4BB;&#xFE0E;</a>`n
-  <a id='myFav' style='translate: 0 0.1em; %x23%' onmousedown="inca('Path','','','fav|1')" onmouseover="setTimeout(function() {if(myFav.matches(':hover'))Fav.scrollIntoView()},200)">&#9825;</a>`n
+  <a id='myFav' style='translate: 0 0.1em; %x23%' onmousedown="inca('Path','','','fav|1')" onmouseover="setTimeout(function() {if(myFav.matches(':hover'))Fav.scrollIntoView()},200)">&#10084;</a>`n
   <a id='mySearch' style='max-width:2.8em; %x20%' onwheel="wheelEvent(event)" onmousedown="inca('SearchBox','','',myInput.value)" onmouseover="setTimeout(function() {if(mySearch.matches(':hover'))filter(id)},140)">&#x1F50D;&#xFE0E;</a>`n
   <input id='myInput' class='searchbox' type='search' autocomplete='off' value='%st%' onmouseenter="if (this.value=='%st%') this.value='%lastSearch%'; this.select()" onmouseover="overText=1; this.focus()" onmouseout='overText=0'>
   <a id='Add' style='max-width:3em; font-size:1.2em; color: red' onmousedown="inca('Add','','',myInput.value)">%add%</a>`n
@@ -1910,7 +1912,6 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
       send {F5}
     else FileAppend, %htm%, %inca%\cache\html\temp.txt, UTF-8		; trigger node server
     sleep 200
-    WinActivate, ahk_group Browsers
     incaTab := folder
     Loop, 30								; wait until page loaded
       {
@@ -2020,6 +2021,9 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
     if !size
       size = 0								; cannot have null size in Param()
 
+
+    if (type == "image")
+      media_s := Chr(0x3048) . " " . media_s
     if (ext=="txt")
       src = "%server%%poster%"
     else src = "%server%%src%"
@@ -2120,8 +2124,31 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
     GuiControlGet, control, Indexer:, GuiInd
     FileGetTime, ytdlp, %inca%\cache\apps, M
     ytdlp := A_Now - ytdlp						; folder last modified (downloading)
-    FileGetTime, downloads, %profile%\Downloads, M
+    FileGetTime, downloads, %profile%\Downloads, S
     downloads := A_Now - downloads
+    if (downloads > 3 && downloads < 6)
+      Loop, Files, %profile%\Downloads\*.mp3
+        {
+        SplitPath, A_LoopFileFullPath, fileWithExt, dir, ext, nameNoExt
+        if (nameNoExt = "")
+          nameNoExt := "null"
+        SplitPath, lastMedia,,,, fol
+        if (!fol)
+          fol := "null"
+        else fol := SubStr(fol, 1, 100)
+        assets := inca . "\assets\" . fol
+        processed := profile . "\Downloads\inca generated folder"
+        FileCreateDir, %assets%
+        FileCreateDir, %processed%
+        destCopy := assets . "\" . nameNoExt . "." . ext
+        m3uAppend := assets . "\" . fol . ".m3u"
+        FileCopy, %A_LoopFileFullPath%, %destCopy%, 1
+        destMove := processed . "\" . nameNoExt . "." . ext
+        if FileExist(destMove)
+        FileDelete, %destMove%
+        FileMove, %A_LoopFileFullPath%, %destMove%
+        FileAppend, %destCopy%|0.0`r`n, %m3uAppend%, UTF-8
+        }
     Files := {}
     if (ytdlp > 4 && downloads > 4 && InStr(control, ".........."))
       GuiControl, Indexer:, GuiInd
