@@ -1,3 +1,7 @@
+// search all srt and txt as you type using js library
+// caption all mp3 downloads for easier discovery
+// do a word match search for any caption to the mp3 library
+
 
 
   let wheel = 0								// wheel count
@@ -60,9 +64,6 @@
   let sheet = ''
   let lastId = ''
   let overEditor = false
-
-  let Sarah = "mJVDL3Jf4JW01l7hCyjI"					// Sarah voice id
-  let text = "hi, it's Sarah here."
 
   let entry = document.createElement('div')				// dummy thumb container
   let thumb = document.createElement('div')				// . thumb element
@@ -164,7 +165,7 @@
     if (Click == 3 && !playing && !overMedia) {thumbSheet = 0; index = lastMedia; start = lastSeek}
     if (!playing && lastClick == 2) return
     if (playing && lastClick == 1 && type == 'document') return
-    if (lastClick) Play()}
+    if (lastClick && !editor.style.display) Play()}
 
 
   function getStart(id) {
@@ -185,7 +186,7 @@
       if (xm < 0.1) {if (longClick) {myPlayer.currentTime = 0} else myPlayer.currentTime = defStart}
       else {myPlayer.currentTime = start}
       return}
-    else if (!longClick && lastClick == 1 && id != 'myPic' && playing) {Pause(); return}
+    else if (!longClick && lastClick == 1 && id != 'myPic' && playing && !editor.matches(':hover')) {Pause(); return}
     else if (!type || !playing && !overMedia) return
     if (longClick && longClick != 2) return
     if (lastClick && lastClick != 2) thumbSheet = 0
@@ -208,10 +209,10 @@
     if (el = document.getElementById('title'+lastMedia)) el.style.color = null
     title.style.opacity = 1; title.style.color = 'pink'
     lastMedia = index
-    if (scaleY < 0.17) scaleY = 0.5						// return zoom after captions
+    if (scaleY < 0.26) scaleY = 0.5						// return zoom after captions
     if (lastClick == 1) myNav.style.display = null
     myMask.style.pointerEvents = 'auto'						// stop overThumb() triggering
-    if (captions || type=='audio' || playlist.match('/inca/music/')) scaleY = 0.16
+    if (captions || type=='audio' || playlist.match('/inca/music/')) scaleY = 0.25
     if (playlist.match('/inca/music/') && !thumbSheet) {myPlayer.currentTime = 0; myPlayer.play(); myPlayer.muted = 0}
     if (type == 'audio') myPlayer.style.borderBottom = '2px solid pink'
     else myPlayer.style.border = null
@@ -270,7 +271,7 @@
       if ((id == 'myAlpha' || id == 'mySearch') && filt > 26) filt = 26
       if (id == 'myType' && filt > 4) filt = 4
       filter(id); block = 80}
-    else if (id == 'mySpeed' && dur) {					// rate
+    else if (id == 'mySpeed') {						// rate
       if (wheelUp) {rate -= 0.01} else rate += 0.01
       updateCue('rate',rate); block = 80}
     else if (id == 'mySkinny' && type) {				// skinny
@@ -303,8 +304,8 @@
       myView.style.width = x.toFixed(2)+'px'
       settings.pageWidth = String(x); localStorage.setItem(folder, JSON.stringify(settings))
       block = 8}
-    else if (id == 'mySelect' && !captions) {
-      Click = longClick = lastClick = 0; block = 150
+    else if (id == 'mySelect') {
+      Click = longClick = lastClick = 0; block = 200
       if (wheelUp) {index++} else if (index>1) index--
       if (!document.getElementById('entry'+index)) index-- 		// next - previous
       else if (Param() && playing) {getStart(id); Play()}
@@ -352,7 +353,7 @@
     if (fade) fade--
     if (cursor) cursor--
     if (selected) mySelected.innerHTML = selected.split(',').length -1
-    else mySelected.innerHTML = editor.style.display
+    else mySelected.innerHTML = ''
     if (!playing || thumbSheet || overText) myBody.style.cursor = null	// show default cursor
     else if (!cursor) myBody.style.cursor = 'none'			// hide cursor
     else myBody.style.cursor = 'crosshair'				// moving cursor over player
@@ -374,7 +375,7 @@
     if (favicon.innerHTML.match('\u2764')) myFavorite.innerHTML = 'Fav &#x2764'
     else myFavorite.innerHTML = 'Fav'
     let qty = selected.split(',').length - 1 || 1
-    if (myInca.matches(':hover') && (selected || type)) {myInca.innerHTML = `Delete ${qty}`; myInca.style.color = 'red'}
+    if (selected || myInca.matches(':hover') && type) {myInca.innerHTML = `Delete ${qty}`; myInca.style.color = 'red'}
     else {myInca.innerHTML = '&hellip;'; myInca.style.color = null}
     mySkinny.style.color = skinny == 1 ? null : 'red'
     mySpeed.style.color = rate == 1 ? null : 'red'
@@ -385,14 +386,14 @@
     seekbar()
     if (playing) {
       positionMedia(0)
-      myPlayer.playbackRate = rate
+      myPlayer.playbackRate = myPic.playbackRate = rate
       myMask.style.pointerEvents = 'auto'
       if (editing) {myCancel.style.visibility = 'visible'} else myCancel.style.visibility = 'hidden'
       if (dur && !thumbSheet) lastSeek = myPlayer.currentTime
       if (playlist.match('/inca/music/')) myMask.style.opacity = 0.7
       else myMask.style.opacity = 1
       if (myPlayer.duration) dur = myPlayer.duration
-      if (cues.innerHTML && !thumbSheet && type !='image') myCues(myPlayer.currentTime)}
+      if (cues.innerHTML && !thumbSheet && type !='image' && dur) myCues(myPlayer.currentTime)}
     else {
       myMask.style.pointerEvents = null
       if (zoom > 1 && overMedia) myMask.style.opacity = 0.3 * zoom
@@ -405,10 +406,10 @@
     myView.style.top = '200px'
     if (!mediaX) {mediaX = screen.width/2; mediaY = screen.height/2; xyz = [mediaX, mediaY, 1]}
     let x = mediaX; let y = mediaY; let z = scaleY
+    if (editor.style.display) y = editor.offsetTop - (editor.offsetHeight/2)
     if (thumbSheet) {x = xyz[0]; y = xyz[1]; z = xyz[2]}
-    let offset = editor.style.display ? 240 : 0				// media moved up to fit captions
     myPlayer.style.left = myVig.style.left = (x - screenX) - myPlayer.offsetWidth / 2 + "px"
-    myPlayer.style.top = myVig.style.top = (y - (outerHeight-innerHeight)) - myPlayer.offsetHeight / 2 - offset + "px"
+    myPlayer.style.top = myVig.style.top = (y - (outerHeight-innerHeight)) - myPlayer.offsetHeight / 2 + "px"
     myPlayer.style.transition = 'opacity ' + time + 's, transform ' + time + 's'
     myVig.style.transition = 'opacity ' + time/4 + 's, transform ' + time + 's'
     skinny = thumb.style.skinny || skinny
@@ -602,11 +603,10 @@
     CaptionEditor.close()
     fetch(src)								// txt or caption text
       .then(response => response.text())
-      .then(data => {CaptionEditor.open(src, data)})
-    myNav.style.display = null}
+      .then(data => {CaptionEditor.open(src, data)})}
 
 
-  function updateCue(item, val) {					// rate, skinny, cues  Param(); 
+  function updateCue(item, val) {					// rate, skinny, cues 
     val = Math.round(1000 * val) / 1000
     thumb.style[item] = val
     thumb.style.posted = 0
@@ -726,31 +726,20 @@
       inca('capEdit', editing, index)}					// save edited text
     Click = playing = start = captions = thumbSheet = cue = editing = 0
     myVig.style.opacity = myPlayer.style.opacity = overText = 0
-    myMask.style = myDur.innerHTML = myPlayer.src = ''
+    myMask.style = myDur.innerHTML = myPlayer.src = myPic.src = ''
     myPlayer.style.zIndex = -1}
-
-
-  function getVoice(voice, text) {					// elevenlabs.ai text to voice call
-//  getVoice(Sarah, text).then(audioUrl => {if (audioUrl) {new Audio(audioUrl).play()}})
-    let api = ""
-    let endpoint = "https://api.elevenlabs.io/v1/text-to-speech/" + voice + "?output_format=mp3_44100_128"
-    return fetch(endpoint, {
-      method: "POST",
-      headers: {"xi-api-key": api, "Content-Type": "application/json"},
-      body: JSON.stringify({text: text, model_id: "eleven_v3"})})
-      .then(res => res.blob())
-      .then(blob => URL.createObjectURL(blob))}
 
 
   function context(e) { if (overEditor) {myNav.classList.add('editor-mode')} else myNav.classList.remove('editor-mode')
     myNav.style.display = 'block'; myNav.style.left = xPos-90+'px'; myNav.style.top = yPos-32+'px'}
+  function Pause() {
+    if (!thumbSheet && playing && myPic.paused) { myPic.play() } else myPic.pause()
+    if (!thumbSheet && playing && myPlayer.paused) { myPlayer.play() } else myPlayer.pause()}
   function closePic() {thumb.style.size = 1; myPic.style = thumb.style = ''; Param()}
   function Cancel() {if (myCancel.innerHTML != 'Sure ?') {myCancel.innerHTML = 'Sure ?'} else {editing = 0; inca('Reload',index)}}
   function Flip() {xPos = 0; skinny *=- 1; thumb.style.skinny = skinny; Param(); positionMedia(0.4)}
   function Time(z) {if (z < 0) return '0:00'; let y = Math.floor(z%60); let x = ':'+y; if (y<10) {x = ':0'+y}; return Math.floor(z/60)+x}
   function selectAll() {for (i = 1; document.getElementById('thumb'+i); i++) {sel(i)}}
-  function Pause() { if (!editor.matches(':hover') && !thumbSheet && playing && myPlayer.paused) {
-    myPlayer.play(); myPic.play()} else {myPlayer.pause(); myPic.pause()}}
 
 
 

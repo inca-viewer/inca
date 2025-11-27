@@ -23,10 +23,10 @@
   container.innerHTML = `
     <style>
       #caption-editor-module * { box-sizing:border-box; margin:0; padding:0; }
-      #editor { display:none; flex-direction:column; width:560px; max-width:100%; height:400px;
+      #editor { display:none; flex-direction:column; width:500px; max-width:100%; height:24em;
         background:#1a1a1a20; border-radius:12px; box-shadow:0 12px 32px rgba(0,0,0,0.6);
         position:fixed; left:50%; top:50%; transform:translate(-50%,-50%);
-        min-width:300px; min-height:300px; resize:both; max-height:80vh; z-index:490; overflow:hidden; }
+        min-width:250px; min-height:160px; resize:both; max-height:80vh; z-index:490; overflow:hidden; }
       #ribbon { background:#1a1a1a20; padding:6px 8px; display:flex; gap:6px; align-items:center;
         flex-wrap:wrap; user-select:none; flex-shrink:0; justify-content:center;}
       .dropdown { position:relative; display:inline-block;}
@@ -35,7 +35,7 @@
         font-size:12px; white-space:nowrap; display:flex; align-items:center; cursor:default;
       }
       .dropdown-content {
-        position: absolute; bottom:100%; min-width:100%; background: #1a1a1a;
+        position: absolute; bottom:100%; min-width:50%; background: #1a1a1a;
         box-shadow:0 4px 12px rgba(0,0,0,0.5); border-radius: 6px;
         display:none; z-index:1; padding-bottom:8px; 
         overflow-y:auto; flex-direction:column; gap:2px; 
@@ -45,20 +45,20 @@
       }
       .dropdown-content > div:hover { background:#2a2a2a; }
       .caption-viewport {
-        flex:1; overflow-y:auto; padding:16px; background:#1a1a1a20;
-        display:flex; flex-direction:column; gap:16px; min-height:0;
+        flex:1; overflow-y:auto; padding:1em; background:#1a1a1a20;
+        display:flex; flex-direction:column; gap:1.1em; min-height:0;
         scrollbar-width:thin; scrollbar-color:#ffc0cb30 transparent; overflow-x: hidden;
       }
       .text-block {
         background:transparent; border-radius:6px; text-align:center; white-space:pre-wrap;
         word-wrap:break-word; font-size:1em; font-family:'Yu Gothic'; line-height:1.5;
-        color:#ffc0cb99; outline:none; width: 95%; align-self: center;
+        color:#ffc0cb99; outline:none; width: 92%; align-self: center;
       }
       .text-block.editing { border-left: 0.1px solid #ffc0cb30; }
       #voice-header > .header { width:8em; justify-content:center; padding: 0 1em }
       #voice-header .dropdown-content {height: 8em; padding: 0.5em 0.5em; line-height: 1.6; }
       #media-header > .header { width:12em; overflow:hidden; text-overflow:ellipsis; justify-content:center; }
-      #media-header .dropdown-content {height: 10.4em; translate: -5em; padding: 0.5em 0.5em; }
+      #media-header .dropdown-content {height: 10.4em; padding: 0.5em 0.5em; }
       #id-display { 
         background:transparent; border:none; color:#ffc0cb99; font-size:12px;
         outline:none; min-width:34px; text-align:center; }
@@ -68,9 +68,9 @@
         user-select:none; cursor:pointer;
       }
       #myCancel {
-        position: absolute; top: 1em; right: 0.5em;
+        position: absolute; top: 0.5em; right: 0;
         visibility:hidden; text-align:center; min-width:3.5em; color:red;
-        transition:0.6s; background:#1a1a1a00; font-size:0.85em; cursor:pointer;
+        transition:0.6s; background:#1a1a1a00; cursor:pointer; font-size: 0.85em;
       }
     </style>
 
@@ -119,7 +119,7 @@
   const voiceHeaderText = container.querySelector('#voice-header > .header');
   const voiceContent = container.querySelector('#voice-header .dropdown-content');
 
-  let originalSrt = ''
+  let originalSrt = '';
   let blocks = [];
   let editingBlock = null;
   let originalPlayerSrc = '';
@@ -129,7 +129,7 @@
   let timestamps = [];
   let hoverBlock = null;
   let isScrolling = false;
-  let userWantsPlay = !myPlayer.paused;
+  let userWantsPlay = false;
   let currentPreviewItem = null;
 
   /* ------------------------------------------------------------------
@@ -276,6 +276,7 @@ div.onclick = () => {
     }
   }
 
+
   /* ------------------------------------------------------------------
      6. PLAYER SYNC & INTERACTION
      ------------------------------------------------------------------ */
@@ -287,10 +288,7 @@ div.onclick = () => {
       myPlayer.load();
     } else {
       myPlayer.poster = '';
-      if (decodeURIComponent(myPlayer.src) !== src) {
-        myPlayer.src = src;
-        myPlayer.load();
-      }
+      if (decodeURIComponent(myPlayer.src) !== src) myPlayer.src = src;
       myPlayer.currentTime = time;
     }
   }
@@ -307,60 +305,60 @@ div.onclick = () => {
     setTimeout(() => isScrolling = false, 1000);
   }
 
+
+
+const activateBlock = (block, options = {}) => {
+  const { edit = false, play = userWantsPlay } = options;
+  if ((editingBlock && !edit) || longClick) return;
+  const isSameBlock = (editingBlock === block);
+  idDisplay.textContent = block.dataset.num;
+  timeDisplay.textContent = shortFormatTime(parseFloat(block.dataset.start) || 0);
+  const media = getEffectiveMedia(block);
+  if (isSameBlock) swapPlayerMedia(media?.src || originalPlayerSrc, myPlayer.currentTime || 0);
+  else swapPlayerMedia(media?.src || originalPlayerSrc, parseFloat(block.dataset.start) || 0);
+  if (block._voice?.src) {
+    myPlayer.muted = true;
+    myPic.muted = defMute;
+    myPic.src = block._voice.src;
+    if (!isSameBlock && play) {
+      myPic.currentTime = 0;
+      myPlayer.play();
+      myPic.play();}
+    else {myPic.pause(); myPlayer.pause()}
+  } 
+  else {
+    myPic.muted = true;
+    myPlayer.muted = defMute;
+    myPic.pause();
+    myPic.src = '';
+    if (!isSameBlock && play) myPlayer.play();
+    else {myPic.pause(); myPlayer.pause()}
+  }
+  if (edit && !isSameBlock) {
+    document.querySelectorAll('.text-block.editing').forEach(b => b.classList.remove('editing'));
+    block.classList.add('editing');
+    editingBlock = block;
+    if (block._voice?.src && play) {
+      myPic.currentTime = 0;
+      myPic.play();
+    }
+  updateMediaHeader();
+  updateVoiceHeader(block);
+  }
+};
+
+
+
+
   /* ------------------------------------------------------------------
      7. BLOCK EVENT LISTENERS
      ------------------------------------------------------------------ */
 
-  viewport.addEventListener('mouseleave', () => hoverBlock = null);
-
   function attachBlockListeners(block) {
 
+block.addEventListener('mouseenter', () => {activateBlock(block, { edit: false, play: userWantsPlay })});
 
-block.addEventListener('mouseenter', () => {
-  if (editingBlock) return;
-  idDisplay.textContent = block.dataset.num;
-  timeDisplay.textContent = shortFormatTime(parseFloat(block.dataset.start) || 0);
-  const media = getEffectiveMedia(block);
-  swapPlayerMedia(media?.src || originalPlayerSrc, parseFloat(block.dataset.start) || 0);
-  updateMediaHeader();
-  updateVoiceHeader(block);
-  if (block._voice?.src) {
-    myPlayer.muted = true;
-    myPic.src = block._voice.src;
-    myPic.muted = false;
-    if (userWantsPlay) myPic.play();
-  } else {
-    myPlayer.muted = false;
-    myPic.pause();
-    myPic.src = '';
-  }
-  if (userWantsPlay) myPlayer.play();
-});
-
-
-
-    block.addEventListener('click', e => {
-      e.stopPropagation();
-      document.querySelectorAll('.text-block.editing').forEach(b => b.classList.remove('editing'));
-      editingBlock = block;
-      block.classList.add('editing');
-      idDisplay.textContent = block.dataset.num;
-      timeDisplay.textContent = shortFormatTime(parseFloat(block.dataset.start) || 0);
-
-      const media = getEffectiveMedia(block);
-      swapPlayerMedia(media?.src || originalPlayerSrc, parseFloat(block.dataset.start) || 0);
-
-      if (userWantsPlay) {
-        myPic.currentTime = 0
-        myPic.play()
-        myPlayer.play();
-        }
- // mySelected.innerHTML = myPic.paused+' ---'+myPic.src
-
-      updateMediaHeader();
-      updateVoiceHeader(block);
-    });
-
+block.addEventListener('click', e => { e.stopPropagation(); activateBlock(block, { edit: true, play: true })});
 
 block.addEventListener('keydown', e => {
   if (e.key !== 'Backspace') return;
@@ -379,7 +377,7 @@ block.addEventListener('keydown', e => {
   const prevText = prev.innerText.trim();
   const currText = block.innerText.trim();
   prev.innerText = prevText + '\n' + currText;
-  prev.innerHTML = prev.innerText;  // ← Strips all tags, keeps \n
+  prev.innerHTML = prev.innerText;
   block.remove();
   blocks = blocks.filter(b => b !== block);
   renumberBlocks();
@@ -398,8 +396,6 @@ block.addEventListener('keydown', e => {
     block.addEventListener('mouseleave', () => {
       const html = block.innerHTML;
       const text = block.innerText.trim();
-
-      // Delete empty block
       if (!text) {
         block.remove();
         blocks = blocks.filter(b => b !== block);
@@ -407,37 +403,25 @@ block.addEventListener('keydown', e => {
         rebuildTimestamps();
         return;
       }
-
-      // Normalize HTML → clean paragraph breaks
       let normalized = html
         .replace(/<br[^>]*>/gi, '\n')
         .replace(/&#10;/g, '\n')
         .replace(/<(div|p)[^>]*>/gi, '\n')
         .replace(/<\/(div|p)>/gi, '')
         .replace(/\n\s*\n/g, '\n\n')
-        .replace(/\n\n+/g, '\n\n'); // collapse 3+ → 2
-
+        .replace(/\n\n+/g, '\n\n');
       const hasTrailingEmpty = normalized.endsWith('\n\n');
       if (hasTrailingEmpty) normalized = normalized.slice(0, -2);
-
       const parts = normalized.split('\n\n').map(p => p.trim()).filter(Boolean);
-
-      // Only split if there are multiple real paragraphs
       if (parts.length <= 1 && !hasTrailingEmpty) return;
-
       const startSec = parseFloat(block.dataset.start) || 0;
       const nextSibling = block.nextSibling;
       const idx = blocks.indexOf(block);
-
-      // Remove original block
       block.remove();
       blocks = blocks.filter(b => b !== block);
-
       let lastInserted = null;
-
-      // Insert new blocks
       parts.forEach((part, i) => {
-        const estSec = i === 0 ? startSec : startSec + (i * 2.5); // rough guess
+        const estSec = i === 0 ? startSec : startSec + (i * 2.5);
         const newBlock = createBlock(
           null, estSec, part,
           { media: block._media, voice: block._voice }
@@ -446,15 +430,12 @@ block.addEventListener('keydown', e => {
         blocks.splice(idx + i, 0, newBlock);
         lastInserted = newBlock;
       });
-
-      // Optional: add empty block at end if user left trailing newline
       if (hasTrailingEmpty) {
         const emptyBlock = createBlock(null, 0, ' ', {});
         viewport.insertBefore(emptyBlock, nextSibling);
         blocks.splice(idx + parts.length, 0, emptyBlock);
         emptyBlock.focus();
       }
-
       renumberBlocks();
       rebuildTimestamps();
       editing = 1;
@@ -464,8 +445,7 @@ block.addEventListener('keydown', e => {
   /* ------------------------------------------------------------------
      8. PLAYER STATE TRACKING
      ------------------------------------------------------------------ */
-  myPlayer.addEventListener('play', () => userWantsPlay = true);
-  myPlayer.addEventListener('pause', () => userWantsPlay = false);
+
   myPlayer.addEventListener('timeupdate', () => {
     scrollToNearestCaption();
     updateTimeDisplay();
@@ -503,11 +483,9 @@ block.addEventListener('keydown', e => {
     try {
 
 const folderName = originalSrt;
-const resp1 = await fetch('/inca/fav/History.m3u');
-const resp2 = await fetch(`/inca/assets/${folderName}/${folderName}.m3u`);
-const historyText = resp1.ok ? (await resp1.text()).trim() : '';
-const assetsText  = resp2.ok ? (await resp2.text()).trim() : '';   // ← ONLY THIS LINE ADDED
-const text  = historyText + (historyText && assetsText ? '\n' : '') + assetsText;
+const resp = await fetch('/inca/fav/History.m3u');
+const historyText = resp.ok ? (await resp.text()).trim() : '';
+const text  = historyText + (historyText ? '\n' : '');
 const lines  = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
 if (!lines.length) throw '';
 
@@ -541,9 +519,7 @@ items.forEach(item => {
   row.style.padding = '2px 4px';
   row.style.cursor = 'default';
 
-if (assetsText.includes(item.url.replace('http://localhost:3000/', '').replace(/\//g, '\\'))) {
-    row.style.borderLeft = '0.2px solid pink'
-    row.dataset.isVoiceAsset = 'true';}
+if (item.url.includes('.mp3')) {row.style.borderLeft = '0.2px solid pink'; row.dataset.isVoiceAsset = 'true';}
 
 
         const mute = document.createElement('span');
@@ -597,7 +573,7 @@ myPlayer.play()
             if (row.dataset.isVoiceAsset === 'true') {
               editingBlock._voice = { 
                 src: item.url,
-                name: editingBlock._voice?.name || item.short.replace(/\.[^.]+$/, ''),
+                name: editingBlock._voice?.name || null,
                 id: editingBlock._voice?.id || null
                 }
               updateVoiceHeader(editingBlock);
@@ -626,40 +602,106 @@ myPlayer.play()
   });
 
 
+function makeProjectJSON() {
+  const data = {
+    ui: {
+      width: editor.style.width,
+      height: editor.style.height,
+      left: editor.style.left,
+      top: editor.style.top,
+      transform: editor.style.transform
+    },
+    defaultMedia: projectMedia.defaultSrc ? {
+      src: projectMedia.defaultSrc.replace(/\\/g, '/'),
+      name: projectMedia.defaultName
+    } : null,
+    lastSelectedId: editingBlock ? parseInt(editingBlock.dataset.num) : 0,
+    blocks: blocks.map(b => ({
+      number: parseInt(b.dataset.num),
+      startTime: parseFloat(b.dataset.start) || null,
+      text: b.innerText.trim(),
+      extras: {
+        media: b._media ? { src: b._media.src.replace(/\\/g, '/'), name: b._media.name } : null,
+        voice: b._voice ? {
+          src: b._voice.src ? b._voice.src.replace(/\\/g, '/') : null,
+          id: b._voice.id || null,
+          name: b._voice.name || null
+        } : null
+      }
+    }))
+  };
+  return JSON.stringify(data, null, 2);
+}
 
 
   /* ------------------------------------------------------------------
-     10. PROJECT JSON EXPORT
+     Helper: super-robust parser (JSON → SRT → plain text)
      ------------------------------------------------------------------ */
-  function makeProjectJSON() {
-    return JSON.stringify({
-      blocks: blocks.map(b => ({
-        number: parseInt(b.dataset.num),
-        startTime: parseFloat(b.dataset.start) || null,
-        text: b.innerText.trim(),
-        extras: {
-          media: b._media ? { src: b._media.src.replace(/\\/g, '/'), name: b._media.name } : null,
-voice: b._voice ? {
-  src: b._voice.src ? b._voice.src.replace(/\\/g, '/') : null,
-  id: b._voice.id || null,
-  name: b._voice.name || null
-} : null
+  function parseInputText(text) {          // ← changed to normal function declaration
+    text = text.trim();
+    if (!text) return { blocks: [] };
+
+    // 1. Try JSON first
+    if (text.startsWith('{') || text.startsWith('[')) {
+      try { return JSON.parse(text); } catch (e) {}
+    }
+
+    const blocksOut = [];
+    const paragraphs = text.split(/\r?\n\r?\n+/);   // double enter = new caption
+
+    paragraphs.forEach((para, i) => {
+      const lines = para.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+      if (!lines.length) return;
+
+      let startSec = i * 3.5;           // auto-spacing for plain text
+      let caption  = para.trim();
+
+      // SRT detection
+      if (/^\d+$/.test(lines[0])) {
+        const m = (lines[1] || '').match(/(\d{1,2}:[\d.,:]+)\s*--?>\s*\d/);
+        if (m) {
+          startSec = parseSrtTimeFlexible(m[1]);
+          caption  = lines.slice(2).join('\n');
         }
-      })),
-      defaultMedia: projectMedia.defaultSrc ? {
-        src: projectMedia.defaultSrc.replace(/\\/g, '/'),
-        name: projectMedia.defaultName
-      } : null,
-      lastSelectedId: editingBlock ? parseInt(editingBlock.dataset.num) : 0,
-      ui: {
-        width: editor.style.width,
-        height: editor.style.height,
-        left: editor.style.left,
-        top: editor.style.top,
-        transform: editor.style.transform
+      } else {
+        const m = lines[0].match(/^(\d{1,2}:[\d.,:]+)\s*--?>\s*\d/);
+        if (m) {
+          startSec = parseSrtTimeFlexible(m[1]);
+          caption  = lines.slice(1).join('\n');
+        }
       }
-    }, null, 2);
+
+      if (caption.trim()) {
+        blocksOut.push({
+          number: blocksOut.length + 1,
+          startTime: startSec,
+          text: caption.trim(),
+          extras: {}
+        });
+      }
+    });
+
+    // Fallback – one big block if nothing matched
+    if (!blocksOut.length && text) {
+      blocksOut.push({ number: 1, startTime: 0, text: text, extras: {} });
+    }
+
+    return { blocks: blocksOut };
   }
+
+  /* ------------------------------------------------------------------
+     Flexible SRT time parser
+     ------------------------------------------------------------------ */
+  function parseSrtTimeFlexible(t) {
+    t = t.replace(',', '.').trim();
+    const parts = t.split(':').map(p => parseFloat(p) || 0);
+    if (parts.length === 3) return parts[0] * 3600 + parts[1] * 60 + parts[2];
+    if (parts.length === 2) return parts[0] * 60 + parts[1];
+    return parseFloat(t) || 0;
+  }
+
+
+
 
   /* ------------------------------------------------------------------
      11. PUBLIC API
@@ -667,9 +709,9 @@ voice: b._voice ? {
   window.CaptionEditor = {
     open(src = '', text = '') {
       originalSrt = src.split(/[\\/]/).pop().replace(/\.[^.]+$/, '');
-      container.querySelectorAll('.dropdown-content').forEach(c => c.style.display = 'none');
       editor.style.display = 'flex';
       originalPlayerSrc = decodeURIComponent(myPlayer.src || '');
+      userWantsPlay = !defPause;
 
       const center = () => {
         editor.style.left = '50%';
@@ -680,58 +722,41 @@ voice: b._voice ? {
       window.addEventListener('resize', center);
 
       loadVoices();
+      container.querySelectorAll('.dropdown-content').forEach(c => c.style.display = 'none');
 
-      if (text.trim().startsWith('{')) {
-        const data = JSON.parse(text);
-        viewport.innerHTML = '';
-        blocks = [];
-        data.blocks.forEach(b => {
-          const block = addBlock(b.number, b.startTime, b.text, b.extras || {});
-          if (b.extras?.media) block._media = b.extras.media;
-          if (b.extras?.voice) block._voice = b.extras.voice;
-        });
-        projectMedia.defaultSrc = data.defaultMedia?.src || null;
-        projectMedia.defaultName = data.defaultMedia?.name || null;
-        updateMediaHeader();
-        if (data.lastSelectedId) {
-          const block = blocks.find(b => parseInt(b.dataset.num) === data.lastSelectedId);
-          if (block) setTimeout(() => block.scrollIntoView({ behavior: 'smooth', block: 'center' }), 100);
-        }
-        if (data.ui) Object.assign(editor.style, data.ui);
-        if (projectMedia.defaultSrc) swapPlayerMedia(projectMedia.defaultSrc, 0);
-      } else {
-        viewport.innerHTML = '';
-        blocks = [];
+      const parsed = parseInputText(text);
 
-        const cues = text.trim().split(/\r?\n\r?\n/);  // proper SRT block split
-        cues.forEach((cue, index) => {
-          const cueLines = cue.trim().split(/\r?\n/);
-          if (cueLines.length < 3) return;
+      viewport.innerHTML = '';
+      blocks = [];
 
-          const numStr = cueLines[0].trim();
-          if (!/^\d+$/.test(numStr)) return;
+      parsed.blocks.forEach(b => {
+        const block = addBlock(
+          b.number || (blocks.length + 1),
+          b.startTime || 0,
+          b.text || '',
+          b.extras || {}
+        );
+        if (b.extras?.media) block._media = b.extras.media;
+        if (b.extras?.voice) block._voice = b.extras.voice;
+      });
 
-const timeLine = cueLines[1].trim();
+      projectMedia.defaultSrc   = parsed.defaultMedia?.src || null;
+      projectMedia.defaultName  = parsed.defaultMedia?.name || null;
+      updateMediaHeader();
+      if (projectMedia.defaultSrc) swapPlayerMedia(projectMedia.defaultSrc, 0);
 
-// Match both formats: 00:01:23,456 --> ...  or  00:12,345 --> ...
-const timeMatch = timeLine.match(/(\d{1,2}:\d{2}(?::\d{2})?,\d{3}) --> .*?(\d{1,2}:\d{2}(?::\d{2})?,\d{3})/);
-if (!timeMatch) return;
-
-const startStr = timeMatch[1].replace(',', '.');
-const startSec = startStr.includes(':') && startStr.split(':').length === 3
-  ? parseSrtTime(startStr)
-  : parseSrtTimeShort(startStr);
-
-          const text = cueLines.slice(2).join('\n').trim();
-          if (text) {
-            addBlock(index + 1, startSec, text);
-          }
-        });
-
-        if (!blocks.length) addBlock(1, 0, ' ');
+      if (parsed.lastSelectedId) {
+        const blk = blocks.find(b => +b.dataset.num === parsed.lastSelectedId);
+        if (blk) setTimeout(() => blk.scrollIntoView({ behavior: 'smooth', block: 'center' }), 120);
       }
 
+      if (parsed.ui) Object.assign(editor.style, parsed.ui);
+      if (!blocks.length) addBlock(1, myPlayer.currentTime, 'new caption');
       rebuildTimestamps();
+
+      editor.style.height = Math.min(blocks.length * 3, 24) + 'em';
+      viewport.style.padding = blocks.length < 4 ? '2em 1em' : '6em 1em 7em 1em';
+
       const observer = new MutationObserver(() => editing = 1);
       observer.observe(viewport, { childList: true, subtree: true, characterData: true });
       editor._mutationObserver = observer;
@@ -742,20 +767,15 @@ const startSec = startStr.includes(':') && startStr.split(':').length === 3
       if (editor._mutationObserver) editor._mutationObserver.disconnect();
       if (editing === 1) editing = makeProjectJSON();
       else editing = 0;
-      editor.style.display = null;		// critical do not use 'none'
+      editor.style.display = null;
       if (editor._resize) window.removeEventListener('resize', editor._resize);
+      overEditor = false;
     }
   };
 
-  /* ------------------------------------------------------------------
-     13. EDITOR HOVER STATE
-     ------------------------------------------------------------------ */
   editor.addEventListener('mouseenter', () => overEditor = true);
-  editor.addEventListener('mouseleave', () => {
-    document.querySelectorAll('.text-block.editing').forEach(b => b.classList.remove('editing'));
-    editingBlock = null;
-    overEditor = false;
-  });
+  editor.addEventListener('mouseleave', () => overEditor = false);
+
   function isElementInViewport(el, container) {
     const r = el.getBoundingClientRect(), c = container.getBoundingClientRect();
     return r.top >= c.top && r.bottom <= c.bottom;

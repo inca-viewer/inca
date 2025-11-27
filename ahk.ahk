@@ -1,3 +1,4 @@
+
   ; Browser Based media Explorer
 
   #NoEnv
@@ -105,7 +106,7 @@
       startPage = #Path###%playlist%
     messages(startPage)				; opens browser
     SetTimer, TimedEvents, 49			; every 49mS - process server requests
-    SetTimer, SlowTimer, 999, -2		; check on youtube downloads
+    SetTimer, SlowTimer, 499, -2		; check on youtube downloads
     SetTimer, VolTimer, 6666, -2		; stops windows vol jitter
     return
 
@@ -239,7 +240,15 @@
       if (value == "myCut")
         send, ^x
       if (value == "myCopy")
+        {
+        Clipboard =
         send, ^c
+        Clipwait,0.1
+        if !Clipboard
+          send, ^a
+        sleep 100
+        send, ^c
+        }
       if (value == "myPaste")
         send, ^v
       }
@@ -452,7 +461,9 @@
       }
     else if (type == "document" || type == "m3u")
       {
-      IfExist, %src%
+      IfExist, %inca%\cache\json\%media%.json
+        Run, %inca%\cache\json\%media%.json
+      else IfExist, %src%
         Run, %src%
       }
     else IfExist, %inca%\cache\json\%media%.json
@@ -658,6 +669,7 @@
     Loop, Parse, select, `,
       if getMedia(A_LoopField)
         {
+        GuiControl, Indexer:, GuiInd, %media%
         Run, cmd /c mklink "c:\inca\cache\temp\%A_Index%.lnk" "%src%",, Hide
         str = %str%file 'c:\inca\cache\temp\%A_Index%.lnk'`r`n
         }
@@ -666,10 +678,10 @@
     x = @echo off`r`nset `"temp=(pause & pause & pause)>nul`"`r`ntype `%1|(`%temp`% & findstr `"^`")`r`n
     FileAppend, %x%, %inca%\cache\temp\temp.bat 
     runwait, %inca%\cache\temp\temp.bat %inca%\cache\temp\temp1.txt > %inca%\cache\temp\temp.txt,,Hide
-    runwait, %inca%\cache\apps\ffmpeg.exe -f concat -safe 0 -i "%inca%\cache\temp\temp.txt" -c copy "%mediaPath%\%media%- join.%ext%",, Hide
+    runwait, %inca%\cache\apps\ffmpeg.exe -f concat -safe 0 -i "%inca%\cache\temp\temp.txt" -c copy "%mediaPath%\%media% -join.%ext%",, Hide
     if ErrorLevel
       PopUp("failed",900,0,0)
-    src = %mediaPath%\%media%- join.%ext%
+    src = %mediaPath%\%media% -join.%ext%
     FileDelete, %inca%\cache\temp\temp.bat
     FileDelete, %inca%\cache\temp\temp.txt
     FileDelete, %inca%\cache\temp\temp1.txt
@@ -677,6 +689,7 @@
     if !ErrorLevel
       if (new := Transcode("myMp4", src, 0, 0))
         Index(new, 1)
+    GuiControl, Indexer:, GuiInd
     reload := 2
     }
 
@@ -1128,7 +1141,7 @@
         {
         getMedia(A_LoopField)
         x = %target%`r`n
-        str := StrReplace(str, x,,1,1)					; mark entry as deleted
+        str := StrReplace(str, x,,1,1)					; delete entry
         }
     FileAppend, %str%, %playlist%, UTF-8
     AllFav()
@@ -1164,7 +1177,7 @@
   RenameFile(new_name)
     {
     IfNotExist, %src%
-      return
+      return 1
     FileMove, %src%, %mediaPath%\%new_name%.%ext%			; FileMove = FileRename
     if ErrorLevel
       return 1         
@@ -1198,7 +1211,7 @@
     FileMove, %inca%\cache\thumbs\%media%.jpg, %inca%\cache\thumbs\%new_name%.jpg, 1
     FileMove, %inca%\cache\posters\%media%.jpg, %inca%\cache\posters\%new_name%.jpg, 1
     FileMove, %inca%\cache\json\%media%.json, %inca%\cache\json\%new_name%.json, 1
-     }
+    }
 
 
   DecodeExt(ex)
@@ -1494,9 +1507,10 @@
     if (id == "myMp3")
       ext = mp3
     else ext = mp4
-    temp = %foldr%\temp_%filen%.%ext%
+    new = %profile%\Downloads\temp_%filen% %suffix%.%ext%
+    new = %new%									; trims whitespace
     if (id == "myMp3")
-      RunWait, %inca%\cache\apps\ffmpeg.exe %ss% %to% -i "%src%" -y file:"%temp%",,Hide
+      RunWait, %inca%\cache\apps\ffmpeg.exe %ss% %to% -i "%src%" -y file:"%new%",,Hide
     else
       {
       if (DecodeExt(type) != "video")
@@ -1565,7 +1579,7 @@
         {
         try
           {
-          cmd = -y -i file:"%src%" %ss% %to% %encoder% -vf scale=%Resolution%,setsar=1:1 -force_key_frames "expr:gte(t,n_forced*2)" -sc_threshold 0 -g %GOPFrames% -keyint_min %GOPFrames% -maxrate %MaxBitrate%k -bufsize %BufSize%k -c:a aac -b:a 128k -ar 48000 -ac 2 -map 0:v:0 -map 0:a? -map 0:s? -c:s copy -f mp4 -movflags +faststart+separate_moof -metadata:s:v:0 handler_name=Inca file:"%temp%"
+          cmd = -y -i file:"%src%" %ss% %to% %encoder% -vf scale=%Resolution%,setsar=1:1 -force_key_frames "expr:gte(t,n_forced*2)" -sc_threshold 0 -g %GOPFrames% -keyint_min %GOPFrames% -maxrate %MaxBitrate%k -bufsize %BufSize%k -c:a aac -b:a 128k -ar 48000 -ac 2 -map 0:v:0 -map 0:a? -map 0:s? -c:s copy -f mp4 -movflags +faststart+separate_moof -metadata:s:v:0 handler_name=Inca file:"%new%"
           RunWait %COMSPEC% /c %inca%\cache\apps\ffmpeg.exe %cmd%, , Hide
           if !ErrorLevel
             break
@@ -1574,18 +1588,16 @@
       if ErrorLevel
         return
       }
-    if (!start && !end && ext != "mp3")
-      FileRecycle, %src%
-    if suffix
-      new = %foldr%\%filen% %suffix%.%ext%
-    else new = %foldr%\%filen%.%ext%
-    FileMove, %temp%, %new%
     if (!suffix && ext != "mp3")
       {
       FileSetTime, %ModifiedTime%, %new%, M
       FileSetTime, %CreationTime%, %new%, C
+      FileRecycle, %src%
       }
-    return new
+    orig = %profile%\Downloads\%filen% %suffix%.%ext%
+    orig = %orig%
+    FileMove, %new%, %orig%, 1
+    return orig
     }
 
 
@@ -1828,9 +1840,9 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
     <a id="myInca">...</a>
 
     <div id='myAlt' class="menu alt">`n
-      <a id="myCut">cut</a>`n
       <a id="myCopy">copy</a>`n
       <a id="myPaste">paste</a>`n
+      <a id="myCut">cut</a>`n
       <a id="myIndex">index</a>`n
       <a id="myMp3">mp3</a>`n
       <a id="myMp4">mp4</a>`n
@@ -1903,6 +1915,8 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
     FileAppend, %htm%, %inca%\cache\html\%folder%.htm, UTF-8
     htm = %server%%inca%\cache\html\%folder%.htm
     StringReplace, htm, htm, \,/, All
+    Gui PopUp:Cancel
+    lastClick =
     if silent
       return
     FileDelete, %inca%\cache\html\temp.txt				; server polling file
@@ -1920,8 +1934,6 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
         break
       Sleep, 100
       }
-    Gui PopUp:Cancel
-    lastClick =
     }
 
 
@@ -2119,53 +2131,43 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
     return
 
 
-  SlowTimer:
+  SlowTimer:								; every second
     Critical Off
     GuiControlGet, control, Indexer:, GuiInd
     FileGetTime, ytdlp, %inca%\cache\apps, M
-    ytdlp := A_Now - ytdlp						; folder last modified (downloading)
     FileGetTime, downloads, %profile%\Downloads, S
-    downloads := A_Now - downloads
-    if (downloads > 3 && downloads < 6)
-      Loop, Files, %profile%\Downloads\*.mp3
+    FileRead, history, %inca%\fav\History.m3u
+    if (A_Now - downloads < 3)
+      Loop, Files, %profile%\Downloads\*.*
+       if !InStr(history, A_LoopFileName)
         {
         SplitPath, A_LoopFileFullPath, fileWithExt, dir, ext, nameNoExt
-        if (nameNoExt = "")
-          nameNoExt := "null"
         SplitPath, lastMedia,,,, fol
-        if (!fol)
-          fol := "null"
-        else fol := SubStr(fol, 1, 100)
+        fol := SubStr(fol, 1, 100)
         assets := inca . "\assets\" . fol
-        processed := profile . "\Downloads\inca generated folder"
         FileCreateDir, %assets%
-        FileCreateDir, %processed%
         destCopy := assets . "\" . nameNoExt . "." . ext
-        m3uAppend := assets . "\" . fol . ".m3u"
-        FileCopy, %A_LoopFileFullPath%, %destCopy%, 1
-        destMove := processed . "\" . nameNoExt . "." . ext
-        if FileExist(destMove)
-        FileDelete, %destMove%
-        FileMove, %A_LoopFileFullPath%, %destMove%
-        FileAppend, %destCopy%|0.0`r`n, %m3uAppend%, UTF-8
+        if (ext == "mp3" || ext == "wav")
+          FileCopy, %A_LoopFileFullPath%, %destCopy%, 1
+        FileAppend, %destCopy%|0.0`r`n, %inca%\fav\History.m3u, UTF-8
         }
     Files := {}
-    if (ytdlp > 4 && downloads > 4 && InStr(control, ".........."))
+    if (A_Now - ytdlp > 4 && A_Now - downloads > 4 && InStr(control, ".........."))
       GuiControl, Indexer:, GuiInd
-    if (downloads > 3)							; stop re-triggering control message
-      if (ytdlp < 3)
+    if (A_Now - downloads > 3)						; stop re-triggering control message
+      if (A_Now - ytdlp < 3)
         GuiControl, Indexer:, GuiInd, ...........................................
-    else Loop, Files, %inca%\cache\apps\*.*
-      if (A_LoopFileExt == "webm" || A_LoopFileExt == "mp4" || A_LoopFileExt == "mkv")
-        if (encoded := Transcode("myMp4", A_LoopFileFullPath,0,0))
-          {
-          GuiControl, Indexer:, GuiInd, %A_LoopFileFullPath%.................................................................
-          Index(encoded, 1)
-          FileMove, %encoded%, %profile%\Downloads, 1
-          FileAppend, %encoded%|0.0`n, C:\inca\fav\history.m3u
-          GuiControl, Indexer:, GuiInd
-          }
-        else FileRecycle, %A_LoopFileFullPath%
+      else Loop, Files, %inca%\cache\apps\*.*
+        if (A_LoopFileExt == "webm" || A_LoopFileExt == "mp4" || A_LoopFileExt == "mkv")
+          if (encoded := Transcode("myMp4", A_LoopFileFullPath,0,0))
+            {
+            GuiControl, Indexer:, GuiInd, %A_LoopFileFullPath%.................................................................
+            Index(encoded, 1)
+            FileMove, %encoded%, %profile%\Downloads, 1
+            FileAppend, %encoded%|0.0`n, C:\inca\fav\history.m3u
+            GuiControl, Indexer:, GuiInd
+            }
+          else FileRecycle, %A_LoopFileFullPath%
     Process, Exist, ffmpeg.exe
     if InStr(control, "transcoding")
       if !ErrorLevel
