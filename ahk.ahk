@@ -202,7 +202,6 @@
         break
         }
       }
-    Gui PopUp:Cancel
     click =
     }
 
@@ -235,23 +234,8 @@
       Sort()
     else if (command == "Search" || command == "SearchBox")
       Search()
-    if (command == "CutCopyPaste")
-      {
-      if (value == "myCut")
-        send, ^x
-      if (value == "myCopy")
-        {
-        Clipboard =
-        send, ^c
-        Clipwait,0.1
-        if !Clipboard
-          send, ^a
-        sleep 100
-        send, ^c
-        }
-      if (value == "myPaste")
-        send, ^v
-      }
+    else if (command == "CutCopyPaste")
+      CutCopyPaste()
     else if (command == "Null")						; used as trigger to save text editing - see Java inca()
       {
       lastClick =
@@ -395,7 +379,6 @@
     index := 0
     serverTimout := A_TickCount
     messages := input
-;    messages := StrReplace(input, "/", "\")
     array := StrSplit(messages,"#")
 ; tooltip %messages%, 0							; for debug
     Loop % array.MaxIndex()/4
@@ -909,6 +892,7 @@
       listSize += 1
       if !playlist
         {
+        start := 0
         FileRead, dur, %inca%\cache\durations\%filen%.txt
         if (dur && med=="video")			; derive 1st thumbnail start time
           if (dur > 61)
@@ -920,6 +904,56 @@
       return entry
       }
     }
+
+
+  CutCopyPaste()
+      {
+      if (value == "myCut")
+        {
+        if selected
+          {
+          Clipboard := "#cut#" . folder . "|" . selected
+          reload := 1
+          selected = 
+          return
+          }
+        send, ^x
+        }
+      if (value == "myCopy")
+        {
+        if selected
+          {
+          Clipboard := "#copy#" . folder . "|" . selected
+          reload := 1
+          selected = 
+          return
+          }
+        Clipboard =
+        send, ^c
+        Clipwait,0.1
+        if !Clipboard
+          send, ^a
+        sleep 100
+        send, ^c
+        }
+      if (value == "myPaste")
+       if (InStr(ClipBoard, "#copy#") || InStr(ClipBoard, "#cut#"))
+        {
+        if InStr(ClipBoard, "#copy#")
+          longClick = LButton
+        ClipBoard := StrReplace(ClipBoard, "#copy#")
+        ClipBoard := StrReplace(ClipBoard, "#cut#")
+        array := StrSplit(ClipBoard,"|")
+        address := path
+        folder := array.1
+        selected := array.2
+        MoveFiles()
+        folder := incaTab
+        reload := 2
+        }
+      else
+        send, ^v
+      }
 
 
   editCues() 
@@ -1594,8 +1628,9 @@
       FileSetTime, %CreationTime%, %new%, C
       FileRecycle, %src%
       }
-    orig = %profile%\Downloads\%filen% %suffix%.%ext%
-    orig = %orig%
+    orig = %profile%\Downloads\%filen% %suffix%
+    orig = %orig%							; trims whitespace ahk v1.1
+    orig = %orig%.%ext%
     FileMove, %new%, %orig%, 1
     return orig
     }
@@ -1615,6 +1650,8 @@
     if playlist
       page := 300
     else page := 90							; media entries per chunk
+    if (command == "More")
+      lastIndex := value - 1
     FileRead, list, %inca%\cache\temp\%folder%.txt
     Loop, Parse, list, `n, `r 						; split big list into smaller web pages
       if (A_Index > lastIndex && A_Index < lastIndex + page + 1)
@@ -1626,7 +1663,6 @@
         start := item.4
         mediaList(A_Index, source, start)				; append mediaList
         }
-    lastIndex += page
     if (command == "More")						; continuous scrolling
       {
       FileDelete, %inca%\cache\html\temp.txt				; server polling file
@@ -1864,12 +1900,13 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
 
     <div class="menu default" onwheel='wheelEvent(event)'>`n
       <a id="mySelect">Select</a>`n
+      <a id="myDelete">Delete</a>`n
       <a id="myFavorite">Fav</a>`n
       <a id="myMute">Mute</a>`n
-      <a id="myPitch">Pitch</a>`n
       <a id="myPause">Pause</a>`n
       <a id="mySpeed"></a>`n
       <a id="mySkinny"></a>`n
+      <a id="myPitch">Pitch</a>`n
       <a id="myFlip">Flip</a>`n
       <a id="myCue">Cue</a>`n
       <a id="myCap">Caption</a>`n
@@ -1916,12 +1953,15 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
     htm = %server%%inca%\cache\html\%folder%.htm
     StringReplace, htm, htm, \,/, All
     Gui PopUp:Cancel
-    lastClick =
     if silent
       return
     FileDelete, %inca%\cache\html\temp.txt				; server polling file
     if (!incaTab || !WinExist("ahk_group Browsers") || lastClick=="MButton")
+{
       run, %htm%
+sleep 144
+    WinActivate, ahk_group Browsers
+}
     else if (incaTab == folder) 
       send {F5}
     else FileAppend, %htm%, %inca%\cache\html\temp.txt, UTF-8		; trigger node server
@@ -1934,7 +1974,8 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
         break
       Sleep, 100
       }
-    }
+  lastClick =
+  }
 
 
   mediaList(j, input, start)						; spool sorted media files into web page
@@ -1945,7 +1986,6 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
       input = 							; hide locked files
     if DetectMedia(input)
       thumb := src
-    else thumb = %inca%\cache\icons\no link.png
     x := RTrim(mediaPath,"\")
     SplitPath, x,,,,thisFolder
     if (searchTerm && lastFolder != thisFolder && sort == "Alpha")
@@ -1974,13 +2014,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
         thumb = %inca%\cache\posters\%media% %seek%.jpg
       else IfExist, %inca%\cache\posters\%media%.jpg
         thumb = %inca%\cache\posters\%media%.jpg
-      else 
-        {
-        cmd = %inca%\cache\apps\ffmpeg.exe -i "%thumb%" -y "%inca%\cache\temp\%media%.jpg"
-        runwait, %cmd%,, Hide
-        thumb = %inca%\cache\temp\%media%.jpg
-        noIndex = <span class='warning'>no index</span>`n 
-        }
+      else thumb = %inca%\cache\icons\no link.png
     FileGetSize, size, %src%, K
     if (type=="document")
       size := Round(size)
@@ -2008,8 +2042,6 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
       StringReplace, thumb, thumb, #, `%23, All				; html cannot have # in filename
       poster = %thumb%
       }
-    else
-      noIndex = <span class='warning'>no index</span>`n 
     if !start
       start = 0.000
     else start := Round(start,3)
@@ -2045,7 +2077,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
     caption = <pre id="dat%j%" style='display: none' type="text/plain" data=%data%></pre>`n
 
     if listView
-      mediaList = %mediaList%%fold%<table id='entry%j%' data-params='%type%,%start%,%dur%,%size%' onmouseenter='if (gesture) sel(%j%)' onmouseover='overThumb(%j%)'`n onmouseout="thumb%j%.style.opacity=0; thumb.src=''">`n <tr><td><video id='thumb%j%' class='thumb2' onwheel='if (zoom > 1) wheelEvent(event)' %poster%`n preload=%preload% muted loop type="video/mp4"></video>`n <video id="vid%j%" style='display: none' src=%src% preload='none' type='video/mp4'></video></td>`n <td>%ext%</td><td>%size%</td><td style='min-width: 6em'>%durT%</td><td>%date%</td><td style='width:3em'>`n <div id='myFavicon%j%' class='favicon' style='position: relative; text-align: left; translate:2em 0.4em'>%favicon%</div></td>`n <td style='width: 80vw'><input id="title%j%" class='title' style='opacity: 1; position: relative; width:100`%; left:-0.2em' onmouseover='overText=1' autocomplete='off' onmouseout='overText=0; Click=0' type='search' value='%media_s%' oninput="renamebox=this.value; lastMedia=%j%"></td>`n %fo%</tr></table>%caption%<span id='cues%j%' style='display: none'>%cues%</span>`n`n
+      mediaList = %mediaList%%fold%<table id='entry%j%' data-params='%type%,%start%,%dur%,%size%' onmouseenter='if (gesture) sel(%j%)' onmouseover='overThumb(%j%)'`n onmouseout="thumb%j%.style.opacity=0; thumb.src=''">`n <tr><td><video id='thumb%j%' class='thumb2' onwheel='if (zoom > 1) wheelEvent(event)' %poster%`n preload=%preload% muted loop type="video/mp4"></video>`n <video id="vid%j%" style='display: none' src=%src% preload='none' type='video/mp4'></video></td><td>%j%</td>`n <td>%ext%</td><td>%size%</td><td style='min-width: 6em'>%durT%</td><td>%date%</td><td style='width:3em'>`n <div id='myFavicon%j%' class='favicon' style='position: relative; text-align: left; translate:2em 0.4em'>%favicon%</div></td>`n <td style='width: 80vw'><input id="title%j%" class='title' style='opacity: 1; position: relative; width:100`%; left:-0.2em' onmouseover='overText=1' autocomplete='off' onmouseout='overText=0; Click=0' type='search' value='%media_s%' oninput="renamebox=this.value; lastMedia=%j%"></td>`n %fo%</tr></table>%caption%<span id='cues%j%' style='display: none'>%cues%</span>`n`n
 
     else mediaList = %mediaList%<div id="entry%j%" class='entry' data-params='%type%,%start%,%dur%,%size%'>`n <span id='myFavicon%j%' onmouseenter='overThumb(%j%)' class='favicon'>%favicon%</span>`n <input id='title%j%' class='title' style='top:-1.1em' type='search'`n value='%media_s%'`n oninput="renamebox=this.value; lastMedia=%j%"`n onmouseover="overText=1; this.style.width=1+this.value.length/2+'em'"`n onmouseout="overText=0; this.style.width=null">`n <video id="thumb%j%" class='thumb' onwheel='if (zoom > 1) wheelEvent(event)' onmouseenter="overThumb(%j%); if (gesture) sel(%j%)"`n onmouseout="thumb.pause()" onmouseup='if (gesture) Param(%j%)' %poster%`n preload=%preload% loop muted type='video/mp4'></video>`n <video id="vid%j%" style='display: none' src=%src% preload='none' type='video/mp4'></video>%noIndex%`n <span id='cues%j%' style='display: none'>%cues%</span></div>`n %caption%`n
     }
@@ -2101,7 +2133,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
         output = %profile%\Downloads\%med% @%time%.jpg
         whisper = %inca%\cache\apps\Faster-Whisper-XXL\faster-whisper-xxl.exe
         if InStr(el_id, "mySrt")
-        runwait, "%whisper%" "%source%" --model tiny.en --language en --output_format srt --output_dir "%inca%\cache\srt", , Hide
+          runwait, "%whisper%" "%source%" --model tiny.en --language en --output_format srt --output_dir "%inca%\cache\srt", , Hide
         else if (DetectMedia(source) == "image")
           cmd = %inca%\cache\apps\ffmpeg.exe -i "%source%" -vf "scale=iw*%skinny%:ih" -y "%output%"
         else cmd = %inca%\cache\apps\ffmpeg.exe -ss %time% -i "%source%" -vf "scale=iw*%skinny%:ih" -y -vframes 1 "%output%"
@@ -2137,18 +2169,20 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
     FileGetTime, ytdlp, %inca%\cache\apps, M
     FileGetTime, downloads, %profile%\Downloads, S
     FileRead, history, %inca%\fav\History.m3u
-    if (A_Now - downloads < 3)
+    if (A_Now - downloads < 3 && lastMedia)
       Loop, Files, %profile%\Downloads\*.*
        if !InStr(history, A_LoopFileName)
         {
         SplitPath, A_LoopFileFullPath, fileWithExt, dir, ext, nameNoExt
-        SplitPath, lastMedia,,,, fol
-        fol := SubStr(fol, 1, 100)
-        assets := inca . "\assets\" . fol
-        FileCreateDir, %assets%
+        SplitPath, lastMedia,,,, foldr
+        foldr := SubStr(foldr, 1, 100)
+        assets := inca . "\assets\" . foldr
         destCopy := assets . "\" . nameNoExt . "." . ext
         if (ext == "mp3" || ext == "wav")
+          {
+          FileCreateDir, %assets%
           FileCopy, %A_LoopFileFullPath%, %destCopy%, 1
+          }
         FileAppend, %destCopy%|0.0`r`n, %inca%\fav\History.m3u, UTF-8
         }
     Files := {}
@@ -2159,15 +2193,24 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
         GuiControl, Indexer:, GuiInd, ...........................................
       else Loop, Files, %inca%\cache\apps\*.*
         if (A_LoopFileExt == "webm" || A_LoopFileExt == "mp4" || A_LoopFileExt == "mkv")
-          if (encoded := Transcode("myMp4", A_LoopFileFullPath,0,0))
+          {
+          SplitPath, A_LoopFileFullPath,,,ex,me
+          ori = %profile%\Downloads\%me%.mp4
+          tem = %profile%\Downloads\%A_Now%.%ex%
+          FileCopy, %A_LoopFileFullPath%, %tem%, 1
+          FileRecycle, %A_LoopFileFullPath%
+          if (encoded := Transcode("myMp4", tem,0,0))
             {
-            GuiControl, Indexer:, GuiInd, %A_LoopFileFullPath%.................................................................
-            Index(encoded, 1)
-            FileMove, %encoded%, %profile%\Downloads, 1
-            FileAppend, %encoded%|0.0`n, C:\inca\fav\history.m3u
+            FileMove, %encoded%, %ori%, 1
+            FileAppend, %ori%|0.0`n, C:\inca\fav\history.m3u
+            PopUp("saved",0,0.75,0.5)
+            GuiControl, Indexer:, GuiInd, %me%.%ex%
+            Index(ori, 1)
+            Gui PopUp:Cancel
             GuiControl, Indexer:, GuiInd
             }
-          else FileRecycle, %A_LoopFileFullPath%
+          else FileRecycle, %tem%
+          }
     Process, Exist, ffmpeg.exe
     if InStr(control, "transcoding")
       if !ErrorLevel

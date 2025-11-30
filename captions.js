@@ -24,9 +24,9 @@
     <style>
       #caption-editor-module * { box-sizing:border-box; margin:0; padding:0; }
       #editor { display:none; flex-direction:column; width:500px; max-width:100%; height:24em;
-        background:#1a1a1a20; border-radius:12px; box-shadow:0 12px 32px rgba(0,0,0,0.6);
-        position:fixed; left:50%; top:50%; transform:translate(-50%,-50%);
-        min-width:250px; min-height:160px; resize:both; max-height:80vh; z-index:490; overflow:hidden; }
+        background:#080707; border-radius:12px; box-shadow:0 12px 32px rgba(0,0,0,0.6);
+        position:fixed; left:50%; top:50%; transform:translate(-50%,-50%); z-index: 5002;
+        min-width:250px; min-height:160px; resize:both; max-height:80vh; overflow:hidden; }
       #ribbon { background:#1a1a1a20; padding:6px 8px; display:flex; gap:6px; align-items:center;
         flex-wrap:wrap; user-select:none; flex-shrink:0; justify-content:center;}
       .dropdown { position:relative; display:inline-block;}
@@ -41,24 +41,40 @@
         overflow-y:auto; flex-direction:column; gap:2px; 
       }
       .dropdown-content > div {
-        font-size:12.5px; white-space:nowrap; cursor:default; border-radius: 10px; text-align: center;
+        font-size:12.5px; white-space:nowrap; cursor:default; border-radius: 10px;
       }
       .dropdown-content > div:hover { background:#2a2a2a; }
-      .caption-viewport {
-        flex:1; overflow-y:auto; padding:1em; background:#1a1a1a20;
-        display:flex; flex-direction:column; gap:1.1em; min-height:0;
-        scrollbar-width:thin; scrollbar-color:#ffc0cb30 transparent; overflow-x: hidden;
-      }
+.caption-viewport {
+  flex:1; 
+  overflow-y:auto; 
+  padding:1em; 
+  background:#1a1a1a20;
+  display:flex; 
+  flex-direction:column; 
+  gap:1.1em; 
+  min-height:0;
+  scrollbar-width:thin; 
+  scrollbar-color:#ffc0cb30 transparent; 
+  overflow-x: hidden;
+  position: relative;
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0%,
+    black        6%,
+    black        94%,
+    transparent  100%
+  );
+}
       .text-block {
         background:transparent; border-radius:6px; text-align:center; white-space:pre-wrap;
         word-wrap:break-word; font-size:1em; font-family:'Yu Gothic'; line-height:1.5;
         color:#ffc0cb99; outline:none; width: 92%; align-self: center;
       }
-      .text-block.editing { border-left: 0.1px solid #ffc0cb30; }
+      .text-block.editing { border-left: 0.1px solid #ffc0cb40; border-right: 0.1px solid #ffc0cb40; }
       #voice-header > .header { width:8em; justify-content:center; padding: 0 1em }
       #voice-header .dropdown-content {height: 8em; padding: 0.5em 0.5em; line-height: 1.6; }
       #media-header > .header { width:12em; overflow:hidden; text-overflow:ellipsis; justify-content:center; }
-      #media-header .dropdown-content {height: 10.4em; padding: 0.5em 0.5em; }
+      #media-header .dropdown-content {height: 10.4em; padding: 0.5em 0.5em; translate: -5em}
       #id-display { 
         background:transparent; border:none; color:#ffc0cb99; font-size:12px;
         outline:none; min-width:34px; text-align:center; }
@@ -123,7 +139,7 @@
   let blocks = [];
   let editingBlock = null;
   let originalPlayerSrc = '';
-  let projectMedia = { defaultSrc: null, defaultName: null };
+  let projectMedia = { defaultSrc: null };
   let currentVoiceName = 'Voice';
 
   let timestamps = [];
@@ -146,8 +162,7 @@
     };
     const hide = () => { if (content) content.style.display = 'none'; };
 
-    dropdown.addEventListener('mouseenter', show);
-    dropdown.addEventListener('click', hide);
+    dropdown.addEventListener('click', show);
     dropdown.addEventListener('mouseleave', hide);
   });
 
@@ -224,7 +239,7 @@
      ------------------------------------------------------------------ */
   function getEffectiveMedia(block = null) {
     if (block?._media?.src) return block._media;
-    return projectMedia.defaultSrc ? { src: projectMedia.defaultSrc, name: projectMedia.defaultName } : null;}
+    return projectMedia.defaultSrc ? { src: projectMedia.defaultSrc } : null;}
 
 
 function updateMediaHeader() {mediaHeader.textContent = (editingBlock?._media?.name || originalSrt).replace(/\.[^.]+$/, '');}
@@ -289,9 +304,9 @@ div.onclick = () => {
     } else {
       myPlayer.poster = '';
       if (decodeURIComponent(myPlayer.src) !== src) myPlayer.src = src;
-      myPlayer.currentTime = time;
     }
-  }
+    myPlayer.currentTime = time;
+ }
 
   function scrollToNearestCaption() {
     if (decodeURIComponent(myPlayer.src) !== originalPlayerSrc || isScrolling || overEditor) return;
@@ -348,98 +363,119 @@ const activateBlock = (block, options = {}) => {
 };
 
 
+/* ------------------------------------------------------------------
+     7. BLOCK EVENT LISTENERS – FINAL SIMPLE & BULLETPROOF VERSION
+   ------------------------------------------------------------------ */
+function attachBlockListeners(block) {
 
+  viewport.addEventListener('click', () => {
+    if (editingBlock) {
+      editingBlock.classList.remove('editing');
+      splitIfNeeded(editingBlock);       // ← split before losing focus
+      editingBlock = null;
+    }
+  });
 
-  /* ------------------------------------------------------------------
-     7. BLOCK EVENT LISTENERS
-     ------------------------------------------------------------------ */
+  block.addEventListener('mouseenter', () => {
+    activateBlock(block, { edit: false, play: userWantsPlay });
+  });
 
-  function attachBlockListeners(block) {
+  block.addEventListener('click', e => {
+    e.stopPropagation();
+    if (editingBlock && editingBlock !== block) {splitIfNeeded(editingBlock)}
+    editingBlock?.classList.remove('editing');
+    block.classList.add('editing');
+ //   editingBlock = block;
+    activateBlock(block, { edit: true, play: true });
+  });
 
-block.addEventListener('mouseenter', () => {activateBlock(block, { edit: false, play: userWantsPlay })});
+  block.addEventListener('keydown', e => {
+    if (e.key !== 'Backspace') return;
+    if (window.getSelection().toString()) return; // selection → let browser delete
 
-block.addEventListener('click', e => { e.stopPropagation(); activateBlock(block, { edit: true, play: true })});
+    const range = window.getSelection().getRangeAt(0);
+    if (range.startOffset !== 0) return;
 
-block.addEventListener('keydown', e => {
-  if (e.key !== 'Backspace') return;
-  if (window.getSelection().toString() !== '') document.execCommand('delete')
-  const range = window.getSelection().getRangeAt(0);
-  const charBefore = range.startContainer.textContent[document.getSelection().getRangeAt(0).startOffset - 1]
-  if (charBefore === '\n') { document.execCommand('delete'); document.execCommand('insertText', false, '  ')}
-  if (range.rangeCount === 0) return;
-  const testRange = document.createRange();
-  testRange.selectNodeContents(block);
-  testRange.setEnd(range.startContainer, range.startOffset);
-  if (testRange.toString() !== '') return;
-  const prev = block.previousElementSibling;
-  if (!prev?.classList.contains('text-block')) return;
-  e.preventDefault();
-  const prevText = prev.innerText.trim();
-  const currText = block.innerText.trim();
-  prev.innerText = prevText + '\n' + currText;
-  prev.innerHTML = prev.innerText;
-  block.remove();
-  blocks = blocks.filter(b => b !== block);
-  renumberBlocks();
-  editingBlock = prev;
-  editingBlock.focus();
-  const r = document.getSelection().getRangeAt(0);
-  r.setStart(r.startContainer, prevText.length + 1);
-  idDisplay.textContent = prev.dataset.num;
-  timeDisplay.textContent = shortFormatTime(+prev.dataset.start || 0);
-  updateMediaHeader(prev);
-  requestAnimationFrame(rebuild);
-});
+    const prev = block.previousElementSibling;
+    if (!prev?.classList.contains('text-block')) return;
 
-    block.addEventListener('input', () => myPlayer.pause());
+    e.preventDefault();
+    prev.focus();
+    const len = prev.innerText.length;
+    prev.innerText += '\n' + block.innerText;
+    prev.innerHTML = prev.innerHTML; // preserve <br> → \n
 
-    block.addEventListener('mouseleave', () => {
-      const html = block.innerHTML;
-      const text = block.innerText.trim();
-      if (!text) {
-        block.remove();
-        blocks = blocks.filter(b => b !== block);
-        renumberBlocks();
-        rebuildTimestamps();
-        return;
-      }
-      let normalized = html
-        .replace(/<br[^>]*>/gi, '\n')
-        .replace(/&#10;/g, '\n')
-        .replace(/<(div|p)[^>]*>/gi, '\n')
-        .replace(/<\/(div|p)>/gi, '')
-        .replace(/\n\s*\n/g, '\n\n')
-        .replace(/\n\n+/g, '\n\n');
-      const hasTrailingEmpty = normalized.endsWith('\n\n');
-      if (hasTrailingEmpty) normalized = normalized.slice(0, -2);
-      const parts = normalized.split('\n\n').map(p => p.trim()).filter(Boolean);
-      if (parts.length <= 1 && !hasTrailingEmpty) return;
-      const startSec = parseFloat(block.dataset.start) || 0;
-      const nextSibling = block.nextSibling;
-      const idx = blocks.indexOf(block);
-      block.remove();
-      blocks = blocks.filter(b => b !== block);
-      let lastInserted = null;
-      parts.forEach((part, i) => {
-        const estSec = i === 0 ? startSec : startSec + (i * 2.5);
-        const newBlock = createBlock(
-          null, estSec, part,
-          { media: block._media, voice: block._voice }
-        );
-        viewport.insertBefore(newBlock, nextSibling);
-        blocks.splice(idx + i, 0, newBlock);
-        lastInserted = newBlock;
-      });
-      if (hasTrailingEmpty) {
-        const emptyBlock = createBlock(null, 0, ' ', {});
-        viewport.insertBefore(emptyBlock, nextSibling);
-        blocks.splice(idx + parts.length, 0, emptyBlock);
-        emptyBlock.focus();
-      }
+    block.remove();
+    blocks = blocks.filter(b => b !== block);
+    renumberBlocks();
+    requestAnimationFrame(() => {
+      const r = document.createRange();
+      r.setStart(prev.firstChild || prev, len + 1);
+      r.collapse(true);
+      const sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(r);
+    });
+  });
+
+  block.addEventListener('input', () => 
+    requestAnimationFrame(() => myPlayer.pause())
+  );
+
+  function splitIfNeeded(blockToSplit) {
+    const html = blockToSplit.innerHTML;
+    const text = blockToSplit.innerText.trim();
+    if (!text) {
+      blockToSplit.remove();
+      blocks = blocks.filter(b => b !== blockToSplit);
       renumberBlocks();
       rebuildTimestamps();
-      editing = 1;
+      return;
+    }
+
+    let normalized = html
+      .replace(/<br[^>]*>/gi, '\n')
+      .replace(/<(div|p)[^>]*>/gi, '\n')
+      .replace(/<\/(div|p)>/gi, '')
+      .replace(/\n\s*\n/g, '\n\n')
+      .replace(/\n\n+/g, '\n\n')
+      .trim();
+
+    const hasTrailingEmpty = html.endsWith('<br>') || /<br>\s*$/i.test(html);
+    if (hasTrailingEmpty) normalized = normalized.replace(/\n\n$/, '');
+
+    const parts = normalized.split('\n\n').map(p => p.trim()).filter(Boolean);
+    if (parts.length <= 1 && !hasTrailingEmpty) return;
+
+    const startSec = parseFloat(blockToSplit.dataset.start) || 0;
+    const nextSibling = blockToSplit.nextSibling;
+    const idx = blocks.indexOf(blockToSplit);
+
+    blockToSplit.remove();
+    blocks = blocks.filter(b => b !== blockToSplit);
+
+    parts.forEach((part, i) => {
+      const newBlock = createBlock(
+        null,
+        i === 0 ? startSec : startSec + i * 2.5,
+        part,
+        { media: blockToSplit._media, voice: blockToSplit._voice }
+      );
+      viewport.insertBefore(newBlock, nextSibling);
+      blocks.splice(idx + i, 0, newBlock);
     });
+
+    if (hasTrailingEmpty) {
+      const empty = createBlock(null, 0, ' ', {});
+      viewport.insertBefore(empty, nextSibling);
+      blocks.splice(idx + parts.length, 0, empty);
+      empty.focus();
+    }
+
+    renumberBlocks();
+    rebuildTimestamps();
+    editing = 1;
+  }
 }
 
   /* ------------------------------------------------------------------
@@ -476,7 +512,7 @@ block.addEventListener('keydown', e => {
   /* ------------------------------------------------------------------
      9. MEDIA DROPDOWN POPULATION
      ------------------------------------------------------------------ */
-  container.querySelector('#media-header').addEventListener('mouseenter', async () => {
+  container.querySelector('#media-header').addEventListener('click', async () => {
     container.querySelectorAll('.dropdown-content').forEach(c => c.style.display = 'none');
     mediaContent.style.display = 'flex';
 
@@ -493,7 +529,7 @@ if (!lines.length) throw '';
         const [path, startStr] = line.split('|');
         const startSec = parseFloat(startStr) || 0;
         const name = path.split(/[\\/]/).pop();
-        const short = name.length > 22 ? name.slice(0, 24) + '...' : name;
+        const short = name.length > 60 ? name.slice(0, 60) + '...' : name;
         const url = 'http://localhost:3000/' + path.replace(/\\/g, '/');
         return { url, startSec, name, short };
       }).filter(i => i.url && !i.name.endsWith('.txt') && !i.name.endsWith('.m3u'));
@@ -504,7 +540,7 @@ if (!lines.length) throw '';
       none.style.marginLeft = '1.7em';
       none.onclick = () => {
         if (editingBlock) editingBlock._media = null;
-        else { projectMedia.defaultSrc = projectMedia.defaultName = null; }
+        else { projectMedia.defaultSrc = null; }
         updateMediaHeader();
         swapPlayerMedia(originalPlayerSrc, myPlayer.currentTime);
         editing = 1;
@@ -587,8 +623,7 @@ myPlayer.play()
             editingBlock = null;
             editing = 1;
           } else {
- //           projectMedia.defaultSrc = mediaObj.src;
-  //          projectMedia.defaultName = mediaObj.name;
+            projectMedia.defaultSrc = mediaObj.src;
           }
           updateMediaHeader();
           swapPlayerMedia(mediaObj.src, item.startSec);
@@ -596,6 +631,9 @@ myPlayer.play()
           if (!myPlayer.muted) myPlayer.play().catch(() => {});
         });
       });
+
+mediaContent.scrollTop = mediaContent.scrollHeight;
+
     } catch (_) {
       mediaContent.innerHTML = '<div style="color:#ffc0cb66;padding:8px;">No media</div>';
     }
@@ -612,8 +650,7 @@ function makeProjectJSON() {
       transform: editor.style.transform
     },
     defaultMedia: projectMedia.defaultSrc ? {
-      src: projectMedia.defaultSrc.replace(/\\/g, '/'),
-      name: projectMedia.defaultName
+      src: projectMedia.defaultSrc.replace(/\\/g, '/')
     } : null,
     lastSelectedId: editingBlock ? parseInt(editingBlock.dataset.num) : 0,
     blocks: blocks.map(b => ({
@@ -710,7 +747,8 @@ function makeProjectJSON() {
     open(src = '', text = '') {
       originalSrt = src.split(/[\\/]/).pop().replace(/\.[^.]+$/, '');
       editor.style.display = 'flex';
-      originalPlayerSrc = decodeURIComponent(myPlayer.src || '');
+      if (type == 'video') originalPlayerSrc = decodeURIComponent(myPlayer.src || '');
+      else originalPlayerSrc = decodeURIComponent(myPlayer.poster || '');
       userWantsPlay = !defPause;
 
       const center = () => {
@@ -740,9 +778,8 @@ function makeProjectJSON() {
         if (b.extras?.voice) block._voice = b.extras.voice;
       });
 
-      projectMedia.defaultSrc   = parsed.defaultMedia?.src || null;
-      projectMedia.defaultName  = parsed.defaultMedia?.name || null;
       updateMediaHeader();
+      projectMedia.defaultSrc = originalPlayerSrc || null;
       if (projectMedia.defaultSrc) swapPlayerMedia(projectMedia.defaultSrc, 0);
 
       if (parsed.lastSelectedId) {
@@ -756,6 +793,10 @@ function makeProjectJSON() {
 
       editor.style.height = Math.min(blocks.length * 3, 24) + 'em';
       viewport.style.padding = blocks.length < 4 ? '2em 1em' : '6em 1em 7em 1em';
+      const ui = parsed.ui || {};
+      Object.assign(editor.style, ui);
+
+      editor.style.top = myPlayer.offsetTop + myPlayer.offsetHeight + 'px'
 
       const observer = new MutationObserver(() => editing = 1);
       observer.observe(viewport, { childList: true, subtree: true, characterData: true });
@@ -767,9 +808,9 @@ function makeProjectJSON() {
       if (editor._mutationObserver) editor._mutationObserver.disconnect();
       if (editing === 1) editing = makeProjectJSON();
       else editing = 0;
-      editor.style.display = null;
-      if (editor._resize) window.removeEventListener('resize', editor._resize);
+      editingBlock = null
       overEditor = false;
+      editor.style.display = null
     }
   };
 
@@ -780,12 +821,5 @@ function makeProjectJSON() {
     const r = el.getBoundingClientRect(), c = container.getBoundingClientRect();
     return r.top >= c.top && r.bottom <= c.bottom;
   }
-  viewport.addEventListener('scroll', () => {
-    if (editingBlock && !isElementInViewport(editingBlock, viewport)) {
-      editingBlock.classList.remove('editing');
-      editingBlock = null;
-      rebuild();
-    }
-  });
 
 })();

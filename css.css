@@ -20,11 +20,14 @@
 .player, .vig {
   position: absolute;
   opacity: 0;
+  z-index: 5003;
   padding: 0.1em;
+  visibility: hidden;
   border-radius: 2.4em}
 
 .vig {
   --scale: 20px;
+  z-index: 5004;
   pointer-events: none;
   background: transparent;
   border-radius: 2.3em;
@@ -90,8 +93,8 @@
   position: absolute;
   pointer-events: none;
   translate: 6em -1em;
-  max-width: 14em;
-  max-height: 15em;
+  max-width: var(--max-size);
+  max-height: var(--max-size);
   border-radius: 1em;
   padding: 0.3em;
   margin: auto;
@@ -100,6 +103,7 @@
 .pic {						/* context menu pic */
   opacity: 0;
   display: block;
+  z-index: 5007;
   position: absolute;
   background-size: 600%;			/* for thumb extraction from thumbSheet */
   background-repeat: no-repeat;
@@ -204,7 +208,7 @@
   flex-wrap: wrap;
   top: 200px;
   width: 40%;
-  padding-top:4em;
+  padding-top:5em;
   padding-bottom: 80vh}
 
 .ribbon {					/* menu, fol, fav, search ... */
@@ -253,7 +257,7 @@
   top: -100px;
   color: red;
   height: 2em;
-  z-index: 501;
+  z-index: 5011;
   transition: font-size 0.5s;
   font-size: 1.8em}
 
@@ -265,6 +269,7 @@
   width: 0;
   height: 1px;
   opacity: 0;
+  z-index: 5010;
   background: pink;
   transition: opacity 1s}
 
@@ -277,6 +282,7 @@
   opacity: 0;
   top: 0;
   left: 0;
+  z-index: 5000;
   height: 100vh;
   width: 100vw;
   background: black}
@@ -295,7 +301,7 @@
   transition: opacity 0.2s;
   font-size: 1em;
   width: 105px;
-  z-index: 500;
+  z-index: 5005;
   border-radius: 0.7em;
   background: #121010c0;}
 
@@ -312,7 +318,7 @@
 
 #myNav[style*="display: block"] {opacity: 1; pointer-events: auto;}
 .context a:hover {background: #23202180;}
-.context a:active {border-left: 1px solid red; border-right: 1px solid red;}
+.context a:active {border-left: 1px solid pink}
 .menu {display: none;}
 #myNav[style*="display: block"]:not(.editor-mode) .default {display: block;}
 #myNav[style*="display: block"].editor-mode .editor {display: block;}
