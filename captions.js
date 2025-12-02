@@ -5,7 +5,7 @@
 
 
 /* ===================================================================
-   IMPORTED GLOBALS - overEditor, editing, myPlayer, myCancel
+   IMPORTED GLOBALS - overEditor, editing, myPlayer, myPic, myCancel, block, wheel
    =================================================================== */
 
 
@@ -18,104 +18,130 @@
 
   const container = document.createElement('div');
   container.id = 'caption-editor-module';
-  container.style.cssText = 'all:initial; font-family:system-ui,sans-serif; color:#ffc0cbbb;';
+  container.style.cssText = 'all:initial; font-family:system-ui,sans-serif; color:#ffc0cbaa;';
 
-  container.innerHTML = `
-    <style>
-      #caption-editor-module * { box-sizing:border-box; margin:0; padding:0; }
-      #editor { display:none; flex-direction:column; width:500px; max-width:100%; height:24em;
-        background:#080707; border-radius:12px; box-shadow:0 12px 32px rgba(0,0,0,0.6);
-        position:fixed; left:50%; top:50%; transform:translate(-50%,-50%); z-index: 5002;
-        min-width:250px; min-height:160px; resize:both; max-height:80vh; overflow:hidden; }
-      #ribbon { background:#1a1a1a20; padding:6px 8px; display:flex; gap:6px; align-items:center;
-        flex-wrap:wrap; user-select:none; flex-shrink:0; justify-content:center;}
-      .dropdown { position:relative; display:inline-block;}
-      .dropdown > .header {
-        background: #1a1a1a80; color: #ffc0cb99; border-radius:6px; height: 1.6em;
-        font-size:12px; white-space:nowrap; display:flex; align-items:center; cursor:default;
-      }
-      .dropdown-content {
-        position: absolute; bottom:100%; min-width:50%; background: #1a1a1a;
-        box-shadow:0 4px 12px rgba(0,0,0,0.5); border-radius: 6px;
-        display:none; z-index:1; padding-bottom:8px; 
-        overflow-y:auto; flex-direction:column; gap:2px; 
-      }
-      .dropdown-content > div {
-        font-size:12.5px; white-space:nowrap; cursor:default; border-radius: 10px;
-      }
-      .dropdown-content > div:hover { background:#2a2a2a; }
-.caption-viewport {
-  flex:1; 
-  overflow-y:auto; 
-  padding:1em; 
-  background:#1a1a1a20;
-  display:flex; 
-  flex-direction:column; 
-  gap:1.1em; 
-  min-height:0;
-  scrollbar-width:thin; 
-  scrollbar-color:#ffc0cb30 transparent; 
-  overflow-x: hidden;
-  position: relative;
-  mask-image: linear-gradient(
-    to bottom,
-    transparent 0%,
-    black        6%,
-    black        94%,
-    transparent  100%
-  );
-}
-      .text-block {
-        background:transparent; border-radius:6px; text-align:center; white-space:pre-wrap;
-        word-wrap:break-word; font-size:1em; font-family:'Yu Gothic'; line-height:1.5;
-        color:#ffc0cb99; outline:none; width: 92%; align-self: center;
-      }
-      .text-block.editing { border-left: 0.1px solid #ffc0cb40; border-right: 0.1px solid #ffc0cb40; }
-      #voice-header > .header { width:8em; justify-content:center; padding: 0 1em }
-      #voice-header .dropdown-content {height: 8em; padding: 0.5em 0.5em; line-height: 1.6; }
-      #media-header > .header { width:12em; overflow:hidden; text-overflow:ellipsis; justify-content:center; }
-      #media-header .dropdown-content {height: 10.4em; padding: 0.5em 0.5em; translate: -5em}
-      #id-display { 
-        background:transparent; border:none; color:#ffc0cb99; font-size:12px;
-        outline:none; min-width:34px; text-align:center; }
-      #time-display {
-        width:70px; background:inherit; color:#ffc0cb99; border:none; outline:none;
-        text-align:center; font-size:12px; font-family:inherit; border-radius:4px;
-        user-select:none; cursor:pointer;
-      }
-      #myCancel {
-        position: absolute; top: 0.5em; right: 0;
-        visibility:hidden; text-align:center; min-width:3.5em; color:red;
-        transition:0.6s; background:#1a1a1a00; cursor:pointer; font-size: 0.85em;
-      }
-    </style>
+container.innerHTML = `
+  <style>
+    #caption-editor-module * { box-sizing:border-box; margin:0; padding:0; }
+    #editor { display:none; flex-direction:column; width:500px; max-width:100%; height:24em;
+      background:#080707; border-radius:12px; box-shadow:0 12px 32px rgba(0,0,0,0.6);
+      position:fixed; left:50%; top:50%; transform:translate(-50%,-50%); z-index: 5002;
+      min-width:250px; min-height:160px; resize:both; max-height:80vh; overflow:hidden; }
+    #ribbon { background:#1a1a1a20; padding:6px 8px; display:flex; gap:6px; align-items:center;
+      flex-wrap:wrap; user-select:none; flex-shrink:0; justify-content:center;}
+    .dropdown { position:relative; display:inline-block;}
+    .dropdown > .header {
+      background: #1a1a1a80; color: #ffc0cb99; border-radius:6px; height: 1.6em;
+      font-size:12px; white-space:nowrap; display:flex; align-items:center; cursor:default;
+    }
+    .dropdown-content {
+      position: absolute; bottom:100%; min-width:50%; background: #1a1a1a;
+      box-shadow:0 4px 12px rgba(0,0,0,0.5); border-radius: 6px;
+      display:none; z-index:1; padding-bottom:8px; 
+      overflow-y:auto; flex-direction:column; gap:2px; 
+    }
+    .dropdown-content > div {
+      font-size:12.5px; white-space:nowrap; cursor:default; border-radius: 10px;
+    }
+    .dropdown-content > div:hover { background:#2a2a2a; }
+    .caption-viewport {
+      flex:1; 
+      overflow-y:auto; 
+      padding:1em; 
+      background:#1a1a1a20;
+      display:flex; 
+      flex-direction:column; 
+      gap:1.1em; 
+      min-height:0;
+      scrollbar-width:thin; 
+      scrollbar-color:#ffc0cb30 transparent; 
+      overflow-x: hidden;
+      position: relative;
+      mask-image: linear-gradient(
+        to bottom,
+        transparent 0%,
+        black        6%,
+        black        94%,
+        transparent  100%
+      );
+    }
+    .text-block {
+      background:transparent; border-radius:6px; text-align:center; white-space:pre-wrap;
+      word-wrap:break-word; font-size:1em; font-family:'Yu Gothic'; padding: 0 1em; line-height:1.5;
+      color:#ffc0cb80; outline:none; width: 95%; align-self: center;
+    }
+    .text-block.editing { border-left: 0.1px solid #ffc0cb40; border-right: 0.1px solid #ffc0cb40; }
+    #voice-header > .header { width:8em; justify-content:center; padding: 0 1em; display: none}
+    #voice-header .dropdown-content {height: 8em; padding: 0.5em 0.5em; line-height: 1.6; }
+    #media-header > .header { width:12em; overflow:hidden; text-overflow:ellipsis; justify-content:center; }
+    #media-header .dropdown-content {height: 10.4em; padding: 0.5em 0.5em; translate: -5em}
+    #id-display { 
+      background:transparent; border:none; color:#ffc0cbaa; font-size:12px;
+      outline:none; min-width:34px; text-align:center; }
+    #time-display {
+      width:70px; background:inherit; color:#ffc0cbaa; border:none; outline:none;
+      text-align:center; font-size:12px; font-family:inherit; border-radius:4px;
+      user-select:none; cursor:pointer;
+    }
+    #myCancel {
+      position: absolute; top: 0.5em; right: 0.7em;
+      visibility:hidden; text-align:center; min-width:3.5em; color:#ffc0cbcc;
+      transition:0.6s; background:#1a1a1a00; cursor:pointer; font-size: 0.85em;
+    }
+    #myCancel:hover { color: red; transform: scale(1.5,1.5)}
 
-    <div id="editor">
-      <div class="caption-viewport" id="viewport"></div>
-      <div id="ribbon">
-        <div id='myCancel' class="dropdown-header" onmouseout="this.innerHTML='✕'">✕</div>
+    #search-header {
+      width: 11em;
+      background: #1a1a1a80;
+      border-radius: 8px;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      padding: 0 6px;
+      cursor: text;
+      height: 1.2em;
+    }
+    #caption-search-input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: #ffc0cbaa;
+      outline: none;
+      font-size: 13px;
+    }
+    mark {background: inherit; color: #ffc0cb}
+    #caption-search-input::placeholder {color: #ffc0cb80; transition: color 1s}
+    #caption-search-input:focus::placeholder {color: transparent}
 
-        <div id="id-header" class="dropdown">
-          <div class="header"><div id="id-display">--</div></div>
-        </div>
+  </style>
 
-        <div id="media-header" class="dropdown">
-          <div class="header">Media</div>
-          <div class="dropdown-content"><div>No media</div></div>
-        </div>
-
-        <div id="voice-header" class="dropdown">
-          <div class="header">Voice</div>
-          <div class="dropdown-content">
-            <div>Sarah</div><div>Tracy</div><div>Michelle</div><div>Brian</div>
-          </div>
-        </div>
-        <div id="time-header" class="dropdown">
-          <div class="header"><div id="time-display">- : -- . -</div></div>
+  <div id="editor">
+    <div class="caption-viewport" id="viewport"></div>
+    <div id="ribbon">
+      <div id='myCancel' class="dropdown-header" onmouseout="this.innerHTML='✕'">✕</div>
+      <div id="id-header" class="dropdown">
+        <div class="header"><div id="id-display">--</div></div>
+      </div>
+      <div id="media-header" class="dropdown">
+        <div class="header">Media</div>
+        <div class="dropdown-content"><div>No media</div></div>
+      </div>
+      <div id="voice-header" class="dropdown">
+        <div class="header">Voice</div>
+        <div class="dropdown-content">
+          <div>Sarah</div><div>Tracy</div><div>Michelle</div><div>Brian</div>
         </div>
       </div>
+      <div id="time-header" class="dropdown">
+        <div class="header"><div id="time-display">- : -- . -</div></div>
+      </div>
+      <div id="search-header">
+        <input type="text" id="caption-search-input" placeholder="&#x1F50D;&#xFE0E;" autocomplete="off">
+      </div>
+
     </div>
-  `;
+  </div>
+`;
 
   document.body.appendChild(container);
 
@@ -149,7 +175,7 @@
   let currentPreviewItem = null;
 
   /* ------------------------------------------------------------------
-     2. DROPDOWN BEHAVIOR (now robust via class + data)
+     2. DROPDOWN BEHAVIOR
      ------------------------------------------------------------------ */
   container.querySelectorAll('.dropdown').forEach(dropdown => {
     const header = dropdown.querySelector('.header');
@@ -165,6 +191,56 @@
     dropdown.addEventListener('click', show);
     dropdown.addEventListener('mouseleave', hide);
   });
+
+
+   /* ------------------------------------------------------------------
+     3. TEXT SEARCH
+     ------------------------------------------------------------------ */
+
+  let matchIndex = 0
+  let searchTerm = ''
+  const searchInput = container.querySelector('#caption-search-input');
+
+  function performSearch() {
+    const term = searchInput.value.trim();
+    if (term) searchTerm = term;
+    else  matchIndex = 0
+    if (term.length < 3) {
+      matchIndex = 0;
+      selected = ''
+      return;
+    }
+    blocks.forEach(b => {b.innerHTML = b.innerText;});
+    const regex = new RegExp(`(${term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+    const matches = [];
+    blocks.forEach(b => {
+      if (regex.test(b.innerText)) {
+        matches.push(b);
+        b.innerHTML = b.innerText.replace(regex, '<mark>$1</mark>');
+      }
+    });
+    if (matches.length === 0) return;
+    selected = String(matches.length)
+    const target = matches[matchIndex] || matches[0];
+    target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+  searchInput.addEventListener('input', performSearch);
+  searchInput.addEventListener('mouseenter', () => {if (searchTerm) {searchInput.value = searchTerm}})
+  container.querySelector('#search-header').addEventListener('wheel', e => {
+    e.preventDefault();
+    wheel += Math.ceil(Math.abs(e.deltaY))
+    if (wheel < block) return
+    block = 180; wheel = 0;
+    performSearch()
+    if (!searchTerm || searchTerm.length < 3) return;
+    const term = searchInput.value.trim();
+    matches = blocks.filter(b => b.innerHTML.includes(term));
+    if (!matches.length) return;
+    selected = String(matchIndex+1)
+    matchIndex = (matchIndex + (e.deltaY > 0 ? 1 : -1) + matches.length) % matches.length;
+    matches[matchIndex].scrollIntoView({ behavior: 'smooth', block: 'center' });
+  });
+
 
   /* ------------------------------------------------------------------
      3. TIME UTILITIES
@@ -266,7 +342,7 @@ function updateVoiceHeader(block) {
       none.textContent = 'None';
       none.style.color = '#ffc0cb88';
       none.onclick = () => {
-        if (editingBlock) { delete editingBlock._voice; updateVoiceHeader(editingBlock); editing = 1; }
+        if (editingBlock) { delete editingBlock._voice; updateVoiceHeader(editingBlock);}
       };
       voiceContent.appendChild(none);
 
@@ -282,7 +358,6 @@ div.onclick = () => {
     name: v.name 
   };
   updateVoiceHeader(editingBlock);
-  editing = 1;
 };
         voiceContent.appendChild(div);
       });
@@ -357,7 +432,7 @@ const activateBlock = (block, options = {}) => {
       myPic.currentTime = 0;
       myPic.play();
     }
-  updateMediaHeader();
+  updateMediaHeader(); 
   updateVoiceHeader(block);
   }
 };
@@ -376,20 +451,21 @@ function attachBlockListeners(block) {
     }
   });
 
-  block.addEventListener('mouseenter', () => {
+  block.addEventListener('mouseenter', () => {selected = ''; 
     activateBlock(block, { edit: false, play: userWantsPlay });
   });
 
   block.addEventListener('click', e => {
     e.stopPropagation();
+    blocks.forEach(b => b.innerHTML = b.innerText);
     if (editingBlock && editingBlock !== block) {splitIfNeeded(editingBlock)}
     editingBlock?.classList.remove('editing');
     block.classList.add('editing');
- //   editingBlock = block;
     activateBlock(block, { edit: true, play: true });
   });
 
   block.addEventListener('keydown', e => {
+    if (e.key != 'Pause') editing = 1
     if (e.key !== 'Backspace') return;
     if (window.getSelection().toString()) return; // selection → let browser delete
 
@@ -474,7 +550,6 @@ function attachBlockListeners(block) {
 
     renumberBlocks();
     rebuildTimestamps();
-    editing = 1;
   }
 }
 
@@ -599,7 +674,7 @@ if (item.url.includes('.mp3')) {row.style.borderLeft = '0.2px solid pink'; row.d
           const muted = mute.dataset.muted !== 'true';
           mute.dataset.muted = muted;
           mute.textContent = muted ? '🔇' : '🔊';
-myPlayer.play()
+          myPlayer.play()
           if (currentPreviewItem === row) myPlayer.muted = muted;
         });
 
@@ -797,17 +872,13 @@ function makeProjectJSON() {
       Object.assign(editor.style, ui);
 
       editor.style.top = myPlayer.offsetTop + myPlayer.offsetHeight + 'px'
-
-      const observer = new MutationObserver(() => editing = 1);
-      observer.observe(viewport, { childList: true, subtree: true, characterData: true });
-      editor._mutationObserver = observer;
       editor._resize = center;
     },
 
     close() {
-      if (editor._mutationObserver) editor._mutationObserver.disconnect();
       if (editing === 1) editing = makeProjectJSON();
       else editing = 0;
+      selected = ''
       editingBlock = null
       overEditor = false;
       editor.style.display = null
@@ -821,5 +892,6 @@ function makeProjectJSON() {
     const r = el.getBoundingClientRect(), c = container.getBoundingClientRect();
     return r.top >= c.top && r.bottom <= c.bottom;
   }
+
 
 })();

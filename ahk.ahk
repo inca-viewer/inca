@@ -107,7 +107,7 @@
     messages(startPage)				; opens browser
     SetTimer, TimedEvents, 49			; every 49mS - process server requests
     SetTimer, SlowTimer, 499, -2		; check on youtube downloads
-    SetTimer, VolTimer, 6666, -2		; stops windows vol jitter
+    SetTimer, VolTimer, 6664, -2		; stops windows vol lockouts
     return
 
 
@@ -424,12 +424,6 @@
       }
     longClick =
     Gui PopUp:Cancel
-    if (A_TickCount - serverTimout > 9999)				; server timed out
-      {
-      Run, %server%inca/cache/html/%folder%.htm
-      sleep 600
-      WinActivate, ahk_group Browsers
-      }
     }
 
 
@@ -795,7 +789,7 @@
     else Loop, Parse, searchPath, `|
       Loop, Files, %A_LoopField%*.*, F%recurse%
         if A_LoopFileAttrib not contains H,S
-          if (A_LoopFileSize > 0 && listSize < 250000)		; for when files are still downloading
+          if (A_LoopFileSize > 0 && listSize < 350000)		; for when files are still downloading
             {
             list .= spool(A_LoopFileFullPath, A_Index, start)
             if (!silent && listSize && ((listSize<10000 && !Mod(listSize,1000)) || !Mod(listSize,10000)))
@@ -1957,11 +1951,11 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
       return
     FileDelete, %inca%\cache\html\temp.txt				; server polling file
     if (!incaTab || !WinExist("ahk_group Browsers") || lastClick=="MButton")
-{
+      {
       run, %htm%
-sleep 144
-    WinActivate, ahk_group Browsers
-}
+      sleep 100
+      WinActivate, ahk_group Browsers
+      }
     else if (incaTab == folder) 
       send {F5}
     else FileAppend, %htm%, %inca%\cache\html\temp.txt, UTF-8		; trigger node server
@@ -2150,6 +2144,8 @@ sleep 144
     CreateList(1)
     if (incaTab && folder == fld)					; if in same tab after processing
       {
+      RegExMatch(select, "(\d+),?\s*$", match)
+      index := match1							; last selected
       RenderPage(0)
       if (A_TickCount - serverTimout > 9999)				; server timout
         send, {F5}

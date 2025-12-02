@@ -1,11 +1,4 @@
-// search all srt in folder and txt as you type using js library
 
-
-// fav start time set to start if < 2 secons in
-// thumbsheet from listviw
-
-// new tab ove music
-// loses sele highlight on myjpg etc
 
   let wheel = 0								// wheel count
   let wheelDir = 0		 					// wheel direction
@@ -68,7 +61,6 @@
   let lastId = ''
   let overEditor = false
   let more = 0
-
 
   let entry = document.createElement('div')				// dummy thumb container
   let thumb = document.createElement('div')				// . thumb element
@@ -176,7 +168,7 @@
 
   function getStart(id) {
     if (lastClick == 2 || !dur) start = defStart
-    if (playing && ym > 0.8 && overMedia || yw > 0.98) {
+    if (!thumbSheet && playing && ym > 0.8 && overMedia || yw > 0.98) {
       if (xm < 0.1) {if (longClick) {myPlayer.currentTime = 0} else myPlayer.currentTime = defStart}
       else {myPlayer.currentTime = start}
       return}
@@ -276,7 +268,7 @@
       else if (filt) filt--						// filter
       if ((id == 'myAlpha' || id == 'mySearch') && filt > 26) filt = 26
       if (id == 'myType' && filt > 4) filt = 4
-      filter(id); block = 80}
+      filter(id); block = 90}
     else if (id == 'mySpeed') {						// rate
       if (wheelUp) {rate -= 0.01} else rate += 0.01
       updateCue('rate',rate); block = 80}
@@ -318,9 +310,9 @@
       if (!thumbSheet) myPlayer.currentTime = start
       positionMedia(0); block = 140}
     else if ((!dur || thumbSheet || longClick) && !overText && playing) { // zoom myPlayer
-      let x = 0, y = 0, z = 0
-      z = overMedia ? wheel / 1500 : z
-      if (scaleY > 0.5) {x = rect.left+rect.width/2-xPos; y = rect.top+rect.height / 2 - yPos}
+      let z = overMedia ? wheel / 1500 : 0
+      let x = rect.left+rect.width / 2 - xPos
+      let y = rect.top+rect.height / 2 - yPos
       let array = thumbSheet ? [...xyz] : [mediaX, mediaY, scaleY]
       array[0] += x * z * (wheelUp ? 1 : -1)
       array[1] += y * z * (wheelUp ? 1 : -1)
@@ -331,7 +323,7 @@
       positionMedia(0)}
     else if (dur && !thumbSheet) {					// seek
       let interval = 0.1
-      if (dur > 200 && overMedia && ym > 0.8) interval = 1	
+      if (dur > 200 && yw > 0.9) interval = 1	
       else if (myPlayer.paused) interval = 0.0333
       if (wheelUp) thumb.currentTime = myPlayer.currentTime += interval
       else if (!wheelUp) thumb.currentTime = myPlayer.currentTime -= interval
@@ -356,8 +348,9 @@
     if (fade) fade--							// seekbar holdback
     if (more) more--							// lazy loading holdback
     if (cursor) cursor--						// cursor hide timer
-    if (selected) mySelected.innerHTML = selected.split(',').length -1
-    else mySelected.innerHTML = ''
+    mySelected.textContent = selected.includes(',') 
+      ? selected.split(',').length - 1 
+      : selected.trim();
     if (!playing || thumbSheet || overText) myBody.style.cursor = null	// show default cursor
     else if (!cursor) myBody.style.cursor = 'none'			// hide cursor
     else myBody.style.cursor = 'crosshair'				// moving cursor over player
@@ -464,7 +457,7 @@
         myPic.style.backgroundImage = 'url(\"'+sheet+'\")'
         myPic.style.backgroundPosition = `${(thumbIndex % 6) * 20}% ${Math.floor(thumbIndex / 6) * 20}%`}
       if (skinny < 0) myPic.style.left = rect.left + rect.width + 'px'}	// media flipped
-    else {mySeek.style.opacity = myPic.style.opacity = 0; start = thumb.currentTime || defStart}}
+    else mySeek.style.opacity = myPic.style.opacity = 0}
 
 
   function setThumb() {							// sets src, poster, thumbsheet & dimensions
