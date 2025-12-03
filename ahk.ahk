@@ -236,6 +236,8 @@
       Search()
     else if (command == "CutCopyPaste")
       CutCopyPaste()
+    else if (command == "Export")
+      FileAppend, %value%, %profile%\Downloads\%media%.txt, UTF-8
     else if (command == "Null")						; used as trigger to save text editing - see Java inca()
       {
       lastClick =
@@ -1238,6 +1240,7 @@
     FileMove, %inca%\cache\durations\%media%.txt, %inca%\cache\durations\%new_name%.txt, 1
     FileMove, %inca%\cache\thumbs\%media%.jpg, %inca%\cache\thumbs\%new_name%.jpg, 1
     FileMove, %inca%\cache\posters\%media%.jpg, %inca%\cache\posters\%new_name%.jpg, 1
+    FileMove, %inca%\cache\srt\%media%.srt, %inca%\cache\srt\%new_name%.srt, 1
     FileMove, %inca%\cache\json\%media%.json, %inca%\cache\json\%new_name%.json, 1
     }
 
@@ -1884,12 +1887,12 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
 
   <div id='myDefault'>
     <div class="menu editor">`n
-      <a>New Voice</a>`n
-      <a>New Video</a>`n
-      <a>New Media</a>`n
-      <a>Clone Voice</a>`n
-      <a>Top Tail jpg</a>`n
-      <a>Duplicate</a>
+      <a id='myBookmark'>Bookmark</a>`n
+      <a>Voice</a>`n
+      <a>Media</a>`n
+      <a>Clone</a>`n
+      <a id='myExport'>Export</a>`n
+      <a>Jpg</a>`n
     </div>
 
     <div class="menu default" onwheel='wheelEvent(event)'>`n
@@ -1953,7 +1956,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
     if (!incaTab || !WinExist("ahk_group Browsers") || lastClick=="MButton")
       {
       run, %htm%
-      sleep 100
+      sleep 200
       WinActivate, ahk_group Browsers
       }
     else if (incaTab == folder) 
@@ -2131,11 +2134,11 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
         else if (DetectMedia(source) == "image")
           cmd = %inca%\cache\apps\ffmpeg.exe -i "%source%" -vf "scale=iw*%skinny%:ih" -y "%output%"
         else cmd = %inca%\cache\apps\ffmpeg.exe -ss %time% -i "%source%" -vf "scale=iw*%skinny%:ih" -y -vframes 1 "%output%"
-        if InStr(el_id, "Index")
-          Index(entry, 1)
-        else if InStr(el_id, "myJpg")
+        if InStr(el_id, "myIndex")
+          Index(source, 1)
+        if InStr(el_id, "myJpg")
           runwait, %cmd%,, Hide
-        else if (InStr(el_id, "myMp3") || InStr(el_id, "myMp4"))
+        if (InStr(el_id, "myMp3") || InStr(el_id, "myMp4"))
           if (new := Transcode(el_id, source, sta, end))
             Index(new, 1)
         GuiControl, Indexer:, GuiInd

@@ -68,8 +68,17 @@ container.innerHTML = `
     .text-block {
       background:transparent; border-radius:6px; text-align:center; white-space:pre-wrap;
       word-wrap:break-word; font-size:1em; font-family:'Yu Gothic'; padding: 0 1em; line-height:1.5;
-      color:#ffc0cb80; outline:none; width: 95%; align-self: center;
+      color:#ffc0cb80; outline:none; width: 95%; align-self: center; border-right: 0.1px solid transparent
     }
+.text-block { position: relative; }
+.text-block[data-fav="1"]::before {
+  content: '♥';
+  position: absolute;
+  color: #ffc0cb;
+  top: 0.36em;
+  left: -1.5em;
+  font-size: 0.7em;
+}
     .text-block.editing { border-left: 0.1px solid #ffc0cb40; border-right: 0.1px solid #ffc0cb40; }
     #voice-header > .header { width:8em; justify-content:center; padding: 0 1em; display: none}
     #voice-header .dropdown-content {height: 8em; padding: 0.5em 0.5em; line-height: 1.6; }
@@ -100,19 +109,22 @@ container.innerHTML = `
       padding: 0 6px;
       cursor: text;
       height: 1.2em;
+      white-space:nowrap; 
     }
     #caption-search-input {
-      flex: 1;
+      width: 8em;
       background: transparent;
+      color: #ffc0cbaa; 
       border: none;
-      color: #ffc0cbaa;
       outline: none;
       font-size: 13px;
     }
-    mark {background: inherit; color: #ffc0cb}
-    #caption-search-input::placeholder {color: #ffc0cb80; transition: color 1s}
-    #caption-search-input:focus::placeholder {color: transparent}
+    #search-match-count { color: #ffc0cb; font-size: 0.8em; margin-left: auto;}
+    mark { background: inherit; color: #ffc0cb }
+    #caption-search-input::placeholder { color: #ffc0cb80; transition: color 1s; }
+    #caption-search-input:focus::placeholder { color: transparent }
 
+'
   </style>
 
   <div id="editor">
@@ -137,6 +149,7 @@ container.innerHTML = `
       </div>
       <div id="search-header">
         <input type="text" id="caption-search-input" placeholder="&#x1F50D;&#xFE0E;" autocomplete="off">
+        <span id="search-match-count"></span>
       </div>
 
     </div>
@@ -199,15 +212,16 @@ container.innerHTML = `
 
   let matchIndex = 0
   let searchTerm = ''
+  let favIndex = 0
   const searchInput = container.querySelector('#caption-search-input');
+  const matchCountSpan  = container.querySelector('#search-match-count');
 
   function performSearch() {
     const term = searchInput.value.trim();
     if (term) searchTerm = term;
-    else  matchIndex = 0
+    else matchIndex = 0
     if (term.length < 3) {
       matchIndex = 0;
-      selected = ''
       return;
     }
     blocks.forEach(b => {b.innerHTML = b.innerText;});
@@ -220,25 +234,33 @@ container.innerHTML = `
       }
     });
     if (matches.length === 0) return;
-    selected = String(matches.length)
+    matchCountSpan.textContent = '1 : ' + String(matches.length)
     const target = matches[matchIndex] || matches[0];
     target.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
   searchInput.addEventListener('input', performSearch);
   searchInput.addEventListener('mouseenter', () => {if (searchTerm) {searchInput.value = searchTerm}})
-  container.querySelector('#search-header').addEventListener('wheel', e => {
-    e.preventDefault();
-    wheel += Math.ceil(Math.abs(e.deltaY))
-    if (wheel < block) return
-    block = 180; wheel = 0;
-    performSearch()
-    if (!searchTerm || searchTerm.length < 3) return;
-    const term = searchInput.value.trim();
-    matches = blocks.filter(b => b.innerHTML.includes(term));
-    if (!matches.length) return;
-    selected = String(matchIndex+1)
-    matchIndex = (matchIndex + (e.deltaY > 0 ? 1 : -1) + matches.length) % matches.length;
-    matches[matchIndex].scrollIntoView({ behavior: 'smooth', block: 'center' });
+container.querySelector('#search-header').addEventListener('wheel', e => {
+  e.preventDefault();
+  wheel += Math.ceil(Math.abs(e.deltaY))
+  if (wheel < block) return
+  block = 200; wheel = 0;
+  performSearch()
+  if (!searchTerm || searchTerm.length < 3) {					// bookmark search
+    const favs = blocks.filter(b => b.dataset.fav === '1');
+    if (!favs.length) return;
+    favIndex = (favIndex + (e.deltaY > 0 ? 1 : -1) + favs.length) % favs.length;
+    matchCountSpan.textContent = `${favIndex + 1} : ${favs.length}`;
+    favs[favIndex].scrollIntoView({ behavior: 'smooth', block: 'center' });
+    return;
+  }
+  const term = searchInput.value.trim();
+  matches = blocks.filter(b => b.innerHTML.includes(term));
+  if (!matches.length) return;
+  matchIndex = (matchIndex + (e.deltaY > 0 ? 1 : -1) + matches.length) % matches.length;
+  matchCountSpan.textContent = String(matchIndex + 1) + ' : ' + String(matches.length)
+  matches[matchIndex].scrollIntoView({ behavior: 'smooth', block: 'center' });
+
   });
 
 
@@ -272,13 +294,14 @@ container.innerHTML = `
   /* ------------------------------------------------------------------
      4. BLOCK MANAGEMENT
      ------------------------------------------------------------------ */
-  function createBlock(num, startSec, text, cues = {}) {
+  function createBlock(num, startSec, text, fav, cues = {}) {
     const block = document.createElement('pre');
     block.className = 'text-block';
     block.dataset.num = num;
     block.dataset.start = startSec;
     block.contentEditable = true;
     block.textContent = text;
+    block.dataset.fav = fav;
     block._cues = cues;
     block._media = cues.media || null;
     block._voice = cues.voice || null;
@@ -286,8 +309,8 @@ container.innerHTML = `
     return block;
   }
 
-  function addBlock(num, startSec, text, cues = {}) {
-    const block = createBlock(num, startSec, text, cues);
+  function addBlock(num, startSec, text, fav, cues = {}) {
+    const block = createBlock(num, startSec, text, fav, cues);
     viewport.appendChild(block);
     blocks.push(block);
     return block;
@@ -309,6 +332,9 @@ container.innerHTML = `
       block: b
     })).sort((a, b) => a.sec - b.sec);
   }
+
+
+
 
   /* ------------------------------------------------------------------
      5. MEDIA & VOICE HANDLING
@@ -451,13 +477,19 @@ function attachBlockListeners(block) {
     }
   });
 
-  block.addEventListener('mouseenter', () => {selected = ''; 
-    activateBlock(block, { edit: false, play: userWantsPlay });
-  });
+
+  myExport.onclick = () => {const str = blocks.map(b => b.innerText.trim()).filter(t => t).join('\n\n'); inca('Export', str)}
+
+  myBookmark.onclick = () => {
+    const block = blocks.find(b => b.dataset.num === idDisplay.textContent);
+    if (block) {block.dataset.fav = block.dataset.fav === '1' ? '0' : '1'; editing = 1}}
+
+  block.addEventListener('dragstart', () => { editing = 1})
+  block.addEventListener('mouseenter', () => {activateBlock(block, { edit: false, play: userWantsPlay })})
 
   block.addEventListener('click', e => {
     e.stopPropagation();
-    blocks.forEach(b => b.innerHTML = b.innerText);
+    if (searchInput.value) {searchInput.value = ''; blocks.forEach(b => b.innerHTML = b.innerText);}
     if (editingBlock && editingBlock !== block) {splitIfNeeded(editingBlock)}
     editingBlock?.classList.remove('editing');
     block.classList.add('editing');
@@ -465,7 +497,7 @@ function attachBlockListeners(block) {
   });
 
   block.addEventListener('keydown', e => {
-    if (e.key != 'Pause') editing = 1
+    if (e.key != 'Pause' && !e.shiftKey && !e.altKey) editing = 1
     if (e.key !== 'Backspace') return;
     if (window.getSelection().toString()) return; // selection → let browser delete
 
@@ -535,6 +567,7 @@ function attachBlockListeners(block) {
         null,
         i === 0 ? startSec : startSec + i * 2.5,
         part,
+        i === 0 ? blockToSplit.dataset.fav : '0',
         { media: blockToSplit._media, voice: blockToSplit._voice }
       );
       viewport.insertBefore(newBlock, nextSibling);
@@ -731,6 +764,7 @@ function makeProjectJSON() {
     blocks: blocks.map(b => ({
       number: parseInt(b.dataset.num),
       startTime: parseFloat(b.dataset.start) || null,
+      fav: b.dataset.fav === '1' ? 1 : 0,
       text: b.innerText.trim(),
       extras: {
         media: b._media ? { src: b._media.src.replace(/\\/g, '/'), name: b._media.name } : null,
@@ -847,6 +881,7 @@ function makeProjectJSON() {
           b.number || (blocks.length + 1),
           b.startTime || 0,
           b.text || '',
+          b.fav || 0,
           b.extras || {}
         );
         if (b.extras?.media) block._media = b.extras.media;
@@ -871,6 +906,10 @@ function makeProjectJSON() {
       const ui = parsed.ui || {};
       Object.assign(editor.style, ui);
 
+matchCountSpan.textContent = ''
+
+
+
       editor.style.top = myPlayer.offsetTop + myPlayer.offsetHeight + 'px'
       editor._resize = center;
     },
@@ -878,7 +917,6 @@ function makeProjectJSON() {
     close() {
       if (editing === 1) editing = makeProjectJSON();
       else editing = 0;
-      selected = ''
       editingBlock = null
       overEditor = false;
       editor.style.display = null

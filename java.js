@@ -161,7 +161,7 @@
     if (myNav.style.display && Click == 3) {thumbSheet ^= 1; myNav.style.display = null; start = lastSeek}
     else if (!getStart(id)) return
     if (Click == 3 && !playing && !overMedia) {thumbSheet = 0; index = lastMedia; start = lastSeek}
-    if (!playing && lastClick == 2) return
+    if (!playing && lastClick == 2 || myNav.style.display) return
     if (playing && lastClick == 1 && type == 'document') return
     if (lastClick && !(overEditor && lastClick == 1)) Play()}
 
@@ -242,11 +242,10 @@
     if (x + y > 9 && !gesture && Click) {gesture=1; if (!longClick&&zoom==1 && !playing && overMedia && !myNav.style.display) sel(index)}
     if (!gesture || !Click) {gesture = 0; return}
     if (y > x + 1) gesture = 2							// enable player move
-    if (Click == 1 && overEditor) editing = 1
     if (!playing && overMedia && zoom > 1) {
       thumb.style.left = parseInt(thumb.style.left || 0) + xPos - xRef + 'px'	// move thumb
       thumb.style.top =  parseInt(thumb.style.top || 0) + yPos - yRef + 'px'}
-    else if (e.target.id == 'ribbon') {
+    else if (e.target.id == 'viewport') {
       editor.style.left = editor.offsetLeft + xPos - xRef + 'px'		// move caption editor
       editor.style.top = editor.offsetTop + yPos - yRef + 'px'}
     else if (playing && (Click == 1 || gesture == 2 || block == 1) && !(!overMedia && captions)) {
@@ -440,10 +439,9 @@
       if (dur) mySeek.style.opacity = 1
       if (xm>0 && xm<1 && ym > 0.8 && ym<1 && !thumbSheet && block < 30) myPic.style.opacity = 1
       else myPic.style.opacity = 0
-      if (playing || zoom > 1) {
-        myPic.style.top = mySeek.offsetTop - thumb.offsetHeight + 'px'
-        myPic.style.left = xPos - thumb.offsetWidth/2 + 'px'}
-      else {myPic.style.top = rect.top + 'px'; myPic.style.left = rect.left + 'px'}
+      myPic.style.top = rect.top + rect.height - myPic.offsetHeight + 'px'
+      if (rect.width > 240) myPic.style.left = xPos - myPic.offsetWidth / 2 + 'px'
+      else myPic.style.left = rect.left + rect.width / 2 - myPic.offsetWidth / 2 + 'px'
       let x = (xPos - rect.left) / rect.width				// set myPic sprite and set start
       let thumbIndex = Math.ceil(x * 35)
       let z = (5 * (thumbIndex + 1) - 1) / 200
@@ -480,6 +478,7 @@
     myVig.style.width = myPic.style.width = thumb.offsetWidth + 'px'
     myVig.style.height = myPic.style.height = thumb.offsetHeight + 'px'
     thumb.style.transform = 'scale('+skinny*zoom+','+zoom+')'
+    if (thumb.offsetWidth > 160) {myPic.style.width = '160px'; myPic.style.height = 160 / aspect +'px'}
     myPic.style.transform = 'scale('+skinny+',1)'
     myPic.style.backgroundPosition = '0% 0%'}				// sets to frame 1 of 6x6 thumbSheet
 
