@@ -144,6 +144,7 @@
       if (longClick) {index--} else index++				// next, previous media
       if (!Param()) {index = lastMedia; closePlayer(); return}}		// end of media list
     if (lastClick == 1) {
+      if (editor.style.display && !thumbSheet) return
       if (!playing && id != title.id) {
         if (!overText && longClick && myPanel.matches(':hover')) return 
         if (id == 'myCue' || (overMedia && thumb.src.slice(-3) == 'm3u')
@@ -163,7 +164,7 @@
     if (Click == 3 && !playing && !overMedia) {thumbSheet = 0; index = lastMedia; start = lastSeek}
     if (!playing && lastClick == 2 || myNav.style.display) return
     if (playing && lastClick == 1 && type == 'document') return
-    if (lastClick && !(overEditor && lastClick == 1)) Play()}
+    if (lastClick) Play()}
 
 
   function getStart(id) {
@@ -245,7 +246,7 @@
     if (!playing && overMedia && zoom > 1) {
       thumb.style.left = parseInt(thumb.style.left || 0) + xPos - xRef + 'px'	// move thumb
       thumb.style.top =  parseInt(thumb.style.top || 0) + yPos - yRef + 'px'}
-    else if (e.target.id == 'viewport') {
+    else if (e.target.id == 'ribbon') {
       editor.style.left = editor.offsetLeft + xPos - xRef + 'px'		// move caption editor
       editor.style.top = editor.offsetTop + yPos - yRef + 'px'}
     else if (playing && (Click == 1 || gesture == 2 || block == 1) && !(!overMedia && captions)) {
@@ -309,9 +310,11 @@
       if (!thumbSheet) myPlayer.currentTime = start
       positionMedia(0); block = 140}
     else if ((!dur || thumbSheet || longClick) && !overText && playing) { // zoom myPlayer
-      let z = overMedia ? wheel / 1500 : 0
-      let x = rect.left+rect.width / 2 - xPos
-      let y = rect.top+rect.height / 2 - yPos
+      let z = (overMedia || !wheelUp) ? wheel / 1200 : 0
+      let zoomPosX = wheelUp ? xPos : innerWidth / 2.2
+      let zoomPosY = wheelUp ? yPos : innerHeight / 2
+      let x = rect.left+rect.width / 2 - zoomPosX
+      let y = rect.top+rect.height / 2 - zoomPosY
       let array = thumbSheet ? [...xyz] : [mediaX, mediaY, scaleY]
       array[0] += x * z * (wheelUp ? 1 : -1)
       array[1] += y * z * (wheelUp ? 1 : -1)
@@ -347,9 +350,9 @@
     if (fade) fade--							// seekbar holdback
     if (more) more--							// lazy loading holdback
     if (cursor) cursor--						// cursor hide timer
-    mySelected.textContent = selected.includes(',') 
+    mySelected.textContent = String(selected).includes(',') 
       ? selected.split(',').length - 1 
-      : selected.trim();
+      : selected;
     if (!playing || thumbSheet || overText) myBody.style.cursor = null	// show default cursor
     else if (!cursor) myBody.style.cursor = 'none'			// hide cursor
     else myBody.style.cursor = 'crosshair'				// moving cursor over player
@@ -440,8 +443,8 @@
       if (xm>0 && xm<1 && ym > 0.8 && ym<1 && !thumbSheet && block < 30) myPic.style.opacity = 1
       else myPic.style.opacity = 0
       myPic.style.top = rect.top + rect.height - myPic.offsetHeight + 'px'
-      if (rect.width > 240) myPic.style.left = xPos - myPic.offsetWidth / 2 + 'px'
-      else myPic.style.left = rect.left + rect.width / 2 - myPic.offsetWidth / 2 + 'px'
+      if (rect.width > 240) myPic.style.left = xPos - skinny * myPic.offsetWidth / 2 + 'px'
+      else myPic.style.left = rect.left + rect.width / 2 - skinny * myPic.offsetWidth / 2 + 'px'
       let x = (xPos - rect.left) / rect.width				// set myPic sprite and set start
       let thumbIndex = Math.ceil(x * 35)
       let z = (5 * (thumbIndex + 1) - 1) / 200
@@ -723,9 +726,9 @@
 
   function context(e) { if (overEditor) {myNav.classList.add('editor-mode')} else myNav.classList.remove('editor-mode')
     myNav.style.display = 'block'; myNav.style.left = xPos-90+'px'; myNav.style.top = yPos-32+'px'}
-  function Pause() {
+  function Pause() { if (!overEditor) {
     if (!thumbSheet && playing && myPic.paused) { myPic.play() } else myPic.pause()
-    if (!thumbSheet && playing && myPlayer.paused) { myPlayer.play() } else myPlayer.pause()}
+    if (!thumbSheet && playing && myPlayer.paused) { myPlayer.play() } else myPlayer.pause()}}
   function closePic() {thumb.style.size = 1; myPic.style = thumb.style = ''; Param()}
   function Cancel() {if (myCancel.innerHTML != 'Sure ?') {myCancel.innerHTML = 'Sure ?'} else {editing = 0; inca('Reload',index)}}
   function Flip() {xPos = 0; skinny *=- 1; thumb.style.skinny = skinny; Param(); positionMedia(0.4)}

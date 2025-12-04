@@ -72,11 +72,11 @@ container.innerHTML = `
     }
 .text-block { position: relative; }
 .text-block[data-fav="1"]::before {
-  content: '♥';
+  content: '❤';
   position: absolute;
   color: #ffc0cb;
   top: 0.36em;
-  left: -1.5em;
+  left: -1.8em;
   font-size: 0.7em;
 }
     .text-block.editing { border-left: 0.1px solid #ffc0cb40; border-right: 0.1px solid #ffc0cb40; }
@@ -93,11 +93,11 @@ container.innerHTML = `
       user-select:none; cursor:pointer;
     }
     #myCancel {
-      position: absolute; top: 0.5em; right: 0.7em;
-      visibility:hidden; text-align:center; min-width:3.5em; color:#ffc0cbcc;
+      position: absolute; top: 0.5em; right: 0.7em; color: red; 
+      visibility:hidden; text-align:center; min-width:3.5em;
       transition:0.6s; background:#1a1a1a00; cursor:pointer; font-size: 0.85em;
     }
-    #myCancel:hover { color: red; transform: scale(1.5,1.5)}
+    #myCancel:hover { transform: scale(1.5,1.5)}
 
     #search-header {
       width: 11em;
@@ -119,7 +119,7 @@ container.innerHTML = `
       outline: none;
       font-size: 13px;
     }
-    #search-match-count { color: #ffc0cb; font-size: 0.8em; margin-left: auto;}
+    #search-match-count { color: #ffc0cbaa; font-size: 0.8em; margin-left: auto;}
     mark { background: inherit; color: #ffc0cb }
     #caption-search-input::placeholder { color: #ffc0cb80; transition: color 1s; }
     #caption-search-input:focus::placeholder { color: transparent }
@@ -240,14 +240,14 @@ container.innerHTML = `
   }
   searchInput.addEventListener('input', performSearch);
   searchInput.addEventListener('mouseenter', () => {if (searchTerm) {searchInput.value = searchTerm}})
-container.querySelector('#search-header').addEventListener('wheel', e => {
-  e.preventDefault();
+  container.querySelector('#search-header').addEventListener('wheel', e => {
+    e.preventDefault();
   wheel += Math.ceil(Math.abs(e.deltaY))
   if (wheel < block) return
   block = 200; wheel = 0;
   performSearch()
-  if (!searchTerm || searchTerm.length < 3) {					// bookmark search
-    const favs = blocks.filter(b => b.dataset.fav === '1');
+  if (!searchTerm || searchTerm.length < 3) {
+    const favs = blocks.filter(b => b.dataset.fav === '1');			// bookmark search
     if (!favs.length) return;
     favIndex = (favIndex + (e.deltaY > 0 ? 1 : -1) + favs.length) % favs.length;
     matchCountSpan.textContent = `${favIndex + 1} : ${favs.length}`;
@@ -469,8 +469,8 @@ const activateBlock = (block, options = {}) => {
    ------------------------------------------------------------------ */
 function attachBlockListeners(block) {
 
-  viewport.addEventListener('click', () => {
-    if (editingBlock) {
+  document.addEventListener('click', () => {
+    if (editingBlock && overEditor == false) {
       editingBlock.classList.remove('editing');
       splitIfNeeded(editingBlock);       // ← split before losing focus
       editingBlock = null;
@@ -496,35 +496,40 @@ function attachBlockListeners(block) {
     activateBlock(block, { edit: true, play: true });
   });
 
-  block.addEventListener('keydown', e => {
-    if (e.key != 'Pause' && !e.shiftKey && !e.altKey) editing = 1
-    if (e.key !== 'Backspace') return;
-    if (window.getSelection().toString()) return; // selection → let browser delete
 
-    const range = window.getSelection().getRangeAt(0);
-    if (range.startOffset !== 0) return;
 
-    const prev = block.previousElementSibling;
-    if (!prev?.classList.contains('text-block')) return;
+block.addEventListener('keydown', e => {
+  if (e.key != 'Pause' && !e.shiftKey && !e.altKey) editing = 1
+  if (e.key !== 'Backspace') return;
+  if (window.getSelection().toString() !== '') document.execCommand('delete')
+  const range = window.getSelection().getRangeAt(0);
+  const charBefore = range.startContainer.textContent[document.getSelection().getRangeAt(0).startOffset - 1]
+  if (charBefore === '\n') { document.execCommand('delete'); document.execCommand('insertText', false, '  ')}
+  if (range.rangeCount === 0) return;
+  const testRange = document.createRange();
+  testRange.selectNodeContents(block);
+  testRange.setEnd(range.startContainer, range.startOffset);
+  if (testRange.toString() !== '') return;
+  const prev = block.previousElementSibling;
+  if (!prev?.classList.contains('text-block')) return;
+  e.preventDefault();
+  const prevText = prev.innerText.trim();
+  const currText = block.innerText.trim();
+  prev.innerText = prevText + '\n' + currText;
+  prev.innerHTML = prev.innerText;
+  block.remove();
+  blocks = blocks.filter(b => b !== block);
+  renumberBlocks();
+  editingBlock = prev;
+  editingBlock.focus();
+  const r = document.getSelection().getRangeAt(0);
+  r.setStart(r.startContainer, prevText.length + 1);
+  idDisplay.textContent = prev.dataset.num;
+  timeDisplay.textContent = shortFormatTime(+prev.dataset.start || 0);
+  updateMediaHeader(prev);
+  requestAnimationFrame(rebuild);
+});
 
-    e.preventDefault();
-    prev.focus();
-    const len = prev.innerText.length;
-    prev.innerText += '\n' + block.innerText;
-    prev.innerHTML = prev.innerHTML; // preserve <br> → \n
-
-    block.remove();
-    blocks = blocks.filter(b => b !== block);
-    renumberBlocks();
-    requestAnimationFrame(() => {
-      const r = document.createRange();
-      r.setStart(prev.firstChild || prev, len + 1);
-      r.collapse(true);
-      const sel = window.getSelection();
-      sel.removeAllRanges();
-      sel.addRange(r);
-    });
-  });
 
   block.addEventListener('input', () => 
     requestAnimationFrame(() => myPlayer.pause())
@@ -907,8 +912,7 @@ function makeProjectJSON() {
       Object.assign(editor.style, ui);
 
 matchCountSpan.textContent = ''
-
-
+container.querySelector('#search-header').dispatchEvent(new WheelEvent('wheel', { deltaY: -100 }));
 
       editor.style.top = myPlayer.offsetTop + myPlayer.offsetHeight + 'px'
       editor._resize = center;
