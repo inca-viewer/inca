@@ -27,17 +27,17 @@ container.innerHTML = `
       background:#080707; border-radius:12px; box-shadow:0 12px 32px rgba(0,0,0,0.6);
       position:fixed; left:50%; top:50%; transform:translate(-50%,-50%); z-index: 5002;
       min-width:250px; min-height:160px; resize:both; max-height:80vh; overflow:hidden; }
-    #ribbon { background:#1a1a1a20; padding:6px 8px; display:flex; gap:6px; align-items:center;
+    #ribbon { background:#080707; padding:6px 8px; display:flex; gap:6px; align-items:center;
       flex-wrap:wrap; user-select:none; flex-shrink:0; justify-content:center;}
     .dropdown { position:relative; display:inline-block;}
     .dropdown > .header {
-      background: #1a1a1a80; color: #ffc0cb99; border-radius:6px; height: 1.6em;
+      color: #ffc0cb99; border-radius:6px; height: 1.6em;
       font-size:12px; white-space:nowrap; display:flex; align-items:center; cursor:default;
     }
     .dropdown-content {
       position: absolute; bottom:100%; min-width:50%; background: #1a1a1a;
       box-shadow:0 4px 12px rgba(0,0,0,0.5); border-radius: 6px;
-      display:none; z-index:1; padding-bottom:8px; 
+      display:none; z-index:1; padding-bottom:8px;
       overflow-y:auto; flex-direction:column; gap:2px; 
     }
     .dropdown-content > div {
@@ -82,13 +82,13 @@ container.innerHTML = `
     .text-block.editing { border-left: 0.1px solid #ffc0cb40; border-right: 0.1px solid #ffc0cb40; }
     #voice-header > .header { width:8em; justify-content:center; padding: 0 1em; display: none}
     #voice-header .dropdown-content {height: 8em; padding: 0.5em 0.5em; line-height: 1.6; }
-    #media-header > .header { width:12em; overflow:hidden; text-overflow:ellipsis; justify-content:center; }
+    #media-header > .header { width:9em; overflow:hidden; text-overflow:ellipsis; justify-content:center; }
     #media-header .dropdown-content {height: 10.4em; padding: 0.5em 0.5em; translate: -5em}
     #id-display { 
-      background:transparent; border:none; color:#ffc0cbaa; font-size:12px;
+      border:none; color:#ffc0cbaa; font-size:12px;
       outline:none; min-width:34px; text-align:center; }
     #time-display {
-      width:70px; background:inherit; color:#ffc0cbaa; border:none; outline:none;
+      width:70px; color:#ffc0cbaa; border:none; outline:none;
       text-align:center; font-size:12px; font-family:inherit; border-radius:4px;
       user-select:none; cursor:pointer;
     }
@@ -100,8 +100,7 @@ container.innerHTML = `
     #myCancel:hover { transform: scale(1.5,1.5)}
 
     #search-header {
-      width: 11em;
-      background: #1a1a1a80;
+      width: 9em;
       border-radius: 8px;
       overflow: hidden;
       display: flex;
@@ -112,7 +111,7 @@ container.innerHTML = `
       white-space:nowrap; 
     }
     #caption-search-input {
-      width: 8em;
+      width: 6em;
       background: transparent;
       color: #ffc0cbaa; 
       border: none;
@@ -190,6 +189,7 @@ container.innerHTML = `
   /* ------------------------------------------------------------------
      2. DROPDOWN BEHAVIOR
      ------------------------------------------------------------------ */
+
   container.querySelectorAll('.dropdown').forEach(dropdown => {
     const header = dropdown.querySelector('.header');
     const content = dropdown.querySelector('.dropdown-content');
@@ -217,50 +217,50 @@ container.innerHTML = `
   const matchCountSpan  = container.querySelector('#search-match-count');
 
   function performSearch() {
-    const term = searchInput.value.trim();
-    if (term) searchTerm = term;
-    else matchIndex = 0
+    const term = searchInput.value.trim()
+    if (term) searchTerm = term
+    else { matchIndex = 0; searchTerm = '' }
     if (term.length < 3) {
-      matchIndex = 0;
-      return;
+      matchIndex = 0
+      return
     }
-    blocks.forEach(b => {b.innerHTML = b.innerText;});
-    const regex = new RegExp(`(${term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
-    const matches = [];
+    blocks.forEach(b => {b.innerHTML = b.innerText;})
+    const regex = new RegExp(`(${term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi')
+    const matches = []
     blocks.forEach(b => {
       if (regex.test(b.innerText)) {
-        matches.push(b);
-        b.innerHTML = b.innerText.replace(regex, '<mark>$1</mark>');
+        matches.push(b)
+        b.innerHTML = b.innerText.replace(regex, '<mark>$1</mark>')
       }
     });
-    if (matches.length === 0) return;
+    if (matches.length === 0) return
     matchCountSpan.textContent = '1 : ' + String(matches.length)
-    const target = matches[matchIndex] || matches[0];
-    target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    const target = matches[matchIndex] || matches[0]
+    target.scrollIntoView({ behavior: 'smooth', block: 'center' })
   }
-  searchInput.addEventListener('input', performSearch);
+
+  searchInput.addEventListener('input', performSearch)
   searchInput.addEventListener('mouseenter', () => {if (searchTerm) {searchInput.value = searchTerm}})
   container.querySelector('#search-header').addEventListener('wheel', e => {
-    e.preventDefault();
+    e.preventDefault()
   wheel += Math.ceil(Math.abs(e.deltaY))
   if (wheel < block) return
   block = 200; wheel = 0;
   performSearch()
   if (!searchTerm || searchTerm.length < 3) {
-    const favs = blocks.filter(b => b.dataset.fav === '1');			// bookmark search
-    if (!favs.length) return;
-    favIndex = (favIndex + (e.deltaY > 0 ? 1 : -1) + favs.length) % favs.length;
-    matchCountSpan.textContent = `${favIndex + 1} : ${favs.length}`;
-    favs[favIndex].scrollIntoView({ behavior: 'smooth', block: 'center' });
-    return;
+    const favs = blocks.filter(b => b.dataset.fav === '1')			// bookmark search
+    if (!favs.length) return
+    favIndex = (favIndex + (e.deltaY > 0 ? 1 : -1) + favs.length) % favs.length
+    matchCountSpan.textContent = `${favIndex + 1} : ${favs.length}`
+    favs[favIndex].scrollIntoView({ behavior: 'smooth', block: 'center' })
+    return
   }
   const term = searchInput.value.trim();
-  matches = blocks.filter(b => b.innerHTML.includes(term));
-  if (!matches.length) return;
-  matchIndex = (matchIndex + (e.deltaY > 0 ? 1 : -1) + matches.length) % matches.length;
+  matches = blocks.filter(b => b.innerHTML.includes(term))
+  if (!matches.length) return
+  matchIndex = (matchIndex + (e.deltaY > 0 ? 1 : -1) + matches.length) % matches.length
   matchCountSpan.textContent = String(matchIndex + 1) + ' : ' + String(matches.length)
-  matches[matchIndex].scrollIntoView({ behavior: 'smooth', block: 'center' });
-
+  matches[matchIndex].scrollIntoView({ behavior: 'smooth', block: 'center' })
   });
 
 
@@ -406,7 +406,7 @@ div.onclick = () => {
       myPlayer.poster = '';
       if (decodeURIComponent(myPlayer.src) !== src) myPlayer.src = src;
     }
-    myPlayer.currentTime = time;
+  myPlayer.currentTime = time;
  }
 
   function scrollToNearestCaption() {
@@ -501,7 +501,7 @@ function attachBlockListeners(block) {
 block.addEventListener('keydown', e => {
   if (e.key != 'Pause' && !e.shiftKey && !e.altKey) editing = 1
   if (e.key !== 'Backspace') return;
-  if (window.getSelection().toString() !== '') document.execCommand('delete')
+  if (window.getSelection().toString() !== '') {document.execCommand('delete'); return}
   const range = window.getSelection().getRangeAt(0);
   const charBefore = range.startContainer.textContent[document.getSelection().getRangeAt(0).startOffset - 1]
   if (charBefore === '\n') { document.execCommand('delete'); document.execCommand('insertText', false, '  ')}
@@ -623,10 +623,24 @@ block.addEventListener('keydown', e => {
   });
 
   /* ------------------------------------------------------------------
-     9. MEDIA DROPDOWN POPULATION
+     9. DROPDOWN MENU POPULATION
      ------------------------------------------------------------------ */
-  container.querySelector('#media-header').addEventListener('click', async () => {
-    container.querySelectorAll('.dropdown-content').forEach(c => c.style.display = 'none');
+
+document.querySelector('#myVoice').addEventListener('mouseover', async (e) => {
+  const voiceHeader = document.querySelector('#voice-header');
+  voiceHeader.style.position = 'fixed';
+  voiceHeader.style.left = myNav.offsetLeft -200 + 'px'
+  voiceHeader.style.top = myNav.offsetTop -36 + 'px'
+  container.querySelectorAll('.dropdown-content').forEach(c => c.style.display = 'none');
+  voiceContent.style.display = 'flex';
+});
+
+document.querySelector('#myMedia').addEventListener('mouseover', async (e) => {
+  const mediaHeader = document.querySelector('#media-header.dropdown-content');
+  mediaHeader.style.position = 'fixed';
+  mediaHeader.style.left = myNav.offsetLeft - 120 + 'px'
+  mediaHeader.style.top = myNav.offsetTop + 18 + 'px'
+  container.querySelectorAll('.dropdown-content').forEach(c => c.style.display = 'none');
     mediaContent.style.display = 'flex';
 
     try {
@@ -646,7 +660,7 @@ if (!lines.length) throw '';
         const url = 'http://localhost:3000/' + path.replace(/\\/g, '/');
         return { url, startSec, name, short };
       }).filter(i => i.url && !i.name.endsWith('.txt') && !i.name.endsWith('.m3u'));
-
+      items.reverse();
       mediaContent.innerHTML = '';
       const none = document.createElement('div');
       none.textContent = 'None';
@@ -744,8 +758,6 @@ if (item.url.includes('.mp3')) {row.style.borderLeft = '0.2px solid pink'; row.d
           if (!myPlayer.muted) myPlayer.play().catch(() => {});
         });
       });
-
-mediaContent.scrollTop = mediaContent.scrollHeight;
 
     } catch (_) {
       mediaContent.innerHTML = '<div style="color:#ffc0cb66;padding:8px;">No media</div>';
@@ -861,7 +873,7 @@ function makeProjectJSON() {
     open(src = '', text = '') {
       originalSrt = src.split(/[\\/]/).pop().replace(/\.[^.]+$/, '');
       editor.style.display = 'flex';
-      if (type == 'video') originalPlayerSrc = decodeURIComponent(myPlayer.src || '');
+      if (type == 'video' || type == 'audio') originalPlayerSrc = decodeURIComponent(myPlayer.src || '');
       else originalPlayerSrc = decodeURIComponent(myPlayer.poster || '');
       userWantsPlay = !defPause;
 

@@ -1888,8 +1888,9 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
   <div id='myDefault'>
     <div class="menu editor">`n
       <a id='myBookmark'>Bookmark</a>`n
-      <a>Voice</a>`n
-      <a>Media</a>`n
+      <a id='myFind'>Find</a>`n
+      <a id='myMedia'>Media</a>`n
+      <a id='myVoice'>Voice</a>`n
       <a>Clone</a>`n
       <a id='myExport'>Export</a>`n
       <a>Jpg</a>`n
@@ -2182,7 +2183,8 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
           FileCreateDir, %assets%
           FileCopy, %A_LoopFileFullPath%, %destCopy%, 1
           }
-        FileAppend, %destCopy%|0.0`r`n, %inca%\fav\History.m3u, UTF-8
+        if (ext == "mp3" || ext == "mp4")
+          FileAppend, %destCopy%|0.0`r`n, %inca%\fav\History.m3u, UTF-8
         }
     Files := {}
     if (A_Now - ytdlp > 4 && A_Now - downloads > 4 && InStr(control, ".........."))

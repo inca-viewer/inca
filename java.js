@@ -1,5 +1,4 @@
 
-
   let wheel = 0								// wheel count
   let wheelDir = 0		 					// wheel direction
   let index = 1								// thumb index (e.g. thumb14)
@@ -119,7 +118,7 @@
 
   function clickEvent(e) {
     let id = e.target.id						// id under cursor
-    block = 100								// block wheel input straight after click
+    block = 80;								// block wheel input straight after click
     if (!playing && longClick && !gesture && overMedia) thumb.style.zIndex = 5002 + Zindex++
     if (['myCut', 'myCopy', 'myPaste'].includes(id)) {myNav.style.display=null; lastId.focus(); inca('CutCopyPaste',id); return}
     if (lastClick != 3 && (gesture || id == 'myInput')) return
@@ -144,7 +143,6 @@
       if (longClick) {index--} else index++				// next, previous media
       if (!Param()) {index = lastMedia; closePlayer(); return}}		// end of media list
     if (lastClick == 1) {
-      if (editor.style.display && !thumbSheet) return
       if (!playing && id != title.id) {
         if (!overText && longClick && myPanel.matches(':hover')) return 
         if (id == 'myCue' || (overMedia && thumb.src.slice(-3) == 'm3u')
@@ -159,6 +157,7 @@
         if (id == 'myCap') {capButton(); return}
         if (id == 'myCue' && playing) {cue = Math.round(100*myPlayer.currentTime)/100; return}}
       if (title.matches(':hover') || longClick != 1 && !playing && !overMedia && !myNav.style.display) return}
+    if (editor.style.display && (lastClick == 3 || lastClick == 1 && overEditor)) return
     if (myNav.style.display && Click == 3) {thumbSheet ^= 1; myNav.style.display = null; start = lastSeek}
     else if (!getStart(id)) return
     if (Click == 3 && !playing && !overMedia) {thumbSheet = 0; index = lastMedia; start = lastSeek}
@@ -310,7 +309,7 @@
       if (!thumbSheet) myPlayer.currentTime = start
       positionMedia(0); block = 140}
     else if ((!dur || thumbSheet || longClick) && !overText && playing) { // zoom myPlayer
-      let z = (overMedia || !wheelUp) ? wheel / 1200 : 0
+      let z = (overMedia || !wheelUp && !editor.style.display) ? wheel / 1200 : 0
       let zoomPosX = wheelUp ? xPos : innerWidth / 2.2
       let zoomPosY = wheelUp ? yPos : innerHeight / 2
       let x = rect.left+rect.width / 2 - zoomPosX
@@ -329,8 +328,8 @@
       else if (myPlayer.paused) interval = 0.0333
       if (wheelUp) thumb.currentTime = myPlayer.currentTime += interval
       else if (!wheelUp) thumb.currentTime = myPlayer.currentTime -= interval
-      myPlayer.addEventListener('seeked', () => {block = 40}, {once: true})
-      if (!playing) fade = 3
+      myPlayer.addEventListener('seeked', () => {block = 100}, {once: true})
+      if (!playing) fade = 3						// hide seekbar in thumb popout
       thumb.pause(); block = 250}
     wheel = 0}
 
@@ -419,7 +418,7 @@
     myPlayer.style.transform = myVig.style.transform = "scale(" + skinny * z + "," + z + ")"}
 
 
-  function seekbar() {							// seekbar bar beneath player
+  function seekbar() {						// seekbar bar beneath player
     navButtons()
     let cueX = rect.left
     let pos = playing ? myPlayer.currentTime : thumb.currentTime
@@ -435,7 +434,7 @@
     if (rect.bottom > innerHeight) mySeek.style.top = innerHeight - 15 +'px'
     else mySeek.style.top = rect.top + rect.height - 6 + 'px'
     mySeek.style.left = cueX + 'px'
-    if (cue || block > 20 && playing && dur || ym > 0.8 && overMedia && !fade && dur) {
+    if (cue || (block > 80 && playing && dur) || (ym > 0.8 && overMedia && !fade && dur)) {
       mySeek.style.background = cue ? 'red' : null
       if (!playing && xm<1) cueW = rect.width * xm
       mySeek.style.width = cueW + 'px'
@@ -728,7 +727,7 @@
     myNav.style.display = 'block'; myNav.style.left = xPos-90+'px'; myNav.style.top = yPos-32+'px'}
   function Pause() { if (!overEditor) {
     if (!thumbSheet && playing && myPic.paused) { myPic.play() } else myPic.pause()
-    if (!thumbSheet && playing && myPlayer.paused) { myPlayer.play() } else myPlayer.pause()}}
+    if (!thumbSheet && playing && myPlayer.paused) {myPlayer.play() } else myPlayer.pause()}}
   function closePic() {thumb.style.size = 1; myPic.style = thumb.style = ''; Param()}
   function Cancel() {if (myCancel.innerHTML != 'Sure ?') {myCancel.innerHTML = 'Sure ?'} else {editing = 0; inca('Reload',index)}}
   function Flip() {xPos = 0; skinny *=- 1; thumb.style.skinny = skinny; Param(); positionMedia(0.4)}
