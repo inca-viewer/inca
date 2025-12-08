@@ -3,6 +3,11 @@ const http = require('http');
 const fs = require('fs');
 const fsPromises = require('fs').promises;
 const path = require('path');
+const SCRIPT_DIR = path.dirname(__filename);
+const DRIVE_ROOT = SCRIPT_DIR[0] + ':\\';
+const CACHE_DIR = path.join(DRIVE_ROOT, 'inca', 'cache', 'html');
+const inputFilePath = path.join(CACHE_DIR, 'in.txt');
+const tempFilePath  = path.join(CACHE_DIR, 'temp.txt');
 
 process.on('uncaughtException', (err) => {});
 
@@ -14,12 +19,10 @@ const server = http.createServer(async (req, res) => {
             req.on('data', chunk => body += chunk);
             req.on('end', async () => {
                 const startTime = Date.now();
-                const inputFilePath = 'C:\\inca\\cache\\html\\in.txt';
                 await fsPromises.writeFile(inputFilePath, body);
                 let responseSent = false;
                 const waitForTempFile = async () => {
-                    const tempFilePath = 'C:\\inca\\cache\\html\\temp.txt';
-                    const maxWaitTime = 9999;
+                    const maxWaitTime = 12000;
                     const pollInterval = 50;
                     while (Date.now() - startTime < maxWaitTime) {
                         try {
@@ -47,10 +50,18 @@ const server = http.createServer(async (req, res) => {
             return;
         }
         let relativePath = decodeURIComponent(req.url.slice(1)).replace(/%20/g, ' ');
+
+if (!relativePath || relativePath === '/' || relativePath.toLowerCase() === 'null') {
+        res.writeHead(200, { 'Content-Type': 'text/plain' });
+        res.end();
+        return;
+    }
+
         let driveLetter = 'C';
         if (/^[a-zA-Z]:/.test(relativePath)) {
             driveLetter = relativePath[0].toUpperCase();
             relativePath = relativePath.slice(2);
+ relativePath = relativePath.replace(/^[\\/]/, '');
         }
         relativePath = relativePath.replace(/\//g, '\\');
         let filePath = path.join(`${driveLetter}:\\`, relativePath);
@@ -70,6 +81,7 @@ const server = http.createServer(async (req, res) => {
         const fileSize = stats.size;
         const ext = path.extname(filePath).toLowerCase();
         const mimeTypes = {
+            '.ico': 'image/x-icon',
             '.jpg': 'image/jpeg',
             '.jpeg': 'image/jpeg',
             '.png': 'image/png',
@@ -95,10 +107,9 @@ const server = http.createServer(async (req, res) => {
             '.ini': 'text/plain',
             '.ahk': 'text/plain',
             '.vtt': 'text/vtt',
-            '.srt': 'text/srt',
+            '.srt': 'text/plain',
             '.bat': 'text/plain',
-            '.m3u': 'audio/x-mpegurl',
-            '.ico': 'image/x-icon'
+            '.m3u': 'audio/x-mpegurl'
         };
         const contentType = mimeTypes[ext] || 'application/octet-stream';
         const headers = {
@@ -133,14 +144,13 @@ const server = http.createServer(async (req, res) => {
             stream.pipe(res);
         }
     } catch (err) {
-        res.writeHead(500, { 'Content-Type': 'text/plain' });
-        res.end('Internal Server Error');
+        res.writeHead(200, { 'Content-Type': 'text/plain' });
+        res.end('File Not Found');
     }
 });
 
 async function serveHtmlFile(res, startTime) {
     try {
-        const tempFilePath = 'C:\\inca\\cache\\html\\temp.txt';
         const fileContent = await fsPromises.readFile(tempFilePath, 'utf8');
         if (!fileContent.trim()) {
             res.writeHead(200);
@@ -154,4 +164,6 @@ async function serveHtmlFile(res, startTime) {
     }
 }
 
+
 server.listen(3000, '127.0.0.1', () => {});
+
