@@ -94,7 +94,7 @@
     initialize()				; sets environment then waits for mouse, key or clipboard events
     Process, Close, node.exe
     sleep 200
-    Run, cmd.exe /c cd /d "C:\inca\cache\apps" && node\node.exe server.js, , Hide
+    Run, cmd.exe /c cd /d "%inca%\cache\apps" && node\node.exe server.js, , Hide
     WinActivate, ahk_group Browsers
     path = %profile%\Pictures\
     startPage = #Path###%path%			; default start page
@@ -649,8 +649,8 @@
       if getMedia(A_LoopField)
         {
         GuiControl, Indexer:, GuiInd, %media%
-        Run, cmd /c mklink "c:\inca\cache\temp\%A_Index%.lnk" "%src%",, Hide
-        str = %str%file 'c:\inca\cache\temp\%A_Index%.lnk'`r`n
+        Run, cmd /c mklink "%inca%\cache\temp\%A_Index%.lnk" "%src%",, Hide
+        str = %str%file '%inca%\cache\temp\%A_Index%.lnk'`r`n
         }
     FileAppend,  %str%, %inca%\cache\temp\temp1.txt, utf-8
     Popup("Joining Media",600,0,0)
@@ -1471,12 +1471,12 @@
       return
     dur =
     if (med == "video")
-      cmd = C:\inca\cache\apps\ffprobe.exe -v quiet -print_format json -show_streams -select_streams v:0 "%source%"
-    else cmd = C:\inca\cache\apps\ffprobe.exe -v quiet -print_format json -show_streams -select_streams a:0 "%source%"
-    RunWait, %ComSpec% /c %cmd% > "c:\inca\cache\temp\meta.txt",, Hide
+      cmd = %inca%\cache\apps\ffprobe.exe -v quiet -print_format json -show_streams -select_streams v:0 "%source%"
+    else cmd = %inca%\cache\apps\ffprobe.exe -v quiet -print_format json -show_streams -select_streams a:0 "%source%"
+    RunWait, %ComSpec% /c %cmd% > "%inca%\cache\temp\meta.txt",, Hide
     if ErrorLevel
       return
-    FileRead, MetaContent, c:\inca\cache\temp\meta.txt
+    FileRead, MetaContent, %inca%\cache\temp\meta.txt
     if RegExMatch(MetaContent, """duration"":\s*""?(\d+\.?\d*)""?", n)
       dur := n1
     if !dur								; try to fix duration missing
@@ -1546,11 +1546,11 @@
       {
       if (DecodeExt(ext) != "video")
         return
-      cmd = C:\inca\cache\apps\ffprobe.exe -v quiet -print_format json -show_streams -select_streams v:0 "%src%"
-      RunWait, %ComSpec% /c %cmd% > "c:\inca\cache\temp\meta.txt",, Hide	; get media meta data
+      cmd = %inca%\cache\apps\ffprobe.exe -v quiet -print_format json -show_streams -select_streams v:0 "%src%"
+      RunWait, %ComSpec% /c %cmd% > "%inca%\cache\temp\meta.txt",, Hide	; get media meta data
       if ErrorLevel
         return
-      FileRead, MetaContent, c:\inca\cache\temp\meta.txt
+      FileRead, MetaContent, %inca%\cache\temp\meta.txt
  ;     if (!join && !start && !end && InStr(MetaContent, "Inca"))		; already transcoded
  ;       return
       if RegExMatch(MetaContent, """width"":\s*(\d+)", WidthMatch)
@@ -1856,13 +1856,9 @@
   if (command == "View")
     keepSelected := selected
 
-header = <!--, %sort%, %toggles%, %listView%, %playlist%, %path%, %searchPath%, %searchTerm%, %subfolders%, -->`n<!doctype html>`n<html>`n<head>`n<meta charset="UTF-8">`n<title>Inca - %title%</title>`n<meta name="viewport" content="width=device-width, initial-scale=1">`n<link rel="icon" href="%server%c:/inca/cache/icons/inca.ico">`n<link rel="stylesheet" href="%server%c:/inca/css.css">`n</head>`n`n
+header = <!--, %sort%, %toggles%, %listView%, %playlist%, %path%, %searchPath%, %searchTerm%, %subfolders%, -->`n<!doctype html>`n<html>`n<head>`n<meta charset="UTF-8">`n<title>Inca - %title%</title>`n<meta name="viewport" content="width=device-width, initial-scale=1">`n<link rel="icon" href="%server%%inca%/cache/icons/inca.ico">`n<link rel="stylesheet" href="%server%%inca%/css.css">`n</head>`n`n
 
 body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals('%folder_s%', %wheelDir%, '%mute%', %paused%, '%sort%', %filt%, %listView%, '%keepSelected%', '%playlist%', %index%); %scroll%.scrollIntoView()">`n`n
-
-
-
-
 
   <div id="editor">
     <div id="viewport" class="caption-viewport"></div>
@@ -1890,16 +1886,6 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
       </div>
     </div>
   </div>`n`n
-
-
-
-
-
-
-
-
-
-
 
 <div id='myVig' class='vig'></div>`n
 <video id='myPic' class='pic' muted onwheel='wheelEvent(event)' onmouseout='thumb.pause()'></video>`n
@@ -1983,8 +1969,8 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
 
     StringReplace, header, header, \, /, All
     StringReplace, body, body, \, /, All
-    script = <script src="%server%c:/inca/cache/apps/pitch.js"></script>`n
-    script = %script%<script src="%server%c:/inca/java.js"></script>`n
+    script = <script src="%server%%inca%/cache/apps/pitch.js"></script>`n
+    script = %script%<script src="%server%%inca%/java.js"></script>`n
     htm = %header%%body%%script%`n</body>`n</html>`n
     FileDelete, %inca%\cache\html\%folder%.htm
     FileAppend, %htm%, %inca%\cache\html\%folder%.htm, UTF-8
@@ -2234,7 +2220,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
           if (encoded := Transcode("myMp4", tem,0,0))
             {
             FileMove, %encoded%, %ori%, 1
-            FileAppend, %ori%|0.0`n, C:\inca\fav\history.m3u
+            FileAppend, %ori%|0.0`n, %inca%\fav\history.m3u
             PopUp("saved",0,0.75,0.5)
             GuiControl, Indexer:, GuiInd, %me%.%ex%
             Index(ori, 1)
@@ -2278,7 +2264,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
     WinGet, brow, ID , ahk_group Browsers
     if incaTab
       {
-      FileRead, messages, *P65001 C:\inca\cache\html\in.txt		; utf codepage
+      FileRead, messages, *P65001 %inca%\cache\html\in.txt		; utf codepage
       if messages
         {
         FileDelete, %inca%\cache\html\in.txt
