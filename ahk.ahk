@@ -719,7 +719,7 @@
     FileRecycle, %inca%\cache\json\%media%.json
     FileAppend, %value%, %inca%\cache\json\%media%.json, UTF-8
     index := selected
-    PopUp("saving...", 999, 0, 0)
+    PopUp("saved", 999, 0, 0)
     RenderPage(0)
     }
 
@@ -1530,7 +1530,7 @@
       suffix = @%start%
     else if end 
       suffix = @%end%
-    SplitPath, src, , foldr, type, filen
+    SplitPath, src, , foldr, ext, filen
     FileGetTime, CreationTime, %src%, C
     FileGetTime, ModifiedTime, %src%, M
     if ErrorLevel
@@ -1544,7 +1544,7 @@
       RunWait, %inca%\cache\apps\ffmpeg.exe %ss% %to% -i "%src%" -y file:"%new%",,Hide
     else
       {
-      if (DecodeExt(type) != "video")
+      if (DecodeExt(ext) != "video")
         return
       cmd = C:\inca\cache\apps\ffprobe.exe -v quiet -print_format json -show_streams -select_streams v:0 "%src%"
       RunWait, %ComSpec% /c %cmd% > "c:\inca\cache\temp\meta.txt",, Hide	; get media meta data
@@ -1860,6 +1860,47 @@ header = <!--, %sort%, %toggles%, %listView%, %playlist%, %path%, %searchPath%, 
 
 body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals('%folder_s%', %wheelDir%, '%mute%', %paused%, '%sort%', %filt%, %listView%, '%keepSelected%', '%playlist%', %index%); %scroll%.scrollIntoView()">`n`n
 
+
+
+
+
+  <div id="editor">
+    <div id="viewport" class="caption-viewport"></div>
+    <div id="ribbon">
+      <div id='myCancel' class="dropdown-header" onmouseout="this.innerHTML='&#x2715;'">&#x2715;</div>
+      <div id="id-header" class="dropdown">
+        <div class="header"><div id="id-display">--</div></div>
+      </div>
+      <div id="media-header" class="dropdown">
+        <div class="header">Media</div>
+        <div class="dropdown-content"><div>No media</div></div>
+      </div>
+      <div id="voice-header" class="dropdown">
+        <div class="header">Voice</div>
+        <div class="dropdown-content">
+          <div>Sarah</div><div>Tracy</div><div>Michelle</div><div>Brian</div>
+        </div>
+      </div>
+      <div id="time-header" class="dropdown">
+        <div class="header"><div id="time-display">- : -- . -</div></div>
+      </div>
+      <div id="search-header">
+        <input type="text" id="caption-search-input" placeholder="&#x1F50D;&#xFE0E;" autocomplete="off">
+        <span id="search-match-count"></span>
+      </div>
+    </div>
+  </div>`n`n
+
+
+
+
+
+
+
+
+
+
+
 <div id='myVig' class='vig'></div>`n
 <video id='myPic' class='pic' muted onwheel='wheelEvent(event)' onmouseout='thumb.pause()'></video>`n
 <video id="myPlayer" class='player' type="video/mp4" muted onwheel='wheelEvent(event)'></video>`n
@@ -1943,7 +1984,6 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
     StringReplace, header, header, \, /, All
     StringReplace, body, body, \, /, All
     script = <script src="%server%c:/inca/cache/apps/pitch.js"></script>`n
-    script = %script%<script src="%server%c:/inca/captions.js"></script>`n
     script = %script%<script src="%server%c:/inca/java.js"></script>`n
     htm = %header%%body%%script%`n</body>`n</html>`n
     FileDelete, %inca%\cache\html\%folder%.htm
@@ -2082,15 +2122,15 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
 
 
   Ffmpeg: 								; mp3, mp4, indexing - async processing
+    PopUp(Chr(0x2713),600,0,0)
     transcoding =
     select := selected							; preserve selected
     selected =
     serverTimout := A_TickCount
-    time := address
+    tim := address
     cue := StrSplit(value, "|").1
     el_id := StrSplit(value, "|").2
     skinny := StrSplit(value, "|").3
-    fld := folder
     fileList =
     FileRead, str, %inca%\cache\temp\%folder%.txt			; list of media in htm
     Loop, Parse, str, `n, `r
@@ -2099,16 +2139,15 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
       Loop, Parse, select, `,						; index selected files
         transcoding .= StrSplit(fileList,"`r`n")[A_LoopField]		; media to lock
     RenderPage(1)							; silent update htm
-    send, {F5}								; clear selected on tab
     Critical Off
     sta := 0
     end := 0
     if cue
-      if (time > cue + 1)
-        sta := cue, end := time
-      else if (time < cue - 1) 
-        sta := time, end := cue
-      else if (time >= cue)
+      if (tim > cue + 1)
+        sta := cue, end := tim
+      else if (tim < cue - 1) 
+        sta := tim, end := cue
+      else if (tim >= cue)
         sta := cue
       else sta := 0, end := cue
     end := Round(end,1)
@@ -2128,13 +2167,13 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
         source := StrSplit(entry, "|").1
         SplitPath, source,,,,med
         GuiControl, Indexer:, GuiInd, %A_Index% - processing - %med%
-        output = %profile%\Downloads\%med% @%time%.jpg
+        output = %profile%\Downloads\%med% @%tim%.jpg
         whisper = %inca%\cache\apps\Faster-Whisper-XXL\faster-whisper-xxl.exe
         if InStr(el_id, "mySrt")
           runwait, "%whisper%" "%source%" --model tiny.en --language en --output_format srt --output_dir "%inca%\cache\srt", , Hide
         else if (DetectMedia(source) == "image")
           cmd = %inca%\cache\apps\ffmpeg.exe -i "%source%" -vf "scale=iw*%skinny%:ih" -y "%output%"
-        else cmd = %inca%\cache\apps\ffmpeg.exe -ss %time% -i "%source%" -vf "scale=iw*%skinny%:ih" -y -vframes 1 "%output%"
+        else cmd = %inca%\cache\apps\ffmpeg.exe -ss %tim% -i "%source%" -vf "scale=iw*%skinny%:ih" -y -vframes 1 "%output%"
         if InStr(el_id, "myIndex")
           Index(source, 1)
         if InStr(el_id, "myJpg")
@@ -2145,15 +2184,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
         GuiControl, Indexer:, GuiInd
         }
     transcoding =
-    CreateList(1)
-    if (incaTab && folder == fld)					; if in same tab after processing
-      {
-      RegExMatch(select, "(\d+),?\s*$", match)
-      index := match1							; last selected
-      RenderPage(0)
-      if (A_TickCount - serverTimout > 9999)				; server timout
-        send, {F5}
-      }
+    CreateList(1)							; unlocks files
     return
 
 
