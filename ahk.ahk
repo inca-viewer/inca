@@ -645,31 +645,33 @@
     {
     if !StrSplit(select, ",").2						; more that one video
       return
+    Popup("Joining Media",0,0,0)
     Loop, Parse, select, `,
       if getMedia(A_LoopField)
         {
+        SplitPath, src,,,ext
         GuiControl, Indexer:, GuiInd, %media%
         Run, cmd /c mklink "%inca%\cache\temp\%A_Index%.lnk" "%src%",, Hide
         str = %str%file '%inca%\cache\temp\%A_Index%.lnk'`r`n
         }
     FileAppend,  %str%, %inca%\cache\temp\temp1.txt, utf-8
-    Popup("Joining Media",600,0,0)
     x = @echo off`r`nset `"temp=(pause & pause & pause)>nul`"`r`ntype `%1|(`%temp`% & findstr `"^`")`r`n
     FileAppend, %x%, %inca%\cache\temp\temp.bat 
     runwait, %inca%\cache\temp\temp.bat %inca%\cache\temp\temp1.txt > %inca%\cache\temp\temp.txt,,Hide
     runwait, %inca%\cache\apps\ffmpeg.exe -f concat -safe 0 -i "%inca%\cache\temp\temp.txt" -c copy "%mediaPath%\%media% -join.%ext%",, Hide
     if ErrorLevel
       PopUp("failed",900,0,0)
-    src = %mediaPath%\%media% -join.%ext%
+    inp = %mediaPath%\%media% -join.%ext%
     FileDelete, %inca%\cache\temp\temp.bat
     FileDelete, %inca%\cache\temp\temp.txt
     FileDelete, %inca%\cache\temp\temp1.txt
     FileDelete, %inca%\cache\temp\*.lnk
     if !ErrorLevel
-      if (new := Transcode("myMp4", src, 0, 0))
+      if (new := Transcode("myMp4", inp, 0, 0))
         Index(new, 1)
     GuiControl, Indexer:, GuiInd
-    reload := 2
+    CreateList(0)
+    RenderPage(0)
     }
 
 
@@ -719,8 +721,8 @@
     FileRecycle, %inca%\cache\json\%media%.json
     FileAppend, %value%, %inca%\cache\json\%media%.json, UTF-8
     index := selected
-    PopUp("saved", 999, 0, 0)
     RenderPage(0)
+    PopUp("saved", 999, 0, 0)
     }
 
 
@@ -904,6 +906,7 @@
 
   CutCopyPaste()
       {
+      PopUp(Chr(0x2713),600,0,0)
       if (value == "myCut")
         {
         if selected
@@ -1519,39 +1522,39 @@
     }
 
 
-  Transcode(id, src, start, end)
+  Transcode(id, src, sta1, end1)
     {
-    local cmd, temp, new, type, filen, foldr
-    if start
-      ss = -ss %start%
-    if end
-      to = -to %end%
-    if start
-      suffix = @%start%
-    else if end 
-      suffix = @%end%
-    SplitPath, src, , foldr, ext, filen
+    local cmd, temp, new, type, filen, foldr, ss, to
+    if sta1
+      ss = -ss %sta1%
+    if end1
+      to = -to %end1%
+    if sta1
+      suffix = @%sta1%
+    else if end1 
+      suffix = @%end1%
+    SplitPath, src, , foldr, extSrc, filen
     FileGetTime, CreationTime, %src%, C
     FileGetTime, ModifiedTime, %src%, M
     if ErrorLevel
       return
     if (id == "myMp3")
-      ext = mp3
-    else ext = mp4
-    new = %profile%\Downloads\temp_%filen% %suffix%.%ext%
+      extNew = mp3
+    else extNew = mp4
+    new = %profile%\Downloads\temp_%filen% %suffix%.%extNew%
     new = %new%									; trims whitespace
     if (id == "myMp3")
       RunWait, %inca%\cache\apps\ffmpeg.exe %ss% %to% -i "%src%" -y file:"%new%",,Hide
     else
       {
-      if (DecodeExt(ext) != "video")
+      if (DecodeExt(extSrc) != "video")
         return
       cmd = %inca%\cache\apps\ffprobe.exe -v quiet -print_format json -show_streams -select_streams v:0 "%src%"
       RunWait, %ComSpec% /c %cmd% > "%inca%\cache\temp\meta.txt",, Hide	; get media meta data
       if ErrorLevel
         return
       FileRead, MetaContent, %inca%\cache\temp\meta.txt
- ;     if (!join && !start && !end && InStr(MetaContent, "Inca"))		; already transcoded
+ ;     if (!join && !sta1 && !end1 && InStr(MetaContent, "Inca"))		; already transcoded
  ;       return
       if RegExMatch(MetaContent, """width"":\s*(\d+)", WidthMatch)
         Width := WidthMatch1 + 0
@@ -1619,7 +1622,7 @@
       if ErrorLevel
         return
       }
-    if (!suffix && ext != "mp3")
+    if (!suffix && id == "myMp4")
       {
       FileSetTime, %ModifiedTime%, %new%, M
       FileSetTime, %CreationTime%, %new%, C
@@ -1627,7 +1630,7 @@
       }
     orig = %profile%\Downloads\%filen% %suffix%
     orig = %orig%							; trims whitespace ahk v1.1
-    orig = %orig%.%ext%
+    orig = %orig%.%extNew%
     FileMove, %new%, %orig%, 1
     return orig
     }
@@ -1861,30 +1864,28 @@ header = <!--, %sort%, %toggles%, %listView%, %playlist%, %path%, %searchPath%, 
 body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals('%folder_s%', %wheelDir%, '%mute%', %paused%, '%sort%', %filt%, %listView%, '%keepSelected%', '%playlist%', %index%); %scroll%.scrollIntoView()">`n`n
 
   <div id="editor">
-    <div id="viewport" class="caption-viewport"></div>
     <div id="ribbon">
       <div id='myCancel' class="dropdown-header" onmouseout="this.innerHTML='&#x2715;'">&#x2715;</div>
       <div id="id-header" class="dropdown">
         <div class="header"><div id="id-display">--</div></div>
       </div>
       <div id="media-header" class="dropdown">
-        <div class="header">Media</div>
+        <div class="header"></div>
         <div class="dropdown-content"><div>No media</div></div>
-      </div>
-      <div id="voice-header" class="dropdown">
-        <div class="header">Voice</div>
-        <div class="dropdown-content">
-          <div>Sarah</div><div>Tracy</div><div>Michelle</div><div>Brian</div>
-        </div>
-      </div>
-      <div id="time-header" class="dropdown">
-        <div class="header"><div id="time-display">- : -- . -</div></div>
       </div>
       <div id="search-header">
         <input type="text" id="caption-search-input" placeholder="&#x1F50D;&#xFE0E;" autocomplete="off">
         <span id="search-match-count"></span>
       </div>
+      <div id="voice-header" class="dropdown">
+        <div class="header"></div>
+        <div class="dropdown-content"></div>
+      </div>
+      <div id="time-header" class="dropdown">
+        <div class="header"><div id="time-display">- : -- . -</div></div>
+      </div>
     </div>
+    <div id="viewport" class="caption-viewport"></div>
   </div>`n`n
 
 <div id='myVig' class='vig'></div>`n
@@ -1897,7 +1898,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
 
 <div id="myNav" class="context">
   <div class="trigger">
-    <a id="myInca">...</a>
+    <a id="myInca" onwheel='wheelEvent(event)'>...</a>
 
     <div id='myAlt' class="menu alt">`n
       <a id="myCopy">copy</a>`n
@@ -1915,12 +1916,8 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
   <div id='myDefault'>
     <div class="menu editor">`n
       <a id='myBookmark'>Bookmark</a>`n
-      <a id='myFind'>Find</a>`n
-      <a id='myMedia'>Media</a>`n
-      <a id='myVoice'>Voice</a>`n
-      <a>Clone</a>`n
       <a id='myExport'>Export</a>`n
-      <a>Jpg</a>`n
+      <a id='myCue2'>Cue</a>`n
     </div>
 
     <div class="menu default" onwheel='wheelEvent(event)'>`n
@@ -2112,9 +2109,10 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
     transcoding =
     select := selected							; preserve selected
     selected =
+    fldr := folder
     serverTimout := A_TickCount
-    tim := address
-    cue := StrSplit(value, "|").1
+    tim := Round(address, 2)
+    cue := Round(StrSplit(value, "|").1, 2)
     el_id := StrSplit(value, "|").2
     skinny := StrSplit(value, "|").3
     fileList =
@@ -2124,7 +2122,8 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
     if (select && !InStr(el_id, "Index"))
       Loop, Parse, select, `,						; index selected files
         transcoding .= StrSplit(fileList,"`r`n")[A_LoopField]		; media to lock
-    RenderPage(1)							; silent update htm
+    RenderPage(1)							; lock htm
+    transcoding =							; lock off
     Critical Off
     sta := 0
     end := 0
@@ -2136,8 +2135,6 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
       else if (tim >= cue)
         sta := cue
       else sta := 0, end := cue
-    end := Round(end,1)
-    sta := Round(sta,1)
     if InStr(el_id, "Join")
       Join(select)
     else if (el_id == "myIndex" && !select)				; index whole folder
@@ -2169,8 +2166,9 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
             Index(new, 1)
         GuiControl, Indexer:, GuiInd
         }
-    transcoding =
-    CreateList(1)							; unlocks files
+    RenderPage(1)
+    if (fldr == folder)
+      send, {F5}
     return
 
 
@@ -2192,6 +2190,8 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
         {
         SplitPath, A_LoopFileFullPath, fileWithExt, dir, ext, nameNoExt
         SplitPath, lastMedia,,,, foldr
+        if (ext != "mp3" && ext != "mp4" && ext != "jpg")
+          continue
         foldr := SubStr(foldr, 1, 100)
         assets := inca . "\assets\" . foldr
         destCopy := assets . "\" . nameNoExt . "." . ext

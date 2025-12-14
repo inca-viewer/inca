@@ -17,31 +17,27 @@
   video::-internal-media-controls-overlay-cast-button {display: none}		/* block google casting	*/
 
 
-
-
-  #caption-editor-module * { box-sizing:border-box; margin:0; padding:0; }
-
-  #editor { display:none; flex-direction:column; width:500px; max-width:100%; height:24em;
+  #editor { box-sizing:border-box; display:none; flex-direction:column; width:500px; max-width:100%; height:24em;
     background:#090808; border-radius:12px; box-shadow:0 12px 32px rgba(0,0,0,0.6); font-size:16px; 
     position:fixed; left:50%; top:50%; transform:translate(-50%,-50%); z-index: 5002; cursor:text;
-    min-width:250px; min-height:160px; resize:both; max-height:80vh; overflow:hidden; }
-
-  #ribbon {font-size:12px; background:#090808; padding:6px 8px; gap:3px; display:flex; align-items:center;
-    flex-wrap:wrap; user-select:none; flex-shrink:0; justify-content:center; cursor:default;}
+    min-width:250px; min-height:160px; resize:both; max-height:80vh; overflow:hidden;}
+  #ribbon { font-size:12px; background:#090808; display:flex; align-items:center; gap: 2em;
+    flex-wrap:wrap; user-select:none; flex-shrink:0; justify-content:center; cursor:default}
   .dropdown { position:relative; display:inline-block;}
   .dropdown > .header {
-    color: #ffc0cb99; border-radius:6px; height: 1.6em; 
-    white-space:nowrap; display:flex; cursor:default}
+    color: #ffc0cb99; border-radius:0.9em; height: 1.8em; background: #0f0e0e;
+    white-space:nowrap; display:flex; cursor:default; }
   .dropdown-content {
-    position: absolute; bottom:100%; min-width:50%; background: #1a1a1a;
+    position: absolute; top:100%; min-width:50%; background: #0f0e0e;
     box-shadow:0 4px 12px rgba(0,0,0,0.5); border-radius: 6px;
     display:none; z-index:1; padding-bottom:8px;
     overflow-y:auto; flex-direction:column; gap:2px;}
   .dropdown-content > div {font-size:12.5px; white-space:nowrap; cursor:default; border-radius: 10px;}
-  .dropdown-content > div:hover { background:#2a2a2a; }
+  .dropdown-content > div:hover { color: #ffc0cbaa; background: black; }
 
   .caption-viewport {
-    flex:1; 
+    flex:1;
+    gap: 1.4em;
     overflow-y:auto; 
     padding:1em; 
     display:flex; 
@@ -59,60 +55,69 @@
       transparent  100%)}
 
   .text-block {
-    position: relative; background:transparent; border-radius:6px; text-align:center; white-space:pre-wrap; 
-    word-wrap:break-word; font-family:'Yu Gothic'; line-height:1.5; margin: 0; padding: 0.6em;
-    color:#ffc0cb80; outline:none; width: 95%; align-self: center; border: 0; border-inline: 0.1px solid transparent}
+    position: relative; background:transparent; border-radius:0.7em; text-align:center; white-space:pre-wrap; 
+    word-wrap:break-word; font-family:'Yu Gothic'; line-height:1.5; margin: 0; padding: 0.2em 1em;
+    color:#ffc0cb80; outline:none; width: auto; align-self: center; border: 0;}
+
+  .text-block.editing { background: #0f0e0e; color: #ffc0cbaa; }
 
   .text-block[data-fav="1"]::before {
     content: '❤';
     position: absolute;
+    opacity: 0.7;
     color: #ffc0cb;
-    top: 1.2em;
-    left: -1.8em;
-    font-size: 0.7em;}
+    top: -1.1em;
+    left: -3em;
+    font-size: 0.6em}
 
-    .text-block.editing { border: 0; border-inline: 0.1px solid #ffc0cb40;}
-    #voice-header > .header { width:8em; justify-content:center; padding: 0 1em; display: none}
-    #voice-header .dropdown-content {height: 8em; padding: 0.5em 0.5em; line-height: 1.6; }
-    #media-header > .header { width:9em; overflow:hidden; text-overflow:ellipsis; }
-    #media-header .dropdown-content {height: 10.4em; padding: 0.5em 0.5em; translate: -5em}
+    #voice-header > .header { width:5em; padding: 0 0.2em; display: flex; 
+      color: #ffc0cb44; overflow: hidden;}
+    #voice-header .dropdown-content {height: 6.7em; padding: 0.5em 0.5em; line-height: 1.6; translate: 0 -2.2em}
+    #media-header > .header { width:12em; padding: 0 0.2em; display: flex;
+      color: #ffc0cb44; overflow: hidden;}
+    #media-header .dropdown-content {width: 24em; height: 6.7em; padding: 0.5em 0.5em; line-height: 1.2; translate: 0 -2.2em}
 
     #id-display { 
-      border:none; color:#ffc0cbaa; font-size:12px;
-      outline:none; min-width:34px; text-align:center; }
+      border:none; color:#ffc0cbaa; font-size:12px; display: none;
+      outline:none; text-align:center; padding: 0 0.6em}
 
     #time-display {
-      width:70px; color:#ffc0cbaa; border:none; outline:none;
+      width:70px; color:#ffc0cbaa; border:none; outline:none; display: none;
       text-align:center; font-size:0.9em; font-family:inherit; border-radius:4px;}
 
     #myCancel {
-      position: absolute; top: 0.5em; right: 0.7em; color: red; 
+      position: absolute; right: 0.7em; color: red; z-index:999;
       visibility:hidden; text-align:center; min-width:3.5em;
-      transition:0.6s; background:#1a1a1a00; cursor:pointer; font-size: 0.85em;}
-    #myCancel:hover { transform: scale(1.5,1.5)}
+      transition:0.6s; background:#1a1a1a00; cursor:pointer; font-size: 1em;}
+    #myCancel:hover { transform: scale(1.4,1.4); translate: 0 -0.2em}
 
     #search-header {
-      width: 9em;
-      border-radius: 8px;
+      width: 12em;
+      max-width: 12em;
+      border-radius: 0.9em;
       overflow: hidden;
       display: flex;
+      background:#0f0e0e;
       align-items: center;
       padding: 0 6px;
       cursor: text;
-      height: 1.2em;
+      height: 1.8em;
+      transition: 0.2s;
       white-space:nowrap;}
+    #search-header:hover { transform: scale(1.14,1.14) }
+
 
     #caption-search-input {
-      width: 6em;
+      width: 8em;
       background: transparent;
       color: #ffc0cbaa; 
       border: none;
       outline: none;
       font-size: 13px;}
+    #caption-search-input::placeholder { color: #ffc0cb44; transition: color 1s; }
+    #caption-search-input:focus::placeholder { color: transparent }
     #search-match-count { color: #ffc0cbaa; font-size: 0.8em; margin-left: auto;}
     mark { background: inherit; color: #ffc0cb }
-    #caption-search-input::placeholder { color: #ffc0cb80; transition: color 1s; }
-    #caption-search-input:focus::placeholder { color: transparent }
 
 
 .player, .vig {
