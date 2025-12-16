@@ -59,6 +59,7 @@ body {
   width: 95%;
   align-self: center;
   position: relative;
+  cursor: text;
 }
 
 .text-block[data-fav="1"]::before {
@@ -68,6 +69,12 @@ body {
   top: 0.36em;
   left: -1.8em;
   font-size: 0.7em;
+}
+
+mark {
+  background: inherit;
+  color: #ffc0cb;
+  font-weight: bold;
 }
 
 #ribbon {
@@ -99,42 +106,6 @@ body {
   padding: 0 0.5em;
 }
 
-.dropdown-content {
-  position: absolute;
-  bottom: 100%;
-  min-width: 100%;
-  background: #1a1a1a;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
-  border-radius: 6px;
-  display: none;
-  padding: 0.5em;
-  flex-direction: column;
-  gap: 2px;
-  max-height: 10em;
-  overflow-y: auto;
-}
-
-.dropdown-content div {
-  font-size: 12.5px;
-  white-space: nowrap;
-  cursor: pointer;
-  padding: 0.3em 0.5em;
-  border-radius: 6px;
-}
-
-.dropdown-content div:hover {
-  background: #2a2a2a;
-}
-
-.dropdown:hover .dropdown-content {
-  display: flex;
-}
-
-#media-header > .header {
-  width: 9em;
-  justify-content: center;
-}
-
 #id-display {
   color: #ffc0cbaa;
   font-size: 12px;
@@ -157,6 +128,12 @@ body {
   align-items: center;
   padding: 0 6px;
   height: 1.2em;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+#search-header:hover {
+  background: #1a1a1a40;
 }
 
 #caption-search {
@@ -198,7 +175,7 @@ body {
 <div id="editor">
   <div id="close-btn">✕</div>
 
-  <div class="caption-viewport">
+  <div class="caption-viewport" id="viewport">
     <div class="text-block" data-fav="1">Welcome to the caption editor</div>
     <div class="text-block">This is a demo of the interface design</div>
     <div class="text-block" data-fav="1">Favorited captions show a heart icon</div>
@@ -210,21 +187,13 @@ and maintains proper spacing</div>
     <div class="text-block">Scroll to see more captions below</div>
     <div class="text-block">The dark theme is easy on the eyes</div>
     <div class="text-block">Perfect for subtitle editing</div>
+    <div class="text-block">Try selecting text and hovering over the search box</div>
+    <div class="text-block">Then use your mouse wheel over the search to find matches</div>
   </div>
 
   <div id="ribbon">
     <div class="dropdown">
       <div class="header"><div id="id-display">42</div></div>
-    </div>
-
-    <div id="media-header" class="dropdown">
-      <div class="header">sample_video.mp4</div>
-      <div class="dropdown-content">
-        <div>sample_video.mp4</div>
-        <div>demo_clip.mov</div>
-        <div>tutorial.webm</div>
-        <div>presentation.mp4</div>
-      </div>
     </div>
 
     <div class="dropdown">
@@ -242,16 +211,129 @@ and maintains proper spacing</div>
 (function() {
   'use strict';
 
-  // Minimal demo functionality
+  const viewport = document.getElementById('viewport');
+  const searchHeader = document.getElementById('search-header');
+  const searchInput = document.getElementById('caption-search');
+  const searchCount = document.getElementById('search-count');
+
+  let blocks = Array.from(document.querySelectorAll('.text-block'));
+  let matches = [];
+  let matchIndex = 0;
+  let favIndex = 0;
+
+  // Feature 1: Selected text appears in search input on hover
+  searchHeader.addEventListener('mouseenter', () => {
+    const selection = window.getSelection().toString().trim();
+    if (selection) {
+      searchInput.value = selection;
+      performSearch(selection);
+    } else if (!searchInput.value) {
+      // Show favorites if no search term
+      showFavorites();
+    }
+  });
+
+  // Feature 2: Mouse wheel scrolls to word matches
+  searchHeader.addEventListener('wheel', (e) => {
+    e.preventDefault();
+
+    const term = searchInput.value.trim();
+
+    // If no search term or term too short, cycle through favorites
+    if (!term || term.length < 3) {
+      cycleFavorites(e.deltaY > 0 ? 1 : -1);
+      return;
+    }
+
+    // Cycle through search matches
+    if (matches.length > 0) {
+      matchIndex = (matchIndex + (e.deltaY > 0 ? 1 : -1) + matches.length) % matches.length;
+      searchCount.textContent = `${matchIndex + 1} : ${matches.length}`;
+      matches[matchIndex].scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  });
+
+  // Clear search on click
+  searchInput.addEventListener('click', () => {
+    searchInput.value = '';
+    searchCount.textContent = '';
+    clearHighlights();
+  });
+
+  // Update search on input
+  searchInput.addEventListener('input', (e) => {
+    const term = e.target.value.trim();
+    if (term) {
+      performSearch(term);
+    } else {
+      clearHighlights();
+      searchCount.textContent = '';
+    }
+  });
+
+  function performSearch(term) {
+    if (term.length < 3) {
+      clearHighlights();
+      searchCount.textContent = '';
+      return;
+    }
+
+    // Clear previous highlights
+    clearHighlights();
+
+    // Escape regex special characters
+    const escapedTerm = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const regex = new RegExp(`(${escapedTerm})`, 'gi');
+
+    // Find and highlight matches
+    matches = [];
+    blocks.forEach(block => {
+      if (regex.test(block.textContent)) {
+        matches.push(block);
+        block.innerHTML = block.textContent.replace(regex, '<mark>$1</mark>');
+      }
+    });
+
+    // Update count and scroll to first match
+    if (matches.length > 0) {
+      matchIndex = 0;
+      searchCount.textContent = `1 : ${matches.length}`;
+      matches[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
+    } else {
+      searchCount.textContent = '0';
+    }
+  }
+
+  function clearHighlights() {
+    blocks.forEach(block => {
+      block.innerHTML = block.textContent;
+    });
+    matches = [];
+    matchIndex = 0;
+  }
+
+  function showFavorites() {
+    const favs = blocks.filter(b => b.dataset.fav === '1');
+    if (favs.length > 0) {
+      searchCount.textContent = `❤ ${favs.length}`;
+    }
+  }
+
+  function cycleFavorites(direction) {
+    const favs = blocks.filter(b => b.dataset.fav === '1');
+    if (favs.length === 0) return;
+
+    favIndex = (favIndex + direction + favs.length) % favs.length;
+    searchCount.textContent = `${favIndex + 1} : ${favs.length}`;
+    favs[favIndex].scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
+  // Close button
   document.getElementById('close-btn').addEventListener('click', () => {
     document.getElementById('editor').style.opacity = '0';
     setTimeout(() => location.reload(), 300);
   });
 
-  document.getElementById('caption-search').addEventListener('input', (e) => {
-    const count = document.getElementById('search-count');
-    count.textContent = e.target.value ? '3/7' : '';
-  });
 })();
 </script>
 
