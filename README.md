@@ -15,26 +15,28 @@ Move, Copy, Rename files in browser<br>
 Create slideshows, favorites, clips, joins, conversions etc.<br>
 Create, edit or search captions and subtitles<br>
 Concurrent Music and playlists from browser tabs<br>
-Sleep timer gradually lowers master volume when mouse quiet<br>
+New... uses node server instead of local files<br>
+New... storyboard and caption editor for AI assisted content creation<br>
+New... top and tail jpg's and clip joins for ai image to video<br>
+New... supports local AI tools for TTS STT or external api's<br>
 
 Lightweight & portable (no installation)<br>
-Pure vanilla java / ahk script (ai check can confirm safe)<br>
+Pure vanilla java / ahk script (ai can confirm is safe)<br>
 No IDE, no libraries, no external calls, no browser extensions<br> 
 Does not mess with any settings - see source code<br>
-Can convert any media to browser compatible.<br>
-Configure your settings.ini in notepad, then run compile.exe<br>
-Browser will default open in pictures folder.<br>
-You need to bookmark at least one tab<br><br>
+All media types supported in browser - fast transcodes when needed.<br>
+Configure settings.ini in notepad, then run compile.exe<br>
+Browser will default open in pictures folder, bookmark this tab<br>
 To 'uninstall', just exit from taskbar & delete inca folder<br>
 You can edit source code in notepad<br>
-Compiles in about 3 second<br>
+Compiles in about 2 second<br>
 
 Middle click
 - next media (long click for previous)<br>
 - toggle list view or thumb view
 
 Back click
-- exit media, menu or osk
+- exit media, context or osk
 - or top of page
 - or reload page
 
@@ -42,24 +44,29 @@ Long back click
 - close browser tab or close window
 
 Long left click
-- over media - show 6x6 thumb sheet
+- overthumb - pop thumb out of page to zoom or play
 - on selected text - find media matches on pc
 - on folder - copies selected files (instead of move)
 
 Right click & slide
 - volume
 
+Double Right click
+- 6x6 thumb sheet
+
 Left click & slide
 - position player
 - select media
-- off browser - zoom tab
 
-6x6 thumbsheets index at about 15 videos per minute<br>
-indexing in downloads also converts video to fast play mp4
+Click & Wheel
+- zoom
+
+index creates 6x6 thumbsheets<br>
+mp4 converts video to fast seek browser mp4
+any text editing sends previous copy to trash for recovery
 Supports rotated screen + osk onscreen keyboard<br>
 set compile.exe to run as administrator if using osk<br>
-then click any text area for osk and back click to close<br>
-Long click on any selected text for file search<br><br>
+Long click on any selected text for file search or unselected text for osk<br><br>
 <img src="screens/mouse.jpg" width="12.6%"> <img src="screens/computer arm 3.jpg" width="15.9%">   <img src="screens/computer arm 4.jpg" width="25%"><br>
 1m x 12mm threaded rod, 2 x nuts + heatshrink<br>
 drill 12mm hole in wood to bend arm and for cables<br>
