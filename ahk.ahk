@@ -235,7 +235,11 @@
     else if (command == "Search" || command == "SearchBox")
       Search()
     else if (command == "CutCopyPaste")
+{
       CutCopyPaste()
+      PopUp(Chr(0x2713),600,0,0)
+
+}
     else if (command == "Export")
       FileAppend, %value%, %profile%\Downloads\%media%.txt, UTF-8
     else if (command == "Null")						; used as trigger to save text editing - see Java inca()
@@ -316,11 +320,11 @@
     else if Setting("osk")						; open osk
       {
       MouseGetPos, x, y
-      x-=300
-      if (x>300)
+      x-=440
+      if (x>440)
         x-=100
-      if (y < A_ScreenHeight/3)
-        y+=100
+      if (y < A_ScreenHeight/5)
+        y+=150
       else y-=550
       run, osk.exe
       Loop, 100
@@ -906,7 +910,6 @@
 
   CutCopyPaste()
       {
-      PopUp(Chr(0x2713),600,0,0)
       if (value == "myCut")
         {
         if selected
@@ -1859,7 +1862,7 @@
   if (command == "View")
     keepSelected := selected
 
-header = <!--, %sort%, %toggles%, %listView%, %playlist%, %path%, %searchPath%, %searchTerm%, %subfolders%, -->`n<!doctype html>`n<html>`n<head>`n<meta charset="UTF-8">`n<title>Inca - %title%</title>`n<meta name="viewport" content="width=device-width, initial-scale=1">`n<link rel="icon" href="%server%%inca%/cache/icons/inca.ico">`n<link rel="stylesheet" href="%server%%inca%/css.css">`n</head>`n`n
+header = <!--, %sort%, %toggles%, %listView%, %playlist%, %path%, %searchPath%, %searchTerm%, %subfolders%, -->`n<!doctype html>`n<html>`n<head>`n<meta charset="UTF-8">`n<title>Inca - %title%</title>`n<meta name="viewport" content="width=device-width, initial-scale=1">`n<link rel="icon" href="data:image/x-icon;base64,AAABAAEAEBAAAAEAIABoBAAAFgAAACgAAAAQAAAAIAAAAAEAIAAAAAAAQAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAJGI/zqShf87AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAI+D/0CLg/61joP+tY2B/0EAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAJCF/0ONgv+6mZn/CpmZ/wqNgv+6lIX/QwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAJCF/0ONgv+6m5v+EgAAAAAAAAAAm5v+Eo2C/7qUhf9DAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAJCF/0ONgv+6m5v+EgAAAAAAAAAAAAAAAAAAAACbm/4SjYL/upSF/0MAAAAAAAAAAAAAAAAAAAAAAAAAAIuD/0KNgv+6m5v+EgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAJub/hKNgv+6koP/QgAAAAAAAAAAAAAAAI6C/yuLgv+7m5v+EgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAm5v+EouC/7uOgv8rAAAAAAAAAACNg/2dlon/JwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACWif8njYP9nQAAAACVjP4djYH9lAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAI2B/ZSVjP4dmYz/KIyB/YoAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACMgf2KmYz/KKmp/gmOg/+j////AQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD///8BjoP/o6mp/gkAAAAAjIL/ZI2C/o0AAAAAAAAAAAAAAAAAAAAAj4//KY+P/ykAAAAAAAAAAAAAAAAAAAAAjYL+jYyC/2QAAAAAAAAAAAAAAACNgf6Ei4P9pZGF/1SKg/9GjYP/fIuC/q6Lgv6ujYP/fIqD/0aRhf9UjYT+pIuB/oQAAAAAAAAAAAAAAAAAAAAAAAAAAJCF/y6NhP9wjIL+e5CB/1EAAAAAAAAAAJCB/1GMgv57jYT/cJCF/y4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==">`n<link rel="stylesheet" href="%server%%inca%/css.css">`n</head>`n`n
 
 body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals('%folder_s%', %wheelDir%, '%mute%', %paused%, '%sort%', %filt%, %listView%, '%keepSelected%', '%playlist%', %index%); %scroll%.scrollIntoView()">`n`n
 
@@ -2076,7 +2079,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
     if (data && type!="document")
       favicon = %favicon% &#169 
     IfNotExist, %src%
-      noIndex = <span class='warning'>no media</span>
+      noIndex = <span class='warning'>disk ?</span>
     src = %src%
     StringReplace, src, src, `%, `%25, All				; html cannot have % in filename
     StringReplace, src, src, #, `%23, All				; html cannot have # in filename
@@ -2184,10 +2187,11 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
     FileGetTime, ytdlp, %inca%\cache\apps, M
     FileGetTime, downloads, %profile%\Downloads, S
     FileRead, history, %inca%\fav\History.m3u
-    if (A_Now - downloads < 3 && lastMedia)
+    if (A_Now - downloads < 3)
       Loop, Files, %profile%\Downloads\*.*
        if !InStr(history, A_LoopFileName)
         {
+        index(A_LoopFileFullPath,1)
         SplitPath, A_LoopFileFullPath, fileWithExt, dir, ext, nameNoExt
         SplitPath, lastMedia,,,, foldr
         if (ext != "mp3" && ext != "mp4" && ext != "jpg")
@@ -2195,7 +2199,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
         foldr := SubStr(foldr, 1, 100)
         assets := inca . "\assets\" . foldr
         destCopy := assets . "\" . nameNoExt . "." . ext
-        if (ext == "mp3" || ext == "wav")
+        if (lastMedia && ext == "mp3" || ext == "wav")
           {
           FileCreateDir, %assets%
           FileCopy, %A_LoopFileFullPath%, %destCopy%, 1

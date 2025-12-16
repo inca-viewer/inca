@@ -1,7 +1,5 @@
-// join blocks fails if times out of sequence
-// should have seekbar under caption
-// ribbon at top
-// myinca trigger editing
+// seekbar under caption to play voice from xpos
+// and use to set block start
 
 
   let wheel = 0								// wheel count
@@ -102,7 +100,7 @@
   document.addEventListener('mousemove', mouseMove)
   document.addEventListener('keydown', keyDown)
   myPlayer.addEventListener('ended', mediaEnded)
-  document.addEventListener('dragend', () => { editing = 1; mouseUp(e) })
+  myPlayer.addEventListener('timeupdate', () => {scrollToNearestCaption(); updateTimeDisplay()})
   window.addEventListener('beforeunload', (e) => {if (playing && editing) e.preventDefault()})
   document.addEventListener('visibilitychange', function() {
     if (document.visibilityState=='visible' && folder=='Downloads' && !selected && !playing) inca('Reload',index)})
@@ -111,15 +109,14 @@
     myAlt.style.display = isAlt ? '' : 'block'
     myDefault.style.display = isAlt ? 'block' : 'none'})
   searchHeader.addEventListener('wheel', nextMatch)
+  searchHeader.addEventListener('mouseup', (e) => {
+    editingBlock.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    matchCountSpan.textContent = searchInput.value = '';
+    blocks.forEach(b => {b.innerHTML = b.innerText})})
   searchHeader.addEventListener('mouseenter', (e) => {
     let sel = window.getSelection().toString(); 
-    if (sel) searchTerm = searchInput.value = sel;
-    favIndex++; matchIndex++; nextMatch(e)})
+    if (sel) {searchTerm = searchInput.value = sel; favIndex++; matchIndex++; nextMatch(e)}})
   searchInput.addEventListener('input', newSearch)
-  searchInput.addEventListener('click', () => {
-    matchCountSpan.textContent = searchInput.value = '';
-    blocks.forEach(b => {b.innerHTML = b.innerText}) 
-    editingBlock.focus()})
 
 
   function mouseDown(e) {
@@ -171,7 +168,7 @@
     if (id == 'myPitch') {setPitch(pitch ^= 1); return}
     if (id == 'myPause') {defPause ^= 1; inca('Pause',defPause); Pause(); return}
     if (id == 'myFlip') {Flip(); return}
-    if (lastClick && lastClick != 2 && captions) editorClick(e, id) 
+    if (!gesture && lastClick && lastClick != 2 && captions) editorClick(e, id)
     if (lastClick == 3) {
       if (longClick || gesture) return
       if (!myNav.style.display) {lastId = e.target; context(e); return}} // my context menu
@@ -225,7 +222,8 @@
       ps = (ps - 1) / 200							// see index() in inca.ahk to explain
       if (overMedia && yw < 0.9) start = (offset - (ps * offset) + dur * ps)
       else start = 0}
-    else if (!longClick && lastClick == 1 && id != 'myPic' && playing && !overBlock) {Pause(); return}
+    else if (!longClick && lastClick == 1 && playing)
+      if (id == 'myPlayer' || id == 'myMask' || id == 'viewport') {Pause(); return}
     if (lastClick && lastClick != 2) thumbSheet = 0
     if (!gesture) return 1}							// return and continue
 
@@ -300,7 +298,7 @@
 
   function wheelEvent(e) {
     e.preventDefault()							// stop html scrolling
-    let id = e.target.id 						// faster hover detection 
+    let id = e.target.id 						// faster hover detection
     wheel += Math.ceil(Math.abs(e.deltaY))
     if (wheel < delay) return
     let wheelUp = wheelDir * e.deltaY > 0
@@ -805,21 +803,16 @@
     if (id == 'myCancel') {
       if (myCancel.innerHTML != 'Sure ?') myCancel.innerHTML = 'Sure ?' 
       else { inca('Reload',index); editing = playing = 0}}
-    if (id == 'myBookmark') {
+    else if (id == 'myBookmark') {
       blk = blocks.find(b => b.dataset.num === idDisplay.textContent);
       if (blk) blk.dataset.fav = blk.dataset.fav === '1' ? '0' : '1'; editing = 1}
-    if (id == 'myExport') {const str = blocks.map(b => b.innerText.trim()).filter(t => t).join('\n\n'); inca('Export', str)}
-    if (editingBlock && block && block != editingBlock) {
-      editingBlock.classList.remove('editing');
-      splitIfNeeded(editingBlock);      		// ← split before losing focus
-      editingBlock = null;}
-    if (overBlock) {
-      if (!block) return
+    else if (id == 'myExport') {const str = blocks.map(b => b.innerText.trim()).filter(t => t).join('\n\n'); inca('Export', str)}
+    else if (block) {
       if (editingBlock && editingBlock !== block) splitIfNeeded(editingBlock)
       editingBlock?.classList.remove('editing')
       block.classList.add('editing')
-      if (lastClick != 3) activateBlock(block, { edit: true })}
-    updateMediaHeader()}
+      activateBlock(block, { edit: true })
+      updateMediaHeader()}}
 
 
   function openEditor(text) {
@@ -832,7 +825,6 @@
       editor.style.top = '50%';
       editor.style.transform = 'translate(-50%,-50%)'}
     center();
-    window.addEventListener('resize', center);
     loadVoices();
     document.querySelectorAll('.dropdown-content').forEach(c => c.style.display = 'none');
     const parsed = parseInputText(text);
@@ -846,17 +838,18 @@
         b.text || '',
         b.fav || 0,
         b.extras || {});
-      if (b.edited === 1 && type != 'document') block.dataset.edited = "1";
+      if (b.edited === 1) block.dataset.edited = "1";
       if (b.extras?.media) block._media = b.extras.media;
       if (b.extras?.voice) {
         block._voice = b.extras.voice; 
         block.dataset.hasVoice = "1"
         if (b.extras.voice.name) block.dataset.voiceName = b.extras.voice.name}});
+    [...blocks].forEach(splitIfNeeded)
     projectMedia.defaultSrc = originalPlayerSrc || null;
     if (projectMedia.defaultSrc) swapPlayerMedia(projectMedia.defaultSrc, 0);
     let first = blocks[0];
     if (parsed.lastSelectedId) {first = blocks.find(b => +b.dataset.num === parsed.lastSelectedId)}
-    setTimeout(() => {first.scrollIntoView({ behavior: 'smooth', block: 'center' })}, 250);
+    setTimeout(() => {editing = 0; first.scrollIntoView({ block: 'center' })}, 10);
     activateBlock(first, { edit: true });  
     if (parsed.ui) Object.assign(editor.style, parsed.ui);
     if (!blocks.length) addBlock(1, myPlayer.currentTime, 'new caption');
@@ -865,6 +858,9 @@
     const ui = parsed.ui || {};
     Object.assign(editor.style, ui);
     matchCountSpan.textContent = ''
+    const options = { childList: false, subtree: true, characterData: true };
+    const editorObserver = new MutationObserver(() => { editing = 1});
+    editorObserver.observe(viewport, options)
     document.querySelector('#search-header').dispatchEvent(new WheelEvent('wheel', { deltaY: -100 }));
     editor.style.top = myPlayer.offsetTop + myPlayer.offsetHeight + 'px'
     editor._resize = center
@@ -931,7 +927,7 @@ function updateMediaHeader() {mediaHeader.textContent = title.value}
 function updateVoiceHeader(block) {
   const icons = [];
   voiceHeaderText.textContent = ''; 
-  if (block.dataset.edited === "1")     icons.push("➤");
+  if (block.dataset.edited === "1")     icons.push("🖉");
   if (block.dataset.hasVoice === "1")   icons.push("♪");
   if (editingBlock._voice?.name) icons.push(editingBlock._voice.name);
   const iconText = icons.length ? icons.join(' ') + '  ' : '';
@@ -979,9 +975,9 @@ div.onclick = () => {
 
 
 const activateBlock = (block, options = {}) => {
-  lastBlock = block
   const { edit = false } = options;
   const isSameBlock = (editingBlock === block);
+  blocks.forEach(b => b.style.color = '')
   idDisplay.textContent = block.dataset.num;
   const media = getEffectiveMedia(block);
   const time = isSameBlock ? myPlayer.currentTime : parseFloat(block.dataset.start)
@@ -991,7 +987,7 @@ const activateBlock = (block, options = {}) => {
     myPic.muted = defMute;
     if (!isSameBlock) myPic.src = block._voice.src
     if (edit) {
-      if (!isSameBlock && myPlayer.paused && !longClick) {
+      if (!isSameBlock && !longClick && lastClick == 1) {
         myPlayer.play(); 
         myPic.play();}
       else {myPic.pause(); myPlayer.pause()}}}
@@ -1000,9 +996,10 @@ const activateBlock = (block, options = {}) => {
     myPlayer.muted = defMute;
     myPic.pause();
     myPic.src = '';
-  if (edit) {
-    if (!isSameBlock && !longClick) myPlayer.play();
-    else {myPic.pause(); myPlayer.pause()}}}
+    if (edit) {
+      if (!isSameBlock && !longClick && lastClick == 1) myPlayer.play();
+      else {myPic.pause(); myPlayer.pause()}}}
+
   if (edit && !isSameBlock) {
     document.querySelectorAll('.text-block.editing').forEach(b => b.classList.remove('editing'));
     block.classList.add('editing');
@@ -1010,7 +1007,11 @@ const activateBlock = (block, options = {}) => {
     if (block._voice?.src && !myPlayer.paused) {
       myPic.currentTime = 0;
       myPic.play()}
-    updateMediaHeader(); 
+    timestamps = blocks.map(b => ({
+      sec: parseFloat(b.dataset.start) || 0,
+      top: b.offsetTop,
+      block: b}))
+    updateMediaHeader();
     updateVoiceHeader(editingBlock)}}
 
 
@@ -1029,31 +1030,18 @@ const activateBlock = (block, options = {}) => {
     if (!Click) {positionMedia(0); myPlayer.style.opacity = 0; positionMedia(2); myPlayer.style.opacity = 1}}
 
 
-  function scrollToNearestCaption() {
-    if (decodeURIComponent(myPlayer.src) !== originalPlayerSrc) return
-    if (viewport.matches(':hover') || isScrolling || overBlock) return
-    const current = myPlayer.currentTime;
-    const nearest = timestamps.reduce((a, b) =>
-      Math.abs(b.sec - current) < Math.abs(a.sec - current) ? b : a);
-    const offset = viewport.clientHeight / 2 - nearest.block.offsetHeight / 2;
-    viewport.scrollTo({ top: Math.max(0, nearest.top - offset), behavior: 'smooth' });
-    isScrolling = true;
-// nearest.block.style.color = '#ffc0cbcc'
-    setTimeout(() => isScrolling = false, 1000);
-  }
-
-
   function splitIfNeeded(blockToSplit) {
     const html = blockToSplit.innerHTML;
-    const text = blockToSplit.innerText.trim();
+    const text = blockToSplit.innerText.trim()
+
     if (!text) {
       blockToSplit.remove();
       blocks = blocks.filter(b => b !== blockToSplit);
       renumberBlocks();
-      return;
-    }
+      return}
 
     let normalized = html
+      .replaceAll("&nbsp;", "")
       .replace(/<br[^>]*>/gi, '\n')
       .replace(/<(div|p)[^>]*>/gi, '\n')
       .replace(/<\/(div|p)>/gi, '')
@@ -1092,11 +1080,23 @@ const activateBlock = (block, options = {}) => {
       blocks.splice(idx + parts.length, 0, empty);
       empty.focus();
     }
-
     renumberBlocks();
   }
 
-  myPlayer.addEventListener('timeupdate', scrollToNearestCaption)
+  myPlayer.addEventListener('timeupdate', () => {scrollToNearestCaption(); updateTimeDisplay()})
+
+  function scrollToNearestCaption() { 
+    if (decodeURIComponent(myPlayer.src) !== originalPlayerSrc) return
+if (searchInput.matches(':hover') || viewport.matches(':hover') || isScrolling || overBlock ) return
+    const current = myPlayer.currentTime;
+    const nearest = timestamps.reduce((a, b) => Math.abs(b.sec - current) < Math.abs(a.sec - current) ? b : a);
+    const offset = viewport.clientHeight / 2 - nearest.block.offsetHeight / 2;
+    viewport.scrollTo({ top: Math.max(0, nearest.top - offset), behavior: 'smooth' });
+    isScrolling = true
+    blocks.forEach(b => b.style.color = '')
+    nearest.block.style.color = '#ffc0cbcc'
+    setTimeout(() => isScrolling = false, 800)}
+
 
   function updateTimeDisplay() {
     const current = myPlayer.currentTime;
@@ -1104,6 +1104,7 @@ const activateBlock = (block, options = {}) => {
     if (editingBlock && myPlayer.paused && Math.abs(current - (parseFloat(editingBlock.dataset.start) || 0)) > 0.1) 
       myInca.style.color = 'red';
     else myInca.style.color = null}
+
 
   voiceHeaderText.addEventListener('mouseover', async (e) => {
     const voiceDropdown = document.querySelector('#voice-header');
@@ -1203,7 +1204,6 @@ if (item.url.includes('.mp3')) {row.style.borderLeft = '0.2px solid pink'; row.d
           e.stopPropagation();
           const muted = mute.dataset.muted !== 'true';
           mute.dataset.muted = muted;
-  //        mute.textContent = muted ? '🔇' : '🔊';
           myPlayer.play()
           if (currentPreviewItem === row) myPlayer.muted = muted;
         });
@@ -1327,13 +1327,12 @@ function makeProjectJSON() {
 
   function incaButton() {
     if (!captions) inca('Settings')
-    if (!editingBlock) return;
-    editingBlock.dataset.start = myPlayer.currentTime;
-    myInca.textContent = shortFormatTime(myPlayer.currentTime)}
+    if (!editingBlock || !myPlayer.paused) return
+    if (editingBlock.dataset.start != myPlayer.currentTime) editing = 1
+    editingBlock.dataset.start = myPlayer.currentTime}
 
 
 function editorInput(e) {
-  if (!longClick && e.key != 'Pause' && !e.shiftKey && !e.altKey) editing = 1
   if (editingBlock && e.key.length === 1) editingBlock.dataset.edited = "1";
   if (e.key !== 'Backspace') return;
   let block = editingBlock

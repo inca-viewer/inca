@@ -18,10 +18,10 @@
 
 
   #editor { box-sizing:border-box; display:none; flex-direction:column; width:500px; max-width:100%; height:24em;
-    background:#090808; border-radius:12px; box-shadow:0 12px 32px rgba(0,0,0,0.6); font-size:16px; 
+    background:#080808; border-radius:12px; box-shadow:0 12px 32px rgba(0,0,0,0.6); font-size:16px; 
     position:fixed; left:50%; top:50%; transform:translate(-50%,-50%); z-index: 5002; cursor:text;
     min-width:250px; min-height:160px; resize:both; max-height:80vh; overflow:hidden;}
-  #ribbon { font-size:12px; background:#090808; display:flex; align-items:center; gap: 2em;
+  #ribbon { font-size:12px; background:#080808; display:flex; align-items:center; gap: 2em;
     flex-wrap:wrap; user-select:none; flex-shrink:0; justify-content:center; cursor:default}
   .dropdown { position:relative; display:inline-block;}
   .dropdown > .header {
