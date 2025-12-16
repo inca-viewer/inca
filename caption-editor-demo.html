@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Caption Editor Demo</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: system-ui, sans-serif;
+  background: #0a0a0a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  color: #ffc0cbaa;
+}
+
+#editor {
+  display: flex;
+  flex-direction: column;
+  width: 500px;
+  height: 24em;
+  background: #080707;
+  border-radius: 12px;
+  box-shadow: 0 12px 32px rgba(0,0,0,0.6);
+  overflow: hidden;
+  resize: both;
+  min-width: 250px;
+  min-height: 160px;
+  max-height: 80vh;
+  position: relative;
+}
+
+.caption-viewport {
+  flex: 1;
+  overflow-y: auto;
+  padding: 6em 1em 7em;
+  background: #1a1a1a20;
+  display: flex;
+  flex-direction: column;
+  gap: 1.1em;
+  scrollbar-width: thin;
+  scrollbar-color: #ffc0cb30 transparent;
+  mask-image: linear-gradient(to bottom, transparent 0%, black 6%, black 94%, transparent 100%);
+}
+
+.text-block {
+  background: transparent;
+  border-radius: 6px;
+  text-align: center;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  font-size: 1em;
+  font-family: 'Yu Gothic', sans-serif;
+  padding: 0 1em;
+  line-height: 1.5;
+  color: #ffc0cb80;
+  width: 95%;
+  align-self: center;
+  position: relative;
+}
+
+.text-block[data-fav="1"]::before {
+  content: '❤';
+  position: absolute;
+  color: #ffc0cb;
+  top: 0.36em;
+  left: -1.8em;
+  font-size: 0.7em;
+}
+
+#ribbon {
+  background: #080707;
+  padding: 6px 8px;
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex-wrap: wrap;
+  user-select: none;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.dropdown > .header {
+  color: #ffc0cb99;
+  border-radius: 6px;
+  height: 1.6em;
+  font-size: 12px;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  padding: 0 0.5em;
+}
+
+.dropdown-content {
+  position: absolute;
+  bottom: 100%;
+  min-width: 100%;
+  background: #1a1a1a;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+  border-radius: 6px;
+  display: none;
+  padding: 0.5em;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 10em;
+  overflow-y: auto;
+}
+
+.dropdown-content div {
+  font-size: 12.5px;
+  white-space: nowrap;
+  cursor: pointer;
+  padding: 0.3em 0.5em;
+  border-radius: 6px;
+}
+
+.dropdown-content div:hover {
+  background: #2a2a2a;
+}
+
+.dropdown:hover .dropdown-content {
+  display: flex;
+}
+
+#media-header > .header {
+  width: 9em;
+  justify-content: center;
+}
+
+#id-display {
+  color: #ffc0cbaa;
+  font-size: 12px;
+  min-width: 34px;
+  text-align: center;
+}
+
+#time-display {
+  width: 70px;
+  color: #ffc0cbaa;
+  text-align: center;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+#search-header {
+  width: 9em;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  padding: 0 6px;
+  height: 1.2em;
+}
+
+#caption-search {
+  width: 6em;
+  background: transparent;
+  color: #ffc0cbaa;
+  border: none;
+  outline: none;
+  font-size: 13px;
+}
+
+#caption-search::placeholder {
+  color: #ffc0cb80;
+}
+
+#search-count {
+  color: #ffc0cbaa;
+  font-size: 0.8em;
+  margin-left: auto;
+}
+
+#close-btn {
+  position: absolute;
+  top: 0.5em;
+  right: 0.7em;
+  color: #ff4444;
+  cursor: pointer;
+  font-size: 0.85em;
+  transition: transform 0.3s;
+}
+
+#close-btn:hover {
+  transform: scale(1.5);
+}
+</style>
+</head>
+<body>
+
+<div id="editor">
+  <div id="close-btn">✕</div>
+
+  <div class="caption-viewport">
+    <div class="text-block" data-fav="1">Welcome to the caption editor</div>
+    <div class="text-block">This is a demo of the interface design</div>
+    <div class="text-block" data-fav="1">Favorited captions show a heart icon</div>
+    <div class="text-block">The text blocks are centered and styled with a soft pink color</div>
+    <div class="text-block">Each caption can span multiple lines
+and maintains proper spacing</div>
+    <div class="text-block">The viewport uses a gradient mask for smooth edges</div>
+    <div class="text-block" data-fav="1">Clean, minimal, and elegant</div>
+    <div class="text-block">Scroll to see more captions below</div>
+    <div class="text-block">The dark theme is easy on the eyes</div>
+    <div class="text-block">Perfect for subtitle editing</div>
+  </div>
+
+  <div id="ribbon">
+    <div class="dropdown">
+      <div class="header"><div id="id-display">42</div></div>
+    </div>
+
+    <div id="media-header" class="dropdown">
+      <div class="header">sample_video.mp4</div>
+      <div class="dropdown-content">
+        <div>sample_video.mp4</div>
+        <div>demo_clip.mov</div>
+        <div>tutorial.webm</div>
+        <div>presentation.mp4</div>
+      </div>
+    </div>
+
+    <div class="dropdown">
+      <div class="header"><div id="time-display">0:42.5</div></div>
+    </div>
+
+    <div id="search-header">
+      <input type="text" id="caption-search" placeholder="🔍︎" autocomplete="off">
+      <span id="search-count"></span>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  'use strict';
+
+  // Minimal demo functionality
+  document.getElementById('close-btn').addEventListener('click', () => {
+    document.getElementById('editor').style.opacity = '0';
+    setTimeout(() => location.reload(), 300);
+  });
+
+  document.getElementById('caption-search').addEventListener('input', (e) => {
+    const count = document.getElementById('search-count');
+    count.textContent = e.target.value ? '3/7' : '';
+  });
+})();
+</script>
+
+</body>
+</html>
