@@ -1,6 +1,8 @@
 // seekbar under caption to play voice from xpos
 // and use to set block start
 
+// color management
+
 
   let wheel = 0								// wheel count
   let wheelDir = 0		 					// wheel direction
@@ -65,6 +67,7 @@
   let more = 0
   let reload = 0
   let scaleY = (innerHeight > innerWidth) ? 0.64 : 0.5			// myPlayer height (screen ratio)
+  let clickMedia = ''
 
   let favIndex = 0
   let matchIndex = 0
@@ -100,7 +103,7 @@
   document.addEventListener('mousemove', mouseMove)
   document.addEventListener('keydown', keyDown)
   myPlayer.addEventListener('ended', mediaEnded)
-  myPlayer.addEventListener('timeupdate', () => {scrollToNearestCaption(); updateTimeDisplay()})
+  myPlayer.addEventListener('timeupdate', () => {if (captions) {scrollToNearestCaption(); updateTimeDisplay()}})
   window.addEventListener('beforeunload', (e) => {if (playing && editing) e.preventDefault()})
   document.addEventListener('visibilitychange', function() {
     if (document.visibilityState=='visible' && folder=='Downloads' && !selected && !playing) inca('Reload',index)})
@@ -125,6 +128,7 @@
     else if (e.button != 2) Click = lastClick = e.button + 1
     if (Click == 2) e.preventDefault()					// forward and back mouse buttons
     xRef = xPos; yRef = yPos
+    clickMedia = overMedia
     clickTimer = setTimeout(function() { 
       longClick = Click; clickEvent(e)},280)}				// detect long click
 
@@ -156,12 +160,15 @@
   function clickEvent(e) {
     delay = 80;								// delay wheel input straight after click
     let id = e.target.id						// id under cursor
+    let emotion = '[' + e.target.dataset.tag + '] '
+    if (e.target.closest('#emotionSub')) {myNav.style.display = null; document.execCommand('insertText', false, emotion)}
     if (!playing && longClick && !gesture && overMedia) popThumb()	// pop thumb out of flow
     if (['myCut', 'myCopy', 'myPaste'].includes(id)) {myNav.style.display=null; lastId.focus(); inca('CutCopyPaste',id); return}
     if (lastClick != 3 && (gesture || id == 'myInput')) return
     if (longClick == 1 && !playing && playlist && selected && overMedia) {inca('Move', overMedia); return}
     if (['myIndex', 'myMp3', 'myMp4', 'myJoin', 'myJpg', 'mySrt'].includes(id)) {Ffmpeg(id); cue = 0; reload = 1; return}
     if (id == 'myInca') {incaButton(); return}
+    if (id == 'ribbon' && !longClick) {viewport.scrollTo({top:0,behavior:'smooth'}); return}
     if (id == 'myFavorite') {addFavorite(); return}
     if (id == 'myDelete') if (selected || type) {inca('Delete','',index); return}
     if (id == 'myMute') {defMute ^= 1; inca('Mute', defMute); myPlayer.muted = defMute; return}
@@ -177,8 +184,9 @@
       if (editing || myMenu.matches(':hover')) return
       if (zoom > 1) {Play(); return}
       else if (!playing && !myNav.style.display) {inca('View',lastMedia); return} // list/thumb view
-      if (longClick) {index--} else index++				// next, previous media
-      if (!Param()) {index = lastMedia; closePlayer(); return}}		// end of media list
+      if (longClick) {index--} else index++				// next media
+      if (!Param()) {index = lastMedia; closePlayer(); return}		// end of media list
+      if (!thumbSheet) messages += '#History#' + myPlayer.currentTime.toFixed(1) + '#' + lastMedia + '#0'}
     if (lastClick == 1) {
       if (!playing && id != title.id) {
         if (!overText && longClick && myPanel.matches(':hover')) return 
@@ -193,10 +201,8 @@
         if (id == 'myCap') {capButton(); return}
         if (id == 'myCue' && playing) {cue = Math.round(100*myPlayer.currentTime)/100; return}}
       if (title.matches(':hover') || longClick != 1 && !playing && !overMedia && !myNav.style.display) return}
-      if (myNav.style.display && Click == 3 && type == 'video') {thumbSheet ^= 1; start = lastSeek}
-        else if (!getStart(id)) return
+    if (!getStart(id)) return
     if (lastClick == 1 && overBlock) return
-    if (Click == 3 && !playing && !overMedia) {thumbSheet = 0; index = lastMedia; start = lastSeek}
     if (Click == 3) myNav.style.display = null
     if (!playing && lastClick == 2) return
     if (playing && lastClick == 1 && type == 'document') return
@@ -204,6 +210,9 @@
 
 
   function getStart(id) {
+    if (lastClick == 3) {
+      if (!playing && !overMedia) {thumbSheet = 0; index = lastMedia; start = lastSeek; return 1}
+      if (myNav.style.display && type == 'video') {thumbSheet ^= 1; start = lastSeek; return 1}}
     if (lastClick == 2 || !dur) start = defStart
     if (!thumbSheet && playing && ym > 0.8 && overMedia || yw > 0.98) {
       if (longClick) {if (xm < 0.25) {myPlayer.currentTime = 0} else myPlayer.currentTime = defStart}
@@ -220,8 +229,7 @@
       let offset = dur > 60 ? 20 : 0						// skip movie credits...
       let ps = 5 * ((row * 6) + col)
       ps = (ps - 1) / 200							// see index() in inca.ahk to explain
-      if (overMedia && yw < 0.9) start = (offset - (ps * offset) + dur * ps)
-      else start = 0}
+      if (overMedia && yw < 0.9) start = (offset - (ps * offset) + dur * ps)}
     else if (!longClick && lastClick == 1 && playing)
       if (id == 'myPlayer' || id == 'myMask' || id == 'viewport') {Pause(); return}
     if (lastClick && lastClick != 2) thumbSheet = 0
@@ -229,6 +237,7 @@
 
 
   function Play() {
+    if (editing) return
     closePic()
     positionMedia(0)
     thumb.pause()
@@ -242,6 +251,7 @@
       if (captions || favicon.matches(':hover') || type == 'document') openCap()
     if (el = document.getElementById('title'+lastMedia)) el.style.color = null
     title.style.opacity = 1; title.style.color = 'pink'
+    if (lastClick && !thumbSheet) inca('Playing',0,index)
     lastMedia = index
     if (scaleY < 0.26) scaleY = 0.5						// return zoom after captions
     if (lastClick == 1) myNav.style.display = null
@@ -250,7 +260,6 @@
     if (playlist.match('/inca/music/') && !thumbSheet) {start = 0; myPlayer.muted = 0}
     if (type == 'audio' && !captions) myPlayer.style.borderBottom = '2px solid pink'
     else myPlayer.style.border = null
-    if (lastClick && !thumbSheet) inca('History',start.toFixed(1),index)
     observer = new IntersectionObserver(([entry]) => {if (!entry.isIntersecting) mediaX = mediaY = 500}).observe(myPlayer)
     if (pitch || myPlayer.context) {setupContext(myPlayer); myPlayer.jungle.setPitchOffset(semiToneTranspose(pitch))}
     if (captions && pitch || myPic.context) {setupContext(myPic); myPic.jungle.setPitchOffset(semiToneTranspose(pitch))}
@@ -270,6 +279,7 @@
 
 
   function mouseMove(e) {
+    let id = e.target.id							// id under cursor
     lastBlock = e.target.closest('.text-block')
     overBlock = lastBlock ? 1 : 0;
     if (innerHeight == outerHeight) {xPos = e.screenX; yPos = e.screenY} 	// fullscreen detection/offsets
@@ -283,10 +293,11 @@
     if (x + y > 9 && !gesture && Click) {gesture=1; if (!longClick&&zoom==1 && !playing && overMedia && !myNav.style.display) sel(index)}
     if (!gesture || !Click) {gesture = 0; return}
     if (y > x + 1) gesture = 2							// enable player move
+    if (id == 'editor' || id == 'ribbon') editing = 1
     if (!playing && overMedia && zoom > 1) {
       thumb.style.left = parseInt(thumb.style.left || 0) + xPos - xRef + 'px'	// move thumb
       thumb.style.top =  parseInt(thumb.style.top || 0) + yPos - yRef + 'px'}
-    else if (e.target.id == 'ribbon') {
+    else if (id == 'ribbon') {
       editor.style.left = editor.offsetLeft + xPos - xRef + 'px'		// move caption editor
       editor.style.top = editor.offsetTop + yPos - yRef + 'px'}
     else if (playing && (Click == 1 || gesture == 2 || delay == 1) && !(!overMedia && captions)) {
@@ -350,11 +361,9 @@
       if (!thumbSheet) myPlayer.currentTime = start
       positionMedia(0); delay = 140}
     else if ((!dur || thumbSheet || longClick) && !overText && playing) { // zoom myPlayer
-      let z = (overMedia || !wheelUp && !editor.style.display) ? wheel / 1200 : 0
-      let zoomPosX = wheelUp ? xPos : innerWidth / 2
-      let zoomPosY = wheelUp ? yPos : innerHeight / 2
-      let x = rect.left+rect.width / 2 - zoomPosX
-      let y = rect.top+rect.height / 2 - zoomPosY
+      let x = rect.left+rect.width/2-xPos
+      let y = rect.top+rect.height / 2 - yPos
+      let z = clickMedia && Click && (xm < 0.2 || xm > 0.8 || ym < 0.2 || ym > 0.8) ? wheel / 1300 : 0
       let array = thumbSheet ? [...xyz] : [mediaX, mediaY, scaleY]
       array[0] += x * z * (wheelUp ? 1 : -1)
       array[1] += y * z * (wheelUp ? 1 : -1)
@@ -367,8 +376,8 @@
       let interval = 0.1
       if (dur > 200 && (overMedia && ym > 0.8 || yw > 0.9)) interval = 0.5	
       else if (myPlayer.paused) interval = 0.0333
-      if (wheelUp) {thumb.currentTime += interval; myPlayer.currentTime += interval}
-      else if (!wheelUp) {thumb.currentTime -= interval; myPlayer.currentTime -= interval}
+      if (wheelUp) if (playing) {myPlayer.currentTime += interval} else thumb.currentTime += interval
+      if (!wheelUp) if (playing) {myPlayer.currentTime -= interval} else thumb.currentTime -= interval
       myPlayer.addEventListener('seeked', () => {delay = 100}, {once: true})
       if (!playing) fade = 3						// hide seekbar in thumb popout
       thumb.pause(); delay = 250}
@@ -705,7 +714,7 @@
 
 
   function Ffmpeg(id) {
-    let target = cue + '|' + id + '|' + skinny
+    let target = cue + '|' + id + '|' + skinny + '|' + playing
     let select = playing || selected || overMedia || 0
     inca('Ffmpeg', target, select, (myPlayer.currentTime === dur ? dur - 0.1 : myPlayer.currentTime).toFixed(2))}
 
@@ -740,7 +749,7 @@
     else if (zoom > 1) closePic()
     else if (longClick) window.close()
     else if (myContent.scrollTop > 50) myContent.scrollTo(0,0)		// else scroll to page top
-    else inca('Reload')}						// or finally, reload page & clear selected
+    else inca('Reload',1)}						// or finally, reload page & clear selected
 
 
   function overThumb(id) {
@@ -755,14 +764,17 @@
   function closePlayer() {
     editor.style.display = null
     if (observer) observer.disconnect()
+    if (!thumbSheet) messages += '#History#' + myPlayer.currentTime.toFixed(1) + '#' + index + '#'
     if (editing) {
       let json = makeProjectJSON().replaceAll('#', '𝌇')					// because # is used as delimiter
       inca('capEdit', json, index)}					// save edited text
-    if (reload) inca('Reload')
+    else if (reload && folder == 'Downloads') inca('Reload', index)	// after ffmpeg processing
+    else inca('Null', index)						// send / clear messages
     Click = playing = start = captions = thumbSheet = cue = editing = 0
     myVig.style.opacity = myPlayer.style.opacity = overText = reload = 0
     myMask.style = myDur.innerHTML = myPlayer.src = myPic.src = ''
-    myNav.style.display = myVig.style.visibility = myPlayer.style.visibility = null}
+    myNav.style.display = myVig.style.visibility = myPlayer.style.visibility = null
+    title.scrollIntoView(); myContent.scrollBy(0,-400)}			// scroll to last played
 
 
   function context(e) { 
@@ -854,7 +866,7 @@
     if (parsed.ui) Object.assign(editor.style, parsed.ui);
     if (!blocks.length) addBlock(1, myPlayer.currentTime, 'new caption');
     editor.style.height = Math.min(blocks.length * 3, 24) + 'em';
-    viewport.style.padding = blocks.length < 4 ? '2em 2em' : '6em 2em 7em 2em';
+    if (blocks.length < 4) viewport.style.padding = '2em 0.5em'
     const ui = parsed.ui || {};
     Object.assign(editor.style, ui);
     matchCountSpan.textContent = ''
@@ -930,7 +942,7 @@ function updateVoiceHeader(block) {
   if (block.dataset.edited === "1")     icons.push("🖉");
   if (block.dataset.hasVoice === "1")   icons.push("♪");
   if (editingBlock._voice?.name) icons.push(editingBlock._voice.name);
-  const iconText = icons.length ? icons.join(' ') + '  ' : '';
+  const iconText = icons.length ? icons.join(' ') : '';
   voiceHeaderText.textContent = iconText}
 
 
@@ -1106,7 +1118,7 @@ if (searchInput.matches(':hover') || viewport.matches(':hover') || isScrolling |
     else myInca.style.color = null}
 
 
-  voiceHeaderText.addEventListener('mouseover', async (e) => {
+  voiceHeaderText.addEventListener('click', async (e) => {
     const voiceDropdown = document.querySelector('#voice-header');
     document.querySelectorAll('.dropdown-content').forEach(c => c.style.display = 'none');
     voiceContent.style.display = 'flex';})
@@ -1115,7 +1127,7 @@ if (searchInput.matches(':hover') || viewport.matches(':hover') || isScrolling |
 
   mediaContent.addEventListener('mouseleave', () => {mediaContent.style.display = null})
 
-  document.querySelector('#media-header').addEventListener('mouseenter', async () => {
+  document.querySelector('#media-header').addEventListener('click', async () => {
     document.querySelectorAll('.dropdown-content').forEach(c => c.style.display = 'none');
     mediaContent.style.display = 'flex';
 
@@ -1334,17 +1346,18 @@ function makeProjectJSON() {
 
 function editorInput(e) {
   if (editingBlock && e.key.length === 1) editingBlock.dataset.edited = "1";
+  if (e.key.length === 1) {myPic.pause(); myPlayer.pause()}
   if (e.key !== 'Backspace') return;
   let block = editingBlock
-  if (window.getSelection().toString() !== '') {document.execCommand('delete'); return}
+  if (window.getSelection().toString() !== '') {e.preventDefault();; document.execCommand('delete'); return}
   const range = window.getSelection().getRangeAt(0);
   const charBefore = range.startContainer.textContent[document.getSelection().getRangeAt(0).startOffset - 1]
   if (charBefore === '\n') { document.execCommand('delete'); document.execCommand('insertText', false, '  ')}
-  if (range.rangeCount === 0) return;
+  if (range.rangeCount === 0) return
   const testRange = document.createRange();
   testRange.selectNodeContents(editingBlock);
   testRange.setEnd(range.startContainer, range.startOffset);
-  if (testRange.toString() !== '') return;
+  if (testRange.toString() !== '') return 
   const prev = block.previousElementSibling;
   if (!prev?.classList.contains('text-block')) return;
   e.preventDefault();

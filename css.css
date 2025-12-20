@@ -21,8 +21,36 @@
     background:#080808; border-radius:12px; box-shadow:0 12px 32px rgba(0,0,0,0.6); font-size:16px; 
     position:fixed; left:50%; top:50%; transform:translate(-50%,-50%); z-index: 5002; cursor:text;
     min-width:250px; min-height:160px; resize:both; max-height:80vh; overflow:hidden;}
-  #ribbon { font-size:12px; background:#080808; display:flex; align-items:center; gap: 2em;
-    flex-wrap:wrap; user-select:none; flex-shrink:0; justify-content:center; cursor:default}
+
+#ribbon {
+  font-size:12px; 
+  background:#080808; 
+  display:flex; 
+  align-items:center; 
+  flex-wrap:wrap; 
+  user-select:none; 
+  flex-shrink:0; 
+  justify-content: space-around;
+  cursor:default;}
+
+#voice-header {flex: 0 0 15%}
+#media-header {flex: 0 0 30%; min-width: 0}
+#search-header {flex: 0 0 30%}
+#voice-header > .header {justify-content: center}
+
+#media-header > .header > * { 
+  display: inline-flex;
+  color: #ffc0cb44; 
+  overflow: hidden;
+  white-space: nowrap;
+  flex-shrink: 1;
+  width: 100%;
+  min-width: 0}
+
+#voice-header .dropdown-content { height: 6.7em; padding: 0.5em 0.5em; line-height: 1.6; translate: 0 -2.2em; align-items: center}
+#media-header > .header { padding: 0 0.2em; display: flex; color: #ffc0cb44; overflow-x: hidden;}
+#media-header .dropdown-content { height: 6.7em; padding: 0.5em 0.5em; line-height: 1.2; translate: 0 -2.2em}
+
   .dropdown { position:relative; display:inline-block;}
   .dropdown > .header {
     color: #ffc0cb99; border-radius:0.9em; height: 1.8em; background: #0f0e0e;
@@ -39,7 +67,7 @@
     flex:1;
     gap: 1.4em;
     overflow-y:auto; 
-    padding:1em; 
+    padding: 6em 0.5em 7em 0.5em; 
     display:flex; 
     flex-direction:column; 
     min-height:0;
@@ -55,27 +83,20 @@
       transparent  100%)}
 
   .text-block {
-    position: relative; background:transparent; border-radius:0.7em; text-align:center; white-space:pre-wrap; 
-    word-wrap:break-word; font-family:'Yu Gothic'; line-height:1.5; margin: 0; padding: 0.2em 1em;
-    color:#ffc0cb80; outline:none; width: auto; align-self: center; border: 0;}
+    position: relative; background:transparent; border-radius:0.7em; white-space:pre-wrap; 
+    word-wrap:break-word; font-family:'Yu Gothic'; line-height:1.5; margin: 0; padding: 0.3em 2em;
+    color:#ffc0cb80; text-align:center; outline:none; width: auto; align-self: center; border: 0;}
 
   .text-block.editing { background: #0f0e0e; color: #ffc0cbaa; }
 
   .text-block[data-fav="1"]::before {
     content: '❤';
     position: absolute;
-    opacity: 0.7;
+    opacity: 1;
     color: #ffc0cb;
-    top: -1.1em;
-    left: -3em;
+    top: 0.4em;
+    left: 0.6em;
     font-size: 0.6em}
-
-    #voice-header > .header { width:5em; padding: 0 0.2em; display: flex; 
-      color: #ffc0cb44; overflow: hidden;}
-    #voice-header .dropdown-content {height: 6.7em; padding: 0.5em 0.5em; line-height: 1.6; translate: 0 -2.2em}
-    #media-header > .header { width:12em; padding: 0 0.2em; display: flex;
-      color: #ffc0cb44; overflow: hidden;}
-    #media-header .dropdown-content {width: 24em; height: 6.7em; padding: 0.5em 0.5em; line-height: 1.2; translate: 0 -2.2em}
 
     #id-display { 
       border:none; color:#ffc0cbaa; font-size:12px; display: none;
@@ -86,10 +107,10 @@
       text-align:center; font-size:0.9em; font-family:inherit; border-radius:4px;}
 
     #myCancel {
-      position: absolute; right: 0.7em; color: red; z-index:999;
+      position: absolute; top: 2.5em; right: 1em; color: red; z-index:999;
       visibility:hidden; text-align:center; min-width:3.5em;
       transition:0.6s; background:#1a1a1a00; cursor:pointer; font-size: 1em;}
-    #myCancel:hover { transform: scale(1.4,1.4); translate: 0 -0.2em}
+    #myCancel:hover { transform: scale(1.6,1.6); translate: 0 -0.2em}
 
     #search-header {
       width: 12em;
@@ -106,7 +127,6 @@
       white-space:nowrap;}
     #search-header:hover { transform: scale(1.14,1.14) }
 
-
     #caption-search-input {
       width: 8em;
       background: transparent;
@@ -118,7 +138,6 @@
     #caption-search-input:focus::placeholder { color: transparent }
     #search-match-count { color: #ffc0cbaa; font-size: 0.8em; margin-left: auto;}
     mark { background: inherit; color: #ffc0cb }
-
 
 .player, .vig {
   position: absolute;
@@ -156,9 +175,9 @@
   background: transparent;
   box-sizing: border-box;
   color: #826858;
-  font-size: 1em;
   font-family: inherit;
   width: 74%;
+  min-width: 1.3em;
   outline: none;
   outline-offset: -2px;
   height: 1.4em;
@@ -425,6 +444,27 @@
 .menu {display: none;}
 #myNav[style*="display: block"]:not(.editor-mode) .default {display: block;}
 #myNav[style*="display: block"].editor-mode .editor {display: block;}
+
+.submenu {
+  position: absolute;
+  left: 90%;
+  top: 0;
+  display: none;
+  background: #121010c0;
+//  border-radius: 0.7em;
+  max-height: 10em;
+  overflow-y: auto;
+  width: 8em;
+}
+
+#myEmotion:hover + .submenu,
+.submenu:hover {
+  display: block;
+}
+
+.context:not(:hover) .submenu {
+  display: none;
+}
 
 .myBody {					/* whole body element */
   font-family: 'Yu Gothic', 'Calibri Light';
