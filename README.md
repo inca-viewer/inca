@@ -28,7 +28,7 @@ All media types supported in browser - fast transcode if needed.<br>
 Edit settings or source code in notepad, then run compile.exe<br>
 Compiles in less than 1 second<br>
 Browser will default to pictures folder, bookmark this tab<br>
-To 'uninstall', just exit from taskbar & delete inca folder<br>
+To close use taskbar or ctrl + Esc. To 'uninstall', delete inca folder<br>
 
 
 Middle click
@@ -60,14 +60,12 @@ Left click & slide
 - select media
 
 Wheel
-- Seek or zoom if +click<br>
+- Seek (+click = zoom)<br><br>
 
 index creates 6x6 thumbsheets<br>
-mp4 converts video to fast-seek browser optimized mp4 <br>
+mp4 converts video to fast-seek mp4 <br>
 any text editing sends previous copy to trash if needed<br>
-Supports rotated screen + osk onscreen keyboard<br>
-set compile.exe to run as administrator if using osk<br>
-Long click on any selected text for file search or unselected text for osk<br><br>
+Supports rotated screen + osk keyboard<br><br>
 <img src="screens/mouse.jpg" width="12.6%"> <img src="screens/computer arm 3.jpg" width="15.9%">   <img src="screens/computer arm 4.jpg" width="25%"><br>
 1m x 12mm threaded rod, 2 x nuts + heatshrink<br>
 drill 12mm hole in wood to bend arm and for cables<br>
