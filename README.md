@@ -14,7 +14,7 @@ Search, organize, edit & view media files in browser<br>
 Move, Copy, Rename files in browser<br>
 Create slideshows, favorites, clips, joins, conversions etc.<br>
 Create, edit or search captions and subtitles<br>
-Concurrent Music and playlists from browser tabs<br>
+Concurrent Music and playlists from browser tabs<br><br>
 New... uses node server instead of local files<br>
 New... storyboard and caption editor for AI assisted content creation<br>
 New... top and tail jpg's and clip joins for ai image to video<br>
@@ -23,13 +23,13 @@ New... supports local AI tools for TTS STT or external api's<br>
 Lightweight & portable (no installation)<br>
 Pure vanilla java / ahk script (ai can confirm is safe)<br>
 No IDE, no libraries, no external calls, no browser extensions<br> 
-Does not mess with any settings - see source code<br>
-All media types supported in browser - fast transcodes when needed.<br>
-Configure settings.ini in notepad, then run compile.exe<br>
-Browser will default open in pictures folder, bookmark this tab<br>
+Does not mess with any settings - see source code<br><br>
+All media types supported in browser - fast transcode if needed.<br>
+Edit settings or source code in notepad, then run compile.exe<br>
+Compiles in less than 1 second<br>
+Browser will default to pictures folder, bookmark this tab<br>
 To 'uninstall', just exit from taskbar & delete inca folder<br>
-You can edit source code in notepad<br>
-Compiles in about 2 second<br>
+
 
 Middle click
 - next media (long click for previous)<br>
@@ -44,8 +44,9 @@ Long back click
 - close browser tab or close window
 
 Long left click
-- overthumb - pop thumb out of page to zoom or play
-- on selected text - find media matches on pc
+- over text - open osk keyboard
+- over selected text - find media matches on pc
+- over thumb - pop thumb out of page flow
 - on folder - copies selected files (instead of move)
 
 Right click & slide
@@ -58,12 +59,12 @@ Left click & slide
 - position player
 - select media
 
-Click & Wheel
-- zoom
+Wheel
+- Seek or zoom if +click<br>
 
 index creates 6x6 thumbsheets<br>
-mp4 converts video to fast seek browser mp4
-any text editing sends previous copy to trash for recovery
+mp4 converts video to fast-seek browser optimized mp4 <br>
+any text editing sends previous copy to trash if needed<br>
 Supports rotated screen + osk onscreen keyboard<br>
 set compile.exe to run as administrator if using osk<br>
 Long click on any selected text for file search or unselected text for osk<br><br>
