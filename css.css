@@ -50,6 +50,9 @@
 #voice-header .dropdown-content { height: 6.7em; padding: 0.5em 0.5em; line-height: 1.6; translate: 0 -2.2em; align-items: center}
 #media-header > .header { padding: 0 0.2em; display: flex; color: #ffc0cb44; overflow-x: hidden;}
 #media-header .dropdown-content { height: 6.7em; padding: 0.5em 0.5em; line-height: 1.2; translate: 0 -2.2em}
+#media-header .dropdown-content > div:active {border-left: 1px solid red}
+#voice-header .dropdown-content > div:active {border-left: 1px solid red}
+#voice-header .dropdown-content > div {padding: 0 0.5em;}
 
   .dropdown { position:relative; display:inline-block;}
   .dropdown > .header {
@@ -84,19 +87,32 @@
 
   .text-block {
     position: relative; background:transparent; border-radius:0.7em; white-space:pre-wrap; 
-    word-wrap:break-word; font-family:'Yu Gothic'; line-height:1.5; margin: 0; padding: 0.3em 2em;
+    word-wrap:break-word; font-family:'Yu Gothic'; line-height:1.5; margin: 0; padding: 0.4em 2em;
     color:#ffc0cb80; text-align:center; outline:none; width: auto; align-self: center; border: 0;}
 
-  .text-block.editing { background: #0f0e0e; color: #ffc0cbaa; }
-
-  .text-block[data-fav="1"]::before {
+  .text-block[data-fav="1"]::after {
     content: '❤';
     position: absolute;
-    opacity: 1;
     color: #ffc0cb;
     top: 0.4em;
     left: 0.6em;
-    font-size: 0.6em}
+    font-size: 0.6em;
+    z-index: 3;
+    pointer-events: none}
+
+  .text-block.editing { background: #0d0c0d; color: #ffc0cbaa; }
+
+  .text-block.editing::before {
+    content: '';
+    position: absolute;
+    left: 2em;
+    right: 2em;
+    bottom: 0.1em;
+    height: 2px;
+    border-radius: 1px;
+    background: linear-gradient(to right, #ffc0cb12 var(--progress, 0%), #ffc0cb0c var(--progress, 0%));
+    transition: background 0.3s linear;
+    z-index: 1}
 
     #id-display { 
       border:none; color:#ffc0cbaa; font-size:12px; display: none;
@@ -184,7 +200,7 @@
   border: none;
   margin: auto;
   transition: 0.3s;
-  border-radius: 0.6em}
+  border-radius: 0.7em}
 .title:hover {color: pink; background:#2b2824; transition: 1.4s; z-index: 99; overflow: visible}
 
 .entry {

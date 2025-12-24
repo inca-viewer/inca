@@ -107,7 +107,6 @@
     messages(startPage)				; opens browser
     SetTimer, TimedEvents, 49			; every 49mS - process server requests
     SetTimer, SlowTimer, 499, -2		; check on youtube downloads
-    SetTimer, VolTimer, 6664, -2		; stops windows vol lockouts
     return
 
 
@@ -140,7 +139,9 @@
     SetTimer, Timer_up, Off
     if (A_TickCount > timer)			; longClick already done ^
       return
-    if WinActive("ahk_class Notepad")
+    IfWinExist, ahk_class OSKMainClass
+      WinClose, ahk_class OSKMainClass		; close onscreen keyboard
+    else if WinActive("ahk_class Notepad")
     Send, {Esc}^s^w
     else if incaTab
       send, {Pause}				; close java media player
@@ -235,7 +236,7 @@
     else if (command == "CutCopyPaste")
       {
       CutCopyPaste()
-      PopUp(Chr(0x2713),600,0,0)
+      PopUp(Chr(0x2713),400,0,0)
       }
     else if (command == "Export")
       {
@@ -286,7 +287,7 @@
     else if (command == "History")					; maintain play history
       {
       if (value <= 0)
-        value = 0.00
+        value = 0.0
       if (folder != "History")
         FileAppend, %src%|%value%`r`n, %inca%\fav\History.m3u, UTF-8
       }
@@ -330,7 +331,7 @@
         x-=100
       if (y < A_ScreenHeight/5)
         y+=150
-      else y-=550
+      else y-=600
       run, osk.exe
       Loop, 100
         {
@@ -1557,11 +1558,11 @@
       {
       if (DecodeExt(type) != "video")
         return
-      cmd = C:\inca\cache\apps\ffprobe.exe -v quiet -print_format json -show_streams -select_streams v:0 "%src%"
-      RunWait, %ComSpec% /c %cmd% > "c:\inca\cache\temp\meta.txt",, Hide	; get media meta data
+      cmd = %inca%\cache\apps\ffprobe.exe -v quiet -print_format json -show_streams -select_streams v:0 "%src%"
+      RunWait, %ComSpec% /c %cmd% > "%inca%\cache\temp\meta.txt",, Hide	; get media meta data
       if ErrorLevel
         return
-      FileRead, MetaContent, c:\inca\cache\temp\meta.txt
+      FileRead, MetaContent, %inca%\cache\temp\meta.txt
  ;     if (!join && !start && !end && InStr(MetaContent, "Inca"))		; already transcoded
  ;       return
       if RegExMatch(MetaContent, """width"":\s*(\d+)", WidthMatch)
@@ -2173,7 +2174,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
         output = %profile%\Downloads\%med% @%tim%.jpg
         whisper = %inca%\cache\apps\Faster-Whisper-XXL\faster-whisper-xxl.exe
         if InStr(el_id, "mySrt")
-          runwait, "%whisper%" "%source%" --model tiny.en --language en --output_format srt --output_dir "%inca%\cache\srt", , Hide
+          runwait, "%whisper%" "%source%" --model tiny.en --language en --output_format srt --compute_type float32 --output_dir "%inca%\cache\srt", , Hide
         else if (DetectMedia(source) == "image")
           cmd = %inca%\cache\apps\ffmpeg.exe -i "%source%" -vf "scale=iw*%skinny%:ih" -y "%output%"
         else cmd = %inca%\cache\apps\ffmpeg.exe -ss %tim% -i "%source%" -vf "scale=iw*%skinny%:ih" -y -vframes 1 "%output%"
@@ -2192,12 +2193,6 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
       RenderPage(1)
       send, {F5}
       }
-    return
-
-
-  VolTimer:
-    SoundSet, volume + 0.1
-    SoundSet, volume
     return
 
 
@@ -2310,7 +2305,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
         x := Round(volume)
       ctime := time
       Gui, Status:+lastfound
-      WinSet, TransColor, 0 20
+      WinSet, TransColor, 0 30
       Gui, Status:Font, s20 cWhite, Segoe UI
       GuiControl, Status:Font, GuiSta
       GuiControl, Status:, GuiSta, %time%  %x%
