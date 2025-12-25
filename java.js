@@ -109,6 +109,7 @@
       const progress = (myPic.currentTime / myPic.duration || 0) * 100;
       editingBlock.style.setProperty('--progress', progress + '%')}})
   window.addEventListener('beforeunload', (e) => {if (playing && editing) e.preventDefault()})
+  myNav.addEventListener('mouseleave', () => {myNav.style.display = myDefault.style.display = myAlt.style.display = null})
   document.addEventListener('visibilitychange', function() {
     if (document.visibilityState=='visible' && folder=='Downloads' && !selected && !playing) inca('Reload',index)})
   myInca.addEventListener('mouseenter', () => {
@@ -253,8 +254,9 @@
     else myPlayer.muted = defMute
     if (!thumbSheet && !(editor.style.display && lastClick == 1))
       if (captions || favicon.matches(':hover') || type == 'document') openCap()
-    if (el = document.getElementById('title'+lastMedia)) el.style.color = null
-    title.style.opacity = 1; title.style.color = 'red'
+    if (el = document.getElementById('title'+lastMedia)) el.style.color = el.style.background = null
+    title.style.color = 'pink'; 
+    if (!listView) title.style.background = '#333'
     if (lastClick && !thumbSheet) inca('Playing',0,index)
     lastMedia = index
     if (scaleY < 0.26) scaleY = 0.5						// return zoom after captions
@@ -392,7 +394,6 @@
     let top = 0; let el = thumb
     if (playing) el = myPlayer
     rect = el.getBoundingClientRect()
-    if (!myNav.matches(':hover')) myNav.style.display = myDefault.style.display = myAlt.style.display = null
     if (!more && list < myList.innerText && myContent.scrollTop > myContent.scrollHeight - 2 * innerHeight) inca('More', list)
     xm = (xPos - rect.left) / rect.width
     ym = (yPos - rect.top) / rect.height
@@ -627,7 +628,8 @@
     Param()								// initialise current media
     if (ix && title) {							// eg. after switch thumbs/listview
       title.style.opacity = 1						// highlight thumb
-      title.style.color = 'red'
+      title.style.color = 'pink'
+      if (!lv) title.style.background = '#333'
       title.scrollIntoView({ block: 'center' })}}
 
 
@@ -832,7 +834,7 @@
         let rect = overBlock.getBoundingClientRect()
         if ((yPos - rect.top) > rect.height - 8) {		// clicked voice seekbar
           let seek = (xPos - rect.left) / rect.width
-          myPic.currentTime = (seek * myPic.duration) - 1
+          myPic.currentTime = (seek * myPic.duration) - 0.5
           myPlayer.currentTime = parseFloat(overBlock.dataset.start) + (seek * myPic.duration) - 1
           myPic.play(); myPlayer.play(); return}}}}
 

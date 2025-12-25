@@ -1656,7 +1656,9 @@
     if (command != "More")
       lastIndex := 0
     type = video							; prime for list parsing
-    if playlist
+    if (command == "View" && index > 90)
+      page := index
+    else if playlist
       page := 300
     else page := 90							; media entries per chunk
     if (command == "More")
