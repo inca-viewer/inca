@@ -61,9 +61,8 @@
   let pitch = 0								// default pitch
   let list = 0								// computed list size (last index +1)
   let end = 0
-  let sheet = ''
-  let lastId = ''
-  let overBlock = ''
+  let sheetUrl = ''							// thumbSheet url
+  let overBlock = ''							// caption editor block
   let more = 0
   let reload = 0
   let scaleY = (innerHeight > innerWidth) ? 0.64 : 0.5			// myPlayer height (screen ratio)
@@ -165,10 +164,11 @@
   function clickEvent(e) {
     delay = 80;								// delay wheel input straight after click
     let id = e.target.id						// id under cursor
+    if (lastClick == 1) overBlock = e.target.closest('.text-block') || 0
     let emotion = '[' + e.target.dataset.tag + '] '
     if (e.target.closest('#emotionSub')) {myNav.style.display = null; document.execCommand('insertText', false, emotion)}
     if (!playing && longClick && !gesture && overMedia) popThumb()	// pop thumb out of flow
-    if (['myCut', 'myCopy', 'myPaste'].includes(id)) {myNav.style.display=null; lastId.focus(); inca('CutCopyPaste',id); return}
+    if (['myCut', 'myCopy', 'myPaste'].includes(id)) {myNav.style.display=null; editingBlock.focus(); inca('CutCopyPaste',id); return}
     if (lastClick != 3 && (gesture || id == 'myInput')) return
     if (longClick == 1 && !playing && playlist && selected && overMedia) {inca('Move', overMedia); return}
     if (['myIndex', 'myMp3', 'myMp4', 'myJoin', 'myJpg', 'mySrt'].includes(id)) {Ffmpeg(id); cue = 0; reload = 1; return}
@@ -180,10 +180,10 @@
     if (id == 'myPitch') {setPitch(pitch ^= 1); return}
     if (id == 'myPause') {defPause ^= 1; inca('Pause',defPause); Pause(); return}
     if (id == 'myFlip') {Flip(); return}
-    if (!gesture && lastClick == 1 && captions) editorClick(e, id)
+    if (!gesture && lastClick != 2) editorClick(e, id)
     if (lastClick == 3) {
       if (longClick || gesture) return
-      if (!myNav.style.display) {lastId = overBlock; context(e); return}} // my context menu
+      if (!myNav.style.display) {context(e); return}}			// my context menu
     if (lastClick == 4) {mouseBack(); return}				// Back Click
     if (lastClick == 2) {  						// Middle click
       if (editing || myMenu.matches(':hover')) return
@@ -511,7 +511,7 @@
         myPic.style.backgroundImage = 'url(\"'+thumb.poster+'\")'}
       else if (type == 'video') {
         myPic.style.backgroundSize = null
-        myPic.style.backgroundImage = 'url(\"'+sheet+'\")'
+        myPic.style.backgroundImage = 'url(\"'+sheetUrl+'\")'
         myPic.style.backgroundPosition = `${(thumbIndex % 6) * 20}% ${Math.floor(thumbIndex / 6) * 20}%`}
       if (skinny < 0) myPic.style.left = rect.left + rect.width + 'px'}	// media flipped
     else mySeek.style.opacity = myPic.style.opacity = 0}
@@ -522,11 +522,11 @@
     if (type == 'video') {
       let filename = thumb.src.match(/\/([^\/]+?)(?:\.[^.]*?)?$/)[1]
       let path = thumb.poster.replace(/\/(posters|temp\/history)\//, '/thumbs/').replace(/\/[^\/]*$/, '')
-      sheet = path + '/' + filename + '.jpg'
-      if (thumbSheet) {myPlayer.poster = sheet; myPlayer.load()}
+      sheetUrl = path + '/' + filename + '.jpg'
+      if (thumbSheet) {myPlayer.poster = sheetUrl; myPlayer.load()}
       else myPlayer.poster = null
       if (myPlayer.src != thumb.src) myPlayer.src = thumb.src
-      myPic.style.backgroundImage = 'url(\"'+sheet+'\")'}		// use 6x6 thumbsheet as poster
+      myPic.style.backgroundImage = 'url(\"'+sheetUrl+'\")'}		// use 6x6 thumbsheet as poster
     else if (type == 'audio') myPlayer.src = thumb.src
     else myPlayer.src = null
     if (!thumbSheet && dur) myPlayer.currentTime = start
@@ -1103,7 +1103,6 @@ const activateBlock = (block, options = {}) => {
     renumberBlocks();
   }
 
-  myPlayer.addEventListener('timeupdate', () => {scrollToNearestCaption(); updateTimeDisplay()})
 
   function scrollToNearestCaption() { 
     if (decodeURIComponent(myPlayer.src) !== originalPlayerSrc) return

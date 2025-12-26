@@ -70,7 +70,7 @@
     flex:1;
     gap: 1.4em;
     overflow-y:auto; 
-    padding: 6em 0.5em 7em 0.5em; 
+    padding: 6em 1.6em 7em 1.6em; 
     display:flex; 
     flex-direction:column; 
     min-height:0;
@@ -86,8 +86,8 @@
       transparent  100%)}
 
   .text-block {
-    position: relative; background:transparent; border-radius:0.7em; white-space:pre-wrap; 
-    word-wrap:break-word; font-family:'Yu Gothic'; line-height:1.5; margin: 0; padding: 0.4em 2em;
+    position: relative; background:transparent; border-radius:0.7em; white-space:pre-wrap; transition: 0.42s;
+    word-wrap:break-word; font-family:'Yu Gothic'; line-height:1.5; margin: 0; padding: 0.4em 1.3em;
     color:#ffc0cb80; text-align:center; outline:none; width: auto; align-self: center; border: 0;}
 
   .text-block[data-fav="1"]::after {
@@ -96,11 +96,11 @@
     color: #ffc0cb;
     top: 0.4em;
     left: 0.6em;
-    font-size: 0.6em;
+    font-size: 0.5em;
     z-index: 3;
     pointer-events: none}
 
-  .text-block.editing { background: #0d0c0d; color: #ffc0cbaa; }
+  .text-block.editing { background: #0d0c0d; color: #ffc0cbaa; transform: scale(1.07, 1.07) }
 
   .text-block[data-has-voice].editing::before {
     content: '';
