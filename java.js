@@ -1,8 +1,4 @@
-
-// color management
 // mp4 using nvidia ?
-
-
 
 
   let wheel = 0								// wheel count
@@ -97,16 +93,17 @@
   const searchInput = document.querySelector('#caption-search-input');
   const matchCountSpan  = document.querySelector('#search-match-count');
 
+
   document.addEventListener('mousedown', mouseDown)
   document.addEventListener('mouseup', mouseUp)
   document.addEventListener('mousemove', mouseMove)
   document.addEventListener('keydown', keyDown)
   myPlayer.addEventListener('ended', mediaEnded)
-  myPlayer.addEventListener('timeupdate', () => {if (captions) {scrollToNearestCaption(); updateTimeDisplay()}})
   myPic.addEventListener('timeupdate', () => {
     if (editingBlock && editingBlock._voice?.src) {
       const progress = (myPic.currentTime / myPic.duration || 0) * 100;
       editingBlock.style.setProperty('--progress', progress + '%')}})
+  myPlayer.addEventListener('timeupdate', () => {scrollToNearestCaption(); updateTimeDisplay()})
   window.addEventListener('beforeunload', (e) => {if (playing && editing) e.preventDefault()})
   myNav.addEventListener('mouseleave', () => {myNav.style.display = myDefault.style.display = myAlt.style.display = null})
   document.addEventListener('visibilitychange', function() {
@@ -120,15 +117,17 @@
     editingBlock.scrollIntoView({ behavior: 'smooth', block: 'center' })
     matchCountSpan.textContent = searchInput.value = '';
     blocks.forEach(b => {b.innerHTML = b.innerText})})
+  searchHeader.addEventListener('mouseleave', () => {searchInput.placeholder='🔍︎'})
   searchHeader.addEventListener('mouseenter', (e) => {
     let sel = window.getSelection().toString(); 
-    if (sel) {searchTerm = searchInput.value = sel; favIndex++; matchIndex++; nextMatch(e)}})
+    if (sel) {searchTerm = searchInput.value = sel; favIndex++; matchIndex++; nextMatch(e)}
+    else searchInput.placeholder='❤'})
   searchInput.addEventListener('input', newSearch)
 
 
   function mouseDown(e) {
     longClick = gesture = 0
-    if (e.key == 'Pause' && e.shiftKey) Click = lastClick = 3
+    if (e.key == 'F22') Click = lastClick = 3
     else if (e.button != 2) Click = lastClick = e.button + 1
     if (Click == 2) e.preventDefault()					// forward and back mouse buttons
     xRef = xPos; yRef = yPos
@@ -150,9 +149,9 @@
     if (e.key == 'Enter' && !playing) {
       if (renamebox) inca('Rename', renamebox, lastMedia)		// rename media
       else inca('SearchBox','','',myInput.value)}			// search for media
-    else if (e.key == 'Pause' && e.shiftKey) mouseDown(e)		// R click down
-    else if (e.key == 'Pause' && e.altKey) mouseUp(e)			// R click up
-    else if (e.key == 'Pause' || (e.code == 'ArrowLeft' && e.shiftKey)) mouseBack()
+    else if (e.key == 'F22') mouseDown(e)				// R click down
+    else if (e.key == 'F23') mouseUp(e)					// R click up
+    else if (e.key == 'F24' || (e.code == 'ArrowLeft' && e.shiftKey)) mouseBack()
     else if (editingBlock && e.target.id != searchInput.id) editorInput(e)
     else if (!overText && !captions && playing) {
       if (e.key == 'ArrowRight') myPlayer.currentTime += 10
@@ -168,7 +167,10 @@
     let emotion = '[' + e.target.dataset.tag + '] '
     if (e.target.closest('#emotionSub')) {myNav.style.display = null; document.execCommand('insertText', false, emotion)}
     if (!playing && longClick && !gesture && overMedia) popThumb()	// pop thumb out of flow
-    if (['myCut', 'myCopy', 'myPaste'].includes(id)) {myNav.style.display=null; editingBlock.focus(); inca('CutCopyPaste',id); return}
+    if (['myCut', 'myCopy', 'myPaste'].includes(id)) {
+      if (overBlock) editingBlock.focus() 
+      myNav.style.display = null
+      inca('CutCopyPaste',id); return}
     if (lastClick != 3 && (gesture || id == 'myInput')) return
     if (longClick == 1 && !playing && playlist && selected && overMedia) {inca('Move', overMedia); return}
     if (['myIndex', 'myMp3', 'myMp4', 'myJoin', 'myJpg', 'mySrt'].includes(id)) {Ffmpeg(id); cue = 0; reload = 1; return}
@@ -261,7 +263,6 @@
     lastMedia = index
     if (scaleY < 0.26) scaleY = 0.5						// return zoom after captions
     if (lastClick == 1) myNav.style.display = null
-    myMask.style.pointerEvents = 'auto'						// stop overThumb() triggering
     if (captions || type=='audio' || playlist.match('/inca/music/')) scaleY = 0.25
     if (playlist.match('/inca/music/') && !thumbSheet) {start = 0; myPlayer.muted = 0}
     if (type == 'audio' && !captions) myPlayer.style.borderBottom = '2px solid pink'
@@ -1001,6 +1002,7 @@ const activateBlock = (block, options = {}) => {
   const { edit = false } = options;
   const isSameBlock = (editingBlock === block);
   blocks.forEach(b => b.style.color = '')
+  block.style.setProperty('--progress', '0%')
   idDisplay.textContent = block.dataset.num;
   const media = getEffectiveMedia(block);
   const time = isSameBlock ? myPlayer.currentTime : parseFloat(block.dataset.start)
@@ -1011,8 +1013,7 @@ const activateBlock = (block, options = {}) => {
     if (!isSameBlock) myPic.src = block._voice.src
     if (edit) {
       if (!isSameBlock && !longClick && lastClick == 1) {
-        myPlayer.play(); 
-        myPic.play();}
+        setTimeout(() => {myPic.play(); myPlayer.play()}, 50)}
       else {myPic.pause(); myPlayer.pause()}}}
   else {
     myPic.muted = true;
@@ -1020,7 +1021,7 @@ const activateBlock = (block, options = {}) => {
     myPic.pause();
     myPic.src = '';
     if (edit) {
-      if (!isSameBlock && !longClick && lastClick == 1) myPlayer.play();
+      if (!isSameBlock && !longClick && lastClick == 1) setTimeout(() => myPlayer.play(), 50)
       else {myPic.pause(); myPlayer.pause()}}}
 
   if (edit && !isSameBlock) {
@@ -1105,8 +1106,8 @@ const activateBlock = (block, options = {}) => {
 
 
   function scrollToNearestCaption() { 
-    if (decodeURIComponent(myPlayer.src) !== originalPlayerSrc) return
-if (searchInput.matches(':hover') || viewport.matches(':hover') || isScrolling || overBlock ) return
+    if (decodeURIComponent(myPlayer.src) !== originalPlayerSrc || isScrolling) return
+    if (!captions || !myMask.matches(':hover')) return
     const current = myPlayer.currentTime;
     const nearest = timestamps.reduce((a, b) => Math.abs(b.sec - current) < Math.abs(a.sec - current) ? b : a);
     const offset = viewport.clientHeight / 2 - nearest.block.offsetHeight / 2;
@@ -1244,6 +1245,8 @@ if (item.url.includes('.mp3')) {row.style.borderLeft = '0.2px solid pink'; row.d
               editingBlock.dataset.start = item.startSec;
               }
             editing = 1;
+            editingBlock = null
+            editingBlock?.classList.remove('editing')
           } else {
             projectMedia.defaultSrc = mediaObj.src;
           }

@@ -110,8 +110,11 @@
     bottom: 0.1em;
     height: 2px;
     border-radius: 1px;
-    background: linear-gradient(to right, #ffc0cb18 var(--progress, 0%), #ffc0cb0a var(--progress, 0%));
-    transition: background 0.3s linear;
+    background: linear-gradient(to right, #ffc0cb20 0%, #ffc0cb20 50%, #ffc0cb0e 50%, #ffc0cb0e 100%);
+    background-size: 200% 100%;
+    background-repeat: no-repeat;
+    background-position: calc(100% - var(--progress, 0%)) 0;
+    transition: background-position 0.3s linear;
     z-index: 1}
 
     #id-display { 
@@ -467,7 +470,7 @@
   top: 0;
   display: none;
   background: #121010c0;
-//  border-radius: 0.7em;
+  border-radius: 0.7em;
   max-height: 10em;
   overflow-y: auto;
   width: 8em;

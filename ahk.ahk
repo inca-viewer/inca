@@ -91,6 +91,7 @@
 
 
   main:
+    Compile()					; re-compile program
     initialize()				; sets environment then waits for mouse, key or clipboard events
     Process, Close, node.exe
     sleep 200
@@ -133,7 +134,7 @@
   Timer_up:					; long back key press
     IfWinActive, ahk_group Browsers
       send, ^w					; close tab
-    else send, !{F4}				; or close app
+    else send, {F4}				; or close app
     return
   XButton1 up::
     SetTimer, Timer_up, Off
@@ -144,7 +145,7 @@
     else if WinActive("ahk_class Notepad")
     Send, {Esc}^s^w
     else if incaTab
-      send, {Pause}				; close java media player
+      send, {F24}				; close java media player
     else send, {XButton1}
     sleep 100
     MouseGetPos,,, cur 				; get window under cursor
@@ -161,8 +162,8 @@
     timer := A_TickCount + 300						; set future timout 300mS
     MouseGetPos, xRef, yRef
     StringReplace, click, A_ThisHotkey, ~,, All
-    if (incaTab && click == "RButton" && cur == brow && yRef > 400)
-      send, +{Pause}							; tell browser Rbutton down
+    if (incaTab && click == "RButton")
+      send, {F22}							; tell browser Rbutton down
     lastClick := click
     loop
       {
@@ -180,12 +181,9 @@
           clp := ClipBoard
           ClipBoard =
           ClipWait, 0.2
-          cmd = %inca%\cache\apps\yt-dlp.exe --no-mtime -f bestvideo+bestaudio "%ClipBoard%"
+          cmd = %inca%\cache\apps\yt-dlp.exe --no-mtime -P "%inca%\cache\apps" -f bestvideo+bestaudio "%ClipBoard%"
           if InStr(Clipboard, "https://youtu")
-            {
-            Run %COMSPEC% /c %cmd% > yt-dlp.txt 2>&1, , Hide
-            click =
-            }
+            Run %COMSPEC% /c %cmd%, , Hide
           ClipBoard := clp
           }
         }
@@ -195,7 +193,7 @@
         {
         if (click == "RButton")
           if (incaTab && yRef > 400 && yRef < A_ScreenHeight - 100)
-            send, !{Pause}
+            send, {F23}
           else if (!gesture && !longClick)
             send, {RButton}
         break
@@ -1341,9 +1339,9 @@
     {
     Global
     inca := A_ScriptDir
-    inca := SubStr(inca, 1, InStr(inca, "\", False, -1))		; one folders back
-    inca := SubStr(inca, 1, InStr(inca, "\", False, -1))
-    StringTrimRight, inca, inca, 1
+;    inca := SubStr(inca, 1, InStr(inca, "\", False, -1))		; one folders back
+;    inca := SubStr(inca, 1, InStr(inca, "\", False, -1))
+;    StringTrimRight, inca, inca, 1
     EnvGet, profile, UserProfile
     sortList = Shuffle|Alpha|Duration|Date|Size|Type|Reverse|Recurse|Video|Image|Audio|Fav|Playlist
     IniRead,config,%inca%\ini.ini,Settings,config
@@ -2059,7 +2057,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
         thumb = %inca%\cache\posters\%media%.jpg
       else thumb = %inca%\cache\icons\no link.png
     FileGetSize, size, %src%, K
-    if (type=="document")
+    if (type == "document")
       size := Round(size)
     else if (size < 9900)
       size := Round(size/1000,1)
@@ -2095,7 +2093,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
       data = %inca%/cache/srt/%media%.srt
  IfExist, %inca%\cache\json\%media%.json
   data = %inca%/cache/json/%media%.json
-    if (data && type!="document")
+    if data
       favicon = %favicon% &#169 
     IfNotExist, %src%
       noIndex = <span class='warning'>disk ?</span>
@@ -2124,6 +2122,26 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
 
     else mediaList = %mediaList%<div id="entry%j%" class='entry' data-params='%type%,%start%,%dur%,%size%'>`n <span id='myFavicon%j%' onmouseenter='overThumb(%j%)' class='favicon'>%favicon%</span>`n <input id='title%j%' class='title' style='top:-1.1em' type='search'`n value='%media_s%'`n oninput="renamebox=this.value"`n onmouseover="overText=1; this.style.width=1+this.value.length/2+'em'"`n onmouseout="overText=0; this.style.width=null">`n <video id="thumb%j%" class='thumb' onwheel='if (zoom > 1) wheelEvent(event)' onmouseenter="overThumb(%j%); if (gesture) sel(%j%)"`n onmouseout="thumb.pause()" onmouseup='if (gesture) Param(%j%)' %poster%`n preload=%preload% loop muted type='video/mp4'></video>`n <video id="vid%j%" style='display: none' src=%src% preload='none' type='video/mp4'></video>%noIndex%`n <span id='cues%j%' style='display: none'>%cues%</span></div>`n %caption%`n
     }
+
+
+  Compile()
+    {
+    TmpExe := A_ScriptDir . "\ahk.exe"
+    if (!FileExist(TmpExe) && A_ScriptName == "inca.exe")
+      {
+      runwait, %A_ScriptDir%\cache\apps\Ahk2Exe.exe /in "%A_ScriptDir%\ahk.ahk" /icon "%A_ScriptDir%\cache\icons\inca.ico"
+      Run, %A_ScriptDir%\ahk.exe
+      exitApp
+      }
+    if (A_ScriptName == "ahk.exe")
+      {
+      FileCopy, ahk.exe, inca.exe, 1
+      Run, %A_ScriptDir%\inca.exe
+      exitApp
+      }
+    FileDelete, D:\inca\ahk.exe
+    }
+
 
 
   Ffmpeg: 								; mp3, mp4, indexing - async processing
@@ -2206,24 +2224,31 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
     FileRead, history, %inca%\fav\History.m3u
     if (A_Now - downloads < 3)						; add to editor dropdown menu
       Loop, Files, %profile%\Downloads\*.*
-       if !InStr(history, A_LoopFileName)
-        {
-        index(A_LoopFileFullPath,1)
-        SplitPath, A_LoopFileFullPath, fileWithExt, dir, ext, nameNoExt
-        SplitPath, lastMedia,,,, foldr
-        if (ext != "mp3" && ext != "mp4" && ext != "jpg")
-          continue
-        foldr := SubStr(foldr, 1, 100)
-        assets := inca . "\assets\" . foldr
-        destCopy := assets . "\" . nameNoExt . "." . ext
-        if (lastMedia && (ext == "mp3" || ext == "wav"))
+        if !InStr(history, A_LoopFileName)				; not already added
           {
-          FileCreateDir, %assets%
-          FileCopy, %A_LoopFileFullPath%, %destCopy%, 1
+          SplitPath, A_LoopFileFullPath, fileWithExt, dir, ext, nameNoExt
+          if (ext == "mp3" || ext == "wav" || ext == "mp4" || ext == "jpg")
+            {
+            if (ext == "wav")
+              {
+              RunWait, %inca%\cache\apps\ffmpeg.exe -i "%A_LoopFileFullPath%" -y file:"%dir%\%nameNoExt%.mp3",,Hide
+              FileRecycle, %A_LoopFileFullPath%
+              ext = mp3
+              }
+            SplitPath, lastMedia,,,, foldr
+            foldr := SubStr(foldr, 1, 100)
+            assets := inca . "\assets\" . foldr
+            destCopy := assets . "\" . nameNoExt . "." . ext
+            index(A_LoopFileFullPath,1)					; get duration
+            if (lastMedia && ext == "mp3")
+              {
+              FileCreateDir, %assets%
+              FileCopy, %dir%\%nameNoExt%.%ext%, %destCopy%, 1
+              FileAppend, %destCopy%|0.0`r`n, %inca%\fav\History.m3u, UTF-8
+              }
+            else FileAppend, %A_LoopFileFullPath%|0.0`r`n, %inca%\fav\History.m3u, UTF-8
+            }
           }
-        if (ext == "mp3" || ext == "mp4")
-          FileAppend, %destCopy%|0.0`r`n, %inca%\fav\History.m3u, UTF-8
-        }
     Files := {}
     if (A_Now - ytdlp > 4 && A_Now - downloads > 4 && InStr(control, ".........."))
       GuiControl, Indexer:, GuiInd
