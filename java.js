@@ -1,6 +1,5 @@
 // mp4 using nvidia ?
 
-
   let wheel = 0								// wheel count
   let wheelDir = 0		 					// wheel direction
   let index = 1								// thumb index (e.g. thumb14)
@@ -98,11 +97,9 @@
   document.addEventListener('mouseup', mouseUp)
   document.addEventListener('mousemove', mouseMove)
   document.addEventListener('keydown', keyDown)
-  myPlayer.addEventListener('ended', mediaEnded)
-  myPic.addEventListener('timeupdate', () => {
-    if (editingBlock && editingBlock._voice?.src) {
-      const progress = (myPic.currentTime / myPic.duration || 0) * 100;
-      editingBlock.style.setProperty('--progress', progress + '%')}})
+  myPlayer.addEventListener('ended', nextMedia)
+  myPic.addEventListener('ended', nextCaption)
+  myPic.addEventListener('timeupdate', voiceProgress)
   myPlayer.addEventListener('timeupdate', () => {scrollToNearestCaption(); updateTimeDisplay()})
   window.addEventListener('beforeunload', (e) => {if (playing && editing) e.preventDefault()})
   myNav.addEventListener('mouseleave', () => {myNav.style.display = myDefault.style.display = myAlt.style.display = null})
@@ -744,11 +741,25 @@
     return width}
 
 
-  function mediaEnded() {						// media finished playing
+  function voiceProgress () {
+    if (editingBlock && editingBlock._voice?.src) {
+      const progress = (myPic.currentTime / myPic.duration || 0) * 100
+      editingBlock.style.setProperty('--progress', progress + '%')}}
+
+
+  function nextMedia() {						// media finished playing
     if (playlist.match('/inca/music/')) {
       if (Param(index += 1)) {Play(); myPlayer.play()} else closePlayer(); return}
     else if (!defPause && delay < 30 && type != 'audio' && !longClick) {getStart(); myPlayer.play()}	// replay media
     else {myPlayer.currentTime = dur+2; myPlayer.pause(); delay = 60}}	// stay at end
+
+
+  function nextCaption() {
+    const next = editingBlock.nextElementSibling
+    activateBlock(next, { edit: true })
+    const offset = viewport.clientHeight / 2 - next.offsetHeight / 2
+    const targetTop = next.offsetTop - offset
+    viewport.scrollTo({ top: Math.max(0, targetTop), behavior: 'smooth' })}
 
 
   function mouseBack() {
