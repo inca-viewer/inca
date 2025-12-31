@@ -1,5 +1,12 @@
 // mp4 using nvidia ?
 
+// grab handle style chrome
+// pop index issues eg thumbsheet after pop move/close
+// zoom and index 
+
+
+
+
   let wheel = 0								// wheel count
   let wheelDir = 0		 					// wheel direction
   let index = 1								// thumb index (e.g. thumb14)
@@ -62,6 +69,7 @@
   let reload = 0
   let scaleY = (innerHeight > innerWidth) ? 0.64 : 0.5			// myPlayer height (screen ratio)
   let clickMedia = ''
+  let lastId = ''
 
   let favIndex = 0
   let matchIndex = 0
@@ -158,15 +166,15 @@
 
 
   function clickEvent(e) {
-    delay = 80;								// delay wheel input straight after click
-    let id = e.target.id						// id under cursor
+delay = 120;									// delay wheel input straight after click
+    let id = e.target.id							// id under cursor
     if (lastClick == 1) overBlock = e.target.closest('.text-block') || 0
     let emotion = '[' + e.target.dataset.tag + '] '
     if (e.target.closest('#emotionSub')) {myNav.style.display = null; document.execCommand('insertText', false, emotion)}
-    if (!playing && longClick && !gesture && overMedia) popThumb()	// pop thumb out of flow
+    if (!playing && longClick && !gesture && overMedia) popThumb()		// pop thumb out of flow
     if (['myCut', 'myCopy', 'myPaste'].includes(id)) {
-      if (overBlock) editingBlock.focus() 
       myNav.style.display = null
+      lastId.focus() 
       inca('CutCopyPaste',id); return}
     if (lastClick != 3 && (gesture || id == 'myInput')) return
     if (longClick == 1 && !playing && playlist && selected && overMedia) {inca('Move', overMedia); return}
@@ -182,14 +190,14 @@
     if (!gesture && lastClick != 2) editorClick(e, id)
     if (lastClick == 3) {
       if (longClick || gesture) return
-      if (!myNav.style.display) {context(e); return}}			// my context menu
-    if (lastClick == 4) {mouseBack(); return}				// Back Click
-    if (lastClick == 2) {  						// Middle click
+      if (!myNav.style.display) {lastId = e.target; context(e); return}}		// my context menu
+    if (lastClick == 4) {mouseBack(); return}						// Back Click
+    if (lastClick == 2) {  								// Middle click
       if (editing || myMenu.matches(':hover')) return
       if (zoom > 1) {Play(); return}
-      else if (!playing && !myNav.style.display) {inca('View',lastMedia); return} // list/thumb view
-      if (longClick) {index--} else index++				// next media
-      if (!Param()) {index = lastMedia; closePlayer(); return}		// end of media list
+      else if (!playing && !myNav.style.display) {inca('View',lastMedia); return}	// list/thumb view
+      if (longClick) {index--} else index++						// next media
+      if (!Param()) {index = lastMedia; closePlayer(); return}				// end of media list
       if (!thumbSheet) messages += '#History#' + myPlayer.currentTime.toFixed(1) + '#' + lastMedia + '#0'}
     if (lastClick == 1) {
       if (!playing && id != title.id) {
@@ -209,7 +217,9 @@
     if (lastClick == 1 && overBlock) return
     if (Click == 3) myNav.style.display = null
     if (!playing && lastClick == 2) return
-    if (playing && lastClick == 1 && type == 'document') return
+    if (playing && lastClick == 1) {
+      if (type == 'document') return
+      if (!longClick && id.includes('thumb')) {Param(); start = defStart}}  		// play popped thumb
     if (lastClick) Play()}
 
 
@@ -242,7 +252,7 @@
 
   function Play() {
     if (editing) return
-    closePic()
+    Param()
     positionMedia(0)
     thumb.pause()
     myPlayer.pause()
@@ -294,13 +304,17 @@
     let y = Math.abs(yPos-yRef)
     seekbar()
     cursor = 5
-    if (x + y > 9 && !gesture && Click) {gesture=1; if (!longClick&&zoom==1 && !playing && overMedia && !myNav.style.display) sel(index)}
+    if (x + y > 9 && !gesture && Click) {					// do once on gesture start
+      gesture = 1
+      if (!playing && overMedia && zoom > 1) popThumb()
+      if (!playing && overMedia && !longClick && zoom == 1 && !myNav.style.display) sel(index)}
     if (!gesture || !Click) {gesture = 0; return}
     if (y > x + 1) gesture = 2							// enable player move
     if (id == 'editor') editing = 1
-    if (!playing && overMedia && zoom > 1) {
-      thumb.style.left = parseInt(thumb.style.left || 0) + xPos - xRef + 'px'	// move thumb
-      thumb.style.top =  parseInt(thumb.style.top || 0) + yPos - yRef + 'px'}
+let pop = document.getElementById('thumb'+index)
+    if (id.includes('thumb') && pop.style.pop > 1) {
+      pop.style.left = parseInt(pop.style.left || 0) + xPos - xRef + 'px'	// move popped thumb
+      pop.style.top =  parseInt(pop.style.top || 0) + yPos - yRef + 'px'}
     else if (playing && (Click == 1 || gesture == 2 || delay == 1) && !(!overMedia && captions)) {
       if (thumbSheet) {xyz[0] += xPos - xRef ; xyz[1] +=  yPos - yRef}
       else {mediaX += xPos - xRef; mediaY += yPos - yRef}			// move myPlayer
@@ -331,8 +345,7 @@
       if (wheelUp) zoom *= factor
       else if (zoom > 1.02) zoom *= factor
       else {zoom = 1; delay = 100; closePic(); return}
-      thumb.style.size = zoom
-      thumb.style.transition = '0.05s'
+      thumb.style.pop = zoom
       thumb.style.transform = 'scale('+Math.abs(skinny)*zoom+','+zoom+')'
       start = thumb.currentTime
       delay = 8}
@@ -345,7 +358,7 @@
       settings.view = String(view)
       myView.style.setProperty('--max-size', view + 'em')
       localStorage.setItem(folder, JSON.stringify(settings))
-      thumb.style.opacity = 0.5
+      if (listView) thumb.style.opacity = 0.5
       delay = 8}
     else if (id == 'myWidth' && !playing) {				// page width
       let x = 1*myView.style.width.slice(0,-2); let z = wheel/2000
@@ -599,7 +612,7 @@
     if (cues && cues.innerHTML) myCues(0)				// get 0:00 cues - width, speed etc.
     let x = Number(thumb.style.rate); if (x) rate = x			// custom css holds edits
     x = Number(thumb.style.skinny); if (x) skinny = x
-    zoom = thumb.style.size || 1
+    zoom = thumb.style.pop || 1
     setThumb()   							// src, thumbSheet
     return 1}
 
@@ -612,7 +625,7 @@
     settings.view = (isNaN(settings.view) || settings.view < 6 || settings.view > 300) ? '10' : settings.view
     settings.defRate = (isNaN(settings.defRate) || settings.defRate < 0.2 || settings.defRate > 5) ? '1' : settings.defRate
     settings.pitch = settings.pitch == 1 ? 1 : 0
-    myView.style.width = parseFloat(settings.pageWidth) + 'px'
+    myView.style.width = (parseFloat(settings.pageWidth) + lv * 120) + 'px'
     myView.style.setProperty('--max-size', settings.view + 'em')
     defRate = parseFloat(settings.defRate)
     pitch = parseFloat(settings.pitch)
@@ -718,7 +731,7 @@
 
 
   function Ffmpeg(id) {
-    let target = cue + '|' + id + '|' + skinny + '|' + playing
+    let target = cue + '|' + id + '|' + skinny + '|' + playing + '|' + decodeURIComponent(myPlayer.src) + '|' + myPlayer.currentTime.toFixed(2)
     let select = playing || selected || overMedia || 0
     inca('Ffmpeg', target, select, (myPlayer.currentTime === dur ? dur - 0.1 : myPlayer.currentTime).toFixed(2))}
 
@@ -763,17 +776,18 @@
 
 
   function mouseBack() {
-    if (playing) closePlayer()						// close player and send messages to inca
-    else if (zoom > 1) closePic()
+    let pop = document.getElementById('thumb'+index)
+    if (pop.style.pop > 1) pop.style.pop = pop.style = ''
+    else if (playing) closePlayer()					// close player and send messages to inca
     else if (longClick) window.close()
     else if (myContent.scrollTop > 50) myContent.scrollTo(0,0)		// else scroll to page top
-    else inca('Reload',1)}						// or finally, reload page & clear selected
+    else {selected = '.'; inca('Reload',1)}}				// or finally, reload page & clear selected
 
 
   function overThumb(id) {
     if (zoom == 1) thumb.src = ''					// release media from server
     index = id
-    if (Click) return							// faster for click & slide selecting
+    if (Click || playing) return					// faster for click & slide selecting
     Param(id)
     thumb.style.opacity = 1
     if (zoom == 1) {thumb.load(); thumb.playbackRate = 0.7; thumb.currentTime = start = defStart + 0.04}}
@@ -788,10 +802,10 @@
       inca('capEdit', json, index)}					// save edited text
     else if (reload && folder == 'Downloads') inca('Reload', index)	// after ffmpeg processing
     else inca('Null', index)						// send / clear messages
-    Click = playing = start = captions = thumbSheet = cue = editing = 0
-    myVig.style.opacity = myPlayer.style.opacity = overText = reload = 0
     myPlayer.muted = myPic.muted = true
     myMask.style = myDur.innerHTML = myPlayer.src = myPic.src = ''
+    Click = playing = start = captions = thumbSheet = cue = editing = overText = 0
+    mySeek.style.width = myVig.style.opacity = myPlayer.style.opacity = reload = 0
     myNav.style.display = myVig.style.visibility = myPlayer.style.visibility = null
     title.scrollIntoView({ block: 'center' })}
 
@@ -804,16 +818,17 @@
     if (!thumbSheet && playing && myPic.paused) { myPic.play() } else myPic.pause()
     if (!thumbSheet && playing && myPlayer.paused) {myPlayer.play() } else myPlayer.pause()}
 
-  function closePic() {thumb.style.size = 1; myPic.style = thumb.style = ''; Param()}
+  function closePic() {thumb.style.pop = 1; myPic.style = thumb.style = ''; Param()}
   function Flip() {xPos = 0; skinny *=- 1; thumb.style.skinny = skinny; Param(); positionMedia(0.4)}
   function Time(z) {if (z < 0) return '0:00'; let y = Math.floor(z%60); let x = ':'+y; if (y<10) {x = ':0'+y}; return Math.floor(z/60)+x}
   function selectAll() {for (i = 1; document.getElementById('thumb'+i); i++) {sel(i)}}
   function popThumb() {
     if (type == 'document' || favicon.matches(':hover')) return
-    if (zoom == 1) zoom = 1.2
-    thumb.style.size = zoom
+    thumb.style.zIndex = 4900 + Zindex++
+    if (zoom > 1) return
+    zoom = 1.2
+    thumb.style.pop = zoom
     thumb.style.position = 'fixed'
-    thumb.style.zIndex = 5002 + Zindex++
     thumb.style.left = xPos - thumb.offsetWidth / 2 +'px'
     thumb.style.top = yPos - thumb.offsetHeight / 2 +'px'
     thumb.style.transform = 'scale('+Math.abs(skinny)*zoom+','+zoom+')'}
@@ -884,7 +899,7 @@
     projectMedia.defaultSrc = originalPlayerSrc || null;
     if (projectMedia.defaultSrc) swapPlayerMedia(projectMedia.defaultSrc, 0);
     let first = blocks[0];
-    if (parsed.lastSelectedId) {first = blocks.find(b => +b.dataset.num === parsed.lastSelectedId)}
+    if (parsed.lastSelectedId) first = blocks.find(b => +b.dataset.num === parsed.lastSelectedId)
     setTimeout(() => {editing = 0; first.scrollIntoView({ block: 'center' })}, 10);
     activateBlock(first, { edit: true });  
     if (parsed.ui) Object.assign(editor.style, parsed.ui);
@@ -1023,8 +1038,7 @@ const activateBlock = (block, options = {}) => {
     myPic.muted = defMute;
     if (!isSameBlock) myPic.src = block._voice.src
     if (edit) {
-      if (!isSameBlock && !longClick && lastClick == 1) {
-        setTimeout(() => {myPic.play(); myPlayer.play()}, 50)}
+      if (!isSameBlock && !longClick && lastClick) {myPic.play(); myPlayer.play()}
       else {myPic.pause(); myPlayer.pause()}}}
   else {
     myPic.muted = true;
@@ -1120,9 +1134,9 @@ const activateBlock = (block, options = {}) => {
     if (decodeURIComponent(myPlayer.src) !== originalPlayerSrc || isScrolling) return
     if (!captions || !myMask.matches(':hover')) return
     const current = myPlayer.currentTime;
-    const nearest = timestamps.reduce((a, b) => Math.abs(b.sec - current) < Math.abs(a.sec - current) ? b : a);
+    const nearest = timestamps.find(t => current + 0.4 >= t.sec && (!timestamps[timestamps.indexOf(t)+1] || current + 0.4 < timestamps[timestamps.indexOf(t)+1].sec)) || timestamps.reduce((a, b) => Math.abs(b.sec - current) < Math.abs(a.sec - current) ? b : a);
     const offset = viewport.clientHeight / 2 - nearest.block.offsetHeight / 2;
-    viewport.scrollTo({ top: Math.max(0, nearest.top - offset), behavior: 'smooth' });
+    nearest.block.scrollIntoView({ behavior: 'smooth', block: 'center' });
     isScrolling = true
     blocks.forEach(b => b.style.color = '')
     nearest.block.style.color = '#ffc0cbcc'

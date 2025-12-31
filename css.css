@@ -47,9 +47,9 @@
   width: 100%;
   min-width: 0}
 
-#voice-header .dropdown-content { height: 6.7em; padding: 0.5em 0.5em; line-height: 1.6; translate: 0 -2.2em; align-items: center}
+#voice-header .dropdown-content { height: 8em; padding: 0.5em 0.5em; line-height: 1.6; translate: 0 -2.2em; align-items: center}
 #media-header > .header { padding: 0 0.2em; display: flex; color: #ffc0cb44; overflow-x: hidden;}
-#media-header .dropdown-content { height: 6.7em; padding: 0.5em 0.5em; line-height: 1.2; translate: 0 -2.2em}
+#media-header .dropdown-content { height: 8em; padding: 0.5em 0.5em; line-height: 1.2; translate: 0 -2.2em}
 #media-header .dropdown-content > div:active {border-left: 1px solid red}
 #voice-header .dropdown-content > div:active {border-left: 1px solid red}
 #voice-header .dropdown-content > div {padding: 0 0.5em;}
@@ -215,7 +215,7 @@
   padding-bottom: 1.5em}
 
 .thumb {					/* htm thumbs */
-  --size;
+  --pop;
   --rate;
   --skinny;
   --posted;					/* edits sent to inca	*/
@@ -412,7 +412,7 @@
   opacity: 0;
   z-index: 5010;
   background: pink;
-  transition: opacity 1s}
+  transition: width 0.2s, opacity 1s}
 
 .mask {						/* media player overlay of htm tab */
   display: flex;
@@ -423,7 +423,7 @@
   opacity: 0;
   top: 0;
   left: 0;
-  z-index: 5000;
+  z-index: 4000;
   height: 100vh;
   width: 100vw;
   background: black}

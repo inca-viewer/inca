@@ -74,9 +74,6 @@
   Global messages				; between browser java and this program
   Global allFav					; all favorite shortcuts consolidated
   Global showSubs
-  Global cur					; window under cursor id
-  Global desk					; current desktop window id
-  Global brow					; current browser id
   Global paused := 0				; default pause
   Global block := 0				; block flag
   Global flush := 0				; flag to flush excess wheel buffer
@@ -156,13 +153,12 @@
   MouseDown()
     {
     Critical								; pause timed events
-    startId := cur								; remember window clicked
     longClick := gesture := 0
     wasCursor := A_Cursor
     timer := A_TickCount + 300						; set future timout 300mS
     MouseGetPos, xRef, yRef
     StringReplace, click, A_ThisHotkey, ~,, All
-    if (incaTab && click == "RButton")
+    if (incaTab && click == "RButton" && (yRef > 400 || fullscreen))
       send, {F22}							; tell browser Rbutton down
     lastClick := click
     loop
@@ -192,7 +188,7 @@
       if (!GetKeyState("LButton", "P") && !GetKeyState("RButton", "P"))	; click up
         {
         if (click == "RButton")
-          if (incaTab && yRef > 400 && yRef < A_ScreenHeight - 100)
+          if (incaTab && (yRef > 400 || fullscreen) && yRef < A_ScreenHeight - 100)
             send, {F23}
           else if (!gesture && !longClick)
             send, {RButton}
@@ -633,7 +629,7 @@
       Loop, Parse, searchPath, `|
         if InStr(path, A_LoopField)					; ensure not duplicate paths
           found = true
-      if !found
+      if (path && !found)
         searchPath = %path%|%searchPath%				; add this folder to search path
       if !InStr(sortList, command)
         if (command == "SearchBox")
@@ -1339,9 +1335,6 @@
     {
     Global
     inca := A_ScriptDir
-;    inca := SubStr(inca, 1, InStr(inca, "\", False, -1))		; one folders back
-;    inca := SubStr(inca, 1, InStr(inca, "\", False, -1))
-;    StringTrimRight, inca, inca, 1
     EnvGet, profile, UserProfile
     sortList = Shuffle|Alpha|Duration|Date|Size|Type|Reverse|Recurse|Video|Image|Audio|Fav|Playlist
     IniRead,config,%inca%\ini.ini,Settings,config
@@ -1874,24 +1867,24 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
 
   <div id="editor">
     <div id="ribbon">
-      <div id='myCancel' class="dropdown-header" onmouseout="this.innerHTML='&#x2715;'">&#x2715;</div>
+      <div id='myCancel' class="dropdown-header" onmouseout="this.innerHTML='&#x2715;'">&#x2715;</div>`n
       <div id="id-header" class="dropdown">
-        <div class="header"><div id="id-display">--</div></div>
+        <div class="header"><div id="id-display">--</div></div>`n
       </div>
       <div id="media-header" class="dropdown">
         <div class="header"></div>
-        <div class="dropdown-content"><div>No media</div></div>
+        <div class="dropdown-content"><div>No media</div></div>`n
       </div>
       <div id="search-header">
         <input type="text" id="caption-search-input" placeholder="&#x1F50D;&#xFE0E;" autocomplete="off">
-        <span id="search-match-count"></span>
+        <span id="search-match-count"></span>`n
       </div>
       <div id="voice-header" class="dropdown">
         <div class="header"></div>
-        <div class="dropdown-content"></div>
+        <div class="dropdown-content"></div>`n
       </div>
       <div id="time-header" class="dropdown">
-        <div class="header"><div id="time-display">- : -- . -</div></div>
+        <div class="header"><div id="time-display">- : -- . -</div></div>`n
       </div>
     </div>
     <div id="viewport" class="caption-viewport"></div>
@@ -1937,7 +1930,6 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
           <a data-tag='unfriendly'>unfriendly</a>
         </div>
       <a id='myExport'>Export</a>`n
-      <a id='myCue2'>Cue</a>`n
     </div>
 
     <div class="menu default" onwheel='wheelEvent(event)'>`n
@@ -2108,7 +2100,8 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
 
 
     if (type == "image")
-      media_s := Chr(0x3048) . " " . media_s
+      media_s := "- " . media_s
+;      media_s := Chr(0x3048) . " " . media_s
     if (ext=="txt")
       src = "%server%%poster%"
     else src = "%server%%src%"
@@ -2120,7 +2113,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
     if listView
       mediaList = %mediaList%%fold%<table id='entry%j%' data-params='%type%,%start%,%dur%,%size%' onmouseenter='if (gesture) sel(%j%)' onmouseover='overThumb(%j%)'`n onmouseout="thumb%j%.style.opacity=0; thumb.src=''">`n <tr><td><video id='thumb%j%' class='thumb2' onwheel='if (zoom > 1) wheelEvent(event)' %poster%`n preload=%preload% muted loop type="video/mp4"></video>`n <video id="vid%j%" style='display: none' src=%src% preload='none' type='video/mp4'></video></td><td>%j%</td>`n <td>%ext%</td><td>%size%</td><td style='min-width: 6em'>%durT%</td><td>%date%</td><td style='width:3em'>`n <div id='myFavicon%j%' class='favicon' style='position: relative; text-align: left; translate:2em 0.4em'>%favicon%</div></td>`n <td style='width: 80vw'><input id="title%j%" class='title' style='opacity: 1; position: relative; width:100`%; left:-0.2em' onmouseover='overText=1' autocomplete='off' onmouseout='overText=0; Click=0' type='search' value='%media_s%' oninput="renamebox=this.value"></td>`n %fo%</tr></table>%caption%<span id='cues%j%' style='display: none'>%cues%</span>`n`n
 
-    else mediaList = %mediaList%<div id="entry%j%" class='entry' data-params='%type%,%start%,%dur%,%size%'>`n <span id='myFavicon%j%' onmouseenter='overThumb(%j%)' class='favicon'>%favicon%</span>`n <input id='title%j%' class='title' style='top:-1.1em' type='search'`n value='%media_s%'`n oninput="renamebox=this.value"`n onmouseover="overText=1; this.style.width=1+this.value.length/2+'em'"`n onmouseout="overText=0; this.style.width=null">`n <video id="thumb%j%" class='thumb' onwheel='if (zoom > 1) wheelEvent(event)' onmouseenter="overThumb(%j%); if (gesture) sel(%j%)"`n onmouseout="thumb.pause()" onmouseup='if (gesture) Param(%j%)' %poster%`n preload=%preload% loop muted type='video/mp4'></video>`n <video id="vid%j%" style='display: none' src=%src% preload='none' type='video/mp4'></video>%noIndex%`n <span id='cues%j%' style='display: none'>%cues%</span></div>`n %caption%`n
+    else mediaList = %mediaList%<div id="entry%j%" class='entry' data-params='%type%,%start%,%dur%,%size%'>`n <span id='myFavicon%j%' onmouseenter='overThumb(%j%)' class='favicon'>%favicon%</span>`n <input id='title%j%' class='title' style='top:-1.1em' type='search'`n value='%media_s%'`n oninput="renamebox=this.value"`n onmouseover="overText=1; this.style.width=1+this.value.length/2+'em'"`n onmouseout="overText=0; this.style.width=null">`n <video id="thumb%j%" class='thumb' onwheel='if (zoom > 1) wheelEvent(event)' onmouseenter="overThumb(%j%); if (gesture && !playing) sel(%j%)"`n onmouseout="thumb.pause()" onmouseup='if (gesture && !playing) Param(%j%)' %poster%`n preload=%preload% loop muted type='video/mp4'></video>`n <video id="vid%j%" style='display: none' src=%src% preload='none' type='video/mp4'></video>%noIndex%`n <span id='cues%j%' style='display: none'>%cues%</span></div>`n %caption%`n
     }
 
 
@@ -2156,6 +2149,10 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
     el_id := StrSplit(value, "|").2
     skinny := StrSplit(value, "|").3
     playing := StrSplit(value, "|").4
+    auxSrc := StrSplit(value, "|").5
+    auxStart := StrSplit(value, "|").6
+    auxSrc := StrReplace(auxSrc, server)
+    auxSrc := StrReplace(auxSrc, "/", "\")
     fileList =
     FileRead, str, %inca%\cache\temp\%folder%.txt			; list of media in htm
     Loop, Parse, str, `n, `r
@@ -2189,6 +2186,12 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
         {
         entry := StrSplit(fileList, "`r`n")[A_LoopField]
         source := StrSplit(entry, "|").1
+        SplitPath, source,,,ex
+        if (ex == "txt")
+          {
+          source := auxSrc
+          tim := auxStart
+          }
         SplitPath, source,,,,med
         GuiControl, Indexer:, GuiInd, %A_Index% - processing - %med%
         output = %profile%\Downloads\%med% @%tim%.jpg
@@ -2304,10 +2307,6 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
     IfWinActive, Notepad
       if (wx != 622)
         WinMove, ahk_class Notepad,, 622, -2, %z%, %y%
-    MouseGetPos,,, id 							; get the window below the mouse 
-    WinGet, cur, ID, ahk_id %id%
-    WinGet, desk, ID , ahk_class Progman
-    WinGet, brow, ID , ahk_group Browsers
     if incaTab
       {
       FileRead, messages, *P65001 %inca%\cache\html\in.txt		; utf codepage
