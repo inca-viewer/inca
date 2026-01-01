@@ -2132,6 +2132,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
       Run, %A_ScriptDir%\inca.exe
       exitApp
       }
+    sleep 44
     FileDelete, D:\inca\ahk.exe
     }
 

@@ -3,9 +3,9 @@
   ::selection {color: #cccccc; background: #222222}
   ::-webkit-search-cancel-button {appearance: none}
   ::-webkit-scrollbar {background: #0e0c05; width: 6px}
-  ::-webkit-resizer {background: #826858}
   ::-webkit-scrollbar-corner {background: #0e0c05}
   ::-webkit-scrollbar-thumb {background: #1b1814; border-radius: 2px}
+  ::-webkit-resizer {background: transparent}
   @supports (not selector(::-webkit-scrollbar)) {html {scrollbar-color: #2b2824 #0e0c05}}
   td {outline: none; text-align: center; min-width: 3.8em; overflow: hidden; white-space: nowrap; border-radius :1em}
   table {color: #826858; font-size: 0.9em; border-collapse: collapse; margin: auto; border-radius: 1em; transition: color 0.3s}
@@ -75,7 +75,7 @@
     flex-direction:column; 
     min-height:0;
     scrollbar-width:thin; 
-    scrollbar-color:#ffc0cb30 transparent; 
+    scrollbar-color:#ffc0cb10 transparent; 
     overflow-x: hidden;
     position: relative;
     mask-image: linear-gradient(
