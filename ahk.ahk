@@ -1,5 +1,6 @@
 
   ; Browser Based media Explorer
+; <audio id='myVoice' style='display:none' src='%server%D:/inca/cache/icons/mp3.mp3'></audio>
 
   #NoEnv
   #UseHook, On
@@ -1891,6 +1892,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
   </div>`n`n
 
 <div id='myVig' class='vig'></div>`n
+<audio id='myVoice' style='display:none' src='data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA'></audio>
 <video id='myPic' class='pic' muted onwheel='wheelEvent(event)' onmouseout='thumb.pause()'></video>`n
 <video id="myPlayer" class='player' type="video/mp4" muted onwheel='wheelEvent(event)'></video>`n
 <div id='mySeek' class='seekbar'><span id='myDur'></span></div>`n
@@ -2111,7 +2113,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
     caption = <pre id="dat%j%" style='display: none' type="text/plain" data=%data%></pre>`n
 
     if listView
-      mediaList = %mediaList%%fold%<table id='entry%j%' data-params='%type%,%start%,%dur%,%size%' onmouseenter='if (gesture) sel(%j%)' onmouseover='overThumb(%j%)'`n onmouseout="thumb%j%.style.opacity=0; thumb.src=''">`n <tr><td><video id='thumb%j%' class='thumb2' onwheel='if (zoom > 1) wheelEvent(event)' %poster%`n preload=%preload% muted loop type="video/mp4"></video>`n <video id="vid%j%" style='display: none' src=%src% preload='none' type='video/mp4'></video></td><td>%j%</td>`n <td>%ext%</td><td>%size%</td><td style='min-width: 6em'>%durT%</td><td>%date%</td><td style='width:3em'>`n <div id='myFavicon%j%' class='favicon' style='position: relative; text-align: left; translate:2em 0.4em'>%favicon%</div></td>`n <td style='width: 80vw'><input id="title%j%" class='title' style='opacity: 1; position: relative; width:100`%; left:-0.2em' onmouseover='overText=1' autocomplete='off' onmouseout='overText=0; Click=0' type='search' value='%media_s%' oninput="renamebox=this.value"></td>`n %fo%</tr></table>%caption%<span id='cues%j%' style='display: none'>%cues%</span>`n`n
+      mediaList = %mediaList%%fold%<table id='entry%j%' data-params='%type%,%start%,%dur%,%size%' onmouseenter='if (gesture) sel(%j%)' onmouseover='overThumb(%j%)'`n onmouseout="thumb%j%.style.opacity=0; thumb.src=''">`n <tr><td><video id='thumb%j%' class='thumb2' onwheel='if (zoom > 1) wheelEvent(event)' %poster%`n preload=%preload% muted loop type="video/mp4"></video>`n <video id="vid%j%" style='display: none' src=%src% preload='none' type='video/mp4'></video></td><td>%j%</td>`n <td>%ext%</td><td>%size%</td><td style='min-width: 6em'>%durT%</td><td>%date%</td><td style='width:1em'>`n <div id='myFavicon%j%' class='favicon' style='position: relative; text-align: left; translate:2em 0.4em'>%favicon%</div></td>`n <td style='width: 80vw'><input id="title%j%" class='title' style='opacity: 1; position: relative; width:100`%; left:-0.2em' onmouseover='overText=1' autocomplete='off' onmouseout='overText=0; Click=0' type='search' value='%media_s%' oninput="renamebox=this.value"></td>`n %fo%</tr></table>%caption%<span id='cues%j%' style='display: none'>%cues%</span>`n`n
 
     else mediaList = %mediaList%<div id="entry%j%" class='entry' data-params='%type%,%start%,%dur%,%size%'>`n <span id='myFavicon%j%' onmouseenter='overThumb(%j%)' class='favicon'>%favicon%</span>`n <input id='title%j%' class='title' style='top:-1.1em' type='search'`n value='%media_s%'`n oninput="renamebox=this.value"`n onmouseover="overText=1; this.style.width=1+this.value.length/2+'em'"`n onmouseout="overText=0; this.style.width=null">`n <video id="thumb%j%" class='thumb' onwheel='if (zoom > 1) wheelEvent(event)' onmouseenter="overThumb(%j%); if (gesture && !playing) sel(%j%)"`n onmouseout="thumb.pause()" onmouseup='if (gesture && !playing) Param(%j%)' %poster%`n preload=%preload% loop muted type='video/mp4'></video>`n <video id="vid%j%" style='display: none' src=%src% preload='none' type='video/mp4'></video>%noIndex%`n <span id='cues%j%' style='display: none'>%cues%</span></div>`n %caption%`n
     }
@@ -2241,7 +2243,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
               }
             SplitPath, lastMedia,,,, foldr
             foldr := SubStr(foldr, 1, 100)
-            assets := inca . "\assets\" . foldr
+            assets := inca . "\cache\assets\" . foldr
             destCopy := assets . "\" . nameNoExt . "." . ext
             index(A_LoopFileFullPath,1)					; get duration
             if (lastMedia && ext == "mp3")

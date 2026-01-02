@@ -7,8 +7,8 @@
   ::-webkit-scrollbar-thumb {background: #1b1814; border-radius: 2px}
   ::-webkit-resizer {background: transparent}
   @supports (not selector(::-webkit-scrollbar)) {html {scrollbar-color: #2b2824 #0e0c05}}
-  td {outline: none; text-align: center; min-width: 3.8em; overflow: hidden; white-space: nowrap; border-radius :1em}
-  table {color: #826858; font-size: 0.9em; border-collapse: collapse; margin: auto; border-radius: 1em; transition: color 0.3s}
+  td {outline: none; text-align: center; min-width: 3.8em; font-size: 0.9em; overflow: hidden; white-space: nowrap; border-radius :1em}
+  table {color: #826858; border-collapse: collapse; margin: auto; border-radius: 1em; transition: color 0.3s}
   table:hover {background: #1b1814}
   a {color: #826858; text-decoration: none; outline: none}	/* default text */
   c {display: block; padding-left: 1em; text-decoration: none; font-weight: bold; color: #826858bb; transition: 1s} /* panel text */
@@ -18,7 +18,7 @@
 
 
   #editor { box-sizing:border-box; display:none; flex-direction:column; width:500px; max-width:100%; height:24em;
-    background:#080808; border-radius:12px; box-shadow:0 12px 32px rgba(0,0,0,0.6); font-size:16px; 
+    background:#080808; border-radius:12px; box-shadow:0 12px 32px rgba(0,0,0,0.6); font-size:15px; 
     position:fixed; left:50%; top:50%; transform:translate(-50%,-50%); z-index: 5002; cursor:text;
     min-width:250px; min-height:160px; resize:both; max-height:80vh; overflow:hidden;}
 
@@ -68,7 +68,7 @@
 
   .caption-viewport {
     flex:1;
-    gap: 1.4em;
+    gap: 0.4em;
     overflow-y:auto; 
     padding: 6em 1.6em 7em 1.6em; 
     display:flex; 
@@ -87,7 +87,7 @@
 
   .text-block {
     position: relative; background:transparent; border-radius:0.7em; white-space:pre-wrap; transition: 0.42s;
-    word-wrap:break-word; font-family:'Yu Gothic'; line-height:1.5; margin: 0; padding: 0.4em 1.3em;
+    word-wrap:break-word; font-family:'Yu Gothic'; line-height:1.5; margin: 0; padding: 1em 1.3em; min-width: 90%;
     color:#ffc0cb80; text-align:center; outline:none; width: auto; align-self: center; border: 0;}
 
   .text-block[data-fav="1"]::after {
@@ -107,8 +107,8 @@
     position: absolute;
     left: 2em;
     right: 2em;
-    bottom: 0.1em;
-    height: 2px;
+    bottom: 0.2em;
+    height: 3px;
     border-radius: 1px;
     background: linear-gradient(to right, #ffc0cb20 0%, #ffc0cb20 50%, #ffc0cb0e 50%, #ffc0cb0e 100%);
     background-size: 200% 100%;
@@ -189,12 +189,13 @@
   display: block;
   position: absolute;
   left: 1.3em;
-  padding: 0.3em;
+  padding: 0.3em 1em;
   white-space: nowrap;
   background: transparent;
   box-sizing: border-box;
   color: #826858;
   font-family: inherit;
+  font-size: 1em;
   width: 74%;
   min-width: 1.3em;
   outline: none;
