@@ -65,6 +65,7 @@
     overflow-y:auto; flex-direction:column; gap:2px;}
   .dropdown-content > div {font-size:12.5px; white-space:nowrap; cursor:default; border-radius: 10px;}
   .dropdown-content > div:hover { color: #ffc0cbaa; background: black; }
+  .dropdown-content > div:active { color: #ffc0cb; background: #2f2e2e; }
 
   .caption-viewport {
     flex:1;
@@ -87,7 +88,7 @@
 
   .text-block {
     position: relative; background:transparent; border-radius:0.7em; white-space:pre-wrap; transition: 0.42s;
-    word-wrap:break-word; font-family:'Yu Gothic'; line-height:1.5; margin: 0; padding: 1em 1.3em; min-width: 90%;
+    word-wrap:break-word; font-family:'Yu Gothic'; line-height:1.5; margin: 0; padding: 1.2em; min-width: 90%;
     color:#ffc0cb80; text-align:center; outline:none; width: auto; align-self: center; border: 0;}
 
   .text-block[data-fav="1"]::after {
@@ -105,10 +106,10 @@
   .text-block[data-has-voice].editing::before {
     content: '';
     position: absolute;
-    left: 2em;
-    right: 2em;
-    bottom: 0.2em;
-    height: 3px;
+    left: 100px;
+    right: 100px;
+    bottom: 0.4em;
+    height: 4px;
     border-radius: 1px;
     background: linear-gradient(to right, #ffc0cb20 0%, #ffc0cb20 50%, #ffc0cb0e 50%, #ffc0cb0e 100%);
     background-size: 200% 100%;

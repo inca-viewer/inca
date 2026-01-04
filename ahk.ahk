@@ -85,7 +85,6 @@
   Global lastIndex := 0				; continuous scrolling
   Global server := "http://localhost:3000/"
   Global transcoding				; media is being transcoded async
-  Global lastMedia				; last/current media played in browser
 
 
   main:
@@ -277,8 +276,6 @@
         reload := 1
       else reload := 2
       }
-    else if (command == "Playing")
-      lastMedia := src
     else if (command == "History")					; maintain play history
       {
       if (value <= 0)
@@ -1447,7 +1444,7 @@
         if (dir > 0)
           send, ^0
         else send, ^{+}
-        sleep 100
+        sleep 200
         }
     }
 
@@ -1892,7 +1889,6 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
   </div>`n`n
 
 <div id='myVig' class='vig'></div>`n
-<audio id='myVoice' style='display:none' src='data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA'></audio>
 <video id='myPic' class='pic' muted onwheel='wheelEvent(event)' onmouseout='thumb.pause()'></video>`n
 <video id="myPlayer" class='player' type="video/mp4" muted onwheel='wheelEvent(event)'></video>`n
 <div id='mySeek' class='seekbar'><span id='myDur'></span></div>`n
@@ -2228,7 +2224,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
     FileGetTime, ytdlp, %inca%\cache\apps, M
     FileGetTime, downloads, %profile%\Downloads, S
     FileRead, history, %inca%\fav\History.m3u
-    if (A_Now - downloads < 3)						; add to editor dropdown menu
+    if (A_Now - downloads < 3)						; check for voice mp3's
       Loop, Files, %profile%\Downloads\*.*
         if !InStr(history, A_LoopFileName)				; not already added
           {
@@ -2241,18 +2237,16 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
               FileRecycle, %A_LoopFileFullPath%
               ext = mp3
               }
-            SplitPath, lastMedia,,,, foldr
-            foldr := SubStr(foldr, 1, 100)
-            assets := inca . "\cache\assets\" . foldr
-            destCopy := assets . "\" . nameNoExt . "." . ext
+            voices := inca . "\cache\voices"
+            destCopy := voices . "\" . nameNoExt . "." . ext
             index(A_LoopFileFullPath,1)					; get duration
-            if (lastMedia && ext == "mp3")
+            if (ext == "mp3")
               {
-              FileCreateDir, %assets%
+              FileCreateDir, %voices%
               FileCopy, %dir%\%nameNoExt%.%ext%, %destCopy%, 1
               FileAppend, %destCopy%|0.0`r`n, %inca%\fav\History.m3u, UTF-8
               }
-            else FileAppend, %A_LoopFileFullPath%|0.0`r`n, %inca%\fav\History.m3u, UTF-8
+            else FileAppend, %destCopy%|0.0`r`n, %inca%\fav\History.m3u, UTF-8
             }
           }
     Files := {}
