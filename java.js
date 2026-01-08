@@ -1,5 +1,6 @@
 // mp4 using nvidia ?
-// when downloads are moved, can history be updated to target?
+
+
 
   let wheel = 0								// wheel count
   let wheelDir = 0		 					// wheel direction
@@ -60,7 +61,7 @@
   let sheetUrl = ''							// thumbSheet url
   let overBlock = ''							// caption editor block
   let more = 0
-  let scaleY = (innerHeight > innerWidth) ? 0.64 : 0.5			// myPlayer height (screen ratio)
+  let scaleY = (innerHeight > innerWidth) ? 0.8 : 0.7			// myPlayer height (screen ratio)
   let clickMedia = ''
   let lastId = ''
   let trigger = 0.8							// trigger to show seekbar
@@ -198,6 +199,7 @@
       if (!Param()) {index = lastMedia; closePlayer(); return}				// end of media list
       if (!thumbSheet) messages += '#History#' + myPlayer.currentTime.toFixed(1) + '#' + lastMedia + '#0'}
     if (lastClick == 1) {
+      if (id == title.id) lastMedia = index
       if (!playing && id != title.id) {
         if (!overText && longClick && myPanel.matches(':hover')) return 
         if (id == 'myCue' || (overMedia && thumb.src.slice(-3) == 'm3u')
@@ -463,7 +465,8 @@
   function positionMedia(time) {							// position myPlayer in window
     myPanel.style.top = '50px'
     myView.style.top = '200px'
-    if (!mediaX) {mediaX = screen.width/2; mediaY = screen.height/2; xyz = [mediaX, mediaY, 1]}
+    let sheetSize = aspect > 1 ? 1.4 : 1
+    if (!mediaX) {mediaX = screen.width/2; mediaY = screen.height/2; xyz = [mediaX, mediaY, sheetSize]}
     let x = mediaX; let y = mediaY; let z = scaleY
     y = captions ? y - 240 : y								// media moved up to fit captions
     if (thumbSheet) {x = xyz[0]; y = xyz[1]; z = xyz[2]}
@@ -573,11 +576,10 @@
         messages += '#editCues#'+el.style.rate+','+el.style.skinny+','+'#'+i+'#'; el.style.posted = 1}}
     if (select) {select += ','} else select = ''
     if (selected) select = selected
-    if (!value) value = ''
+    value = typeof value === 'string' ? value.replaceAll('#', '𝌇') : value ?? '';
     if (!address) address = ''
     if (command == 'Delete' || command == 'Rename' || value.toString().includes('|myMp4') || (select && command == 'Path')) {
       selected = ''
-      if (command == 'Rename') value = value.replaceAll('#', '𝌇')
       for (x of select.split(',')) if (el = document.getElementById('thumb'+x)) el.remove()}	// release media
     messages += '#'+command+'#'+value+'#'+select+'#'+address
     fetch('http://localhost:3000/generate-html', {method: 'POST', headers: {'Content-Type': 'text/plain'}, body: messages})
@@ -904,7 +906,7 @@ editor.style = '';
     if (parsed.ui) Object.assign(editor.style, parsed.ui);
     if (!blocks.length) addBlock(1, myPlayer.currentTime, 'new caption');
     editor.style.height = Math.min(blocks.length * 3, 24) + 'em';
-    if (blocks.length < 4) viewport.style.padding = '2em 1.6em'
+    if (blocks.length < 4) viewport.style.padding = '2em 2em'
     const ui = parsed.ui || {};
     Object.assign(editor.style, ui);
     matchCountSpan.textContent = ''

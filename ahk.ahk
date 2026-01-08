@@ -30,6 +30,7 @@
   Global music					; music playlists
   Global search					; list of search words
   Global searchFolders				; default search locations
+  Global indexFolders				; default search locations
   Global searchPath				; current search paths
   Global inca					; default folder path
   Global listId					; pointer to media
@@ -1375,6 +1376,7 @@
     sortList = Shuffle|Alpha|Duration|Date|Size|Type|Reverse|Recurse|Video|Image|Audio|Fav|Playlist
     IniRead,config,%inca%\ini.ini,Settings,config
     IniRead,searchFolders,%inca%\ini.ini,Settings,searchFolders
+    IniRead,indexFolders,%inca%\ini.ini,Settings,indexFolders
     IniRead,fol,%inca%\ini.ini,Settings,Fol
     IniRead,search,%inca%\ini.ini,Settings,Search
     IniRead,fav,%inca%\ini.ini,Settings,Fav
@@ -1456,8 +1458,9 @@
        source := StrSplit(A_Loopfield, "|").1
        start := StrSplit(A_Loopfield, "|").2
        detectMedia(source)
+       searchSpace := searchFolders . "|" . indexFolders
        IfNotExist, %source%
-         Loop, Parse, searchFolders, `|
+         Loop, Parse, searchSpace, `|
            IfExist, %A_LoopField%%media%.%ext%
              {
              flag := 1
@@ -2146,7 +2149,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
     caption = <pre id="dat%j%" style='display: none' type="text/plain" data=%data%></pre>`n
 
     if listView
-      mediaList = %mediaList%%fold%<table id='entry%j%' data-params='%type%,%start%,%dur%,%size%' onmouseenter='if (gesture) sel(%j%)' onmouseover='overThumb(%j%)'`n onmouseout="thumb%j%.style.opacity=0; thumb.src=''">`n <tr><td><video id='thumb%j%' class='thumb2' onwheel='if (zoom > 1) wheelEvent(event)' %poster%`n preload=%preload% muted loop type="video/mp4"></video>`n <video id="vid%j%" style='display: none' src=%src% preload='none' type='video/mp4'></video></td><td>%j%</td>`n <td>%ext%</td><td>%size%</td><td style='min-width: 6em'>%durT%</td><td>%date%</td><td style='width:1em'>`n <div id='myFavicon%j%' class='favicon' style='position: relative; text-align: left; translate:3em 0.4em'>%favicon%</div></td>`n <td style='width: 80vw'><input id="title%j%" class='title' style='opacity: 1; position: relative; width:100`%; left:-0.2em' onmouseover='overText=1' autocomplete='off' onmouseout='overText=0; Click=0' type='search' value='%media_s%' oninput="renamebox=this.value"></td>`n %fo%</tr></table>%caption%<span id='cues%j%' style='display: none'>%cues%</span>`n`n
+      mediaList = %mediaList%%fold%<table id='entry%j%' data-params='%type%,%start%,%dur%,%size%' onmouseenter='if (gesture) sel(%j%)' onmouseover='overThumb(%j%)'`n onmouseout="thumb%j%.style.opacity=0; thumb.src=''">`n <tr><td><video id='thumb%j%' class='thumb2' onwheel='if (zoom > 1) wheelEvent(event)' %poster%`n preload=%preload% muted loop type="video/mp4"></video>`n <video id="vid%j%" style='display: none' src=%src% preload='none' type='video/mp4'></video></td><td>%j%</td>`n <td>%ext%</td><td>%size%</td><td style='min-width: 6em'>%durT%</td><td>%date%</td><td style='width:1em'>`n <div id='myFavicon%j%' class='favicon' style='position: relative; text-align: left; translate:1em 0.4em'>%favicon%</div></td>`n <td style='width: 80vw'><input id="title%j%" class='title' style='opacity: 1; position: relative; width:100`%; left:-0.2em' onmouseover='overText=1' autocomplete='off' onmouseout='overText=0; Click=0' type='search' value='%media_s%' oninput="renamebox=this.value"></td>`n %fo%</tr></table>%caption%<span id='cues%j%' style='display: none'>%cues%</span>`n`n
 
     else mediaList = %mediaList%<div id="entry%j%" class='entry' data-params='%type%,%start%,%dur%,%size%'>`n <span id='myFavicon%j%' onmouseenter='overThumb(%j%)' class='favicon'>%favicon%</span>`n <input id='title%j%' class='title' style='top:-0.8em; opacity:0.7' type='search'`n value='%media_s%'`n oninput="renamebox=this.value"`n onmouseover="overText=1; this.style.width=1+this.value.length/2+'em'"`n onmouseout="overText=0; this.style.width=null">`n <video id="thumb%j%" class='thumb' onwheel='if (zoom > 1) wheelEvent(event)' onmouseenter="overThumb(%j%); if (gesture && !playing) sel(%j%)"`n onmouseout="thumb.pause()" onmouseup='if (gesture && !playing) Param(%j%)' %poster%`n preload=%preload% loop muted type='video/mp4'></video>`n <video id="vid%j%" style='display: none' src=%src% preload='none' type='video/mp4'></video>%noIndex%`n <span id='cues%j%' style='display: none'>%cues%</span></div>`n %caption%`n
     }
