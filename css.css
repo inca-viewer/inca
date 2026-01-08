@@ -18,7 +18,7 @@
 
 
   #editor { box-sizing:border-box; display:none; flex-direction:column; width:500px; max-width:100%; height:24em;
-    background:#080808; border-radius:12px; box-shadow:0 12px 32px rgba(0,0,0,0.6); font-size:15px; 
+    background:#080808; border-radius:12px; box-shadow:0 12px 32px rgba(0,0,0,0.6); font-size:16px; 
     position:fixed; left:50%; top:50%; transform:translate(-50%,-50%); z-index: 5002; cursor:text;
     min-width:250px; min-height:160px; resize:both; max-height:80vh; overflow:hidden;}
 
@@ -76,7 +76,7 @@
     flex-direction:column; 
     min-height:0;
     scrollbar-width:thin; 
-    scrollbar-color:#ffc0cb10 transparent; 
+    scrollbar-color:#ffc0cb20 transparent; 
     overflow-x: hidden;
     position: relative;
     mask-image: linear-gradient(
@@ -101,7 +101,7 @@
     z-index: 3;
     pointer-events: none}
 
-  .text-block.editing { background: #0d0c0d; color: #ffc0cbaa; transform: scale(1.07, 1.07) }
+  .text-block.editing { background: #0e0d0e; color: #ffc0cbaa; transform: scale(1.07, 1.07) }
 
   .text-block[data-has-voice].editing::before {
     content: '';
@@ -189,14 +189,15 @@
 .title {					/* thumb title */
   display: block;
   position: absolute;
-  left: 1.3em;
-  padding: 0.3em 1em;
+  left: 1.6em;
+  padding: 0.3em;
   white-space: nowrap;
+  font-variant-emoji: text;
   background: transparent;
   box-sizing: border-box;
   color: #826858;
   font-family: inherit;
-  font-size: 1em;
+  font-size: 1.1em;
   width: 74%;
   min-width: 1.3em;
   outline: none;
@@ -265,16 +266,15 @@
   overflow: visible;
   width: 1.1em;
   height:0;
-  top: -1.5em;
+  top: -0.9em;
   left: 0.8em;
   color: pink;
   font-size: 0.7em;
-  opacity: 0.9;
-  padding: 0.1em;
+  opacity: 0.4;
   white-space: nowrap; 
   border-radius: 1em;
-  transition: 0.4s}
-.favicon:hover {color: red}
+  transition: 0.2s}
+.favicon:hover {color: red; opacity: 1; top: -1.8em; transform: scale(2,2)}
 .favicon:empty {display:none}
 
 .capButton {					/* buttons over caption */
@@ -491,7 +491,7 @@
   font-family: 'Yu Gothic', 'Calibri Light';
   background: #0e0c05;
   user-select: none;
-  font-size: 0.8em;
+  font-size: 0.85em;
   overflow: hidden;
   cursor: normal;
   margin: 0;

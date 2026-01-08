@@ -1,10 +1,5 @@
 // mp4 using nvidia ?
-// try nextVoice for audio cutout on new voice and swap out for next block play or hover block
-
-// rename index hilight more?
-// crush mp4 cuts 5secs off top
-
-
+// when downloads are moved, can history be updated to target?
 
   let wheel = 0								// wheel count
   let wheelDir = 0		 					// wheel direction
@@ -65,10 +60,10 @@
   let sheetUrl = ''							// thumbSheet url
   let overBlock = ''							// caption editor block
   let more = 0
-  let reload = 0
   let scaleY = (innerHeight > innerWidth) ? 0.64 : 0.5			// myPlayer height (screen ratio)
   let clickMedia = ''
   let lastId = ''
+  let trigger = 0.8							// trigger to show seekbar
 
   let favIndex = 0
   let matchIndex = 0
@@ -115,17 +110,18 @@
     const isAlt = myAlt.style.display === 'block'			// toggle context menus
     myAlt.style.display = isAlt ? '' : 'block'
     myDefault.style.display = isAlt ? 'block' : 'none'})
-  ribbon.addEventListener('mouseenter', (e) => {myVoice.pause(); myPlayer.pause()})
+  ribbon.addEventListener('click', (e) => {myVoice.pause(); myPlayer.pause()})
+  mediaHeader.addEventListener('wheel', nextMatch)
   searchHeader.addEventListener('wheel', nextMatch)
   searchHeader.addEventListener('mouseup', (e) => {
     editingBlock.scrollIntoView({ behavior: 'smooth', block: 'center' })
     matchCountSpan.textContent = searchInput.value = '';
     blocks.forEach(b => {b.innerHTML = b.innerText})})
-  voiceContent.addEventListener('mouseleave', () => {voiceContent.style.display = null})
-  mediaContent.addEventListener('mouseleave', () => {mediaContent.style.display = null})
+  voiceContent.addEventListener('mouseleave', () => {voiceContent.style.display = 'none'})
+  mediaContent.addEventListener('mouseleave', () => {mediaContent.style.display = 'none'})
   searchHeader.addEventListener('mouseleave', () => {searchInput.placeholder='🔍︎'})
   searchHeader.addEventListener('mouseenter', (e) => {
-    let sel = window.getSelection().toString(); 
+    let sel = window.getSelection().toString()
     if (sel) {searchTerm = searchInput.value = sel; favIndex++; matchIndex++; nextMatch(e)}
     else searchInput.placeholder='❤'})
   searchInput.addEventListener('input', newSearch)
@@ -167,7 +163,7 @@
 
 
   function clickEvent(e) {
-    delay = 120;									// delay wheel input straight after click
+    delay = 80;										// 80 max
     let id = e.target.id								// id under cursor
     if (lastClick == 1) overBlock = e.target.closest('.text-block') || 0
     let emotion = '[' + e.target.dataset.tag + '] '
@@ -179,7 +175,7 @@
       inca('CutCopyPaste',id); return}
     if (lastClick != 3 && (gesture || id == 'myInput')) return
     if (longClick == 1 && !playing && playlist && selected && overMedia) {inca('Move', overMedia); return}
-    if (['myIndex', 'myMp3', 'myMp4', 'myJoin', 'myJpg', 'mySrt'].includes(id)) {Ffmpeg(id); cue = 0; reload = 1; return}
+    if (['myIndex', 'myMp3', 'myMp4', 'myJoin', 'myJpg', 'mySrt'].includes(id)) {Ffmpeg(id); cue = 0; return}
     if (id == 'myInca') {incaButton(); return}
     if (id == 'ribbon' && !longClick) {viewport.scrollTo({top:0,behavior:'smooth'}); return}
     if (id == 'myFavorite') {addFavorite(); return}
@@ -190,6 +186,7 @@
     if (id == 'myFlip') {Flip(); return}
     if (!gesture && lastClick != 2) editorClick(e, id)
     if (lastClick == 3) {
+      if (overBlock) {lastId = overBlock} else lastId = e.target
       if (longClick || gesture) return
       if (!myNav.style.display) {context(e); return}}					// my context menu
     if (lastClick == 4) {mouseBack(); return}						// Back Click
@@ -229,7 +226,7 @@
       if (!playing && !overMedia) {thumbSheet = 0; index = lastMedia; start = lastSeek; return 1}
       if (myNav.style.display && type == 'video') {thumbSheet ^= 1; start = lastSeek; return 1}}
     if (lastClick == 2 || !dur) start = defStart
-    if (!thumbSheet && playing && ym > 0.8 && overMedia || yw > 0.98) {
+    if (!thumbSheet && playing && ym > trigger && overMedia || yw > 0.98) {
       if (longClick) {if (xm < 0.25) {myPlayer.currentTime = 0} else myPlayer.currentTime = defStart}
       else myPlayer.currentTime = start
       return }
@@ -388,7 +385,7 @@
       positionMedia()}
     else if (!thumbSheet) {								// seek
       let interval = 0.1
-      if (dur > 200 && (overMedia && ym > 0.8 || yw > 0.9)) interval = 0.5	
+      if (dur > 200 && (overMedia && ym > trigger || yw > 0.9)) interval = 0.5	
       else if (myPlayer.paused) interval = 0.0333
       if (wheelUp) (playing ? [myPlayer, myVoice] : [thumb]).forEach(el => el.currentTime += interval)
       else (playing ? [myPlayer, myVoice] : [thumb]).forEach(el => el.currentTime -= interval)
@@ -441,7 +438,7 @@
     myPitch.style.color = pitch ? 'red' : null
     myPause.style.color = defPause ? 'red' : null
     myMute.style.color = defMute ? 'red' : null
-    if (!overMedia || overMedia && ym < 0.8) fade = 2
+    if (!overMedia || overMedia && ym < trigger) fade = 2
     seekbar()
     if (playing) {
       positionMedia(0)
@@ -460,7 +457,7 @@
       myMask.style.pointerEvents = null
       if (zoom > 1 && overMedia) myMask.style.opacity = 0.3 * zoom
       else myMask.style.opacity = 0
-    if (!myNav.style.display && !listView && thumb.readyState === 4 && ym < 0.8 && overMedia && zoom == 1) thumb.play()}}
+    if (!myNav.style.display && !listView && thumb.readyState === 4 && ym < trigger && overMedia && zoom == 1) thumb.play()}}
 
 
   function positionMedia(time) {							// position myPlayer in window
@@ -501,12 +498,12 @@
     if (rect.bottom > innerHeight) mySeek.style.top = innerHeight - 15 +'px'
     else mySeek.style.top = rect.top + rect.height - 6 + 'px'
     mySeek.style.left = cueX + 'px'
-    if (cue || (delay > 80 && playing && dur) || (ym > 0.8 && overMedia && !fade && dur)) {
+    if (cue || (delay > 80 && playing && dur) || (ym > trigger && overMedia && !fade && dur)) {
       mySeek.style.background = cue ? 'red' : null
       if (!playing && xm<1) cueW = rect.width * xm
       mySeek.style.width = cueW + 'px'
       if (dur) mySeek.style.opacity = 1
-      if (xm>0 && xm<1 && ym > 0.8 && ym<1 && !thumbSheet && delay < 30) myPic.style.opacity = 1
+      if (xm>0 && xm<1 && ym > trigger && ym < 1 && !thumbSheet && delay < 30) myPic.style.opacity = 1
       else myPic.style.opacity = 0
       myPic.style.top = rect.top + rect.height - myPic.offsetHeight + 'px'
       if (rect.width > 240) myPic.style.left = xPos - skinny * myPic.offsetWidth / 2 + 'px'
@@ -541,6 +538,7 @@
     else myPlayer.src = null
     if (!thumbSheet && dur) myPlayer.currentTime = start
     aspect = thumb.offsetWidth/thumb.offsetHeight
+    trigger = aspect > 1 ? 0.7 : 0.8							// when to show seekbar - ym
     let x = y = z = innerHeight
     if (aspect < 1) {x = z*aspect} else y = z/aspect					// portrait or landscape - normalised size
     myPlayer.style.width = x +'px'; myPlayer.style.height = y +'px'			// normalise player size
@@ -701,9 +699,8 @@
     if (thumb.style.skinny) x = cue+'|skinny|'+thumb.style.skinny
     if (thumb.style.rate) x = cue+'|rate|'+thumb.style.rate
     thumb.style.skinny = thumb.style.rate = 0
-    if (cue) {cue = 0; messages += '#addCue#' + x + '#' + index + '#'} // add cues to media
-    else {captions = 1; Play()}
-    cue = 0}
+    if (cue) messages += '#addCue#' + x + '#' + index + '#' 		// add cues to media
+    else {captions = 1; Play()}}
 
 
   function sel(i) {							// highlight selected media in html
@@ -787,26 +784,30 @@
 
 
   function closePlayer() {
-    editor.style.display = null
     if (observer) observer.disconnect()
     if (!thumbSheet) messages += '#History#' + myPlayer.currentTime.toFixed(1) + '#' + index + '#'
     if (editing) {
-      let json = makeProjectJSON().replaceAll('#', '𝌇')			// because # is used as delimiter
-      inca('capEdit', json, index)}					// save edited text
-    else if (reload && folder == 'Downloads') inca('Reload', index)	// after ffmpeg processing
-    else inca('Null', index)						// send / clear messages
+      let json = makeProjectJSON().replaceAll('#', '𝌇')				// because # is used as delimiter
+      inca('capEdit', json, index)}						// save edited text
+    else if (cue || folder == 'Downloads' && !selected) inca('Reload', index)	// after ffmpeg processing
+    else inca('Null', index)							// send / clear messages
     closePic()
     myPlayer.muted = myVoice.muted = true
     Click = playing = start = captions = thumbSheet = cue = editing = overText = 0
-    mySeek.style.width = myVig.style.opacity = myPlayer.style.opacity = reload = 0
-    myNav.style.display = myVig.style.visibility = myPlayer.style.visibility = null
+    mySeek.style.width = myVig.style.opacity = myPlayer.style.opacity = 0
+    editor.style.display = myNav.style.display = myVig.style.visibility = myPlayer.style.visibility = null
     myMask.style = myDur.innerHTML = myVoice.src = myPlayer.src = ''
+
+editor.style = '';
+
+
     title.scrollIntoView({ block: 'center' })}
 
 
-  function context(e) { 
+  function context(e) {
     if (overBlock || viewport.matches(':hover')) {myNav.classList.add('editor-mode')} else myNav.classList.remove('editor-mode')
-    myNav.style.display = 'block'; myNav.style.left = xPos-90+'px'; myNav.style.top = yPos-32+'px'}
+    myNav.style.display = 'block'; myNav.style.left = xPos-90+'px'; myNav.style.top = yPos-32+'px'
+    delay = 200}
 
   function togglePause() {
     if (!thumbSheet && playing && myVoice.paused) { myVoice.play() } else myVoice.pause()
@@ -838,8 +839,7 @@
 
 
   function editorClick(e, id) {
-    if (id == 'myMask') nextCaption()
-    else if (id == 'myCancel') {
+    if (id == 'myCancel') {
       if (myCancel.innerHTML != 'Sure ?') myCancel.innerHTML = 'Sure ?' 
       else { editing = 0; closePlayer() }}
     else if (id == 'myBookmark') {
@@ -856,15 +856,14 @@
         updateMediaHeader()}
       else if (overBlock._voice?.src || myPlayer.duration) {
         let rect = overBlock.getBoundingClientRect()
-        if (yPos - rect.top < 20) togglePause()				// clicked above caption text
-        else if ((yPos - rect.top) > rect.height - 20) {		// clicked voice seekbar
+        if (yPos - rect.top < 20 || yPos - rect.top > rect.height - 20) togglePause()
+        else {myVoice.pause(); myPlayer.pause()}
+        if (overBlock._voice?.src && (yPos - rect.top) > rect.height - 20) {		// clicked voice seekbar
           let seek = (xPos - rect.left - 100) / (rect.width - 200)
           if (seek > 0 && seek < 1) {
             myVoice.currentTime = (seek * myVoice.duration) - 0.5
             myPlayer.currentTime = parseFloat(overBlock.dataset.start) + (seek * myVoice.duration) - 1
-            myVoice.play(); myPlayer.play(); return}
-          else togglePause()}
-        else {myVoice.pause(); myPlayer.pause()}}}}
+            myVoice.play(); myPlayer.play(); return}}}}}
 
 
   function openEditor(text) {
@@ -905,7 +904,7 @@
     if (parsed.ui) Object.assign(editor.style, parsed.ui);
     if (!blocks.length) addBlock(1, myPlayer.currentTime, 'new caption');
     editor.style.height = Math.min(blocks.length * 3, 24) + 'em';
-    if (blocks.length < 4) viewport.style.padding = '2em 0.5em'
+    if (blocks.length < 4) viewport.style.padding = '2em 1.6em'
     const ui = parsed.ui || {};
     Object.assign(editor.style, ui);
     matchCountSpan.textContent = ''
@@ -918,9 +917,10 @@
     updateMediaHeader()}
 
 
-  function nextCaption() {
-    if (!captions) return
-    const next = editingBlock.nextElementSibling
+  function nextCaption(wheel) {
+    if (!captions || overBlock) return
+    let next = editingBlock.nextElementSibling
+    if (wheel < 0) next = next.previousElementSibling.previousElementSibling
     activateBlock(next, { edit: true })
     const offset = viewport.clientHeight / 2 - next.offsetHeight / 2
     const targetTop = next.offsetTop - offset
@@ -1060,6 +1060,7 @@ const activateBlock = (block, options = {}) => {
       else {myVoice.pause(); myPlayer.pause()}}}
 
   if (edit && !isSameBlock) {
+myVoice.currentTime = 0
     document.querySelectorAll('.text-block.editing').forEach(b => b.classList.remove('editing'));
     block.classList.add('editing');
     editingBlock = block;
@@ -1176,7 +1177,9 @@ const resp = await fetch('/inca/fav/History.m3u');
 const historyText = resp.ok ? (await resp.text()).trim() : '';
 const text  = historyText + (historyText ? '\n' : '');
 const lines  = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
-if (!lines.length) throw '';
+
+if (editingBlock._voice?.src) lines.push(editingBlock._voice.src);
+if (editingBlock._media?.src) lines.push(editingBlock._media.src);
 
       const items = lines.map(line => {
         const [path, startStr] = line.split('|');
@@ -1188,22 +1191,7 @@ if (!lines.length) throw '';
       }).filter(i => i.url && !i.name.endsWith('.txt') && !i.name.endsWith('.m3u'));
       items.reverse();
       mediaContent.innerHTML = '';
-      const none = document.createElement('div');
-      none.textContent = 'None';
-      none.style.marginLeft = '1.7em';
-      none.onclick = () => {
-        if (editingBlock) {
-          if (editingBlock._media) delete editingBlock._media
-          else if (editingBlock._voice) {
-            delete editingBlock._voice;
-            delete editingBlock.dataset.hasVoice;
-            updateVoiceHeader(editingBlock);}}
-        else { projectMedia.defaultSrc = null; }
-        updateMediaHeader();
-        swapPlayerMedia(originalPlayerSrc, myPlayer.currentTime);
-        editing = 1;
-      };
-      mediaContent.appendChild(none);
+
 
 items.forEach(item => {
   const row = document.createElement('div');
@@ -1293,6 +1281,25 @@ setTimeout(() => myVoice.load(), 100)
           if (!myPlayer.muted) myPlayer.play().catch(() => {});
         });
       });
+
+
+const none = document.createElement('div');
+none.textContent = 'None';
+none.style.marginLeft = '1.7em';
+none.onclick = () => {
+if (editingBlock) {
+if (editingBlock._media) delete editingBlock._media
+else if (editingBlock._voice) {
+delete editingBlock._voice;
+delete editingBlock.dataset.hasVoice;
+updateVoiceHeader(editingBlock);}}
+else { projectMedia.defaultSrc = null; }
+updateMediaHeader();
+swapPlayerMedia(originalPlayerSrc, myPlayer.currentTime);
+editing = 1;
+};
+mediaContent.appendChild(none);
+
 
     } catch (_) {
       mediaContent.innerHTML = '<div style="color:#ffc0cb66;padding:8px;">No media</div>';
@@ -1425,11 +1432,11 @@ function editorInput(e) {
 
 
   function nextMatch(e) {
-    e.preventDefault()
-    if (!searchHeader.matches(':hover')) return
     wheel += Math.ceil(Math.abs(e.deltaY))
     if (wheel < delay) return
     delay = 200; wheel = 0;
+    if (!searchHeader.matches(':hover')) {if (mediaContent.style.display == 'none') nextCaption(e.deltaY); return}
+    myVoice.pause(); myPlayer.pause()
     newSearch()
     if (!searchTerm || searchTerm.length < 3) {
       const favs = blocks.filter(b => b.dataset.fav === '1')			// bookmark search
