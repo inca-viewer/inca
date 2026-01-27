@@ -300,7 +300,7 @@
 .panel {					/* Top panel element showing folders etc. */
   position: relative;
   font-size: 1em;
-  transform: translateX(-7%);
+  transform: translateX(-5%);
   white-space: nowrap;
   overflow: hidden;
   height: 7em;
@@ -315,8 +315,8 @@
   transform: rotate(-90deg);
   transform-origin: right top;
   background: inherit;
-  max-height: 65em;				/* critical	*/
-  height: 90vw;
+  max-height: 60em;				/* critical	*/
+  height: 85vw;
   width: 7em}
 .innerPanel:hover {overflow-y: scroll; width:7.01em}	/* firefox bug	*/
 

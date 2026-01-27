@@ -1,4 +1,6 @@
 // mp4 using nvidia ?
+// seekbar on all srt
+
 
 
 
@@ -116,7 +118,7 @@
   searchHeader.addEventListener('wheel', nextMatch)
   searchHeader.addEventListener('mouseup', (e) => {
     editingBlock.scrollIntoView({ behavior: 'smooth', block: 'center' })
-    matchCountSpan.textContent = searchInput.value = '';
+    if (e.button != 1) matchCountSpan.textContent = searchInput.value = '';
     blocks.forEach(b => {b.innerHTML = b.innerText})})
   voiceContent.addEventListener('mouseleave', () => {voiceContent.style.display = 'none'})
   mediaContent.addEventListener('mouseleave', () => {mediaContent.style.display = 'none'})
@@ -313,7 +315,7 @@
     if (id.includes('thumb') && thumb.style.pop > 1) {					// move popped thumb
         thumb.style.left = parseInt(thumb.style.left || 0) + xPos - xRef + 'px'
         thumb.style.top =  parseInt(thumb.style.top || 0) + yPos - yRef + 'px'}
-    else if (playing && (Click == 1 || gesture == 2 || delay == 1) && !(!overMedia && captions)) {
+    else if (playing && (Click == 1 || gesture == 2 || delay == 1) && (overMedia || id == 'myMask')) {
       if (thumbSheet) {xyz[0] += xPos - xRef ; xyz[1] +=  yPos - yRef}
       else {mediaX += xPos - xRef; mediaY += yPos - yRef}				// move myPlayer
       positionMedia(0)}
@@ -570,13 +572,13 @@
 
 
   function inca(command,value,select,address) {						// send java messages to inca.exe
-    more = 4										// critical - sets 400mS block for lazy loading
+    more = 8										// critical - sets 400mS block for lazy loading
     for (i = 1; el = document.getElementById('thumb'+i); i++) {				// add cue edits to messages
       if ((el.style.rate || el.style.skinny) && !el.style.posted) {
         messages += '#editCues#'+el.style.rate+','+el.style.skinny+','+'#'+i+'#'; el.style.posted = 1}}
     if (select) {select += ','} else select = ''
     if (selected) select = selected
-    value = typeof value === 'string' ? value.replaceAll('#', '𝌇') : value ?? '';
+    value = typeof value === 'string' ? value.replaceAll('#', '𝌇') : value ?? ''
     if (!address) address = ''
     if (command == 'Delete' || command == 'Rename' || value.toString().includes('|myMp4') || (select && command == 'Path')) {
       selected = ''
@@ -791,7 +793,7 @@
     if (editing) {
       let json = makeProjectJSON().replaceAll('#', '𝌇')				// because # is used as delimiter
       inca('capEdit', json, index)}						// save edited text
-    else if (cue || folder == 'Downloads' && !selected) inca('Reload', index)	// after ffmpeg processing
+    else if (cue && folder == 'Downloads' && !selected) inca('Reload', index)	// after ffmpeg processing
     else inca('Null', index)							// send / clear messages
     closePic()
     myPlayer.muted = myVoice.muted = true
@@ -799,11 +801,9 @@
     mySeek.style.width = myVig.style.opacity = myPlayer.style.opacity = 0
     editor.style.display = myNav.style.display = myVig.style.visibility = myPlayer.style.visibility = null
     myMask.style = myDur.innerHTML = myVoice.src = myPlayer.src = ''
-
-editor.style = '';
-
-
-    title.scrollIntoView({ block: 'center' })}
+    let rec = title.getBoundingClientRect()
+    if (rec.top < 100 || rec.top > innerHeight || lastClick != 1)
+      title.scrollIntoView({ block: 'center' })}
 
 
   function context(e) {
@@ -905,7 +905,7 @@ editor.style = '';
     setTimeout(() => {editing = 0; first.scrollIntoView({ block: 'center' }); activateBlock(first, { edit: true })}, 500)
     if (parsed.ui) Object.assign(editor.style, parsed.ui);
     if (!blocks.length) addBlock(1, myPlayer.currentTime, 'new caption');
-    editor.style.height = Math.min(blocks.length * 3, 24) + 'em';
+    editor.style.height = Math.min(blocks.length * 9, 24) + 'em';
     if (blocks.length < 4) viewport.style.padding = '2em 2em'
     const ui = parsed.ui || {};
     Object.assign(editor.style, ui);
@@ -1460,7 +1460,6 @@ function editorInput(e) {
     if (term) searchTerm = term
     else { matchIndex = 0; searchTerm = '' }
     if (term.length < 3) {matchIndex = 0; return}
-    blocks.forEach(b => {b.innerHTML = b.innerText;})
     const regex = new RegExp(`(${term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi')
     const matches = []
     blocks.forEach(b => {

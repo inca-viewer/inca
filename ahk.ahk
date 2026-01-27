@@ -159,7 +159,7 @@
     timer := A_TickCount + 300						; set future timout 300mS
     MouseGetPos, xRef, yRef
     StringReplace, click, A_ThisHotkey, ~,, All
-    if (incaTab && click == "RButton" && (yRef > 400 || fullscreen))
+    if (incaTab && click == "RButton" && (xRef > A_ScreenWidth -400 || yRef > 400 || fullscreen))
       send, {F22}							; tell browser Rbutton down
     lastClick := click
     loop
@@ -178,7 +178,7 @@
           clp := ClipBoard
           ClipBoard =
           ClipWait, 0.2
-          cmd = %inca%\cache\apps\yt-dlp.exe --no-mtime -P "%inca%\cache\apps" -f bestvideo+bestaudio "%ClipBoard%"
+          cmd = %inca%\cache\apps\yt-dlp.exe --no-mtime -P "%inca%\cache\apps" -f bv*[ext=mp4]+ba[ext=m4a]/b[ext=mp4] "%ClipBoard%"
           if InStr(Clipboard, "https://youtu")
             Run %COMSPEC% /c %cmd%, , Hide
           ClipBoard := clp
@@ -324,7 +324,7 @@
         x-=100
       if (y < A_ScreenHeight/5)
         y+=150
-      else y-=600
+      else y-=500
       run, osk.exe
       Loop, 100
         {
@@ -1511,9 +1511,7 @@
     if (med == "video" && size < 100)
       return
     dur =
-    if (med == "video")
-      cmd = %inca%\cache\apps\ffprobe.exe -v quiet -print_format json -show_streams -select_streams v:0 "%source%"
-    else cmd = %inca%\cache\apps\ffprobe.exe -v quiet -print_format json -show_streams -select_streams a:0 "%source%"
+    cmd = %inca%\cache\apps\ffprobe.exe -v quiet -print_format json -show_format "%source%"
     RunWait, %ComSpec% /c %cmd% > "%inca%\cache\temp\meta.txt",, Hide
     if ErrorLevel
       return
@@ -2148,6 +2146,14 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
 
     caption = <pre id="dat%j%" style='display: none' type="text/plain" data=%data%></pre>`n
 
+
+if playlist
+  if (ext == "mp4" && noIndex)
+     src := StrReplace(src, "mp4", "mkv")
+    
+
+
+
     if listView
       mediaList = %mediaList%%fold%<table id='entry%j%' data-params='%type%,%start%,%dur%,%size%' onmouseenter='if (gesture) sel(%j%)' onmouseover='overThumb(%j%)'`n onmouseout="thumb%j%.style.opacity=0; thumb.src=''">`n <tr><td><video id='thumb%j%' class='thumb2' onwheel='if (zoom > 1) wheelEvent(event)' %poster%`n preload=%preload% muted loop type="video/mp4"></video>`n <video id="vid%j%" style='display: none' src=%src% preload='none' type='video/mp4'></video></td><td>%j%</td>`n <td>%ext%</td><td>%size%</td><td style='min-width: 6em'>%durT%</td><td>%date%</td><td style='width:1em'>`n <div id='myFavicon%j%' class='favicon' style='position: relative; text-align: left; translate:1em 0.4em'>%favicon%</div></td>`n <td style='width: 80vw'><input id="title%j%" class='title' style='opacity: 1; position: relative; width:100`%; left:-0.2em' onmouseover='overText=1' autocomplete='off' onmouseout='overText=0; Click=0' type='search' value='%media_s%' oninput="renamebox=this.value"></td>`n %fo%</tr></table>%caption%<span id='cues%j%' style='display: none'>%cues%</span>`n`n
 
@@ -2247,7 +2253,6 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
         if (InStr(el_id, "myMp3") || InStr(el_id, "myMp4"))
           if (new := Transcode(el_id, source, sta, end))
             Index(new, 1)
-        GuiControl, Indexer:, GuiInd
         }
     if (fldr == folder && !playing)
       {
@@ -2255,6 +2260,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
       RenderPage(1)
       send, {F5}
       }
+    GuiControl, Indexer:, GuiInd
     return
 
 
@@ -2322,7 +2328,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
     x := Setting("Sleep Timer") * 60000
     if (volume > 0 && A_TimeIdlePhysical > x)
       {
-      volume -= 0.2
+      volume -= 0.05
       SoundSet, volume
       }
     return
