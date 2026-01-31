@@ -6,7 +6,7 @@
   ::-webkit-scrollbar-corner {background: #0e0c05}
   ::-webkit-scrollbar-thumb {background: #1b1814; border-radius: 2px}
   ::-webkit-resizer {background: transparent}
-  @supports (not selector(::-webkit-scrollbar)) {html {scrollbar-color: #2b2824 #0e0c05}}
+  @supports (not selector(::-webkit-scrollbar)) {*{scrollbar-width: thin; scrollbar-color: #1b1814 #0e0c05}}
   td {outline: none; text-align: center; min-width: 3.8em; font-size: 0.9em; overflow: hidden; white-space: nowrap; border-radius :1em}
   table {color: #826858; border-collapse: collapse; margin: auto; border-radius: 1em; transition: color 0.3s}
   table:hover {background: #1b1814}
@@ -15,7 +15,6 @@
   c:hover {transition: 0.2s; transform: scale(1.1,1.1); color: pink}
   c:active {color: #0e0c05; transform: scale(0.8,0.8)}
   video::-internal-media-controls-overlay-cast-button {display: none}		/* block google casting	*/
-
 
   #editor { box-sizing:border-box; display:none; flex-direction:column; width:500px; max-width:100%; height:24em;
     background:#080808; border-radius:12px; box-shadow:0 12px 32px rgba(0,0,0,0.6); font-size:16px; 
@@ -103,8 +102,9 @@
 
   .text-block.editing { background: #0e0d0e; color: #ffc0cbaa; transform: scale(1.07, 1.07) }
 
-  .text-block[data-has-voice].editing::before {
+  .text-block.editing::before {
     content: '';
+    opacity: 0;
     position: absolute;
     left: 100px;
     right: 100px;
@@ -117,6 +117,8 @@
     background-position: calc(100% - var(--progress, 0%)) 0;
     transition: background-position 0.3s linear;
     z-index: 1}
+
+  .text-block.editing.progress-visible::before {opacity: 1}
 
     #id-display { 
       border:none; color:#ffc0cbaa; font-size:12px; display: none;
@@ -318,7 +320,7 @@
   max-height: 60em;				/* critical	*/
   height: 85vw;
   width: 7em}
-.innerPanel:hover {overflow-y: scroll; width:7.01em}	/* firefox bug	*/
+ .innerPanel:hover {overflow-y: scroll; width:7.01em}	/* firefox bug	*/
 
 .p2 {						/* panel entries */
   overflow: hidden;
@@ -338,7 +340,7 @@
   display: block;
   position: absolute;
   margin: auto;
-  overflow-x: hidden; 
+  overflow-x: hidden;
   height: 100%;
   width: 100%}
 

@@ -1,7 +1,4 @@
 // mp4 using nvidia ?
-// seekbar on all srt
-
-
 
 
   let wheel = 0								// wheel count
@@ -755,8 +752,9 @@
 
 
   function voiceProgress () {
-    if (editingBlock && editingBlock._voice?.src) {
+    if (editingBlock._voice?.src) {
       const progress = (myVoice.currentTime / myVoice.duration || 0) * 100
+      editingBlock.classList.toggle('progress-visible', progress > 0);
       editingBlock.style.setProperty('--progress', progress + '%')}}
 
 
@@ -836,10 +834,6 @@
 
 
 
-
-
-
-
   function editorClick(e, id) {
     if (id == 'myCancel') {
       if (myCancel.innerHTML != 'Sure ?') myCancel.innerHTML = 'Sure ?' 
@@ -848,24 +842,32 @@
       blk = blocks.find(b => b.dataset.num === idDisplay.textContent);
       if (blk) blk.dataset.fav = blk.dataset.fav === '1' ? '0' : '1'; editing = 1}
     else if (id == 'myExport') { const str = blocks.map(b => b.innerText.trim()).filter(t => t).join('\n\n'); inca('Export', str) }
-    else if (overBlock) {
-      if (!editingBlock) activateBlock(overBlock, { edit: true })
-      if (editingBlock && editingBlock !== overBlock) {
+    else if (overBlock) { 
+      if (editingBlock?.isConnected && editingBlock !== overBlock) {
         splitIfNeeded(editingBlock)
         editingBlock?.classList.remove('editing')
         overBlock.classList.add('editing')
         activateBlock(overBlock, { edit: true })
         updateMediaHeader()}
-      else if (overBlock._voice?.src || myPlayer.duration) {
+      if (editingBlock !== overBlock) {activateBlock(overBlock, { edit: true }); editingBlock = overBlock}
+      else if (myPlayer.duration || overBlock._voice?.src) {
         let rect = overBlock.getBoundingClientRect()
+        let seek = (xPos - rect.left - 100) / (rect.width - 200)
         if (yPos - rect.top < 20 || yPos - rect.top > rect.height - 20) togglePause()
         else {myVoice.pause(); myPlayer.pause()}
-        if (overBlock._voice?.src && (yPos - rect.top) > rect.height - 20) {		// clicked voice seekbar
-          let seek = (xPos - rect.left - 100) / (rect.width - 200)
+        if (overBlock._voice?.src && yPos - rect.top > rect.height - 20) {		// clicked progress bar
           if (seek > 0 && seek < 1) {
             myVoice.currentTime = (seek * myVoice.duration) - 0.5
             myPlayer.currentTime = parseFloat(overBlock.dataset.start) + (seek * myVoice.duration) - 1
-            myVoice.play(); myPlayer.play(); return}}}}}
+            myVoice.play(); myPlayer.play(); return}}
+        else if (yPos - rect.top > rect.height - 20) {					// clicked progress bar
+          const currentIndex = timestamps.findIndex(t => t.block === overBlock);
+          if (currentIndex !== -1) {
+            const start = timestamps[currentIndex].sec;
+            const end = timestamps[currentIndex + 1] ? timestamps[currentIndex + 1].sec : myPlayer.duration;
+            myPlayer.currentTime = start + (seek * (end - start));
+            myPlayer.play(); return}}}}}
+
 
 
   function openEditor(text) {
@@ -1062,7 +1064,7 @@ const activateBlock = (block, options = {}) => {
       else {myVoice.pause(); myPlayer.pause()}}}
 
   if (edit && !isSameBlock) {
-myVoice.currentTime = 0
+    myVoice.currentTime = 0
     document.querySelectorAll('.text-block.editing').forEach(b => b.classList.remove('editing'));
     block.classList.add('editing');
     editingBlock = block;
@@ -1110,10 +1112,8 @@ myVoice.currentTime = 0
 
     const hasTrailingEmpty = html.endsWith('<br>') || /<br>\s*$/i.test(html);
     if (hasTrailingEmpty) normalized = normalized.replace(/\n\n$/, '');
-
     const parts = normalized.split('\n\n').map(p => p.trim()).filter(Boolean);
     if (parts.length <= 1 && !hasTrailingEmpty) return;
-
     const startSec = parseFloat(blockToSplit.dataset.start) || 0;
     const nextSibling = blockToSplit.nextSibling;
     const idx = blocks.indexOf(blockToSplit);
@@ -1143,17 +1143,28 @@ myVoice.currentTime = 0
   }
 
 
-  function scrollToNearestCaption() { 
-    if (decodeURIComponent(myPlayer.src) !== originalPlayerSrc || isScrolling) return
-    if (!captions || !myMask.matches(':hover')) return
-    const current = myPlayer.currentTime;
-    const nearest = timestamps.find(t => current + 0.4 >= t.sec && (!timestamps[timestamps.indexOf(t)+1] || current + 0.4 < timestamps[timestamps.indexOf(t)+1].sec)) || timestamps.reduce((a, b) => Math.abs(b.sec - current) < Math.abs(a.sec - current) ? b : a);
-    const offset = viewport.clientHeight / 2 - nearest.block.offsetHeight / 2;
+function scrollToNearestCaption() { 
+  if (decodeURIComponent(myPlayer.src) !== originalPlayerSrc) return
+  if (!captions || !myPlayer.duration) return
+  const current = myPlayer.currentTime;
+  const nearest = timestamps.find(t => current + 0.4 >= t.sec && (!timestamps[timestamps.indexOf(t)+1] || current + 0.4 < timestamps[timestamps.indexOf(t)+1].sec)) || timestamps.reduce((a, b) => Math.abs(b.sec - current) < Math.abs(a.sec - current) ? b : a);
+  if (!overBlock && !isScrolling) {
     nearest.block.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    isScrolling = true
-    blocks.forEach(b => b.style.color = '')
-    nearest.block.style.color = '#ffc0cbcc'
+    isScrolling = true;
+    blocks.forEach(b => {b.style.color = ''; b.classList.remove('editing')})
+    editingBlock = nearest.block
+    nearest.block.style.color = '#ffc0cbcc';
+    nearest.block.classList.add('editing');
     setTimeout(() => isScrolling = false, 800)}
+  const currentIndex = timestamps.indexOf(nearest);
+  const start = nearest.sec;
+  const end = timestamps[currentIndex + 1] ? timestamps[currentIndex + 1].sec : myPlayer.duration;
+  const duration = end - start;
+  const elapsed = current + 0.4 - start;
+  const progress = Math.min(Math.max((elapsed / duration) * 100, 0), 100);
+  nearest.block.classList.toggle('progress-visible', progress > 0);
+  nearest.block.style.setProperty('--progress', progress + '%');
+  if (overBlock && editingBlock !== nearest.block) myPlayer.pause()}
 
 
   function updateTimeDisplay() {

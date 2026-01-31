@@ -1222,6 +1222,8 @@
 
   MoveEntry()								; within playlist 
     {
+    if (StrSplit(selected, ",").1 == value)				; cannot move to self
+      return
     if (sort != "Playlist")
       {
       toggles =
