@@ -1,4 +1,14 @@
 // mp4 using nvidia ?
+// seekbar on all srt
+// fav from history mp3
+
+// maybe add browser back after page reset from mouse back click
+// pause hack in openeditor()
+// add "&& !defPause" to voice.play() and myPlayer.play() in activate block
+// function openEditor(text) changed to open captions at last editing point
+
+// create poster from fav on batch or even single index
+
 
 
   let wheel = 0								// wheel count
@@ -115,7 +125,7 @@
   searchHeader.addEventListener('wheel', nextMatch)
   searchHeader.addEventListener('mouseup', (e) => {
     editingBlock.scrollIntoView({ behavior: 'smooth', block: 'center' })
-    if (e.button != 1) matchCountSpan.textContent = searchInput.value = '';
+    matchCountSpan.textContent = searchInput.value = '';
     blocks.forEach(b => {b.innerHTML = b.innerText})})
   voiceContent.addEventListener('mouseleave', () => {voiceContent.style.display = 'none'})
   mediaContent.addEventListener('mouseleave', () => {mediaContent.style.display = 'none'})
@@ -268,7 +278,7 @@
     lastMedia = index
     if (scaleY < 0.26) scaleY = 0.5							// return zoom after captions
     if (lastClick == 1) myNav.style.display = null
-    if (captions || type=='audio' || playlist.match('/inca/music/')) scaleY = 0.25
+    if (lastClick == 1 && captions || type=='audio' || playlist.match('/inca/music/')) scaleY = 0.25
     if (playlist.match('/inca/music/') && !thumbSheet) {start = 0; myPlayer.muted = 0}
     if (type == 'audio' && !captions) myPlayer.style.borderBottom = '2px solid pink'
     else myPlayer.style.border = null
@@ -569,13 +579,13 @@
 
 
   function inca(command,value,select,address) {						// send java messages to inca.exe
-    more = 8										// critical - sets 400mS block for lazy loading
+    more = 4										// critical - sets 400mS block for lazy loading
     for (i = 1; el = document.getElementById('thumb'+i); i++) {				// add cue edits to messages
       if ((el.style.rate || el.style.skinny) && !el.style.posted) {
         messages += '#editCues#'+el.style.rate+','+el.style.skinny+','+'#'+i+'#'; el.style.posted = 1}}
     if (select) {select += ','} else select = ''
     if (selected) select = selected
-    value = typeof value === 'string' ? value.replaceAll('#', '𝌇') : value ?? ''
+    value = typeof value === 'string' ? value.replaceAll('#', '𝌇') : value ?? '';
     if (!address) address = ''
     if (command == 'Delete' || command == 'Rename' || value.toString().includes('|myMp4') || (select && command == 'Path')) {
       selected = ''
@@ -752,9 +762,8 @@
 
 
   function voiceProgress () {
-    if (editingBlock._voice?.src) {
+    if (editingBlock && editingBlock._voice?.src) {
       const progress = (myVoice.currentTime / myVoice.duration || 0) * 100
-      editingBlock.classList.toggle('progress-visible', progress > 0);
       editingBlock.style.setProperty('--progress', progress + '%')}}
 
 
@@ -791,7 +800,7 @@
     if (editing) {
       let json = makeProjectJSON().replaceAll('#', '𝌇')				// because # is used as delimiter
       inca('capEdit', json, index)}						// save edited text
-    else if (cue && folder == 'Downloads' && !selected) inca('Reload', index)	// after ffmpeg processing
+    else if (cue || folder == 'Downloads' && !selected) inca('Reload', index)	// after ffmpeg processing
     else inca('Null', index)							// send / clear messages
     closePic()
     myPlayer.muted = myVoice.muted = true
@@ -800,7 +809,7 @@
     editor.style.display = myNav.style.display = myVig.style.visibility = myPlayer.style.visibility = null
     myMask.style = myDur.innerHTML = myVoice.src = myPlayer.src = ''
     let rec = title.getBoundingClientRect()
-    if (rec.top < 100 || rec.top > innerHeight || lastClick != 1)
+    if (rec.top < 200 || rec.top > innerHeight)
       title.scrollIntoView({ block: 'center' })}
 
 
@@ -834,6 +843,10 @@
 
 
 
+
+
+
+
   function editorClick(e, id) {
     if (id == 'myCancel') {
       if (myCancel.innerHTML != 'Sure ?') myCancel.innerHTML = 'Sure ?' 
@@ -842,32 +855,24 @@
       blk = blocks.find(b => b.dataset.num === idDisplay.textContent);
       if (blk) blk.dataset.fav = blk.dataset.fav === '1' ? '0' : '1'; editing = 1}
     else if (id == 'myExport') { const str = blocks.map(b => b.innerText.trim()).filter(t => t).join('\n\n'); inca('Export', str) }
-    else if (overBlock) { 
-      if (editingBlock?.isConnected && editingBlock !== overBlock) {
+    else if (overBlock) {
+      if (!editingBlock) activateBlock(overBlock, { edit: true })
+      if (editingBlock && editingBlock !== overBlock) {
         splitIfNeeded(editingBlock)
         editingBlock?.classList.remove('editing')
         overBlock.classList.add('editing')
         activateBlock(overBlock, { edit: true })
         updateMediaHeader()}
-      if (editingBlock !== overBlock) {activateBlock(overBlock, { edit: true }); editingBlock = overBlock}
-      else if (myPlayer.duration || overBlock._voice?.src) {
+      else if (overBlock._voice?.src || myPlayer.duration) {
         let rect = overBlock.getBoundingClientRect()
-        let seek = (xPos - rect.left - 100) / (rect.width - 200)
         if (yPos - rect.top < 20 || yPos - rect.top > rect.height - 20) togglePause()
         else {myVoice.pause(); myPlayer.pause()}
-        if (overBlock._voice?.src && yPos - rect.top > rect.height - 20) {		// clicked progress bar
+        if (overBlock._voice?.src && (yPos - rect.top) > rect.height - 20) {		// clicked voice seekbar
+          let seek = (xPos - rect.left - 100) / (rect.width - 200)
           if (seek > 0 && seek < 1) {
             myVoice.currentTime = (seek * myVoice.duration) - 0.5
             myPlayer.currentTime = parseFloat(overBlock.dataset.start) + (seek * myVoice.duration) - 1
-            myVoice.play(); myPlayer.play(); return}}
-        else if (yPos - rect.top > rect.height - 20) {					// clicked progress bar
-          const currentIndex = timestamps.findIndex(t => t.block === overBlock);
-          if (currentIndex !== -1) {
-            const start = timestamps[currentIndex].sec;
-            const end = timestamps[currentIndex + 1] ? timestamps[currentIndex + 1].sec : myPlayer.duration;
-            myPlayer.currentTime = start + (seek * (end - start));
-            myPlayer.play(); return}}}}}
-
+            myVoice.play(); myPlayer.play(); return}}}}}
 
 
   function openEditor(text) {
@@ -883,6 +888,7 @@
     loadVoices();
     document.querySelectorAll('.dropdown-content').forEach(c => c.style.display = 'none');
     const parsed = parseInputText(text);
+const lastNum = editingBlock ? +editingBlock.dataset.num : 0;
     viewport.replaceChildren();
     viewport.innerHTML = '';
     blocks = [];
@@ -903,7 +909,8 @@
     projectMedia.defaultSrc = originalPlayerSrc || null;
     if (projectMedia.defaultSrc) swapPlayerMedia(projectMedia.defaultSrc, 0);
     let first = overBlock = blocks[0];
-    if (parsed.lastSelectedId) first = blocks.find(b => +b.dataset.num === parsed.lastSelectedId)
+if (parsed.lastSelectedId) first = blocks.find(b => +b.dataset.num === parsed.lastSelectedId)
+else if (lastNum) first = blocks.find(b => +b.dataset.num === lastNum) || blocks[0]
     setTimeout(() => {editing = 0; first.scrollIntoView({ block: 'center' }); activateBlock(first, { edit: true })}, 500)
     if (parsed.ui) Object.assign(editor.style, parsed.ui);
     if (!blocks.length) addBlock(1, myPlayer.currentTime, 'new caption');
@@ -918,6 +925,9 @@
     document.querySelector('#search-header').dispatchEvent(new WheelEvent('wheel', { deltaY: -100 }));
     editor.style.top = myPlayer.offsetTop + myPlayer.offsetHeight + 'px'
     editor._resize = center
+
+    setTimeout(() => {myPlayer.pause()}, 600)
+
     updateMediaHeader()}
 
 
@@ -1053,14 +1063,14 @@ const activateBlock = (block, options = {}) => {
     myVoice.volume = 1
     if (edit) {
       if (!isSameBlock && decodeURIComponent(myVoice.src) != block._voice.src) myVoice.src = block._voice.src
-      if (!isSameBlock && !longClick && lastClick) setTimeout(() => {myVoice.play(); myPlayer.play()}, 50)
+      if (!isSameBlock && !longClick && lastClick && !defPause) setTimeout(() => {myVoice.play(); myPlayer.play()}, 50)
       else {myVoice.pause(); myPlayer.pause()}}}
   else {
     myVoice.muted = true;
     myPlayer.muted = defMute;
     myVoice.pause();
     if (edit) {
-      if (!isSameBlock && !longClick && lastClick == 1) setTimeout(() => myPlayer.play(), 50)
+      if (!isSameBlock && !longClick && lastClick == 1 && !defPause) setTimeout(() => myPlayer.play(), 50)
       else {myVoice.pause(); myPlayer.pause()}}}
 
   if (edit && !isSameBlock) {
@@ -1112,8 +1122,10 @@ const activateBlock = (block, options = {}) => {
 
     const hasTrailingEmpty = html.endsWith('<br>') || /<br>\s*$/i.test(html);
     if (hasTrailingEmpty) normalized = normalized.replace(/\n\n$/, '');
+
     const parts = normalized.split('\n\n').map(p => p.trim()).filter(Boolean);
     if (parts.length <= 1 && !hasTrailingEmpty) return;
+
     const startSec = parseFloat(blockToSplit.dataset.start) || 0;
     const nextSibling = blockToSplit.nextSibling;
     const idx = blocks.indexOf(blockToSplit);
@@ -1143,28 +1155,17 @@ const activateBlock = (block, options = {}) => {
   }
 
 
-function scrollToNearestCaption() { 
-  if (decodeURIComponent(myPlayer.src) !== originalPlayerSrc) return
-  if (!captions || !myPlayer.duration) return
-  const current = myPlayer.currentTime;
-  const nearest = timestamps.find(t => current + 0.4 >= t.sec && (!timestamps[timestamps.indexOf(t)+1] || current + 0.4 < timestamps[timestamps.indexOf(t)+1].sec)) || timestamps.reduce((a, b) => Math.abs(b.sec - current) < Math.abs(a.sec - current) ? b : a);
-  if (!overBlock && !isScrolling) {
+  function scrollToNearestCaption() { 
+    if (decodeURIComponent(myPlayer.src) !== originalPlayerSrc || isScrolling) return
+    if (!captions || !myMask.matches(':hover')) return
+    const current = myPlayer.currentTime;
+    const nearest = timestamps.find(t => current + 0.4 >= t.sec && (!timestamps[timestamps.indexOf(t)+1] || current + 0.4 < timestamps[timestamps.indexOf(t)+1].sec)) || timestamps.reduce((a, b) => Math.abs(b.sec - current) < Math.abs(a.sec - current) ? b : a);
+    const offset = viewport.clientHeight / 2 - nearest.block.offsetHeight / 2;
     nearest.block.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    isScrolling = true;
-    blocks.forEach(b => {b.style.color = ''; b.classList.remove('editing')})
-    editingBlock = nearest.block
-    nearest.block.style.color = '#ffc0cbcc';
-    nearest.block.classList.add('editing');
+    isScrolling = true
+    blocks.forEach(b => b.style.color = '')
+    nearest.block.style.color = '#ffc0cbcc'
     setTimeout(() => isScrolling = false, 800)}
-  const currentIndex = timestamps.indexOf(nearest);
-  const start = nearest.sec;
-  const end = timestamps[currentIndex + 1] ? timestamps[currentIndex + 1].sec : myPlayer.duration;
-  const duration = end - start;
-  const elapsed = current + 0.4 - start;
-  const progress = Math.min(Math.max((elapsed / duration) * 100, 0), 100);
-  nearest.block.classList.toggle('progress-visible', progress > 0);
-  nearest.block.style.setProperty('--progress', progress + '%');
-  if (overBlock && editingBlock !== nearest.block) myPlayer.pause()}
 
 
   function updateTimeDisplay() {
@@ -1471,6 +1472,7 @@ function editorInput(e) {
     if (term) searchTerm = term
     else { matchIndex = 0; searchTerm = '' }
     if (term.length < 3) {matchIndex = 0; return}
+    blocks.forEach(b => {b.innerHTML = b.innerText;})
     const regex = new RegExp(`(${term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi')
     const matches = []
     blocks.forEach(b => {
