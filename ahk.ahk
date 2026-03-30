@@ -1,6 +1,6 @@
 
   ; Browser Based media Explorer
-; <audio id='myVoice' style='display:none' src='%server%D:/inca/cache/icons/mp3.mp3'></audio>
+
 
   #NoEnv
   #UseHook, On
@@ -170,14 +170,14 @@
         longClick = true
         Critical off							; allow timer interrupts
         }
-      if (click == "LButton" && !longClick)				; see if youtube download request
+      if (click == "LButton")						; see if youtube download request
         {
         WinGetTitle title, A
         if InStr(title, "YouTube")
           {
           clp := ClipBoard
           ClipBoard =
-          ClipWait, 0.2
+          ClipWait, 0.5
           cmd = %inca%\cache\apps\yt-dlp.exe --no-mtime -P "%inca%\cache\apps" -f bestvideo+bestaudio "%ClipBoard%"
           if InStr(Clipboard, "https://youtu")
             Run %COMSPEC% /c %cmd%, , Hide
@@ -269,7 +269,6 @@
       index := value
       reload := address
       }
-
     else if (command == "Reload")					; reload web page
       {
       index := value
@@ -277,7 +276,7 @@
         reload := 1
       else reload := 2
       }
-    else if (command == "History")					; maintain play history
+    else if (command == "History")
       {
       if (value <= 0)
         value = 0.0
@@ -530,7 +529,7 @@
       playlist =
       path := address
       IfNotExist, %path%
-        path := SubStr(path, 1, InStr(path, "\", False, -1))	; try one folder back
+        path := SubStr(path, 1, InStr(path, "\", False, -1))		; try one folder back
       IfNotExist, %path%
         {
         reload := 0
@@ -760,6 +759,11 @@
     {
     FileRecycle, %inca%\cache\json\%media%.json
     FileAppend, %value%, %inca%\cache\json\%media%.json, UTF-8
+if (ext == "txt")
+  {
+    FileRecycle, %src%
+    FileAppend, %address%, %src%, UTF-8
+  }
     index := selected
     RenderPage(0)
     PopUp("saved", 999, 0, 0)
@@ -1160,15 +1164,15 @@
         FileGetSize, x, %address%%media%.%ext%				; if x, then name already exists in target folder
         FileGetSize, y, %src%						; get source file size
         z=								; new 'Copy -' addendum
-        if x								; filename exists in target folder
+        if (x && !playlist)						; filename exists in target folder
           Loop 9999							; Copy (index) suffix attempt
-          {
-          z = \%media% - Copy (%A_Index%).%ext%
-          FileGetSize, w,  %address%%z%
-          if !w								; if Copy name not exist 
-            break
-          }
-        if (!longClick && x==y)
+            {
+            z = \%media% - Copy (%A_Index%).%ext%
+            FileGetSize, w,  %address%%z%
+            if !w								; if Copy name not exist 
+              break
+            }
+        if (!longClick && x == y)
           {
           fail = %fail%,%A_Index%
           popup = Duplicate %A_Index%
@@ -1290,7 +1294,7 @@
   DecodeExt(ex)
     {
     StringLower ex, ex
-    if InStr("jpg png jpeg webp gif", ex)
+    if InStr("jpg png jpeg webp gif heic", ex)
       return "image"
     if InStr("mp4 wmv avi mov webm mpg mpeg flv divx mkv asf m4v mvb rmvb vob rm ts", ex)
       return "video"
@@ -2138,8 +2142,8 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
       size = 0								; cannot have null size in Param()
 
 
-    if (type == "image")
-      media_s := "- " . media_s
+;    if (type == "image")
+;      media_s := "* " . media_s					; highlight as image (not video)
     if (ext=="txt")
       src = "%server%%poster%"
     else src = "%server%%src%"
@@ -2231,18 +2235,16 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
           source := auxSrc
           tim := auxStart
           }
-if playlist
-  source := entry
-
+        if playlist
+          source := entry						; use start time for poster
         SplitPath, source,,,,med
         GuiControl, Indexer:, GuiInd, %A_Index% - processing - %med%
         output = %profile%\Downloads\%med% @%tim%.jpg
         whisper = %inca%\cache\apps\Faster-Whisper-XXL\faster-whisper-xxl.exe
         if InStr(el_id, "mySrt")
           runwait, "%whisper%" "%source%" --model tiny.en --language en --output_format srt --compute_type float32 --output_dir "%inca%\cache\srt", , Hide
-        else if (DetectMedia(source) == "image")
+        else if (InStr(el_id, "myJpg") || DetectMedia(source) == "image")
           cmd = %inca%\cache\apps\ffmpeg.exe -i "%source%" -vf "scale=iw*%skinny%:ih" -y "%output%"
-        else cmd = %inca%\cache\apps\ffmpeg.exe -ss %tim% -i "%source%" -vf "scale=iw*%skinny%:ih" -y -vframes 1 "%output%"
         if InStr(el_id, "myIndex")
           Index(source, 1)
         if InStr(el_id, "myJpg")
@@ -2269,10 +2271,10 @@ if playlist
     FileRead, history, %inca%\fav\History.m3u
     if (A_Now - downloads < 3)						; check for voice mp3's
       Loop, Files, %profile%\Downloads\*.*
-        if !InStr(history, A_LoopFileName)				; not already added
+        if (!InStr(history, A_LoopFileName) && InStr(A_LoopFileName, "Eleven"))	; voice not already added
           {
           SplitPath, A_LoopFileFullPath, fileWithExt, dir, ext, nameNoExt
-          if (ext == "mp3" || ext == "wav" || ext == "mp4" || ext == "jpg")
+          if (ext == "mp3" || ext == "wav")
             {
             if (ext == "wav")
               {

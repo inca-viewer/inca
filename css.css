@@ -294,7 +294,7 @@
   transform: translateX(-50%);
   top: 50px;
   width: 95%;
-  max-width: 67em;
+  max-width: 64.5em;
   background: #0e0c05}
 
 .panel {					/* Top panel element showing folders etc. */
@@ -305,7 +305,7 @@
   overflow: hidden;
   height: 7em;
   max-width: 69em;				/* critical for sizing	*/
-  width: 95vw;
+  width: 90vw;
   box-sizing: border-box}
 
 .innerPanel {					/* rotated child of myPanel */
@@ -315,8 +315,8 @@
   transform: rotate(-90deg);
   transform-origin: right top;
   background: inherit;
-  max-height: 65em;				/* critical	*/
-  height: 90vw;
+  max-height: 60em;				/* critical	*/
+  height: 95vw;
   width: 7em}
 .innerPanel:hover {overflow-y: scroll; width:7.01em}	/* firefox bug	*/
 

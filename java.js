@@ -1,14 +1,4 @@
-// mp4 using nvidia ?
-// seekbar on all srt
-// fav from history mp3
-
-// maybe add browser back after page reset from mouse back click
-// pause hack in openeditor()
-// add "&& !defPause" to voice.play() and myPlayer.play() in activate block
-// function openEditor(text) changed to open captions at last editing point
-
-// create poster from fav on batch or even single index
-
+// mp4 using nvidia gpu?
 
 
   let wheel = 0								// wheel count
@@ -150,8 +140,6 @@
 
   function mouseUp(e) {
     if (!Click) return							// stop re-entry also if new page load
-    if (!playing && !myInput.matches(':hover'))
-      myInput.value = window.getSelection().toString() || myInput.value	// paste last search into myInput 
     clearTimeout(clickTimer)						// longClick timer
     if (!longClick) clickEvent(e)					// process click event
     Click = longClick = wheel = gesture = 0}
@@ -201,6 +189,7 @@
       if (!myNav.style.display) {context(e); return}}					// my context menu
     if (lastClick == 4) {mouseBack(); return}						// Back Click
     if (lastClick == 2) {  								// Middle click
+      editor.style.display = null
       if (editing || myMenu.matches(':hover')) return
       if (zoom > 1) {Play(); return}
       if (!playing && !myNav.style.display) {inca('View',lastMedia); return}		// list/thumb view
@@ -271,14 +260,14 @@
     if (playlist.match('/inca/music/')) myPlayer.muted = 0
     else myPlayer.muted = defMute
     if (!thumbSheet && !(editor.style.display && lastClick == 1))
-      if (captions || favicon.matches(':hover') || type == 'document') openCap()
+    if (captions || type == 'document' || favicon.matches(':hover') || type == 'document') openCap()
     if (el = document.getElementById('title'+lastMedia)) el.style.color = el.style.background = null
     title.style.color = 'pink'; 
     if (!listView) title.style.background = '#333'
     lastMedia = index
     if (scaleY < 0.26) scaleY = 0.5							// return zoom after captions
     if (lastClick == 1) myNav.style.display = null
-    if (lastClick == 1 && captions || type=='audio' || playlist.match('/inca/music/')) scaleY = 0.25
+    if (captions || type == 'audio' || playlist.match('/inca/music/')) scaleY = 0.25
     if (playlist.match('/inca/music/') && !thumbSheet) {start = 0; myPlayer.muted = 0}
     if (type == 'audio' && !captions) myPlayer.style.borderBottom = '2px solid pink'
     else myPlayer.style.border = null
@@ -454,7 +443,7 @@
     if (playing) {
       positionMedia(0)
       if (captions) updateTimeDisplay()
-      myPlayer.playbackRate = myPic.playbackRate = rate
+      myPlayer.playbackRate = myVoice.playbackRate = rate
       myMask.style.pointerEvents = 'auto'
       if (editing) {myCancel.style.visibility = 'visible'} else myCancel.style.visibility = 'hidden'
       if (dur && !thumbSheet) lastSeek = myPlayer.currentTime
@@ -464,7 +453,6 @@
       if (cues.innerHTML && !thumbSheet && type !='image' && dur) myCues(myPlayer.currentTime)}
     else {
       myInca.textContent = '...'
-      rate = defRate
       myMask.style.pointerEvents = null
       if (zoom > 1 && overMedia) myMask.style.opacity = 0.3 * zoom
       else myMask.style.opacity = 0
@@ -798,8 +786,9 @@
     if (observer) observer.disconnect()
     if (!thumbSheet) messages += '#History#' + myPlayer.currentTime.toFixed(1) + '#' + index + '#'
     if (editing) {
+      let txt = blocks.map(b => b.innerText.trim()).filter(Boolean).join('\n\n').replaceAll('#', '𝌇')
       let json = makeProjectJSON().replaceAll('#', '𝌇')				// because # is used as delimiter
-      inca('capEdit', json, index)}						// save edited text
+      inca('capEdit', json, index, txt)}					// save edited text
     else if (cue || folder == 'Downloads' && !selected) inca('Reload', index)	// after ffmpeg processing
     else inca('Null', index)							// send / clear messages
     closePic()
@@ -842,11 +831,6 @@
 
 
 
-
-
-
-
-
   function editorClick(e, id) {
     if (id == 'myCancel') {
       if (myCancel.innerHTML != 'Sure ?') myCancel.innerHTML = 'Sure ?' 
@@ -854,7 +838,9 @@
     else if (id == 'myBookmark') {
       blk = blocks.find(b => b.dataset.num === idDisplay.textContent);
       if (blk) blk.dataset.fav = blk.dataset.fav === '1' ? '0' : '1'; editing = 1}
-    else if (id == 'myExport') { const str = blocks.map(b => b.innerText.trim()).filter(t => t).join('\n\n'); inca('Export', str) }
+    else if (id == 'myExport') {
+      let txt = blocks.map(b => b.innerText.trim()).filter(Boolean).join('\n\n').replaceAll('#', '𝌇')
+      inca('Export', txt, index)}
     else if (overBlock) {
       if (!editingBlock) activateBlock(overBlock, { edit: true })
       if (editingBlock && editingBlock !== overBlock) {
@@ -888,7 +874,7 @@
     loadVoices();
     document.querySelectorAll('.dropdown-content').forEach(c => c.style.display = 'none');
     const parsed = parseInputText(text);
-const lastNum = editingBlock ? +editingBlock.dataset.num : 0;
+    const lastNum = editingBlock ? +editingBlock.dataset.num : 0;
     viewport.replaceChildren();
     viewport.innerHTML = '';
     blocks = [];
@@ -909,8 +895,8 @@ const lastNum = editingBlock ? +editingBlock.dataset.num : 0;
     projectMedia.defaultSrc = originalPlayerSrc || null;
     if (projectMedia.defaultSrc) swapPlayerMedia(projectMedia.defaultSrc, 0);
     let first = overBlock = blocks[0];
-if (parsed.lastSelectedId) first = blocks.find(b => +b.dataset.num === parsed.lastSelectedId)
-else if (lastNum) first = blocks.find(b => +b.dataset.num === lastNum) || blocks[0]
+    if (parsed.lastSelectedId) first = blocks.find(b => +b.dataset.num === parsed.lastSelectedId)
+    else if (lastNum) first = blocks.find(b => +b.dataset.num === lastNum) || blocks[0]
     setTimeout(() => {editing = 0; first.scrollIntoView({ block: 'center' }); activateBlock(first, { edit: true })}, 500)
     if (parsed.ui) Object.assign(editor.style, parsed.ui);
     if (!blocks.length) addBlock(1, myPlayer.currentTime, 'new caption');
@@ -925,9 +911,7 @@ else if (lastNum) first = blocks.find(b => +b.dataset.num === lastNum) || blocks
     document.querySelector('#search-header').dispatchEvent(new WheelEvent('wheel', { deltaY: -100 }));
     editor.style.top = myPlayer.offsetTop + myPlayer.offsetHeight + 'px'
     editor._resize = center
-
-    setTimeout(() => {myPlayer.pause()}, 600)
-
+    setTimeout(() => {myPlayer.pause(); if (searchTerm) {searchInput.value = searchTerm; newSearch()}}, 600)
     updateMediaHeader()}
 
 
@@ -1470,20 +1454,18 @@ function editorInput(e) {
   function newSearch() {
     const term = searchInput.value.trim()
     if (term) searchTerm = term
-    else { matchIndex = 0; searchTerm = '' }
     if (term.length < 3) {matchIndex = 0; return}
-    blocks.forEach(b => {b.innerHTML = b.innerText;})
+    blocks.forEach(b => {b.innerHTML = b.innerText})
     const regex = new RegExp(`(${term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi')
     const matches = []
     blocks.forEach(b => {
       if (regex.test(b.innerText)) {
         matches.push(b)
         b.innerHTML = b.innerText.replace(regex, '<mark>$1</mark>')}});
-    if (matches.length === 0) return
-    matchCountSpan.textContent = '1 : ' + String(matches.length)
+    if (matches.length > 0) matchCountSpan.textContent = '1 : ' + String(matches.length)
+    else matchCountSpan.textContent = '0 : 0'
     const target = matches[matchIndex] || matches[0]
     target.scrollIntoView({ behavior: 'smooth', block: 'center' })}
-
 
 
 
