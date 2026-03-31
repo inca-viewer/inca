@@ -31,7 +31,7 @@ Pure vanilla java / ahk script (ai can confirm is safe)<br>
 No IDE, no libraries, no external calls, no browser extensions<br> 
 Does not mess with any settings - see source code<br><br>
 All media types supported in browser - fast transcode if needed.<br>
-Edit settings or source code in notepad, then run compile.exe<br>
+Edit settings or source code in notepad, then run inca.exe<br>
 Compiles in less than 1 second<br>
 Browser will default to pictures folder, bookmark this tab<br>
 To exit, use taskbar or press ctrl + Esc<br>
