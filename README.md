@@ -2,6 +2,12 @@
 # Media Viewer<br>
 Windows - Chrome, Firefox, Edge, Opera, Brave<br>
 YouTube style interface for your local media<br><br>
+
+Curate pathways through your own media.<br>
+Start times, skips, pauses, skinny, pitch, speed, captions,<br>
+change voices, dialog, storyboards, AI tools etc.<br><br>
+General filing, mp3/jpg/caption extractions, conversions,<br>
+cuts and joins for buttery smooth playback in browsers<br><br>
 <img src="screens/overview2.png" width="55%"><br>
 <img src="screens/computer arm 5.jpg" width="18%"> <img src="screens/computer arm 2.jpg" width="18%"> <img src="screens/computer arm 1.jpg" width="18%"><br><br>
 <img src="screens/Screen 1.jpg" width="25%"> <img src="screens/Screen 2.jpg" width="25%"><br>
@@ -28,7 +34,8 @@ All media types supported in browser - fast transcode if needed.<br>
 Edit settings or source code in notepad, then run compile.exe<br>
 Compiles in less than 1 second<br>
 Browser will default to pictures folder, bookmark this tab<br>
-To close use taskbar or ctrl + Esc. To 'uninstall', delete inca folder<br>
+To exit, use taskbar or press ctrl + Esc<br>
+To 'uninstall', delete inca folder<br>
 
 
 Middle click
@@ -45,7 +52,7 @@ Long back click
 
 Long left click
 - over text - open osk keyboard
-- over selected text - find media matches on pc
+- over any selected text in browser - lists file matches on pc
 - over thumb - pop thumb out of page flow
 - on folder - copies selected files (instead of move)
 
@@ -63,8 +70,8 @@ Wheel
 - Seek (+click = zoom)<br><br>
 
 index creates 6x6 thumbsheets<br>
-mp4 converts video to fast-seek mp4 <br>
-any text editing sends previous copy to trash if needed<br>
+mp4 converts video to browser optimized mp4 <br>
+text or mp4 editing sends original copies to trash<br>
 Supports rotated screen + osk keyboard<br><br>
 <img src="screens/mouse.jpg" width="12.6%"> <img src="screens/computer arm 3.jpg" width="15.9%">   <img src="screens/computer arm 4.jpg" width="25%"><br>
 1m x 12mm threaded rod, 2 x nuts + heatshrink<br>
