@@ -1,9 +1,9 @@
 
-# DreamWeaver<br>
+# Inca<br>
 Windows - Chrome, Firefox, Edge, Opera, Brave<br>
 YouTube style interface for your local media<br><br>
 
-Curate pathways through your own media.<br>
+Create pathways through your own media.<br>
 Start times, skips, pauses, skinny, pitch, speed, captions,<br>
 change voices, dialog, storyboards, AI tools etc.<br><br>
 General filing, mp3/jpg/caption extractions, conversions,<br>
