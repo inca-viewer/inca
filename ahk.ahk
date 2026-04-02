@@ -1385,6 +1385,7 @@ if (ext == "txt")
     IniRead,search,%inca%\ini.ini,Settings,Search
     IniRead,fav,%inca%\ini.ini,Settings,Fav
     IniRead,music,%inca%\ini.ini,Settings,Music
+    fol = %profile%\downloads\|%profile%\pictures\|%fol%
     }
 
 
@@ -1670,6 +1671,7 @@ if (ext == "txt")
       FileSetTime, %ModifiedTime%, %new%, M
       FileSetTime, %CreationTime%, %new%, C
       FileRecycle, %src%
+      PopUp("original sent to recycle bin",0,0,0)
       }
     orig = %profile%\Downloads\%filen% %suffix%
     orig = %orig%							; trims whitespace ahk v1.1
@@ -2175,7 +2177,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
       exitApp
       }
     sleep 44
-    FileDelete, D:\inca\ahk.exe
+    FileDelete, %TmpExe%
     }
 
 
@@ -2221,9 +2223,15 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
     else if (el_id == "myIndex" && !select)				; index whole folder
       if (playlist || searchTerm)
         Loop, Parse, filelist, `n, `r
+          {
+          GuiControl, Indexer:, GuiInd, %A_Loopfield%
           Index(A_Loopfield, 0)
+          }
     else Loop, files, %path%*.*
+      {
+      GuiControl, Indexer:, GuiInd, %A_LoopFileFullPath%
       Index(A_LoopFileFullPath, 0)
+      }
     else Loop, Parse, select, `,					; index selected files
       if A_LoopField
         {
@@ -2235,7 +2243,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
           source := auxSrc
           tim := auxStart
           }
-        if playlist
+        if (playlist && InStr(el_id, "myIndex"))
           source := entry						; use start time for poster
         SplitPath, source,,,,med
         GuiControl, Indexer:, GuiInd, %A_Index% - processing - %med%
@@ -2252,7 +2260,6 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
         if (InStr(el_id, "myMp3") || InStr(el_id, "myMp4"))
           if (new := Transcode(el_id, source, sta, end))
             Index(new, 1)
-        GuiControl, Indexer:, GuiInd
         }
     if (fldr == folder && !playing)
       {
@@ -2260,6 +2267,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
       RenderPage(1)
       send, {F5}
       }
+    GuiControl, Indexer:, GuiInd
     return
 
 

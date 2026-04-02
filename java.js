@@ -1,5 +1,7 @@
 // mp4 using nvidia gpu?
 
+// repeating more pages still occuring
+
 
   let wheel = 0								// wheel count
   let wheelDir = 0		 					// wheel direction
@@ -354,7 +356,7 @@
       settings.view = String(view)
       myView.style.setProperty('--max-size', view + 'em')
       localStorage.setItem(folder, JSON.stringify(settings))
-      if (listView) thumb.style.opacity = 0.5
+      thumb.load(); updateThumbPosters()						// show poster or sheets
       delay = 8}
     else if (id == 'myWidth' && !playing) {						// page width
       let x = 1*myView.style.width.slice(0,-2); let z = wheel/2000
@@ -456,7 +458,7 @@
       myMask.style.pointerEvents = null
       if (zoom > 1 && overMedia) myMask.style.opacity = 0.3 * zoom
       else myMask.style.opacity = 0
-    if (!myNav.style.display && !listView && thumb.readyState === 4 && ym < trigger && overMedia && zoom == 1) thumb.play()}}
+      if (!myNav.style.display && !listView && thumb.readyState === 4 && ym < trigger && overMedia && zoom == 1) thumb.play()}}
 
 
   function positionMedia(time) {							// position myPlayer in window
@@ -566,6 +568,18 @@
     if (myType.innerHTML != 'Type') myType.style.color = 'red'}
 
 
+  function updateThumbPosters() {							// to show posters or thumbsheets
+    const useThumbsheet = parseFloat(settings.view) > 30
+    document.querySelectorAll('[id^="thumb"]').forEach(thumb => {
+      if (useThumbsheet) {
+        if (!thumb.dataset.thumbsheet) {
+          const filename = thumb.src.match(/\/([^\/]+?)(?:\.[^.]*?)?$/)[1]
+          const path = thumb.poster.replace(/\/(posters|temp\/history)\//, '/thumbs/').replace(/\/[^\/]*$/, '')
+          thumb.dataset.thumbsheet = path + '/' + filename + '.jpg'}
+        thumb.poster = thumb.dataset.thumbsheet} 
+      else if (thumb.dataset.originalPoster) thumb.poster = thumb.dataset.originalPoster})}
+
+
   function inca(command,value,select,address) {						// send java messages to inca.exe
     more = 4										// critical - sets 400mS block for lazy loading
     for (i = 1; el = document.getElementById('thumb'+i); i++) {				// add cue edits to messages
@@ -582,8 +596,11 @@
     fetch('http://localhost:3000/generate-html', {method: 'POST', headers: {'Content-Type': 'text/plain'}, body: messages})
       .then(response => {if (response.status === 204) {return} return response.text()})
       .then(data => { if (data) {
-        if (command == 'More') {myView.insertAdjacentHTML('beforeend', data); while (Param(list)) list++}
-        else if (data.length < 500) window.location.href = data}})
+      if (command == 'More' && data.includes('thumb'+list)) {
+        myView.insertAdjacentHTML('beforeend', data)
+        while (Param(list)) list++
+        setTimeout(updateThumbPosters, 10)}
+      else if (data.length < 500) window.location.href = data}})
     messages = ''}
 
 
@@ -631,7 +648,9 @@
     for (list = 1; Param(list); list++) {}				// process null cues (eg. skinny, start, rate)		
     if (!ix) index = 1
     else index = ix
-    lastMedia = index							// set htm thumb widths and heights 
+    lastMedia = index							// set htm thumb widths and heights
+    document.querySelectorAll('[id^="thumb"]').forEach(t => {if (!t.dataset.originalPoster) t.dataset.originalPoster = t.poster})
+    updateThumbPosters()
     Param()								// initialise current media
     if (ix && title) {							// eg. after switch thumbs/listview
       title.style.opacity = 1						// highlight thumb
@@ -779,7 +798,7 @@
     if (playing && !thumbSheet) {
       if (type == 'video') {myPlayer.currentTime = defStart; if (!defPause) myPlayer.play()}
       else myPlayer.poster = thumb.poster}
-    if (zoom == 1) {thumb.load(); thumb.playbackRate = 0.7; thumb.currentTime = start = defStart + 0.04}}
+    if (settings.view <= 30 && zoom == 1) {thumb.load(); thumb.playbackRate = 0.7; thumb.currentTime = start = defStart + 0.04}}
 
 
   function closePlayer() {
@@ -991,44 +1010,91 @@ function updateVoiceHeader(block) {
   voiceHeaderText.textContent = iconText}
 
 
-  async function loadVoices() {
-    try {
-      const resp = await fetch('/inca/cache/voices/voices.json');
-      if (!resp.ok) throw '';
-      const data = await resp.json();
-      voiceContent.innerHTML = '';
-      const none = document.createElement('div');
-      none.textContent = 'None';
-      none.style.color = '#ffc0cb88';
-      none.onclick = () => {
-        if (editingBlock) { 
-          delete editingBlock._voice; 
-          delete editingBlock.dataset.hasVoice; 
-          delete editingBlock.dataset.voiceName;
-          updateVoiceHeader(editingBlock);}
-         };
-      voiceContent.appendChild(none);
-      data.voices.forEach(v => {
-        const div = document.createElement('div');
-        div.textContent = v.name;
-        div.dataset.voiceId = v.id;
-div.onclick = () => {
-  if (!editingBlock) return;
-  editingBlock._voice = {
-    src: editingBlock._voice?.src || null,
-    id: v.id,
-    name: v.name
-  };
-  editingBlock.dataset.hasVoice = "1";
-  editingBlock.dataset.voiceName = v.name;
-  editing = 1
-};
-        voiceContent.appendChild(div);
+async function loadVoices() {
+  try {
+    const resp = await fetch('/inca/cache/voices/voices.json');
+    if (!resp.ok) throw '';
+    const data = await resp.json();
+    voiceContent.innerHTML = '';
+
+    const none = document.createElement('div');
+    none.textContent = 'None';
+    none.style.color = '#ffc0cb88';
+    none.onclick = () => {
+      if (editingBlock) { 
+        delete editingBlock._voice; 
+        delete editingBlock.dataset.hasVoice; 
+        delete editingBlock.dataset.voiceName;
+        updateVoiceHeader(editingBlock);
+      }
+    };
+    voiceContent.appendChild(none);
+
+    data.voices.forEach(v => {
+      const isActive = editingBlock && editingBlock._voice && editingBlock._voice.id === v.id;
+      const savedVol = isActive ? (editingBlock._voice.volume ?? 1) : (v.volume ?? 1);
+
+      const row = document.createElement('div');
+      row.style.display = 'flex';
+      row.style.alignItems = 'center';
+      row.style.gap = '10px';
+      row.style.padding = '4px 8px';
+
+      // Brighter text if this voice is active on current block
+      const nameStyle = isActive ? 'color:#ffc0cb; font-weight:500;' : 'color:#ffc0cb99;';
+
+      row.innerHTML = `
+        <span style="flex:1; cursor:pointer; ${nameStyle}">${v.name}</span>
+        <div class="vol-track" style="width:70px; height:14px; position:relative; cursor:pointer;">
+          <div class="vol-line" style="position:absolute; top:6px; left:0; width:70px; height:1px; background:#222;"></div>
+          <div class="vol-fill" style="position:absolute; top:6px; left:0; width:${savedVol * 70}px; height:2px; background:#ffc0cb66;"></div>
+        </div>
+      `;
+
+      const track = row.querySelector('.vol-track');
+      const fill = row.querySelector('.vol-fill');
+
+      track.addEventListener('click', (e) => {
+        const rect = track.getBoundingClientRect();
+        let percent = (e.clientX - rect.left) / rect.width;
+        percent = Math.max(0, Math.min(1, percent));
+
+        fill.style.width = (percent * 80) + 'px';
+
+        if (editingBlock && editingBlock._voice?.id === v.id) {
+          editingBlock._voice.volume = percent;
+          myVoice.volume = percent;
+          editing = 1;
+
+          if (myVoice.paused && editingBlock._voice.src) {
+            myVoice.play().catch(() => {});
+          }
+        }
       });
-    } catch (e) {
-      voiceContent.innerHTML = '<div style="color:#ffc0cb66;padding:8px;">voices.json not found</div>';
-    }
+
+      row.querySelector('span').addEventListener('click', () => {
+        if (!editingBlock) return;
+
+        const currentVol = parseFloat(fill.style.width) / 80;
+
+        editingBlock._voice = {
+          src: editingBlock._voice?.src || null,
+          id: v.id,
+          name: v.name,
+          volume: currentVol
+        };
+        editingBlock.dataset.hasVoice = "1";
+        editingBlock.dataset.voiceName = v.name;
+        editing = 1;
+        updateVoiceHeader(editingBlock);
+      });
+
+      voiceContent.appendChild(row);
+    });
+  } catch (e) {
+    voiceContent.innerHTML = '<div style="color:#ffc0cb66;padding:8px;">voices.json not found</div>';
   }
+}
 
 
 const activateBlock = (block, options = {}) => {
@@ -1044,7 +1110,7 @@ const activateBlock = (block, options = {}) => {
   if (block._voice?.src) {
     myPlayer.muted = true;
     myVoice.muted = defMute;
-    myVoice.volume = 1
+myVoice.volume = block._voice.volume !== undefined ? block._voice.volume : 1;
     if (edit) {
       if (!isSameBlock && decodeURIComponent(myVoice.src) != block._voice.src) myVoice.src = block._voice.src
       if (!isSameBlock && !longClick && lastClick && !defPause) setTimeout(() => {myVoice.play(); myPlayer.play()}, 50)
@@ -1163,7 +1229,10 @@ const activateBlock = (block, options = {}) => {
   voiceHeaderText.addEventListener('click', async (e) => {
     const voiceDropdown = document.querySelector('#voice-header');
     document.querySelectorAll('.dropdown-content').forEach(c => c.style.display = 'none');
-    voiceContent.style.display = 'flex';})
+    voiceContent.style.display = 'flex';
+loadVoices();
+
+})
 
   document.querySelector('#media-header').addEventListener('click', async () => {
     document.querySelectorAll('.dropdown-content').forEach(c => c.style.display = 'none');
@@ -1326,11 +1395,12 @@ function makeProjectJSON() {
       text: b.innerText.trim(),
       extras: {
         media: b._media ? { src: b._media.src.replace(/\\/g, '/'), name: b._media.name } : null,
-        voice: b._voice ? {
-          src: b._voice.src ? b._voice.src.replace(/\\/g, '/') : null,
-          id: b._voice.id || null,
-          name: b._voice.name || null
-        } : null
+voice: b._voice ? {
+  src: b._voice.src ? b._voice.src.replace(/\\/g, '/') : null,
+  id: b._voice.id || null,
+  name: b._voice.name || null,
+  volume: b._voice.volume !== undefined ? b._voice.volume : 1
+} : null
       }
     }))
   };
