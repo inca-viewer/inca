@@ -1,8 +1,5 @@
 // mp4 using nvidia gpu?
 
-// voices json??
-// fade at top of html mask
-
 
   let wheel = 0								// wheel count
   let wheelDir = 0		 					// wheel direction
@@ -282,7 +279,7 @@
     zoom = 1
     myPic.style.top = '-999px'
     let syncStart = start								// because seekbar overwrites start
-    if (!thumbSheet && dur && !cue) {myPlayer.currentTime = syncStart; myPlayer.play()}
+    if (!thumbSheet && dur && !cue && !captions) {myPlayer.currentTime = syncStart; myPlayer.play()}
     setTimeout(function() {
       if (!thumbSheet && defPause && !playlist.match('/inca/music/')) {myPlayer.currentTime = syncStart; myPlayer.pause()}
       if (!more && list < listSize && index > list - 9) inca('More', list)
@@ -885,7 +882,6 @@
     editor.style.display = 'flex';
     if (type == 'video' || type == 'audio') originalPlayerSrc = decodeURIComponent(myPlayer.src || '');
     else originalPlayerSrc = decodeURIComponent(myPlayer.poster || '');
-    if (defPause) myPlayer.pause()
     const center = () => {
       editor.style.left = '50%';
       editor.style.top = '50%';
@@ -912,6 +908,7 @@
         block.dataset.hasVoice = "1"
         if (b.extras.voice.name) block.dataset.voiceName = b.extras.voice.name}});
     [...blocks].forEach(splitIfNeeded)
+    getAllProjectVoices()
     projectMedia.defaultSrc = originalPlayerSrc || null;
     if (projectMedia.defaultSrc) swapPlayerMedia(projectMedia.defaultSrc, 0);
     let first = overBlock = blocks[0];
@@ -931,7 +928,7 @@
     document.querySelector('#search-header').dispatchEvent(new WheelEvent('wheel', { deltaY: -100 }));
     editor.style.top = myPlayer.offsetTop + myPlayer.offsetHeight + 'px'
     editor._resize = center
-    setTimeout(() => {myPlayer.pause(); if (searchTerm) {searchInput.value = searchTerm; newSearch()}}, 600)
+    setTimeout(() => {if (searchTerm) {searchInput.value = searchTerm; newSearch()}}, 600)
     updateMediaHeader()}
 
 
@@ -999,6 +996,98 @@
     return projectMedia.defaultSrc ? { src: projectMedia.defaultSrc } : null;}
 
 
+
+
+
+
+function loadVoices() {
+    voiceContent.innerHTML = '';
+
+    const projectVoices = getAllProjectVoices();
+
+    // "None" option
+    const none = document.createElement('div');
+    none.textContent = 'None';
+    none.style.color = '#ffc0cb88';
+    none.onclick = () => {
+        if (editingBlock) { 
+            delete editingBlock._voice; 
+            delete editingBlock.dataset.hasVoice; 
+            delete editingBlock.dataset.voiceName;
+            updateVoiceHeader(editingBlock);
+        }
+    };
+    voiceContent.appendChild(none);
+
+    // Existing project voices
+    projectVoices.forEach(name => {
+        const row = document.createElement('div');
+        row.style.display = 'flex';
+        row.style.alignItems = 'center';
+        row.style.gap = '10px';
+        row.style.padding = '4px 8px';
+
+        const isActive = editingBlock && editingBlock._voice?.name === name;
+
+        row.innerHTML = `
+            <span style="flex:1; cursor:pointer; ${isActive ? 'color:#ffc0cb; font-weight:500;' : 'color:#ffc0cb99;'}">
+                ${name}
+            </span>
+        `;
+
+        row.querySelector('span').addEventListener('click', () => {
+            selectVoice(name);
+        });
+
+        voiceContent.appendChild(row);
+    });
+
+    // "New Voice" entry at the bottom
+    const newVoiceRow = document.createElement('div');
+    newVoiceRow.style.display = 'flex';
+    newVoiceRow.style.alignItems = 'center';
+
+
+    newVoiceRow.innerHTML = `
+        <span style="flex:1; cursor:pointer; color:#ffc0cb99;">
+            New Voice
+        </span>
+    `;
+
+    newVoiceRow.querySelector('span').addEventListener('click', () => {
+        const newName = prompt("Enter new voice name:", "");
+        if (!newName || newName.trim() === '') return;
+
+        selectVoice(newName.trim());
+    });
+
+    voiceContent.appendChild(newVoiceRow);
+}
+
+
+
+
+function getAllProjectVoices() {
+    const voiceSet = new Set()
+    blocks.forEach(block => {
+        if (block._voice && block._voice.name) {
+            const name = block._voice.name.trim()
+            if (name) voiceSet.add(name)}})
+    return Array.from(voiceSet)}
+
+function selectVoice(name) {
+    if (!editingBlock) return
+    editingBlock._voice = {
+        src: editingBlock._voice?.src || null,
+        id: null,
+        name: name,
+        volume: editingBlock._voice?.volume ?? 1}
+    editingBlock.dataset.hasVoice = "1"
+    editingBlock.dataset.voiceName = name
+    editing = 1
+    updateVoiceHeader(editingBlock)
+    loadVoices()}
+
 function updateMediaHeader() {mediaHeader.textContent = title.value}
 
 function updateVoiceHeader(block) {
@@ -1011,91 +1100,8 @@ function updateVoiceHeader(block) {
   voiceHeaderText.textContent = iconText}
 
 
-async function loadVoices() {
-  try {
-    const resp = await fetch('/inca/cache/voices/voices.json');
-    if (!resp.ok) throw '';
-    const data = await resp.json();
-    voiceContent.innerHTML = '';
 
-    const none = document.createElement('div');
-    none.textContent = 'None';
-    none.style.color = '#ffc0cb88';
-    none.onclick = () => {
-      if (editingBlock) { 
-        delete editingBlock._voice; 
-        delete editingBlock.dataset.hasVoice; 
-        delete editingBlock.dataset.voiceName;
-        updateVoiceHeader(editingBlock);
-      }
-    };
-    voiceContent.appendChild(none);
 
-    data.voices.forEach(v => {
-      const isActive = editingBlock && editingBlock._voice && editingBlock._voice.id === v.id;
-      const savedVol = isActive ? (editingBlock._voice.volume ?? 1) : (v.volume ?? 1);
-
-      const row = document.createElement('div');
-      row.style.display = 'flex';
-      row.style.alignItems = 'center';
-      row.style.gap = '10px';
-      row.style.padding = '4px 8px';
-
-      // Brighter text if this voice is active on current block
-      const nameStyle = isActive ? 'color:#ffc0cb; font-weight:500;' : 'color:#ffc0cb99;';
-
-      row.innerHTML = `
-        <span style="flex:1; cursor:pointer; ${nameStyle}">${v.name}</span>
-        <div class="vol-track" style="width:70px; height:14px; position:relative; cursor:pointer;">
-          <div class="vol-line" style="position:absolute; top:6px; left:0; width:70px; height:1px; background:#222;"></div>
-          <div class="vol-fill" style="position:absolute; top:6px; left:0; width:${savedVol * 70}px; height:2px; background:#ffc0cb66;"></div>
-        </div>
-      `;
-
-      const track = row.querySelector('.vol-track');
-      const fill = row.querySelector('.vol-fill');
-
-      track.addEventListener('click', (e) => {
-        const rect = track.getBoundingClientRect();
-        let percent = (e.clientX - rect.left) / rect.width;
-        percent = Math.max(0, Math.min(1, percent));
-
-        fill.style.width = (percent * 80) + 'px';
-
-        if (editingBlock && editingBlock._voice?.id === v.id) {
-          editingBlock._voice.volume = percent;
-          myVoice.volume = percent;
-          editing = 1;
-
-          if (myVoice.paused && editingBlock._voice.src) {
-            myVoice.play().catch(() => {});
-          }
-        }
-      });
-
-      row.querySelector('span').addEventListener('click', () => {
-        if (!editingBlock) return;
-
-        const currentVol = parseFloat(fill.style.width) / 80;
-
-        editingBlock._voice = {
-          src: editingBlock._voice?.src || null,
-          id: v.id,
-          name: v.name,
-          volume: currentVol
-        };
-        editingBlock.dataset.hasVoice = "1";
-        editingBlock.dataset.voiceName = v.name;
-        editing = 1;
-        updateVoiceHeader(editingBlock);
-      });
-
-      voiceContent.appendChild(row);
-    });
-  } catch (e) {
-    voiceContent.innerHTML = '<div style="color:#ffc0cb66;padding:8px;">voices.json not found</div>';
-  }
-}
 
 
 const activateBlock = (block, options = {}) => {
@@ -1535,6 +1541,9 @@ function newSearch() {
     blocks.filter(b => !matches.includes(b)).forEach(b => {if (b.querySelector('mark')) b.innerHTML = b.innerText})
     matchCountSpan.textContent = matches.length > 0 ? `1 : ${matches.length}` : '0 : 0'
     if (matches.length) matches[0].scrollIntoView({ behavior: 'smooth', block: 'center' })}
+
+
+
 
 
 

@@ -763,7 +763,7 @@ if (ext == "txt")
     FileRecycle, %src%
     FileAppend, %address%, %src%, UTF-8
   }
-    index := selected
+    index := StrSplit(selected, ",").1
     RenderPage(0)
     PopUp("saved", 999, 0, 0)
     }
@@ -1689,9 +1689,10 @@ if (ext == "txt")
     lastFolder =
     menu_item =
     mediaList =
-    SplitPath, playlist,,,,heading
-    if !playlist
-      heading := folder
+    str := StrSplit(path,"\")
+    heading := str[str.MaxIndex()-1]					; in case folder has .com in name
+    if playlist
+      SplitPath, playlist,,,,heading
     topDiv = <div style="font-size:1.4em; padding-bottom:0.7em; color:pink; text-align:center; width:100`%">%heading% &ensp; %listSize%</div>`n
     if (command != "More")
       lastIndex := 0
@@ -1997,11 +1998,12 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
 </div>`n`n
 
 <div id='myMenu'>
-  <div id='z1' class='fade' style='height:190px'></div><div id='z2' class='fade' style='top:190px; background: linear-gradient(#0e0c05ff, #0e0c0500)'></div>`n
+  <div id='z1' class='fade' style='height:190px'></div><div id='z2' class='fade' style='top:198px; height:10px; background: linear-gradient(#0e0c05ff, #0e0c0500)'></div>`n
   <div id='myPanel' class='myPanel'><div class='panel'><div class='innerPanel'>`n`n%panelList%`n</div></div>`n`n
 
   <div id='myRibbon1' class='ribbon' style='font-size: 1.2em'>`n
-  <a></a>`n
+  <a style='width: 4.5em'></a>
+  <a style='width: 3.5em; font-size: 1.8em' onmousedown='window.history.back()'>&#129028;</a>`n
   <a id='myMusic' style='max-width:1.8em; %x22%' onmousedown="inca('Path','','','music|1')" onmouseover="setTimeout(function() {if(myMusic.matches(':hover'))Music.scrollIntoView()},200)">&#x266B;</a>`n
   <a id='mySub' style='max-width:2em; font-size:0.7em; %x8%' onmousedown="inca('Recurse')" onmouseover="setTimeout(function() {if(mySub.matches(':hover'))Sub.scrollIntoView()},200)">%subs%</a>`n
   <a id='myFol' style='max-width:2.8em; %x21%' onmousedown="inca('Path','','','fol|1')" onmouseover="setTimeout(function() {if(myFol.matches(':hover'))Fol.scrollIntoView()},200)">&#x1F4BB;&#xFE0E;</a>`n
@@ -2011,8 +2013,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
   <a id='Add' style='max-width:3em; font-size:1.2em; color: red' onmousedown="inca('Add','','',myInput.value)">%add%</a>`n
   </div>`n`n
 
-  <div id='myRibbon2' class='ribbon' style='width: 90`%; background:#1b1814' onwheel="wheelEvent(event)">`n
-  <a style='width: 3em; font-size: 1.8em' onmousedown='window.history.back()'>&#129028;</a>`n
+  <div id='myRibbon2' class='ribbon' style='width: 80`%; background:#1b1814' onwheel="wheelEvent(event)">`n
   <a id='myPlaylist' style='%x13%' onmousedown="inca('Playlist')">%pl%</a>`n
   <a id='myDate' style='%x4%' onmousedown="inca('Date', filt)">Date</a>`n
   <a id='myDuration' style='%x3%' onmousedown="inca('Duration', filt)"> Duration</a>`n
