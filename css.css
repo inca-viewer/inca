@@ -266,17 +266,17 @@
   position: absolute;
   direction: rtl;
   overflow: visible;
-  width: 1.1em;
+  width: 0.9em;
   height:0;
   top: -0.9em;
   left: 0.8em;
   color: pink;
   font-size: 0.7em;
-  opacity: 0.4;
+  opacity: 0.1;
   white-space: nowrap; 
   border-radius: 1em;
   transition: 0.2s}
-.favicon:hover {color: red; opacity: 1; top: -1.8em; transform: scale(2,2)}
+.favicon:hover {color: red; opacity: 1; top: -1.8em; transform: scale(1.8,1.8)}
 .favicon:empty {display:none}
 
 .capButton {					/* buttons over caption */
@@ -353,7 +353,7 @@
   flex-wrap: wrap;
   top: 200px;
   width: 40%;
-  padding-top:4em;
+  padding-top:1em;
   padding-bottom: 80vh}
 
 .ribbon {					/* menu, fol, fav, search ... */

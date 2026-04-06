@@ -1,6 +1,7 @@
 // mp4 using nvidia gpu?
 
-// repeating more pages still occuring
+// voices json??
+// fade at top of html mask
 
 
   let wheel = 0								// wheel count
@@ -66,6 +67,7 @@
   let clickMedia = ''
   let lastId = ''
   let trigger = 0.8							// trigger to show seekbar
+  let listSize = 0
 
   let favIndex = 0
   let matchIndex = 0
@@ -113,7 +115,6 @@
     myAlt.style.display = isAlt ? '' : 'block'
     myDefault.style.display = isAlt ? 'block' : 'none'})
   ribbon.addEventListener('click', (e) => {myVoice.pause(); myPlayer.pause()})
-  mediaHeader.addEventListener('wheel', nextMatch)
   searchHeader.addEventListener('wheel', nextMatch)
   searchHeader.addEventListener('mouseup', (e) => {
     editingBlock.scrollIntoView({ behavior: 'smooth', block: 'center' })
@@ -284,7 +285,7 @@
     if (!thumbSheet && dur && !cue) {myPlayer.currentTime = syncStart; myPlayer.play()}
     setTimeout(function() {
       if (!thumbSheet && defPause && !playlist.match('/inca/music/')) {myPlayer.currentTime = syncStart; myPlayer.pause()}
-      if (!more && list < myList.innerText && index > list - 9) inca('More', list)
+      if (!more && list < listSize && index > list - 9) inca('More', list)
       if (lastClick) positionMedia(0.4)
       myVig.style.visibility = myPlayer.style.visibility = 'visible'
       myPlayer.style.opacity = 0.99							// chrome transition bug
@@ -403,7 +404,7 @@
     let top = 0; let el = thumb
     if (playing) el = myPlayer
     rect = el.getBoundingClientRect()
-    if (!more && list < myList.innerText && myContent.scrollTop > myContent.scrollHeight - 2 * innerHeight) inca('More', list)
+    if (!more && list < listSize && myContent.scrollTop > myContent.scrollHeight - 2 * innerHeight) inca('More', list)
     xm = (xPos - rect.left) / rect.width
     ym = (yPos - rect.top) / rect.height
     if (delay >= 30) delay -= 10							// wheel/timer blocking 
@@ -630,15 +631,15 @@
     return 1}
 
 
-  function globals(fo, wd, mu, pa, so, fi, lv, se, pl, ix) {		// import globals from inca.exe
-    folder = fo; filt = fi; wheelDir = wd; defPause = pa; listView = lv; selected = se; playlist = pl
+  function globals(fo, wd, mu, pa, so, fi, lv, se, pl, ix, ls) {	// import globals from inca.exe
+    folder = fo; filt = fi; wheelDir = wd; defPause = pa; listView = lv; selected = se; playlist = pl; listSize = ls
     defMute = (mu == 'yes') ? 1 : 0
     settings = JSON.parse(localStorage.getItem(folder) || '{}')
     settings.pageWidth = (isNaN(settings.pageWidth) || settings.pageWidth > innerWidth) ? '700' : settings.pageWidth
     settings.view = (isNaN(settings.view) || settings.view < 6 || settings.view > 300) ? '10' : settings.view
     settings.defRate = (isNaN(settings.defRate) || settings.defRate < 0.2 || settings.defRate > 5) ? '1' : settings.defRate
     settings.pitch = settings.pitch == 1 ? 1 : 0
-    myView.style.width = (parseFloat(settings.pageWidth) + lv * 100) + 'px'
+    myView.style.width = parseFloat(settings.pageWidth) + 'px'
     myView.style.setProperty('--max-size', settings.view + 'em')
     defRate = parseFloat(settings.defRate)
     pitch = parseFloat(settings.pitch)
@@ -1514,28 +1515,28 @@ function editorInput(e) {
       favs[favIndex].scrollIntoView({ behavior: 'smooth', block: 'center' })
       return}
     const term = searchInput.value.trim();
-    matches = blocks.filter(b => b.innerHTML.includes(term))
+    matches = blocks.filter(b => b.innerHTML.toLowerCase().includes(term))
     if (!matches.length) return
     matchIndex = (matchIndex + (e.deltaY > 0 ? 1 : -1) + matches.length) % matches.length
     matchCountSpan.textContent = String(matchIndex + 1) + ' : ' + String(matches.length)
     matches[matchIndex].scrollIntoView({ behavior: 'smooth', block: 'center' })}
 
 
-  function newSearch() {
-    const term = searchInput.value.trim()
+function newSearch() {
+    const term = searchInput.value.trim().toLowerCase()
     if (term) searchTerm = term
-    if (term.length < 3) {matchIndex = 0; return}
-    blocks.forEach(b => {b.innerHTML = b.innerText})
-    const regex = new RegExp(`(${term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi')
-    const matches = []
-    blocks.forEach(b => {
-      if (regex.test(b.innerText)) {
-        matches.push(b)
-        b.innerHTML = b.innerText.replace(regex, '<mark>$1</mark>')}});
-    if (matches.length > 0) matchCountSpan.textContent = '1 : ' + String(matches.length)
-    else matchCountSpan.textContent = '0 : 0'
-    const target = matches[matchIndex] || matches[0]
-    target.scrollIntoView({ behavior: 'smooth', block: 'center' })}
+    if (term.length < 3) {matchIndex = 0; blocks.forEach(b => {if (b.querySelector('mark')) b.innerHTML = b.innerText}); return}
+    matches = blocks.filter(b => b.innerText.toLowerCase().includes(term))
+    matches.forEach(b => {
+        const text = b.innerText
+        const lowerText = text.toLowerCase()
+        const idx = lowerText.indexOf(term)
+        b.innerHTML = text.slice(0, idx) + '<mark>' + text.slice(idx, idx + term.length) + '</mark>' + text.slice(idx + term.length)})
+    blocks.filter(b => !matches.includes(b)).forEach(b => {if (b.querySelector('mark')) b.innerHTML = b.innerText})
+    matchCountSpan.textContent = matches.length > 0 ? `1 : ${matches.length}` : '0 : 0'
+    if (matches.length) matches[0].scrollIntoView({ behavior: 'smooth', block: 'center' })}
+
+
 
 
 
