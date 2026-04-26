@@ -1,7 +1,3 @@
-// mp4 using nvidia gpu?
-
-
-// original sent... message once only
 
 
   let wheel = 0								// wheel count
@@ -208,7 +204,7 @@
         if (id == 'myCue' || (overMedia && thumb.src.slice(-3) == 'm3u')
         || (longClick && ((overMedia && type == 'document')
         || (favicon && favicon.matches(':hover')))) 
-        || (overMedia && thumb.src.endsWith('.pdf'))) {Click = 0; inca('Notepad',id,index); return}}
+        || (overMedia && thumb.src.endsWith('.pdf'))) {Click = 0; inca('Notepad',id,index,favicon.matches(':hover')); return}}
       if (!longClick) {
         if (editor.style.display) editorClick(e, id)
         if (id == 'mySelect') {if (type) {sel(index)} else selectAll(); return}
@@ -363,8 +359,8 @@
       delay = 8}
     else if (id == 'myWidth' && !playing) {						// page width
       let x = 1*myView.style.width.slice(0,-2); let z = wheel/2000
-      if (wheelUp) x *= 1+z
-      else if (!wheelUp && x / 1+z > 100) x /= 1+z
+      if (!wheelUp) x *= 1+z
+      else if (wheelUp && x / 1+z > 100) x /= 1+z
       if (x > innerWidth-20) x = innerWidth - 20
       myView.style.width = x.toFixed(2)+'px'
       settings.pageWidth = String(x); localStorage.setItem(folder, JSON.stringify(settings))
@@ -819,7 +815,8 @@
 
 
   function context(e) {
-    if (overBlock || viewport.matches(':hover')) {myNav.classList.add('editor-mode')} else myNav.classList.remove('editor-mode')
+    if (overBlock || viewport.matches(':hover')) {myNav.classList.add('editor-mode'); editorClick(e)}
+    else myNav.classList.remove('editor-mode')
     myNav.style.display = 'block'; myNav.style.left = xPos-90+'px'; myNav.style.top = yPos-32+'px'
     delay = 200}
 
@@ -995,74 +992,112 @@
 
 
 
-
-
-
 function loadVoices() {
     voiceContent.innerHTML = '';
 
-    const projectVoices = getAllProjectVoices();
-
-    // "None" option
+    // None option
     const none = document.createElement('div');
     none.textContent = 'None';
     none.style.color = '#ffc0cb88';
+    none.style.padding = '6px 10px';
     none.onclick = () => {
-        if (editingBlock) { 
-            delete editingBlock._voice; 
-            delete editingBlock.dataset.hasVoice; 
+        if (editingBlock) {
+            delete editingBlock._voice;
+            delete editingBlock.dataset.hasVoice;
             delete editingBlock.dataset.voiceName;
             updateVoiceHeader(editingBlock);
         }
     };
     voiceContent.appendChild(none);
 
-    // Existing project voices
-    projectVoices.forEach(name => {
+    const voices = getAllProjectVoices();
+
+    if (voices.length === 0) {
+        const msg = document.createElement('div');
+        msg.textContent = '(no voices assigned yet)';
+        msg.style.color = '#ffc0cb66';
+        msg.style.padding = '8px 10px';
+        voiceContent.appendChild(msg);
+        return;
+    }
+
+    voices.forEach(name => {
+        const isActive = editingBlock && editingBlock._voice?.name === name;
+        const vol = isActive && editingBlock._voice.volume !== undefined 
+                    ? editingBlock._voice.volume 
+                    : 1;
+
         const row = document.createElement('div');
         row.style.display = 'flex';
         row.style.alignItems = 'center';
         row.style.gap = '10px';
         row.style.padding = '4px 8px';
 
-        const isActive = editingBlock && editingBlock._voice?.name === name;
-
         row.innerHTML = `
             <span style="flex:1; cursor:pointer; ${isActive ? 'color:#ffc0cb; font-weight:500;' : 'color:#ffc0cb99;'}">
                 ${name}
             </span>
+            <div class="vol-track" style="width:70px; height:14px; position:relative; cursor:pointer;">
+                <div class="vol-line" style="position:absolute; top:6px; left:0; width:70px; height:1px; background:#222;"></div>
+                <div class="vol-fill" style="position:absolute; top:6px; left:0; width:${vol * 70}px; height:2px; background:#ffc0cb66;"></div>
+            </div>
         `;
 
+        const track = row.querySelector('.vol-track');
+        const fill = row.querySelector('.vol-fill');
+
+        // Click volume bar
+        track.addEventListener('click', e => {
+            const rect = track.getBoundingClientRect();
+            let percent = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+
+            fill.style.width = (percent * 70) + 'px';
+
+            if (editingBlock) {
+                if (!editingBlock._voice) editingBlock._voice = {};
+                editingBlock._voice.name = name;
+                editingBlock._voice.volume = percent;
+                editingBlock.dataset.hasVoice = "1";
+                editingBlock.dataset.voiceName = name;
+                myVoice.volume = percent;
+                editing = 1;
+                updateVoiceHeader(editingBlock);
+            }
+        });
+
+        // Click name to assign voice
         row.querySelector('span').addEventListener('click', () => {
-            selectVoice(name);
+            if (!editingBlock) return;
+            const currentVol = editingBlock._voice?.volume ?? 1;
+
+            editingBlock._voice = {
+                src: editingBlock._voice?.src || null,
+                id: null,
+                name: name,
+                volume: currentVol
+            };
+            editingBlock.dataset.hasVoice = "1";
+            editingBlock.dataset.voiceName = name;
+            editing = 1;
+            updateVoiceHeader(editingBlock);
+            loadVoices();   // refresh active state
         });
 
         voiceContent.appendChild(row);
     });
 
-    // "New Voice" entry at the bottom
-    const newVoiceRow = document.createElement('div');
-    newVoiceRow.style.display = 'flex';
-    newVoiceRow.style.alignItems = 'center';
-
-
-    newVoiceRow.innerHTML = `
-        <span style="flex:1; cursor:pointer; color:#ffc0cb99;">
-            New Voice
-        </span>
-    `;
-
-    newVoiceRow.querySelector('span').addEventListener('click', () => {
-        const newName = prompt("Enter new voice name:", "");
-        if (!newName || newName.trim() === '') return;
-
-        selectVoice(newName.trim());
-    });
-
-    voiceContent.appendChild(newVoiceRow);
+    // New Voice
+    const newRow = document.createElement('div');
+    newRow.style.padding = '8px 10px';
+    newRow.style.color = '#ffc0cb88';
+    newRow.style.cursor = 'pointer';
+    newRow.textContent = '+ New Voice';
+    newRow.onclick = () => {
+        const name = prompt("Enter new voice name:", "");
+        if (name && name.trim()) selectVoice(name.trim());
+    };
+    voiceContent.appendChild(newRow);
 }
-
-
 
 
 function getAllProjectVoices() {

@@ -1,5 +1,5 @@
 
-  ; Browser Based media Explorer
+  ; Browser Based media explorer - server side
 
 
   #NoEnv
@@ -178,7 +178,7 @@
           clp := ClipBoard
           ClipBoard =
           ClipWait, 0.5
-          cmd = %inca%\cache\apps\yt-dlp.exe --no-mtime -P "%inca%\cache\apps" -f bestvideo+bestaudio "%ClipBoard%"
+          cmd = %inca%\cache\apps\yt-dlp.exe --no-mtime -P "%profile%\Downloads" -f bestvideo+bestaudio "%ClipBoard%"
           if InStr(Clipboard, "https://youtu")
             Run %COMSPEC% /c %cmd%, , Hide
           ClipBoard := clp
@@ -442,7 +442,7 @@
       }
     else if (type == "document" || type == "m3u")
       {
-      IfExist, %inca%\cache\json\%media%.json
+      if (address && FileExist(inca "\cache\json\" media ".json"))
         Run, %inca%\cache\json\%media%.json
       else IfExist, %src%
         Run, %src%
@@ -607,6 +607,7 @@
     reload := 3
     if (longClick || command == "SearchBox")
       lastClick = MButton						; open search in new tab
+    else playlist =							; allows playlist searches
     if !address
       return
     address = %address%							; trims whitespace
@@ -1573,8 +1574,8 @@ if (ext == "txt")
       if ErrorLevel
         return
       FileRead, MetaContent, %inca%\cache\temp\meta.txt
- ;     if (!join && !start && !end && InStr(MetaContent, "Inca"))		; already transcoded
- ;       return
+      if (!join && !start && !end && InStr(MetaContent, "Inca"))		; already transcoded
+        return
       if RegExMatch(MetaContent, """width"":\s*(\d+)", WidthMatch)
         Width := WidthMatch1 + 0
       if RegExMatch(MetaContent, """height"":\s*(\d+)", HeightMatch)
@@ -1739,9 +1740,7 @@ if (ext == "txt")
     else if x9
       type = Video
     else type = Type
-    if searchTerm
-      x20 = color:red
-    else if (!playlist && InStr(fol,folder))
+    if (!playlist && InStr(fol,folder))
       x21 = color:red
     else if (playlist && InStr(path,"\music\"))
       x22 = color:red
@@ -1981,7 +1980,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
   <a id='mySub' style='width:2em; translate: 0.3em; font-size:0.7em; %x8%' onmousedown="inca('Recurse')" onmouseover="setTimeout(function() {if(mySub.matches(':hover'))Sub.scrollIntoView()},200)">%subs%</a>`n
   <a id='myFol' style='max-width:2.8em; %x21%' onmousedown="inca('Path','','','fol|1')" onmouseover="setTimeout(function() {if(myFol.matches(':hover'))Fol.scrollIntoView()},200)">&#x1F4BB;&#xFE0E;</a>`n
   <a id='myFav' style='translate: 0.4em 0.06em; %x23%' onmousedown="inca('Path','','','fav|1')" onmouseover="setTimeout(function() {if(myFav.matches(':hover'))Fav.scrollIntoView()},200)">&#10084;</a>`n
-  <a style='color: red; min-width: 8em; width: auto; padding: 0 1.4em; '>%heading% &ensp; %listSize%</a>`n
+  <a style='color: red; width: 12em; overflow: hidden; padding: 0 1.4em; '>%heading% &ensp; %listSize%</a>`n
   <a id='mySearch' style='max-width:2em; %x20%' onwheel="wheelEvent(event)" onmousedown="inca('SearchBox','','',myInput.value)" onmouseover="setTimeout(function() {if(mySearch.matches(':hover'))filter(id)},140)">&#x1F50D;&#xFE0E;</a>`n
   <input id='myInput' class='searchbox' type='search' autocomplete='off' value='%st%' onmouseenter="if (this.value=='%st%') this.value='%lastSearch%'; this.select()" onmouseover="overText=1; this.focus()" onmouseout='overText=0'>
   <a id='Add' style='width:1em; font-size:1.2em; color: red' onmousedown="inca('Add','','',myInput.value)">%add%</a>`n
@@ -2263,9 +2262,9 @@ mediaList(j, input, start)						; spool sorted media files into web page
     FileGetTime, ytdlp, %inca%\cache\apps, M
     FileGetTime, downloads, %profile%\Downloads, S
     FileRead, history, %inca%\fav\History.m3u
-    if (A_Now - downloads < 3)						; check for voice mp3's
+    if (A_Now - downloads > 3)						; check for voice mp3's
       Loop, Files, %profile%\Downloads\*.*
-        if (!InStr(history, A_LoopFileName) && InStr(A_LoopFileName, "Eleven"))	; voice not already added
+        if (!InStr(history, A_LoopFileName))				; media already added to history
           {
           SplitPath, A_LoopFileFullPath, fileWithExt, dir, ext, nameNoExt
           if (ext == "mp3" || ext == "wav")
@@ -2274,50 +2273,29 @@ mediaList(j, input, start)						; spool sorted media files into web page
               {
               RunWait, %inca%\cache\apps\ffmpeg.exe -i "%A_LoopFileFullPath%" -y file:"%dir%\%nameNoExt%.mp3",,Hide
               FileRecycle, %A_LoopFileFullPath%
-              ext = mp3
               }
             voices := inca . "\cache\voices"
-            destCopy := voices . "\" . nameNoExt . "." . ext
-            index(A_LoopFileFullPath,1)					; get duration
-            if (ext == "mp3")
-              {
-              FileCreateDir, %voices%
+            FileCreateDir, %voices%
+            destCopy := voices . "\" . nameNoExt . ".mp3"
+            if (ext == "wav" || InStr(A_LoopFileName, "Eleven"))
               FileCopy, %dir%\%nameNoExt%.%ext%, %destCopy%, 1
-              FileAppend, %destCopy%|0.0`r`n, %inca%\fav\History.m3u, UTF-8
-              }
-            else FileAppend, %destCopy%|0.0`r`n, %inca%\fav\History.m3u, UTF-8
+            FileAppend, %destCopy%|0.0`r`n, %inca%\fav\History.m3u, UTF-8
+            index(A_LoopFileFullPath,1)					; get duration
             }
-          }
-    Files := {}
-    if (A_Now - ytdlp > 4 && A_Now - downloads > 4 && InStr(control, ".........."))
-      GuiControl, Indexer:, GuiInd
-    if (A_Now - downloads > 3)						; stop re-triggering control message
-      if (A_Now - ytdlp < 3)
-        GuiControl, Indexer:, GuiInd, ...........................................
-      else Loop, Files, %inca%\cache\apps\*.*
-        if (A_LoopFileExt == "webm" || A_LoopFileExt == "mp4" || A_LoopFileExt == "mkv")
-          {
-          SplitPath, A_LoopFileFullPath,,,ex,me				; move yt to downloads folder
-          ori = %profile%\Downloads\%me%.mp4
-          tem = %profile%\Downloads\%A_Now%.%ex%
-          FileCopy, %A_LoopFileFullPath%, %tem%, 1			; because file name issues
-          FileRecycle, %A_LoopFileFullPath%
-          if (encoded := Transcode("myMp4", tem,0,0))
+          if (A_Now - downloads > 10)					; finished downloading
             {
-            FileMove, %encoded%, %ori%, 1
-            FileAppend, %ori%|0.0`n, %inca%\fav\history.m3u
-            PopUp("saved",0,0.75,0.5)
-            GuiControl, Indexer:, GuiInd, %me%.%ex%
-            Index(ori, 1)
-            Gui PopUp:Cancel
-            GuiControl, Indexer:, GuiInd
+            type := DecodeExt(ext)
+            if (type == "video")
+              if 1*Setting("AutoIndex")
+{
+                if (new := Transcode("myMp4", A_LoopFileFullPath, 0, 0))
+                  Index(new, 1)
+            FileAppend, %new%|0.0`r`n, %inca%\fav\History.m3u, UTF-8
+PopUp(nameNoExt,999,0.5,0.5)
+}
             }
-          else FileRecycle, %tem%
+          FileRead, history, %inca%\fav\History.m3u
           }
-    Process, Exist, ffmpeg.exe
-    if InStr(control, "transcoding")
-      if !ErrorLevel
-        GuiControl, Indexer:, GuiInd
     x := Setting("Sleep Timer") * 60000
     if (volume > 0 && A_TimeIdlePhysical > x)
       {

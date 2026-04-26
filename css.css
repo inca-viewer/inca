@@ -380,8 +380,7 @@
 .searchbox {					/* input searchbox in htm tab */
   text-overflow: ellipsis;
   display: inline;
-  width: auto;
-  min-width: 20em;
+  width: 26em;
   border-radius: 0.3em; 
   color: pink;
   border: none;
