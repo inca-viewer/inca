@@ -509,12 +509,13 @@
     reload := 3								; show folder size
     if selected								; move/copy files
       {
+      reload = 1							; silent reload
       x := StrSplit(selected,",")
       index := x[x.MaxIndex()-1]					; scroll htm to end of selection
       if MoveFiles()							; between folders or playlists
         return								; failed so stay in folder
       reload := 3
-      CreateList(1)							; silently update old htm page
+      CreateList(1)							; full update htm page
       RenderPage(1)							; to stay in this folder add return
       return
       }
@@ -605,9 +606,8 @@
     {
     value := 0								; remove filt/index scroll variable
     reload := 3
-    if (longClick || command == "SearchBox")
-      lastClick = MButton						; open search in new tab
-    else playlist =							; allows playlist searches
+    if (longClick || command != "SearchBox")
+      playlist =
     if !address
       return
     address = %address%							; trims whitespace
@@ -1178,7 +1178,8 @@ if (ext == "txt")
       PopUp("failed",900,0,0)
     else if popup
       PopUp(popup,500,0,0)
-    return fail
+    if (fail || longClick)
+      return 1
     }  
 
 
@@ -1652,6 +1653,7 @@ if (ext == "txt")
     orig = %orig%							; trims whitespace ahk v1.1
     orig = %orig%.%exten%
     FileMove, %new%, %orig%, 1
+    FileAppend, %orig%|0.0`r`n, %inca%\fav\History.m3u, UTF-8
     return orig
     }
 
@@ -2165,6 +2167,7 @@ mediaList(j, input, start)						; spool sorted media files into web page
 
   Ffmpeg: 								; mp3, mp4, indexing - async processing
     PopUp(Chr(0x2713),600,0,0)
+    GuiControl, Indexer:, GuiInd, processing ...
     transcoding =
     select := selected							; preserve selected
     selected =
@@ -2259,6 +2262,8 @@ mediaList(j, input, start)						; spool sorted media files into web page
   SlowTimer:								; every second
     Critical Off
     GuiControlGet, control, Indexer:, GuiInd
+    if control								; block if ffmpeg busy
+      return
     FileGetTime, ytdlp, %inca%\cache\apps, M
     FileGetTime, downloads, %profile%\Downloads, S
     FileRead, history, %inca%\fav\History.m3u
@@ -2287,12 +2292,11 @@ mediaList(j, input, start)						; spool sorted media files into web page
             type := DecodeExt(ext)
             if (type == "video")
               if 1*Setting("AutoIndex")
-{
+                {
                 if (new := Transcode("myMp4", A_LoopFileFullPath, 0, 0))
                   Index(new, 1)
-            FileAppend, %new%|0.0`r`n, %inca%\fav\History.m3u, UTF-8
-PopUp(nameNoExt,999,0.5,0.5)
-}
+                PopUp(nameNoExt,999,0.5,0.5)
+                }
             }
           FileRead, history, %inca%\fav\History.m3u
           }

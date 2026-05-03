@@ -148,7 +148,7 @@
   function keyDown(e) {							// keyboard events
     if (e.key == 'Enter' && !playing) {
       if (renamebox) inca('Rename', renamebox, lastMedia)		// rename media
-      else inca('SearchBox','','',myInput.value)}			// search for media
+      else if (myInput.value) inca('SearchBox','','',myInput.value)}	// search for media
     else if (e.key == 'F22') mouseDown(e)				// R click down
     else if (e.key == 'F23') mouseUp(e)					// R click up
     else if (e.key == 'F24' || (e.code == 'ArrowLeft' && e.shiftKey)) mouseBack()
@@ -1502,7 +1502,7 @@ voice: b._voice ? {
 function editorInput(e) {
   if (editingBlock && e.key.length === 1) editingBlock.dataset.edited = "1";
   if (e.key.length === 1) {myVoice.pause(); myPlayer.pause()}
-editing = 1
+  editing = 1
   if (e.key !== 'Backspace') return;
   let block = editingBlock
   if (window.getSelection().toString() !== '') {e.preventDefault();; document.execCommand('delete'); return}
@@ -1547,7 +1547,7 @@ editing = 1
       matchCountSpan.textContent = `${favIndex + 1} : ${favs.length}`
       favs[favIndex].scrollIntoView({ behavior: 'smooth', block: 'center' })
       return}
-    const term = searchInput.value.trim();
+    const term = searchInput.value.trim().toLowerCase();
     matches = blocks.filter(b => b.innerHTML.toLowerCase().includes(term))
     if (!matches.length) return
     matchIndex = (matchIndex + (e.deltaY > 0 ? 1 : -1) + matches.length) % matches.length
@@ -1568,12 +1568,6 @@ function newSearch() {
     blocks.filter(b => !matches.includes(b)).forEach(b => {if (b.querySelector('mark')) b.innerHTML = b.innerText})
     matchCountSpan.textContent = matches.length > 0 ? `1 : ${matches.length}` : '0 : 0'
     if (matches.length) matches[0].scrollIntoView({ behavior: 'smooth', block: 'center' })}
-
-
-
-
-
-
 
 
 
