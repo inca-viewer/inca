@@ -364,7 +364,7 @@
   justify-content: space-around;
   min-width: 46em;
   max-width: 70em;
-  width: 90%;
+  width: 80%;
   margin: auto;
   white-space: nowrap;
   line-height: 1.2em;
@@ -380,8 +380,8 @@
 .searchbox {					/* input searchbox in htm tab */
   text-overflow: ellipsis;
   display: inline;
-  width: 26em;
-  border-radius: 0.3em; 
+  width: 18em;
+  border-radius: 1em; 
   color: pink;
   border: none;
   translate: 0 -2px;

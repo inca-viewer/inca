@@ -104,7 +104,7 @@
     if playlist
       startPage = #Path###%playlist%
     messages(startPage)				; opens browser
-    SetTimer, TimedEvents, 49			; every 49mS - process server requests
+    SetTimer, FastTimer, 49			; every 49mS - process server requests
     SetTimer, SlowTimer, 499, -2		; check on youtube downloads
     return
 
@@ -228,6 +228,12 @@
       Sort()
     else if (command == "Search" || command == "SearchBox")
       Search()
+    else if (command == "Clone")
+      {
+      end := Round(value + 20,1)
+      RunWait, %inca%\cache\apps\ffmpeg.exe -ss %value% -to %end% -i "%src%" -y file:"%inca%\cache\voices\clones\clone.mp3",,Hide
+      PopUp("voice created",900,0,0)
+      }
     else if (command == "CutCopyPaste")
       {
       CutCopyPaste()
@@ -512,8 +518,11 @@
       reload = 1							; silent reload
       x := StrSplit(selected,",")
       index := x[x.MaxIndex()-1]					; scroll htm to end of selection
-      if MoveFiles()							; between folders or playlists
-        return								; failed so stay in folder
+      MoveFiles()							; between folders or playlists
+      if longClick							; copy not move
+        return
+      if (!InStr(path, "\inca\") && InStr(address, "\inca\"))
+        return								; added to playlist
       reload := 3
       CreateList(1)							; full update htm page
       RenderPage(1)							; to stay in this folder add return
@@ -1178,8 +1187,7 @@ if (ext == "txt")
       PopUp("failed",900,0,0)
     else if popup
       PopUp(popup,500,0,0)
-    if (fail || longClick)
-      return 1
+    return
     }  
 
 
@@ -1930,6 +1938,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
       <a id="myPaste">paste</a>`n
       <a id="myCut">cut</a>`n
       <a id="myIndex">index</a>`n
+      <a id='myClone'>clone</a>
       <a id="myMp3">mp3</a>`n
       <a id="myMp4">mp4</a>`n
       <a id="myJoin">join</a>`n
@@ -1952,7 +1961,9 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
           <a data-tag='friendly'>friendly</a>
           <a data-tag='unfriendly'>unfriendly</a>
         </div>
-      <a id='myExport'>Export</a>`n
+      <a id='myExport'>Export</a>
+      <a id='myOpenAudio'></a>
+      <a id='myElevenLabs'></a>`n
     </div>
 
     <div class="menu default" onwheel='wheelEvent(event)'>`n
@@ -1979,16 +1990,16 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
   <a style='width: 5em'></a>
   <a style='width: 4.3em; font-size: 1.8em' onmousedown='window.history.back()'>&#129028;</a>`n
   <a id='myMusic' style='width:3.5em; %x22%' onmousedown="inca('Path','','','music|1')" onmouseover="setTimeout(function() {if(myMusic.matches(':hover'))Music.scrollIntoView()},200)">&#x266B;</a>`n
-  <a id='mySub' style='width:2em; translate: 0.3em; font-size:0.7em; %x8%' onmousedown="inca('Recurse')" onmouseover="setTimeout(function() {if(mySub.matches(':hover'))Sub.scrollIntoView()},200)">%subs%</a>`n
+  <a id='mySub' style='width:2em; translate: 0.3em; font-size:0.7em; %x8%' onmousedown="inca('Recurse')" onmouseover="setTimeout(function() {if(mySub.matches(':hover'))Sub.scrollIntoView({behavior: 'smooth'})},200)">%subs%</a>`n
   <a id='myFol' style='max-width:2.8em; %x21%' onmousedown="inca('Path','','','fol|1')" onmouseover="setTimeout(function() {if(myFol.matches(':hover'))Fol.scrollIntoView()},200)">&#x1F4BB;&#xFE0E;</a>`n
   <a id='myFav' style='translate: 0.4em 0.06em; %x23%' onmousedown="inca('Path','','','fav|1')" onmouseover="setTimeout(function() {if(myFav.matches(':hover'))Fav.scrollIntoView()},200)">&#10084;</a>`n
-  <a style='color: red; width: 12em; overflow: hidden; padding: 0 1.4em; '>%heading% &ensp; %listSize%</a>`n
+  <a style='color: red; width: 18em; overflow: hidden; padding: 0 1.4em; '>%heading% &ensp; %listSize%</a>`n
   <a id='mySearch' style='max-width:2em; %x20%' onwheel="wheelEvent(event)" onmousedown="inca('SearchBox','','',myInput.value)" onmouseover="setTimeout(function() {if(mySearch.matches(':hover'))filter(id)},140)">&#x1F50D;&#xFE0E;</a>`n
   <input id='myInput' class='searchbox' type='search' autocomplete='off' value='%st%' onmouseenter="if (this.value=='%st%') this.value='%lastSearch%'; this.select()" onmouseover="overText=1; this.focus()" onmouseout='overText=0'>
   <a id='Add' style='width:1em; font-size:1.2em; color: red' onmousedown="inca('Add','','',myInput.value)">%add%</a>`n
   </div>`n`n
 
-  <div id='myRibbon2' class='ribbon' style='width: 78`%; background:#1b1814' onwheel="wheelEvent(event)">`n
+  <div id='myRibbon2' class='ribbon' style='background:#1b1814' onwheel="wheelEvent(event)">`n
   <a id='myMute2' style='width: 1px; color: red'></a>
   <a id='myPitch2' style='width: 1px; color: red'></a>
   <a id='myPause2' style='width: 1px; color: red'></a>
@@ -2253,13 +2264,13 @@ mediaList(j, input, start)						; spool sorted media files into web page
       RenderPage(1)
       send, {F5}
       }
-    if InStr(el_id, "myMp4")
+    if (!cue && InStr(el_id, "myMp4"))
       PopUp("original sent to recycle bin",999,0,0)
     GuiControl, Indexer:, GuiInd
     return
 
 
-  SlowTimer:								; every second
+  SlowTimer:								; every half second
     Critical Off
     GuiControlGet, control, Indexer:, GuiInd
     if control								; block if ffmpeg busy
@@ -2287,15 +2298,17 @@ mediaList(j, input, start)						; spool sorted media files into web page
             FileAppend, %destCopy%|0.0`r`n, %inca%\fav\History.m3u, UTF-8
             index(A_LoopFileFullPath,1)					; get duration
             }
-          if (A_Now - downloads > 10)					; finished downloading
+          if (A_Now - downloads > 10 && A_Now - downloads < 60)		; finished downloading
             {
             type := DecodeExt(ext)
             if (type == "video")
               if 1*Setting("AutoIndex")
                 {
                 if (new := Transcode("myMp4", A_LoopFileFullPath, 0, 0))
+                  {
                   Index(new, 1)
-                PopUp(nameNoExt,999,0.5,0.5)
+                  PopUp(nameNoExt,999,0.5,0.5)
+                  }
                 }
             }
           FileRead, history, %inca%\fav\History.m3u
@@ -2309,7 +2322,7 @@ mediaList(j, input, start)						; spool sorted media files into web page
     return
 
 
-  TimedEvents:								; every 100mS
+  FastTimer:								; every 49mS
     GetBrowser()
     WinGetPos,wx,wy,w,h,a
     if (w == A_ScreenWidth)
