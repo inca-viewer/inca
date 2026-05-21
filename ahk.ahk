@@ -286,7 +286,14 @@
       {
       if (value <= 0)
         value = 0.0
-      if (folder != "History")
+      if !selected							; add last and new voice to history
+        {
+        x := StrSplit(address,"|").1					; last voice
+        y := StrSplit(StrSplit(address, "|").2, "/").Pop()		; new voice
+        y = %inca%\cache\voices\%y%
+        FileAppend, %inca%\cache\voices\%x%|0.0`r`n%y%|0.0`r`n, %inca%\fav\History.m3u, UTF-8
+        }
+      else if (folder != "History")
         FileAppend, %src%|%value%`r`n, %inca%\fav\History.m3u, UTF-8
       }
     else if (command == "Pause")					; set default paused

@@ -1,8 +1,3 @@
-// YesNichole caption sync
-// pauses after new voice?
-// voice media entries / history
-
-// think another way to put eleven voice to history
 
 
   let wheel = 0								// wheel count
@@ -497,6 +492,7 @@
     navButtons()
     let cueX = rect.left
     let pos = playing ? myPlayer.currentTime : thumb.currentTime
+    if (editingBlock && editingBlock._voice?.src) pos = 0
     pos = Math.round(100*pos) / 100
     let cueW = rect.width * pos / dur
     if (cue && cue <= pos) {
@@ -957,7 +953,8 @@
 
 
   function nextCaption(wheel) {
-    if (!captions || overBlock) return
+    myVoice.pause(); myPlayer.pause()
+    if (!captions || editor.matches(':hover') || myNav.style.display) return
     let next = editingBlock.nextElementSibling
     if (wheel < 0) next = next.previousElementSibling.previousElementSibling
     activateBlock(next, { edit: true })
@@ -1364,6 +1361,7 @@ if (item.url.includes('.mp3')) {row.style.borderLeft = '0.2px solid pink'; row.d
         });
 
         label.addEventListener('click', () => {
+          setTimeout(() => {mediaContent.style.display = 'none'}, 10)
           const mediaObj = { src: item.url, name: item.short };
           if (editingBlock) {
             if (row.dataset.isVoiceAsset === 'true') {
@@ -1375,19 +1373,15 @@ if (item.url.includes('.mp3')) {row.style.borderLeft = '0.2px solid pink'; row.d
               editingBlock.dataset.hasVoice = "1";
               updateVoiceHeader(editingBlock);
               myVoice.src = item.url
-myVoice.volume = 0.01
-myVoice.load()
-myVoice.play()
-myVoice.muted = false
-setTimeout(() => myVoice.load(), 100)
-              }
+              const requestBlock = editingBlock
+              editingBlock = null						// forces selected voice asset to play
+              activateBlock(requestBlock, { edit: true })}
             else {
               editingBlock._media = mediaObj;
               editingBlock.dataset.start = item.startSec;
+              activateBlock(editingBlock, { edit: true })			// shows media asset in myPlayer
               }
             editing = 1;
-            editingBlock = null
-            editingBlock?.classList.remove('editing')
           } else {
             projectMedia.defaultSrc = mediaObj.src;
           }
@@ -1593,7 +1587,12 @@ function getVoice(voiceName, text, provider) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ voiceName, text, provider})})
     .then(res => res.json())
-    .then(data => data.path)}
+    .then(data => data.path)
+    .then(path => {
+      x = editingBlock?._voice?.src || myVoice.src || ''	// last voice
+      x = x.split('/').pop() + '|' + path			// last voice + this voice
+      inca('History',0,0,x)					// so they show in editor dropdown list
+      return path})}
 
 
 
