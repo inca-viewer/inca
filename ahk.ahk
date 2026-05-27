@@ -91,6 +91,8 @@
   main:
     Compile()					; re-compile program
     initialize()				; sets environment then waits for mouse, key or clipboard events
+    Process, Close, node.exe
+    sleep 200
     Run, cmd.exe /c cd /d "%inca%\cache\apps" && node\node.exe server.js, , Hide
     Run, cmd.exe /c cd /d "%inca%\cache\apps\Chatterbox-TTS-Server" && "python_embedded\python.exe" start.py, , Hide
     WinActivate, ahk_group Browsers
@@ -233,18 +235,19 @@
       Search()
     else if (command == "attachClone")					; rename last clone.mp3 to voice name
       {
+      base := RegExReplace(value, " \d+$")
       t := inca "\cache\voices\clones\" value ".mp3"
       c := inca "\cache\voices\clones\clone.mp3"
-      if (!FileExist(c) && !FileExist(t))
+      if (!FileExist(c) && !FileExist(t))				; only if no existing voice or clone
         {
         start := Round(address,1)
         end := Round(start + 20,1)
-        RunWait, %inca%\cache\apps\ffmpeg.exe -ss %start% -to %end% -i "%src%" -y file:%c%,,Hide
+        RunWait, %inca%\cache\apps\ffmpeg.exe -ss %start% -to %end% -i "%src%" -y file:%c%,,Hide	; create clone then attach to voice
         }
       if FileExist(c)
         {
         i:=1
-        while FileExist(b:= inca "\cache\voices\clones\" value " " i ".mp3") && i<9
+        while FileExist(b:= inca "\cache\voices\clones\" base " " i ".mp3") && i<9
           i++
         FileMove,%t%,%b%,1						; archive last voice
         FileMove, %c%, %t%   						; attach new voice
@@ -252,9 +255,13 @@
       }
     else if (command == "Clone")
       {
-      end := Round(value + 20,1)
-      RunWait, %inca%\cache\apps\ffmpeg.exe -ss %value% -to %end% -i "%src%" -y file:"%inca%\cache\voices\clones\clone.mp3",,Hide
-      PopUp("voice created",900,0,0)
+      if type == "video" || type == "audio")
+        {
+        end := Round(value + 20,1)
+        RunWait, %inca%\cache\apps\ffmpeg.exe -ss %value% -to %end% -i "%src%" -y file:"%inca%\cache\voices\clones\clone.mp3",,Hide
+        PopUp("voice created",900,0,0)
+        }
+      else PopUp("no media",900,0,0)
       }
     else if (command == "CutCopyPaste")
       {

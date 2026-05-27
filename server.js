@@ -128,7 +128,7 @@ if (provider === 'chatterbox') {
   const tmp = path.join(fullDir, '_tmp.wav');
   const norm = path.join(fullDir, '_norm.mp3');
   await fsPromises.writeFile(tmp, buffer);
-  require('child_process').execSync(`"${ffmpeg}" -y -i "${tmp}" -af loudnorm "${norm}"`);
+  require('child_process').execSync(`"${ffmpeg}" -y -i "${tmp}" -af "loudnorm=I=-28" "${norm}"`);
   buffer = await fsPromises.readFile(norm);
   fsPromises.unlink(tmp).catch(()=>{});
   fsPromises.unlink(norm).catch(()=>{})}

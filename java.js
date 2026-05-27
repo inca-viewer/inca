@@ -62,12 +62,10 @@
   let sheetUrl = ''							// thumbSheet url
   let overBlock = ''							// caption editor block
   let more = 0
-  let scaleY = (innerHeight > innerWidth) ? 0.8 : 0.7			// myPlayer height (screen ratio)
   let clickMedia = ''
   let lastId = ''
   let trigger = 0.8							// trigger to show seekbar
   let listSize = 0
-
   let favIndex = 0
   let matchIndex = 0
   let searchTerm = ''
@@ -78,6 +76,7 @@
   let editingBlock = null;
   let originalPlayerSrc = '';
   let projectMedia = { defaultSrc: null };
+  let scaleY = (innerHeight > innerWidth) ? 0.8 : 0.7			// myPlayer height (screen ratio)
 
   let entry = document.createElement('div')				// dummy thumb container
   let thumb = document.createElement('div')				// . thumb element
@@ -166,12 +165,12 @@
   function clickEvent(e) {
     delay = 80;										// 80 max
     let id = e.target.id								// id under cursor
+    if (id != 'mySelect' && lastClick == 1) myNav.style.display = null
     if (lastClick == 1) overBlock = e.target.closest('.text-block') || 0
     let emotion = '[' + e.target.dataset.tag + '] '
-    if (e.target.closest('#emotionSub')) {myNav.style.display = null; document.execCommand('insertText', false, emotion)}
+    if (e.target.closest('#emotionSub')) document.execCommand('insertText', false, emotion)
     if (!playing && !listView && longClick && !gesture && overMedia) popThumb()		// pop thumb out of flow
     if (['myCut', 'myCopy', 'myPaste'].includes(id)) {
-      myNav.style.display = null
       lastId.focus() 
       inca('CutCopyPaste',id); return}
     if (lastClick != 3 && (gesture || id == 'myInput')) return
@@ -221,7 +220,6 @@
       if (title.matches(':hover') || (!longClick && !playing && !overMedia && !myNav.style.display)) return}
     if (!getStart(id)) return
     if (lastClick == 1 && overBlock) return
-    if (Click == 3) myNav.style.display = null
     if (!playing && lastClick == 2) return
     if (playing && lastClick == 1) {
       if (type == 'document') return
@@ -274,7 +272,6 @@
     if (!listView) title.style.background = '#333'
     lastMedia = index
     if (scaleY < 0.26) scaleY = 0.5							// return zoom after captions
-    if (lastClick == 1) myNav.style.display = null
     if (captions || type == 'audio' || playlist.match('/inca/music/')) scaleY = 0.25
     if (playlist.match('/inca/music/') && !thumbSheet) {start = 0; myPlayer.muted = 0}
     if (type == 'audio' && !captions) myPlayer.style.borderBottom = '2px solid pink'
@@ -861,7 +858,6 @@
       inca('Export', txt, index)}
     else if (['myElevenLabs', 'myChatterbox'].includes(id)) {
       myVoice.pause()
-      myNav.style.display = null
       if (!editingBlock) return
       const requestBlock = editingBlock
       const voiceName = editingBlock._voice?.name || editingBlock.dataset.voiceName;
@@ -1126,7 +1122,7 @@ function selectVoice(name) {
             b._voice.name = name;
             b._voice.volume = b._voice.volume ?? 1;
             b.dataset.voiceName = name;}});
-//    if (!editingBlock._voice) editingBlock._voice = {};
+    if (!editingBlock._voice) editingBlock._voice = {};
     editingBlock._voice.name = name;
     editingBlock._voice.volume = editingBlock._voice.volume ?? 1;
     editingBlock.dataset.voiceName = name;
@@ -1267,15 +1263,21 @@ const activateBlock = (block, options = {}) => {
 
   function scrollToNearestCaption() { 
     if (decodeURIComponent(myPlayer.src) !== originalPlayerSrc || isScrolling) return
-    if (!captions || !myMask.matches(':hover')) return
-    const current = myPlayer.currentTime;
-    const nearest = timestamps.find(t => current + 0.4 >= t.sec && (!timestamps[timestamps.indexOf(t)+1] || current + 0.4 < timestamps[timestamps.indexOf(t)+1].sec)) || timestamps.reduce((a, b) => Math.abs(b.sec - current) < Math.abs(a.sec - current) ? b : a);
-    const offset = viewport.clientHeight / 2 - nearest.block.offsetHeight / 2;
-    nearest.block.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    isScrolling = true
-    blocks.forEach(b => b.style.color = '')
-    nearest.block.style.color = '#ffc0cbcc'
-    setTimeout(() => isScrolling = false, 800)}
+    if (!captions) return
+    if (editingBlock && !myMask.matches(':hover')) {
+      let currentIndex = blocks.indexOf(editingBlock)
+      let nextBlock = blocks[currentIndex + 1];
+      let nextStart = parseFloat(nextBlock.dataset.start) - 0.3 || 0;
+      if (myPlayer.currentTime >= nextStart) myPlayer.pause()}
+    else {
+      const current = myPlayer.currentTime;
+      const nearest = timestamps.find(t => current + 0.4 >= t.sec && (!timestamps[timestamps.indexOf(t)+1] || current + 0.4 < timestamps[timestamps.indexOf(t)+1].sec)) || timestamps.reduce((a, b) => Math.abs(b.sec - current) < Math.abs(a.sec - current) ? b : a);
+      const offset = viewport.clientHeight / 2 - nearest.block.offsetHeight / 2;
+      nearest.block.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      isScrolling = true
+      blocks.forEach(b => b.style.color = '')
+      nearest.block.style.color = '#ffc0cbcc'
+      setTimeout(() => isScrolling = false, 800)}}
 
 
   function updateTimeDisplay() {
@@ -1325,8 +1327,8 @@ none.style.marginLeft = '1.7em';
 none.onclick = () => {
 if (editingBlock) {
 if (editingBlock._media) delete editingBlock._media
-else if (editingBlock._voice) {
-delete editingBlock._voice;
+else if (editingBlock._voice.src) {
+delete editingBlock._voice.src;
 updateVoiceHeader(editingBlock);}}
 else { projectMedia.defaultSrc = null; }
 updateMediaHeader();
