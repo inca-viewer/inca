@@ -1,4 +1,3 @@
-
 const http = require('http');
 const fs = require('fs');
 const fsPromises = require('fs').promises;
@@ -55,56 +54,38 @@ const server = http.createServer(async (req, res) => {
                         res.end(JSON.stringify({ error: "text is required" }));
                         return;
                     }
-
                     let buffer;
-                    let finalVoiceName = voiceName || 'Clone';
+                    let finalVoiceName = voiceName;
 
 
- if (provider === 'openaudio') {
+// added reference_audio_path, format and max_reference_duration_sec to config.yaml
+// chatterbox only uses wav, server.py commented out "import webbrowser"
 
-    const voicePath = path.join(DRIVE_ROOT, 'inca', 'cache', 'voices', 'clones');
-    const clonePath = path.join(voicePath, 'clone.mp3');			// retrieve and rename temp clone reference voice
-    const finalPath = path.join(voicePath, voiceName + '.mp3');
-    await fsPromises.access(finalPath).catch(() => fsPromises.rename(clonePath, finalPath));
-    const refPath = path.join(DRIVE_ROOT, 'inca', 'cache', 'voices', 'clones', voiceName + '.mp3');
-    const fileBuffer = await fsPromises.readFile(refPath);
+
+
+ if (provider === 'chatterbox') {
+    const refFilename = (voiceName || 'Clone') + '.mp3';
+    const voicePath = path.join(DRIVE_ROOT, 'inca', 'cache', 'voices', 'clones', refFilename);
+    const fileBuffer = await fsPromises.readFile(voicePath);
     const uploadForm = new FormData();
-    uploadForm.append('files', new Blob([fileBuffer], { type: 'audio/mpeg' }), 'voiceClone.mp3');
-    const uploadData = await (await fetch('http://127.0.0.1:7860/gradio_api/upload', { method: 'POST', body: uploadForm })).json();
-    const uploadedPath = uploadData[0];
-    const session_hash = Math.random().toString(36).slice(2);
-    await fetch('http://127.0.0.1:7860/gradio_api/queue/join', {
+    uploadForm.append('files', new Blob([fileBuffer], { type: 'audio/mpeg' }), refFilename);
+    const uploadRes = await fetch('http://127.0.0.1:8004/api/reference-audio', { method: 'POST', body: uploadForm });
+    const ttsRes = await fetch('http://127.0.0.1:8004/tts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-            api_name: "/partial", fn_index: 1, session_hash, event_data: null,
-data: [ text, "", { path: uploadedPath, meta: { _type: "gradio.FileData" } }, "", 0, 300, 0.8, 1.1, 0.8, Math.floor(Math.random() * 1000), "off" ]        })
+            text,
+            voice_mode: 'clone',
+            reference_audio_filename: refFilename
+        })
     });
-    const rawText = await (await fetch(`http://127.0.0.1:7860/gradio_api/queue/data?session_hash=${session_hash}`)).text();
-    const outputPath = rawText.match(/"path"\s*:\s*"([^"]+)"/)?.[1];
-    if (!outputPath) throw new Error('No output path in queue response');
-    const audioRes = await fetch(`http://127.0.0.1:7860/gradio_api/file=${outputPath.replace(/\\\\/g, '/')}`);
-    if (!audioRes.ok) throw new Error(`Audio fetch failed: ${audioRes.status}`);
-    buffer = Buffer.from(await audioRes.arrayBuffer());
+    if (!ttsRes.ok) {
+        const errText = await ttsRes.text();
+        throw new Error(`Chatterbox ${ttsRes.status}: ${errText}`);
+    }
+    buffer = Buffer.from(await ttsRes.arrayBuffer());
 
 
-                   } else if (provider === 'venice' && VENICE_API_KEY) {
-                        const response = await fetch('https://api.venice.ai/api/v1/audio/speech', {
-                            method: "POST",
-                            headers: {
-                                "Authorization": `Bearer ${VENICE_API_KEY}`,
-                                "Content-Type": "application/json"
-                            },
-                            body: JSON.stringify({
-                                input: text,
-                                model: VENICE_MODEL,
-                                voice: voiceMap.get(voiceName?.toLowerCase()) || voiceName,
-                                response_format: "mp3"
-                            })
-                        });
-
-                        if (!response.ok) throw new Error(`Venice ${response.status}: ${await response.text()}`);
-                        buffer = Buffer.from(await response.arrayBuffer());
 
                     } else if (provider === 'elevenlabs' && ELEVENLABS_API_KEY) {
                         const voiceId = voiceMap.get(voiceName?.toLowerCase());
@@ -131,33 +112,37 @@ data: [ text, "", { path: uploadedPath, meta: { _type: "gradio.FileData" } }, ""
                         buffer = Buffer.from(await response.arrayBuffer());
                      }
 
-                    // ====================== Save file ======================
-                    const clean = str => str.replace(/[\\\/:*?"<>|]/g, ' ').replace(/\s+/g, ' ').slice(0, 40);
-                    const safeVoice = clean(finalVoiceName);
-                    const safeText = clean(text);
-                    const timestamp = new Date().toLocaleString('sv').replace(/:/g, '.');	// "2026-05-20 17.05.12"
-                    const filename = `${safeVoice} - ${safeText} - ${timestamp}.mp3`;
-                    const fullDir = path.join(DRIVE_ROOT, 'inca', 'cache', 'voices');
-                    await fsPromises.mkdir(fullDir, { recursive: true });
-                    const filepath = path.join(fullDir, filename);
 
-                    await fsPromises.writeFile(filepath, buffer);
 
-                    const publicPath = `/inca/cache/voices/${filename}`;
+// ====================== Save file ======================
+const clean = str => str.replace(/[\\\/:*?"<>|]/g, ' ').replace(/\s+/g, ' ').slice(0, 26);
+const safeVoice = clean(finalVoiceName);
+const safeText = clean(text).slice(0, 26).replace(/\s+\S*$/, '').trim();
+const timestamp = new Date().toLocaleString('sv').replace(/:/g, '.');
+const filename = `${safeVoice} - ${safeText} - ${timestamp}.mp3`;
+const fullDir = path.join(DRIVE_ROOT, 'inca', 'cache', 'voices');
+await fsPromises.mkdir(fullDir, { recursive: true });
 
-                    res.writeHead(200, { 'Content-Type': 'application/json' });
-                    res.end(JSON.stringify({ 
-                        path: publicPath, 
-                        voiceName: finalVoiceName,
-                        filename 
-                    }));
+if (provider === 'chatterbox') {
+  const ffmpeg = path.join(DRIVE_ROOT, 'inca', 'cache', 'apps', 'ffmpeg.exe');
+  const tmp = path.join(fullDir, '_tmp.wav');
+  const norm = path.join(fullDir, '_norm.mp3');
+  await fsPromises.writeFile(tmp, buffer);
+  require('child_process').execSync(`"${ffmpeg}" -y -i "${tmp}" -af loudnorm "${norm}"`);
+  buffer = await fsPromises.readFile(norm);
+  fsPromises.unlink(tmp).catch(()=>{});
+  fsPromises.unlink(norm).catch(()=>{})}
 
-                } catch (err) {
-                    console.error('Voice generation error:', err);
-                    res.writeHead(500, { 'Content-Type': 'application/json' });
-                    res.end(JSON.stringify({ error: err.message }));
-                }
-            });
+const filepath = path.join(fullDir, filename);
+await fsPromises.writeFile(filepath, buffer);
+const publicPath = `/inca/cache/voices/${filename}`;
+res.writeHead(200, { 'Content-Type': 'application/json' });
+res.end(JSON.stringify({ path: publicPath, voiceName: finalVoiceName, filename }));
+} catch (err) {
+    res.writeHead(500, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ error: err.message }));
+}
+});
             return;
         }
 
