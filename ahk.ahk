@@ -91,9 +91,8 @@
   main:
     Compile()					; re-compile program
     initialize()				; sets environment then waits for mouse, key or clipboard events
-    Process, Close, node.exe
-    sleep 200
     Run, cmd.exe /c cd /d "%inca%\cache\apps" && node\node.exe server.js, , Hide
+    Run, cmd.exe /c cd /d "%inca%\cache\apps\Chatterbox-TTS-Server" && "python_embedded\python.exe" start.py, , Hide
     WinActivate, ahk_group Browsers
     path = %profile%\Pictures\
     startPage = #Path###%path%			; default start page
@@ -157,10 +156,14 @@
     longClick := gesture := 0
     wasCursor := A_Cursor
     timer := A_TickCount + 300						; set future timout 300mS
-    MouseGetPos, xRef, yRef
+    MouseGetPos, xRef, yRef, winId, ctrl
+    WinGet, ctrlList, ControlList, ahk_id %winId%
     StringReplace, click, A_ThisHotkey, ~,, All
-    if (incaTab && click == "RButton" && (xRef > A_ScreenWidth -400 || yRef > 400 || fullscreen))
-      send, {F22}							; tell browser Rbutton down
+    if (ctrlList == "MozillaCompositorWindowClass1")			; firefox bookmarks dropdown
+      send, {RButton}
+    else if (winId != WinExist("ahk_class Shell_TrayWnd"))
+      if (incaTab && click == "RButton" && (xRef > A_ScreenWidth -400 || yRef > 400 || fullscreen))
+        send, {F22}							; tell browser Rbutton down
     lastClick := click
     loop
       {
@@ -228,6 +231,25 @@
       Sort()
     else if (command == "Search" || command == "SearchBox")
       Search()
+    else if (command == "attachClone")					; rename last clone.mp3 to voice name
+      {
+      t := inca "\cache\voices\clones\" value ".mp3"
+      c := inca "\cache\voices\clones\clone.mp3"
+      if (!FileExist(c) && !FileExist(t))
+        {
+        start := Round(address,1)
+        end := Round(start + 20,1)
+        RunWait, %inca%\cache\apps\ffmpeg.exe -ss %start% -to %end% -i "%src%" -y file:%c%,,Hide
+        }
+      if FileExist(c)
+        {
+        i:=1
+        while FileExist(b:= inca "\cache\voices\clones\" value " " i ".mp3") && i<9
+          i++
+        FileMove,%t%,%b%,1						; archive last voice
+        FileMove, %c%, %t%   						; attach new voice
+        } 
+      }
     else if (command == "Clone")
       {
       end := Round(value + 20,1)
@@ -773,11 +795,11 @@
     {
     FileRecycle, %inca%\cache\json\%media%.json
     FileAppend, %value%, %inca%\cache\json\%media%.json, UTF-8
-if (ext == "txt")
-  {
-    FileRecycle, %src%
-    FileAppend, %address%, %src%, UTF-8
-  }
+    if (ext == "txt")
+      { 
+      FileRecycle, %src%
+      FileAppend, %address%, %src%, UTF-8
+      }
     index := StrSplit(selected, ",").1
     RenderPage(0)
     PopUp("saved", 999, 0, 0)
@@ -1956,21 +1978,22 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
 
   <div id='myDefault'>
     <div class="menu editor">`n
-      <a id='myBookmark'>Bookmark</a>`n
+      <a id='myChatterbox'></a>
+      <a id='myElevenLabs'></a>
+      <a id='myBookmark'>Bookmark</a>
       <a id='myEmotion'>Emotion</a>
         <div id='emotionSub' class='submenu'>
-          <a data-tag='happy'>happy</a>
-          <a data-tag='sad'>sad</a>
-          <a data-tag='angry'>angry</a>
-          <a data-tag='excited'>excited</a>
-          <a data-tag='whisper'>whisper</a>
-          <a data-tag='shouting'>shouting</a>
-          <a data-tag='friendly'>friendly</a>
-          <a data-tag='unfriendly'>unfriendly</a>
+          <a data-tag='laugh'>laugh</a>
+          <a data-tag=chuckle'>chuckle</a>
+          <a data-tag='sigh'>sigh</a>
+          <a data-tag='gasp'>gasp</a>
+          <a data-tag='cough'>cough</a>
+          <a data-tag='clear throat'>clear throat</a>
+          <a data-tag='sniff'>sniff</a>
+          <a data-tag='groan'>groan</a>
+          <a data-tag='shush'>shush</a>
         </div>
-      <a id='myExport'>Export</a>
-      <a id='myOpenAudio'></a>
-      <a id='myElevenLabs'></a>`n
+      <a id='myExport'>Export</a>`n
     </div>
 
     <div class="menu default" onwheel='wheelEvent(event)'>`n
@@ -2018,8 +2041,10 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
   <a id='myShuffle' style='%x1%' onmousedown="inca('Shuffle')">Shuffle</a>`n
   <a id='mySize' style='%x5%' onmousedown="inca('Size', filt)">Size</a>`n
   <a id='myAlpha' style='%x2%' onmousedown="inca('Alpha', filt)">Alpha</a>`n
+  <a style='width: 2.5em'></a>
   <a id='myThumbs' onmouseup="inca('View',0)">Thumb</a>`n 
-  <a id='myWidth'>Width</a></div></div></div>`n`n
+  <a id='myWidth'>Width</a>
+  <a style='width: 1.5em'></a></div></div></div>`n`n
 <div id='myMask' class="mask" onwheel="wheelEvent(event)"></div>`n`n
 
     StringReplace, header, header, \, /, All
@@ -2250,13 +2275,18 @@ mediaList(j, input, start)						; spool sorted media files into web page
         SplitPath, source,,,,med
         GuiControl, Indexer:, GuiInd, %A_Index% - processing - %med%
         output = %profile%\Downloads\%med% @%tim%.jpg
+        outputDir := inca . "\cache\srt"
         whisper = %inca%\cache\apps\Faster-Whisper-XXL\faster-whisper-xxl.exe
         if InStr(el_id, "mySrt")
-          runwait, "%whisper%" "%source%" --model tiny.en --language en --output_format srt --compute_type float32 --output_dir "%inca%\cache\srt", , Hide
+          runwait, "%whisper%" "%source%" --model tiny.en --language en --output_format srt --compute_type float32 --output_dir "%inca%\cache\srt" --sentence --beep_off, , Hide
+;          RunWait, curl.exe -X POST http://127.0.0.1:8001/transcribe -F "file=@%source%" -F "output_dir=%outputDir%" -F "output_format=srt", , Hide
         else if InStr(el_id, "myJpg")
+          {
           if  DetectMedia(source) == "image"
             cmd = %inca%\cache\apps\ffmpeg.exe -i "%source%" -vf "scale=iw*%skinny%:ih" -y "%output%"
           else cmd = %inca%\cache\apps\ffmpeg.exe -ss %tim% -i "%source%" -vf "scale=iw*%skinny%:ih" -y "%output%"
+          FileAppend, %output%|0.0`r`n, %inca%\fav\History.m3u, UTF-8
+          }
         if InStr(el_id, "myIndex")
           Index(source, 1)
         if InStr(el_id, "myJpg")

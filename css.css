@@ -17,13 +17,13 @@
 
 
   #editor { box-sizing:border-box; display:none; flex-direction:column; width:500px; max-width:100%; height:24em;
-    background:#080808; border-radius:12px; box-shadow:0 12px 32px rgba(0,0,0,0.6); font-size:16px; 
+    background:#0a0a0a; border-radius:12px; box-shadow:0 12px 32px rgba(0,0,0,0.6); font-size:16px; 
     position:fixed; left:50%; top:50%; transform:translate(-50%,-50%); z-index: 5002; cursor:text;
     min-width:250px; min-height:160px; resize:both; max-height:80vh; overflow:hidden;}
 
 #ribbon {
   font-size:12px; 
-  background:#080808; 
+  background:#0a0a0a; 
   display:flex; 
   align-items:center; 
   flex-wrap:wrap; 
@@ -88,8 +88,8 @@
 
   .text-block {
     position: relative; background:transparent; border-radius:0.7em; white-space:pre-wrap; transition: 0.42s;
-    word-wrap:break-word; font-family:'Yu Gothic'; line-height:1.5; margin: 0; padding: 0.7em; min-width: 90%;
-    color:#ffc0cb80; text-align:center; outline:none; width: auto; align-self: center; border: 0;}
+    word-wrap:break-word; font-family:'Yu Gothic'; line-height:1.5; margin: 0; padding: 0 1em 0.6em 1em; min-width: 80%;
+    color:#ffc0cb80; text-align:center; outline:none; width: auto; align-self: center; border: 0; margin-bottom: 1em;}
 
   .text-block[data-fav="1"]::after {
     content: '❤';
@@ -101,9 +101,9 @@
     z-index: 3;
     pointer-events: none}
 
-  .text-block.editing { background: #0e0d0e; color: #ffc0cbaa; transform: scale(1.07, 1.07) }
+  .text-block.editing { background: #0f0f0f; color: #ffc0cbaa; transform: scale(1.07, 1.07) }
 
-  .text-block[data-has-voice].editing::before {
+  .text-block.has-voice.editing::before {
     content: '';
     position: absolute;
     left: 100px;
