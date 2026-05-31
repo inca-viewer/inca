@@ -161,7 +161,7 @@
     MouseGetPos, xRef, yRef, winId, ctrl
     WinGet, ctrlList, ControlList, ahk_id %winId%
     StringReplace, click, A_ThisHotkey, ~,, All
-    if (ctrlList == "MozillaCompositorWindowClass1")			; firefox bookmarks dropdown
+    if (!fullscreen && ctrlList == "MozillaCompositorWindowClass1")	; firefox bookmarks dropdown
       send, {RButton}
     else if (winId != WinExist("ahk_class Shell_TrayWnd"))
       if (incaTab && click == "RButton" && (xRef > A_ScreenWidth -400 || yRef > 400 || fullscreen))
@@ -255,7 +255,7 @@
       }
     else if (command == "Clone")
       {
-      if type == "video" || type == "audio")
+      if (type == "video" || type == "audio")
         {
         end := Round(value + 20,1)
         RunWait, %inca%\cache\apps\ffmpeg.exe -ss %value% -to %end% -i "%src%" -y file:"%inca%\cache\voices\clones\clone.mp3",,Hide
@@ -263,6 +263,22 @@
         }
       else PopUp("no media",900,0,0)
       }
+    else if (command == "Loudnorm")
+      {
+      if (type == "video" || type == "audio")
+        {
+        GuiControl, Indexer:, GuiInd, %A_Index% - normalising volume - %media%
+        cmd = -af loudnorm=I=-24:TP=-3:LRA=7:linear=true -c:v copy -c:a aac -b:a 128k -ar 48000 -ac 2 -map 0:v:0 -map 0:a? -map 0:s? -c:s copy -f mp4 -movflags +faststart+separate_moof -metadata:s:v:0 handler_name=Inca
+        RunWait, %inca%\cache\apps\ffmpeg.exe -y -i file:"%src%" %cmd% file:"%inca%\cache\temp\temp.%ext%",,Hide
+        FileRecycle, %src%
+        FileMove, %inca%\cache\temp\temp.%ext%, %src%, 1
+        GuiControl, Indexer:, GuiInd
+        PopUp("normalised",900,0,0)
+        }
+      else PopUp("no media",900,0,0)
+      reload := 1
+      }
+
     else if (command == "CutCopyPaste")
       {
       CutCopyPaste()
@@ -317,10 +333,16 @@
         value = 0.0
       if !selected							; add last and new voice to history
         {
+        address := StrReplace(address, server)
+        address := RegExReplace(address, "[a-zA-Z]:", "")
+        address := StrReplace(address, "/", "\")
         x := StrSplit(address,"|").1					; last voice
-        y := StrSplit(StrSplit(address, "|").2, "/").Pop()		; new voice
-        y = %inca%\cache\voices\%y%
-        FileAppend, %inca%\cache\voices\%x%|0.0`r`n%y%|0.0`r`n, %inca%\fav\History.m3u, UTF-8
+        y := StrSplit(address,"|").2					; new voice
+        Drive := SubStr(A_ScriptDir, 1, 2)     ; e.g. "D:\"
+        if (x && !y)
+          FileAppend, %Drive%%x%|0.0`r`n, %inca%\fav\History.m3u, UTF-8
+        else if x 
+          FileAppend, %Drive%%x%|0.0`r`n%Drive%%y%|0.0`r`n, %inca%\fav\History.m3u, UTF-8
         }
       else if (folder != "History")
         FileAppend, %src%|%value%`r`n, %inca%\fav\History.m3u, UTF-8
@@ -1245,7 +1267,7 @@
     }
 
 
-  MoveEntry()								; within playlist 
+  MoveEntry() 								; within playlist
     {
     if (sort != "Playlist")
       {
@@ -1257,15 +1279,17 @@
     Loop, Parse, selected, `,
       if A_LoopField is number
         {
+        if (A_LoopField == value)
+          continue
         getMedia(A_LoopField)
-        source = %target%						; source = entry to move
-        getMedia(value)							; target now is place to move
+        source = %target%            					; entry to move
+        getMedia(value)							; new position
         FileRead, str, %playlist%
         FileDelete, %playlist%
         both = %target%`r`n%source%
         source = %source%`r`n
-        StringReplace, str, str, %source%				; remove target entry
-        StringReplace, str, str, %target%, %both%			; replace with both target and source
+        StringReplace, str, str, %source%				; remove old entry
+        StringReplace, str, str, %target%, %both% ; insert at new position
         FileAppend, %str%, %playlist%, UTF-8
         }
     }
@@ -1456,7 +1480,7 @@
     gui, vol: color, ffb6c1
     Gui Status:+lastfound +AlwaysOnTop -Caption +ToolWindow
     Gui Status:Color, Black
-    Gui Status:Add, Text, vGuiSta w120 h35
+    Gui Status:Add, Text, vGuiSta w140 h35
     Gui Status: Show, Hide
     ix := A_screenWidth * Setting("Status Bar")/100
     iy := A_ScreenHeight * 0.95
@@ -1970,15 +1994,16 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
     <a id="myInca" onwheel='wheelEvent(event)'>...</a>
 
     <div id='myAlt' class="menu alt">`n
-      <a id="myCopy">copy</a>`n
-      <a id="myPaste">paste</a>`n
-      <a id="myCut">cut</a>`n
-      <a id="myIndex">index</a>`n
+      <a id="myCut">cut</a>
+      <a id="myCopy">copy</a>
+      <a id="myPaste">paste</a>
+      <a id="myIndex">index</a>
       <a id='myClone'>clone</a>
-      <a id="myMp3">mp3</a>`n
-      <a id="myMp4">mp4</a>`n
-      <a id="myJoin">join</a>`n
-      <a id="myJpg" onwheel='wheelEvent(event)'>jpg</a>`n
+      <a id='myLoudnorm'>normalise</a>
+      <a id="myMp3">mp3</a>
+      <a id="myMp4">mp4</a>
+      <a id="myJoin">join</a>
+      <a id="myJpg" onwheel='wheelEvent(event)'>jpg</a>
       <a id="mySrt">srt</a>`n
     </div>
   </div>`n
@@ -2188,9 +2213,9 @@ mediaList(j, input, start)						; spool sorted media files into web page
     caption = <pre id="dat%j%" style='display: none' type="text/plain" data=%data%></pre>`n
 
     if listView
-      mediaList = %mediaList%%fold%<table id='entry%j%' data-params='%type%,%start%,%dur%,%size%' onmouseenter='if (gesture) sel(%j%)' onmouseover='overThumb(%j%)'`n onmouseout="thumb%j%.style.opacity=0; thumb.src=''">`n <tr><td><video id='thumb%j%' class='thumb2' onwheel='if (zoom > 1) wheelEvent(event)' %poster%`n preload=%preload% muted loop disableRemotePlayback type="video/mp4"></video>`n <video id="vid%j%" style='display: none' src=%src% preload='none' type='video/mp4'></video></td><td>%j%</td>`n <td>%ext%</td><td>%size%</td><td style='min-width: 6em'>%durT%</td><td>%date%</td><td style='width:1em'>`n <div id='myFavicon%j%' class='favicon' style='%favi% position: relative; text-align: right; translate:1.6em 0.4em'>%favicon%</div></td>`n <td style='width: 80vw'><input id="title%j%" class='title' style='position: relative; width:100`%; left:-0.2em' onmouseover='overText=1' autocomplete='off' onmouseout='overText=0; Click=0' type='search' value='%media_s%' oninput="renamebox=this.value"></td>`n %fo%</tr></table>%caption%<span id='cues%j%' style='display: none'>%cues%</span>`n`n
+      mediaList = %mediaList%%fold%<table id='entry%j%' data-params='%type%,%start%,%dur%,%size%' onmouseenter='if (gesture) sel(%j%)' onmouseover='overThumb(%j%)'`n onmouseout="thumb%j%.style.opacity=0; thumb.src=''">`n <tr><td><video id='thumb%j%' class='thumb2' onwheel='if (zoom > 1) wheelEvent(event)' %poster%`n preload=%preload% muted loop disableRemotePlayback type="video/mp4"></video>`n <video id="vid%j%" style='display: none' src=%src% preload='none' type='video/mp4'></video></td><td>%j%</td>`n <td>%ext%</td><td>%size%</td><td style='min-width: 6em'>%durT%</td><td>%date%</td><td style='width:1em'>`n <div id='myFavicon%j%' class='favicon' style='%favi% position: relative; text-align: right; translate:1.6em 0.4em'>%favicon%</div></td>`n <td style='width: 80vw'><textarea id="title%j%" class='title' style='position: relative; width:100`%; left:-0.2em' onmouseover='overText=1' autocomplete='off' onmouseout='overText=0; Click=0' type='text' oninput="renamebox=this.value">%media_s%</textarea></td>`n %fo%</tr></table>%caption%<span id='cues%j%' style='display: none'>%cues%</span>`n`n
 
-    else mediaList = %mediaList%<div id="entry%j%" class='entry' data-params='%type%,%start%,%dur%,%size%'>`n <span id='myFavicon%j%' onmouseenter='overThumb(%j%)' class='favicon' style='%favi%'>%favicon%</span>`n <input id='title%j%' class='title' style='top:-0.8em; opacity:0.7' type='search'`n value='%media_s%'`n oninput="renamebox=this.value"`n onmouseover="overText=1; this.style.width=1+this.value.length/2+'em'"`n onmouseout="overText=0; this.style.width=null">`n <video id="thumb%j%" class='thumb' onwheel='if (zoom > 1) wheelEvent(event)' onmouseenter="overThumb(%j%); if (gesture && !playing) sel(%j%)"`n onmouseout="thumb.pause()" onmouseup='if (gesture && !playing) Param(%j%)' %poster%`n preload=%preload% loop muted disableRemotePlayback type='video/mp4'></video>`n <video id="vid%j%" style='display: none' src=%src% preload='none' type='video/mp4'></video>%noIndex%`n <span id='cues%j%' style='display: none'>%cues%</span></div>`n %caption%`n
+    else mediaList = %mediaList%<div id="entry%j%" class='entry' data-params='%type%,%start%,%dur%,%size%'>`n <span id='myFavicon%j%' onmouseenter='overThumb(%j%)' class='favicon' style='%favi%'>%favicon%</span>`n <textarea id='title%j%' class='title' style='top:-0.8em; opacity:0.7' type='text'`n oninput="renamebox=this.value"`n onmouseover="overText=1"`n onmouseout="overText=0">%media_s%</textarea>`n <video id="thumb%j%" class='thumb' onwheel='if (zoom > 1) wheelEvent(event)' onmouseenter="overThumb(%j%); if (gesture && !playing) sel(%j%)"`n onmouseleave="thumb.pause()"`n onmouseup='if (gesture && !playing) Param(%j%)' %poster%`n preload=%preload% loop muted disableRemotePlayback type='video/mp4'></video>`n <video id="vid%j%" style='display: none' src=%src% preload='none' type='video/mp4'></video>%noIndex%`n <span id='cues%j%' style='display: none'>%cues%</span></div>`n %caption%`n
     }
 
 
@@ -2342,7 +2367,7 @@ mediaList(j, input, start)						; spool sorted media files into web page
             FileAppend, %destCopy%|0.0`r`n, %inca%\fav\History.m3u, UTF-8
             index(A_LoopFileFullPath,1)					; get duration
             }
-          if (A_Now - downloads > 10 && A_Now - downloads < 60)		; finished downloading
+          if (A_Now - downloads > 20 && A_Now - downloads < 60)		; finished downloading
             {
             type := DecodeExt(ext)
             if (type == "video")

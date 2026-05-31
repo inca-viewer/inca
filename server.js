@@ -75,6 +75,7 @@ const server = http.createServer(async (req, res) => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
             text,
+            exaggeration: 1.4,
             voice_mode: 'clone',
             reference_audio_filename: refFilename
         })
@@ -128,7 +129,7 @@ if (provider === 'chatterbox') {
   const tmp = path.join(fullDir, '_tmp.wav');
   const norm = path.join(fullDir, '_norm.mp3');
   await fsPromises.writeFile(tmp, buffer);
-  require('child_process').execSync(`"${ffmpeg}" -y -i "${tmp}" -af "loudnorm=I=-28" "${norm}"`);
+  require('child_process').execSync(`"${ffmpeg}" -y -i "${tmp}" -af "loudnorm=I=-24:TP=-3:LRA=7:linear=true" "${norm}"`);
   buffer = await fsPromises.readFile(norm);
   fsPromises.unlink(tmp).catch(()=>{});
   fsPromises.unlink(norm).catch(()=>{})}
