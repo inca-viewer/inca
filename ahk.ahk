@@ -1991,7 +1991,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
 
 <div id="myNav" class="context">
   <div class="trigger">
-    <a id="myInca" onwheel='wheelEvent(event)'>...</a>
+    <a id="myInca">...</a>
 
     <div id='myAlt' class="menu alt">`n
       <a id="myCut">cut</a>
@@ -2003,7 +2003,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
       <a id="myMp3">mp3</a>
       <a id="myMp4">mp4</a>
       <a id="myJoin">join</a>
-      <a id="myJpg" onwheel='wheelEvent(event)'>jpg</a>
+      <a id="myJpg">jpg</a>
       <a id="mySrt">srt</a>`n
     </div>
   </div>`n
@@ -2028,7 +2028,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
       <a id='myExport'>Export</a>`n
     </div>
 
-    <div class="menu default" onwheel='wheelEvent(event)'>`n
+    <div class="menu default">`n
       <a id="mySelect">Select</a>`n
       <a id="myDelete">Delete</a>`n
       <a id="myFavorite">Fav</a>`n
@@ -2049,13 +2049,13 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
   <div id='myPanel' class='myPanel'><div class='panel'><div class='innerPanel'>`n`n%panelList%`n</div></div>`n`n
 
   <div id='myRibbon1' class='ribbon' style='font-size: 1.2em'>`n
-  <a style='width: 5em'></a>
-  <a style='width: 4.3em; font-size: 1.8em' onmousedown='window.history.back()'>&#129028;</a>`n
+  <a style='width: 2em'></a>
+  <a style='width: 3.4em; font-size: 1.8em' onmousedown='window.history.back()'>&#129028;</a>`n
   <a id='myMusic' style='width:3.5em; %x22%' onmousedown="inca('Path','','','music|1')" onmouseover="setTimeout(function() {if(myMusic.matches(':hover'))Music.scrollIntoView()},200)">&#x266B;</a>`n
   <a id='mySub' style='width:2em; translate: 0.3em; font-size:0.7em; %x8%' onmousedown="inca('Recurse')" onmouseover="setTimeout(function() {if(mySub.matches(':hover'))Sub.scrollIntoView({behavior: 'smooth'})},200)">%subs%</a>`n
   <a id='myFol' style='max-width:2.8em; %x21%' onmousedown="inca('Path','','','fol|1')" onmouseover="setTimeout(function() {if(myFol.matches(':hover'))Fol.scrollIntoView()},200)">&#x1F4BB;&#xFE0E;</a>`n
   <a id='myFav' style='translate: 0.4em 0.06em; %x23%' onmousedown="inca('Path','','','fav|1')" onmouseover="setTimeout(function() {if(myFav.matches(':hover'))Fav.scrollIntoView()},200)">&#10084;</a>`n
-  <a style='color: red; width: 18em; overflow: hidden; padding: 0 1.4em; '>%heading% &ensp; %listSize%</a>`n
+  <a style='color: red; width: 26`%; overflow: hidden; padding: 0 1.4em; '>%heading% &ensp; %listSize%</a>`n
   <a id='mySearch' style='max-width:2em; %x20%' onwheel="wheelEvent(event)" onmousedown="inca('SearchBox','','',myInput.value)" onmouseover="setTimeout(function() {if(mySearch.matches(':hover'))filter(id)},140)">&#x1F50D;&#xFE0E;</a>`n
   <input id='myInput' class='searchbox' type='search' autocomplete='off' value='%st%' onmouseenter="if (this.value=='%st%') this.value='%lastSearch%'; this.select()" onmouseover="overText=1; this.focus()" onmouseout='overText=0'>
   <a id='Add' style='width:1em; font-size:1.2em; color: red' onmousedown="inca('Add','','',myInput.value)">%add%</a>`n

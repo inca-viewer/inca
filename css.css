@@ -25,11 +25,11 @@
   left: 1.6em;
   translate: 0 -0.16em;
   font-variant-emoji: text;
-  background: transparent;
+  background: transparent !important;
   box-sizing: border-box;
   width: 74%;
   line-height: 1.25;
-  color: #826858;
+  color: #826858; !important;
   outline: none;
   font-family: inherit;
   font-size: 1em;
@@ -126,7 +126,7 @@
 
   .text-block {
     position: relative; background:transparent; border-radius:0.7em; white-space:pre-wrap; transition: 0.42s; overflow: visible;
-    word-wrap:break-word; font-family:'Yu Gothic'; line-height:1.5; margin: 0; padding: 0 1em 0.6em 1em; min-width: 80%;
+    word-wrap:break-word; font-family:'Yu Gothic'; line-height:1.5; margin: 0; padding: 0 1em 0.6em 1em; min-width: 90%;
     color:#ffc0cb80; text-align:center; outline:none; width: auto; align-self: center; border: 0; margin-bottom: 1em;}
 
   .text-block[data-fav="1"]::after {
@@ -139,7 +139,7 @@
     z-index: 3;
     pointer-events: none}
 
-  .text-block.editing { background: #0f0f0f; color: #ffc0cbaa; transform: scale(1.07, 1.07) }
+  .text-block.editing { background: #111111; color: #ffc0cbaa; transform: scale(1.07, 1.07) }
 
   .text-block.has-voice.editing::before {
     content: '';
@@ -260,7 +260,7 @@
   z-index: 1;
   opacity: 0}
 
-.pic {						/* context menu pic */
+.pic {						/* progress bar pic */
   opacity: 0;
   display: block;
   z-index: 5007;
@@ -386,16 +386,16 @@
   border-radius: 1em;
   text-align: center;
   transition: 0.3s;
-  padding: 0.1em; 
+  padding: 0.1em;
   margin-bottom: 0.4em;
   font-size: 0.9em}
-.ribbon a {width: 5em; transition: 0.8s; border-radius: 1em}
+.ribbon a {width: 4em; transition: 0.8s; border-radius: 1em}
 .ribbon a:hover {transition: 0.2s; color: pink}
 
 .searchbox {					/* input searchbox in htm tab */
   text-overflow: ellipsis;
   display: inline;
-  width: 18em;
+  width: 54%;
   border-radius: 1em; 
   color: pink;
   border: none;
