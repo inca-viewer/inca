@@ -7,37 +7,58 @@
   ::-webkit-scrollbar-thumb {background: #1b1814; border-radius: 2px}
   ::-webkit-resizer {background: transparent}
   @supports (not selector(::-webkit-scrollbar)) {html {scrollbar-color: #2b2824 #0e0c05}}
-  td {outline: none; text-align: center; min-width: 3.8em; font-size: 0.9em; overflow: hidden; white-space: nowrap; border-radius :1em}
-  table {color: #826858; border-collapse: collapse; margin: auto; border-radius: 1em; transition: color 0.3s}
-  table:hover {background: #1b1814}
   a {color: #826858; text-decoration: none; outline: none}			/* default text */
   c {display: block; padding-left: 1em; text-decoration: none; font-weight: bold; color: #826858bb; transition: 1s} /* panel text */
   c:hover {transition: 0.2s; transform: scale(1.1,1.1); color: pink}
   c:active {color: #0e0c05; transform: scale(0.8,0.8)}
 
 
-.title {					/* thumb title */
+.entry-row {
+  display: grid;
+  align-items: center;
+  height: 1.6em;
+  overflow: visible;
+  white-space: nowrap;
+  color: #826858;
+  font-size: 0.9em;
+  border-radius: 1em;
+  transition: color 0.3s;
+  grid-template-columns: 4em 3em 3em 3em 6em 4em 1em auto 8em;
+  width: 100%}
+
+.entry-row:hover { background: #1b1814; }
+
+.title-cell {
+  max-width: 60vw;
+  height: 1.6em;
+  position: relative;
+  overflow: visible;}
+
+
+.title {					/* media title */
   display: block;
   position: absolute;
   resize: none !important;
   overflow: hidden !important;
   white-space: pre-wrap !important;
-  left: 1.6em;
+  left: 0.6em;
   translate: 0 -0.16em;
   font-variant-emoji: text;
+  font-family: inherit;
+  font-size: 1.05em;
   background: transparent !important;
   box-sizing: border-box;
-  width: 74%;
+  width: 100%;
   line-height: 1.25;
   color: #826858; !important;
   outline: none;
-  font-family: inherit;
-  font-size: 1em;
+
   height: 1.4em;
   border: none;
   margin: auto;
   transition: 0.3s;
   border-radius: 0.6em}
+
 .title.preview {
     white-space: nowrap;
     overflow-wrap: break-word;
@@ -51,8 +72,8 @@
     z-index: 9999 !important;
     opacity: 1 !important;
     overflow: visible !important;
-    width: 26em !important;
-    translate: 0 -1.7em !important;}
+    width: auto !important;
+    translate: 0.1em -1.5em !important;}
 
   #editor { box-sizing:border-box; display:none; flex-direction:column; width:500px; max-width:100%; height:24em;
     background:#0a0a0a; border-radius:12px; box-shadow:0 12px 32px rgba(0,0,0,0.6); font-size:16px; 
@@ -282,15 +303,15 @@
   overflow: visible;
   width: 0.9em;
   height:0;
-  top: -0.9em;
-  left: 0.8em;
+  top: -1.2em;
+  left: -1em;
   color: pink;
   font-size: 0.7em;
-  opacity: 0.1;
-  white-space: nowrap; 
+  opacity: 0.8;
+  white-space: nowrap;
   border-radius: 1em;
   transition: 0.2s}
-.favicon:hover {color: red; opacity: 1; top: -1.8em; transform: scale(1.8,1.8)}
+.favicon:hover {opacity: 1}
 .favicon:empty {display:none}
 
 .capButton {					/* buttons over caption */

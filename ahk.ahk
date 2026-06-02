@@ -265,17 +265,23 @@
       }
     else if (command == "Loudnorm")
       {
-      if (type == "video" || type == "audio")
+      Loop, Parse, selected, `,						; index selected files
+       if getMedia(A_LoopField)
         {
-        GuiControl, Indexer:, GuiInd, %A_Index% - normalising volume - %media%
-        cmd = -af loudnorm=I=-24:TP=-3:LRA=7:linear=true -c:v copy -c:a aac -b:a 128k -ar 48000 -ac 2 -map 0:v:0 -map 0:a? -map 0:s? -c:s copy -f mp4 -movflags +faststart+separate_moof -metadata:s:v:0 handler_name=Inca
-        RunWait, %inca%\cache\apps\ffmpeg.exe -y -i file:"%src%" %cmd% file:"%inca%\cache\temp\temp.%ext%",,Hide
-        FileRecycle, %src%
-        FileMove, %inca%\cache\temp\temp.%ext%, %src%, 1
-        GuiControl, Indexer:, GuiInd
-        PopUp("normalised",900,0,0)
+        if (type == "video" || type == "audio")
+          {
+          GuiControl, Indexer:, GuiInd, %A_Index% - normalising volume - %media%
+          if (type == "video")
+            cmd = -af loudnorm=I=-23:TP=-3:LRA=7:linear=true -c:v copy -c:a aac -b:a 128k -ar 48000 -ac 2 -map 0 -c:s copy -f mp4 -movflags +faststart
+          else cmd = -af "loudnorm=I=-23:TP=-3:LRA=7:linear=true" -c:a libmp3lame -b:a 128k -ar 48000 -ac 2 -map 0 -f mp3
+          RunWait, %inca%\cache\apps\ffmpeg.exe -y -i file:"%src%" %cmd% file:"%inca%\cache\temp\temp.%ext%",,Hide
+          IfExist, %inca%\cache\temp\temp.%ext%
+            FileRecycle, %src%
+          FileMove, %inca%\cache\temp\temp.%ext%, %src%, 1
+          }
         }
-      else PopUp("no media",900,0,0)
+      GuiControl, Indexer:, GuiInd
+      PopUp("normalised",900,0,0)
       reload := 1
       }
 
@@ -1994,36 +2000,36 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
     <a id="myInca">...</a>
 
     <div id='myAlt' class="menu alt">`n
-      <a id="myCut">cut</a>
-      <a id="myCopy">copy</a>
-      <a id="myPaste">paste</a>
-      <a id="myIndex">index</a>
-      <a id='myClone'>clone</a>
-      <a id='myLoudnorm'>normalise</a>
-      <a id="myMp3">mp3</a>
-      <a id="myMp4">mp4</a>
-      <a id="myJoin">join</a>
-      <a id="myJpg">jpg</a>
+      <a id="myCut">cut</a>`n
+      <a id="myCopy">copy</a>`n
+      <a id="myPaste">paste</a>`n
+      <a id="myIndex">index</a>`n
+      <a id='myClone'>clone</a>`n
+      <a id='myLoudnorm'>normalise</a>`n
+      <a id="myMp3">mp3</a>`n
+      <a id="myMp4">mp4</a>`n
+      <a id="myJoin">join</a>`n
+      <a id="myJpg">jpg</a>`n
       <a id="mySrt">srt</a>`n
     </div>
   </div>`n
 
   <div id='myDefault'>
     <div class="menu editor">`n
-      <a id='myChatterbox'></a>
-      <a id='myElevenLabs'></a>
-      <a id='myBookmark'>Bookmark</a>
-      <a id='myEmotion'>Emotion</a>
-        <div id='emotionSub' class='submenu'>
-          <a data-tag='laugh'>laugh</a>
-          <a data-tag=chuckle'>chuckle</a>
-          <a data-tag='sigh'>sigh</a>
-          <a data-tag='gasp'>gasp</a>
-          <a data-tag='cough'>cough</a>
-          <a data-tag='clear throat'>clear throat</a>
-          <a data-tag='sniff'>sniff</a>
-          <a data-tag='groan'>groan</a>
-          <a data-tag='shush'>shush</a>
+      <a id='myChatterbox'></a>`n
+      <a id='myElevenLabs'></a>`n
+      <a id='myBookmark'>Bookmark</a>`n
+      <a id='myEmotion'>Emotion</a>`n
+        <div id='emotionSub' class='submenu'>`n
+          <a data-tag='laugh'>laugh</a>`n
+          <a data-tag=chuckle'>chuckle</a>`n
+          <a data-tag='sigh'>sigh</a>`n
+          <a data-tag='gasp'>gasp</a>`n
+          <a data-tag='cough'>cough</a>`n
+          <a data-tag='clear throat'>clear throat</a>`n
+          <a data-tag='sniff'>sniff</a>`n
+          <a data-tag='groan'>groan</a>`n
+          <a data-tag='shush'>shush</a>`n
         </div>
       <a id='myExport'>Export</a>`n
     </div>
@@ -2128,19 +2134,19 @@ mediaList(j, input, start)						; spool sorted media files into web page
       fold = <div style="font-size:1.4em; color:pink; width:80`%">%thisFolder%</div>`n
     lastFolder := thisFolder
     if (searchTerm || InStr(toggles, "Recurse"))
-      fo = <td style='width:5em; padding-right:3em; text-align:right'>%thisFolder%</td>
+      fo = <div style='width:5em; padding-right:3em; text-align:right'>%thisFolder%</div>
     FileRead, dur, %inca%\cache\durations\%media%.txt
     durT := Time(dur)
     if (type == "document" || type == "image" || !dur)
       dur := 0
     FileRead, cues, %inca%\cache\cues\%media%.txt
-    favicon =  &#169 &#8195						; invisible char
+    favicon =  
     x = %media%.%ext%
     if !playlist
       Loop, Parse, allfav, `n, `r
         if InStr(A_Loopfield, x)
           {
-          favicon = &#169 &#x2764					; favorite heart symbol
+          favicon = &#x2764;					; favorite heart symbol
           start := StrSplit(A_Loopfield,"|").2
           break
           }
@@ -2188,7 +2194,7 @@ mediaList(j, input, start)						; spool sorted media files into web page
       data = %inca%/cache/srt/%media%.srt
  IfExist, %inca%\cache\json\%media%.json
   data = %inca%/cache/json/%media%.json
-    if (data || favicon == "&#169 &#x2764")
+    if (data || favicon == "&#x2764;")
       favi = opacity: 0.8;
     IfNotExist, %src%
       noIndex = <span class='warning'>disk ?</span>
@@ -2213,9 +2219,9 @@ mediaList(j, input, start)						; spool sorted media files into web page
     caption = <pre id="dat%j%" style='display: none' type="text/plain" data=%data%></pre>`n
 
     if listView
-      mediaList = %mediaList%%fold%<table id='entry%j%' data-params='%type%,%start%,%dur%,%size%' onmouseenter='if (gesture) sel(%j%)' onmouseover='overThumb(%j%)'`n onmouseout="thumb%j%.style.opacity=0; thumb.src=''">`n <tr><td><video id='thumb%j%' class='thumb2' onwheel='if (zoom > 1) wheelEvent(event)' %poster%`n preload=%preload% muted loop disableRemotePlayback type="video/mp4"></video>`n <video id="vid%j%" style='display: none' src=%src% preload='none' type='video/mp4'></video></td><td>%j%</td>`n <td>%ext%</td><td>%size%</td><td style='min-width: 6em'>%durT%</td><td>%date%</td><td style='width:1em'>`n <div id='myFavicon%j%' class='favicon' style='%favi% position: relative; text-align: right; translate:1.6em 0.4em'>%favicon%</div></td>`n <td style='width: 80vw'><textarea id="title%j%" class='title' style='position: relative; width:100`%; left:-0.2em' onmouseover='overText=1' autocomplete='off' onmouseout='overText=0; Click=0' type='text' oninput="renamebox=this.value">%media_s%</textarea></td>`n %fo%</tr></table>%caption%<span id='cues%j%' style='display: none'>%cues%</span>`n`n
+mediaList = %mediaList%%fold%<div id='entry%j%' class='entry-row' data-params='%type%,%start%,%dur%,%size%' onmouseenter='if (gesture) sel(%j%)' onmouseover='overThumb(%j%)'`n onmouseout="thumb%j%.style.opacity=0; thumb.src=''"><div><video id='thumb%j%' class='thumb2' onwheel='if (zoom > 1) wheelEvent(event)'`n %poster% preload=%preload% muted loop disableRemotePlayback type="video/mp4"></video><video id="vid%j%" style='display: none'`n src=%src% preload='none' type='video/mp4'></video>`n </div><div>%j%</div><div>%ext%</div><div>%size%</div><div style='min-width: 6em'>%durT%</div><div>%date%</div><div style='width:1em'><div id='myFavicon%j%' class='favicon' style='%favi% position: relative; text-align: right; translate:1.6em 0.4em'>%favicon%</div></div><div class='title-cell'><textarea id="title%j%" class='title' onmouseover='overText=1' autocomplete='off' onmouseout='overText=0; Click=0' oninput="renamebox=this.value">`n %media_s%</textarea></div>%fo%</div>`n %caption%<span id='cues%j%' style='display: none'>%cues%</span>`n`n
 
-    else mediaList = %mediaList%<div id="entry%j%" class='entry' data-params='%type%,%start%,%dur%,%size%'>`n <span id='myFavicon%j%' onmouseenter='overThumb(%j%)' class='favicon' style='%favi%'>%favicon%</span>`n <textarea id='title%j%' class='title' style='top:-0.8em; opacity:0.7' type='text'`n oninput="renamebox=this.value"`n onmouseover="overText=1"`n onmouseout="overText=0">%media_s%</textarea>`n <video id="thumb%j%" class='thumb' onwheel='if (zoom > 1) wheelEvent(event)' onmouseenter="overThumb(%j%); if (gesture && !playing) sel(%j%)"`n onmouseleave="thumb.pause()"`n onmouseup='if (gesture && !playing) Param(%j%)' %poster%`n preload=%preload% loop muted disableRemotePlayback type='video/mp4'></video>`n <video id="vid%j%" style='display: none' src=%src% preload='none' type='video/mp4'></video>%noIndex%`n <span id='cues%j%' style='display: none'>%cues%</span></div>`n %caption%`n
+    else mediaList = %mediaList%<div id="entry%j%" class='entry' data-params='%type%,%start%,%dur%,%size%'>`n <span id='myFavicon%j%' onmouseenter='overThumb(%j%)' class='favicon' style='%favi%'>%favicon%</span>`n <textarea id='title%j%' class='title' style='top:-0.8em; opacity:0.7' type='text'`n oninput="renamebox=this.value"`n onmouseover="overThumb(%j%); overText=1"`n onmouseout="overText=0">%media_s%</textarea>`n <video id="thumb%j%" class='thumb' onwheel='if (zoom > 1) wheelEvent(event)' onmouseenter="overThumb(%j%); if (gesture && !playing) sel(%j%)"`n onmouseleave="thumb.pause()"`n onmouseup='if (gesture && !playing) Param(%j%)' %poster%`n preload=%preload% loop muted disableRemotePlayback type='video/mp4'></video>`n <video id="vid%j%" style='display: none' src=%src% preload='none' type='video/mp4'></video>%noIndex%`n <span id='cues%j%' style='display: none'>%cues%</span></div>`n %caption%`n
     }
 
 
