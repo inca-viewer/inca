@@ -189,7 +189,7 @@
           ClipBoard := clp
           }
         }
-      if (!gesture && longClick && click == "LButton" && wasCursor == "IBeam")
+      if (!gesture && longClick && click == "LButton" && wasCursor == "IBeam")		; longClick for osk or file search
         Find()
       if (!GetKeyState("LButton", "P") && !GetKeyState("RButton", "P"))	; click up
         {
@@ -2146,7 +2146,7 @@ mediaList(j, input, start)						; spool sorted media files into web page
       Loop, Parse, allfav, `n, `r
         if InStr(A_Loopfield, x)
           {
-          favicon = &#x2764;					; favorite heart symbol
+          favicon = &#169 &#8195					; favorite heart symbol
           start := StrSplit(A_Loopfield,"|").2
           break
           }
@@ -2192,10 +2192,10 @@ mediaList(j, input, start)						; spool sorted media files into web page
       data = %src%
     else IfExist, %inca%\cache\srt\%media%.srt
       data = %inca%/cache/srt/%media%.srt
- IfExist, %inca%\cache\json\%media%.json
-  data = %inca%/cache/json/%media%.json
-    if (data || favicon == "&#x2764;")
-      favi = opacity: 0.8;
+    IfExist, %inca%\cache\json\%media%.json
+      data = %inca%/cache/json/%media%.json
+    if (data)
+      favicon =  &#x2764 %favicon%
     IfNotExist, %src%
       noIndex = <span class='warning'>disk ?</span>
     src = %src%
@@ -2219,9 +2219,9 @@ mediaList(j, input, start)						; spool sorted media files into web page
     caption = <pre id="dat%j%" style='display: none' type="text/plain" data=%data%></pre>`n
 
     if listView
-mediaList = %mediaList%%fold%<div id='entry%j%' class='entry-row' data-params='%type%,%start%,%dur%,%size%' onmouseenter='if (gesture) sel(%j%)' onmouseover='overThumb(%j%)'`n onmouseout="thumb%j%.style.opacity=0; thumb.src=''"><div><video id='thumb%j%' class='thumb2' onwheel='if (zoom > 1) wheelEvent(event)'`n %poster% preload=%preload% muted loop disableRemotePlayback type="video/mp4"></video><video id="vid%j%" style='display: none'`n src=%src% preload='none' type='video/mp4'></video>`n </div><div>%j%</div><div>%ext%</div><div>%size%</div><div style='min-width: 6em'>%durT%</div><div>%date%</div><div style='width:1em'><div id='myFavicon%j%' class='favicon' style='%favi% position: relative; text-align: right; translate:1.6em 0.4em'>%favicon%</div></div><div class='title-cell'><textarea id="title%j%" class='title' onmouseover='overText=1' autocomplete='off' onmouseout='overText=0; Click=0' oninput="renamebox=this.value">`n %media_s%</textarea></div>%fo%</div>`n %caption%<span id='cues%j%' style='display: none'>%cues%</span>`n`n
+mediaList = %mediaList%%fold%<div id='entry%j%' class='entry-row' data-params='%type%,%start%,%dur%,%size%' onmouseenter='if (gesture) sel(%j%)' onmouseover='overThumb(%j%)'`n onmouseout="thumb%j%.style.opacity=0; thumb.src=''"><div><video id='thumb%j%' class='thumb2' onwheel='if (zoom > 1) wheelEvent(event)'`n %poster% preload=%preload% muted loop disableRemotePlayback type="video/mp4"></video><video id="vid%j%" style='display: none'`n src=%src% preload='none' type='video/mp4'></video>`n </div><div>%j%</div><div>%ext%</div><div>%size%</div><div style='min-width: 6em'>%durT%</div><div>%date%</div><div style='width:1em'><div id='myFavicon%j%' class='favicon' style='%favi% position: relative; text-align: right; translate:1.6em 0.4em'>%favicon%</div></div><div class='title-cell'><textarea id="title%j%" class='title' autocomplete='off' oninput="renamebox=this.value">`n %media_s%</textarea></div>%fo%</div>`n %caption%<span id='cues%j%' style='display: none'>%cues%</span>`n`n
 
-    else mediaList = %mediaList%<div id="entry%j%" class='entry' data-params='%type%,%start%,%dur%,%size%'>`n <span id='myFavicon%j%' onmouseenter='overThumb(%j%)' class='favicon' style='%favi%'>%favicon%</span>`n <textarea id='title%j%' class='title' style='top:-0.8em; opacity:0.7' type='text'`n oninput="renamebox=this.value"`n onmouseover="overThumb(%j%); overText=1"`n onmouseout="overText=0">%media_s%</textarea>`n <video id="thumb%j%" class='thumb' onwheel='if (zoom > 1) wheelEvent(event)' onmouseenter="overThumb(%j%); if (gesture && !playing) sel(%j%)"`n onmouseleave="thumb.pause()"`n onmouseup='if (gesture && !playing) Param(%j%)' %poster%`n preload=%preload% loop muted disableRemotePlayback type='video/mp4'></video>`n <video id="vid%j%" style='display: none' src=%src% preload='none' type='video/mp4'></video>%noIndex%`n <span id='cues%j%' style='display: none'>%cues%</span></div>`n %caption%`n
+    else mediaList = %mediaList%<div id="entry%j%" class='entry' data-params='%type%,%start%,%dur%,%size%'>`n <span id='myFavicon%j%' onmouseenter='overThumb(%j%)' class='favicon' style='%favi%'>%favicon%</span>`n <textarea id='title%j%' class='title' style='top:-0.8em; opacity:0.7' type='text'`n oninput="renamebox=this.value"`n >%media_s%</textarea>`n <video id="thumb%j%" class='thumb' onwheel='if (zoom > 1) wheelEvent(event)' onmouseenter="overThumb(%j%); if (gesture && !playing) sel(%j%)"`n onmouseleave="thumb.pause()"`n onmouseup='if (gesture && !playing) Param(%j%)' %poster%`n preload=%preload% loop muted disableRemotePlayback type='video/mp4'></video>`n <video id="vid%j%" style='display: none' src=%src% preload='none' type='video/mp4'></video>%noIndex%`n <span id='cues%j%' style='display: none'>%cues%</span></div>`n %caption%`n
     }
 
 

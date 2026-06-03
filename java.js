@@ -5,11 +5,18 @@
 // occational dead html after return from notepad
 // do skinny on editor too
 
+// list all mouse commands bottom of myView
+// home icon somewhere to github
 
-// cannot get srt or  json over cc icon
-// clone mechanism?
-// when sel none voice my player set to 0 temp
-// crashes if volume is null
+// clone mechanism still confusing?
+// when media select none on previous voice.  myplayer set to 0 temporarily
+// insert new block with voice between two myplayer blocks?
+// speed not inhert - maybe block already set to 1 overriding
+
+// next voice when over mask still issues
+
+
+
 
 
   let wheel = 0								// wheel count
@@ -36,7 +43,7 @@
   let selected = ''							// list of selected media in page
   let overMedia = 0							// over thumb or myPlayer
   let overText = 0							// text input fields, allow cut paste
-  let editing = 0							// editing text active
+  let editing = 0							// 1 = over textarea 2 = editing
   let messages = ''							// message digest to inca.exe
   let Zindex = 1							// element zIndex
   let rect								// element dimensions
@@ -180,13 +187,14 @@
     if (lastClick == 1) overBlock = e.target.closest('.text-block') || 0
     let emotion = '[' + e.target.dataset.tag + '] '
     if (e.target.closest('#emotionSub')) document.execCommand('insertText', false, emotion)
-    if (!playing && !listView && longClick && !gesture && overMedia && !overText) popThumb()		// pop thumb out of flow
+    if (!playing && !listView && longClick && !gesture && overMedia && !overText) popThumb()	// pop thumb out of flow
     if (['myCut', 'myCopy', 'myPaste'].includes(id)) {
       lastId.focus()
       inca('CutCopyPaste',id); return}
     if (lastClick != 3 && (gesture || id == 'myInput')) return
     if (longClick == 1 && !playing && playlist && selected && overMedia) {inca('Move', overMedia); return}
     if (['myIndex', 'myMp3', 'myMp4', 'myJoin', 'myJpg', 'mySrt'].includes(id)) {Ffmpeg(id); cue = 0; return}
+    if ((id == 'myView' || id == 'myContent') && overText) location.reload()
     if (id == 'myClone') {inca('Clone',myPlayer.currentTime.toFixed(1),index); return}
     if (id == 'myLoudnorm') {inca('Loudnorm'); return}
     if (id == 'myInca') {incaButton(); return}
@@ -202,7 +210,9 @@
     if (lastClick == 3) {
       if (overBlock && !gesture) {
         myPlayer.currentTime = overBlock.dataset.start; myVoice.currentTime = 0
-        lastId = overBlock; myNav.classList.add('editor-mode'); editorClick(e)
+        lastId = overBlock
+        myNav.classList.add('editor-mode')
+        editorClick(e)
         setTimeout(function() {myPlayer.pause(); myVoice.pause()},100)} 
       else {lastId = e.target; myNav.classList.remove('editor-mode')}
       if (!gesture && !longClick && !myNav.style.display) {
@@ -231,6 +241,7 @@
         if (id == 'myCap') {capButton(); return}
         if (id == 'myCue' && playing) {cue = Math.round(100*myPlayer.currentTime)/100; return}}
       if (!longClick && !playing && !overMedia && !myNav.style.display) return
+if (title.matches(':hover') && longClick) return
       if (title.matches(':hover')) if (xm < 0.3 || overText == 2 || !blocks.length) {overText = 2; return}}
     if (!getStart(id)) return
     if (lastClick == 1 && overBlock) return
@@ -280,8 +291,8 @@
     if (playlist.match('/inca/music/')) myPlayer.muted = 0
     else myPlayer.muted = defMute
     if (!thumbSheet && !(editor.style.display && lastClick == 1))
-    if (blocks && title.matches(':hover') && Click) {if (!longClick) lastBlock = 0; getSrt(1)}				// caption preview start
-    else if (captions || type == 'document' || favicon.matches(':hover') || type == 'document') {getSrt(1)}
+    if (blocks && title.matches(':hover') && Click) {if (!longClick) getSrt(1)}		// caption preview start
+    else if (captions || type == 'document' || favicon.matches(':hover') || type == 'document') {lastBlock = 0; getSrt(1)}
     if (el = document.getElementById('title'+lastMedia)) el.style.color = null
     title.style.color = 'pink'; 
     lastMedia = index
@@ -311,6 +322,10 @@
   function mouseMove(e) {
     let id = e.target.id								// id under cursor
     overBlock = e.target.closest('.text-block') || 0
+
+if (title.matches(':hover')) {if (!overText) overText = 1}
+else if (overText != 2) overText = 0
+
     if (overBlock) lastId = overBlock
     if (innerHeight == outerHeight) {xPos = e.screenX; yPos = e.screenY} 		// fullscreen detection/offsets
     else {xPos = e.clientX; yPos = e.clientY}
@@ -469,6 +484,8 @@
     mySpeed2.innerHTML = defRate !=1 ? "s" : ''
     if (!overMedia || overMedia && ym < trigger) fade = 3
     seekbar()
+if (overText != 2 || playing) {title.value = title.defaultValue; title.classList.remove('preview')}
+
     if (playing) {
       positionMedia(0)
       if (captions) updateTimeDisplay()
@@ -493,7 +510,6 @@
           title.style.cursor = 'default'
           lastBlock = block.dataset.num;
           title.value = block.innerText.replace(/([.,!?;:—…])\s*/g, '$1\n').trim()}}
-      else if (overText != 2) {title.value = title.defaultValue; title.classList.remove('preview')}
       myInca.textContent = '...'
       myMask.style.pointerEvents = null
       if (zoom > 1 && overMedia) myMask.style.opacity = 0.9
@@ -555,7 +571,8 @@
       let thumbIndex = Math.ceil(x * 35)
       let z = (5 * (thumbIndex + 1) - 1) / 200
       let offset = dur > 60 ? 20 : 0
-      start = offset - (z * offset) + dur * z
+      let seek = offset - (z * offset) + dur * z					// calculate sprite timestamp
+      if (seek >= 0 && seek < dur) start = seek
       if (!thumbIndex || type != 'video') {
         myPic.style.backgroundSize = '100%'
         myPic.style.backgroundImage = 'url(\"'+thumb.poster+'\")'}
@@ -642,7 +659,7 @@
     myPlayer.poster = myPlayer.src = ''
     if (!(document.getElementById('thumb'+i))) return			// end of media list
     if (!(favicon = document.getElementById('myFavicon'+i))) favicon = '' // fav or cc icon
-    title.classList.remove('preview')
+ if (!overText)   title.classList.remove('preview')
     thumb = document.getElementById('thumb'+i)				// htm thumb element
     entry = document.getElementById('entry'+i)				// thumb and title container
     title = document.getElementById('title'+i)				// htm title element
@@ -811,6 +828,7 @@
 
   function mouseBack() {
     if (playing) closePlayer()						// close player and send messages to inca
+    else if (overText > 1) location.reload()
     else if (thumb.style.pop > 1) closePic()
     else if (longClick) window.close()
     else if (myContent.scrollTop > 50) myContent.scrollTo(0,0)		// else scroll to page top
@@ -876,6 +894,7 @@ editingBlock = null
     thumb.style.left = xPos - thumb.offsetWidth * xm +'px'
     thumb.style.top = yPos - thumb.offsetHeight * ym +'px'
     thumb.style.transform = 'scale('+Math.abs(skinny)*zoom+','+zoom+')'}
+
 
 
 
@@ -952,8 +971,8 @@ editingBlock = null
         b.extras || {});
       if (b.extras?.voice?.rate) {
         block.dataset.rate = b.extras.voice.rate;
-        block._rate = parseFloat(b.extras.voice.rate)}
-      block._voice.volume = b.extras.voice.volume || 1
+        block._rate = parseFloat(b.extras.voice.rate)
+        block._voice.volume = parseFloat(b.extras.voice.volume)}
       if (b.edited === 1) block.dataset.edited = "1";
       if (b.extras?.media) block._media = b.extras.media;
       if (b.extras?.voice) {
@@ -1188,8 +1207,8 @@ myVoice.pause();
       else {myVoice.pause(); myPlayer.pause()}}
     myPlayer.muted = true;
     myVoice.muted = defMute;
-    myVoice.volume = block._voice.volume !== undefined ? block._voice.volume : rate
-    myVoice.playbackRate = block._voice.rate ? parseFloat(block.dataset.rate) : rate
+    myVoice.volume = (block._voice && typeof block._voice.volume === 'number') ? block._voice.volume : 1
+    myVoice.playbackRate = (block._voice && typeof block._voice.rate === 'number') ? block._voice.rate : 1
     block.classList.add('has-voice')}
   else {
     block.classList.remove('has-voice');
@@ -1230,62 +1249,56 @@ myVoice.pause();
     if (Click || changed) {positionMedia(0); myPlayer.style.opacity = 0; positionMedia(2); myPlayer.style.opacity = 1}}
 
 
-  function splitIfNeeded(blockToSplit) {
+function splitIfNeeded(blockToSplit) {
+    if (!blockToSplit) return;
     const html = blockToSplit.innerHTML;
-    const text = blockToSplit.innerText.trim()
     let normalized = html
-      .replaceAll("&nbsp;", "")
-      .replace(/<br[^>]*>/gi, '\n')
-      .replace(/<(div|p)[^>]*>/gi, '\n')
-      .replace(/<\/(div|p)>/gi, '')
-      .replace(/\n\s*\n/g, '\n\n')
-      .replace(/\n\n+/g, '\n\n')
-      .trim();
-
-    const hasTrailingEmpty = html.endsWith('<br>') || /<br>\s*$/i.test(html);
-    if (hasTrailingEmpty) normalized = normalized.replace(/\n\n$/, '');
-    const parts = normalized.split('\n\n').map(p => p.trim()).filter(Boolean);
+        .replaceAll("&nbsp;", " ")
+        .replace(/<br[^>]*>/gi, '\n')
+        .replace(/<(div|p)[^>]*>/gi, '\n')
+        .replace(/<\/(div|p)>/gi, '')
+        .replace(/\n\s*\n/g, '\n\n')
+        .replace(/\n\n+/g, '\n\n')
+        .trim();
+    const hasTrailingEmpty = normalized.endsWith('\n\n') || 
+                             html.endsWith('<br>') || 
+                             /<br>\s*$/i.test(html);
+    if (hasTrailingEmpty) {
+        normalized = normalized.replace(/\n\n$/, '').trim()}
+    const parts = normalized.split('\n\n')
+                           .map(p => p.trim())
+                           .filter(Boolean);        // <-- removes empty parts
     if (parts.length <= 1 && !hasTrailingEmpty) return;
     const startSec = parseFloat(blockToSplit.dataset.start) || 0;
     const nextSibling = blockToSplit.nextSibling;
     const idx = blocks.indexOf(blockToSplit);
-
     blockToSplit.remove();
     blocks = blocks.filter(b => b !== blockToSplit);
     parts.forEach((part, i) => {
-      const newBlock = createBlock(
-        null,
-        i === 0 ? startSec : startSec + i * 2.5,
-        part,
-        i === 0 ? blockToSplit.dataset.fav : '0',
-        { media: blockToSplit._media, voice: blockToSplit._voice }
-      );
+        const newBlock = createBlock(
+            null,
+            i === 0 ? startSec : startSec + i * 2.5,
+            part,
+            i === 0 ? blockToSplit.dataset.fav : '0',
+            { media: blockToSplit._media, voice: blockToSplit._voice }
+        );
 
-      if (blockToSplit._voice) {
-        newBlock._voice = Object.assign({}, blockToSplit._voice);
-        newBlock.dataset.voiceName = blockToSplit.dataset.voiceName || '';
-        if (i > 0) newBlock._voice.src = null;  				// only first block keeps audio
-      }
+        if (blockToSplit._voice) {
+            newBlock._voice = Object.assign({}, blockToSplit._voice);
+            newBlock.dataset.voiceName = blockToSplit.dataset.voiceName || '';
+            if (i > 0) newBlock._voice.src = null;
+        }
 
-      if (blockToSplit.dataset.rate) newBlock.dataset.rate = blockToSplit.dataset.rate;
-      if (blockToSplit._rate) newBlock._rate = blockToSplit._rate;
-      if (blockToSplit._volume) newBlock._volume = blockToSplit._volume;
-      if (i === 0 && blockToSplit.dataset.edited) newBlock.dataset.edited = blockToSplit.dataset.edited;
-      viewport.insertBefore(newBlock, nextSibling);
-      blocks.splice(idx + i, 0, newBlock);
+        if (blockToSplit.dataset.rate) newBlock.dataset.rate = blockToSplit.dataset.rate;
+        if (blockToSplit._rate) newBlock._rate = blockToSplit._rate;
+
+        viewport.insertBefore(newBlock, nextSibling);
+        blocks.splice(idx + i, 0, newBlock);
     });
-
-    if (hasTrailingEmpty) {
-      const empty = createBlock(null, startSec + 1, ' ', {});
-      viewport.insertBefore(empty, nextSibling);
-      blocks.splice(idx + parts.length, 0, empty);
-      empty._voice = {};
-      empty._voice.name = blockToSplit._voice?.name
-      empty.focus();
-    }
     renumberBlocks();
-    if (parts.length > 1) activateBlock(blocks[idx + 1], { edit: true })
-  }
+    if (parts.length > 1) {
+        activateBlock(blocks[idx + 1], { edit: true });
+    }}
 
 
   function updateTimeDisplay() {
@@ -1665,6 +1678,7 @@ function editorInput(e) {
 
   function generateVoice(voiceName, text, provider) {
     splitIfNeeded(editingBlock)
+myPlayer.pause(); myVoice.pause()
     text = editingBlock.innerText.trim()
     provider = (provider || '').replace(/^my/i, '').toLowerCase();
     return fetch("http://localhost:3000/generate-voice", {
@@ -1681,8 +1695,6 @@ function editorInput(e) {
         let x = editingBlock?._voice?.src + '|' + path				// last voice | this voice
         inca('History',0,0,x)}							// so they show in editor dropdown list
       return path})}
-
-
 
 
 
