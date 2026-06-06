@@ -24,7 +24,7 @@
   font-size: 0.9em;
   border-radius: 1em;
   transition: color 0.3s;
-  grid-template-columns: 4em 3em 3em 3em 6em 4em 1em auto 8em;
+  grid-template-columns: 4em 4em 4em 4em 4em 2em 2em auto 6em;
   width: 100%}
 
 .entry-row:hover { background: #1b1814; }
@@ -41,19 +41,19 @@
   position: absolute;
   resize: none !important;
   overflow: hidden !important;
+word-break: break-all;
   white-space: pre-wrap !important;
-  left: 0.6em;
+  left: 0.9em;
   translate: 0 -0.16em;
   font-variant-emoji: text;
   font-family: inherit;
   font-size: 1.05em;
   background: transparent !important;
   box-sizing: border-box;
-  width: 100%;
+  width: 90%;
   line-height: 1.25;
   color: #826858; !important;
   outline: none;
-
   height: 1.4em;
   border: none;
   margin: auto;
@@ -63,8 +63,8 @@
 .title.preview {
     white-space: nowrap;
     overflow-wrap: break-word;
-    left: 0;
-    padding: 0 0.6em;
+    left: 0.8em;
+    padding: 0 0.3em;
     line-height: 1.3;
     height: 2.8em !important;
     transition: 0.6s !important;
@@ -252,6 +252,7 @@
   position: relative;
   border-radius: 1em;
   overflow: visible;
+padding: 0.3em;
   padding-bottom: 1.5em}
 
 .thumb {					/* htm thumbs */
@@ -307,7 +308,7 @@
   top: -1.2em;
   color: pink;
   font-size: 0.7em;
-  opacity: 0.8;
+  opacity: 0.6;
   white-space: nowrap;
   border-radius: 1em;
   transition: 0.2s}
@@ -479,7 +480,7 @@
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.2s;
-  font-size: 1em;
+  font-size: 0.9em;
   width: 105px;
   z-index: 5005;
   border-radius: 0.7em;
@@ -487,13 +488,12 @@
 
 .context a {
   display: block;
-  padding: 0.08em;
   padding-left: 1em;
   color: lightsalmon;
   text-decoration: none;
   white-space: nowrap;
   overflow: hidden;
-  border-radius: 1.3em;
+  border-radius: 1em;
   text-overflow: ellipsis;}
 
 #myNav[style*="display: block"] {opacity: 1; pointer-events: auto;}

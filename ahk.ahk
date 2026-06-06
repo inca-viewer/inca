@@ -110,6 +110,7 @@
     return
 
 
+
   ^Esc up::
     Process, Close, node.exe
     ExitApp
@@ -234,57 +235,11 @@
     else if (command == "Search" || command == "SearchBox")
       Search()
     else if (command == "attachClone")					; rename last clone.mp3 to voice name
-      {
-      base := RegExReplace(value, " \d+$")
-      t := inca "\cache\voices\clones\" value ".mp3"
-      c := inca "\cache\voices\clones\clone.mp3"
-      if (!FileExist(c) && !FileExist(t))				; only if no existing voice or clone
-        {
-        start := Round(address,1)
-        end := Round(start + 20,1)
-        RunWait, %inca%\cache\apps\ffmpeg.exe -ss %start% -to %end% -i "%src%" -y file:%c%,,Hide	; create clone then attach to voice
-        }
-      if FileExist(c)
-        {
-        i:=1
-        while FileExist(b:= inca "\cache\voices\clones\" base " " i ".mp3") && i<9
-          i++
-        FileMove,%t%,%b%,1						; archive last voice
-        FileMove, %c%, %t%   						; attach new voice
-        } 
-      }
+      Attachclone()
     else if (command == "Clone")
-      {
-      if (type == "video" || type == "audio")
-        {
-        end := Round(value + 20,1)
-        RunWait, %inca%\cache\apps\ffmpeg.exe -ss %value% -to %end% -i "%src%" -y file:"%inca%\cache\voices\clones\clone.mp3",,Hide
-        PopUp("voice created",900,0,0)
-        }
-      else PopUp("no media",900,0,0)
-      }
+      Clone()
     else if (command == "Loudnorm")
-      {
-      Loop, Parse, selected, `,						; index selected files
-       if getMedia(A_LoopField)
-        {
-        if (type == "video" || type == "audio")
-          {
-          GuiControl, Indexer:, GuiInd, %A_Index% - normalising volume - %media%
-          if (type == "video")
-            cmd = -af loudnorm=I=-23:TP=-3:LRA=7:linear=true -c:v copy -c:a aac -b:a 128k -ar 48000 -ac 2 -map 0 -c:s copy -f mp4 -movflags +faststart
-          else cmd = -af "loudnorm=I=-23:TP=-3:LRA=7:linear=true" -c:a libmp3lame -b:a 128k -ar 48000 -ac 2 -map 0 -f mp3
-          RunWait, %inca%\cache\apps\ffmpeg.exe -y -i file:"%src%" %cmd% file:"%inca%\cache\temp\temp.%ext%",,Hide
-          IfExist, %inca%\cache\temp\temp.%ext%
-            FileRecycle, %src%
-          FileMove, %inca%\cache\temp\temp.%ext%, %src%, 1
-          }
-        }
-      GuiControl, Indexer:, GuiInd
-      PopUp("normalised",900,0,0)
-      reload := 1
-      }
-
+      Loudnorm()
     else if (command == "CutCopyPaste")
       {
       CutCopyPaste()
@@ -334,25 +289,7 @@
       else reload := 2
       }
     else if (command == "History")
-      {
-      if (value <= 0)
-        value = 0.0
-      if !selected							; add last and new voice to history
-        {
-        address := StrReplace(address, server)
-        address := RegExReplace(address, "[a-zA-Z]:", "")
-        address := StrReplace(address, "/", "\")
-        x := StrSplit(address,"|").1					; last voice
-        y := StrSplit(address,"|").2					; new voice
-        Drive := SubStr(A_ScriptDir, 1, 2)     ; e.g. "D:\"
-        if (x && !y)
-          FileAppend, %Drive%%x%|0.0`r`n, %inca%\fav\History.m3u, UTF-8
-        else if x 
-          FileAppend, %Drive%%x%|0.0`r`n%Drive%%y%|0.0`r`n, %inca%\fav\History.m3u, UTF-8
-        }
-      else if (folder != "History")
-        FileAppend, %src%|%value%`r`n, %inca%\fav\History.m3u, UTF-8
-      }
+      History()
     else if (command == "Pause")					; set default paused
       {
       config := RegExReplace(config, "Pause/[^|]*", "Pause/" . value)
@@ -362,45 +299,6 @@
       {
       config := RegExReplace(config, "Mute/[^|]*", "Mute/" . value)
       IniWrite, %config%, %inca%\ini.ini, Settings, config
-      }
-    }
-
-
-  Find() 
-    {
-    clp := Clipboard
-    Clipboard =
-    send, ^c
-    sleep 24
-    address := Clipboard
-    Clipboard := clp
-    send, {Lbutton up}
-    if (address && WinActive("ahk_group Browsers"))			;  long clicked selected text    
-      {
-      path =
-      click =
-      reload := 2
-      cmd = #SearchBox###%address%
-      messages(cmd)							; search for files matching text
-      }
-    else IfWinExist, ahk_class OSKMainClass
-      return
-    else if Setting("osk")						; open osk
-      {
-      MouseGetPos, x, y
-      x-=440
-      if (x>440)
-        x-=100
-      if (y < A_ScreenHeight/5)
-        y+=150
-      else y-=600
-      run, osk.exe
-      Loop, 100
-        {
-        sleep 5
-        IfWinExist, ahk_class OSKMainClass
-        WinMove, ahk_class OSKMainClass, , %x%, %y%
-        }
       }
     }
 
@@ -498,6 +396,124 @@
       }
     longClick =
     Gui PopUp:Cancel
+    }
+
+
+    History()
+      {
+      if (value <= 0)
+        value = 0.0
+      if !selected							; add last and new voice to history
+        {
+        address := StrReplace(address, server)
+        address := RegExReplace(address, "[a-zA-Z]:", "")
+        address := StrReplace(address, "/", "\")
+        x := StrSplit(address,"|").1					; last voice
+        y := StrSplit(address,"|").2					; new voice
+        Drive := SubStr(A_ScriptDir, 1, 2)     ; e.g. "D:\"
+        if (x && !y)
+          FileAppend, %Drive%%x%|0.0`r`n, %inca%\fav\History.m3u, UTF-8
+        else if x 
+          FileAppend, %Drive%%x%|0.0`r`n%Drive%%y%|0.0`r`n, %inca%\fav\History.m3u, UTF-8
+        }
+      else if (folder != "History")
+        FileAppend, %src%|%value%`r`n, %inca%\fav\History.m3u, UTF-8
+      }
+
+
+  loudNorm()
+      {
+      Loop, Parse, selected, `,						; index selected files
+       if getMedia(A_LoopField)
+        {
+        if (type == "video" || type == "audio")
+          {
+          GuiControl, Indexer:, GuiInd, %A_Index% - normalising volume - %media%
+          if (type == "video")
+            cmd = -af loudnorm=I=-23:TP=-3:LRA=7:linear=true -c:v copy -c:a aac -b:a 128k -ar 48000 -ac 2 -map 0 -c:s copy -f mp4 -movflags +faststart
+          else cmd = -af "loudnorm=I=-23:TP=-3:LRA=7:linear=true" -c:a libmp3lame -b:a 128k -ar 48000 -ac 2 -map 0 -f mp3
+          RunWait, %inca%\cache\apps\ffmpeg.exe -y -i file:"%src%" %cmd% file:"%inca%\cache\temp\temp.%ext%",,Hide
+          IfExist, %inca%\cache\temp\temp.%ext%
+            FileRecycle, %src%
+          FileMove, %inca%\cache\temp\temp.%ext%, %src%, 1
+          }
+        }
+      GuiControl, Indexer:, GuiInd
+      PopUp("normalised",900,0,0)
+      reload := 1
+      }
+
+
+  Clone()
+      {
+      if (type == "video" || type == "audio")
+        {
+        end := Round(value + 20,1)
+        RunWait, %inca%\cache\apps\ffmpeg.exe -ss %value% -to %end% -i "%src%" -y file:"%inca%\cache\voices\clones\clone.mp3",,Hide
+        PopUp("voice created",900,0,0)
+        }
+      else PopUp("no media",900,0,0)
+      }
+
+
+  Attachclone()
+      {
+      base := RegExReplace(value, " \d+$")
+      t := inca "\cache\voices\clones\" value ".mp3"
+      c := inca "\cache\voices\clones\clone.mp3"
+      if (!FileExist(c) && !FileExist(t))				; only if no existing voice or clone
+        {
+        start := Round(address,1)
+        end := Round(start + 20,1)
+        RunWait, %inca%\cache\apps\ffmpeg.exe -ss %start% -to %end% -i "%src%" -y file:%c%,,Hide	; create clone then attach to voice
+        }
+      if FileExist(c)
+        {
+        i:=1
+        while FileExist(b:= inca "\cache\voices\clones\" base " " i ".mp3") && i<9
+          i++
+        FileMove,%t%,%b%,1						; archive last voice
+        FileMove, %c%, %t%   						; attach new voice
+        } 
+      }
+
+
+  Find() 
+    {
+    clp := Clipboard
+    Clipboard =
+    send, ^c
+    sleep 24
+    address := Clipboard
+    Clipboard := clp
+    send, {Lbutton up}
+    if (address && WinActive("ahk_group Browsers"))			;  long clicked selected text    
+      {
+      path =
+      click =
+      reload := 2
+      cmd = #SearchBox###%address%
+      messages(cmd)							; search for files matching text
+      }
+    else IfWinExist, ahk_class OSKMainClass
+      return
+    else if Setting("osk")						; open osk
+      {
+      MouseGetPos, x, y
+      x-=440
+      if (x>440)
+        x-=100
+      if (y < A_ScreenHeight/5)
+        y+=150
+      else y-=600
+      run, osk.exe
+      Loop, 100
+        {
+        sleep 5
+        IfWinExist, ahk_class OSKMainClass
+        WinMove, ahk_class OSKMainClass, , %x%, %y%
+        }
+      }
     }
 
 
@@ -826,8 +842,38 @@
     }
 
 
-  capEdit() 								; Save edited text or SRT file
-    {
+capEdit() 								; Save edited text or SRT file
+  {
+  IfExist, %inca%\cache\json\%media%.json
+    IfExist, %inca%\cache\voices\%media%\
+      {
+      FileCreateDir, %inca%\cache\temp\%media%\
+      FileRead, txt, %inca%\cache\json\%media%.json
+      used := {}
+      Loop, Parse, txt, `n, `r
+        {
+        line := A_LoopField
+        if (InStr(line, """src""") = 0)
+          continue
+        if (RegExMatch(line, """src""\s*:\s*""(/[^""]+)""", m))
+          {
+          p := StrReplace(m1, "/", "\")
+          if (SubStr(p, 1, 5) = "\inca")
+            p := inca . SubStr(p, 6)
+          else if (SubStr(p, 1, 6) = "/inca")
+            p := inca . SubStr(p, 7)
+          if (FileExist(p))
+            used[p] := 1
+          }
+        }
+      for src in used
+        {
+        SplitPath, src, fn
+        FileCopy, %src%, %inca%\cache\temp\%media%\%fn%, 1
+        }
+      FileRecycle, %inca%\cache\voices\%media%
+      FileMoveDir, %inca%\cache\temp\%media%, %inca%\cache\voices\%media%, 1
+      }
     FileRecycle, %inca%\cache\json\%media%.json
     FileAppend, %value%, %inca%\cache\json\%media%.json, UTF-8
     if (ext == "txt")
@@ -1339,6 +1385,17 @@
     FileMove, %inca%\cache\posters\%media%.jpg, %inca%\cache\posters\%new_name%.jpg, 1
     FileMove, %inca%\cache\srt\%media%.srt, %inca%\cache\srt\%new_name%.srt, 1
     FileMove, %inca%\cache\json\%media%.json, %inca%\cache\json\%new_name%.json, 1
+    FileMoveDir, %inca%\cache\voices\%media%, %inca%\cache\voices\%new_name%, 1
+    IfExist, %inca%\cache\json\%new_name%.json
+      IfExist, %inca%\cache\voices\%new_name%
+        {
+        oldStr = /cache/voices/%media%
+        newStr = /cache/voices/%new_name%
+        FileRead, json, %inca%\cache\json\%new_name%.json
+        json := RegExReplace(json, "i)\Q" oldStr "\E", newStr)
+        FileRecycle, %inca%\cache\json\%new_name%.json
+        FileAppend, %json%, %inca%\cache\json\%new_name%.json
+        }
     }
 
 
@@ -2146,7 +2203,7 @@ mediaList(j, input, start)						; spool sorted media files into web page
       Loop, Parse, allfav, `n, `r
         if InStr(A_Loopfield, x)
           {
-          favicon = &#169 &#8195					; favorite heart symbol
+          favicon = &#x2764					; favorite heart symbol
           start := StrSplit(A_Loopfield,"|").2
           break
           }
@@ -2195,7 +2252,7 @@ mediaList(j, input, start)						; spool sorted media files into web page
     IfExist, %inca%\cache\json\%media%.json
       data = %inca%/cache/json/%media%.json
     if (data)
-      favicon =  &#x2764 %favicon%
+      favicon =  %favicon% &#8203 &#169 
     IfNotExist, %src%
       noIndex = <span class='warning'>disk ?</span>
     src = %src%
@@ -2219,9 +2276,9 @@ mediaList(j, input, start)						; spool sorted media files into web page
     caption = <pre id="dat%j%" style='display: none' type="text/plain" data=%data%></pre>`n
 
     if listView
-mediaList = %mediaList%%fold%<div id='entry%j%' class='entry-row' data-params='%type%,%start%,%dur%,%size%' onmouseenter='if (gesture) sel(%j%)' onmouseover='overThumb(%j%)'`n onmouseout="thumb%j%.style.opacity=0; thumb.src=''"><div><video id='thumb%j%' class='thumb2' onwheel='if (zoom > 1) wheelEvent(event)'`n %poster% preload=%preload% muted loop disableRemotePlayback type="video/mp4"></video><video id="vid%j%" style='display: none'`n src=%src% preload='none' type='video/mp4'></video>`n </div><div>%j%</div><div>%ext%</div><div>%size%</div><div style='min-width: 6em'>%durT%</div><div>%date%</div><div style='width:1em'><div id='myFavicon%j%' class='favicon' style='%favi% position: relative; text-align: right; translate:1.6em 0.4em'>%favicon%</div></div><div class='title-cell'><textarea id="title%j%" class='title' autocomplete='off' oninput="renamebox=this.value">`n %media_s%</textarea></div>%fo%</div>`n %caption%<span id='cues%j%' style='display: none'>%cues%</span>`n`n
+mediaList = %mediaList%%fold%<div id='entry%j%' class='entry-row' data-params='%type%,%start%,%dur%,%size%' onmouseenter='if (gesture) sel(%j%)' onmouseover='overThumb(%j%)'`n onmouseout="thumb%j%.style.opacity=0; thumb.src=''"><div><video id='thumb%j%' class='thumb2' onwheel='if (zoom > 1) wheelEvent(event)'`n %poster% preload=%preload% muted loop disableRemotePlayback type="video/mp4"></video><video id="vid%j%" style='display: none'`n src=%src% preload='none' type='video/mp4'></video>`n </div><div>%j%</div><div>%ext%</div><div>%size%</div><div style='min-width: 6em'>%durT%</div><div>%date%</div><div style='width:1em'><div id='myFavicon%j%' class='favicon' style='position: relative; text-align: right; translate:1.6em 0.4em'>%favicon%</div></div><div class='title-cell'><textarea id="title%j%" class='title' style='top:0.1em' autocomplete='off' onmouseenter='overThumb(%j%)' oninput="renamebox=this.value">`n %media_s%</textarea></div>%fo%</div>`n %caption%<span id='cues%j%' style='display: none'>%cues%</span>`n`n
 
-    else mediaList = %mediaList%<div id="entry%j%" class='entry' data-params='%type%,%start%,%dur%,%size%'>`n <span id='myFavicon%j%' onmouseenter='overThumb(%j%)' class='favicon' style='%favi%'>%favicon%</span>`n <textarea id='title%j%' class='title' style='top:-0.8em; opacity:0.7' type='text'`n oninput="renamebox=this.value"`n >%media_s%</textarea>`n <video id="thumb%j%" class='thumb' onwheel='if (zoom > 1) wheelEvent(event)' onmouseenter="overThumb(%j%); if (gesture && !playing) sel(%j%)"`n onmouseleave="thumb.pause()"`n onmouseup='if (gesture && !playing) Param(%j%)' %poster%`n preload=%preload% loop muted disableRemotePlayback type='video/mp4'></video>`n <video id="vid%j%" style='display: none' src=%src% preload='none' type='video/mp4'></video>%noIndex%`n <span id='cues%j%' style='display: none'>%cues%</span></div>`n %caption%`n
+    else mediaList = %mediaList%<div id="entry%j%" class='entry' data-params='%type%,%start%,%dur%,%size%'>`n <span id='myFavicon%j%' onmouseenter='overThumb(%j%)' class='favicon'>%favicon%</span>`n <textarea id='title%j%' class='title' style='top:-0.8em; opacity:0.7' type='text'`n oninput="renamebox=this.value"`n onmouseenter='overThumb(%j%)'>%media_s%</textarea>`n <video id="thumb%j%" class='thumb' onwheel='if (zoom > 1) wheelEvent(event)' onmouseenter="overThumb(%j%); if (gesture && !playing) sel(%j%)"`n onmouseleave="thumb.pause()"`n onmouseup='if (gesture && !playing) Param(%j%)' %poster%`n preload=%preload% loop muted disableRemotePlayback type='video/mp4'></video>`n <video id="vid%j%" style='display: none' src=%src% preload='none' type='video/mp4'></video>%noIndex%`n <span id='cues%j%' style='display: none'>%cues%</span></div>`n %caption%`n
     }
 
 
