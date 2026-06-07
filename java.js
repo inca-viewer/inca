@@ -81,6 +81,7 @@
   let editingBlock = null;
   let originalPlayerSrc = '';
   let projectMedia = { defaultSrc: null };
+  let editorObserver = null;
   let scaleY = (innerHeight > innerWidth) ? 0.8 : 0.7			// myPlayer height (screen ratio)
 
   let entry = document.createElement('div')				// dummy thumb container
@@ -184,7 +185,7 @@
     if (longClick == 1 && !playing && playlist && selected && overMedia) {inca('Move', overMedia); return}
     if (['myIndex', 'myMp3', 'myMp4', 'myJoin', 'myJpg', 'mySrt'].includes(id)) {Ffmpeg(id); cue = 0; return}
     if (id == 'myClone') {inca('Clone',myPlayer.currentTime.toFixed(1),index); return}
-    if (id == 'myLoudnorm') {inca('Loudnorm'); return}
+    if (id == 'myLoudnorm') {inca('Loudnorm',0,index); return}
     if (id == 'myInca') {incaButton(); return}
     if (id == 'ribbon' && !longClick) {viewport.scrollTo({top:0,behavior:'smooth'}); return}
     if (id == 'myFavorite') {addFavorite(); return}
@@ -233,7 +234,6 @@
       if (overTitle && longClick) return
       if (overTitle) if (ym > 0.5 || overTitle == 2 || !blocks.length) {title.value = title.value.trim(); overTitle = 2; return}}
     if (!getStart(id)) return
-
     if (lastClick == 1 && overBlock) return
     if (!playing && lastClick == 2) return
     if (playing && lastClick == 1) {
@@ -280,9 +280,9 @@
     else if (!playing) lastSeek = defStart
     if (playlist.match('/inca/music/')) myPlayer.muted = 0
     else myPlayer.muted = defMute
-    if (!thumbSheet && !(editor.style.display && lastClick == 1))
-    if (blocks && title.matches(':hover') && Click) {if (!longClick) getSrt(1)}		// caption preview start
-    else if (captions || type == 'document' || favicon.matches(':hover') || type == 'document') {lastBlock = 0; getSrt(1)}
+    if (!thumbSheet) {
+      if (blocks.length && overTitle && Click && !longClick) getSrt()			// use caption preview start
+      else if (captions || type == 'document' || favicon.matches(':hover')) {lastBlock = 0; getSrt()}}
     if (el = document.getElementById('title'+lastMedia)) el.style.color = null
     title.style.color = 'pink'; 
     lastMedia = index
@@ -312,7 +312,7 @@
   function mouseMove(e) {
     let id = e.target.id								// id under cursor
     overBlock = e.target.closest('.text-block') || 0
-    if (playing) delay = 100								// show seekbar
+    if (playing && !overMedia) delay = 100						// show seekbar
     if (overBlock) lastId = overBlock
     if (innerHeight == outerHeight) {xPos = e.screenX; yPos = e.screenY} 		// fullscreen detection/offsets
     else {xPos = e.clientX; yPos = e.clientY}
@@ -473,6 +473,7 @@
     mySpeed2.innerHTML = defRate !=1 ? "s" : ''
     if (!overMedia || overMedia && ym < trigger) fade = 3
     seekbar()
+    if (playing || !overTitle) title.classList.remove('preview')
     if (playing) {
       positionMedia(0)
       if (captions) updateTimeDisplay()
@@ -485,17 +486,16 @@
       if (myPlayer.duration) dur = myPlayer.duration
       if (cues.innerHTML && !thumbSheet && type !='image' && dur) myCues(myPlayer.currentTime)}
     else {
-      if (!overTitle || (overTitle == 1 && xm > 0.4 && ym > 0.5)) title.classList.remove('preview')
-      if (blocks && overTitle == 1) {							// caption preview
-        if  (ym > 0.5 || overTitle > 1) {
-          title.style.cursor = 'text'
-          title.value = '\n' + title.defaultValue}
-        else if (blocks) {
-          const idx = Math.floor(xm * blocks.length);
-          const block = blocks[Math.min(idx, blocks.length - 1)];
-          title.style.cursor = 'default'
-          lastBlock = block.dataset.num;
-          title.value = block.innerText.replace(/([.,!?;:—…])\s*/g, '$1\n').trim()}}
+      if (overTitle == 1 && !blocks.length && xm > 0.3 && favicon.innerText.includes('©')) getPreview()
+      if (!blocks.length && overTitle) {
+        title.style.cursor = 'text'
+        title.value = title.defaultValue}
+      else {
+        const idx = Math.floor(xm * blocks.length);
+        const block = blocks[Math.min(idx, blocks.length - 1)];
+        title.style.cursor = 'default'
+        lastBlock = block.dataset.num;
+        title.value = block.innerText.replace(/([.,!?;:—…])\s*/g, '$1\n').trim()}
       myInca.textContent = '...'
       myMask.style.pointerEvents = null
       if (zoom > 1 && overMedia) myMask.style.opacity = 0.9
@@ -550,7 +550,7 @@
       if (dur) mySeek.style.opacity = 1
       if (xm>0 && xm<1 && ym > trigger && ym < 1 && !thumbSheet && delay < 30) myPic.style.opacity = 1
       else myPic.style.opacity = 0
-      myPic.style.top = rect.top + rect.height - myPic.offsetHeight - 6 + 'px'
+      myPic.style.top = rect.top + rect.height - myPic.offsetHeight + 'px'
       if (rect.width > 240) myPic.style.left = xPos - skinny * myPic.offsetWidth / 2 + 'px'
       else myPic.style.left = rect.left + rect.width / 2 - skinny * myPic.offsetWidth / 2 + 'px'
       let x = (xPos - rect.left) / rect.width						// set myPic sprite and set start
@@ -708,22 +708,27 @@
         else if (el[1] == 'pause') {myPlayer.pause(); if (el[2]) setTimeout(function(){myPlayer.play()},1000*el[2])}}}}
 
 
-  function getSrt(open) {
-    if (!open && editor.style.display === 'flex') return
+  function getSrt() {
     const src = document.getElementById('dat' + index)?.getAttribute('data');
-    if (!src) return
-    if (open) {captions = 1; editor.style.display = 'flex'}
-    positionMedia(0);
-    blocks = [];
+    if (!src || editor.style.display === 'flex') return
+    editor.style.display = 'flex'
+    captions = 1
     fetch(src)
       .then(response => {return response.text()})
-      .then(data => {
-        if (open) {openEditor(data)}
-        else {
+      .then(data => {openEditor(data)})
+    .catch(() => {openEditor('')})}					// new caption
+
+
+  function getPreview() {
+    const src = document.getElementById('dat' + index)?.getAttribute('data');
+    if (src) {
+      fetch(src)
+        .then(response => {return response.text()})
+        .then(data => {
           blocks = []
           const parsed = parseInputText(data);
-          if (parsed?.blocks?.length) {parsed.blocks.forEach(b => {addBlock(b.number || (blocks.length + 1), b.startTime || 0, b.text || '')})}}})
-    .catch(() => {if (open) openEditor('')})}				// new caption
+          if (parsed?.blocks?.length) {parsed.blocks.forEach(b => {addBlock(b.number || (blocks.length + 1), b.startTime || 0, b.text || '')})}})}}
+
 
 
   function updateCue(item, val) {					// rate, skinny, cues 
@@ -830,7 +835,7 @@
     if (Click) return							// faster for click & slide selecting
     index = id
     Param(id)
-    getSrt()								// for preview
+    blocks = []								// for preview
     thumb.style.opacity = 1
     if (playing && !thumbSheet) {
       if (type == 'video') {myPlayer.currentTime = defStart; if (!defPause) myPlayer.play()}
@@ -841,6 +846,7 @@
 
   function closePlayer() {
     if (observer) observer.disconnect()
+    if (editorObserver) editorObserver.disconnect()
     if (!thumbSheet) messages += '#History#' + myPlayer.currentTime.toFixed(1) + '#' + index + '#'
     if (editing) {
       let txt = blocks.map(b => b.innerText.trim()).filter(Boolean).join('\n\n').replaceAll('#', '𝌇')
@@ -986,9 +992,10 @@
     const ui = parsed.ui || {};
     Object.assign(editor.style, ui);
     matchCountSpan.textContent = ''
-    const options = { childList: false, subtree: true, characterData: true };
-    const editorObserver = new MutationObserver(() => { editing = 1});
-    editorObserver.observe(viewport, options)
+    const options = { childList: false, subtree: true, characterData: true }
+    if (!editorObserver) {
+        editorObserver = new MutationObserver(() => { editing = 1 });
+        editorObserver.observe(viewport, { childList: false, subtree: true, characterData: true })}
     document.querySelector('#search-header').dispatchEvent(new WheelEvent('wheel', { deltaY: -100 }));
     setTimeout(() => {
       editing = 0
@@ -1605,9 +1612,7 @@ function editorInput(e) {
     if (wheel < 0) next = next?.previousElementSibling?.previousElementSibling
     if (!myMask.matches(':hover')) {next = editingBlock; editingBlock = null}
     activateBlock(next)
-    const offset = viewport.clientHeight / 2 - next.offsetHeight / 2
-    const targetTop = next.offsetTop - offset
-    viewport.scrollTo({ top: Math.max(0, targetTop), behavior: 'smooth' })}
+    if (myMask.matches(':hover')) next.scrollIntoView({ behavior: 'smooth', block: 'center' });}
 
 
   function scrollToNearestCaption() {
@@ -1622,7 +1627,8 @@ function editorInput(e) {
       if (myPlayer.currentTime >= nextStart - 0.1) {
         if (!myMask.matches(':hover')) {
           setTimeout(() => {myPlayer.pause(); myVoice.pause();},100)}
-        else activateBlock(nextBlock)
+        else {activateBlock(nextBlock)}
+        if (myMask.matches(':hover')) nextBlock.scrollIntoView({ behavior: 'smooth', block: 'center' });
         isScrolling = true
         setTimeout(() => isScrolling = false, 800);}}}
 

@@ -421,6 +421,8 @@
       }
 
 
+
+
   loudNorm()
       {
       Loop, Parse, selected, `,						; index selected files
@@ -842,10 +844,21 @@
     }
 
 
-capEdit() 								; Save edited text or SRT file
+capEdit() 								; Save edited json, text or SRT file
   {
-  IfExist, %inca%\cache\json\%media%.json
-    IfExist, %inca%\cache\voices\%media%\
+  if (value && address)
+    {
+    FileRecycle, %inca%\cache\json\%media%.json
+    FileAppend, %value%, %inca%\cache\json\%media%.json, UTF-8
+    if (ext == "txt")
+      { 
+      FileRecycle, %src%
+      FileAppend, %address%, %src%, UTF-8
+      }
+    PopUp("saved", 999, 0, 0)
+    }
+  IfExist, %inca%\cache\json\%media%.json				; if voices exist in json
+    IfExist, %inca%\cache\voices\%media%\				; clear voices folder of any unused voices
       {
       FileCreateDir, %inca%\cache\temp\%media%\
       FileRead, txt, %inca%\cache\json\%media%.json
@@ -874,17 +887,9 @@ capEdit() 								; Save edited text or SRT file
       FileRecycle, %inca%\cache\voices\%media%
       FileMoveDir, %inca%\cache\temp\%media%, %inca%\cache\voices\%media%, 1
       }
-    FileRecycle, %inca%\cache\json\%media%.json
-    FileAppend, %value%, %inca%\cache\json\%media%.json, UTF-8
-    if (ext == "txt")
-      { 
-      FileRecycle, %src%
-      FileAppend, %address%, %src%, UTF-8
-      }
-    index := StrSplit(selected, ",").1
-    RenderPage(0)
-    PopUp("saved", 999, 0, 0)
-    }
+  index := StrSplit(selected, ",").1
+  RenderPage(0)
+  }
 
 
   Add()
