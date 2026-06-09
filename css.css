@@ -17,21 +17,21 @@
 .entry-row {
   display: grid;
   align-items: center;
-  height: 1.6em;
+  height: 1.7em;
   overflow: visible;
   white-space: nowrap;
   color: #826858;
   font-size: 0.9em;
   border-radius: 1em;
   transition: color 0.3s;
-  grid-template-columns: 4em 4em 4em 4em 4em 2em 2em auto 6em;
+  grid-template-columns: 4em 4em 4em 4em 4em 3.5em 1em auto 6em;
   width: 100%}
 
 .entry-row:hover { background: #1b1814; }
 
 .title-cell {
   max-width: 60vw;
-  height: 1.6em;
+  top: -1em;
   position: relative;
   overflow: visible;}
 
@@ -62,11 +62,12 @@
 .title.preview {
     white-space: nowrap;
     overflow-wrap: break-word;
+    word-break: keep-all;
     left: 0.8em;
     padding: 0 0.3em;
     line-height: 1.3;
     height: 2.8em !important;
-    z-index: 9999 !important;
+    z-index: 999 !important;
     opacity: 1 !important;
     transition: 0.6s !important;
     color: pink !important;
@@ -147,7 +148,7 @@
 
   .text-block {
     position: relative; background:transparent; border-radius:0.7em; white-space:pre-wrap; transition: 0.42s; overflow: visible;
-    word-wrap:break-word; font-family:'Yu Gothic'; line-height:1.5; margin: 0; padding: 0 1em 0.6em 1em; min-width: 90%;
+    word-wrap:break-word; font-family:'Yu Gothic'; line-height:1.5; margin: 0; padding: 0 1em 0.9em 1em; min-width: 90%;
     color:#ffc0cb80; text-align:center; outline:none; width: auto; align-self: center; border: 0; margin-bottom: 1em;}
 
   .text-block[data-fav="1"]::after {
@@ -162,7 +163,7 @@
 
   .text-block.editing { background: #111111; color: #ffc0cbaa; transform: scale(1.07, 1.07) }
 
-  .text-block.has-voice.editing::before {
+.text-block.editing[data-has-media="1"]::before {
     content: '';
     position: absolute;
     left: 100px;

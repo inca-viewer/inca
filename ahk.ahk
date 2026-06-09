@@ -425,6 +425,7 @@
 
   loudNorm()
       {
+      Critical, Off                          				; allows RClick to fire
       Loop, Parse, selected, `,						; index selected files
        if getMedia(A_LoopField)
         {
@@ -432,16 +433,22 @@
           {
           GuiControl, Indexer:, GuiInd, %A_Index% - normalising volume - %media%
           if (type == "video")
+            ex = mp4
+          else ex = mp3
+          if (type == "video")
             cmd = -af loudnorm=I=-23:TP=-3:LRA=7:linear=true -c:v copy -c:a aac -b:a 128k -ar 48000 -ac 2 -map 0 -c:s copy -f mp4 -movflags +faststart
           else cmd = -af "loudnorm=I=-23:TP=-3:LRA=7:linear=true" -c:a libmp3lame -b:a 128k -ar 48000 -ac 2 -map 0 -f mp3
-          RunWait, %inca%\cache\apps\ffmpeg.exe -y -i file:"%src%" %cmd% file:"%inca%\cache\temp\temp.%ext%",,Hide
-          IfExist, %inca%\cache\temp\temp.%ext%
+          RunWait, %inca%\cache\apps\ffmpeg.exe -y -i file:"%src%" %cmd% file:"%inca%\cache\temp\temp.%ex%",,Hide
+          IfExist, %inca%\cache\temp\temp.%ex%
+            {
             FileRecycle, %src%
-          FileMove, %inca%\cache\temp\temp.%ext%, %src%, 1
+            FileMove, %inca%\cache\temp\temp.%ex%, %mediaPath%\%media%.%ex%, 1
+            PopUp("normalised",900,0,0)
+            }
           }
         }
       GuiControl, Indexer:, GuiInd
-      PopUp("normalised",900,0,0)
+      sleep 200
       reload := 1
       }
 
@@ -475,7 +482,7 @@
         while FileExist(b:= inca "\cache\voices\clones\" base " " i ".mp3") && i<9
           i++
         FileMove,%t%,%b%,1						; archive last voice
-        FileMove, %c%, %t%   						; attach new voice
+        FileMove, %c%, %t%   						; attach new clone voice
         } 
       }
 
@@ -888,6 +895,7 @@ capEdit() 								; Save edited json, text or SRT file
       FileMoveDir, %inca%\cache\temp\%media%, %inca%\cache\voices\%media%, 1
       }
   index := StrSplit(selected, ",").1
+sleep 100
   RenderPage(0)
   }
 
@@ -1254,7 +1262,7 @@ capEdit() 								; Save edited json, text or SRT file
         popup = Added %A_Index%
       if (InStr(address, "inca\fav") || InStr(address, "inca\music"))
         {
-        PopUp("Added",0,0,0)
+        PopUp("Adding",0,0,0)
         FileAppend, %target%`r`n, %address%, UTF-8			; add media entry to playlist
         if (src && !InStr(path, "\inca\"))
           Runwait, %inca%\cache\apps\ffmpeg.exe -i "%src%" -y -vf scale=1280:1280/dar -vframes 1 "%inca%\cache\posters\%media%%A_Space%0.0.jpg",, Hide
@@ -2166,9 +2174,12 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
       sleep 200
       WinActivate, ahk_group Browsers
       }
-    else if (incaTab == folder) 
-      send {F5}
-    else FileAppend, %htm%, %inca%\cache\html\temp.txt, UTF-8		; trigger node server
+    else IfWinActive, ahk_group Browsers
+      { 
+      if (incaTab == folder) 
+        send {F5}
+      else FileAppend, %htm%, %inca%\cache\html\temp.txt, UTF-8		; trigger node server
+      }
     sleep 200
     incaTab := folder
     Loop, 30								; wait until page loaded
@@ -2202,13 +2213,13 @@ mediaList(j, input, start)						; spool sorted media files into web page
     if (type == "document" || type == "image" || !dur)
       dur := 0
     FileRead, cues, %inca%\cache\cues\%media%.txt
-    favicon =  
+    favicon = &#8203							; empty space char
     x = %media%.%ext%
     if !playlist
       Loop, Parse, allfav, `n, `r
         if InStr(A_Loopfield, x)
           {
-          favicon = &#x2764					; favorite heart symbol
+          favicon = &#x2764						; favorite heart symbol
           start := StrSplit(A_Loopfield,"|").2
           break
           }
@@ -2257,7 +2268,7 @@ mediaList(j, input, start)						; spool sorted media files into web page
     IfExist, %inca%\cache\json\%media%.json
       data = %inca%/cache/json/%media%.json
     if (data)
-      favicon =  %favicon% &#8203 &#169 
+      favicon =  %favicon% &#169 					; © copyright symbol		
     IfNotExist, %src%
       noIndex = <span class='warning'>disk ?</span>
     src = %src%
@@ -2281,7 +2292,7 @@ mediaList(j, input, start)						; spool sorted media files into web page
     caption = <pre id="dat%j%" style='display: none' type="text/plain" data=%data%></pre>`n
 
     if listView
-mediaList = %mediaList%%fold%<div id='entry%j%' class='entry-row' data-params='%type%,%start%,%dur%,%size%' onmouseenter='if (gesture) sel(%j%)' onmouseover='overThumb(%j%)'`n onmouseout="thumb%j%.style.opacity=0; thumb.src=''"><div><video id='thumb%j%' class='thumb2' onwheel='if (zoom > 1) wheelEvent(event)'`n %poster% preload=%preload% muted loop disableRemotePlayback type="video/mp4"></video><video id="vid%j%" style='display: none'`n src=%src% preload='none' type='video/mp4'></video>`n </div><div>%j%</div><div>%ext%</div><div>%size%</div><div style='min-width: 6em'>%durT%</div><div>%date%</div><div style='width:1em'><div id='myFavicon%j%' class='favicon' style='position: relative; text-align: right; translate:1.6em 0.4em'>%favicon%</div></div><div class='title-cell'><textarea id="title%j%" class='title' style='top:0.1em' autocomplete='off' onmouseenter='overThumb(%j%)' oninput="renamebox=this.value">`n %media_s%</textarea></div>%fo%</div>`n %caption%<span id='cues%j%' style='display: none'>%cues%</span>`n`n
+mediaList = %mediaList%%fold%<div id='entry%j%' class='entry-row' data-params='%type%,%start%,%dur%,%size%' onmouseenter='if (gesture) sel(%j%)' onmouseover='overThumb(%j%)'`n onmouseout="thumb%j%.style.opacity=0; thumb.src=''"><div><video id='thumb%j%' class='thumb2' onwheel='if (zoom > 1) wheelEvent(event)'`n %poster% preload=%preload% muted loop disableRemotePlayback type="video/mp4"></video><video id="vid%j%" style='display: none'`n src=%src% preload='none' type='video/mp4'></video>`n </div><div>%j%</div><div>%ext%</div><div>%size%</div><div style='min-width: 6em'>%durT%</div><div>%date%</div><div id='myFavicon%j%' class='favicon' style='position: relative; text-align: right; translate:1.6em 0.4em'>%favicon%</div><div class='title-cell'><textarea id="title%j%" class='title' style='top:0.1em' autocomplete='off' onmouseenter='overThumb(%j%)' oninput="renamebox=this.value">`n %media_s%</textarea></div>%fo%</div>`n %caption%<span id='cues%j%' style='display: none'>%cues%</span>`n`n
 
     else mediaList = %mediaList%<div id="entry%j%" class='entry' data-params='%type%,%start%,%dur%,%size%'>`n <span id='myFavicon%j%' onmouseenter='overThumb(%j%)' class='favicon'>%favicon%</span>`n <textarea id='title%j%' class='title' style='top:-0.8em; opacity:0.7' type='text'`n oninput="renamebox=this.value"`n onmouseenter='overThumb(%j%)'>%media_s%</textarea>`n <video id="thumb%j%" class='thumb' onwheel='if (zoom > 1) wheelEvent(event)' onmouseenter="overThumb(%j%); if (gesture && !playing) sel(%j%)"`n onmouseleave="thumb.pause()"`n onmouseup='if (gesture && !playing) Param(%j%)' %poster%`n preload=%preload% loop muted disableRemotePlayback type='video/mp4'></video>`n <video id="vid%j%" style='display: none' src=%src% preload='none' type='video/mp4'></video>%noIndex%`n <span id='cues%j%' style='display: none'>%cues%</span></div>`n %caption%`n
     }
@@ -2309,6 +2320,7 @@ mediaList = %mediaList%%fold%<div id='entry%j%' class='entry-row' data-params='%
 
 
   Ffmpeg: 								; mp3, mp4, indexing - async processing
+    Critical, off							; allow RClick
     PopUp(Chr(0x2713),600,0,0)
     GuiControl, Indexer:, GuiInd, processing ...
     transcoding =
