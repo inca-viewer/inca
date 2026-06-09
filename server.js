@@ -47,7 +47,7 @@ const server = http.createServer(async (req, res) => {
             req.on('end', async () => {
                 try {
                     const data = JSON.parse(body);
-                    const { voiceName, text, provider = 'elevenlabs' } = data;
+                    const { voiceName, text, provider = 'elevenlabs', title: mediaTitle } = data;
 
                     if (!text) {
                         res.writeHead(400, { 'Content-Type': 'application/json' });
@@ -114,14 +114,15 @@ const server = http.createServer(async (req, res) => {
                      }
 
 
-
 // ====================== Save file ======================
-const clean = str => str.replace(/[\\\/:*?"<>|]/g, ' ').replace(/\s+/g, ' ').slice(0, 26);
-const safeVoice = clean(finalVoiceName);
-const safeText = clean(text).slice(0, 26).replace(/\s+\S*$/, '').trim();
+
+const clean = str => str.replace(/[\\\/:*?"<>|]/g, ' ').replace(/\s+/g, ' ') 
+const safeVoice = clean(finalVoiceName).slice(0, 20).trim();
+let textSize = 36 - safeVoice.length
+const safeText = clean(text + ' QQQ').slice(0, textSize).replace(/\s+\S*$/, '').replace(/[.,;—…]+$/, '').trim();
 const timestamp = new Date().toLocaleString('sv').replace(/:/g, '.');
 const filename = `${safeVoice} - ${safeText} - ${timestamp}.mp3`;
-const fullDir = path.join(DRIVE_ROOT, 'inca', 'cache', 'voices');
+const fullDir = path.join(DRIVE_ROOT, 'inca', 'cache', 'voices', mediaTitle);
 await fsPromises.mkdir(fullDir, { recursive: true });
 
 if (provider === 'chatterbox') {
@@ -136,7 +137,9 @@ if (provider === 'chatterbox') {
 
 const filepath = path.join(fullDir, filename);
 await fsPromises.writeFile(filepath, buffer);
-const publicPath = `/inca/cache/voices/${filename}`;
+const publicPath = mediaTitle 
+    ? `/inca/cache/voices/${mediaTitle}/${filename}`
+    : `/inca/cache/voices/${filename}`;
 res.writeHead(200, { 'Content-Type': 'application/json' });
 res.end(JSON.stringify({ path: publicPath, voiceName: finalVoiceName, filename }));
 } catch (err) {
