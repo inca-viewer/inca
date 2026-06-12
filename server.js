@@ -6,7 +6,7 @@ const SCRIPT_DIR = path.dirname(__filename);
 const DRIVE_ROOT = SCRIPT_DIR[0] + ':\\';
 const CACHE_DIR = path.join(DRIVE_ROOT, 'inca', 'cache', 'html');
 const inputFilePath = path.join(CACHE_DIR, 'in.txt');
-const tempFilePath  = path.join(CACHE_DIR, 'temp.txt');
+const tempFilePath  = path.join(CACHE_DIR, 'out.txt');
 
 let ELEVENLABS_API_KEY = null;
 let ELEVEN_MODEL = "eleven_v3";
@@ -47,7 +47,7 @@ const server = http.createServer(async (req, res) => {
             req.on('end', async () => {
                 try {
                     const data = JSON.parse(body);
-                    const { voiceName, text, provider = 'elevenlabs', title: mediaTitle } = data;
+                    let { voiceName, text, provider = 'elevenlabs', title: mediaTitle } = data;
 
                     if (!text) {
                         res.writeHead(400, { 'Content-Type': 'application/json' });
@@ -56,6 +56,13 @@ const server = http.createServer(async (req, res) => {
                     }
                     let buffer;
                     let finalVoiceName = voiceName;
+                    if (provider === 'chatterbox' && text) {
+                        text = text
+                            .replace(/\n+/g, '. ')      // newlines → sentence break
+                            .replace(/\s+/g, ' ')       // normalize spaces
+                            .replace(/\.\s*\./g, '.')   // clean ".."
+                            .trim();
+                    }
 
 
 // added reference_audio_path, format and max_reference_duration_sec to config.yaml
@@ -181,6 +188,10 @@ res.end(JSON.stringify({ path: publicPath, voiceName: finalVoiceName, filename }
                 }
                 responseSent = true;
                 await serveHtmlFile(res, startTime);
+
+// Clear out.txt once consumed
+// fsPromises.writeFile(tempFilePath, '').catch(() => {});
+
 
                 setTimeout(() => {
                     if (!responseSent) {
