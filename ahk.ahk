@@ -2109,9 +2109,9 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
 
   <div id='myDefault'>
     <div class="menu editor">`n
-      <a id='myChatterbox'></a>`n
-      <a id='myElevenLabs'></a>`n
       <a id='myBookmark'>Bookmark</a>`n
+      <a id='myChatterbox'>Chatterbox &#x2726;</a>`n
+      <a id='myElevenLabs'>Elevenlabs &#x2726;</a>`n
       <a id='myEmotion'>Emotion</a>`n
         <div id='emotionSub' class='submenu'>`n
           <a data-tag='laugh'>laugh</a>`n

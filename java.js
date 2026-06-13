@@ -196,7 +196,8 @@
       else { editing = 0; closePlayer() }}
     if (id == 'myBookmark') {
       blk = blocks.find(b => b.dataset.num === idDisplay.textContent);
-      if (blk) blk.dataset.fav = blk.dataset.fav === '1' ? '0' : '1'; editing = 1}
+      if (blk) blk.dataset.fav = blk.dataset.fav === '1' ? '0' : '1'
+      editing = 1; overBlock = editingBlock}
     if (id == 'myExport') {
       let txt = blocks.map(b => b.innerText.trim()).filter(Boolean).join('\n\n').replaceAll('#', '𝌇')
       inca('Export', txt, index)}
@@ -219,8 +220,7 @@
         splitIfNeeded(editingBlock)
         editingBlock?.classList.remove('editing')
         overBlock.classList.add('editing')
-        activateBlock(overBlock)
-        updateMediaHeader()}
+        activateBlock(overBlock)}
       else {activateBlock(overBlock); myVoice.play(); myPlayer.play()}}			// ! togglePause() reverses
     if (lastClick == 3) {
       if (overBlock && !gesture) {
@@ -993,8 +993,7 @@ incaBusy = ''
     setTimeout(() => {
       editing = 0
       if (defPause) {myPlayer.pause(); myVoice.pause()}
-      if (searchTerm) {searchInput.value = searchTerm; newSearch()}}, 600)
-    updateMediaHeader()}
+      if (searchTerm) {searchInput.value = searchTerm; newSearch()}}, 600)}
 
 
   function parseSrtTime(t) {
@@ -1063,8 +1062,7 @@ function loadVoices() {
     none.onclick = () => {
         if (editingBlock) {
             delete editingBlock._voice;
-            delete editingBlock.dataset.voiceName;
-            updateVoiceHeader(editingBlock);
+            delete editingBlock.dataset.voiceName
         }
     };
     voiceContent.appendChild(none);
@@ -1121,7 +1119,6 @@ function loadVoices() {
                 if (editingBlock._voice.name == name) myVoice.volume = editingBlock._voice.volume = percent;
                 editing = 1;
                 if (name) selectVoice(name);
-                updateVoiceHeader(editingBlock);
                 loadVoices();   // refresh active state
             }
         });
@@ -1142,7 +1139,7 @@ function loadVoices() {
     newRow.style.cursor = 'pointer';
     newRow.textContent = '+ New Voice';
     newRow.onclick = () => {
-myPlayer.pause(); myVoice.pause()
+    myPlayer.pause(); myVoice.pause()
         let name = prompt("Enter new voice name:", "").trim();
         if (name) {name = name.charAt(0).toUpperCase() + name.slice(1); selectVoice(name)}
     };
@@ -1171,23 +1168,7 @@ myPlayer.pause(); myVoice.pause()
     editingBlock._voice.volume = editingBlock._voice.volume ?? 1;
     editingBlock.dataset.voiceName = name;
     editing = 1;
-    updateVoiceHeader(editingBlock);
     loadVoices();}
-
-
-  function updateMediaHeader() {mediaHeader.textContent = title.value}
-
-function updateVoiceHeader(block) {
-  const icons = [];
-  voiceHeaderText.textContent = ''; 
-  if (block._voice?.name) {
-    icons.push(block._voice.name); 
-    myElevenLabs.innerHTML = 'ElevenLabs ✦'
-    myChatterbox.innerHTML = 'Chatterbox ✦'}
-  else myElevenLabs.textContent = myChatterbox.textContent = ''
-  const iconText = icons.length ? icons.join(' ') : '';
-  voiceHeaderText.textContent = iconText}
-
 
 
 
@@ -1198,7 +1179,9 @@ function updateVoiceHeader(block) {
 
 const activateBlock = (block, options = {}) => {
   const { play = true } = options;
-  const isSameBlock = play == 'always' ? 0 : (editingBlock === block);
+  const isSameBlock = play == 'always' ? 0 : (editingBlock === block)
+  mediaHeader.textContent = title.value || null
+  voiceHeaderText.textContent = block.dataset.voiceName || null
   blocks.forEach(b => {b.style.color = ''; if (b === block) {b.style.padding = '0 1em 1em 1em'} else {b.style.padding = '0 1em 0 1em'}})
   block.style.setProperty('--progress', '0%')
   block.style.transition = '0.4s'
@@ -1237,9 +1220,7 @@ const activateBlock = (block, options = {}) => {
     timestamps = blocks.map(b => ({
       sec: parseFloat(b.dataset.start) || 0,
       top: b.offsetTop,
-      block: b}))
-    updateMediaHeader();
-    updateVoiceHeader(editingBlock)}
+      block: b}))}
   block.dataset.hasMedia = (block._voice?.src || myPlayer.src.includes('mp4')) ? "1" : "0"}
 
 
@@ -1360,9 +1341,7 @@ const lines  = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
     if (editingBlock) {
         delete editingBlock._media;
         if (editingBlock._voice) delete editingBlock._voice.src
-        updateVoiceHeader(editingBlock);
     } else projectMedia.defaultSrc = null
-    updateMediaHeader();
     swapPlayerMedia(originalPlayerSrc, myPlayer.currentTime);
     editing = 1;
     setTimeout(() => {
@@ -1438,7 +1417,6 @@ if (item.url.includes('.mp3')) {row.style.borderLeft = '0.2px solid pink'; row.d
                 name: editingBlock._voice?.name || null,
                 id: editingBlock._voice?.id || null
                 }
-              updateVoiceHeader(editingBlock);
               myVoice.src = item.url}
             else {
               editingBlock._media = mediaObj;
@@ -1448,7 +1426,6 @@ if (item.url.includes('.mp3')) {row.style.borderLeft = '0.2px solid pink'; row.d
           } else {
             projectMedia.defaultSrc = mediaObj.src;
           }
-          updateMediaHeader();
           swapPlayerMedia(mediaObj.src, item.startSec);
           myPlayer.muted = mute.dataset.muted === 'true';
           setTimeout(function() {
@@ -1592,7 +1569,6 @@ function editorInput(e) {
   const r = document.getSelection().getRangeAt(0);
   r.setStart(r.startContainer, prevText.length + 1);
   idDisplay.textContent = prev.dataset.num;
-  updateMediaHeader();
   requestAnimationFrame(rebuild)}
 
 
@@ -1693,7 +1669,6 @@ function editorInput(e) {
             if (provider.toLowerCase().includes('elevenlabs')) editingBlock._voice.volume = 1
             else editingBlock._voice.volume = 1
             editing = 1
-            updateVoiceHeader(editingBlock)
             activateBlock(editingBlock, { play: 'always' })
             if (voiceName) {
               let x = (lastVoice || projectMedia.defaultSrc) + '|' + path 		// last voice | this voice
