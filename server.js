@@ -168,18 +168,26 @@ res.end(JSON.stringify({ path: publicPath, voiceName: finalVoiceName, filename }
                 await fsPromises.writeFile(inputFilePath, body);
                 let responseSent = false;
 
-                const waitForTempFile = async () => {
-                    const maxWaitTime = 12000;
-                    const pollInterval = 50;
-                    while (Date.now() - startTime < maxWaitTime) {
-                        try {
-                            const stats = await fsPromises.stat(tempFilePath);
-                            if (stats.mtimeMs > startTime) return true;
-                        } catch (err) {}
-                        await new Promise(resolve => setTimeout(resolve, pollInterval));
-                    }
-                    return false;
-                };
+const waitForTempFile = async () => {
+    const pollInterval = 200;
+    let lastMtime = 0;
+    let lastActivity = Date.now();
+    while (true) {
+        try {
+            const stats = await fsPromises.stat(tempFilePath);
+            if (stats.mtimeMs > startTime) {
+                if (stats.mtimeMs !== lastMtime) {
+                    lastMtime = stats.mtimeMs;
+                    lastActivity = Date.now(); // reset timeout on change
+                }
+                const content = await fsPromises.readFile(tempFilePath, 'utf8');
+                if (content.trim() !== 'working') return true;
+            }
+        } catch (err) {}
+        if (Date.now() - lastActivity > 1000) return false; 
+        await new Promise(resolve => setTimeout(resolve, pollInterval));
+    }
+};
 
                 const tempFileUpdated = await waitForTempFile();
                 if (!tempFileUpdated) {
@@ -189,16 +197,9 @@ res.end(JSON.stringify({ path: publicPath, voiceName: finalVoiceName, filename }
                 responseSent = true;
                 await serveHtmlFile(res, startTime);
 
-// Clear out.txt once consumed
-// fsPromises.writeFile(tempFilePath, '').catch(() => {});
 
+fsPromises.unlink(tempFilePath, '').catch(() => {});		// Clear out.txt once consumed
 
-                setTimeout(() => {
-                    if (!responseSent) {
-                        responseSent = true;
-                        res.end();
-                    }
-                }, 6000);
             });
             return;
         }

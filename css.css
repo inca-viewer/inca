@@ -128,15 +128,22 @@
     word-wrap:break-word; font-family:'Yu Gothic'; line-height:1.5; margin-bottom: 0.6em; padding: 0 1em 1em 1em;
     color:#ffc0cb80; text-align:center; outline:none; width: 86%; align-self: center; border: 0; margin-bottom: 1em;}
 
-  .text-block[data-fav="1"]::after {
-    content: '❤';
-    position: absolute;
-    color: #ffc0cb;
-    top: 0.4em;
-    left: 0.6em;
-    font-size: 0.5em;
-    z-index: 3;
-    pointer-events: none}
+
+.text-block.has-voice::after { content: '♪'; }
+.text-block[data-fav="1"]::after { content: '❤'; }
+.text-block.has-voice[data-fav="1"]::after { content: '♪ ❤'; }
+
+.text-block.has-voice::after,
+.text-block[data-fav="1"]::after {
+  position: absolute;
+  opacity: 0.2;
+  top: 0.4em;
+  left: 1em;
+  font-size: 0.55em;
+  color: #ffc0cb;
+  z-index: 3;
+  pointer-events: none;
+}
 
   .text-block.editing { background: #111111; color: #ffc0cbaa; transform: scale(1.07, 1.07) }
 

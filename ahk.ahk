@@ -384,13 +384,17 @@
       CreateList(0)
     if reload
       RenderPage(0)
-    if (!reload && command != "More")
     longClick =
+    if (command != "More" && command != "GetClones" && command != "attachClone")	; these return data
+      {
+      FileDelete, %inca%\cache\html\out.txt				; the rest are just commands
+      FileAppend, done, %inca%\cache\html\out.txt, UTF-8		; so allow server to close
+      }
     Gui PopUp:Cancel
     }
 
 
-    History()
+  History()
       {
       FileRead, history, %inca%\fav\History.m3u
       if (value <= 0)
@@ -406,8 +410,10 @@
           x := Drive . x
         if !RegExMatch(y, "^[a-zA-Z]:\\")
           y := Drive . y
-        FileAppend, %x%|0.0`r`n, %inca%\fav\History.m3u, UTF-8
-        FileAppend, %y%|0.0`r`n, %inca%\fav\History.m3u, UTF-8
+        if !InStr(history, x)
+          FileAppend, %x%|0.0`r`n, %inca%\fav\History.m3u, UTF-8
+        if !InStr(history, y)
+          FileAppend, %y%|0.0`r`n, %inca%\fav\History.m3u, UTF-8
         }
       else if (address && folder != "History" && !InStr(history, src))	; address == !thumbSheet
         FileAppend, %src%|%value%`r`n, %inca%\fav\History.m3u, UTF-8
@@ -466,7 +472,6 @@
         start := Round(address,1)
         end := Round(start + 20,1)
         RunWait, %inca%\cache\apps\ffmpeg.exe -ss %start% -to %end% -i "%src%" -y file:%c%,,Hide	; create clone then attach to voice
-        sleep 100
         }
       if FileExist(c)
         {
@@ -478,6 +483,7 @@
         }
       FileDelete, %inca%\cache\html\out.txt
       FileAppend, attached|%base%, %inca%\cache\html\out.txt, UTF-8	; send to browser
+      PopUp("Generating",200,0,0)
       }
 
 
@@ -958,11 +964,15 @@ Edited() 								; Save edited json, text or SRT file
     else Loop, Parse, searchPath, `|
       Loop, Files, %A_LoopField%*.*, F%recurse%
         if A_LoopFileAttrib not contains H,S
-          if (A_LoopFileSize > 0 && listSize < 350000)		; for when files are still downloading
+          if (A_LoopFileSize > 0 && listSize < 350000)			; for when files are still downloading
             {
             list .= spool(A_LoopFileFullPath, A_Index, start)
-            if (!silent && listSize && ((listSize<10000 && !Mod(listSize,1000)) || !Mod(listSize,10000)))
+            if (!silent && listSize && !Mod(listSize,1000))
+              {
+              FileDelete, %inca%\cache\html\out.txt			; keep server waiting
+              FileAppend, working, %inca%\cache\html\out.txt, UTF-8
               PopUp(listSize,0,0,0)
+              }
             }
     if !silent
       PopUp(listSize,0,0,0)
