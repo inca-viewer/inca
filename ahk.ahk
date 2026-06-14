@@ -239,6 +239,8 @@
       GetClones()
     else if (command == "Clone")
       Clone()
+    else if (command == "swapVoice")
+      swapVoice()
     else if (command == "Loudnorm")
       Loudnorm()
     else if (command == "CutCopyPaste")
@@ -268,6 +270,7 @@
     else if (command == "addCue")					; add skinny, speed, goto at scroll
       {
       FileAppend, `r`n%value%, %inca%\cache\cues\%media%.txt, UTF-8
+      index := StrSplit(selected, ",").1
       reload := 2
       }
     else if (command == "Move")						; move entry within playlist
@@ -503,6 +506,15 @@
     }
 
 
+  swapVoice()
+    {
+    FileCopy, %inca%\cache\voices\clones\%value%.mp3, %inca%\cache\voices\clones\swapVoice.mp3, 1
+    FileMove, %inca%\cache\voices\clones\%address%.mp3, %inca%\cache\voices\clones\%value%.mp3, 1
+    FileMove, %inca%\cache\voices\clones\swapVoice.mp3, %inca%\cache\voices\clones\%address%.mp3, 1
+    PopUp("Swapped...",900,0,0)
+    }
+
+
   Find() 
     {
     clp := Clipboard
@@ -624,13 +636,11 @@
       x := StrSplit(selected,",")
       index := x[x.MaxIndex()-1]					; scroll htm to end of selection
       MoveFiles()							; between folders or playlists
-      if longClick							; copy not move
-        return
-      if (!InStr(path, "\inca\") && InStr(address, "\inca\"))
-        return								; added to playlist
-      reload := 3
+      reload := 0
       CreateList(1)							; full update htm page
-      RenderPage(1)							; to stay in this folder add return
+      if (InStr(address, "\inca\"))
+        reload := 3							; 999 = top panel stay in target folder
+      else RenderPage(999)						; 999 = top panel stay in target folder
       return
       }
     else if InStr(address, ".m3u")					; playlist
@@ -1556,7 +1566,7 @@ Edited() 								; Save edited json, text or SRT file
       count -= 250
     else count = 0
     Loop, Parse, history, `n, `r					; keep history below 250 entries
-      if (A_Loopfield && A_Index >= count)
+      if (A_Loopfield && A_Index >= count && FIleExist(StrSplit(A_Loopfield,"|").1))
         str = %str%%A_Loopfield%`r`n
     FileAppend, %str%, %inca%\fav\History.m3u, UTF-8			; clean up html cache
     str = %fol%,%fav%,%music%,%search%					; keep any recognized htm pages
@@ -1842,8 +1852,6 @@ Edited() 								; Save edited json, text or SRT file
     type = video							; prime for list parsing
     if (command == "View" && index > 90)
       page := index
-;    else if playlist
-;      page := 300
     else page := 90							; media entries per chunk
     if (command == "More")
       lastIndex := value - 1
@@ -1926,7 +1934,7 @@ Edited() 								; Save edited json, text or SRT file
       StringReplace, st, st, `', &apos;, All
       x24=All
       }
-    else if (!InStr(command, "Path"))
+    else if (silent != 999)						; else stay in main folders
       {
       if InStr(path, "\inca\fav\")
         scroll = Fav
@@ -2109,9 +2117,9 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
 
   <div id='myDefault'>
     <div class="menu editor">`n
-      <a id='myBookmark'>Bookmark</a>`n
       <a id='myChatterbox'>Chatterbox &#x2726;</a>`n
       <a id='myElevenLabs'>Elevenlabs &#x2726;</a>`n
+      <a id='myBookmark'>Bookmark</a>`n
       <a id='myEmotion'>Emotion</a>`n
         <div id='emotionSub' class='submenu'>`n
           <a data-tag='laugh'>laugh</a>`n
@@ -2188,7 +2196,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
     htm = %server%%inca%\cache\html\%folder%.htm
     StringReplace, htm, htm, \,/, All
     Gui PopUp:Cancel
-    if silent
+    if (silent && silent != 999)
       return
     FileDelete, %inca%\cache\html\out.txt				; server polling file
     if (!incaTab || !WinExist("ahk_group Browsers") || command ==  "SearchBox")
@@ -2304,8 +2312,8 @@ mediaList(j, input, start)						; spool sorted media files into web page
       size = 0								; cannot have null size in Param()
 
 
-;    if (type == "image")
-;      media_s := "... " . media_s					; highlight as image (not video)
+    if (type == "image")
+      media_s := "&#x2726; " . media_s					; highlight as image (not video)
     if (ext=="txt")
       src = "%server%%poster%"
     else src = "%server%%src%"
@@ -2414,7 +2422,6 @@ mediaList = %mediaList%%fold%<div id='entry%j%' class='entry-row' data-params='%
         whisper = %inca%\cache\apps\Faster-Whisper-XXL\faster-whisper-xxl.exe
         if InStr(el_id, "mySrt")
           runwait, "%whisper%" "%source%" --model tiny.en --language en --output_format srt --compute_type float32 --output_dir "%inca%\cache\srt" --sentence --beep_off, , Hide
-;          RunWait, curl.exe -X POST http://127.0.0.1:8001/transcribe -F "file=@%source%" -F "output_dir=%outputDir%" -F "output_format=srt", , Hide
         else if InStr(el_id, "myJpg")
           {
           if  DetectMedia(source) == "image"
@@ -2514,7 +2521,6 @@ mediaList = %mediaList%%fold%<div id='entry%j%' class='entry-row' data-params='%
       FileRead, input, *P65001 %inca%\cache\html\in.txt		; utf codepage
       if input
         {
-; tooltip %input%							; debug
         FileDelete, %inca%\cache\html\in.txt
         Messages(input)
         }

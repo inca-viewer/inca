@@ -3,7 +3,13 @@
 // list all mouse commands bottom of myView
 // home icon somewhere to github
 
-// voice naming confusion still
+
+// a default voice option to solve voice swaps??
+// option to here clone voice ref
+// long click to swap ??
+
+
+
 
 
   let wheel = 0								// wheel count
@@ -221,7 +227,7 @@
         editingBlock?.classList.remove('editing')
         overBlock.classList.add('editing')
         activateBlock(overBlock)}
-      else {activateBlock(overBlock); myVoice.play(); myPlayer.play()}}			// ! togglePause() reverses
+      else {if (!longClick) {activateBlock(overBlock); myVoice.play(); myPlayer.play()}}}	// ! togglePause() reverses
     if (lastClick == 3) {
       if (overBlock && !gesture) {
         myPlayer.currentTime = overBlock.dataset.start; myVoice.currentTime = 0
@@ -240,7 +246,7 @@
       if (zoom > 1) {Play(); return}
       if (!playing && !myNav.style.display) {inca('View',lastMedia); selected = '.'; return}	// list/thumb view
       if (longClick) {index--} else index++						// next media
-      if (!Param()) {index = lastMedia; closePlayer(); return}				// end of media list
+ //   if (!Param()) {index = lastMedia; closePlayer(); return}				//  flash on next ....end of media list
       if (!thumbSheet) await inca('History', myPlayer.currentTime.toFixed(1), lastMedia)}
     if (lastClick == 1) {
       if (id == title.id) lastMedia = index
@@ -1074,7 +1080,7 @@ function loadVoices() {
         row.style.padding = '4px 8px';
         row.style.cursor = 'pointer';
         row.textContent = name;
-        row.onclick = () => selectVoice(name);
+        row.onmouseup = () => selectVoice(name);
         voiceContent.appendChild(row);
     });
 });
@@ -1157,6 +1163,9 @@ function loadVoices() {
 
   function selectVoice(name) {
     if (!name || !editingBlock) return;
+    const oldVoice = editingBlock.dataset.voiceName
+    if (longClick && oldVoice && oldVoice !== name) {inca('swapVoice', oldVoice, index, name); return}
+
     blocks.forEach(b => {
         if (!b.dataset.voiceName) {
             if (!b._voice) b._voice = {};
@@ -1167,12 +1176,9 @@ function loadVoices() {
     editingBlock._voice.name = name;
     editingBlock._voice.volume = editingBlock._voice.volume ?? 1;
     editingBlock.dataset.voiceName = name;
+    voiceHeaderText.textContent = name;
     editing = 1;
     loadVoices();}
-
-
-
-
 
 
 
@@ -1309,7 +1315,7 @@ const activateBlock = (block, options = {}) => {
     loadVoices();
     })
 
-  document.querySelector('#media-header').addEventListener('mouseenter', async (e) => {
+  document.querySelector('#media-header').addEventListener('click', async (e) => {
     e.stopPropagation()
     document.querySelectorAll('.dropdown-content').forEach(c => c.style.display = 'none');
     mediaContent.style.display = 'flex';
