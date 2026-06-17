@@ -55,7 +55,7 @@
 
   #editor { box-sizing:border-box; display:none; flex-direction:column; width:500px; max-width:100%; height:24em;
     background:#0a0a0a; border-radius:12px; box-shadow:0 12px 32px rgba(0,0,0,0.6); font-size:16px; 
-    position:fixed; left:50%; top:50%; transform:translate(-50%,-50%); z-index: 5002; cursor:text; transition: 0;
+    position:fixed; left:50%; top:50%; transform:translate(-50%,-50%); z-index: 5002; transition: 0;
     min-width:250px; min-height:160px; resize:both; max-height:80vh; overflow:hidden;}
 
 #ribbon {
@@ -107,6 +107,7 @@
   .caption-viewport {
     flex:1;
     gap: 0.4em;
+    cursor: default;
     overflow-y:auto; 
     padding: 6em 1.6em 7em 2em; 
     display:flex; 
@@ -123,29 +124,31 @@
       black        94%,
       transparent  100%)}
 
+
   .text-block {
     position: relative; background:transparent; border-radius:1.2em; white-space:pre-wrap; transition: 0; overflow: visible;
-    word-wrap:break-word; font-family:'Yu Gothic'; line-height:1.5; margin-bottom: 0.6em; padding: 0 1em 1em 1em;
-    color:#ffc0cb80; text-align:center; outline:none; width: 86%; align-self: center; border: 0; margin-bottom: 1em;}
+    word-wrap:break-word; line-height:1.5; margin-bottom: 0.6em; padding: 0.3em 1em 0.3em 1em; cursor: text; font-size: 0.82em;
+    color:#ffc0cb60; text-align:center; outline:none; width: 86%; align-self: center; border: 0; margin-bottom: 1em}
 
 
 .text-block.has-voice::after { content: '♪'; }
 .text-block[data-fav="1"]::after { content: '❤'; }
-.text-block.has-voice[data-fav="1"]::after { content: '♪ ❤'; }
+.text-block.has-voice[data-fav="1"]::after { content: '❤\A♪'; white-space: pre }
 
 .text-block.has-voice::after,
 .text-block[data-fav="1"]::after {
   position: absolute;
-  opacity: 0.2;
-  top: 0.4em;
-  left: 1em;
+  opacity: 0.5;
+  top: 0.5em;
+  left: -1em;
   font-size: 0.55em;
   color: #ffc0cb;
   z-index: 3;
   pointer-events: none;
 }
 
-  .text-block.editing { background: #111111; color: #ffc0cbaa; transform: scale(1.07, 1.07) }
+
+  .text-block.editing { background: #111111; color: #ffc0cbaa; transform: scale(1.04, 1.14) }
 
 .text-block.editing[data-has-media="1"]::before {
     content: '';
@@ -153,7 +156,7 @@
     left: 100px;
     right: 100px;
     bottom: 0.4em;
-    height: 4px;
+    height: 2px;
     border-radius: 1px;
     background: linear-gradient(to right, #ffc0cb20 0%, #ffc0cb20 50%, #ffc0cb0e 50%, #ffc0cb0e 100%);
     background-size: 200% 100%;
@@ -214,16 +217,12 @@
   font-size: 0.9em;
   border-radius: 1em;
   transition: color 0.3s;
-  grid-template-columns: 4em 4em 4em 4em 4em 3.5em 1em auto 6em;
+  grid-template-columns: 4em 4em 4em 4em 4em 3.5em 1em auto 1em;
   width: 100%}
 
 .entry-row:hover { background: #1b1814; }
 
-.title-cell {
-  max-width: 60vw;
-  top: -1em;
-  position: relative;
-  overflow: visible;}
+.title-cell { top: -1em; position: relative; overflow: visible; }
 
 
 .player, .vig {

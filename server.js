@@ -72,7 +72,7 @@ const server = http.createServer(async (req, res) => {
 
  if (provider === 'chatterbox') {
     const refFilename = (voiceName || 'Clone') + '.mp3';
-    const voicePath = path.join(DRIVE_ROOT, 'inca', 'cache', 'voices', 'clones', refFilename);
+    const voicePath = path.join(DRIVE_ROOT, 'inca', 'cache', 'voices', refFilename);
     const fileBuffer = await fsPromises.readFile(voicePath);
     const uploadForm = new FormData();
     uploadForm.append('files', new Blob([fileBuffer], { type: 'audio/mpeg' }), refFilename);
@@ -129,7 +129,7 @@ let textSize = 36 - safeVoice.length
 const safeText = clean(text + ' QQQ').slice(0, textSize).replace(/\s+\S*$/, '').replace(/[.,;—…]+$/, '').trim();
 const timestamp = new Date().toLocaleString('sv').replace(/:/g, '.');
 const filename = `${safeVoice} - ${safeText} - ${timestamp}.mp3`;
-const fullDir = path.join(DRIVE_ROOT, 'inca', 'cache', 'voices', mediaTitle);
+const fullDir = path.join(DRIVE_ROOT, 'inca', 'cache', 'speech', mediaTitle.trim());
 await fsPromises.mkdir(fullDir, { recursive: true });
 
 if (provider === 'chatterbox') {
@@ -145,8 +145,8 @@ if (provider === 'chatterbox') {
 const filepath = path.join(fullDir, filename);
 await fsPromises.writeFile(filepath, buffer);
 const publicPath = mediaTitle 
-    ? `/inca/cache/voices/${mediaTitle}/${filename}`
-    : `/inca/cache/voices/${filename}`;
+    ? `/inca/cache/speech/${mediaTitle}/${filename}`
+    : `/inca/cache/speech/${filename}`;
 res.writeHead(200, { 'Content-Type': 'application/json' });
 res.end(JSON.stringify({ path: publicPath, voiceName: finalVoiceName, filename }));
 } catch (err) {
@@ -184,7 +184,7 @@ const waitForTempFile = async () => {
                 if (content.trim() !== 'working') return true;
             }
         } catch (err) {}
-        if (Date.now() - lastActivity > 1000) return false; 
+        if (Date.now() - lastActivity > 1500) return false; 
         await new Promise(resolve => setTimeout(resolve, pollInterval));
     }
 };
@@ -198,7 +198,7 @@ const waitForTempFile = async () => {
                 await serveHtmlFile(res, startTime);
 
 
-fsPromises.unlink(tempFilePath, '').catch(() => {});		// Clear out.txt once consumed
+// fsPromises.unlink(tempFilePath, '').catch(() => {});		// Clear out.txt once consumed
 
             });
             return;

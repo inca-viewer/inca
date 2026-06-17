@@ -76,8 +76,6 @@
   Global allFav					; all favorite shortcuts consolidated
   Global showSubs
   Global paused := 0				; default pause
-  Global block := 0				; block flag
-  Global flush := 0				; flag to flush excess wheel buffer
   Global dur					; media duration
   Global mute					; global mute
   Global start := 0				; default start time
@@ -85,6 +83,7 @@
   Global lastIndex := 0				; continuous scrolling
   Global server := "http://localhost:3000/"
   Global transcoding				; media is being transcoded async
+  Global editorMedia				; current editor media
 
 
   main:
@@ -239,8 +238,6 @@
       GetClones()
     else if (command == "Clone")
       Clone()
-    else if (command == "swapVoice")
-      swapVoice()
     else if (command == "Loudnorm")
       Loudnorm()
     else if (command == "CutCopyPaste")
@@ -288,6 +285,8 @@
       }
     else if (command == "History")
       History()
+    else if (command == "addHistory")
+      addHistory()
     else if (command == "Pause")					; set default paused
       {
       config := RegExReplace(config, "Pause/[^|]*", "Pause/" . value)
@@ -350,7 +349,7 @@
     serverTimout := A_TickCount
 
     array := StrSplit(input,"#")
-; tooltip %input%, 0							; for debug
+; tooltip %input%, 100							; for debug
     Loop % array.MaxIndex()/4
       {
       command := array[ptr+=1]
@@ -388,9 +387,9 @@
     if reload
       RenderPage(0)
     longClick =
-    if (command != "More" && command != "GetClones" && command != "attachClone")	; these return data
+    if (!reload && command != "More" && command != "GetClones" && command != "attachClone")	; these return data
       {
-      FileDelete, %inca%\cache\html\out.txt				; the rest are just commands
+      FileDelete, %inca%\cache\html\out.txt				; the rest are commands
       FileAppend, done, %inca%\cache\html\out.txt, UTF-8		; so allow server to close
       }
     Gui PopUp:Cancel
@@ -399,28 +398,31 @@
 
   History()
       {
+      editorMedia = 
       FileRead, history, %inca%\fav\History.m3u
       if (value <= 0)
         value = 0.0
-      if !selected							; add last and new voice to history
+      if (folder != "History" && !InStr(history, src))
+        FileAppend, %src%|%value%`r`n, %inca%\fav\History.m3u, UTF-8
+      }
+
+
+  addHistory()								; add last and new voice to history
         {
+        value := StrReplace(value, server)
+        value := StrReplace(value, "/", "\")
         address := StrReplace(address, server)
         address := StrReplace(address, "/", "\")
         Drive := SubStr(A_ScriptDir, 1, 2)  ; e.g. "D:\"
-        x := StrSplit(address, "|").1  ; last voice
-        y := StrSplit(address, "|").2  ; new voice
-        if !RegExMatch(x, "^[a-zA-Z]:\\")
-          x := Drive . x
-        if !RegExMatch(y, "^[a-zA-Z]:\\")
-          y := Drive . y
-        if !InStr(history, x)
-          FileAppend, %x%|0.0`r`n, %inca%\fav\History.m3u, UTF-8
-        if !InStr(history, y)
-          FileAppend, %y%|0.0`r`n, %inca%\fav\History.m3u, UTF-8
+        if !RegExMatch(value, "^[a-zA-Z]:\\")
+          value := Drive . value
+        if !RegExMatch(address, "^[a-zA-Z]:\\")
+          address := Drive . address
+        if !InStr(history, value)
+          FileAppend, %value%|0.0`r`n, %inca%\fav\History.m3u, UTF-8
+        if !InStr(history, address)
+          FileAppend, %address%|0.0`r`n, %inca%\fav\History.m3u, UTF-8
         }
-      else if (address && folder != "History" && !InStr(history, src))	; address == !thumbSheet
-        FileAppend, %src%|%value%`r`n, %inca%\fav\History.m3u, UTF-8
-      }
 
 
   loudNorm()
@@ -458,7 +460,7 @@
       if (type == "video" || type == "audio")
         {
         end := Round(value + 20,1)
-        RunWait, %inca%\cache\apps\ffmpeg.exe -ss %value% -to %end% -i "%src%" -y file:"%inca%\cache\voices\clones\clone.mp3",,Hide
+        RunWait, %inca%\cache\apps\ffmpeg.exe -ss %value% -to %end% -i "%src%" -y file:"%inca%\cache\voices\clone.mp3",,Hide
         PopUp("clone created",900,0,0)
         }
       else PopUp("no media",900,0,0)
@@ -468,8 +470,8 @@
   Attachclone()
       {
       base := RegExReplace(value, " \d+$")
-      t := inca "\cache\voices\clones\" value ".mp3"
-      c := inca "\cache\voices\clones\clone.mp3"
+      t := inca "\cache\voices\" value ".mp3"
+      c := inca "\cache\voices\clone.mp3"
       if (!FileExist(c) && !FileExist(t))				; only if no existing voice or clone
         {
         start := Round(address,1)
@@ -479,7 +481,7 @@
       if FileExist(c)
         {
         i:=1
-        while FileExist(b:= inca "\cache\voices\clones\" base " " i ".mp3") && i<9
+        while FileExist(b:= inca "\cache\voices\" base " " i ".mp3") && i<9
           i++
         FileMove,%t%,%b%,1						; archive last voice
         FileMove, %c%, %t%   						; attach new clone voice
@@ -492,7 +494,8 @@
 
   GetClones()
     {
-    dir := inca "\cache\voices\clones\"
+    editorMedia := StrSplit(selected, ",").1				; editor always calls this
+    dir := inca "\cache\voices\"					; to populate voices
     list := ""
     Loop, Files, %dir%*.mp3
       {
@@ -502,16 +505,7 @@
       }
     StringTrimRight, list, list, 1
     FileDelete, %inca%\cache\html\out.txt
-    FileAppend, clones|%list%, %inca%\cache\html\out.txt, UTF-8		; send to browser
-    }
-
-
-  swapVoice()
-    {
-    FileCopy, %inca%\cache\voices\clones\%value%.mp3, %inca%\cache\voices\clones\swapVoice.mp3, 1
-    FileMove, %inca%\cache\voices\clones\%address%.mp3, %inca%\cache\voices\clones\%value%.mp3, 1
-    FileMove, %inca%\cache\voices\clones\swapVoice.mp3, %inca%\cache\voices\clones\%address%.mp3, 1
-    PopUp("Swapped...",900,0,0)
+    FileAppend, voices|%list%, %inca%\cache\html\out.txt, UTF-8		; send to browser
     }
 
 
@@ -526,6 +520,8 @@
     send, {Lbutton up}
     if (address && WinActive("ahk_group Browsers"))			;  long clicked selected text    
       {
+      if (editorMedia || StrLen(address) < 3)
+        return
       path =
       click =
       reload := 2
@@ -881,7 +877,11 @@ Edited() 								; Save edited json, text or SRT file
   {
   json := value
   value := 0
+  lastMedia := editorMedia
   History()
+  if lastMedia
+    getMedia(lastMedia)							; in case index changed
+  else PopUp("failed...",4444,0,0)
   if (json && address)
     {
     FileRecycle, %inca%\cache\json\%media%.json
@@ -891,10 +891,9 @@ Edited() 								; Save edited json, text or SRT file
       FileRecycle, %src%
       FileAppend, %address%, %src%, UTF-8
       }
-    PopUp("saved", 999, 0, 0)
     }
-  IfExist, %inca%\cache\json\%media%.json				; if voices exist in json
-    IfExist, %inca%\cache\voices\%media%\				; clear voices folder of any unused voices
+  IfExist, %inca%\cache\json\%media%.json				; if speech exist in json
+    IfExist, %inca%\cache\speech\%media%\				; clear speech folder of any unused speech
       {
       FileCreateDir, %inca%\cache\temp\%media%\
       FileRead, txt, %inca%\cache\json\%media%.json
@@ -920,12 +919,13 @@ Edited() 								; Save edited json, text or SRT file
         SplitPath, src, fn
         FileCopy, %src%, %inca%\cache\temp\%media%\%fn%, 1
         }
-      FileRecycle, %inca%\cache\voices\%media%
-      FileMoveDir, %inca%\cache\temp\%media%, %inca%\cache\voices\%media%, 1
+      FileRecycle, %inca%\cache\speech\%media%
+      FileMoveDir, %inca%\cache\temp\%media%, %inca%\cache\speech\%media%, 1
       }
   index := StrSplit(selected, ",").1
-  sleep 100
   RenderPage(0)
+  if (json && address)
+    PopUp("saved", 900, 0, 0)
   }
 
 
@@ -1431,12 +1431,12 @@ Edited() 								; Save edited json, text or SRT file
     FileMove, %inca%\cache\posters\%media%.jpg, %inca%\cache\posters\%new_name%.jpg, 1
     FileMove, %inca%\cache\srt\%media%.srt, %inca%\cache\srt\%new_name%.srt, 1
     FileMove, %inca%\cache\json\%media%.json, %inca%\cache\json\%new_name%.json, 1
-    FileMoveDir, %inca%\cache\voices\%media%, %inca%\cache\voices\%new_name%, 1
+    FileMoveDir, %inca%\cache\speech\%media%, %inca%\cache\speech\%new_name%, 1
     IfExist, %inca%\cache\json\%new_name%.json
-      IfExist, %inca%\cache\voices\%new_name%
+      IfExist, %inca%\cache\speech\%new_name%
         {
-        oldStr = /cache/voices/%media%
-        newStr = /cache/voices/%new_name%
+        oldStr = /cache/speech/%media%
+        newStr = /cache/speech/%new_name%
         FileRead, json, %inca%\cache\json\%new_name%.json
         json := RegExReplace(json, "i)\Q" oldStr "\E", newStr)
         FileRecycle, %inca%\cache\json\%new_name%.json
@@ -1852,7 +1852,9 @@ Edited() 								; Save edited json, text or SRT file
     type = video							; prime for list parsing
     if (command == "View" && index > 90)
       page := index
-    else page := 90							; media entries per chunk
+    else if playlist
+      page := 256
+    else page := 96							; media entries per chunk
     if (command == "More")
       lastIndex := value - 1
     FileRead, list, %inca%\cache\temp\%folder%.txt
@@ -2117,9 +2119,10 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
 
   <div id='myDefault'>
     <div class="menu editor">`n
+      <a id='myBookmark'>Bookmark</a>`n
       <a id='myChatterbox'>Chatterbox &#x2726;</a>`n
       <a id='myElevenLabs'>Elevenlabs &#x2726;</a>`n
-      <a id='myBookmark'>Bookmark</a>`n
+      <a id='myDelay'>Delay</a>`n
       <a id='myEmotion'>Emotion</a>`n
         <div id='emotionSub' class='submenu'>`n
           <a data-tag='laugh'>laugh</a>`n
@@ -2195,7 +2198,6 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
     FileAppend, %htm%, %inca%\cache\html\%folder%.htm, UTF-8
     htm = %server%%inca%\cache\html\%folder%.htm
     StringReplace, htm, htm, \,/, All
-    Gui PopUp:Cancel
     if (silent && silent != 999)
       return
     FileDelete, %inca%\cache\html\out.txt				; server polling file
@@ -2238,7 +2240,7 @@ mediaList(j, input, start)						; spool sorted media files into web page
       fold = <div style="font-size:1.4em; color:pink; width:80`%">%thisFolder%</div>`n
     lastFolder := thisFolder
     if (searchTerm || InStr(toggles, "Recurse"))
-      fo = <div style='width:5em; padding-right:3em; text-align:right'>%thisFolder%</div>
+      fo = <div style='overflow: hidden; text-overflow: ellipsis; width: 8em'>%thisFolder%</div>
     FileRead, dur, %inca%\cache\durations\%media%.txt
     durT := Time(dur)
     if (type == "document" || type == "image" || !dur)
@@ -2323,9 +2325,9 @@ mediaList(j, input, start)						; spool sorted media files into web page
     caption = <pre id="dat%j%" style='display: none' type="text/plain" data=%data%></pre>`n
 
     if listView
-mediaList = %mediaList%%fold%<div id='entry%j%' class='entry-row' data-params='%type%,%start%,%dur%,%size%' onmouseenter='if (gesture) sel(%j%)' onmouseover='overThumb(%j%)'`n onmouseout="thumb%j%.style.opacity=0; thumb.src=''"><div><video id='thumb%j%' class='thumb2' onwheel='if (zoom > 1) wheelEvent(event)'`n %poster% preload=%preload% muted loop disableRemotePlayback type="video/mp4"></video><video id="vid%j%" style='display: none'`n src=%src% preload='none' type='video/mp4'></video>`n </div><div>%j%</div><div>%ext%</div><div>%size%</div><div style='min-width: 6em'>%durT%</div><div>%date%</div><div id='myFavicon%j%' class='favicon' style='position: relative; text-align: right; translate:1.6em 0.4em'>%favicon%</div><div class='title-cell'><textarea id="title%j%" class='title' style='top:0.1em' autocomplete='off' onmouseenter='overThumb(%j%)' oninput="renamebox=this.value">`n %media_s%</textarea></div>%fo%</div>`n %caption%<span id='cues%j%' style='display: none'>%cues%</span>`n`n
+mediaList = %mediaList%%fold%<div id='entry%j%' class='entry-row' data-params='%type%,%start%,%dur%,%size%' onmouseenter='if (gesture) sel(%j%)' onmouseover='overThumb(%j%)'`n onmouseout="thumb%j%.style.opacity=0; thumb.src=''"><div><video id='thumb%j%' class='thumb2' onwheel='if (zoom > 1) wheelEvent(event)'`n %poster% preload=%preload% muted loop disableRemotePlayback type="video/mp4"></video><video id="vid%j%" style='display: none'`n src=%src% preload='none' type='video/mp4'></video>`n </div><div>%j%</div><div>%ext%</div><div>%size%</div><div style='min-width: 6em'>%durT%</div><div>%date%</div><div id='myFavicon%j%' class='favicon' style='position: relative; text-align: right; translate:1.6em 0.4em'>%favicon%</div><div class='title-cell'><textarea id="title%j%" class='title' style='top:0.1em' autocomplete='off' onmouseenter='overThumb(%j%)'>`n %media_s%</textarea></div>%fo%</div>`n %caption%<span id='cues%j%' style='display: none'>%cues%</span>`n`n
 
-    else mediaList = %mediaList%<div id="entry%j%" class='entry' data-params='%type%,%start%,%dur%,%size%'>`n <span id='myFavicon%j%' onmouseenter='overThumb(%j%)' class='favicon'>%favicon%</span>`n <textarea id='title%j%' class='title' style='top:-0.8em; opacity:0.7' type='text'`n oninput="renamebox=this.value"`n onmouseenter='overThumb(%j%)'>%media_s%</textarea>`n <video id="thumb%j%" class='thumb' onwheel='if (zoom > 1) wheelEvent(event)' onmouseenter="overThumb(%j%); if (gesture && !playing) sel(%j%)"`n onmouseout="thumb.pause()"`n onmouseup='if (gesture && !playing) Param(%j%)' %poster%`n preload=%preload% loop muted disableRemotePlayback type='video/mp4'></video>`n <video id="vid%j%" style='display: none' src=%src% preload='none' type='video/mp4'></video>%noIndex%`n <span id='cues%j%' style='display: none'>%cues%</span></div>`n %caption%`n
+    else mediaList = %mediaList%<div id="entry%j%" class='entry' data-params='%type%,%start%,%dur%,%size%'>`n <span id='myFavicon%j%' onmouseenter='overThumb(%j%)' class='favicon'>%favicon%</span>`n <textarea id='title%j%' class='title' style='top:-0.8em; opacity:0.7' type='text'`n onmouseenter='overThumb(%j%)'>%media_s%</textarea>`n <video id="thumb%j%" class='thumb' onwheel='if (zoom > 1) wheelEvent(event)' onmouseenter="overThumb(%j%); if (gesture && !playing) sel(%j%)"`n onmouseout="thumb.pause()"`n onmouseup='if (gesture && !playing) Param(%j%)' %poster%`n preload=%preload% loop muted disableRemotePlayback type='video/mp4'></video>`n <video id="vid%j%" style='display: none' src=%src% preload='none' type='video/mp4'></video>%noIndex%`n <span id='cues%j%' style='display: none'>%cues%</span></div>`n %caption%`n
     }
 
 
@@ -2469,9 +2471,9 @@ mediaList = %mediaList%%fold%<div id='entry%j%' class='entry-row' data-params='%
               RunWait, %inca%\cache\apps\ffmpeg.exe -i "%A_LoopFileFullPath%" -y file:"%dir%\%nameNoExt%.mp3",,Hide
               FileRecycle, %A_LoopFileFullPath%
               }
-            voices := inca . "\cache\voices"
-            FileCreateDir, %voices%
-            destCopy := voices . "\" . nameNoExt . ".mp3"
+            speech := inca . "\cache\speech"
+            FileCreateDir, %speech%
+            destCopy := speech . "\" . nameNoExt . ".mp3"
             if (ext == "wav" || InStr(A_LoopFileName, "Eleven"))
               FileCopy, %dir%\%nameNoExt%.%ext%, %destCopy%, 1
             FileAppend, %destCopy%|0.0`r`n, %inca%\fav\History.m3u, UTF-8
