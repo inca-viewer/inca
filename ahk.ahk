@@ -232,13 +232,11 @@
       Sort()
     else if (command == "Search" || command == "SearchBox")
       Search()
-    else if (command == "attachClone")					; rename last clone.mp3 to voice name
-      Attachclone()
-    else if (command == "GetClones")
-      GetClones()
-    else if (command == "Clone")
-      Clone()
-    else if (command == "Loudnorm")
+    else if (command == "getVoices")
+      getVoices()
+    else if (command == "newVoice")
+      newVoice()
+    else if (command == "loudNorm")
       Loudnorm()
     else if (command == "CutCopyPaste")
       {
@@ -387,7 +385,7 @@
     if reload
       RenderPage(0)
     longClick =
-    if (!reload && command != "More" && command != "GetClones" && command != "attachClone")	; these return data
+    if (!reload && command != "More" && command != "getVoices" && command != "createRef")	; these return data
       {
       FileDelete, %inca%\cache\html\out.txt				; the rest are commands
       FileAppend, done, %inca%\cache\html\out.txt, UTF-8		; so allow server to close
@@ -455,44 +453,24 @@
       }
 
 
-  Clone()
+  newVoice()
       {
-      if (type == "video" || type == "audio")
+      if !address
+        PopUp("no name",999,0,0)
+      else if (type == "video" || type == "audio")
         {
         end := Round(value + 20,1)
-        RunWait, %inca%\cache\apps\ffmpeg.exe -ss %value% -to %end% -i "%src%" -y file:"%inca%\cache\voices\clone.mp3",,Hide
-        PopUp("clone created",900,0,0)
+        popup = %address% created
+        IfExist, %inca%\cache\voices\%address%.mp3
+          FileRecycle, %inca%\cache\voices\%address%.mp3
+        RunWait, %inca%\cache\apps\ffmpeg.exe -ss %value% -to %end% -i "%src%" -y file:"%inca%\cache\voices\%address%.mp3",,Hide
+        PopUp(popup,999,0,0)
         }
-      else PopUp("no media",900,0,0)
+      else PopUp("no media",999,0,0)
       }
 
 
-  Attachclone()
-      {
-      base := RegExReplace(value, " \d+$")
-      t := inca "\cache\voices\" value ".mp3"
-      c := inca "\cache\voices\clone.mp3"
-      if (!FileExist(c) && !FileExist(t))				; only if no existing voice or clone
-        {
-        start := Round(address,1)
-        end := Round(start + 20,1)
-        RunWait, %inca%\cache\apps\ffmpeg.exe -ss %start% -to %end% -i "%src%" -y file:%c%,,Hide	; create clone then attach to voice
-        }
-      if FileExist(c)
-        {
-        i:=1
-        while FileExist(b:= inca "\cache\voices\" base " " i ".mp3") && i<9
-          i++
-        FileMove,%t%,%b%,1						; archive last voice
-        FileMove, %c%, %t%   						; attach new clone voice
-        }
-      FileDelete, %inca%\cache\html\out.txt
-      FileAppend, attached|%base%, %inca%\cache\html\out.txt, UTF-8	; send to browser
-      PopUp("Generating",200,0,0)
-      }
-
-
-  GetClones()
+  getVoices()
     {
     editorMedia := StrSplit(selected, ",").1				; editor always calls this
     dir := inca "\cache\voices\"					; to populate voices
@@ -633,10 +611,13 @@
       index := x[x.MaxIndex()-1]					; scroll htm to end of selection
       MoveFiles()							; between folders or playlists
       reload := 0
-      CreateList(1)							; full update htm page
-      if (InStr(address, "\inca\"))
-        reload := 3							; 999 = top panel stay in target folder
-      else RenderPage(999)						; 999 = top panel stay in target folder
+      if !longClick							; copy not move so no reload
+        {
+        CreateList(1)							; full update htm page
+        if (InStr(address, "\inca\"))
+          reload := 3							; 999 = top panel stay in target folder
+        else RenderPage(999)						; 999 = top panel stay in target folder
+        }
       return
       }
     else if InStr(address, ".m3u")					; playlist
@@ -901,9 +882,9 @@ Edited() 								; Save edited json, text or SRT file
       Loop, Parse, txt, `n, `r
         {
         line := A_LoopField
-        if (InStr(line, """src""") = 0)
+        if (InStr(line, """voice""") = 0)
           continue
-        if (RegExMatch(line, """src""\s*:\s*""(/[^""]+)""", m))
+        if (RegExMatch(line, """voice""\s*:\s*""(/[^""]+)""", m))
           {
           p := StrReplace(m1, "/", "\")
           if (SubStr(p, 1, 5) = "\inca")
@@ -1562,8 +1543,8 @@ Edited() 								; Save edited json, text or SRT file
     FileDelete, %inca%\fav\History.m3u
     Loop, Parse, history, `n, `r					; garbage collection
       count++
-    if (count > 250)
-      count -= 250
+    if (count > 90)
+      count -= 90
     else count = 0
     Loop, Parse, history, `n, `r					; keep history below 250 entries
       if (A_Loopfield && A_Index >= count && FIleExist(StrSplit(A_Loopfield,"|").1))
@@ -2095,6 +2076,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
 <video id="myPlayer" class='player' type="video/mp4" muted onwheel='wheelEvent(event)'></video>`n
 <div id='mySeek' class='seekbar'><span id='myDur'></span></div>`n
 <span id='mySelected' class='selected'></span>`n
+<span id='myAlert' class='selected'></span>`n
 <div id='myContent' class='mycontent' onwheel='if (Click) wheelEvent(event)'>`n 
   <div id='myView' class='myview'>`n`n %mediaList%</div></div>`n`n
 
@@ -2107,8 +2089,8 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
       <a id="myCopy">copy</a>`n
       <a id="myPaste">paste</a>`n
       <a id="myIndex">index</a>`n
-      <a id='myClone'>clone</a>`n
-      <a id='myLoudnorm'>normalise</a>`n
+      <a id='myClone'>new voice &#x2726;</a>`n
+      <a id='myLoudnorm'>fix volume</a>`n
       <a id="myMp3">mp3</a>`n
       <a id="myMp4">mp4</a>`n
       <a id="myJoin">join</a>`n
@@ -2119,10 +2101,12 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
 
   <div id='myDefault'>
     <div class="menu editor">`n
+      <a id='myDelay'>Delay</a>`n
+      <a id='myRate'>Speed</a>`n
+      <a id='myVol'>Volume</a>`n
       <a id='myBookmark'>Bookmark</a>`n
       <a id='myChatterbox'>Chatterbox &#x2726;</a>`n
       <a id='myElevenLabs'>Elevenlabs &#x2726;</a>`n
-      <a id='myDelay'>Delay</a>`n
       <a id='myEmotion'>Emotion</a>`n
         <div id='emotionSub' class='submenu'>`n
           <a data-tag='laugh'>laugh</a>`n
@@ -2464,19 +2448,9 @@ mediaList = %mediaList%%fold%<div id='entry%j%' class='entry-row' data-params='%
         if (!InStr(history, A_LoopFileName))				; media already added to history
           {
           SplitPath, A_LoopFileFullPath, fileWithExt, dir, ext, nameNoExt
-          if (ext == "mp3" || ext == "wav")
+          if (ext == "mp3")
             {
-            if (ext == "wav")
-              {
-              RunWait, %inca%\cache\apps\ffmpeg.exe -i "%A_LoopFileFullPath%" -y file:"%dir%\%nameNoExt%.mp3",,Hide
-              FileRecycle, %A_LoopFileFullPath%
-              }
-            speech := inca . "\cache\speech"
-            FileCreateDir, %speech%
-            destCopy := speech . "\" . nameNoExt . ".mp3"
-            if (ext == "wav" || InStr(A_LoopFileName, "Eleven"))
-              FileCopy, %dir%\%nameNoExt%.%ext%, %destCopy%, 1
-            FileAppend, %destCopy%|0.0`r`n, %inca%\fav\History.m3u, UTF-8
+            FileAppend, %A_LoopFileFullPath%|0.0`r`n, %inca%\fav\History.m3u, UTF-8
             index(A_LoopFileFullPath,1)					; get duration
             }
           if (A_Now - downloads > 20 && A_Now - downloads < 60)		; finished downloading
