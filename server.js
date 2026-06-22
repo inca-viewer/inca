@@ -47,7 +47,7 @@ const server = http.createServer(async (req, res) => {
             req.on('end', async () => {
                 try {
                     const data = JSON.parse(body);
-                    let { voiceName, text, provider = 'elevenlabs', title: mediaTitle } = data;
+                    let { voiceName, text, provider, title: mediaTitle } = data;
 
                     if (!text) {
                         res.writeHead(400, { 'Content-Type': 'application/json' });
@@ -82,7 +82,7 @@ const server = http.createServer(async (req, res) => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
             text,
-            exaggeration: 1.4,
+            exaggeration: 2,
             voice_mode: 'clone',
             reference_audio_filename: refFilename
         })
