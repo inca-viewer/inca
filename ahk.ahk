@@ -83,7 +83,7 @@
   Global lastIndex := 0				; continuous scrolling
   Global server := "http://localhost:3000/"
   Global transcoding				; media is being transcoded async
-  Global editorMedia				; current editor media
+  Global captions				; current editor media
 
 
   main:
@@ -396,12 +396,12 @@
 
   History()
       {
-      editorMedia = 
+      if address							; captions mode
+        captions := src
+      else captions = 
       FileRead, history, %inca%\fav\History.m3u
-      if (value <= 0)
-        value = 0.0
       if (folder != "History" && !InStr(history, src))
-        FileAppend, %src%|%value%`r`n, %inca%\fav\History.m3u, UTF-8
+        FileAppend, %src%|%seek%`r`n, %inca%\fav\History.m3u, UTF-8
       }
 
 
@@ -472,7 +472,6 @@
 
   getVoices()
     {
-    editorMedia := StrSplit(selected, ",").1				; editor always calls this
     dir := inca "\cache\voices\"					; to populate voices
     list := ""
     Loop, Files, %dir%*.mp3
@@ -498,7 +497,7 @@
     send, {Lbutton up}
     if (address && WinActive("ahk_group Browsers"))			;  long clicked selected text    
       {
-      if (editorMedia || StrLen(address) < 3)
+      if (captions || StrLen(address) < 3)
         return
       path =
       click =
@@ -847,7 +846,7 @@
     FileAppend, %src%|%value%`r`n, %inca%\fav\new.m3u, UTF-8
     if (type == "audio" || type == "video")
       Runwait, %inca%\cache\apps\ffmpeg.exe -ss %value% -i "%src%" -y -vf scale=1280:1280/dar -vframes 1 "%inca%\cache\posters\%media%%A_Space%%value%.jpg",, Hide
-    AllFav()										; update consolidated fav list
+    AllFav()								; update consolidated fav list
     index := StrSplit(selected, ",").1 + 1
     if playlist
       reload := 3
@@ -858,11 +857,9 @@ Edited() 								; Save edited json, text or SRT file
   {
   json := value
   value := 0
-  lastMedia := editorMedia
-  History()
-  if lastMedia
-    getMedia(lastMedia)							; in case index changed
-  else PopUp("failed...",4444,0,0)
+  if captions
+    getMedia(captions)
+  else PopUp("protection failed...",444,0,0)
   if (json && address)
     {
     FileRecycle, %inca%\cache\json\%media%.json
@@ -2049,9 +2046,6 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
   <div id="editor">
     <div id="ribbon">
       <div id='myCancel' class="dropdown-header" onmouseout="this.innerHTML='&#x2715;'">&#x2715;</div>`n
-      <div id="id-header" class="dropdown">
-        <div class="header"><div id="id-display">--</div></div>`n
-      </div>
       <div id="media-header" class="dropdown">
         <div class="header"></div>
         <div class="dropdown-content"><div>No media</div></div>`n
@@ -2059,13 +2053,6 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
       <div id="search-header">
         <input type="text" id="caption-search-input" placeholder="&#x1F50D;&#xFE0E;" autocomplete="off">
         <span id="search-match-count"></span>`n
-      </div>
-      <div id="voice-header" class="dropdown">
-        <div class="header"></div>
-        <div class="dropdown-content"></div>`n
-      </div>
-      <div id="time-header" class="dropdown">
-        <div class="header"><div id="time-display">- : -- . -</div></div>`n
       </div>
     </div>
     <div id="viewport" class="caption-viewport"></div>
@@ -2083,7 +2070,6 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
 <div id="myNav" class="context">
   <div class="trigger">
     <a id="myInca">...</a>
-
     <div id='myAlt' class="menu alt">`n
       <a id="myCut">cut</a>`n
       <a id="myCopy">copy</a>`n
@@ -2101,12 +2087,14 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
 
   <div id='myDefault'>
     <div class="menu editor">`n
+      <a id='myStart'>- : -- . -</a>`n
+      <a id="myVoiceHeader" style="color:pink">voice:</a>
+      <div id="voiceSub" class="submenu"></div>
       <a id='myDelay'>Delay</a>`n
       <a id='myRate'>Speed</a>`n
-      <a id='myVol'>Volume</a>`n
-      <a id='myBookmark'>Bookmark</a>`n
-      <a id='myChatterbox'>Chatterbox &#x2726;</a>`n
+      <a id='myVol'>Volume</a>`n      <a id='myChatterbox'>Chatterbox &#x2726;</a>`n
       <a id='myElevenLabs'>Elevenlabs &#x2726;</a>`n
+      <a id='myBookmark'>Bookmark</a>`n
       <a id='myEmotion'>Emotion</a>`n
         <div id='emotionSub' class='submenu'>`n
           <a data-tag='laugh'>laugh</a>`n
@@ -2118,6 +2106,8 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
           <a data-tag='sniff'>sniff</a>`n
           <a data-tag='groan'>groan</a>`n
           <a data-tag='shush'>shush</a>`n
+          <a data-tag='whisper'>whisper</a>`n
+          <a data-tag='shout'>shout</a>`n
         </div>
       <a id='myExport'>Export</a>`n
     </div>
