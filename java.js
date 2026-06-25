@@ -5,9 +5,6 @@
 // stop json creation if flat text, no media ?
 // save media in speech folders ?
 
-// auto next play after split in gold and silver json?
-
-
 
   let wheel = 0								// wheel count
   let wheelDir = 0		 					// wheel direction
@@ -258,10 +255,9 @@
       if (!Param()) {index = lastMedia; closePlayer(); return}
       myPlayer.style.opacity = overMedia = 0}
     if (lastClick == 1 && !gesture) {
-if (voiceSub.matches(':hover')) return
+      if (voiceSub.matches(':hover')) return
       if (overBlock || ribbon.matches(':hover')) return
-      if (id == 'viewport' && longClick) activateBlock(editingBlock, { play: 'always' })
-      else if (captions && (progress > 95 || longClick)) nextCaption( - longClick)
+      if (captions && longClick) activateBlock(editingBlock, { play: 'always' })
       if (overTitle && (longClick || overTitle == 2)) {
         title.value = title.defaultValue.trim(); overTitle = 2; lastMedia = index; return}
       if (!playing && id != title.id) {
@@ -1072,7 +1068,7 @@ const activateBlock = (block, options = {}) => {
   swapPlayerMedia(media?.src || originalPlayerSrc, time || 0);
   myVoice.pause()
   myVoice.currentTime = 0
-  if (myPlayer.paused)  myPlayer.currentTime = block.dataset.start
+  if (myPlayer.paused || !block._voice?.src)  myPlayer.currentTime = block.dataset.start
   if (block._voice?.src) {
     if (play) {
       if (!isSameBlock && decodeURIComponent(myVoice.src) != block._voice.src) myVoice.src = block._voice.src
@@ -1191,19 +1187,20 @@ const activateBlock = (block, options = {}) => {
 
 
   function splitIfNeeded(block) {
-    if (!block) return;
+    if (!block) return
     editing = 1
-    let html = block.innerHTML;
-    html = html.replace(/\n<br>/g, '\n');			// firefox fix
-    html = html.replace(/<br>/g, '\n');				// chrome partial fix
+    let html = block.innerHTML
+    html = html.replace(/\n<br>/g, '\n')				// chrome & firefox hacks
+    if (window.getSelection().getRangeAt(0).endOffset) html = html.replace(/<br><br>/g, '\n')
+    html = html.replace(/<br>/g, '\n')
     const hasTrailingEmpty = html.endsWith('\n\n') || html.endsWith('<br><br><br>')
     const parts = html.split('\n\n').map(p => p.trim()).filter(Boolean)
-    if (parts.length <= 1 && !hasTrailingEmpty) return;
-    const startSec = parseFloat(block.dataset.start) || 0;
-    const nextSibling = block.nextSibling;
-    const idx = blocks.indexOf(block);
-    block.remove();
-    blocks = blocks.filter(b => b !== block);
+    if (parts.length <= 1 && !hasTrailingEmpty) return
+    const startSec = parseFloat(block.dataset.start) || 0
+    const nextSibling = block.nextSibling
+    const idx = blocks.indexOf(block)
+    block.remove()
+    blocks = blocks.filter(b => b !== block)
     parts.forEach((part, i) => {
         const newBlock = createBlock(
             null,
@@ -1213,20 +1210,21 @@ const activateBlock = (block, options = {}) => {
             {});
         if (block._voice) {
             newBlock._voice = Object.assign({}, block._voice);
-            newBlock.dataset.voiceName = block.dataset.voiceName || '';
+            newBlock.dataset.voiceName = block.dataset.voiceName || ''
             if (i > 0) newBlock._voice.src = null}
-        if (block._media) newBlock._media = block._media;
-        if (block.dataset.rate) newBlock.dataset.rate = block.dataset.rate;
-        if (block._rate) newBlock._rate = block._rate;
-        viewport.insertBefore(newBlock, nextSibling);
+        if (block._media) newBlock._media = block._media
+        if (block.dataset.rate) newBlock.dataset.rate = block.dataset.rate
+        if (block._rate) newBlock._rate = block._rate
+        viewport.insertBefore(newBlock, nextSibling)
         blocks.splice(idx + i, 0, newBlock)
-        block = blocks[idx + parts.length-1]});
+        block = blocks[idx + parts.length-1]})
     if (hasTrailingEmpty) {
       const emptyBlock = createBlock(null, startSec + 1, '', '0', {})
-      viewport.insertBefore(emptyBlock, nextSibling);
+      viewport.insertBefore(emptyBlock, nextSibling)
       blocks.splice(idx + 1, 0, emptyBlock)
       block = blocks[idx + parts.length]
       block.innerHTML = '\u200B'}
+    myPlayer.currentTime = 0						// stops triggering next block play
     setTimeout(() => {
       renumberBlocks()
       activateBlock(block, { play: 'never' })
@@ -1508,70 +1506,39 @@ function makeJSON() {
     return parseFloat(t) || 0;
   }
 
-
-
 function editorInput(e) {
-  if (editingBlock && e.key.length === 1) editingBlock.dataset.edited = "1";
+  if (editingBlock && e.key.length === 1) editingBlock.dataset.edited = "1"
   if (e.key.length === 1) {myVoice.pause(); myPlayer.pause()}
   if (!longClick) editing = 1
-  if (e.key !== 'Backspace') return;
+  if (e.key !== 'Backspace') return
   let block = editingBlock
-  if (window.getSelection().toString() !== '') {e.preventDefault();; document.execCommand('delete'); return}
-  const range = window.getSelection().getRangeAt(0);
+  if (window.getSelection().toString() !== '') {e.preventDefault(); document.execCommand('delete'); return}
+  const range = window.getSelection().getRangeAt(0)
   const charBefore = range.startContainer.textContent[document.getSelection().getRangeAt(0).startOffset - 1]
   if (charBefore === '\n') { document.execCommand('delete'); document.execCommand('insertText', false, '  ')}
   if (range.rangeCount === 0) return
-  const testRange = document.createRange();
-  testRange.selectNodeContents(editingBlock);
-  testRange.setEnd(range.startContainer, range.startOffset);
+  const testRange = document.createRange()
+  testRange.selectNodeContents(editingBlock)
+  testRange.setEnd(range.startContainer, range.startOffset)
   if (testRange.toString() !== '') return 
-  const prev = block.previousElementSibling;
-  if (!prev?.classList.contains('text-block')) return;
-  e.preventDefault();
-  const prevText = prev.innerText.trim();
-  const currText = editingBlock.innerText.trim();
-  prev.innerText = prevText + '\n' + currText;
-  prev.innerHTML = prev.innerText;
-  editingBlock.remove();
-  blocks = blocks.filter(b => b !== block);
-  renumberBlocks();
-  editingBlock = prev;
-  editingBlock.focus();
-  const r = document.getSelection().getRangeAt(0);
-  r.setStart(r.startContainer, prevText.length + 1);
-  requestAnimationFrame(rebuild)}
+  const prev = block.previousElementSibling
+  if (!prev?.classList.contains('text-block')) return
+  e.preventDefault()
+  const prevText = prev.innerText.trim()
+  const currText = editingBlock.innerText.trim()
+  prev.focus()
+  document.execCommand('insertText', false, currText + '\n')
+  editingBlock.remove()
+  renumberBlocks()
+  blocks = blocks.filter(b => b !== block)
+  editingBlock = null
+  requestAnimationFrame(() => {activateBlock(prev, { play: 'never' }); prev.focus()})}
 
 
   function voiceProgress () {								// voice progress bar
     if (editingBlock && editingBlock._voice?.src) {
       progress = (myVoice.currentTime / myVoice.duration || 0) * 100
       editingBlock.style.setProperty('--progress', progress + '%')}}
-
-
-  function playerProgress() {								// myPlayer progress bar
-    if (!captions || !playing || editingBlock?._voice?.src) return
-    let current = editingBlock?.dataset.start
-    let next = editingBlock?.nextElementSibling
-    let previous = editingBlock?.previousElementSibling
-    progress = ((myPlayer.currentTime - current) / (next.dataset.start - current) || 0) * 100
-    progress = Math.max(0, Math.min(100, progress))
-    editingBlock.style.setProperty('--progress', progress + '%')
-    if (myNav.style.display) return
-    if (next && myPlayer.currentTime > next.dataset.start) {				// next caption
-      if (overBlock == editingBlock) { myPlayer.pause(); myVoice.pause() }
-      else {activateBlock(next); next.scrollIntoView({ behavior: 'smooth', block: 'center' })}}
-    else if (previous && myPlayer.currentTime < current) {				// previous caption
-      if (overEditor) { myPlayer.pause(); myVoice.pause() }
-      else {activateBlock(previous); previous.scrollIntoView({ behavior: 'smooth', block: 'center' })}}}
-
-
-  function nextCaption(wheel) {								// wheel search or myVoice ended
-    if (!captions || myNav.style.display) return
-    let next = editingBlock?.nextElementSibling
-    if (overBlock == editingBlock) {myVoice.pause(); myPlayer.pause(); return}
-    if (wheel < 0) next = next?.previousElementSibling?.previousElementSibling
-    activateBlock(next)
-    next.scrollIntoView({ behavior: 'smooth', block: 'center' })}
 
 
   function nextMatch(e) {
@@ -1643,6 +1610,33 @@ function editorInput(e) {
             editing = 1
             activateBlock(editingBlock, { play: 'always' })
             if (voiceName) inca('addHistory',last,0,path)})}
+
+
+  function playerProgress() {								// myPlayer progress bar
+    if (!captions || !playing || editingBlock?._voice?.src) return
+    let current = editingBlock?.dataset.start
+    let next = editingBlock?.nextElementSibling
+    let previous = editingBlock?.previousElementSibling
+    progress = ((myPlayer.currentTime - current) / (next.dataset.start - current) || 0) * 100
+    progress = Math.max(0, Math.min(100, progress))
+    editingBlock.style.setProperty('--progress', progress + '%')
+    if (myNav.style.display || overEditor) return
+    if (next && myPlayer.currentTime > next.dataset.start) {				// next caption
+      if (overBlock == editingBlock) { myPlayer.pause(); myVoice.pause() }
+      else {activateBlock(next); next.scrollIntoView({ behavior: 'smooth', block: 'center' })}}
+    else if (previous && myPlayer.currentTime < current) {				// previous caption
+      if (overEditor) { myPlayer.pause(); myVoice.pause() }
+      else {activateBlock(previous); previous.scrollIntoView({ behavior: 'smooth', block: 'center' })}}}
+
+
+  function nextCaption(wheel) {								// wheel search or myVoice ended
+    if (!captions || myNav.style.display || overEditor) return
+    let next = editingBlock?.nextElementSibling
+    if (overBlock == editingBlock) {myVoice.pause(); myPlayer.pause(); return}
+    if (wheel < 0) next = next?.previousElementSibling?.previousElementSibling
+    activateBlock(next)
+    next.scrollIntoView({ behavior: 'smooth', block: 'center' })}
+
 
 
 

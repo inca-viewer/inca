@@ -2088,10 +2088,10 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
   <div id='myDefault'>
     <div class="menu editor">`n
       <a id='myStart'>- : -- . -</a>`n
-      <a id="myVoiceHeader" style="color:pink">voice:</a>
-      <div id="voiceSub" class="submenu"></div>
       <a id='myDelay'>Delay</a>`n
       <a id='myRate'>Speed</a>`n
+      <a id="myVoiceHeader" style="color:pink">voice:</a>
+      <div id="voiceSub" class="submenu"></div>
       <a id='myVol'>Volume</a>`n      <a id='myChatterbox'>Chatterbox &#x2726;</a>`n
       <a id='myElevenLabs'>Elevenlabs &#x2726;</a>`n
       <a id='myBookmark'>Bookmark</a>`n
