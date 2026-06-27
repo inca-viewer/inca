@@ -516,7 +516,8 @@
       if (y < A_ScreenHeight/5)
         y+=150
       else y-=600
-      run, osk.exe
+      if (!incaTab || yRef < 200)
+        run, osk.exe
       Loop, 100
         {
         sleep 5
@@ -2166,6 +2167,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
     StringReplace, header, header, \, /, All
     StringReplace, body, body, \, /, All
     script = <script src="%server%%inca%/cache/apps/pitch.js"></script>`n
+    script = <script src="%server%%inca%/cache/apps/osk.js"></script>`n
     script = %script%<script src="%server%%inca%/java.js"></script>`n
     htm = %header%%body%%script%`n</body>`n</html>`n
     FileDelete, %inca%\cache\html\%folder%.htm

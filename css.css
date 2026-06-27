@@ -14,6 +14,101 @@
 
 
 
+
+#osk {
+  position: fixed !important;
+  background: #111;
+  padding: 8px 24px;
+  border-radius: 10px;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.7);
+  z-index: 5004;
+  user-select: none;
+  touch-action: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+#osk-keys {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.osk-row {
+  display: flex;
+  gap: 4px;
+  justify-content: center;
+}
+
+#osk button {
+  font-size: 13px;
+  background: #1a1a1a;
+  color: #ffc0cb80;
+  border: none;
+  border-radius: 4px;
+  transition: background 0.06s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  margin: 0;
+}
+
+#osk button:active,
+#osk button.highlight {
+  background: pink !important;
+  color: pink;
+}
+
+.osk-key {
+  width: 2.5em;
+  height: 2em;
+}
+
+.osk-control {
+  width: 3.2em;
+  height: 2em;
+  padding: 3px;
+}
+
+.osk-space {
+  flex: 1;
+  height: 2em;
+}
+
+.osk-spacer {
+  width: 2em;
+}
+
+#osk-suggestions {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 0.5em;
+  justify-content: center}
+
+.osk-suggestion {
+  flex: 1;
+  max-width: 5.2em;
+  height: 1.4em;
+  background: inherit !important;
+  color: #ffc0cbb0 !important;
+}
+
+#osk .osk-control,
+#osk .osk-space,
+#osk .osk-suggestion { font-size: 10px }
+#osk button.locked,
+#osk button.active { color : pink !important }
+
+.osk-suggestion:active {
+  transform: scale(1.5) !important;
+  color: #ffc0cbf0 !important;
+}
+
+
+
+
 .title {					/* media title */
   display: block;
   position: absolute;
@@ -69,8 +164,8 @@
   justify-content: space-around;
   cursor:default;}
 
- #media-header {min-width: 16em}
- #search-header {min-width: 16em}
+ #media-header {width: 40%}
+ #search-header {min-width: 40%}
 
 
 
