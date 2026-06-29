@@ -82,7 +82,7 @@ const server = http.createServer(async (req, res) => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
             text,
-            exaggeration: 2,
+            exaggeration: 1.4,
             voice_mode: 'clone',
             reference_audio_filename: refFilename
         })

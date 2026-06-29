@@ -858,6 +858,7 @@ Edited() 								; Save edited json, text or SRT file
   {
   json := value
   value := 0
+  lastSrc := src
   if captions
     getMedia(captions)
   else PopUp("protection failed...",444,0,0)
@@ -867,8 +868,8 @@ Edited() 								; Save edited json, text or SRT file
     FileAppend, %json%, %inca%\cache\json\%media%.json, UTF-8
     if (ext == "txt")
       {
-      FileRecycle, %src%
-      FileAppend, %address%, %src%, UTF-8
+      FileRecycle, %lastSrc%
+      FileAppend, %address%, %lastSrc%, UTF-8
       }
     }
   IfExist, %inca%\cache\json\%media%.json				; if speech exist in json
@@ -2091,24 +2092,27 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
       <a id='myStart'>- : -- . -</a>`n
       <a id='myDelay'>Delay</a>`n
       <a id='myRate'>Speed</a>`n
+      <a id='myVol'>Volume</a>`n
       <a id="myVoiceHeader" style="color:pink">voice:</a>
       <div id="voiceSub" class="submenu"></div>
-      <a id='myVol'>Volume</a>`n      <a id='myChatterbox'>Chatterbox &#x2726;</a>`n
+      <a id='myClone2'>new voice &#x2726;</a>`n
+      <a id='myChatterbox'>Chatterbox &#x2726;</a>`n
       <a id='myElevenLabs'>Elevenlabs &#x2726;</a>`n
       <a id='myBookmark'>Bookmark</a>`n
       <a id='myEmotion'>Emotion</a>`n
         <div id='emotionSub' class='submenu'>`n
-          <a data-tag='laugh'>laugh</a>`n
-          <a data-tag=chuckle'>chuckle</a>`n
-          <a data-tag='sigh'>sigh</a>`n
-          <a data-tag='gasp'>gasp</a>`n
-          <a data-tag='cough'>cough</a>`n
-          <a data-tag='clear throat'>clear throat</a>`n
+          <a data-tag='yarn'>yarn</a>`n
+          <a data-tag='breath'>breath</a>`n
+          <a data-tag='whisper'>whisper</a>`n
           <a data-tag='sniff'>sniff</a>`n
           <a data-tag='groan'>groan</a>`n
           <a data-tag='shush'>shush</a>`n
-          <a data-tag='whisper'>whisper</a>`n
-          <a data-tag='shout'>shout</a>`n
+          <a data-tag='sigh'>sigh</a>`n
+          <a data-tag='gasp'>gasp</a>`n
+          <a data-tag='cough'>cough</a>`n
+          <a data-tag='laugh'>laugh</a>`n
+          <a data-tag='chuckle'>chuckle</a>`n
+          <a data-tag='clear throat'>clear throat</a>`n
         </div>
       <a id='myExport'>Export</a>`n
     </div>
