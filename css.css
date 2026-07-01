@@ -38,7 +38,7 @@
   justify-content: center;}
 
 #osk button {
-  font-size: 14px;
+  font-size: 13px;
   background: #1a1a1a;
   color: #ffc0cb80;
   border: none;
@@ -49,48 +49,51 @@
   justify-content: center;
   box-sizing: border-box;
   margin: 0;
+  transition: 0.1s;
   min-height: 2em;
-  width: 1.8em;}
-
-.osk-control {
-  width: 3.2em !important;
+  width: 1.6em;
 }
 
-.osk-space {
-  width: 5.4em !important;
-}
+.osk-control {width: 2.3em !important;}
+.osk-space {width: 9.5em !important;}
+.osk-back {width: 5em !important;}
+.osk-ctrl {width: 2.3em !important;}
+.osk-enter {width: 6em !important;}
+.osk-shift {width: 4.5em !important;}
 
-// #osk button:nth-child(1) { width: 2.2em !important; }
-
-#osk button:hover {background: #141414}
+#osk button:hover {background: #ffc0cb18; color: pink; transform: scale(1.1)}
 #osk button:active,
 #osk button.highlight {
   background: pink !important;
-  color: pink;}
-
-.osk-spacer {
-  width: 1em;}
+  color: black;}
 
 #osk-suggestions {
   display: flex;
   gap: 4px;
   margin-bottom: 0.3em;
-  justify-content: center}
+  justify-content: center;
+  min-height: 1.7em;          /* ← add this */
+}
 
+#osk .osk-suggestion:empty {
+  display: none               /* keep this */
+}
 
-.osk-suggestion {
+#osk .osk-suggestion {
   flex: 1;
   max-width: 6em;
+  min-width: 2em;
   height: 1.7em;
   background: inherit !important;
-  color: #ffc0cbb0 !important}
+  color: #ffc0cbb0 !important;
+  text-align: center;
+  font-size: 11px}
 
 #osk .osk-control,
 #osk .osk-space { font-size: 9px }
 #osk button.locked,
 #osk button.active { color : pink !important }
 #osk .osk-suggestion { font-size: 11px }
-
 
 .osk-suggestion:active {color: #ffc0cbf0 !important}
 

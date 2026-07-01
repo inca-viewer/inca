@@ -198,7 +198,7 @@ const waitForTempFile = async () => {
                 await serveHtmlFile(res, startTime);
 
 
-// fsPromises.unlink(tempFilePath, '').catch(() => {});		// Clear out.txt once consumed
+ fsPromises.unlink(tempFilePath, '').catch(() => {});		// Clear out.txt once consumed
 
             });
             return;

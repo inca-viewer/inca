@@ -71,7 +71,6 @@
   Global poster					; htm thumbnail
   Global mediaList				; html of media content
   Global panelList				; html of top panel
-  Global lastFolder
   Global index = 0				; scroll to index
   Global allFav					; all favorite shortcuts consolidated
   Global showSubs
@@ -940,23 +939,35 @@ Edited() 								; Save edited json, text or SRT file
     if playlist
       {
       checkPlaylist()
-      FileRead, str, %playlist%
-      Loop, Parse, str, `n, `r
-        if A_LoopField
-          {  
-          source := StrSplit(A_Loopfield, "|").1
-          start := StrSplit(A_Loopfield, "|").2
-          if (SubStr(source, 1, 1) != "#")
-            if (!searchTerm || InStr(source, searchTerm)) 
-            list .= spool(source, A_Index, start)
-          }
+      Loop, Files, %inca%\fav\*.m3u
+        {
+        if (!searchTerm && A_LoopFileFullPath != playlist)
+          continue
+        allFav = %inca%\fav\all fav.m3u
+        if (searchTerm && A_LoopFileFullPath == allFav)
+          continue
+        SplitPath, A_LoopFileFullPath,,,, fold
+        FileRead, str, %A_LoopFileFullPath%
+        Loop, Parse, str, `n, `r
+          if A_LoopField
+            {  
+            source := StrSplit(A_Loopfield, "|").1
+            start := StrSplit(A_Loopfield, "|").2
+            if (SubStr(source, 1, 1) != "#")
+              if (!searchTerm || InStr(source, searchTerm)) 
+              list .= spool(source, A_Index, start, fold)
+            }
+        }
       }
     else Loop, Parse, searchPath, `|
+      {
+      SplitPath, A_LoopField,, fold
+      SplitPath, fold,,,, fold
       Loop, Files, %A_LoopField%*.*, F%recurse%
         if A_LoopFileAttrib not contains H,S
           if (A_LoopFileSize > 0 && listSize < 350000)			; for when files are still downloading
             {
-            list .= spool(A_LoopFileFullPath, A_Index, start)
+            list .= spool(A_LoopFileFullPath, A_Index, start, fold)
             if (!silent && listSize && !Mod(listSize,1000))
               {
               FileDelete, %inca%\cache\html\out.txt			; keep server waiting
@@ -964,6 +975,7 @@ Edited() 								; Save edited json, text or SRT file
               PopUp(listSize,0,0,0)
               }
             }
+      }
     if !silent
       PopUp(listSize,0,0,0)
     if (listSize > 250000)
@@ -988,7 +1000,7 @@ Edited() 								; Save edited json, text or SRT file
     }
 
 
-  Spool(input, count, start)						; sorting and search filters
+  Spool(input, count, start, fold)					; sorting and search filters
     {
     SplitPath, input,,,ex, filen
     if (ex == "lnk")
@@ -1063,7 +1075,7 @@ Edited() 								; Save edited json, text or SRT file
           else start := 4 * dur / 200
         }
       start := Round(start,3)
-      entry = %listId%/%input%/%med%/%start%`r`n
+      entry = %listId%/%input%/%med%/%start%/%fold%`r`n
       return entry
       }
     }
@@ -1224,9 +1236,14 @@ Edited() 								; Save edited json, text or SRT file
       yv := A_ScreenHeight - 3
       xv := A_ScreenWidth * volume/100
       Gui, vol: show, x0 y%yv% w%xv% h3 NA
-      SoundSet, volume
+      showTime()
+      SetTimer, volTimer, -1
       }
     }
+
+volTimer:
+      SoundSet, volume
+return
 
 
   Time(in)
@@ -1504,6 +1521,22 @@ Edited() 								; Save edited json, text or SRT file
         }
     FileRead, allFav, %inca%\fav\all fav.m3u    
     }
+
+
+  showTime()
+      {
+      FormatTime, time,, h:mm
+      x =
+      if volume
+        x := Round(volume)
+      ctime := time
+      Gui, Status:+lastfound
+      WinSet, TransColor, 0 30
+      Gui, Status:Font, s20 cWhite, Segoe UI
+      GuiControl, Status:Font, GuiSta
+      GuiControl, Status:, GuiSta, %time%  %x%
+      Gui, Status: Show, NA
+      }
 
 
   LoadSettings()
@@ -1820,7 +1853,6 @@ Edited() 								; Save edited json, text or SRT file
     Critical								; stop pause key & timer interrupts
     if !path
       return
-    lastFolder =
     menu_item =
     mediaList =
     str := StrSplit(path,"\")
@@ -1846,7 +1878,8 @@ Edited() 								; Save edited json, text or SRT file
         source := item.2
         type := item.3
         start := item.4
-        mediaList(A_Index, source, start)				; append mediaList
+        fold := item.5
+        mediaList(A_Index, source, start, fold)			; append mediaList
         }
     if (command == "More")						; continuous scrolling
       {
@@ -2171,7 +2204,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
     StringReplace, header, header, \, /, All
     StringReplace, body, body, \, /, All
     script = <script src="%server%%inca%/cache/apps/pitch.js"></script>`n
-    script = <script src="%server%%inca%/cache/apps/osk.js"></script>`n
+    script = %script%<script src="%server%%inca%/cache/apps/osk.js"></script>`n
     script = %script%<script src="%server%%inca%/java.js"></script>`n
     htm = %header%%body%%script%`n</body>`n</html>`n
     FileDelete, %inca%\cache\html\%folder%.htm
@@ -2206,21 +2239,16 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
   }
 
 
-mediaList(j, input, start)						; spool sorted media files into web page
+mediaList(j, input, start, fold)					; spool sorted media files into web page
     {
     Critical
     poster =
     if (InStr(transcoding, input) || (transcoding && InStr(input, "temp_")))
-      input = 							; hide locked files
+      input = 								; hide locked files
     if DetectMedia(input)
       thumb := src
-    x := RTrim(mediaPath,"\")
-    SplitPath, x,,,,thisFolder
-    if (searchTerm && lastFolder != thisFolder && sort == "Alpha")
-      fold = <div style="font-size:1.4em; color:pink; width:80`%">%thisFolder%</div>`n
-    lastFolder := thisFolder
     if (searchTerm || InStr(toggles, "Recurse"))
-      fo = <div style='overflow: hidden; text-overflow: ellipsis; width: 8em'>%thisFolder%</div>
+      fo = <div style='overflow: hidden; text-overflow: ellipsis; width: 8em'>%fold%</div>
     FileRead, dur, %inca%\cache\durations\%media%.txt
     durT := Time(dur)
     if (type == "document" || type == "image" || !dur)
@@ -2262,6 +2290,8 @@ mediaList(j, input, start)						; spool sorted media files into web page
       thumb = %inca%\cache\icons\music.png
     if (type == "document")
       thumb = %inca%\cache\icons\ebook.png
+    if (type == "document" && listView)
+      thumb =
     preload = 'auto'							; browser to render non indexed media
     IfExist, %thumb%
       {
@@ -2296,16 +2326,16 @@ mediaList(j, input, start)						; spool sorted media files into web page
 
     if (type == "image")
       media_s := "&#x2726; " . media_s					; highlight as image (not video)
-    if (ext=="txt")
+    if (ext == "txt")
       src = "%server%%poster%"
     else src = "%server%%src%"
-    poster = poster="%server%%poster%"
+    poster = poster = "%server%%poster%"
     data = "%server%%data%"
 
     caption = <pre id="dat%j%" style='display: none' type="text/plain" data=%data%></pre>`n
 
     if listView
-mediaList = %mediaList%%fold%<div id='entry%j%' class='entry-row' data-params='%type%,%start%,%dur%,%size%' onmouseenter='if (gesture) sel(%j%)' onmouseover='overThumb(%j%)'`n onmouseout="thumb%j%.style.opacity=0; thumb.src=''"><div><video id='thumb%j%' class='thumb2' onwheel='if (zoom > 1) wheelEvent(event)'`n %poster% preload=%preload% muted loop disableRemotePlayback type="video/mp4"></video><video id="vid%j%" style='display: none'`n src=%src% preload='none' type='video/mp4'></video>`n </div><div>%j%</div><div>%ext%</div><div>%size%</div><div style='min-width: 6em'>%durT%</div><div>%date%</div><div id='myFavicon%j%' class='favicon' style='position: relative; text-align: right; translate:1.6em 0.4em'>%favicon%</div><div class='title-cell'><textarea id="title%j%" class='title' style='top:0.1em' autocomplete='off' onmouseenter='overThumb(%j%)'>`n %media_s%</textarea></div>%fo%</div>`n %caption%<span id='cues%j%' style='display: none'>%cues%</span>`n`n
+mediaList = %mediaList%%foldr%<div id='entry%j%' class='entry-row' data-params='%type%,%start%,%dur%,%size%' onmouseenter='if (gesture) sel(%j%)' onmouseover='overThumb(%j%)'`n onmouseout="thumb%j%.style.opacity=0; thumb.src=''"><div><video id='thumb%j%' class='thumb2' onwheel='if (zoom > 1) wheelEvent(event)'`n %poster% preload=%preload% muted loop disableRemotePlayback type="video/mp4"></video><video id="vid%j%" style='display: none'`n src=%src% preload='none' type='video/mp4'></video>`n </div><div>%j%</div><div>%ext%</div><div>%size%</div><div style='min-width: 6em'>%durT%</div><div>%date%</div><div id='myFavicon%j%' class='favicon' style='position: relative; text-align: right; translate:1.6em 0.4em'>%favicon%</div><div class='title-cell'><textarea id="title%j%" class='title' style='top:0.1em' autocomplete='off' onmouseenter='overThumb(%j%)'>`n %media_s%</textarea></div>%fo%</div>`n %caption%<span id='cues%j%' style='display: none'>%cues%</span>`n`n
 
     else mediaList = %mediaList%<div id="entry%j%" class='entry' data-params='%type%,%start%,%dur%,%size%'>`n <span id='myFavicon%j%' onmouseenter='overThumb(%j%)' class='favicon'>%favicon%</span>`n <textarea id='title%j%' class='title' style='top:-0.8em; opacity:0.7' type='text'`n onmouseenter='overThumb(%j%)'>%media_s%</textarea>`n <video id="thumb%j%" class='thumb' onwheel='if (zoom > 1) wheelEvent(event)' onmouseenter="overThumb(%j%); if (gesture && !playing) sel(%j%)"`n onmouseout="thumb.pause()"`n onmouseup='if (gesture && !playing) Param(%j%)' %poster%`n preload=%preload% loop muted disableRemotePlayback type='video/mp4'></video>`n <video id="vid%j%" style='display: none' src=%src% preload='none' type='video/mp4'></video>%noIndex%`n <span id='cues%j%' style='display: none'>%cues%</span></div>`n %caption%`n
     }
@@ -2505,23 +2535,11 @@ mediaList = %mediaList%%fold%<div id='entry%j%' class='entry-row' data-params='%
     if (incaTab && fullscreen)
       WinSet, Top,,ahk_group Browsers
     FormatTime, time,, h:mm
-    if (click || time != ctime)
-      {
-      x =
-      if volume
-        x := Round(volume)
-      ctime := time
-      Gui, Status:+lastfound
-      WinSet, TransColor, 0 30
-      Gui, Status:Font, s20 cWhite, Segoe UI
-      GuiControl, Status:Font, GuiSta
-      GuiControl, Status:, GuiSta, %time%  %x%
-      Gui, Status: Show, NA
-      }
+    if (time != ctime)
+      showTime()
     if (!click || gesture < 0)
       gui, vol: hide
     return
-
 
 
 

@@ -1,9 +1,7 @@
 // list all mouse commands bottom of myView
 // home icon somewhere to github
-
 // stop json creation if flat text, no media ?
 // save media in speech folders ?
-
 
 
 
@@ -128,7 +126,6 @@
     const isAlt = myAlt.style.display === 'block'			// toggle context menus
     myAlt.style.display = isAlt ? '' : 'block'
     myDefault.style.display = isAlt ? 'block' : 'none'})
-  ribbon.addEventListener('click', (e) => {myVoice.pause(); myPlayer.pause()})
   searchHeader.addEventListener('wheel', nextMatch)
   mediaContent.addEventListener('mouseleave', () => {mediaContent.style.display = 'none'})
   searchHeader.addEventListener('mouseleave', () => {searchInput.placeholder='🔍︎'})
@@ -169,7 +166,7 @@
     else if (e.key == 'F23') mouseUp(e)					// R click up
     else if (e.key == 'F24' || (e.code == 'ArrowLeft' && e.shiftKey)) mouseBack()
     else if ((e.key == 'ArrowUp' || e.key == 'ArrowDown') && captions && editingBlock) moveBlock(e)
-    else if (e.key === 'Backspace') editorInput(e)
+    else if (e.key === 'Backspace') Backspace(e)
     else if (!overTitle && !captions && playing) {
       if (e.key == 'ArrowRight') myPlayer.currentTime += 10
       else if (e.key == 'ArrowLeft') myPlayer.currentTime -= 10
@@ -219,6 +216,7 @@
 
     if (lastClick == 3) {
       if (gesture) return
+      if (overBlock) activateBlock(overBlock, { play: 'never' })
       if (overEditor && longClick) Chatterbox(id)
       lastId = editingBlock
       if (overEditor) {
@@ -242,15 +240,15 @@
       if (longClick) {index--} else index++						// next media
       if (!Param()) {index = lastMedia; closePlayer(); return}
       myPlayer.style.opacity = overMedia = 0}
+
     if (document.getElementById('osk')?.contains(document.elementFromPoint(xPos, yPos))) return
     predictBuffer = ''
     if (longClick && (overTitle || ['myInput', 'caption-search-input', 'inp', 'myVoiceInput'].includes(id))) osk()
     const wasOsk = document.getElementById('osk')
+    if (id.includes('search-input')) return
 
     if (lastClick == 1 && !gesture) {
-// if (ribbon.matches(':hover') || document.activeElement.id == 'caption-search-input') return
       if (captions) {
-//        if (overBlock) {blocks.forEach(b => {b.style.color = ''; b.textContent = b.textContent})}
         if (longClick && overBlock) osk()
         if (overBlock && overBlock !== editingBlock) {
           if (longClick && !wasOsk) activateBlock(overBlock, { play: 'never' })
@@ -364,8 +362,8 @@
     if (overBlock) lastId = overBlock
     if (innerHeight == outerHeight) {xPos = e.screenX; yPos = e.screenY} 		// fullscreen detection/offsets
     else {xPos = e.clientX; yPos = e.clientY}
-    myAlert.style.left = mySelected.style.left = xPos +30 +'px'
-    myAlert.style.top = mySelected.style.top = yPos +'px'
+    myAlert.style.left = mySelected.style.left = xPos + 30 +'px'
+    myAlert.style.top = mySelected.style.top = yPos + 20 +'px'
     let x = Math.abs(xPos-xRef)								// gesture (Click + slide)
     let y = Math.abs(yPos-yRef)
     cursor = 6
@@ -381,7 +379,7 @@
     if (id.includes('thumb') && thumb.style.pop > 1) {					// move popped thumb
         thumb.style.left = parseInt(thumb.style.left || 0) + xPos - xRef + 'px'
         thumb.style.top =  parseInt(thumb.style.top || 0) + yPos - yRef + 'px'}
-    else if (osk && osk.contains(document.elementFromPoint(xPos, yPos))){
+    else if (Click == 1 && osk && osk.contains(document.elementFromPoint(xPos, yPos))){	// move osk
         osk.style.left = parseInt(osk.style.left || 0) + xPos - xRef + 'px'
         osk.style.top =  parseInt(osk.style.top || 0) + yPos - yRef + 'px'}
     else if (playing && (Click == 1 || gesture == 2 || delay == 1) && (overMedia || !overEditor)) {
@@ -500,13 +498,13 @@
     else if (!thumbSheet) {								// seek
         let interval = 0.2
         if (dur > 200 && (overMedia && ym > trigger || yw > 0.9)) interval = 0.8	
-        else if (myPlayer.paused) interval = 0.0333
+        else if (myPlayer.paused) interval = 0.02
         if (wheelUp) (playing ? [myPlayer, myVoice] : [thumb]).forEach(el => el.currentTime += interval)
         else (playing ? [myPlayer, myVoice] : [thumb]).forEach(el => el.currentTime -= interval)
         if (dur) myPlayer.addEventListener('seeked', () => {delay = 100}, {once: true})
         if (!playing) fade = 3								// hide seekbar in thumb popout
         else cursor = 6
-        delay = 50
+        delay = 24
         thumb.pause()}
     wheel = 0}
 
@@ -1034,11 +1032,10 @@
       if (b.media) block._media = { src: b.media };
       if (b.voice) block._voice = { src: b.voice };
         lastVoice = b.voiceName || lastVoice
-        block._voiceName = b.voiceName
-        block._volume = b.volume
-        block._rate = b.rate
-        block._delay = b.delay
-        block._edited = b.edited;});
+        block._voiceName = b.voiceName || ''
+        block._volume = b.volume || 1
+        block._rate = b.rate || 1
+        block._delay = b.delay || 0});
     projectMedia.defaultSrc = originalPlayerSrc || null;
     if (projectMedia.defaultSrc) swapPlayerMedia(projectMedia.defaultSrc, 0)
     let first = blocks[0];
@@ -1071,6 +1068,10 @@ const activateBlock = (block, options = {}) => {
   const isSameBlock = play == 'always' ? 0 : (editingBlock === block)
   const startDelay = Click ? 0 : block._delay * 1000 || 0
   if (!blocks.length) blocks = [...document.querySelectorAll('.text-block')]
+  if (overBlock) blocks.forEach(b => { 
+    b.style.color = '';									// remove search word highlights
+    b.querySelectorAll('mark').forEach( m => { 
+      while(m.firstChild) m.parentNode.insertBefore(m.firstChild,m); m.remove()})})
   mediaHeader.textContent = title.value || null
   lastVoice = editingBlock?._voiceName || lastVoice;
   block.style.setProperty('--progress', '0%')
@@ -1177,7 +1178,7 @@ if (myPlayer.paused && !block._voice?.src)  myPlayer.currentTime = block.dataset
     if (!name || !editingBlock) return
     editing = 1
     if (longClick) {
-      blocks.forEach(b => {if (b._voiceName == myVoiceHeader.textContent) b._voiceName = name})
+      blocks.forEach(b => {if ((b._voiceName || 'None') == myVoiceHeader.textContent) b._voiceName = name})
       myAlert.innerText = name + ' > ' + myVoiceHeader.textContent
       delay = 212}
     editingBlock._voiceName = myVoiceHeader.textContent = name}
@@ -1260,12 +1261,10 @@ function splitIfNeeded(e) {
     mediaContent.style.display = 'flex';
 
     try {
-
-const resp = await fetch('/inca/fav/History.m3u');
-const historyText = resp.ok ? (await resp.text()).trim() : '';
-const text  = historyText + (historyText ? '\n' : '');
-const lines  = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
-
+      const resp = await fetch('/inca/fav/History.m3u');
+      const historyText = resp.ok ? (await resp.text()).trim() : '';
+      const text  = historyText + (historyText ? '\n' : '');
+      const lines  = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
       const items = lines.map(line => {
         const [path, startStr] = line.split('|');
         const startSec = parseFloat(startStr) || 0;
@@ -1390,7 +1389,10 @@ function populateVoices() {
 
   voiceSub.innerHTML = '';
   voiceSub.style.padding = '0 1.5em 0 1.2em';
-  const current = editingBlock?._voiceName || lastVoice || '';
+  
+  const current = editingBlock?._voiceName || '';
+  myVoiceHeader.textContent = current || 'None';
+  
   const addGap = () => {const gap = document.createElement('div'); gap.style.height = '8px'; voiceSub.appendChild(gap)}
 
   const none = document.createElement('div');
@@ -1399,7 +1401,14 @@ function populateVoices() {
   none.onclick = () => {
     if (editingBlock) {
       delete editingBlock._voice;
+      delete editingBlock._voiceName;
       delete editingBlock.dataset.voiceName;
+      editingBlock.classList.remove('has-voice');
+      editing = 1;
+      lastVoice = ''
+      myVoice.pause();
+      myVoice.src = '';
+      activateBlock(editingBlock, { play: 'never' });
     }
     myVoiceHeader.textContent = 'None';
   };
@@ -1411,23 +1420,24 @@ function populateVoices() {
   newSet.forEach(name => {
     const row = document.createElement('div');
     row.textContent = name;
-    if (name === current) {myVoiceHeader.innerText = name; row.style.color = 'pink'}
+    if (name === current) { row.style.color = 'pink' }
     row.onmousedown = () => {Timer = setTimeout(() => {longClick = 1; selectVoice(name)},300)};
     row.onmouseup = () => {clearTimeout(Timer); if (!longClick) selectVoice(name)};
     voiceSub.appendChild(row);
   });
 
   addGap();
-  inca('getVoices', 0, index).then(result => {
-    if (!result) return;
-    result.split('|').filter(Boolean).forEach(name => {
-      const row = document.createElement('div');
-      row.textContent = name;
-      row.onmousedown = () => {Timer = setTimeout(() => {longClick = 1; selectVoice(name)},300)};
-      row.onmouseup = () => {clearTimeout(Timer); if (!longClick) selectVoice(name)};
-      voiceSub.appendChild(row);
-    });
+inca('getVoices', 0, index)?.then(result => {
+  if (!result) return;
+  result.split('|').filter(Boolean).forEach(name => {
+    const row = document.createElement('div');
+    row.textContent = name;
+    if (name === current) { row.style.color = 'pink' }
+    row.onmousedown = () => {Timer = setTimeout(() => {longClick = 1; selectVoice(name)},300)};
+    row.onmouseup = () => {clearTimeout(Timer); if (!longClick) selectVoice(name)};
+    voiceSub.appendChild(row);
   });
+})
 }
 
 
@@ -1449,7 +1459,6 @@ function makeJSON() {
       return {
         number: parseInt(b.dataset.num),
         startTime: isNaN(start) ? null : start.toFixed(1),
-        edited: b.dataset.edited === '1' ? 1 : 0,
         fav: b.dataset.fav === '1' ? 1 : 0,
         text: b.innerText.trim(),
         media: b._media?.src ? b._media.src.replace(/\\/g, '/') : null,
@@ -1517,26 +1526,34 @@ function makeJSON() {
   }
 
 
-function editorInput(e) {
-  if (editingBlock && e.key.length === 1) editingBlock.dataset.edited = "1"
-  if (e.key.length === 1) {myVoice.pause(); myPlayer.pause()}
-  if (captions && !longClick) editing = 1
-  if (e.key !== 'Backspace') return
-e.preventDefault()
+
+function Backspace(e) {
+  e.preventDefault()
+  myVoice.pause()
+  myPlayer.pause()
+  if (captions) editing = 1
+  const text = editingBlock?.textContent || ''
+  const leading = /^\s/.test(text) && text.trim().length > 0 ? 1 : 0
   document.execCommand('delete')
-  if (!captions || e.target.id == 'caption-search-input') return
+  if (!captions || e.target.id == 'caption-search-input' || leading) return
   const range = window.getSelection().getRangeAt(0)
   const testRange = document.createRange()
   testRange.selectNodeContents(editingBlock)
   testRange.setEnd(range.startContainer, range.startOffset)
-  if (testRange.toString() !== '') return 
+  if (testRange.toString() !== '') return
   const prev = editingBlock?.previousElementSibling
   if (!prev) return
-  prev.innerText = prev.innerText + '\n' + editingBlock.innerText
+  const joinAt = prev.textContent.length
+  prev.textContent = prev.textContent + '\n' + editingBlock.textContent
+  const removed = editingBlock
   editingBlock.remove()
-  setTimeout(() => {overBlock = prev; activateBlock(prev, { play: 'never' }); prev.focus()},200)
-  blocks = blocks.filter(b => b !== block)
-  renumberBlocks()}
+  blocks = blocks.filter(b => b !== removed)
+  overBlock = prev
+  activateBlock(prev, { play: 'never' })
+  prev.focus()
+  window.getSelection().collapse(prev.firstChild, joinAt)
+  renumberBlocks()
+}
 
 
   function moveBlock(e) {
@@ -1562,7 +1579,7 @@ e.preventDefault()
     inp.className = 'voice-input'
     inp.id = 'myVoiceInput'
     inp.value = editingBlock?._voiceName || ''
-    inp.placeholder = 'voice name'
+    inp.placeholder = 'new voice'
     inp.onblur = () => inp.remove()
     inp.style.left = xPos+'px'
     inp.style.top  = yPos+'px'
@@ -1624,7 +1641,7 @@ e.preventDefault()
     let provider = 'chatterbox'
     if (id == 'myElevenLabs') provider = 'elevenlabs'
     myPlayer.pause(); myVoice.pause()
-    delay = 100; myAlert.innerText = voiceName + '...'
+    delay = 100; myAlert.innerText = voiceName + ' ...'
     fetch("http://localhost:3000/generate-voice", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -1649,7 +1666,7 @@ e.preventDefault()
     progress = ((myPlayer.currentTime - current) / (next.dataset.start - current) || 0) * 100
     progress = Math.max(0, Math.min(100, progress))
     editingBlock.style.setProperty('--progress', progress + '%')
-if (overEditor && progress == 100) myPlayer.pause(); 
+    if (overEditor && progress == 100) myPlayer.pause(); 
     if (myNav.style.display || overEditor) return
     if (next && myPlayer.currentTime > next.dataset.start) {				// next caption
       if (overBlock == editingBlock) { myPlayer.pause(); myVoice.pause() }
@@ -1667,7 +1684,6 @@ if (overEditor && progress == 100) myPlayer.pause();
     if (wheel < 0) next = next?.previousElementSibling?.previousElementSibling
     activateBlock(next)
     next.scrollIntoView({ behavior: 'smooth', block: 'center' })}
-
 
 
 

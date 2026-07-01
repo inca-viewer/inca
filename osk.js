@@ -52,7 +52,7 @@ function osk() {
   oskElement._selectionHandler = captureSelection;
   oskElement.addEventListener('mousedown', captureSelection, true);
 
-  function updateSuggestions() {
+function updateSuggestions() {
     requestAnimationFrame(() => {
     if (!targetEl) return
     const text = (targetEl.isContentEditable ? targetEl.innerText : targetEl.value).replace(/\u200B/g, '')
@@ -62,7 +62,7 @@ function osk() {
       if (i < 6) {
         const w = words[i] || ''
         btn.textContent = w
-        btn.style.visibility = w ? 'visible' : 'hidden'
+        btn.style.visibility = 'visible'
         btn.onclick = w ? () => insertSuggestion(w) : null}})}
   )}
 
@@ -92,20 +92,21 @@ else {
 
     predictBuffer = ''
     captureSelection()
-    updateSuggestions()}
+    updateSuggestions()
+}
 
   const controlKeys = ["Num","Shift","Space","Del","Back","Enter","Ctrl","↑","↓"];
 
   let currentLayout = [
-    ["↑","q","w","e","r","t","y","u","i","o","p", "Space","Back","Enter"],
-    ["↓","a","s","d","f","g","h","j","k","l","'",'"',"!","?"],
-    ["Ctrl","z","x","c","v","b","n","m",",",".","Del","Num","Shift"]
+    ["q","w","e","r","t","y","u","i","o","p", "Space","Back"],
+    ["Ctrl","a","s","d","f","g","h","j","k","l","?",'‹','›',"Enter","Del"],
+    ["Shift","z","x","c","v","b","n","m",",",".","!","'",'"',"Num","Shift"]
   ];
 
 let numLayout = [
-  ["↑", "1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "Space", "Back", "Enter"],
-  ["↓", "!", "@", "#", "$", "%", "^", "&", "*", "(", ")", "-", "+", "="],
-  ["~", "`", "_", "-", "[", "]", "{", "}", "\\", "|", "Del", "Num", "Shift"]
+  ["1","2","3","4","5","6","7","8","9","0","Space","Back"],
+  ["@","#","£","$","%","^","&","*","(",")","-","+","=","Enter","Del"],
+  ["Shift","~","_","[","]","{","}","\\","?",";",":","↑","↓","Num","Shift"]
 ];
 
   function createKeyboard() {
@@ -116,14 +117,6 @@ let numLayout = [
       rowDiv.className = 'osk-row';
 
       row.forEach(key => {
-        if (typeof key === 'object' && key.spacer) {
-          const spacer = document.createElement('div');
-          spacer.className = 'osk-spacer';
-          spacer.style.width = (key.spacer * 1.8) + 'em';
-          rowDiv.appendChild(spacer);
-          return;
-        }
-
         const btn = document.createElement('button');
         let displayKey = key;
         if (isShift && !controlKeys.includes(key)) {
@@ -133,12 +126,14 @@ let numLayout = [
         btn.textContent = displayKey;
         btn.className = 'osk-key';
         
-        if (key === "Space") {
-          btn.classList.add('osk-space');
-        } else if (controlKeys.includes(key)) {
-          btn.classList.add('osk-control');
-        }
-        
+        if (key === "Space") btn.classList.add('osk-space');
+        else  if (key === "Shift") btn.classList.add('osk-shift')
+        else  if (key === "Enter") btn.classList.add('osk-enter')
+        else  if (key === "Back") btn.classList.add('osk-back')
+        else  if (key === "Ctrl") btn.classList.add('osk-ctrl')
+        else if (controlKeys.includes(key)) btn.classList.add('osk-control')
+        if  (key === "Enter"  ||  key === "Back" ||  key === "Shift" ||  key === "Ctrl")  btn.style.fontSize = '9px'
+
         if ((key === "Shift" && isShift) || 
             (key === "Ctrl" && isCtrl) || 
             (key === "Num" && isNumMode)) {
@@ -146,18 +141,17 @@ let numLayout = [
         }
 
         btn.setAttribute('tabindex', '-1');
-        btn.addEventListener('mousedown', e => { e.preventDefault(); });
+        btn.addEventListener('mousedown', e => e.preventDefault())
 
         let pressTimer;
         let repeatTimer;
 
         btn.addEventListener('mousedown', () => {
-          if (!['Shift', 'Ctrl', 'Num'].includes(key)) return;
+          if (!['Shift', 'Num'].includes(key)) return;
           
           pressTimer = setTimeout(() => {
             btn.classList.add('locked');
             if (key === "Shift")  window.shiftLocked = true;
-            if (key === "Ctrl")   window.ctrlLocked  = true;
             if (key === "Num")    window.numLocked   = true;
           }, 320);
         });
@@ -200,14 +194,9 @@ let numLayout = [
     setTimeout(() => btn.classList.remove('highlight'), 120);
     lastKeyTime = Date.now();
 
-    if (key === "Shift") { isShift = !isShift; createKeyboard(); return; }
-    if (key === "Ctrl") { isCtrl = !isCtrl; createKeyboard(); return; }
-
-    if (key === "Num") {
-      isNumMode = !isNumMode;
-      createKeyboard();
-      return;
-    }
+    if (key === "Ctrl") { isCtrl = !isCtrl; createKeyboard(); return }
+    if (key === "Shift") { isShift = !isShift; if (!isShift) window.shiftLocked = false; createKeyboard(); return }
+    if (key === "Num") { isNumMode = !isNumMode; if (!isNumMode) window.numLocked = false; createKeyboard(); return }
 
     const active = targetEl;
     let char = key;
@@ -228,6 +217,7 @@ let numLayout = [
         createKeyboard();
         return;
       }
+
       if (lowerKey === 'v') {
         navigator.clipboard.readText().then(text => {
           if (text) document.execCommand('insertText', false, text)
@@ -250,6 +240,34 @@ let numLayout = [
       captureSelection();
       return;
     }
+
+if (key === "‹" || key === "›") {
+  if (!restoreSelection()) return;
+  const active = targetEl;
+  const isCE = active.isContentEditable;
+  if (isCE) {
+    const sel = window.getSelection();
+    if (sel.rangeCount) {
+      try {
+        const dir = (key === "↑" || key === "↓") ? "line" : "character";
+        const forward = (key === "↓" || key === "›");
+        sel.modify("move", forward ? "forward" : "backward", dir);
+      } catch (_) {
+      }
+    }
+  } else {
+    let pos = active.selectionStart ?? 0;
+    const len = active.value.length;
+
+    if (key === "‹") pos = Math.max(0, pos - 1);
+    else if (key === "›") pos = Math.min(len, pos + 1);
+
+    active.selectionStart = active.selectionEnd = pos;
+  }
+  captureSelection();
+  return;
+}
+
 
     if (key === "Space") char = " ";
     else if (key === "Back") {
@@ -289,7 +307,7 @@ let numLayout = [
       document.execCommand('insertText', false, char);
     } else {
       let pos = active.selectionStart || active.value.length;
-      active.value = active.value.slice(0, pos) + char + active.value.slice(pos);
+      active.value = active.value.slice(0, pos) + char + active.value.slice(active.selectionEnd);
       active.selectionStart = active.selectionEnd = pos + 1;
     }
     captureSelection();
@@ -312,6 +330,7 @@ let numLayout = [
     const wordBtn = document.createElement('button');
     wordBtn.className = 'osk-key osk-suggestion';
     wordBtn.setAttribute('tabindex', '-1');
+    wordBtn.style.visibility = 'visible';
     suggestionRow.appendChild(wordBtn);
   }
 
@@ -392,20 +411,15 @@ function buildPredictor() {
 }
 
 function predict(text, buffer) {
-  let partial = buffer || '';
-  
-  if (!partial) {
-    const sel = window.getSelection();
-    const textBefore = sel.rangeCount ? 
-      (sel.getRangeAt(0).startContainer.textContent?.slice(0, sel.getRangeAt(0).startOffset) || '') : '';
-    partial = (textBefore.match(/\S+$/) || [''])[0];
-  }
+  const sel = window.getSelection();
+  const textBefore = sel.rangeCount ?
+    (sel.getRangeAt(0).startContainer.textContent?.slice(0, sel.getRangeAt(0).startOffset) || '') : '';
+  const partial = (buffer || (textBefore.match(/\S+$/) || [''])[0]).toLowerCase();
 
   const out = Object.keys(predictor.words)
     .filter(w => w.startsWith(partial))
     .sort((a, b) => (predictor.words[b] || 0) - (predictor.words[a] || 0))
     .slice(0, 6);
-
   return { words: out };
 }
 
