@@ -609,7 +609,7 @@
       x := StrSplit(selected,",")
       index := x[x.MaxIndex()-1]					; scroll htm to end of selection
       MoveFiles()							; between folders or playlists
-      reload := 0
+      reload := 1
       if !longClick							; copy not move so no reload
         {
         CreateList(1)							; full update htm page
@@ -939,24 +939,26 @@ Edited() 								; Save edited json, text or SRT file
     if playlist
       {
       checkPlaylist()
-      Loop, Files, %inca%\fav\*.m3u
-        {
-        if (!searchTerm && A_LoopFileFullPath != playlist)
+      folders := [inca "\fav", inca "\music"]
+      for index, f in folders
+        Loop, Files, %f%\*.m3u
+          {
+          if (!searchTerm && A_LoopFileFullPath != playlist)
           continue
-        allFav = %inca%\fav\all fav.m3u
-        if (searchTerm && A_LoopFileFullPath == allFav)
-          continue
-        SplitPath, A_LoopFileFullPath,,,, fold
-        FileRead, str, %A_LoopFileFullPath%
-        Loop, Parse, str, `n, `r
-          if A_LoopField
-            {  
-            source := StrSplit(A_Loopfield, "|").1
-            start := StrSplit(A_Loopfield, "|").2
-            if (SubStr(source, 1, 1) != "#")
-              if (!searchTerm || InStr(source, searchTerm)) 
-              list .= spool(source, A_Index, start, fold)
-            }
+          allFav = %inca%\fav\all fav.m3u
+          if (searchTerm && A_LoopFileFullPath == allFav)
+            continue
+          SplitPath, A_LoopFileFullPath,,,, fold
+          FileRead, str, %A_LoopFileFullPath%
+          Loop, Parse, str, `n, `r
+            if A_LoopField
+              {  
+              source := StrSplit(A_Loopfield, "|").1
+              start := StrSplit(A_Loopfield, "|").2
+              if (SubStr(source, 1, 1) != "#")
+                if (!searchTerm || InStr(source, searchTerm)) 
+                list .= spool(source, A_Index, start, fold)
+              }
         }
       }
     else Loop, Parse, searchPath, `|
@@ -2167,7 +2169,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
 </div>`n`n
 
 <div id='myMenu'>
-  <div id='z1' class='fade' style='height:190px'></div><div id='z2' class='fade' style='top:198px; height:10px; background: linear-gradient(#0e0c05ff, #0e0c0500)'></div>`n
+  <div id='z1' class='fade' style='height:190px'></div><div id='z2' class='fade' style='top:190px; height:10px; background: linear-gradient(#0e0c05ff, #0e0c0500)'></div>`n
   <div id='myPanel' class='myPanel'><div class='panel'><div class='innerPanel'>`n`n%panelList%`n</div></div>`n`n
 
   <div id='myRibbon1' class='ribbon' style='font-size: 1.2em'>`n
@@ -2324,8 +2326,8 @@ mediaList(j, input, start, fold)					; spool sorted media files into web page
       size = 0								; cannot have null size in Param()
 
 
-    if (type == "image")
-      media_s := "&#x2726; " . media_s					; highlight as image (not video)
+;    if (type == "image")
+;      media_s := "&#x2726; " . media_s					; highlight as image (not video)
     if (ext == "txt")
       src = "%server%%poster%"
     else src = "%server%%src%"

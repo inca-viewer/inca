@@ -8,7 +8,7 @@
   ::-webkit-resizer {background: transparent}
   @supports (not selector(::-webkit-scrollbar)) {html {scrollbar-color: #2b2824 #0e0c05}}
   a {color: #826858; text-decoration: none; outline: none}			/* default text */
-  c {display: block; padding-left: 1em; text-decoration: none; font-weight: bold; color: #826858bb; transition: 1s} /* panel text */
+  c {color: #826858cc; text-decoration: none; display: block; transition: 1s}	/* top panel text */
   c:hover {transition: 0.2s; transform: scale(1.1,1.1); color: pink}
   c:active {color: #0e0c05; transform: scale(0.8,0.8)}
 
@@ -49,17 +49,17 @@
   justify-content: center;
   box-sizing: border-box;
   margin: 0;
-  transition: 0.1s;
   min-height: 2em;
   width: 1.6em;
 }
 
 .osk-control {width: 2.3em !important;}
-.osk-space {width: 9.5em !important;}
-.osk-back {width: 5em !important;}
-.osk-ctrl {width: 2.3em !important;}
-.osk-enter {width: 6em !important;}
-.osk-shift {width: 4.5em !important;}
+.osk-space {width: 5em !important;}
+.osk-enter {width: 5em !important;}
+.osk-back {width: 3em !important;}
+.osk-ctrl {width: 2.7em !important;}
+.osk-num {width: 3em !important;}
+.osk-shift {width: 4.3em !important;}
 
 #osk button:hover {background: #ffc0cb18; color: pink; transform: scale(1.1)}
 #osk button:active,
@@ -108,7 +108,7 @@
   left: 0.9em;
   font-variant-emoji: text;
   font-family: inherit;
-  font-size: 1em;
+  font-size: 0.9em;
   background: transparent;
   box-sizing: border-box;
   width: 90%;
@@ -299,7 +299,7 @@
   grid-template-columns: 4em 4em 4em 4em 4em 3.5em 1em auto 1em;
   width: 100%}
 
-.entry-row:hover { background: #1b1814; }
+.entry-row:hover { background: #141211 }
 
 .title-cell { top: -1em; position: relative; overflow: visible; }
 
@@ -337,7 +337,7 @@
   position: relative;
   border-radius: 1em;
   overflow: visible;
-padding: 0.3em;
+  padding: 0.3em;
   padding-bottom: 1.5em}
 
 .thumb {					/* htm thumbs */
@@ -422,7 +422,7 @@ padding: 0.3em;
 
 .panel {					/* Top panel element showing folders etc. */
   position: relative;
-  font-size: 1em;
+  font-size: 0.9em;
   transform: translateX(-7%);
   white-space: nowrap;
   overflow: hidden;

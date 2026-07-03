@@ -1,8 +1,8 @@
-// list all mouse commands bottom of myView
-// home icon somewhere to github
-// stop json creation if flat text, no media ?
-// save media in speech folders ?
+//
 
+// new caption new voice ends too abruptly 
+
+// set cap start at end block crash
 
 
   let wheel = 0								// wheel count
@@ -106,6 +106,7 @@
   document.addEventListener('mouseup', mouseUp)
   document.addEventListener('mousemove', mouseMove)
   document.addEventListener('keydown', keyDown)
+  document.addEventListener('dragend', () => Click = 0)
   myPlayer.addEventListener('ended', nextMedia)
   myVoice.addEventListener('ended', nextCaption)
   myVoice.addEventListener('timeupdate', voiceProgress)
@@ -165,7 +166,7 @@
     else if (e.key == 'F22') mouseDown(e)				// R click down
     else if (e.key == 'F23') mouseUp(e)					// R click up
     else if (e.key == 'F24' || (e.code == 'ArrowLeft' && e.shiftKey)) mouseBack()
-    else if ((e.key == 'ArrowUp' || e.key == 'ArrowDown') && captions && editingBlock) moveBlock(e)
+    else if ((e.key == 'ArrowUp' || e.key == 'ArrowDown') && e.shiftKey && captions && editingBlock) moveBlock(e)
     else if (e.key === 'Backspace') Backspace(e)
     else if (!overTitle && !captions && playing) {
       if (e.key == 'ArrowRight') myPlayer.currentTime += 10
@@ -241,14 +242,14 @@
       if (!Param()) {index = lastMedia; closePlayer(); return}
       myPlayer.style.opacity = overMedia = 0}
 
-    if (document.getElementById('osk')?.contains(document.elementFromPoint(xPos, yPos))) return
-    predictBuffer = ''
-    if (longClick && (overTitle || ['myInput', 'caption-search-input', 'inp', 'myVoiceInput'].includes(id))) osk()
-    const wasOsk = document.getElementById('osk')
-    if (id.includes('search-input')) return
 
-    if (lastClick == 1 && !gesture) {
-      if (captions) {
+    if (lastClick == 1) {
+      if (document.getElementById('osk')?.contains(document.elementFromPoint(xPos, yPos))) return
+      predictBuffer = ''
+      if (longClick && (overTitle || ['myInput', 'caption-search-input', 'inp', 'myVoiceInput'].includes(id))) osk()
+      const wasOsk = document.getElementById('osk')
+      if (id.includes('search-input')) return
+      if (captions && !gesture) {
         if (longClick && overBlock) osk()
         if (overBlock && overBlock !== editingBlock) {
           if (longClick && !wasOsk) activateBlock(overBlock, { play: 'never' })
@@ -256,7 +257,7 @@
           return}
         else if (longClick) {
           if (!wasOsk && overEditor && document.getElementById('osk')) activateBlock(editingBlock, { play: 'never' })
-          else activateBlock(editingBlock, { play: 'always' })
+          else if (!gesture) returnactivateBlock(editingBlock, { play: 'always' })
           return}
          else if (wasOsk && overBlock) {myPlayer.pause(); myVoice.pause(); return}}
       if (!title.matches(':hover') && overTitle == 2) {closeOsk(); overTitle = 0; return}
@@ -274,7 +275,7 @@
         if (id == 'myCap') {capButton(); return}
         if (id == 'myCue' && playing) {cue = Math.round(100*myPlayer.currentTime)/100; return}
         if (!playing && !overMedia && !myNav.style.display) return}
-      if (myNav.matches(':hover')) return}
+      if (myNav.matches(':hover') || gesture) return}
     if (!getStart(id)) return
     if (lastClick == 1 && overBlock) return
     if (!playing && lastClick == 2) return
@@ -379,7 +380,7 @@
     if (id.includes('thumb') && thumb.style.pop > 1) {					// move popped thumb
         thumb.style.left = parseInt(thumb.style.left || 0) + xPos - xRef + 'px'
         thumb.style.top =  parseInt(thumb.style.top || 0) + yPos - yRef + 'px'}
-    else if (Click == 1 && osk && osk.contains(document.elementFromPoint(xPos, yPos))){	// move osk
+    else if (Click == 1 && id.includes('osk')){						// move osk
         osk.style.left = parseInt(osk.style.left || 0) + xPos - xRef + 'px'
         osk.style.top =  parseInt(osk.style.top || 0) + yPos - yRef + 'px'}
     else if (playing && (Click == 1 || gesture == 2 || delay == 1) && (overMedia || !overEditor)) {
@@ -1544,7 +1545,7 @@ function Backspace(e) {
   const prev = editingBlock?.previousElementSibling
   if (!prev) return
   const joinAt = prev.textContent.length
-  prev.textContent = prev.textContent + '\n' + editingBlock.textContent
+  prev.textContent = prev.textContent + (editingBlock.textContent.trim() ? '\n' : '') + editingBlock.textContent
   const removed = editingBlock
   editingBlock.remove()
   blocks = blocks.filter(b => b !== removed)

@@ -98,16 +98,16 @@ else {
   const controlKeys = ["Num","Shift","Space","Del","Back","Enter","Ctrl","↑","↓"];
 
   let currentLayout = [
-    ["q","w","e","r","t","y","u","i","o","p", "Space","Back"],
-    ["Ctrl","a","s","d","f","g","h","j","k","l","?",'‹','›',"Enter","Del"],
-    ["Shift","z","x","c","v","b","n","m",",",".","!","'",'"',"Num","Shift"]
+    ["q","w","e","r","t","y","u","i","o","p","Space","Enter","Back"],
+    ["Ctrl","a","s","d","f","g","h","j","k","l",'‹','›',"↑","↓","Del","Num"],
+    ["Shift","z","x","c","v","b","n","m",",",".","'",'"',"!","?","Shift"]
   ];
 
-let numLayout = [
-  ["1","2","3","4","5","6","7","8","9","0","Space","Back"],
-  ["@","#","£","$","%","^","&","*","(",")","-","+","=","Enter","Del"],
-  ["Shift","~","_","[","]","{","}","\\","?",";",":","↑","↓","Num","Shift"]
-];
+  let numLayout = [
+    ["1","2","3","4","5","6","7","8","9","0","Space","Enter","Back"],
+    ["Ctrl","@","#","£","$","%","^","&","*","(",")","-","+","=","Del","Num"],
+    ["Shift","~","_","[","]","{","}","\\","!","?",";",":",",",".","Shift"]
+  ];
 
   function createKeyboard() {
     keysContainer.innerHTML = '';
@@ -131,9 +131,9 @@ let numLayout = [
         else  if (key === "Enter") btn.classList.add('osk-enter')
         else  if (key === "Back") btn.classList.add('osk-back')
         else  if (key === "Ctrl") btn.classList.add('osk-ctrl')
+        else  if (key === "Num") btn.classList.add('osk-num')
         else if (controlKeys.includes(key)) btn.classList.add('osk-control')
-        if  (key === "Enter"  ||  key === "Back" ||  key === "Shift" ||  key === "Ctrl")  btn.style.fontSize = '9px'
-
+        if (["Enter", "Back", "Shift", "Ctrl", "Num"].includes(key))  btn.style.fontSize = '9px'
         if ((key === "Shift" && isShift) || 
             (key === "Ctrl" && isCtrl) || 
             (key === "Num" && isNumMode)) {
@@ -188,7 +188,7 @@ let numLayout = [
   }
 
   function handleKey(key, btn) {
-    if (!targetEl || gesture) return;
+    if (!targetEl) return;
     if (!restoreSelection()) return;
     btn.classList.add('highlight');
     setTimeout(() => btn.classList.remove('highlight'), 120);
@@ -234,14 +234,20 @@ let numLayout = [
       return;
     }
 
-    if (key === "↑" || key === "↓") {
-      const ev = new KeyboardEvent('keydown', { key: key === "↑" ? "ArrowUp" : "ArrowDown", bubbles: true });
-      active.dispatchEvent(ev);
-      captureSelection();
-      return;
-    }
 
-if (key === "‹" || key === "›") {
+
+if ((key === "↑" || key === "↓") && isShift) {
+  const ev = new KeyboardEvent('keydown', {
+    key: key === "↑" ? 'ArrowUp' : 'ArrowDown',
+    code: key === "↑" ? 'ArrowUp' : 'ArrowDown',
+    shiftKey: isShift || window.shiftLocked,
+    bubbles: true
+  });
+  active.dispatchEvent(ev);
+  if (ev.defaultPrevented) return;
+}
+
+if (key === "‹" || key === "›" || key === "↑" || key === "↓") {
   if (!restoreSelection()) return;
   const active = targetEl;
   const isCE = active.isContentEditable;
@@ -258,10 +264,8 @@ if (key === "‹" || key === "›") {
   } else {
     let pos = active.selectionStart ?? 0;
     const len = active.value.length;
-
     if (key === "‹") pos = Math.max(0, pos - 1);
     else if (key === "›") pos = Math.min(len, pos + 1);
-
     active.selectionStart = active.selectionEnd = pos;
   }
   captureSelection();
