@@ -1,12 +1,12 @@
 
-  ; Browser Based media explorer - server side
+  ; Browser Based media explorer - server side 
 
 
   #NoEnv
   #UseHook, On
   #MaxMem, 4095
   SetWinDelay, 0
-  SetKeyDelay, 0
+  SetKeyDelay, 10
   SetBatchLines -1
   SetTitleMatchMode, 2
   GroupAdd, Browsers, ahk_exe chrome.exe	; supported browsers
@@ -107,7 +107,6 @@
     return
 
 
-
   ^Esc up::
     Process, Close, node.exe
     ExitApp
@@ -140,7 +139,7 @@
     IfWinExist, ahk_class OSKMainClass
       WinClose, ahk_class OSKMainClass		; close onscreen keyboard
     else if WinActive("ahk_class Notepad")
-    Send, {Esc}^s^w
+      Send, {Esc}^s^{F4}
     else if incaTab
       send, {F24}				; close java media player
     else send, {XButton1}
@@ -233,8 +232,8 @@
       Search()
     else if (command == "getVoices")
       getVoices()
-    else if (command == "newVoice")
-      newVoice()
+    else if (command == "newClone")
+      newClone()
     else if (command == "loudNorm")
       Loudnorm()
     else if (command == "CutCopyPaste")
@@ -344,7 +343,6 @@
     ptr := 1
     index := 0
     serverTimout := A_TickCount
-
     array := StrSplit(input,"#")
 ; tooltip %input%, 100							; for debug
     Loop % array.MaxIndex()/4
@@ -435,24 +433,32 @@
             ex = mp4
           else ex = mp3
           if (type == "video")
-            cmd = -af loudnorm=I=-23:TP=-3:LRA=7:linear=true -c:v copy -c:a aac -b:a 128k -ar 48000 -ac 2 -map 0 -c:s copy -f mp4 -movflags +faststart
+            cmd = -af loudnorm=I=-23:TP=-3:LRA=7:linear=true -c:v copy -c:a aac -b:a 128k -ar 48000 -ac 2 -map 0:v:0 -map 0:a:0 -c:s copy -f mp4 -movflags +faststart
           else cmd = -af "loudnorm=I=-23:TP=-3:LRA=7:linear=true" -c:a libmp3lame -b:a 128k -ar 48000 -ac 2 -map 0 -f mp3
           RunWait, %inca%\cache\apps\ffmpeg.exe -y -i file:"%src%" %cmd% file:"%inca%\cache\temp\temp.%ex%",,Hide
           IfExist, %inca%\cache\temp\temp.%ex%
             {
-            FileRecycle, %src%
-            FileMove, %inca%\cache\temp\temp.%ex%, %mediaPath%\%media%.%ex%, 1
-            PopUp("normalised",900,0,0)
+            FileGetSize, size, %inca%\cache\temp\temp.%ex%
+            if (size > 1000)
+              {
+              FileGetTime, oldTime, %src%, M
+              FileRecycle, %src%
+              FileMove, %inca%\cache\temp\temp.%ex%, %mediaPath%\%media%.%ex%, 1
+              FileSetTime, %oldTime%, %mediaPath%\%media%.%ex%, M
+              PopUp("normalised",900,0,0)
+              }
+            else FileDelete, %inca%\cache\temp\temp.%ex%
             }
           }
         }
       GuiControl, Indexer:, GuiInd
       sleep 200
+      index := StrSplit(selected, ",").1
       reload := 1
       }
 
 
-  newVoice()
+  newClone()
       {
       if !address
         PopUp("no name",999,0,0)
@@ -605,11 +611,12 @@
     reload := 3								; show folder size
     if selected								; move/copy files
       {
-      reload = 1							; silent reload
       x := StrSplit(selected,",")
       index := x[x.MaxIndex()-1]					; scroll htm to end of selection
-      MoveFiles()							; between folders or playlists
-      reload := 1
+      MoveFiles()
+      if playlist							; between folders or playlists
+        reload := 0							; silent reload
+      else reload := 1
       if !longClick							; copy not move so no reload
         {
         CreateList(1)							; full update htm page
@@ -940,7 +947,7 @@ Edited() 								; Save edited json, text or SRT file
       {
       checkPlaylist()
       folders := [inca "\fav", inca "\music"]
-      for index, f in folders
+      for k, f in folders
         Loop, Files, %f%\*.m3u
           {
           if (!searchTerm && A_LoopFileFullPath != playlist)
@@ -1864,10 +1871,8 @@ return
     if (command != "More")
       lastIndex := 0
     type = video							; prime for list parsing
-    if (command == "View" && index > 90)
+    if (index > 96)							; last index to scroll to
       page := index
-    else if playlist
-      page := 256
     else page := 96							; media entries per chunk
     if (command == "More")
       lastIndex := value - 1
@@ -2112,7 +2117,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
       <a id="myCopy">copy</a>`n
       <a id="myPaste">paste</a>`n
       <a id="myIndex">index</a>`n
-      <a id='myClone'>new voice &#x2726;</a>`n
+      <a id='myClone'>new clone &#x2726;</a>`n
       <a id='myLoudnorm'>fix volume</a>`n
       <a id="myMp3">mp3</a>`n
       <a id="myMp4">mp4</a>`n
@@ -2130,7 +2135,6 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
       <a id='myVol'>Volume</a>`n
       <a id="myVoiceHeader" style="color:pink">voice:</a>
       <div id="voiceSub" class="submenu"></div>
-      <a id='myClone2'>new voice &#x2726;</a>`n
       <a id='myChatterbox'>Chatterbox &#x2726;</a>`n
       <a id='myElevenLabs'>Elevenlabs &#x2726;</a>`n
       <a id='myBookmark'>Bookmark</a>`n
@@ -2453,6 +2457,7 @@ mediaList = %mediaList%%foldr%<div id='entry%j%' class='entry-row' data-params='
         }
     if (fldr == folder && !playing)
       {
+      index := StrSplit(select, ",").1
       CreateList(1)
       RenderPage(1)
       send, {F5}

@@ -15,88 +15,6 @@
 
 .voice-input{position:fixed;z-index:9999;font-size:12px;padding:4px;border:0.1px solid #555;border-radius:1em;background:#222;color:pink;outline:none}
 
-#osk {
-  position: fixed !important;
-  background: #121212;
-  padding: 0 8px 8px 8px;
-  border-radius: 10px;
-  z-index: 5004;
-  user-select: none;
-  border: 0.1px solid #2a2a2a;
-  touch-action: none;
-  display: flex;
-  flex-direction: column;}
-
-#osk-keys {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;}
-
-.osk-row {
-  display: flex;
-  gap: 4px;
-  justify-content: center;}
-
-#osk button {
-  font-size: 13px;
-  background: #1a1a1a;
-  color: #ffc0cb80;
-  border: none;
-  border-radius: 4px;
-  transition: background 0.06s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-sizing: border-box;
-  margin: 0;
-  min-height: 2em;
-  width: 1.6em;
-}
-
-.osk-control {width: 2.3em !important;}
-.osk-space {width: 5em !important;}
-.osk-enter {width: 5em !important;}
-.osk-back {width: 3em !important;}
-.osk-ctrl {width: 2.7em !important;}
-.osk-num {width: 3em !important;}
-.osk-shift {width: 4.3em !important;}
-
-#osk button:hover {background: #ffc0cb18; color: pink; transform: scale(1.1)}
-#osk button:active,
-#osk button.highlight {
-  background: pink !important;
-  color: black;}
-
-#osk-suggestions {
-  display: flex;
-  gap: 4px;
-  margin-bottom: 0.3em;
-  justify-content: center;
-  min-height: 1.7em;          /* ← add this */
-}
-
-#osk .osk-suggestion:empty {
-  display: none               /* keep this */
-}
-
-#osk .osk-suggestion {
-  flex: 1;
-  max-width: 6em;
-  min-width: 2em;
-  height: 1.7em;
-  background: inherit !important;
-  color: #ffc0cbb0 !important;
-  text-align: center;
-  font-size: 11px}
-
-#osk .osk-control,
-#osk .osk-space { font-size: 9px }
-#osk button.locked,
-#osk button.active { color : pink !important }
-#osk .osk-suggestion { font-size: 11px }
-
-.osk-suggestion:active {color: #ffc0cbf0 !important}
-
 
 .title {					/* media title */
   display: block;
@@ -210,7 +128,7 @@
     word-wrap:break-word; line-height:1.5; padding: 0.5em 1em 1.2em 1em; cursor: text; font-size: 0.82em;
     color:#ffc0cb60; text-align:center; outline:none; width: 100%; align-self: center; border: 0; margin-bottom: 1em}
 
-  .text-block.editing { background: #0e0e0e; color: #ffc0cbaa; transform: scale(1, 1.13) }
+  .text-block.editing { background: #0e0e0e; color: #ffc0cbaa; transform: scale(1, 1.1) }
 
 .text-block.has-voice::after { content: '♪'; }
 .text-block[data-fav="1"]::after { content: '❤'; }
@@ -293,7 +211,7 @@
   overflow: visible;
   white-space: nowrap;
   color: #826858;
-  font-size: 0.9em;
+  font-size: 0.8em;
   border-radius: 1em;
   transition: color 0.3s;
   grid-template-columns: 4em 4em 4em 4em 4em 3.5em 1em auto 1em;
@@ -301,7 +219,7 @@
 
 .entry-row:hover { background: #141211 }
 
-.title-cell { top: -1em; position: relative; overflow: visible; }
+.title-cell { top: -0.84em; position: relative; overflow: visible; font-size: 1.2em !important;}
 
 
 .player, .vig {
@@ -359,7 +277,7 @@
 .thumb2 {					/* thumbs in list view  */
   position: absolute;
   pointer-events: none;
-  translate: 6em -1em;
+  left: -2em;
   max-width: var(--max-size);
   max-height: var(--max-size);
   border-radius: 1em;
@@ -423,6 +341,7 @@
 .panel {					/* Top panel element showing folders etc. */
   position: relative;
   font-size: 0.9em;
+font-weight: bold;
   transform: translateX(-7%);
   white-space: nowrap;
   overflow: hidden;
@@ -445,7 +364,7 @@
 
 .p2 {						/* panel entries */
   overflow: hidden;
-  line-height: 1.5em;
+  line-height: 1.6em;
   white-space: nowrap}
 .p2:hover {overflow: visible}
 
@@ -604,6 +523,88 @@
 #voiceSub:hover {visibility: visible; opacity: 1; transition: opacity 0.34s;}
 #myEmotion:hover + #emotionSub,
 #emotionSub:hover {visibility: visible; opacity: 1; transition: opacity 0.34s;}
+
+
+#osk {
+  position: fixed !important;
+  background: #121212;
+
+  padding: 0 8px 8px 8px;
+  border-radius: 10px;
+  z-index: 5004;
+  user-select: none; 
+  border: 0.1px solid #2a2a2a;
+  display: flex;
+  flex-direction: column;}
+
+#osk-keys {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;}
+
+.osk-row {
+  display: flex;
+  gap: 4px;
+  justify-content: center;}
+
+#osk button {
+  font-size: 13px;
+  background: #1a1a1a;
+  color: #ffc0cb80;
+  border: none;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  margin: 0;
+  min-height: 2em;
+  width: 1.6em;
+}
+
+.osk-control {width: 2.3em !important;}
+.osk-space {width: 5em !important;}
+.osk-enter {width: 5em !important;}
+.osk-back {width: 3em !important;}
+.osk-ctrl {width: 2.7em !important;}
+.osk-num {width: 3em !important;}
+.osk-shift {width: 4.3em !important;}
+
+#osk button:hover {background: #ffc0cb18; color: pink; transform: scale(1.1)}
+#osk button:active,
+#osk button.highlight {
+  background: pink !important;
+  color: black;}
+
+#osk-suggestions {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 0.3em;
+  justify-content: center;
+  min-height: 1.7em;          /* ← add this */
+}
+
+#osk .osk-suggestion:empty {
+  display: none               /* keep this */
+}
+
+#osk .osk-suggestion {
+  flex: 1;
+  max-width: 6em;
+  min-width: 2em;
+  height: 1.7em;
+  background: inherit !important;
+  color: #ffc0cbb0 !important;
+  text-align: center;
+  font-size: 11px}
+
+#osk .osk-control,
+#osk .osk-space { font-size: 9px }
+#osk button.locked,
+#osk button.active { color : pink !important }
+#osk .osk-suggestion { font-size: 11px }
+
+.osk-suggestion:active {color: #ffc0cbf0 !important}
 
 
 #myNav[style*="display: block"] {opacity: 1; pointer-events: auto;}
