@@ -24,7 +24,7 @@ Concurrent Music and playlists from browser tabs<br><br>
 New... uses node server instead of local files<br>
 New... storyboard and caption editor for AI assisted content creation<br>
 New... top and tail jpg's and clip joins for ai image to video<br>
-New... supports local AI tools for TTS STT or external api's<br>
+New... supports local AI Chatterbox and Faster Whisper & external api's<br>
 
 Lightweight & portable (no installation)<br>
 Pure vanilla java / ahk script (ai can confirm is safe)<br>
