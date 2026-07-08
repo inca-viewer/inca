@@ -272,12 +272,16 @@
       reload := 2
       index := value							; for scrollToIndex() in java
       }
-    else if (command == "Reload")					; reload web page
+    else if (command == "Reload")					; myPlayer closed
       {
-      index := value
+      captions =
+      if selected
+        index := StrSplit(selected, ",").1
       if (sort == "Shuffle")
         reload := 1
       else reload := 2
+      if !value
+        reload := 0
       }
     else if (command == "History")
       History()
@@ -868,6 +872,7 @@ Edited() 								; Save edited json, text or SRT file
   if captions
     getMedia(captions)
   else PopUp("protection failed...",444,0,0)
+  captions =
   if (json && address)
     {
     FileRecycle, %inca%\cache\json\%media%.json
@@ -2337,7 +2342,6 @@ mediaList(j, input, start, fold)					; spool sorted media files into web page
     else src = "%server%%src%"
     poster = poster = "%server%%poster%"
     data = "%server%%data%"
-
     caption = <pre id="dat%j%" style='display: none' type="text/plain" data=%data%></pre>`n
 
     if listView
