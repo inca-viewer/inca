@@ -1,5 +1,6 @@
 // synthetic media/stories/worlds
-// captionmania
+// captionmania paradise engineering
+// orgasmatron
 
 
   let wheel = 0								// wheel count
@@ -114,8 +115,8 @@
   myStart.addEventListener('wheel', wheelEvent)
   myStart.addEventListener('mouseenter', () => {			// play short sample
     if (editingBlock) { 
-      let current = myPlayer.currentTime; myPlayer.muted = false; userPlay = 1
-      setTimeout(() => {userPlay = 0; myPlayer.currentTime = current; myPlayer.muted = true},1200)}})
+      let current = myPlayer.currentTime; userPlay = 1; if (!editingBlock._voice) myPlayer.muted = false
+      setTimeout(() => {userPlay = 0; myPlayer.currentTime = current},1200)}})
   document.addEventListener('visibilitychange', function() {
     if (document.visibilityState=='visible' && folder=='Downloads' && !selected && !playing) inca('Reload',1,index)})
   myInca.addEventListener('mouseenter', () => {
@@ -132,7 +133,9 @@
     if (sel) {searchTerm = searchInput.value = sel}
     else searchInput.placeholder='❤'})
   searchInput.addEventListener('input', newSearch)
-  viewport.addEventListener('input', () => { editing = 1; userPlay = 0 }, { passive: true })
+  viewport.addEventListener('input', () => {
+    if (editingBlock?.innerText.length < 3) editingBlock.dataset.start = myPlayer.currentTime
+    editing = 1; userPlay = 0 }, { passive: true })
 
 
   function mouseDown(e) {
@@ -201,7 +204,8 @@
     if (id == 'myFlip') {Flip(); return}
     if (id == 'myElevenLabs' || id == 'myChatterbox') Chatterbox(id)
     if (id == 'myCancel') {
-      if (myCancel.innerHTML != 'Sure ?') myCancel.innerHTML = 'Sure ?' 
+      if (!editing) {captions = 1; activateBlock(editingBlock,1); editingBlock.scrollIntoView({block: 'center' }); return}
+      else if (myCancel.innerHTML != 'Sure ?') myCancel.innerHTML = 'Sure ?' 
       else { editing = 0; closePlayer() }}
     if (id == 'myBookmark') {
       editingBlock.dataset.fav = editingBlock.dataset.fav === '1' ? '0' : '1';
@@ -214,10 +218,12 @@
     if (lastClick == 3) {
       if (gesture) return
       if (overEditor) {
-        if (overEditor && longClick) Chatterbox(id)
-        activateBlock(overBlock, 0)
+        if (longClick) Chatterbox(id)
         lastId = editingBlock
         myVoice.currentTime = 0
+        if (overBlock) {
+          activateBlock(overBlock, 0)
+          if (overBlock.innerText.length > 1) myPlayer.currentTime = overBlock.dataset.start}
         populateVoices()
         myNav.classList.add('editor-mode')
         setTimeout(function() {userPlay = 0},100)} 
@@ -246,7 +252,7 @@
       if (captions && !gesture && !overMedia) {
         const wasOsk = document.getElementById('osk')
         const block = overBlock ? overBlock : editingBlock
-        if (longClick && captions == 1) {captions = 2; activateBlock(block)}
+        if (longClick && !editing && captions == 1) {captions = 2; activateBlock(block)}
         if (longClick && overBlock) {osk(); activateBlock(block, 0); return}
         if (overBlock && overBlock !== editingBlock) {activateBlock(block, 1); return}
         else if (myPlayer.currentTime >= block._end) {
@@ -321,8 +327,8 @@
     else myPlayer.muted = defMute
     if (!thumbSheet) {
       if (favicon.matches(':hover')) getSrt(1)
-      else if ((overTitle && Click && !longClick)) getSrt(lastBlock)} 			 // use caption preview start
-    if (type == 'document') {getSrt(lastBlock); captions = 2}
+      else if ((overTitle && Click && !longClick)) getSrt(lastBlock) 			 // use caption preview start
+      else if (type == 'document') getSrt()}
     if (el = document.getElementById('title'+lastMedia)) el.style.color = null
     title.style.color = 'pink'
     if (type == 'document' || type == 'audio' || playlist.match('/inca/music/')) scaleY = 0.25
@@ -486,8 +492,9 @@
         if (newIndex >= blocks.length) newIndex = blocks.length - 1
         if (newIndex !== currentIndex) activateBlock(blocks[newIndex], 0)
         myVoiceHeader.textContent = editingBlock._voiceName
+        myPlayer.currentTime = editingBlock.dataset.start
         editingBlock.scrollIntoView({ behavior: 'smooth', block: 'nearest' })		// nudging block start time
-        delay = 180}
+        delay = 333}
       else { myPlayer.currentTime += (wheelUp ? 0.02 : -0.02); delay = 60 }}
     else if (!thumbSheet) {								// seek
         delay = 124
@@ -496,7 +503,8 @@
         else if (!userPlay || (captions && id == 'myMask')) interval = 0.02
         if (wheelUp) (playing ? [myPlayer, myVoice] : [thumb]).forEach(el => el.currentTime += interval)
         else (playing ? [myPlayer, myVoice] : [thumb]).forEach(el => el.currentTime -= interval)
-        if (!wheelUp && !myVoice.currentTime) nextCaption(-1)
+        if (wheelUp && myVoice.currentTime >= editingBlock?._end) nextCaption()
+        else if (!wheelUp && !myVoice.currentTime) nextCaption(-1)
         else if (dur) myPlayer.addEventListener('seeked', () => delay = 40, {once: true})	// min. 40
         if (!playing) fade = 3									// hide seekbar in thumb popout
         else cursor = 12									// show seekbar & dur too
@@ -562,7 +570,9 @@
     seekbar()
     if (playing || !overTitle) {title.classList.remove('preview'); title.value = title.defaultValue}
     if (playing) {
-      userPlay ? myPlayer.play() : myPlayer.pause();
+      myCancel.innerText = editing ? (myCancel.innerText !== 'Sure ?' ? '✕' : 'Sure ?') : '⌒'
+      myCancel.style.color = myCancel.innerText == '⌒' ? 'pink' : 'red'
+      userPlay ? myPlayer.play() : myPlayer.pause()
       userPlay && !!editingBlock?._voice?.src ? myVoice.play() : myVoice.pause()
       positionMedia(0)
       if (captions) showStart()
@@ -572,7 +582,7 @@
       myVoice.playbackRate = editingBlock?._rate || 1
       myPlayer.playbackRate = editingBlock?._voice?.src ? rate : editingBlock?._rate || rate
       myMask.style.pointerEvents = 'auto'
-      if (editing) {myCancel.style.visibility = 'visible'} else myCancel.style.visibility = 'hidden'
+//      if (editing) {myCancel.style.visibility = 'visible'} else myCancel.style.visibility = 'hidden'
       if (dur && !thumbSheet) lastSeek = myPlayer.currentTime
       if (playlist.match('/inca/music/') && scaleY < 0.27) myMask.style.opacity = 0.7
       else myMask.style.opacity = 1
@@ -825,7 +835,7 @@
     const src = document.getElementById('dat' + index)?.getAttribute('data');
     if (!src || editor.style.display === 'flex') return
     editor.style.display = 'flex'
-    captions = 1
+    captions = captions ? captions : 2
       fetch(src)
         .then(response => {return response.text()})
         .then(data => {openEditor(data)})
@@ -884,7 +894,7 @@
     if (thumb.style.rate) x = cue+'|rate|'+thumb.style.rate+'\n'+lastSeek.toFixed(1)+'|rate|1'
     thumb.style.skinny = thumb.style.rate = 0
     if (cue) inca('addCue', x, index)						// add cues to media
-    else {getSrt(); captions = 2; Play(); setTimeout(() => myPlayer.currentTime = start, 100)}}
+    else {getSrt(); Play(); setTimeout(() => myPlayer.currentTime = start, 100)}}
 
 
   function sel(i) {								// highlight selected media in html
@@ -1658,6 +1668,7 @@ function Backspace(e) {
     const voiceName = editingBlock._voiceName || lastVoice || 'Tracy'
     if (!voiceName) return
     let block = editingBlock
+myPlayer.currentTime = editingBlock.dataset.start
     let last = block?._voice?.src || projectMedia.defaultSrc
     let text = block.innerText.trim()
     let provider = 'chatterbox'

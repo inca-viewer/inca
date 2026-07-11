@@ -98,13 +98,13 @@ else {
   const controlKeys = ["Num","Shift","Space","Del","Back","Enter","Ctrl","↑","↓"];
 
   let currentLayout = [
-    ["q","w","e","r","t","y","u","i","o","p","Space","Enter","Back"],
+    ["q","w","e","r","t","y","u","i","o","p","Space","Back","Enter"],
     ["Ctrl","a","s","d","f","g","h","j","k","l",'‹','›',"↑","↓","Del","Num"],
     ["Shift","z","x","c","v","b","n","m",",",".","'",'"',"!","?","Shift"]
   ];
 
   let numLayout = [
-    ["1","2","3","4","5","6","7","8","9","0","Space","Enter","Back"],
+    ["1","2","3","4","5","6","7","8","9","0","Space","Back","Enter"],
     ["Ctrl","@","#","£","$","%","^","&","*","(",")","-","+","=","Del","Num"],
     ["Shift","~","_","[","]","{","}","\\","!","?",";",":",",",".","Shift"]
   ];
@@ -343,18 +343,7 @@ oskElement.prepend(suggestionRow);
 
   if (!oskElement.style.position) oskElement.style.position = 'fixed';
 
-  oskElement.addEventListener('wheel', (e) => {
-    if (captions && editingBlock) {
-      const vp = document.getElementById('viewport');
-      if (vp) {
-        vp.scrollBy({
-          top: e.deltaY,
-          left: e.deltaX || 0,
-          behavior: 'auto'
-        });
-      }
-    }
-  }, { passive: true });
+
 
   if (suggestionRow) {
     suggestionRow.addEventListener('wheel', (e) => {
@@ -387,7 +376,6 @@ oskElement.prepend(suggestionRow);
 
 function buildPredictor() {
   predictor.words = {};   // start empty
-
   // 1. Load from dictionary.txt (optional, but boosted)
   fetch("/inca/cache/apps/dictionary.txt")
     .then(r => {

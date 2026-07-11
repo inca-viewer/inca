@@ -71,8 +71,8 @@
   justify-content: space-around;
   cursor:default;}
 
- #media-header {width: 40%}
- #search-header {min-width: 40%}
+ #media-header {width: 34%}
+ #search-header {min-width: 34%}
 
 
 
@@ -171,10 +171,10 @@
       text-align:center; font-size:0.9em; font-family:inherit; border-radius:4px;}
 
     #myCancel {
-      position: absolute; top: 1.9em; right: 0.6em; color: red; z-index:999;
-      visibility:hidden; text-align:center; min-width: 4em;
+      position: absolute; top: 0.3em; z-index:999;
+      text-align:center; width: auto; padding: 0 0.5em;
       transition:0.6s; background:#1a1a1a00; cursor:pointer; font-size: 1em;}
-    #myCancel:hover { transform: scale(1.6,1.6)}
+    #myCancel:hover { transform: scale(1.4,1.4)}
 
     #search-header {
       width: 12em;
@@ -486,7 +486,7 @@ font-weight: bold;
   transition: opacity 0.24s;
   font-size: 0.9em;
   width: 110px;
-  z-index: 5005;
+  z-index: 5011;
   border: 0.1px solid #333;
   border-radius: 0.7em;
   background: #121010f0}

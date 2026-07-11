@@ -82,7 +82,6 @@
   Global lastIndex := 0				; continuous scrolling
   Global server := "http://localhost:3000/"
   Global transcoding				; media is being transcoded async
-  Global captions				; current editor media
 
 
   main:
@@ -274,7 +273,6 @@
       }
     else if (command == "Reload")					; myPlayer closed
       {
-      captions =
       if selected
         index := StrSplit(selected, ",").1
       if (sort == "Shuffle")
@@ -397,9 +395,6 @@
 
   History()
       {
-      if address							; captions mode
-        captions := src
-      else captions = 
       FileRead, history, %inca%\fav\History.m3u
       if (folder != "History" && !InStr(history, src))
         FileAppend, %src%|%seek%`r`n, %inca%\fav\History.m3u, UTF-8
@@ -506,7 +501,7 @@
     send, {Lbutton up}
     if (address && WinActive("ahk_group Browsers"))			;  long clicked selected text    
       {
-      if (captions || StrLen(address) < 3)
+      if (StrLen(address) < 3)
         return
       path =
       click =
@@ -864,23 +859,41 @@
     }
 
 
+
+
 Edited() 								; Save edited json, text or SRT file
   {
   json := value
   value := 0
-  lastSrc := src
-  if captions
-    getMedia(captions)
-  else PopUp("protection failed...",444,0,0)
+  RegExMatch(json, """src"":\s*""([^""]+)""", m)
+  jsonSrc := StrReplace(m1, server)
+  jsonSrc := StrReplace(jsonSrc, "/", "\")
+  texts := []
+  foundPos := 1
+  Loop {
+    foundPos := RegExMatch(json, "(?s)""text""\s*:\s*""(.*?)(?=""\s*[,}])", match, foundPos)
+    if (!foundPos)
+        break
+    text := StrReplace(match1, "\\", "\")     ; first unescape backslashes
+    text := StrReplace(text, "\n", "`n")      ; convert JSON \n → real newline
+    text := StrReplace(text, "\r", "`r")      ; convert JSON \r → real CR (if any)
+    texts.Push(text) 
+    foundPos += StrLen(match)
+    }
+
+  if (jsonSrc != src)
+    PopUp("protection failed...",999,0,0)
   captions =
-  if (json && address)
+  if json
     {
     FileRecycle, %inca%\cache\json\%media%.json
     FileAppend, %json%, %inca%\cache\json\%media%.json, UTF-8
     if (ext == "txt")
       {
-      FileRecycle, %lastSrc%
-      FileAppend, %address%, %lastSrc%, UTF-8
+      FileRecycle, %jsonSrc%
+      for i, t in texts {
+        FileAppend, %t%`n`n, %jsonSrc%, UTF-8
+        }
       }
     }
   IfExist, %inca%\cache\json\%media%.json				; if speech exist in json
@@ -915,7 +928,7 @@ Edited() 								; Save edited json, text or SRT file
       }
   index := StrSplit(selected, ",").1
   RenderPage(0)
-  if (json && address)
+  if json
     PopUp("saved", 900, 0, 0)
   }
 
@@ -1704,12 +1717,15 @@ return
     if ErrorLevel
       return
     FileRead, MetaContent, %inca%\cache\temp\meta.txt
-    if RegExMatch(MetaContent, """duration"":\s*""?(\d+\.?\d*)""?", n)
-      dur := n1
-    if !dur								; try to fix duration missing
-      runwait, %inca%\cache\apps\ffmpeg.exe -c copy -map 0 -fflags +genpts "%source%" -y "%source%",, Hide
-    if RegExMatch(MetaContent, """start_time"":\s*""?(\d+\.?\d*)""?", n)
-      offset := n1
+    if RegExMatch(MetaContent, """duration""\s*:\s*""?([\d\.]+)""?", n)		; normal case
+      || RegExMatch(MetaContent, """DURATION""\s*:\s*""?([^""]+)""?", n)	; Google encoding
+      {
+      durRaw := n1
+      if RegExMatch(durRaw, "(\d+):(\d+):(\d+\.?\d*)", t)
+        dur := (t1*3600) + (t2*60) + t3
+      else
+        dur := durRaw + 0							; force numeric
+      }
     dur := Round(dur,2)
     FileDelete, %inca%\cache\durations\%filen%.txt
     FileAppend, %dur%, %inca%\cache\durations\%filen%.txt, UTF-8
@@ -1775,7 +1791,7 @@ return
       if (DecodeExt(type) != "video")
         return
       cmd = %inca%\cache\apps\ffprobe.exe -v quiet -print_format json -show_streams -select_streams v:0 "%src%"
-      RunWait, %ComSpec% /c %cmd% > "%inca%\cache\temp\meta.txt",, Hide	; get media meta data
+      RunWait, %ComSpec% /c %cmd% > "%inca%\cache\temp\meta.txt",, Hide		; get media meta data
       if ErrorLevel
         return
       FileRead, MetaContent, %inca%\cache\temp\meta.txt
@@ -2092,7 +2108,6 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
 
   <div id="editor">
     <div id="ribbon">
-      <div id='myCancel' class="dropdown-header" onmouseout="this.innerHTML='&#x2715;'">&#x2715;</div>`n
       <div id="media-header" class="dropdown">
         <div class="header"></div>
         <div class="dropdown-content"><div>No media</div></div>`n
@@ -2101,6 +2116,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
         <input type="text" id="caption-search-input" placeholder="&#x1F50D;&#xFE0E;" autocomplete="off">
         <span id="search-match-count"></span>`n
       </div>
+      <div id='myCancel' onmouseout="this.innerHTML='&#x2715;'" class="dropdown-header">&#8978;</div>`n
     </div>
     <div id="viewport" class="caption-viewport"></div>
   </div>`n`n
@@ -2337,9 +2353,9 @@ mediaList(j, input, start, fold)					; spool sorted media files into web page
 
 ;    if (type == "image")
 ;      media_s := "&#x2726; " . media_s					; highlight as image (not video)
-    if (ext == "txt")
-      src = "%server%%poster%"
-    else src = "%server%%src%"
+;    if (ext == "txt")
+;      src = "%server%%poster%"
+    src = "%server%%src%"
     poster = poster = "%server%%poster%"
     data = "%server%%data%"
     caption = <pre id="dat%j%" style='display: none' type="text/plain" data=%data%></pre>`n
@@ -2493,14 +2509,12 @@ mediaList = %mediaList%%foldr%<div id='entry%j%' class='entry-row' data-params='
           if (A_Now - downloads > 20 && A_Now - downloads < 60)		; finished downloading
             {
             type := DecodeExt(ext)
-            if (type == "video")
+            if (type == "video" && ext == "webm")
               if 1*Setting("AutoIndex")
                 {
-                if (new := Transcode("myMp4", A_LoopFileFullPath, 0, 0))
-                  {
-                  Index(new, 1)
+                Index(A_LoopFileFullPath, 1)
+                if Transcode("myMp4", A_LoopFileFullPath, 0, 0)
                   PopUp(nameNoExt,999,0.5,0.5)
-                  }
                 }
             }
           FileRead, history, %inca%\fav\History.m3u
