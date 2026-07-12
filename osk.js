@@ -62,7 +62,6 @@ function updateSuggestions() {
       if (i < 6) {
         const w = words[i] || ''
         btn.textContent = w
-        btn.style.visibility = 'visible'
         btn.onclick = w ? () => insertSuggestion(w) : null}})}
   )}
 
@@ -133,7 +132,6 @@ else {
         else  if (key === "Ctrl") btn.classList.add('osk-ctrl')
         else  if (key === "Num") btn.classList.add('osk-num')
         else if (controlKeys.includes(key)) btn.classList.add('osk-control')
-        if (["Enter", "Back", "Shift", "Ctrl", "Num"].includes(key))  btn.style.fontSize = '9px'
         if ((key === "Shift" && isShift) || 
             (key === "Ctrl" && isCtrl) || 
             (key === "Num" && isNumMode)) {
@@ -334,7 +332,6 @@ if (key === "‹" || key === "›" || key === "↑" || key === "↓") {
     const wordBtn = document.createElement('button');
     wordBtn.className = 'osk-key osk-suggestion';
     wordBtn.setAttribute('tabindex', '-1');
-    wordBtn.style.visibility = 'visible';
     suggestionRow.appendChild(wordBtn);
   }
 

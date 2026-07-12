@@ -1,7 +1,5 @@
 // synthetic media/stories/worlds
 // captionmania paradise engineering
-// orgasmatron
-
 
   let wheel = 0								// wheel count
   let wheelDir = 0		 					// wheel direction
@@ -115,7 +113,7 @@
   myStart.addEventListener('wheel', wheelEvent)
   myStart.addEventListener('mouseenter', () => {			// play short sample
     if (editingBlock) { 
-      let current = myPlayer.currentTime; userPlay = 1; if (!editingBlock._voice) myPlayer.muted = false
+      let current = myPlayer.currentTime; userPlay = 1; if (!editingBlock._voice) myPlayer.muted = defMute
       setTimeout(() => {userPlay = 0; myPlayer.currentTime = current},1200)}})
   document.addEventListener('visibilitychange', function() {
     if (document.visibilityState=='visible' && folder=='Downloads' && !selected && !playing) inca('Reload',1,index)})
@@ -259,10 +257,9 @@
           if (overEditor && (!document.getElementById('osk') || id == 'viewport')) {
             myPlayer.currentTime = block.dataset.start; activateBlock(block, 1); return}}
         else if (wasOsk && overBlock) {userPlay = 0; return}}
-      if (!title.matches(':hover') && overTitle == 2) {closeOsk(); overTitle = 0; return}
-      if (overTitle && (longClick || overTitle == 2)) {
-        if (overTitle != 2 && previewMode != 2) title.value = title.defaultValue.trim()
-        overTitle = 2; lastMedia = index; return}
+       if (overTitle && (longClick || overTitle == 2)) {
+         if (overTitle != 2) title.value = title.defaultValue.trim()
+         overTitle = 2; lastMedia = index; return}
       if (!playing && id != title.id) {
         if (!overTitle && longClick && myPanel.matches(':hover')) return 
         if (id == 'myCue' || (overMedia && thumb.src.slice(-3) == 'm3u')
@@ -290,7 +287,7 @@
       if (myNav.style.display && type == 'video') {myNav.style.display = null; thumbSheet ^= 1; start = lastSeek; return 1}}
     if (lastClick == 2 || !dur) start = defStart
     if (!thumbSheet && playing && ym > trigger && overMedia || yw > 0.98) {
-      if (longClick || xm < 0.25) {if (xm < 0.25) {myPlayer.currentTime = 0} else myPlayer.currentTime = defStart}
+      if (longClick) {if (xm < 0.5) {myPlayer.currentTime = 0} else myPlayer.currentTime = defStart}
       else myPlayer.currentTime = start
       if (!Click && captions && editingBlock?._voice?.src) nextCaption(-1)		// wheel only
       return }
@@ -351,7 +348,7 @@
       myVig.style.visibility = myPlayer.style.visibility = 'visible'
       myPlayer.style.opacity = 0.99							// chrome transition bug
       myVig.style.opacity = 1
-      if (!thumbSheet) await inca('History', myPlayer.currentTime.toFixed(1), lastMedia)},10)}
+      if (!thumbSheet) await inca('History', myPlayer.currentTime.toFixed(1), lastMedia)},100)}
 
 
   function mouseMove(e) {
@@ -582,7 +579,6 @@
       myVoice.playbackRate = editingBlock?._rate || 1
       myPlayer.playbackRate = editingBlock?._voice?.src ? rate : editingBlock?._rate || rate
       myMask.style.pointerEvents = 'auto'
-//      if (editing) {myCancel.style.visibility = 'visible'} else myCancel.style.visibility = 'hidden'
       if (dur && !thumbSheet) lastSeek = myPlayer.currentTime
       if (playlist.match('/inca/music/') && scaleY < 0.27) myMask.style.opacity = 0.7
       else myMask.style.opacity = 1
@@ -593,10 +589,8 @@
       if (blocks.length && overTitle && overTitle != 2) {
         let idx = Math.floor(xm * blocks.length)
         const block = blocks[Math.min(idx, blocks.length - 1)]
-        if (previewMode == 0 && xm > 0.4) previewMode = 1
-        else if (previewMode == 1 && xm < 0.4) previewMode = 2
-        if (previewMode == 0) title.value = title.defaultValue
-        else if (previewMode == 1) title.value = lastText
+        if (xm > 0.4) previewMode = 1
+        if (!previewMode) title.value = lastText
         else { title.value = block.innerText.trim(); lastBlock = block.dataset.num }}
       myInca.textContent = '...'
       myMask.style.pointerEvents = null
@@ -639,7 +633,6 @@
     navButtons()
     let cueX = rect.left
     let pos = playing ? myPlayer.currentTime : thumb.currentTime
-//    if (editingBlock?._voice?.src) pos = 0					// causes flickering on seekbar during seek
     pos = Math.round(100*pos) / 100
     let cueW = rect.width * pos / dur
     if (cue && cue <= pos) {
@@ -894,7 +887,7 @@
     if (thumb.style.rate) x = cue+'|rate|'+thumb.style.rate+'\n'+lastSeek.toFixed(1)+'|rate|1'
     thumb.style.skinny = thumb.style.rate = 0
     if (cue) inca('addCue', x, index)						// add cues to media
-    else {getSrt(); Play(); setTimeout(() => myPlayer.currentTime = start, 100)}}
+    else {getSrt(); Play()}}
 
 
   function sel(i) {								// highlight selected media in html
@@ -1012,7 +1005,9 @@
 
 
   function openEditor(text) {
-    originalPlayerSrc = decodeURIComponent(thumb.src)
+    originalPlayerSrc = decodeURIComponent(type === 'image' ? thumb.src : myPlayer.src);
+    captions = type === 'image' ? 1 : 2;
+    lastBlock = type === 'image' ? 1 : lastBlock;
     editor.style.transition = 'opacity 1s'
     editor.style.opacity = 1
     document.querySelectorAll('.dropdown-content').forEach(c => c.style.display = 'none');
@@ -1071,7 +1066,6 @@ const activateBlock = (block, play) => {
   const media = getEffectiveMedia(block);
   const time = isSameBlock ? myPlayer.currentTime : parseFloat(block.dataset.start)
   swapPlayerMedia(media?.src || originalPlayerSrc, time || 0)
-//          if (!userPlay && !block._voice?.src) myPlayer.currentTime = block.dataset.start		// blocks fast seeking over seekbar
   if (block._voice?.src) {
     if (!isSameBlock && decodeURIComponent(myVoice.src) != block._voice.src) myVoice.src = block._voice.src
     myPlayer.muted = true; myVoice.muted = defMute
@@ -1177,7 +1171,8 @@ const activateBlock = (block, play) => {
       blocks.forEach(b => {if ((b._voiceName || 'None') == myVoiceHeader.textContent) b._voiceName = name})
       myAlert.innerText = name + ' > ' + myVoiceHeader.textContent
       delay = 212}
-    editingBlock._voiceName = myVoiceHeader.textContent = name}
+    editingBlock._voiceName = myVoiceHeader.textContent = name
+    myNav.style.display = 'none'}
 
 
   function swapPlayerMedia(src, time) {
@@ -1339,15 +1334,11 @@ const activateBlock = (block, play) => {
 function populateVoices() {
   const myVoiceHeader = document.getElementById('myVoiceHeader');
   const voiceSub = document.getElementById('voiceSub');
-
   voiceSub.innerHTML = '';
   voiceSub.style.padding = '0 1.5em 0 1.2em';
-  
   const current = editingBlock?._voiceName || '';
   myVoiceHeader.textContent = current || 'None';
-  
   const addGap = () => {const gap = document.createElement('div'); gap.style.height = '8px'; voiceSub.appendChild(gap)}
-
   const none = document.createElement('div');
   none.textContent = 'None';
   none.style.color = '#ffc0cb88';
@@ -1367,7 +1358,6 @@ function populateVoices() {
   };
   voiceSub.appendChild(none);
   addGap();
-
   let newSet = new Set()
   blocks.forEach(b => { if (b._voiceName) newSet.add(b._voiceName.trim()) })
   newSet.forEach(name => {
@@ -1378,20 +1368,19 @@ function populateVoices() {
     row.onmouseup = () => {clearTimeout(Timer); if (!longClick) selectVoice(name)};
     voiceSub.appendChild(row);
   });
-
   addGap();
-inca('getVoices', 0, index)?.then(result => {
-  if (!result) return;
-  result.split('|').filter(Boolean).forEach(name => {
-    const row = document.createElement('div');
-    row.textContent = name;
-    if (name === current) { row.style.color = 'pink' }
-    row.onmousedown = () => {Timer = setTimeout(() => {longClick = 1; selectVoice(name)},300)};
-    row.onmouseup = () => {clearTimeout(Timer); if (!longClick) selectVoice(name)};
-    voiceSub.appendChild(row);
-  });
-})
-}
+  inca('getVoices', 0, index)?.then(result => {
+    if (!result) return;
+    result.split('|').filter(Boolean).sort((a,b)=>a.localeCompare(b,undefined,{numeric:true})).forEach(name => {
+      const row = document.createElement('div');
+      row.textContent = name;
+      if (name === current) { row.style.color = 'pink' }
+      row.onmousedown = () => {Timer = setTimeout(() => {longClick = 1; selectVoice(name)},300)};
+      row.onmouseup = () => {clearTimeout(Timer); if (!longClick) selectVoice(name)};
+      voiceSub.appendChild(row);
+      });
+    })
+  }
 
 
 function makeJSON() {
@@ -1568,7 +1557,7 @@ function Backspace(e) {
       prev.focus()
       const newRange = document.createRange()
       const sel2 = window.getSelection()
-      prev.normalize() // Merges adjacent text nodes to ensure single text node
+      prev.normalize()
       if (prev.firstChild && prev.firstChild.nodeType === 3) {
         const textNode = prev.firstChild
         newRange.setStart(textNode, Math.min(joinAt, textNode.length))}
@@ -1701,7 +1690,7 @@ function playerProgress() {
     if (currentBlock !== editingBlock && myPlayer.currentTime < editingBlock.dataset.start) {
       activateBlock(currentBlock, userPlay)
       currentBlock.scrollIntoView({ behavior: 'smooth', block: 'center' }) }
-    let progress = ((myPlayer.currentTime - currentStart) / (nextStart - currentStart)) * 110
+    let progress = ((myPlayer.currentTime - currentStart) / (nextStart - currentStart)) * 100
     progress = Math.max(0, Math.min(100, progress))
     currentBlock.style.setProperty('--progress', progress + '%')
     if (myNav.style.display) return}							//   || !userPlay

@@ -184,7 +184,7 @@ const waitForTempFile = async () => {
                 if (content.trim() !== 'working') return true;
             }
         } catch (err) {}
-        if (Date.now() - lastActivity > 1500) return false; 
+        if (Date.now() - lastActivity > 2000) return false; 
         await new Promise(resolve => setTimeout(resolve, pollInterval));
     }
 };
@@ -198,7 +198,7 @@ const waitForTempFile = async () => {
                 await serveHtmlFile(res, startTime);
 
 
- fsPromises.unlink(tempFilePath, '').catch(() => {});		// Clear out.txt once consumed
+// fsPromises.unlink(tempFilePath, '').catch(() => {});		// Clear out.txt once consumed - but stops big html ?
 
             });
             return;
