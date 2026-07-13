@@ -184,7 +184,7 @@ const waitForTempFile = async () => {
                 if (content.trim() !== 'working') return true;
             }
         } catch (err) {}
-        if (Date.now() - lastActivity > 2000) return false; 
+        if (Date.now() - lastActivity > 3000) return false; 
         await new Promise(resolve => setTimeout(resolve, pollInterval));
     }
 };
