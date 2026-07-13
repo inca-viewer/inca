@@ -74,8 +74,6 @@
  #media-header {width: 34%}
  #search-header {min-width: 34%}
 
-
-
 #media-header > .header > * { 
   display: inline-flex;
   color: #ffc0cb44; 
@@ -104,7 +102,6 @@
 
   .caption-viewport {
     flex:1;
- //   gap: 0.2em;
     cursor: default;
     overflow-y:auto; 
     padding: 6em 1.6em 7em 2em; 
@@ -130,15 +127,15 @@
 
   .text-block.editing { background: #0e0e0e; color: #ffc0cbaa; transform: scale(1, 1.1) }
 
-.text-block.has-voice::after { content: '♪'; }
+.text-block.has-voice::after { content: '*'; }
 .text-block[data-fav="1"]::after { content: '❤'; }
-.text-block.has-voice[data-fav="1"]::after { content: '❤\A♪'; white-space: pre }
+.text-block.has-voice[data-fav="1"]::after { content: '❤\A*'; white-space: pre }
 
 .text-block.has-voice::after,
 .text-block[data-fav="1"]::after {
   position: absolute;
   opacity: 0.5;
-  top: 0.5em;
+  top: 1.8em;
   left: -1.6em;
   font-size: 0.55em;
   color: #ffc0cb;
@@ -588,17 +585,19 @@ font-weight: bold;
   width: 1.6em}
 
 .osk-control { width: 2.3em !important; }
-.osk-shift   { width: 4.3em !important; }
-.osk-ctrl    { width: 2.7em !important; }
+.osk-shift   { width: 3em !important; }
+.osk-ctrl    { width: 4.5em !important; }
 .osk-back,
 .osk-num     { width: 3em !important; }
 .osk-enter,
-.osk-space   { width: 5em !important; }
+.osk-space   { width: 4em !important; }
+.osk-del { width: 4.5em !important; }
 
 .osk-control,
 .osk-shift,
 .osk-ctrl,
 .osk-num,
+.osk-del,
 .osk-back,
 .osk-enter,
 .osk-space { font-size: 9px !important; }

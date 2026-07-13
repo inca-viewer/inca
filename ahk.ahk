@@ -881,20 +881,15 @@ Edited() 								; Save edited json, text or SRT file
     foundPos += StrLen(match)
     }
 
-  if (jsonSrc != src)
-    PopUp("protection failed...",999,0,0)
+if (jsonSrc != src)
+PopUp("save protection failed...",999,0,0)
+
   captions =
+  lastExt := ext
   if json
     {
     FileRecycle, %inca%\cache\json\%media%.json
     FileAppend, %json%, %inca%\cache\json\%media%.json, UTF-8
-    if (ext == "txt")
-      {
-      FileRecycle, %jsonSrc%
-      for i, t in texts {
-        FileAppend, %t%`n`n, %jsonSrc%, UTF-8
-        }
-      }
     }
   IfExist, %inca%\cache\json\%media%.json				; if speech exist in json
     IfExist, %inca%\cache\speech\%media%\				; clear speech folder of any unused speech
@@ -929,7 +924,16 @@ Edited() 								; Save edited json, text or SRT file
   index := StrSplit(selected, ",").1
   RenderPage(0)
   if json
+    {
     PopUp("saved", 900, 0, 0)
+    if (lastExt == "txt")					; at end because can take too long
+      {
+      FileRecycle, %jsonSrc%
+      for i, t in texts {
+        FileAppend, %t%`n`n, %jsonSrc%, UTF-8
+        }
+      }
+    }
   }
 
 
@@ -997,8 +1001,8 @@ Edited() 								; Save edited json, text or SRT file
             list .= spool(A_LoopFileFullPath, A_Index, start, fold)
             if (!silent && listSize && !Mod(listSize,1000))
               {
-              FileDelete, %inca%\cache\html\out.txt			; keep server waiting
-              FileAppend, working, %inca%\cache\html\out.txt, UTF-8
+              FileDelete, %inca%\cache\html\out.txt
+              FileAppend, working, %inca%\cache\html\out.txt, UTF-8	; keep server active
               PopUp(listSize,0,0,0)
               }
             }
@@ -2361,7 +2365,7 @@ mediaList(j, input, start, fold)					; spool sorted media files into web page
     caption = <pre id="dat%j%" style='display: none' type="text/plain" data=%data%></pre>`n
 
     if listView
-mediaList = %mediaList%%foldr%<div id='entry%j%' class='entry-row' data-params='%type%,%start%,%dur%,%size%' onmouseenter='if (gesture) sel(%j%)' onmouseover='overThumb(%j%)'`n onmouseout="thumb%j%.style.opacity=0; thumb.src=''"><div><video id='thumb%j%' class='thumb2' onwheel='if (zoom > 1) wheelEvent(event)'`n %poster% preload=%preload% muted loop disableRemotePlayback type="video/mp4"></video><video id="vid%j%" style='display: none'`n src=%src% preload='none' type='video/mp4'></video>`n </div><div>%j%</div><div>%ext%</div><div>%size%</div><div style='min-width: 6em'>%durT%</div><div>%date%</div><div id='myFavicon%j%' class='favicon' style='position: relative; text-align: right; translate:1.6em 0.4em'>%favicon%</div><div class='title-cell'><textarea id="title%j%" class='title' style='top:0.1em' autocomplete='off' onmouseenter='overThumb(%j%)'>`n %media_s%</textarea></div>%fo%</div>`n %caption%<span id='cues%j%' style='display: none'>%cues%</span>`n`n
+mediaList = %mediaList%%foldr%<div id='entry%j%' class='entry-row' data-params='%type%,%start%,%dur%,%size%' onmouseenter='if (gesture) sel(%j%)' onmouseover='overThumb(%j%)'`n onmouseout="thumb%j%.style.opacity=0"><div><video id='thumb%j%' class='thumb2' onwheel='if (zoom > 1) wheelEvent(event)'`n %poster% preload=%preload% muted loop disableRemotePlayback type="video/mp4"></video><video id="vid%j%" style='display: none'`n src=%src% preload='none' type='video/mp4'></video>`n </div><div>%j%</div><div>%ext%</div><div>%size%</div><div style='min-width: 6em'>%durT%</div><div>%date%</div><div id='myFavicon%j%' class='favicon' style='position: relative; text-align: right; translate:1.6em 0.4em'>%favicon%</div><div class='title-cell'><textarea id="title%j%" class='title' style='top:0.1em' autocomplete='off' onmouseenter='overThumb(%j%)'>`n %media_s%</textarea></div>%fo%</div>`n %caption%<span id='cues%j%' style='display: none'>%cues%</span>`n`n
 
     else mediaList = %mediaList%<div id="entry%j%" class='entry' data-params='%type%,%start%,%dur%,%size%'>`n <span id='myFavicon%j%' onmouseenter='overThumb(%j%)' class='favicon'>%favicon%</span>`n <textarea id='title%j%' class='title' style='top:-0.8em; opacity:0.7' type='text'`n onmouseenter='overThumb(%j%)'>%media_s%</textarea>`n <video id="thumb%j%" class='thumb' onwheel='if (zoom > 1) wheelEvent(event)' onmouseenter="overThumb(%j%); if (gesture && !playing) sel(%j%)"`n onmouseout="thumb.pause()"`n onmouseup='if (gesture && !playing) Param(%j%)' %poster%`n preload=%preload% loop muted disableRemotePlayback type='video/mp4'></video>`n <video id="vid%j%" style='display: none' src=%src% preload='none' type='video/mp4'></video>%noIndex%`n <span id='cues%j%' style='display: none'>%cues%</span></div>`n %caption%`n
     }

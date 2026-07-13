@@ -94,18 +94,18 @@ else {
     updateSuggestions()
 }
 
-  const controlKeys = ["Num","Shift","Space","Del","Back","Enter","Ctrl","↑","↓"];
+  const controlKeys = ["Num","Shift","","Del","Back","Enter","Ctrl","↑","↓"];
 
   let currentLayout = [
-    ["q","w","e","r","t","y","u","i","o","p","Space","Back","Enter"],
-    ["Ctrl","a","s","d","f","g","h","j","k","l",'‹','›',"↑","↓","Del","Num"],
-    ["Shift","z","x","c","v","b","n","m",",",".","'",'"',"!","?","Shift"]
+    ["q","w","e","r","t","y","u","i","o","p","","Back","Enter"],
+    ["Shift","a","s","d","f","g","h","j","k","l",'‹','›',"↑","↓","Del"],
+    ["Ctrl","z","x","c","v","b","n","m",",",".","'",'"',"!","?","Num"]
   ];
 
   let numLayout = [
-    ["1","2","3","4","5","6","7","8","9","0","Space","Back","Enter"],
-    ["Ctrl","@","#","£","$","%","^","&","*","(",")","-","+","=","Del","Num"],
-    ["Shift","~","_","[","]","{","}","\\","!","?",";",":",",",".","Shift"]
+    ["1","2","3","4","5","6","7","8","9","0","","Back","Enter"],
+    ["Shift","@","#","£","$","%","^","&","*","(",")","-","+","=","Del"],
+    ["Ctrl","~","_","[","]","{","}","\\","!","?",";",":",",",".","Num"]
   ];
 
   function createKeyboard() {
@@ -125,10 +125,11 @@ else {
         btn.textContent = displayKey;
         btn.className = 'osk-key';
         
-        if (key === "Space") btn.classList.add('osk-space');
+        if (key === "") btn.classList.add('osk-space');
         else  if (key === "Shift") btn.classList.add('osk-shift')
         else  if (key === "Enter") btn.classList.add('osk-enter')
         else  if (key === "Back") btn.classList.add('osk-back')
+        else if (key === "Del") btn.classList.add('osk-del')
         else  if (key === "Ctrl") btn.classList.add('osk-ctrl')
         else  if (key === "Num") btn.classList.add('osk-num')
         else if (controlKeys.includes(key)) btn.classList.add('osk-control')
@@ -163,7 +164,8 @@ else {
 
         btn.addEventListener('click', () => {
             handleKey(key, btn);
-            setTimeout(() => {
+            if (!["Num", "Shift", "Ctrl", "↑", "↓", "‹", "›", "Back", "Del", "Enter"].includes(key)) 
+              setTimeout(() => {
                 captureSelection();
                 requestAnimationFrame(updateSuggestions);
             }, 8);
@@ -271,7 +273,7 @@ if (key === "‹" || key === "›" || key === "↑" || key === "↓") {
 }
 
 
-    if (key === "Space") char = " ";
+    if (key === "") char = " ";
     else if (key === "Back") {
       predictBuffer = predictBuffer.slice(0, -1);
       const ev = new KeyboardEvent('keydown', {key: 'Backspace', code: 'Backspace', bubbles: true, cancelable: true});
@@ -313,7 +315,7 @@ if (key === "‹" || key === "›" || key === "↑" || key === "↓") {
       active.selectionStart = active.selectionEnd = pos + 1;
     }
     captureSelection();
-    if (key === 'Space') predictBuffer = ''; else predictBuffer += char;
+    if (key === '') predictBuffer = ''; else predictBuffer += char;
 
     if ((isShift && !window.shiftLocked) || 
         (isCtrl  && !window.ctrlLocked)  || 
@@ -357,7 +359,7 @@ oskElement.prepend(suggestionRow);
     const kbRect = oskElement.getBoundingClientRect();
     const kbHeight = kbRect.height || 220;
     const kbWidth = kbRect.width || 400;
-    let left = xPos - kbWidth / 2
+    let left = xPos - kbWidth / 3
     let top = yPos + 20
     if (overBlock) {
       const block = overBlock?.getBoundingClientRect();

@@ -1,6 +1,9 @@
 // synthetic media/stories/worlds
 // captionmania paradise engineering
 
+// how to open json at start or last easily
+
+
   let wheel = 0								// wheel count
   let wheelDir = 0		 					// wheel direction
   let index = 1								// thumb index (e.g. thumb14)
@@ -89,20 +92,20 @@
   let myVoice = document.createElement('audio')
   let intervalTimer = setInterval(timerEvent,94)			// background tasks every 94mS
 
-  const ribbon = document.querySelector('#ribbon');
-  const viewport = document.querySelector('#viewport');
-  const mediaHeader = document.querySelector('#media-header > .header');
-  const mediaContent = document.querySelector('#media-header .dropdown-content');
-  const searchHeader = document.querySelector('#search-header');
-  const searchInput = document.querySelector('#caption-search-input');
-  const matchCountSpan  = document.querySelector('#search-match-count');
+  const ribbon = document.querySelector('#ribbon')
+  const viewport = document.querySelector('#viewport')
+  const mediaHeader = document.querySelector('#media-header > .header')
+  const mediaContent = document.querySelector('#media-header .dropdown-content')
+  const searchHeader = document.querySelector('#search-header')
+  const searchInput = document.querySelector('#caption-search-input')
+  const matchCountSpan  = document.querySelector('#search-match-count')
 
   document.addEventListener('mousedown', mouseDown)
   document.addEventListener('mouseup', mouseUp)
   document.addEventListener('mousemove', mouseMove)
   document.addEventListener('keydown', keyDown)
   document.addEventListener('dragstart', () => gesture = 1)
-  document.addEventListener('dragend', () => {Click = 0; gesture = 0})
+  document.addEventListener('drop', (e) => {Click = 0; gesture = 0; if (overEditor) activateBlock(e.target.closest('.text-block'),0)})
   myPlayer.addEventListener('ended', nextMedia)
   myVoice.addEventListener('ended', nextCaption)
   myVoice.addEventListener('timeupdate', voiceProgress)
@@ -112,7 +115,8 @@
   myNav.addEventListener('mouseleave', () => myNav.style.display = myDefault.style.display = myAlt.style.display = null)
   myStart.addEventListener('wheel', wheelEvent)
   myStart.addEventListener('mouseenter', () => {			// play short sample
-    if (editingBlock) { 
+    if (!Click && editingBlock) {
+      myVoice.currentTime = 0 
       let current = myPlayer.currentTime; userPlay = 1; if (!editingBlock._voice) myPlayer.muted = defMute
       setTimeout(() => {userPlay = 0; myPlayer.currentTime = current},1200)}})
   document.addEventListener('visibilitychange', function() {
@@ -223,8 +227,7 @@
           activateBlock(overBlock, 0)
           if (overBlock.innerText.length > 1) myPlayer.currentTime = overBlock.dataset.start}
         populateVoices()
-        myNav.classList.add('editor-mode')
-        setTimeout(function() {userPlay = 0},100)} 
+        myNav.classList.add('editor-mode')} 
       else myNav.classList.remove('editor-mode')
       if (!longClick && !myNav.style.display) {
         myNav.style.display = 'block'; myNav.style.left = xPos-90+'px'; myNav.style.top = yPos-32+'px'; delay = 200; return}
@@ -255,7 +258,7 @@
         if (overBlock && overBlock !== editingBlock) {activateBlock(block, 1); return}
         else if (myPlayer.currentTime >= block._end) {
           if (overEditor && (!document.getElementById('osk') || id == 'viewport')) {
-            myPlayer.currentTime = block.dataset.start; activateBlock(block, 1); return}}
+            myVoice.currentTime = 0; myPlayer.currentTime = block.dataset.start; activateBlock(block, 1); return}}
         else if (wasOsk && overBlock) {userPlay = 0; return}}
        if (overTitle && (longClick || overTitle == 2)) {
          if (overTitle != 2) title.value = title.defaultValue.trim()
@@ -324,7 +327,7 @@
     else myPlayer.muted = defMute
     if (!thumbSheet) {
       if (favicon.matches(':hover')) getSrt(1)
-      else if ((overTitle && Click && !longClick)) getSrt(lastBlock) 			 // use caption preview start
+      else if (overTitle && Click && blocks.length) previewMode ? getSrt(lastBlock) : getSrt(1)
       else if (type == 'document') getSrt()}
     if (el = document.getElementById('title'+lastMedia)) el.style.color = null
     title.style.color = 'pink'
@@ -490,9 +493,9 @@
         if (newIndex !== currentIndex) activateBlock(blocks[newIndex], 0)
         myVoiceHeader.textContent = editingBlock._voiceName
         myPlayer.currentTime = editingBlock.dataset.start
-        editingBlock.scrollIntoView({ behavior: 'smooth', block: 'nearest' })		// nudging block start time
+        editingBlock.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
         delay = 333}
-      else { myPlayer.currentTime += (wheelUp ? 0.02 : -0.02); delay = 60 }}
+      else { myPlayer.currentTime += (wheelUp ? 0.02 : -0.02); delay = 60 }}		// nudge start time
     else if (!thumbSheet) {								// seek
         delay = 124
         let interval = 0.2
@@ -589,8 +592,10 @@
       if (blocks.length && overTitle && overTitle != 2) {
         let idx = Math.floor(xm * blocks.length)
         const block = blocks[Math.min(idx, blocks.length - 1)]
-        if (xm > 0.4) previewMode = 1
-        if (!previewMode) title.value = lastText
+        previewMode = xm > 0.4 && !previewMode ? 1 : previewMode
+        previewMode = xm < 0.4 && previewMode ? 2 : previewMode
+        if (!previewMode) title.value = title.defaultValue
+        else if (previewMode == 1) title.value = lastText
         else { title.value = block.innerText.trim(); lastBlock = block.dataset.num }}
       myInca.textContent = '...'
       myMask.style.pointerEvents = null
@@ -1005,7 +1010,7 @@
 
 
   function openEditor(text) {
-    originalPlayerSrc = decodeURIComponent(type === 'image' ? thumb.src : myPlayer.src);
+    originalPlayerSrc = decodeURIComponent(type === 'video' ? myPlayer.src : thumb.src)
     captions = type === 'image' ? 1 : 2;
     lastBlock = type === 'image' ? 1 : lastBlock;
     editor.style.transition = 'opacity 1s'
@@ -1082,7 +1087,7 @@ const activateBlock = (block, play) => {
       top: b.offsetTop,
       block: b}))}
   myPlayer.volume = myVoice.volume = block._voice?.volume || 1
-  if (play) userPlay = play
+  userPlay = play
   if (captions == 1) {									// compact captions
     const rec = editingBlock.getBoundingClientRect()
     editor.style.height = rec.height + 'px'
@@ -1657,7 +1662,7 @@ function Backspace(e) {
     const voiceName = editingBlock._voiceName || lastVoice || 'Tracy'
     if (!voiceName) return
     let block = editingBlock
-myPlayer.currentTime = editingBlock.dataset.start
+    myPlayer.currentTime = editingBlock.dataset.start
     let last = block?._voice?.src || projectMedia.defaultSrc
     let text = block.innerText.trim()
     let provider = 'chatterbox'
