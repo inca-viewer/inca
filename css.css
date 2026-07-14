@@ -585,12 +585,12 @@ font-weight: bold;
   width: 1.6em}
 
 .osk-control { width: 2.3em !important; }
-.osk-shift   { width: 3em !important; }
-.osk-ctrl    { width: 4.5em !important; }
+.osk-shift   { width: 3.8em !important; }
+.osk-ctrl    { width: 5.3em !important; }
 .osk-back,
 .osk-num     { width: 3em !important; }
 .osk-enter,
-.osk-space   { width: 4em !important; }
+.osk-space   { width: 5.2em !important; }
 .osk-del { width: 4.5em !important; }
 
 .osk-control,
