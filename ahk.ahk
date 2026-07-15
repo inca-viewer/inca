@@ -997,15 +997,7 @@ PopUp("save protection failed...",999,0,0)
       Loop, Files, %A_LoopField%*.*, F%recurse%
         if A_LoopFileAttrib not contains H,S
           if (A_LoopFileSize > 0 && listSize < 350000)			; for when files are still downloading
-            {
             list .= spool(A_LoopFileFullPath, A_Index, start, fold)
-            if (!silent && listSize && !Mod(listSize,1000))
-              {
-              FileDelete, %inca%\cache\html\out.txt
-              FileAppend, working, %inca%\cache\html\out.txt, UTF-8	; keep server active
-              PopUp(listSize,0,0,0)
-              }
-            }
       }
     if !silent
       PopUp(listSize,0,0,0)
@@ -1096,6 +1088,12 @@ PopUp("save protection failed...",999,0,0)
       if (InStr(toggles, "Fav") && !InStr(allfav, filen))
         return
       listSize += 1
+      if (!silent && (!Mod(listSize,1000) || (searchTerm && !Mod(listSize,10))))
+        {
+        FileDelete, %inca%\cache\html\out.txt
+        FileAppend, working, %inca%\cache\html\out.txt, UTF-8	; keep server active
+        PopUp(listSize,0,0,0)
+        }
       if !playlist
         {
         start := 0
@@ -1272,9 +1270,9 @@ PopUp("save protection failed...",999,0,0)
       }
     }
 
-volTimer:
+  volTimer:
       SoundSet, volume
-return
+  return
 
 
   Time(in)
@@ -1525,9 +1523,7 @@ return
     Gui PopUp:Destroy
     Gui PopUp:+lastfound +AlwaysOnTop -Caption +ToolWindow
     Gui PopUp:Color, Black
-    if (StrLen(message) <3)
-      Gui PopUp:Font, s24 cRed, Segoe UI
-    else Gui PopUp:Font, s16 cRed, Segoe UI
+    Gui PopUp:Font, s16 cRed, Segoe UI
     Gui PopUp:Add, Text,, %message%
     Gui PopUp:Show, x%xp% y%yp% NA
     WinSet, TransColor, 0 255
