@@ -396,7 +396,7 @@
   History()
       {
       FileRead, history, %inca%\fav\History.m3u
-      if (folder != "History" && !InStr(history, src))
+      if (folder != "History" && !InStr(history, src) && StrLen(src) > 4)
         FileAppend, %src%|%seek%`r`n, %inca%\fav\History.m3u, UTF-8
       }
 
@@ -412,9 +412,9 @@
           value := Drive . value
         if !RegExMatch(address, "^[a-zA-Z]:\\")
           address := Drive . address
-        if !InStr(history, value)
+        if (!InStr(history, value) && StrLen(value) > 4)
           FileAppend, %value%|0.0`r`n, %inca%\fav\History.m3u, UTF-8
-        if !InStr(history, address)
+        if (!InStr(history, address) && StrLen(address) > 4 && value != address)
           FileAppend, %address%|0.0`r`n, %inca%\fav\History.m3u, UTF-8
         }
 
