@@ -326,7 +326,6 @@
       subfolders =
       folder := incaTab
       GetTabSettings(1)							; get htm parameters
-      CreateList(1)							; silently update to new tab
       }
     return incaTab
     }
@@ -2192,12 +2191,13 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
   <div id='myPanel' class='myPanel'><div class='panel'><div class='innerPanel'>`n`n%panelList%`n</div></div>`n`n
 
   <div id='myRibbon1' class='ribbon' style='font-size: 1.2em'>`n
-  <a style='width: 4em; min-width:4em; '></a>
-  <a id='myMusic' style='width: 2em; min-width: 2em; %x22%' onmousedown="inca('Path','','','music|1')" onmouseover="setTimeout(function() {if(myMusic.matches(':hover'))Music.scrollIntoView()},200)">&#x266B;</a>`n
-  <a id='mySub' style='width: 4em; min-width:4em; translate: 0.3em; font-size:0.7em; %x8%' onmousedown="inca('Recurse')" onmouseover="setTimeout(function() {if(mySub.matches(':hover'))Sub.scrollIntoView({behavior: 'smooth'})},200)">%subs%</a>`n
+  <a style='width: 1.2em; min-width: 1.2em'></a>
+  <a style='width: 2.1em; min-width: 2.1em; font-size: 1.4em' onmousedown='window.history.back()'>&#129028;</a>`n
+  <a id='myMusic' style='width: 2.4em; min-width: 2.4em; %x22%' onmousedown="inca('Path','','','music|1')" onmouseover="setTimeout(function() {if(myMusic.matches(':hover'))Music.scrollIntoView()},200)">&#x266B;</a>`n
+  <a id='mySub' style='width: 2em; min-width: 2em; translate: 0.3em; font-size:0.7em; %x8%' onmousedown="inca('Recurse')" onmouseover="setTimeout(function() {if(mySub.matches(':hover'))Sub.scrollIntoView({behavior: 'smooth'})},200)">%subs%</a>`n
   <a id='myFol' style='width: 3em; min-width:3em; %x21%' onmousedown="inca('Path','','','fol|1')" onmouseover="setTimeout(function() {if(myFol.matches(':hover'))Fol.scrollIntoView()},200)">&#x1F4BB;&#xFE0E;</a>`n
   <a id='myFav' style='width: 3em; min-width:3em; translate: 0.4em 0.06em; %x23%' onmousedown="inca('Path','','','fav|1')" onmouseover="setTimeout(function() {if(myFav.matches(':hover'))Fav.scrollIntoView()},200)">&#10084;</a>`n
-  <a style='color: red; width: auto; max-width: 40`%; font-size: 0.94em; padding: 0 1.4em; '>%listSize% &ensp; %heading%</a>`n
+  <a style='color: red; width: auto; min-width: 16`%; max-width: 40`%; font-size: 0.94em; padding: 0 1.4em; '>%listSize% &ensp; %heading%</a>`n
   <a id='mySearch' style='max-width:2em; %x20%' onwheel="wheelEvent(event)" onmousedown="inca('SearchBox','','',myInput.value)" onmouseover="setTimeout(function() {if(mySearch.matches(':hover'))filter(id)},140)">&#x1F50D;&#xFE0E;</a>`n
   <input id='myInput' class='searchbox' type='search' autocomplete='off' value='%st%' onmouseenter="if (this.value=='%st%') this.value='%lastSearch%'; this.select()" onmouseover="overText=1; this.focus()" onmouseout='overText=0'>
   <a id='Add' style='width:1em; font-size:1.2em; color: red' onmousedown="inca('Add','','',myInput.value)">%add%</a>`n

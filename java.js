@@ -1,6 +1,8 @@
 // synthetic media/stories/worlds
 // captionmania paradise engineering
 
+// why is bowser back even out of sync in shuffle
+
 
   let wheel = 0								// wheel count
   let wheelDir = 0		 					// wheel direction
@@ -98,8 +100,7 @@
   const searchInput = document.querySelector('#caption-search-input')
   const matchCountSpan  = document.querySelector('#search-match-count')
 
-  window.addEventListener('pageshow', (e) => {				// user browser navigation sync up
-    if (e.persisted || performance.getEntriesByType('navigation')[0]?.type === 'back_forward') {inca('Reload',3,0)}})
+
   document.addEventListener('mousedown', mouseDown)
   document.addEventListener('mouseup', mouseUp)
   document.addEventListener('mousemove', mouseMove)
@@ -733,7 +734,7 @@
     if (myType.innerHTML != 'Type') myType.style.color = 'red'}
 
 
-  function inca(command,value,select,address) {
+  function inca(command,value,select,address) {					// server messaging to inca.ahk
     more = 4
     if (incaBusy) return
     incaBusy = '1'
