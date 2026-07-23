@@ -1,13 +1,12 @@
 
 # Inca<br>
-Windows - Chrome, Firefox, Edge, Opera, Brave<br>
+Windows - Chrome, Firefox, Edge, Opera or Brave<br>
 YouTube style interface for your local media<br><br>
 
-Create pathways through your own media.<br>
-Start times, skips, pauses, skinny, pitch, speed, captions,<br>
-change voices, dialog, storyboards, AI tools etc.<br><br>
-General filing, mp3/jpg/caption extractions, conversions,<br>
-cuts and joins for buttery smooth playback in browsers<br><br>
+Set start times, cuts, joins, skips, pauses, skinny, pitch, speed, captions,<br>
+change voices, dialog, storyboards etc. with AI tools <br><br>
+General filing, mp3/jpg/caption extraction, conversion,<br>
+buttery smooth playback and seeking in browsers<br><br>
 <img src="screens/overview2.png" width="55%"><br>
 <img src="screens/computer arm 5.jpg" width="18%"> <img src="screens/computer arm 2.jpg" width="18%"> <img src="screens/computer arm 1.jpg" width="18%"><br><br>
 <img src="screens/Screen 1.jpg" width="25%"> <img src="screens/Screen 2.jpg" width="25%"><br>
@@ -24,7 +23,7 @@ Concurrent Music and playlists from browser tabs<br><br>
 New... uses node server instead of local files<br>
 New... storyboard and caption editor for AI assisted content creation<br>
 New... top and tail jpg's and clip joins for ai image to video<br>
-New... supports local AI Chatterbox and Faster Whisper & external api's<br>
+New... supports local AI Chatterbox and Faster Whisper & external api's<br><br>
 
 Lightweight & portable (no installation)<br>
 Pure vanilla java / ahk script (ai can confirm is safe)<br>
@@ -71,7 +70,7 @@ Wheel
 
 index creates 6x6 thumbsheets<br>
 mp4 converts video to browser optimized mp4 <br>
-text or mp4 editing sends original copies to trash<br>
+text or mp4 editing sends original copies to trash / recycle bin<br>
 Supports rotated screen + osk keyboard<br><br>
 <img src="screens/mouse.jpg" width="12.6%"> <img src="screens/computer arm 3.jpg" width="15.9%">   <img src="screens/computer arm 4.jpg" width="25%"><br>
 1m x 12mm threaded rod, 2 x nuts + heatshrink<br>
