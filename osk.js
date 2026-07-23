@@ -94,17 +94,17 @@ else {
     updateSuggestions()
 }
 
-  const controlKeys = ["Num","Shift","","Del","Back","Enter","Ctrl","↑","↓"];
+  const controlKeys = ["Num","Shift","","Del","←","⏎","Ctrl","↑","↓"];
 
   let currentLayout = [
-    ["q","w","e","r","t","y","u","i","o","p","","Back","Enter"],
-    ["Shift","a","s","d","f","g","h","j","k","l",'‹','›',"↑","↓","Del"],
+    ["-","q","w","e","r","t","y","u","i","o","p","","←","Del"],
+    ["Shift","a","s","d","f","g","h","j","k","l",'‹','›',"↑","↓","⏎"],
     ["Ctrl","z","x","c","v","b","n","m",",",".","'",'"',"!","?","Num"]
   ];
 
   let numLayout = [
-    ["1","2","3","4","5","6","7","8","9","0","","Back","Enter"],
-    ["Shift","@","#","£","$","%","^","&","*","(",")","-","+","=","Del"],
+    ["-","1","2","3","4","5","6","7","8","9","0","","←","Del"],
+    ["Shift","@","#","£","$","%","^","&","*","(",")","-","+","=","⏎"],
     ["Ctrl","~","_","[","]","{","}","\\","!","?",";",":",",",".","Num"]
   ];
 
@@ -127,8 +127,8 @@ else {
         
         if (key === "") btn.classList.add('osk-space');
         else  if (key === "Shift") btn.classList.add('osk-shift')
-        else  if (key === "Enter") btn.classList.add('osk-enter')
-        else  if (key === "Back") btn.classList.add('osk-back')
+        else  if (key === "⏎") btn.classList.add('osk-enter')
+        else  if (key === "←") btn.classList.add('osk-back')
         else if (key === "Del") btn.classList.add('osk-del')
         else  if (key === "Ctrl") btn.classList.add('osk-ctrl')
         else  if (key === "Num") btn.classList.add('osk-num')
@@ -164,7 +164,7 @@ else {
 
         btn.addEventListener('click', () => {
             handleKey(key, btn);
-            if (!["Num", "Shift", "Ctrl", "↑", "↓", "‹", "›", "Back", "Del", "Enter"].includes(key)) 
+            if (!["Num", "Shift", "Ctrl", "↑", "↓", "‹", "›", "←", "Del", "⏎"].includes(key)) 
               setTimeout(() => {
                 captureSelection();
                 requestAnimationFrame(updateSuggestions);
@@ -172,10 +172,10 @@ else {
         });
 
         btn.addEventListener('mousedown', () => {
-          if (key !== "Back") return;
+          if (key !== "←") return;
           
           const repeat = () => {
-            handleKey("Back", btn);
+            handleKey("←", btn);
             repeatTimer = setTimeout(repeat, 60);
           };
           repeatTimer = setTimeout(repeat, 300);
@@ -274,7 +274,7 @@ if (key === "‹" || key === "›" || key === "↑" || key === "↓") {
 
 
     if (key === "") char = " ";
-    else if (key === "Back") {
+    else if (key === "←") {
       predictBuffer = predictBuffer.slice(0, -1);
       const ev = new KeyboardEvent('keydown', {key: 'Backspace', code: 'Backspace', bubbles: true, cancelable: true});
       active.dispatchEvent(ev);
@@ -291,7 +291,7 @@ if (key === "‹" || key === "›" || key === "↑" || key === "↓") {
       captureSelection();
       return;
     }
-    else if (key === "Enter") {
+    else if (key === "⏎") {
       predictBuffer = '';
       const event = new KeyboardEvent('keydown', {key: 'Enter', code: 'Enter', bubbles: true, cancelable: true});
       active.dispatchEvent(event);

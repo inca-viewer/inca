@@ -2,16 +2,12 @@
   ::placeholder {color: lightsalmon}
   ::selection {color: #cccccc; background: #222222}
   ::-webkit-search-cancel-button {appearance: none}
-  ::-webkit-scrollbar {background: #0e0c05; width: 6px}
-  ::-webkit-scrollbar-corner {background: #0e0c05}
-  ::-webkit-scrollbar-thumb {background: #1b1814; border-radius: 2px}
   ::-webkit-resizer {background: transparent}
   @supports (not selector(::-webkit-scrollbar)) {html {scrollbar-color: #2b2824 #0e0c05}}
   a {color: #826858; text-decoration: none; outline: none}			/* default text */
   c {color: #826858cc; text-decoration: none; display: block; transition: 1s}	/* top panel text */
   c:hover {transition: 0.2s; transform: scale(1.1,1.1); color: pink}
   c:active {color: #0e0c05; transform: scale(0.8,0.8)}
-
 
 .voice-input{position:fixed;z-index:9999;font-size:12px;padding:4px;border:0.1px solid #555;border-radius:1em;background:#222;color:pink;outline:none}
 
@@ -123,9 +119,9 @@
   .text-block {
     position: relative; background:transparent; border-radius:2em; white-space:pre-wrap; transition: 0; overflow: visible;
     word-wrap:break-word; line-height:1.5; padding: 0.5em 1em 1.2em 1em; cursor: text; font-size: 0.82em;
-    color:#ffc0cb60; text-align:center; outline:none; width: 100%; align-self: center; border: 0; margin-bottom: 1em}
+    color:#ffc0cb70; text-align:center; outline:none; width: 100%; align-self: center; border: 0; margin-bottom: 1em}
 
-  .text-block.editing { background: #0e0e0e; color: #ffc0cbaa; transform: scale(1, 1.1) }
+  .text-block.editing { background: #0e0e0e; color: #ffc0cbaa }
 
 .text-block.has-voice::after { content: '*'; }
 .text-block[data-fav="1"]::after { content: '❤'; }
@@ -368,7 +364,7 @@ font-weight: bold;
 .fade {						/* between menu and scrolled thumbs */
   position: absolute;
   display: block;
-  width: 99.25vw;
+  width: 99vw;
   height: 0.8em;
   background: #0e0c05;
   pointer-events: none}
@@ -418,7 +414,7 @@ font-weight: bold;
 .searchbox {					/* input searchbox in htm tab */
   text-overflow: ellipsis;
   display: inline;
-  width: 54%;
+  width: auto;
   border-radius: 1em; 
   color: pink;
   border: none;
@@ -439,7 +435,7 @@ font-weight: bold;
   top: -100px;
   color: red;
   height: 2em;
-  z-index: 5011;
+  z-index: 5014;
   transition: font-size 0.5s;
   font-size: 1.4em}
 
@@ -530,6 +526,7 @@ font-weight: bold;
 
 .myBody {					/* whole body element */
   font-family: 'Yu Gothic', 'Calibri Light';
+  scrollbar-color:#ffc0cb10 transparent;
   background: #0e0c05;
   user-select: none;
   font-size: 0.85em;
@@ -587,11 +584,11 @@ font-weight: bold;
 .osk-control { width: 2.3em !important; }
 .osk-shift   { width: 3.8em !important; }
 .osk-ctrl    { width: 5.3em !important; }
-.osk-back,
+.osk-back    { width: 3.2em !important; }
 .osk-num     { width: 3em !important; }
-.osk-enter,
-.osk-space   { width: 5.2em !important; }
-.osk-del { width: 4.5em !important; }
+.osk-enter   { width: 4.5em !important; }
+.osk-space   { width: 7em !important; }
+.osk-del     { width: 3em !important; }
 
 .osk-control,
 .osk-shift,

@@ -203,6 +203,7 @@
 
   ProcessMessage()							; messages from java/browser html
     {
+    PopUp(".",0,0,0)
     if (command == "editCues")						; update media cues skinny, rate
       editCues()
     else if (command == "Favorite")					; add media favorite to New.m3u
@@ -275,11 +276,9 @@
       {
       if selected
         index := StrSplit(selected, ",").1
-      if (sort == "Shuffle")
+      reload := value
+      if (reload && sort == "Shuffle")
         reload := 1
-      else reload := 2
-      if !value
-        reload := 0
       }
     else if (command == "History")
       History()
@@ -618,6 +617,7 @@
       else reload := 1
       if !longClick							; copy not move so no reload
         {
+        reload = 0
         CreateList(1)							; full update htm page
         if (InStr(address, "\inca\"))
           reload := 3							; 999 = top panel stay in target folder
@@ -880,17 +880,7 @@ Edited() 								; Save edited json, text or SRT file
     texts.Push(text) 
     foundPos += StrLen(match)
     }
-
-if (jsonSrc != src)
-PopUp("save protection failed...",999,0,0)
-
-  captions =
-  lastExt := ext
-  if json
-    {
-    FileRecycle, %inca%\cache\json\%media%.json
-    FileAppend, %json%, %inca%\cache\json\%media%.json, UTF-8
-    }
+  SplitPath, jsonSrc,,,ext,media					; use jsonSrc as truth
   IfExist, %inca%\cache\json\%media%.json				; if speech exist in json
     IfExist, %inca%\cache\speech\%media%\				; clear speech folder of any unused speech
       {
@@ -926,7 +916,10 @@ PopUp("save protection failed...",999,0,0)
   if json
     {
     PopUp("saved", 900, 0, 0)
-    if (lastExt == "txt")					; at end because can take too long
+    SplitPath, jsonSrc,,,ext,media
+    FileRecycle, %inca%\cache\json\%media%.json
+    FileAppend, %json%, %inca%\cache\json\%media%.json, UTF-8
+    if (ext == "txt")							; at end because can take too long
       {
       FileRecycle, %jsonSrc%
       for i, t in texts {
@@ -986,7 +979,7 @@ PopUp("save protection failed...",999,0,0)
               start := StrSplit(A_Loopfield, "|").2
               if (SubStr(source, 1, 1) != "#")
                 if (!searchTerm || InStr(source, searchTerm)) 
-                list .= spool(source, A_Index, start, fold)
+                list .= spool(source, A_Index, start, fold, silent)
               }
         }
       }
@@ -997,7 +990,7 @@ PopUp("save protection failed...",999,0,0)
       Loop, Files, %A_LoopField%*.*, F%recurse%
         if A_LoopFileAttrib not contains H,S
           if (A_LoopFileSize > 0 && listSize < 350000)			; for when files are still downloading
-            list .= spool(A_LoopFileFullPath, A_Index, start, fold)
+            list .= spool(A_LoopFileFullPath, A_Index, start, fold, silent)
       }
     if !silent
       PopUp(listSize,0,0,0)
@@ -1023,7 +1016,7 @@ PopUp("save protection failed...",999,0,0)
     }
 
 
-  Spool(input, count, start, fold)					; sorting and search filters
+  Spool(input, count, start, fold, silent)					; sorting and search filters
     {
     SplitPath, input,,,ex, filen
     if (ex == "lnk")
@@ -1088,11 +1081,12 @@ PopUp("save protection failed...",999,0,0)
       if (InStr(toggles, "Fav") && !InStr(allfav, filen))
         return
       listSize += 1
-      if (!silent && (!Mod(listSize,1000) || (searchTerm && !Mod(listSize,10))))
+      if (!Mod(listSize,1000) || (searchTerm && !Mod(listSize,10)))
         {
         FileDelete, %inca%\cache\html\out.txt
         FileAppend, working, %inca%\cache\html\out.txt, UTF-8	; keep server active
-        PopUp(listSize,0,0,0)
+        if !silent
+          PopUp(listSize,0,0,0)
         }
       if !playlist
         {
@@ -1737,7 +1731,7 @@ PopUp("save protection failed...",999,0,0)
     t := 0
     if (dur > 61)
       {
-      t := 20 + offset   						; try to skip any video intro banners
+      t := 20   							; try to skip any video intro banners
       dur -= 20
       }
     loop 180
@@ -1764,7 +1758,7 @@ PopUp("save protection failed...",999,0,0)
 
   Transcode(id, src, start, end)
     {
-    local cmd, temp, new, type, filen, foldr
+    local cmd, temp, new, type, filen, foldr, ss, to, suffix, orig, index
     if start
       ss = -ss %start%
     if end
@@ -2156,9 +2150,9 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
       <a id='myVol'>Volume</a>`n
       <a id="myVoiceHeader" style="color:pink">voice:</a>
       <div id="voiceSub" class="submenu"></div>
-      <a id='myChatterbox'>Chatterbox &#x2726;</a>`n
-      <a id='myElevenLabs'>Elevenlabs &#x2726;</a>`n
-      <a id='myBookmark'>Bookmark</a>`n
+      <a id='myChatterbox'>Chatterbox</a>`n
+      <a id='myElevenLabs'>Elevenlabs</a>`n
+      <a id='myBookmark'>Bookmark <span style="font-size:0.64em; vertical-align:0.1em">&#x2764</span></a>`n
       <a id='myEmotion'>Emotion</a>`n
         <div id='emotionSub' class='submenu'>`n
           <a data-tag='yarn'>yarn</a>`n
@@ -2198,13 +2192,12 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
   <div id='myPanel' class='myPanel'><div class='panel'><div class='innerPanel'>`n`n%panelList%`n</div></div>`n`n
 
   <div id='myRibbon1' class='ribbon' style='font-size: 1.2em'>`n
-  <a style='width: 2em'></a>
-  <a style='width: 3.4em; font-size: 1.8em' onmousedown='window.history.back()'>&#129028;</a>`n
-  <a id='myMusic' style='width:3.5em; %x22%' onmousedown="inca('Path','','','music|1')" onmouseover="setTimeout(function() {if(myMusic.matches(':hover'))Music.scrollIntoView()},200)">&#x266B;</a>`n
-  <a id='mySub' style='width:2em; translate: 0.3em; font-size:0.7em; %x8%' onmousedown="inca('Recurse')" onmouseover="setTimeout(function() {if(mySub.matches(':hover'))Sub.scrollIntoView({behavior: 'smooth'})},200)">%subs%</a>`n
-  <a id='myFol' style='max-width:2.8em; %x21%' onmousedown="inca('Path','','','fol|1')" onmouseover="setTimeout(function() {if(myFol.matches(':hover'))Fol.scrollIntoView()},200)">&#x1F4BB;&#xFE0E;</a>`n
-  <a id='myFav' style='translate: 0.4em 0.06em; %x23%' onmousedown="inca('Path','','','fav|1')" onmouseover="setTimeout(function() {if(myFav.matches(':hover'))Fav.scrollIntoView()},200)">&#10084;</a>`n
-  <a style='color: red; width: 26`%; overflow: hidden; padding: 0 1.4em; '>%heading% &ensp; %listSize%</a>`n
+  <a style='width: 4em; min-width:4em; '></a>
+  <a id='myMusic' style='width: 2em; min-width: 2em; %x22%' onmousedown="inca('Path','','','music|1')" onmouseover="setTimeout(function() {if(myMusic.matches(':hover'))Music.scrollIntoView()},200)">&#x266B;</a>`n
+  <a id='mySub' style='width: 4em; min-width:4em; translate: 0.3em; font-size:0.7em; %x8%' onmousedown="inca('Recurse')" onmouseover="setTimeout(function() {if(mySub.matches(':hover'))Sub.scrollIntoView({behavior: 'smooth'})},200)">%subs%</a>`n
+  <a id='myFol' style='width: 3em; min-width:3em; %x21%' onmousedown="inca('Path','','','fol|1')" onmouseover="setTimeout(function() {if(myFol.matches(':hover'))Fol.scrollIntoView()},200)">&#x1F4BB;&#xFE0E;</a>`n
+  <a id='myFav' style='width: 3em; min-width:3em; translate: 0.4em 0.06em; %x23%' onmousedown="inca('Path','','','fav|1')" onmouseover="setTimeout(function() {if(myFav.matches(':hover'))Fav.scrollIntoView()},200)">&#10084;</a>`n
+  <a style='color: red; width: auto; max-width: 40`%; font-size: 0.94em; padding: 0 1.4em; '>%listSize% &ensp; %heading%</a>`n
   <a id='mySearch' style='max-width:2em; %x20%' onwheel="wheelEvent(event)" onmousedown="inca('SearchBox','','',myInput.value)" onmouseover="setTimeout(function() {if(mySearch.matches(':hover'))filter(id)},140)">&#x1F50D;&#xFE0E;</a>`n
   <input id='myInput' class='searchbox' type='search' autocomplete='off' value='%st%' onmouseenter="if (this.value=='%st%') this.value='%lastSearch%'; this.select()" onmouseover="overText=1; this.focus()" onmouseout='overText=0'>
   <a id='Add' style='width:1em; font-size:1.2em; color: red' onmousedown="inca('Add','','',myInput.value)">%add%</a>`n

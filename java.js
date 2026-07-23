@@ -1,10 +1,6 @@
 // synthetic media/stories/worlds
 // captionmania paradise engineering
 
-// python_embedded \ pip install --upgrade chatterbox-tts-server
-
-
-
 
   let wheel = 0								// wheel count
   let wheelDir = 0		 					// wheel direction
@@ -102,6 +98,8 @@
   const searchInput = document.querySelector('#caption-search-input')
   const matchCountSpan  = document.querySelector('#search-match-count')
 
+  window.addEventListener('pageshow', (e) => {				// user browser navigation sync up
+    if (e.persisted || performance.getEntriesByType('navigation')[0]?.type === 'back_forward') {inca('Reload',3,0)}})
   document.addEventListener('mousedown', mouseDown)
   document.addEventListener('mouseup', mouseUp)
   document.addEventListener('mousemove', mouseMove)
@@ -122,7 +120,7 @@
       let current = myPlayer.currentTime; userPlay = 1; if (!editingBlock._voice?.src) myPlayer.muted = defMute
       setTimeout(() => {userPlay = 0; myPlayer.currentTime = current},1200)}})
   document.addEventListener('visibilitychange', function() {
-    if (document.visibilityState=='visible' && folder=='Downloads' && !selected && !playing) inca('Reload',1,index)})
+    if (document.visibilityState=='visible' && folder=='Downloads' && !selected && !playing) inca('Reload',2,index)})
   myInca.addEventListener('mouseenter', () => {
     const isAlt = myAlt.style.display === 'block'			// toggle context menus
     myAlt.style.display = isAlt ? '' : 'block'
@@ -162,7 +160,8 @@
 
 
   function keyDown(e) {							// keyboard events
-    if (e.key == 'Enter' && captions) {e.preventDefault(); e.stopImmediatePropagation(); setTimeout(() => splitIfNeeded(e),10)}
+    if (e.key == 'Enter' && captions) {e.preventDefault(); e.stopImmediatePropagation(); splitIfNeeded(e)} // new block above not below issue
+//    if (e.key == 'Enter' && captions) {e.preventDefault(); e.stopImmediatePropagation(); setTimeout(() => splitIfNeeded(e),10)}
     else if (e.key == 'Enter' && !playing) {
       if (overTitle == 2) inca('Rename', title.value, lastMedia)	// rename title
       else inca('SearchBox','','',myInput.value)}			// search for media
@@ -239,7 +238,7 @@
       if (editing) return
       blocks = []
       viewport.innerHTML = ''
-      editor.style.display = null							// ollow new srt
+      editor.style.display = null							// allow new srt
       if (editing || myMenu.matches(':hover') || myPanel.matches(':hover')) return
       if (zoom > 1) {Play(); return}
       if (!playing && !myNav.style.display) {inca('View',lastMedia); return}		// list/thumb view
@@ -252,16 +251,15 @@
       predictBuffer = ''
       if (longClick && (overTitle || ['myInput', 'caption-search-input', 'inp', 'myVoiceInput'].includes(id))) osk()
       if (id.includes('search-input')) return
-      if (captions && !gesture && !overMedia) {
+      if (captions && !overMedia) {
         const wasOsk = document.getElementById('osk')
         const block = overBlock ? overBlock : editingBlock
-myVoice.currentTime = 0; myPlayer.currentTime = block.dataset.start; 
-        if ((longClick || type == 'image') && !editing && captions == 1) {captions = 2; activateBlock(block)}
-        if (longClick && overBlock) {osk(); activateBlock(block, 0); return}
+        if (id != 'myMask') {myVoice.currentTime = 0; myPlayer.currentTime = block.dataset.start}
+        if (captions == 1) {captions = 2; activateBlock(block)}
+        if (longClick && overBlock && !gesture) {osk(); activateBlock(block, 0); return}
         if (overBlock && overBlock !== editingBlock) {activateBlock(block, 1); return}
         else if (myPlayer.currentTime >= block._end) {
-          if (overEditor && (!document.getElementById('osk') || id == 'viewport')) {
-activateBlock(block, 1); return}
+          if (overEditor && (!document.getElementById('osk') || id == 'viewport')) {activateBlock(block, 1); return}
           else {userPlay = 0; return}}
         else if (wasOsk && overBlock) {userPlay = 0; return}}
        if (overTitle && (longClick || overTitle == 2)) {
@@ -332,7 +330,7 @@ activateBlock(block, 1); return}
     if (!thumbSheet) {
       if (favicon.matches(':hover')) getSrt(1)
       else if (overTitle && Click && blocks.length) previewMode ? getSrt(lastBlock) : getSrt(1)
-      else if (type == 'document') getSrt()}
+      else if (captions || type == 'document') getSrt()}
     if (el = document.getElementById('title'+lastMedia)) el.style.color = null
     title.style.color = 'pink'
     if (type == 'document' || type == 'audio' || playlist.match('/inca/music/')) scaleY = 0.25
@@ -535,10 +533,6 @@ activateBlock(block, 1); return}
     if (!more && lastIndex < listSize && myContent.scrollTop > myContent.scrollHeight - 2 * innerHeight) inca('More', lastIndex)
     xm = (xPos - rect.left) / rect.width
     ym = (yPos - rect.top) / rect.height
-
- // myAlert.innerHTML = captions
- // delay = 222
-
     if (delay >= 30) delay -= 10							// wheel/timer blocking
     else myAlert.innerText = ''
     if (wheel >= 10) wheel -= 10
@@ -965,7 +959,7 @@ activateBlock(block, 1); return}
     else if (thumb.style.pop > 1) closePic()
     else if (longClick) window.close()
     else if (myContent.scrollTop > 50) myContent.scrollTo(0,0)			// else scroll to page top
-    else {inca('Reload',1,0)}}							// or finally, reload page & clear selected
+    else {inca('Reload',2,0)}}							// or finally, reload page & clear selected
 
 
   function overThumb(id) {
@@ -997,9 +991,9 @@ activateBlock(block, 1); return}
     closePic()
     myPlayer.muted = myVoice.muted = true
     Click = playing = start = captions = thumbSheet = cue = editing = overTitle = 0
-    editingBlock = null
     mySeek.style.width = myVig.style.opacity = myPlayer.style.opacity = editor.style.opacity = 0
-    editor.style.display = myNav.style.display = myVig.style.visibility = myPlayer.style.visibility = null
+    editingBlock = editor.style.display = myNav.style.display = null
+    myVig.style.visibility = myPlayer.style.visibility = null
     myMask.style = myDur.innerHTML = myVoice.src = myPlayer.src = ''
     thumb.scrollIntoView({ block: 'nearest' })}
 
@@ -1101,7 +1095,7 @@ const activateBlock = (block, play) => {
       sec: parseFloat(b.dataset.start) || 0,
       top: b.offsetTop,
       block: b}))}
-  myPlayer.volume = myVoice.volume = block._voice?.volume || 1
+  myPlayer.volume = myVoice.volume = block._volume || 1
   userPlay = play
   if (captions == 1) {									// compact captions
     const rec = editingBlock.getBoundingClientRect()
@@ -1569,6 +1563,7 @@ function Backspace(e) {
       renumberBlocks()
       return}
     return}
+if (atStart) {document.execCommand('forwardDelete'); return}
   document.execCommand('delete')}
 
 
