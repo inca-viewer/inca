@@ -451,7 +451,7 @@
       GuiControl, Indexer:, GuiInd
       sleep 200
       index := StrSplit(selected, ",").1
-      reload := 1
+      reload := 3
       }
 
 
@@ -612,14 +612,13 @@
       index := x[x.MaxIndex()-1]					; scroll htm to end of selection
       MoveFiles()
       if playlist							; between folders or playlists
-        reload := 0							; silent reload
-      else reload := 1
-      if !longClick							; copy not move so no reload
+        reload := 3							; silent reload
+      if longClick							; copy not move so no reload
         {
-        reload = 0
+        reload := 0
         CreateList(1)							; full update htm page
-        if (InStr(address, "\inca\"))
-          reload := 3							; 999 = top panel stay in target folder
+        if (InStr(address, "\inca\"))					; playlists
+          reload := 3
         else RenderPage(999)						; 999 = top panel stay in target folder
         }
       return
@@ -858,8 +857,6 @@
     }
 
 
-
-
 Edited() 								; Save edited json, text or SRT file
   {
   json := value
@@ -880,6 +877,11 @@ Edited() 								; Save edited json, text or SRT file
     foundPos += StrLen(match)
     }
   SplitPath, jsonSrc,,,ext,media					; use jsonSrc as truth
+  if json
+    {
+    FileRecycle, %inca%\cache\json\%media%.json
+    FileAppend, %json%, %inca%\cache\json\%media%.json, UTF-8
+    }
   IfExist, %inca%\cache\json\%media%.json				; if speech exist in json
     IfExist, %inca%\cache\speech\%media%\				; clear speech folder of any unused speech
       {
@@ -911,13 +913,9 @@ Edited() 								; Save edited json, text or SRT file
       FileMoveDir, %inca%\cache\temp\%media%, %inca%\cache\speech\%media%, 1
       }
   index := StrSplit(selected, ",").1
-  RenderPage(0)
   if json
     {
     PopUp("saved", 900, 0, 0)
-    SplitPath, jsonSrc,,,ext,media
-    FileRecycle, %inca%\cache\json\%media%.json
-    FileAppend, %json%, %inca%\cache\json\%media%.json, UTF-8
     if (ext == "txt")							; at end because can take too long
       {
       FileRecycle, %jsonSrc%
@@ -926,6 +924,7 @@ Edited() 								; Save edited json, text or SRT file
         }
       }
     }
+  reload := 2
   }
 
 
@@ -2197,7 +2196,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
   <a id='mySub' style='width: 2em; min-width: 2em; translate: 0.3em; font-size:0.7em; %x8%' onmousedown="inca('Recurse')" onmouseover="setTimeout(function() {if(mySub.matches(':hover'))Sub.scrollIntoView({behavior: 'smooth'})},200)">%subs%</a>`n
   <a id='myFol' style='width: 3em; min-width:3em; %x21%' onmousedown="inca('Path','','','fol|1')" onmouseover="setTimeout(function() {if(myFol.matches(':hover'))Fol.scrollIntoView()},200)">&#x1F4BB;&#xFE0E;</a>`n
   <a id='myFav' style='width: 3em; min-width:3em; translate: 0.4em 0.06em; %x23%' onmousedown="inca('Path','','','fav|1')" onmouseover="setTimeout(function() {if(myFav.matches(':hover'))Fav.scrollIntoView()},200)">&#10084;</a>`n
-  <a style='color: red; width: auto; min-width: 16`%; max-width: 40`%; font-size: 0.94em; padding: 0 1.4em; '>%listSize% &ensp; %heading%</a>`n
+  <a id='myList' style='color: red; width: auto; min-width: 16`%; overflow: hidden; font-size: 0.94em; padding: 0 1.4em'>%listSize% &ensp; %heading%</a>`n
   <a id='mySearch' style='max-width:2em; %x20%' onwheel="wheelEvent(event)" onmousedown="inca('SearchBox','','',myInput.value)" onmouseover="setTimeout(function() {if(mySearch.matches(':hover'))filter(id)},140)">&#x1F50D;&#xFE0E;</a>`n
   <input id='myInput' class='searchbox' type='search' autocomplete='off' value='%st%' onmouseenter="if (this.value=='%st%') this.value='%lastSearch%'; this.select()" onmouseover="overText=1; this.focus()" onmouseout='overText=0'>
   <a id='Add' style='width:1em; font-size:1.2em; color: red' onmousedown="inca('Add','','',myInput.value)">%add%</a>`n

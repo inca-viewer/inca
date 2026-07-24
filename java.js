@@ -1,8 +1,6 @@
 // synthetic media/stories/worlds
 // captionmania paradise engineering
 
-// why is bowser back even out of sync in shuffle
-
 
   let wheel = 0								// wheel count
   let wheelDir = 0		 					// wheel direction
@@ -161,8 +159,7 @@
 
 
   function keyDown(e) {							// keyboard events
-    if (e.key == 'Enter' && captions) {e.preventDefault(); e.stopImmediatePropagation(); splitIfNeeded(e)} // new block above not below issue
-//    if (e.key == 'Enter' && captions) {e.preventDefault(); e.stopImmediatePropagation(); setTimeout(() => splitIfNeeded(e),10)}
+    if (e.key == 'Enter' && captions) {e.preventDefault(); e.stopImmediatePropagation(); splitIfNeeded(e)}
     else if (e.key == 'Enter' && !playing) {
       if (overTitle == 2) inca('Rename', title.value, lastMedia)	// rename title
       else inca('SearchBox','','',myInput.value)}			// search for media
@@ -255,10 +252,11 @@
       if (captions && !overMedia) {
         const wasOsk = document.getElementById('osk')
         const block = overBlock ? overBlock : editingBlock
-        if (id != 'myMask') {myVoice.currentTime = 0; myPlayer.currentTime = block.dataset.start}
+        if (id != 'myMask' && overBlock !== editingBlock) {myVoice.currentTime = 0; myPlayer.currentTime = block.dataset.start}
         if (captions == 1) {captions = 2; activateBlock(block)}
         if (longClick && overBlock && !gesture) {osk(); activateBlock(block, 0); return}
         if (overBlock && overBlock !== editingBlock) {activateBlock(block, 1); return}
+        if (id === 'myMask' && myPlayer.currentTime >= (block._end - 0.3 || Infinity)) {activateBlock(block.nextElementSibling || block, 1); return}
         else if (myPlayer.currentTime >= block._end) {
           if (overEditor && (!document.getElementById('osk') || id == 'viewport')) {activateBlock(block, 1); return}
           else {userPlay = 0; return}}

@@ -415,6 +415,7 @@ font-weight: bold;
   text-overflow: ellipsis;
   display: inline;
   width: auto;
+min-width: 0;
   border-radius: 1em; 
   color: pink;
   border: none;
