@@ -585,10 +585,10 @@ min-width: 0;
 .osk-control { width: 2.3em !important; }
 .osk-shift   { width: 3.8em !important; }
 .osk-ctrl    { width: 5.3em !important; }
-.osk-back    { width: 3.2em !important; }
+.osk-back    { width: 3em !important; }
 .osk-num     { width: 3em !important; }
 .osk-enter   { width: 4.5em !important; }
-.osk-space   { width: 7em !important; }
+.osk-space   { width: 9.1em !important; }
 .osk-del     { width: 3em !important; }
 
 .osk-control,
@@ -612,9 +612,9 @@ min-width: 0;
   min-width: 2em;
   height: 1.7em;
   background: inherit;
-  color: #ffc0cbb0;
+  color: #ffc0cbff;
   text-align: center;
-  font-size: 11px;
+  font-size: 12px;
   transform: translateY(0.15em) !important;}
 
 #osk .osk-suggestion:empty { display: none; }

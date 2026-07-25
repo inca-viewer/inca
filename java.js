@@ -249,22 +249,24 @@
       predictBuffer = ''
       if (longClick && (overTitle || ['myInput', 'caption-search-input', 'inp', 'myVoiceInput'].includes(id))) osk()
       if (id.includes('search-input')) return
-      if (captions && !overMedia) {
+      if (captions && !overMedia && !gesture) {
         const wasOsk = document.getElementById('osk')
         const block = overBlock ? overBlock : editingBlock
         if (id != 'myMask' && overBlock !== editingBlock) {myVoice.currentTime = 0; myPlayer.currentTime = block.dataset.start}
         if (captions == 1) {captions = 2; activateBlock(block)}
-        if (longClick && overBlock && !gesture) {osk(); activateBlock(block, 0); return}
+        if (longClick && overBlock) {osk(); activateBlock(block, 0); return}
         if (overBlock && overBlock !== editingBlock) {activateBlock(block, 1); return}
-        if (id === 'myMask' && myPlayer.currentTime >= (block._end - 0.3 || Infinity)) {activateBlock(block.nextElementSibling || block, 1); return}
-        else if (myPlayer.currentTime >= block._end) {
+        if (!block?._voice?.src && id === 'myMask' && myPlayer.currentTime >= (block._end - 0.3 || Infinity)) {
+          activateBlock(block.nextElementSibling || block, 1); return}
+        else if (!block?._voice?.src && myPlayer.currentTime >= block._end) {
           if (overEditor && (!document.getElementById('osk') || id == 'viewport')) {activateBlock(block, 1); return}
           else {userPlay = 0; return}}
-        else if (wasOsk && overBlock) {userPlay = 0; return}}
-       if (overTitle && (longClick || overTitle == 2)) {
-         if (overTitle != 2) title.value = title.defaultValue.trim()
-         overTitle = 2; lastMedia = index; return}
-      if (!playing && id != title.id) {
+        else if (wasOsk && overBlock) {userPlay = 0; return}
+        else {userPlay ^= 1; return}}
+      if (overTitle && (longClick || overTitle == 2)) {
+        if (overTitle != 2) title.value = title.defaultValue.trim()
+        overTitle = 2; lastMedia = index; return}
+      if (!playing && id != title.id && !gesture) {
         if (!overTitle && longClick && myPanel.matches(':hover')) return 
         if (id == 'myCue' || (overMedia && thumb.src.slice(-3) == 'm3u')
         || (longClick && ((overMedia && type == 'document')
@@ -290,6 +292,7 @@
       if (!playing && !overMedia) {myNav.style.display = null; index = lastMedia; start = lastSeek; return 1}
       if (myNav.style.display && type == 'video') {myNav.style.display = null; thumbSheet ^= 1; start = lastSeek; return 1}}
     if (lastClick == 2 || !dur) start = defStart
+    else if (zoom > 1) start = thumb.currentTime || start
     if (!thumbSheet && playing && ym > trigger && overMedia || yw > 0.98) {
       if (longClick) {if (xm < 0.5) {myPlayer.currentTime = 0} else myPlayer.currentTime = defStart}
       else myPlayer.currentTime = start
@@ -513,7 +516,7 @@
           voiceProgress()}
         if (type == 'document') nextCaption(e.deltaY)
         else if (dur) myPlayer.addEventListener('seeked', () => delay = 40, {once: true})}  // min. 40
-      else if (zoom != 1) thumb.currentTime += interval					// popped thumb
+      else if (zoom != 1) thumb.currentTime += interval; 				// popped thumb
       if (!playing) fade = 3								// hide seekbar in thumb popout
       else cursor = 12									// show seekbar & dur too
       thumb.pause()}
@@ -922,7 +925,7 @@
     if (!type || gesture) return
     if (playing) start = myPlayer.currentTime
     if (!playing && zoom == 1) if (dur < 200) {start = 0.0} else start = defStart
-    inca('Favorite', start.toFixed(1), index)
+    inca('Favorite', start.toFixed(1),'',index)
     favicon.innerHTML = '&#10084'}						// heart symbol on htm thumb
 
 
@@ -980,16 +983,16 @@
     else {myPlayer.currentTime = dur+2; userPlay = 0; delay = 60}}	// stay at end
 
 
-  function closePlayer() {
+  async function closePlayer() {
     closeOsk()
     if (editing) {
-      incaBusy = ''								// must not fail
+      editing = 0
       let json = makeJSON().replaceAll('#', '𝌇')				// because # is used as delimiter
-      inca('Edited', json, index)}						// save edited text 
+      await inca('Edited', json, index)}					// save edited text 
     else inca('Reload', 0, index)
     closePic()
     myPlayer.muted = myVoice.muted = true
-    Click = playing = start = captions = thumbSheet = cue = editing = overTitle = 0
+    Click = playing = start = captions = thumbSheet = cue = overTitle = 0
     mySeek.style.width = myVig.style.opacity = myPlayer.style.opacity = editor.style.opacity = 0
     editingBlock = editor.style.display = myNav.style.display = null
     myVig.style.visibility = myPlayer.style.visibility = null
@@ -1458,7 +1461,7 @@ function makeJSON() {
   }
 
 
-function splitIfNeeded(e) {
+  function splitIfNeeded(e) {
     if (!editingBlock) return;
     e.preventDefault()
     const block = editingBlock
@@ -1562,7 +1565,7 @@ function Backspace(e) {
       renumberBlocks()
       return}
     return}
-if (atStart) {document.execCommand('forwardDelete'); return}
+  if (atStart) {document.execCommand('forwardDelete'); return}
   document.execCommand('delete')}
 
 

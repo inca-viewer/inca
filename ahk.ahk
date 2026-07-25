@@ -845,7 +845,7 @@
 
   Favorite()
     {
-    if !selected
+    if !getMedia(address)
       return
     FileAppend, %src%|%value%`r`n, %inca%\fav\new.m3u, UTF-8
     if (type == "audio" || type == "video")
@@ -861,6 +861,7 @@ Edited() 								; Save edited json, text or SRT file
   {
   json := value
   value := 0
+  PopUp("saved", 0, 0.46, 0.48)
   RegExMatch(json, """src"":\s*""([^""]+)""", m)
   jsonSrc := StrReplace(m1, server)
   jsonSrc := StrReplace(jsonSrc, "/", "\")
@@ -881,6 +882,13 @@ Edited() 								; Save edited json, text or SRT file
     {
     FileRecycle, %inca%\cache\json\%media%.json
     FileAppend, %json%, %inca%\cache\json\%media%.json, UTF-8
+    if (ext == "txt")							; at end because can take too long
+      {
+      FileRecycle, %jsonSrc%
+      for i, t in texts {
+        FileAppend, %t%`n`n, %jsonSrc%, UTF-8
+        }
+      }
     }
   IfExist, %inca%\cache\json\%media%.json				; if speech exist in json
     IfExist, %inca%\cache\speech\%media%\				; clear speech folder of any unused speech
@@ -913,18 +921,7 @@ Edited() 								; Save edited json, text or SRT file
       FileMoveDir, %inca%\cache\temp\%media%, %inca%\cache\speech\%media%, 1
       }
   index := StrSplit(selected, ",").1
-  if json
-    {
-    PopUp("saved", 900, 0, 0)
-    if (ext == "txt")							; at end because can take too long
-      {
-      FileRecycle, %jsonSrc%
-      for i, t in texts {
-        FileAppend, %t%`n`n, %jsonSrc%, UTF-8
-        }
-      }
-    }
-  reload := 2
+  reload := 0
   }
 
 
