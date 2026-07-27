@@ -2,6 +2,7 @@
 // captionmania paradise engineering
 
 
+
   let wheel = 0								// wheel count
   let wheelDir = 0		 					// wheel direction
   let index = 1								// thumb index (e.g. thumb14)
@@ -249,20 +250,21 @@
       predictBuffer = ''
       if (longClick && (overTitle || ['myInput', 'caption-search-input', 'inp', 'myVoiceInput'].includes(id))) osk()
       if (id.includes('search-input')) return
-      if (captions && !overMedia && !gesture) {
+      if (captions && !overMedia) {
         const wasOsk = document.getElementById('osk')
         const block = overBlock ? overBlock : editingBlock
-        if (id != 'myMask' && overBlock !== editingBlock) {myVoice.currentTime = 0; myPlayer.currentTime = block.dataset.start}
-        if (captions == 1) {captions = 2; activateBlock(block)}
-        if (longClick && overBlock) {osk(); activateBlock(block, 0); return}
         if (overBlock && overBlock !== editingBlock) {activateBlock(block, 1); return}
-        if (!block?._voice?.src && id === 'myMask' && myPlayer.currentTime >= (block._end - 0.3 || Infinity)) {
-          activateBlock(block.nextElementSibling || block, 1); return}
-        else if (!block?._voice?.src && myPlayer.currentTime >= block._end) {
-          if (overEditor && (!document.getElementById('osk') || id == 'viewport')) {activateBlock(block, 1); return}
-          else {userPlay = 0; return}}
-        else if (wasOsk && overBlock) {userPlay = 0; return}
-        else {userPlay ^= 1; return}}
+        if (!gesture) {
+          if (id != 'myMask' && overBlock !== editingBlock) {myVoice.currentTime = 0; myPlayer.currentTime = block.dataset.start}
+          if (captions == 1) {captions = 2; activateBlock(block)}
+          if (longClick && overBlock) {osk(); activateBlock(block, 0); return}
+          if (!block?._voice?.src && id === 'myMask' && myPlayer.currentTime >= (block._end - 0.3 || Infinity)) {
+            activateBlock(block.nextElementSibling || block, 1); return}
+          else if (!block?._voice?.src && myPlayer.currentTime >= block._end) {
+            if (overEditor && (!document.getElementById('osk') || id == 'viewport')) {activateBlock(block, 1); return}
+            else {userPlay = 0; return}}
+          else if (wasOsk && overBlock) {userPlay = 0; return}
+          else {userPlay ^= 1; return}}}
       if (overTitle && (longClick || overTitle == 2)) {
         if (overTitle != 2) title.value = title.defaultValue.trim()
         overTitle = 2; lastMedia = index; return}
@@ -500,10 +502,11 @@
         editingBlock.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
         delay = 333}
       else { myPlayer.currentTime += (wheelUp ? 0.02 : -0.02); delay = 60 }}		// nudge start time
-    else if (!thumbSheet) {								// seek
+    else if (!thumbSheet) {
       delay = 124
-      let interval = 0.2
-      if (dur > 200 && (overMedia && ym > trigger || yw > 0.9)) interval = 0.8	
+      let interval = 0.06								// seek
+      if (dur > 200) interval = 0.2
+      if (dur > 200 && (overMedia && ym > trigger || yw > 0.9)) interval = 1	
       else if (!userPlay || (captions && id == 'myMask')) interval = 0.02
       interval = wheelUp ? interval : -interval
       if (playing) {
@@ -603,8 +606,8 @@
       if (blocks.length && overTitle && overTitle != 2) {
         let idx = Math.floor(xm * blocks.length)
         const block = blocks[Math.min(idx, blocks.length - 1)]
-        previewMode = xm > 0.4 && !previewMode ? 1 : previewMode
-        previewMode = xm < 0.4 && previewMode ? 2 : previewMode
+        previewMode = xm > 0.6 && !previewMode ? 1 : previewMode
+        previewMode = xm < 0.6 && previewMode ? 2 : previewMode
         if (!previewMode) title.value = title.defaultValue
         else if (previewMode == 1) title.value = lastText
         else { title.value = block.innerText.trim(); lastBlock = block.dataset.num }}

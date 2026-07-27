@@ -94,18 +94,18 @@ else {
     updateSuggestions()
 }
 
-  const controlKeys = ["Num","Shift","","Del","←","⏎","Ctrl","↑","↓"];
+  const controlKeys = ["Num","Shift","","Del","←","Enter","Ctrl","↑","↓"];
 
   let currentLayout = [
-    ["-","q","w","e","r","t","y","u","i","o","p","⏎","←","Del","Num"],
-    ["Shift","a","s","d","f","g","h","j","k","l",",",".","'",'"',"!","?"],
+    ["-","q","w","e","r","t","y","u","i","o","p",",",".","←","Del","Num"],
+    ["Shift","a","s","d","f","g","h","j","k","l","Enter","!","?","'",'"'],
     ["Ctrl","z","x","c","v","b","n","m","",'‹','›',"↑","↓"]
   ];
 
   let numLayout = [
-    ["`","1","2","3","4","5","6","7","8","9","0","⏎","←","Del","Num"],
-    ["Shift","@","#","£","$","%","^","&","*","(",")","-","+","=","!","?"],
-    ["Ctrl","~","_","[","]","{","}","\\","",";",":",",","."]
+    ["`","1","2","3","4","5","6","7","8","9","0",",",".","←","Del","Num"],
+    ["Shift","@","#","£","$","%","^","&","*","-","Enter","!","?",";",":"],
+    ["Ctrl","~","_","[","]","{","}","\\","","(",")","+","="]
   ];
 
   function createKeyboard() {
@@ -127,7 +127,7 @@ else {
         
         if (key === "") btn.classList.add('osk-space');
         else  if (key === "Shift") btn.classList.add('osk-shift')
-        else  if (key === "⏎") btn.classList.add('osk-enter')
+        else  if (key === "Enter") btn.classList.add('osk-enter')
         else  if (key === "←") btn.classList.add('osk-back')
         else if (key === "Del") btn.classList.add('osk-del')
         else  if (key === "Ctrl") btn.classList.add('osk-ctrl')
@@ -164,7 +164,7 @@ else {
 
         btn.addEventListener('click', () => {
             handleKey(key, btn);
-            if (!["Num", "Shift", "Ctrl", "↑", "↓", "‹", "›", "←", "Del", "⏎"].includes(key)) 
+            if (!["Num", "Shift", "Ctrl", "↑", "↓", "‹", "›", "←", "Del", "Enter"].includes(key)) 
               setTimeout(() => {
                 captureSelection();
                 requestAnimationFrame(updateSuggestions);
@@ -291,7 +291,7 @@ if (key === "‹" || key === "›" || key === "↑" || key === "↓") {
       captureSelection();
       return;
     }
-    else if (key === "⏎") {
+    else if (key === "Enter") {
       predictBuffer = '';
       const event = new KeyboardEvent('keydown', {key: 'Enter', code: 'Enter', bubbles: true, cancelable: true});
       active.dispatchEvent(event);
@@ -360,7 +360,7 @@ oskElement.prepend(suggestionRow);
     const kbHeight = kbRect.height || 220;
     const kbWidth = kbRect.width || 400;
     let left = xPos - kbWidth / 3
-    let top = yPos + 20
+    let top = yPos + 42
     if (overBlock) {
       const block = overBlock?.getBoundingClientRect();
       left = block.left + block.width/2 - kbWidth / 2; 

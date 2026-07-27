@@ -501,7 +501,6 @@
       {
       if (StrLen(address) < 3)
         return
-      path =
       click =
       reload := 2
       cmd = #SearchBox###%address%
@@ -608,19 +607,15 @@
     reload := 3								; show folder size
     if selected								; move/copy files
       {
+      reload := 0							; prevent standard reload
       x := StrSplit(selected,",")
       index := x[x.MaxIndex()-1]					; scroll htm to end of selection
       MoveFiles()
-      if playlist							; between folders or playlists
-        reload := 3							; silent reload
-      if longClick							; copy not move so no reload
-        {
-        reload := 0
-        CreateList(1)							; full update htm page
-        if (InStr(address, "\inca\"))					; playlists
-          reload := 3
-        else RenderPage(999)						; 999 = top panel stay in target folder
-        }
+      if (!longClick && !(!playlist && InStr(address, "\inca\")))	; is copy or to pl so no change to folder
+        CreateList(1)							; silent list update
+      if InStr(address, "\inca\")					; was to playlist
+        RenderPage(0)							; normal render
+      else RenderPage(999)						; 999 = top panel scrolls to target folder
       return
       }
     else if InStr(address, ".m3u")					; playlist
@@ -961,9 +956,8 @@ Edited() 								; Save edited json, text or SRT file
         Loop, Files, %f%\*.m3u
           {
           if (!searchTerm && A_LoopFileFullPath != playlist)
-          continue
-          allFav = %inca%\fav\all fav.m3u
-          if (searchTerm && A_LoopFileFullPath == allFav)
+            continue
+          if (searchTerm && A_LoopFileFullPath == inca . "\fav\all fav.m3u")
             continue
           SplitPath, A_LoopFileFullPath,,,, fold
           FileRead, str, %A_LoopFileFullPath%
@@ -1325,12 +1319,19 @@ Edited() 								; Save edited json, text or SRT file
             {
             z = \%media% - Copy (%A_Index%).%ext%
             FileGetSize, w,  %address%%z%
-            if !w								; if Copy name not exist 
+            if !w							; if Copy name not exist 
               break
             }
+        if z
+          {
+          SplitPath, z,,,, newMedia
+          FileCopy, %inca%\cache\durations\%media%.txt, %inca%\cache\durations\%newMedia%.txt, 1
+          FileCopy, %inca%\cache\posters\%media%.jpg, %inca%\cache\posters\%newMedia%.jpg, 1
+          FileCopy, %inca%\cache\thumbs\%media%.jpg,  %inca%\cache\thumbs\%newMedia%.jpg, 1
+          }
         if (!longClick && x == y)
           {
-          fail = %fail%,%A_Index%
+          fail = failed
           popup = Duplicate %A_Index%
           continue
           }         
@@ -1345,7 +1346,7 @@ Edited() 								; Save edited json, text or SRT file
           }
         if ErrorLevel
           {
-          fail=%fail%,%A_Index%
+          fail = failed
           popup = Failed %A_Index%
           }
         }
@@ -1813,44 +1814,52 @@ Edited() 								; Save edited json, text or SRT file
         }
       Resolution := OutWidth ":" OutHeight
       GOPFrames := Round(FrameRate)					; every second
-      MaxBitrate := 6000
-      BufSize := 12000
-      if (OutWidth <= 1280)
-        {
-        if (Bitrate > 0)
-          {
-          MaxBitrate := Round(Bitrate * 3 / 2)
-          BufSize := MaxBitrate * 2
-          }
-        else
-          {
-          if (OutWidth <= 720)
-            {
-            MaxBitrate := 1500
-            BufSize := 3000
-            Bitrate := 1000
-            }
-          else
-            {
-            MaxBitrate := 6000
-            BufSize := 12000
-            Bitrate := 4000
-            }
-          }
-        }
-      encoders := "-c:v h264_amf -rc cqp -qp_i 22 -qp_p 24|-c:v h264_nvenc -preset p5 -rc vbr -b:v %MaxBitrate%k -bufsize %BufSize%k|-c:v h264_qsv -preset medium -global_quality 23|-c:v libx264 -preset medium -crf 23 -pix_fmt yuv420p"
-      for index, encoder in StrSplit(encoders, "|")
-        {
-        try
-          {
-          cmd = -y -i file:"%src%" %ss% %to% %encoder% -vf scale=%Resolution%,setsar=1:1 -force_key_frames "expr:gte(t,n_forced*2)" -sc_threshold 0 -g %GOPFrames% -keyint_min %GOPFrames% -maxrate %MaxBitrate%k -bufsize %BufSize%k -c:a aac -b:a 128k -ar 48000 -ac 2 -map 0:v:0 -map 0:a? -map 0:s? -c:s copy -f mp4 -movflags +faststart+separate_moof -metadata:s:v:0 handler_name=Inca file:"%new%"
-          RunWait %COMSPEC% /c %inca%\cache\apps\ffmpeg.exe %cmd%, , Hide
-          if !ErrorLevel
-            break
-          }
-        }
-      if ErrorLevel
-        return
+
+MaxBitrate := 6000
+BufSize := 12000
+LongSide := OutWidth > OutHeight ? OutWidth : OutHeight
+
+if (Bitrate > 0)
+{
+  MaxBitrate := Round(Bitrate * 3 / 2)
+  if (MaxBitrate > 6000)
+    MaxBitrate := 6000
+  BufSize := MaxBitrate * 2
+}
+else
+{
+  if (LongSide <= 720)
+  {
+    MaxBitrate := 2500
+    BufSize := 5000
+  }
+  else
+  {
+    MaxBitrate := 6000
+    BufSize := 12000
+  }
+}
+
+; 1. Try the fast 5090 gpu first
+cmd = -hwaccel cuda -hwaccel_output_format cuda -y -i file:"%src%" %ss% %to% -vf scale_cuda=%Resolution% -c:v h264_nvenc -preset p4 -rc vbr -b:v %MaxBitrate%k -bufsize %BufSize%k -spatial_aq 1 -temporal_aq 1 -force_key_frames "expr:gte(t,n_forced*2)" -g %GOPFrames% -keyint_min %GOPFrames% -maxrate %MaxBitrate%k -c:a aac -b:a 128k -ar 48000 -ac 2 -map 0:v:0 -map 0:a? -map 0:s? -c:s copy -f mp4 -movflags +faststart+separate_moof -metadata:s:v:0 handler_name=Inca file:"%new%"
+RunWait %COMSPEC% /c %inca%\cache\apps\ffmpeg.exe %cmd%, , Hide
+
+; 2. If it failed, fall back to AMF then CPU
+if ErrorLevel || !FileExist(new)
+{
+  encoders := "-c:v h264_amf -rc cqp -qp_i 22 -qp_p 24|-c:v libx264 -preset medium -crf 23 -pix_fmt yuv420p"
+  Loop, Parse, encoders, |
+  {
+    encoder := A_LoopField
+    cmd = -y -i file:"%src%" %ss% %to% %encoder% -vf scale=%Resolution%,setsar=1:1 -force_key_frames "expr:gte(t,n_forced*2)" -sc_threshold 0 -g %GOPFrames% -keyint_min %GOPFrames% -maxrate %MaxBitrate%k -bufsize %BufSize%k -c:a aac -b:a 128k -ar 48000 -ac 2 -map 0:v:0 -map 0:a? -map 0:s? -c:s copy -f mp4 -movflags +faststart+separate_moof -metadata:s:v:0 handler_name=Inca file:"%new%"
+    RunWait %COMSPEC% /c %inca%\cache\apps\ffmpeg.exe %cmd%, , Hide
+    if !ErrorLevel
+      break
+  }
+}
+
+if ErrorLevel
+  return
       }
     if (!suffix && exten != "mp3")
       {
@@ -2377,69 +2386,80 @@ mediaList = %mediaList%%foldr%<div id='entry%j%' class='entry-row' data-params='
 
 
 
-  Ffmpeg: 								; mp3, mp4, indexing - async processing
-    Critical, off							; allow RClick
-    PopUp(Chr(0x2713),600,0,0)
-    GuiControl, Indexer:, GuiInd, processing ...
-    transcoding =
-    select := selected							; preserve selected
-    selected =
-    fldr := folder
-    serverTimout := A_TickCount
-    tim := Round(address, 2)
-    cue := Round(StrSplit(value, "|").1, 2)
-    el_id := StrSplit(value, "|").2
-    skinny := StrSplit(value, "|").3
-    playing := StrSplit(value, "|").4
-    auxSrc := StrSplit(value, "|").5
-    auxStart := StrSplit(value, "|").6
-    auxSrc := StrReplace(auxSrc, server)
-    auxSrc := StrReplace(auxSrc, "/", "\")
-    fileList =
-    FileRead, str, %inca%\cache\temp\%folder%.txt			; list of media in htm
-    Loop, Parse, str, `n, `r
+Ffmpeg: 								; mp3, mp4, indexing - async processing
+  Critical, off							; allow RClick
+  PopUp(Chr(0x2713),600,0,0)
+  GuiControl, Indexer:, GuiInd, processing ...
+  transcoding =
+  select := selected							; preserve selected
+  selected =
+  fldr := folder
+  serverTimout := A_TickCount
+  tim := Round(address, 2)
+  cue := Round(StrSplit(value, "|").1, 2)
+  el_id := StrSplit(value, "|").2
+  skinny := StrSplit(value, "|").3
+  playing := StrSplit(value, "|").4
+  auxSrc := StrSplit(value, "|").5
+  auxStart := StrSplit(value, "|").6
+  auxSrc := StrReplace(auxSrc, server)
+  auxSrc := StrReplace(auxSrc, "/", "\")
+  fileList =
+  FileRead, str, %inca%\cache\temp\%folder%.txt			; list of media in htm
+  Loop, Parse, str, `n, `r
     fileList .= StrSplit(A_LoopField, "/").2 . "|" . Round(StrSplit(A_LoopField, "/").4,1) . "`r`n"
-    if (select && !InStr(el_id, "Index"))
-      Loop, Parse, select, `,						; index selected files
-        transcoding .= StrSplit(fileList,"`r`n")[A_LoopField]		; media to lock
-    RenderPage(1)							; lock htm
-    transcoding =							; lock off
-    Critical Off
-    sta := 0
-    end := 0
-    if cue
-      if (tim > cue + 1)
-        sta := cue, end := tim
-      else if (tim < cue - 1) 
-        sta := tim, end := cue
-      else if (tim >= cue)
-        sta := cue
-      else sta := 0, end := cue
-    if InStr(el_id, "Join")
-      Join(select)
-    else if (el_id == "myIndex" && !select)				; index whole folder
-      if (playlist || searchTerm)
-        Loop, Parse, filelist, `n, `r
-          {
-          GuiControl, Indexer:, GuiInd, %A_Loopfield%
-          Index(A_Loopfield, 0)
-          }
-    else Loop, files, %path%*.*
+  if (select && !InStr(el_id, "Index"))
+    Loop, Parse, select, `,						; index selected files
+      transcoding .= StrSplit(fileList,"`r`n")[A_LoopField]		; media to lock
+  RenderPage(1)							; lock htm
+  transcoding =							; lock off
+  Critical Off
+  sta := 0
+  end := 0
+  if cue
+    if (tim > cue + 1)
+      sta := cue, end := tim
+    else if (tim < cue - 1) 
+      sta := tim, end := cue
+    else if (tim >= cue)
+      sta := cue
+    else sta := 0, end := cue
+
+  if InStr(el_id, "Join")
+    Join(select)
+  else if (el_id == "myIndex" && !select)				; index whole folder / current list
+  {
+    if (playlist || searchTerm)
+    {
+      Loop, Parse, filelist, `n, `r
       {
-      GuiControl, Indexer:, GuiInd, %A_LoopFileFullPath%
-      Index(A_LoopFileFullPath, 0)
+        GuiControl, Indexer:, GuiInd, %A_Loopfield%
+        Index(A_Loopfield, 0)
       }
-    else Loop, Parse, select, `,					; index selected files
+    }
+    else
+    {
+      Loop, Files, %path%*.*
+      {
+        GuiControl, Indexer:, GuiInd, %A_LoopFileFullPath%
+        Index(A_LoopFileFullPath, 0)
+      }
+    }
+  }
+  else								; selected items (mp3/mp4/join/jpg/srt/index)
+  {
+    Loop, Parse, select, `,
+    {
       if A_LoopField
-        {
+      {
         entry := StrSplit(fileList, "`r`n")[A_LoopField]
         source := StrSplit(entry, "|").1
         SplitPath, source,,,ex
         if (ex == "txt")
-          {
+        {
           source := auxSrc
           tim := auxStart
-          }
+        }
         if (playlist && InStr(el_id, "myIndex"))
           source := entry						; use start time for poster
         SplitPath, source,,,,med
@@ -2450,12 +2470,12 @@ mediaList = %mediaList%%foldr%<div id='entry%j%' class='entry-row' data-params='
         if InStr(el_id, "mySrt")
           runwait, "%whisper%" "%source%" --model tiny.en --language en --output_format srt --compute_type float32 --output_dir "%inca%\cache\srt" --sentence --beep_off, , Hide
         else if InStr(el_id, "myJpg")
-          {
+        {
           if  DetectMedia(source) == "image"
             cmd = %inca%\cache\apps\ffmpeg.exe -i "%source%" -vf "scale=iw*%skinny%:ih" -y "%output%"
           else cmd = %inca%\cache\apps\ffmpeg.exe -ss %tim% -i "%source%" -vf "scale=iw*%skinny%:ih" -y "%output%"
           FileAppend, %output%|0.0`r`n, %inca%\fav\History.m3u, UTF-8
-          }
+        }
         if InStr(el_id, "myIndex")
           Index(source, 1)
         if InStr(el_id, "myJpg")
@@ -2463,18 +2483,22 @@ mediaList = %mediaList%%foldr%<div id='entry%j%' class='entry-row' data-params='
         if (InStr(el_id, "myMp3") || InStr(el_id, "myMp4"))
           if (new := Transcode(el_id, source, sta, end))
             Index(new, 1)
-        }
-    if (fldr == folder && !playing)
-      {
-      index := StrSplit(select, ",").1
-      CreateList(1)
-      RenderPage(1)
-      send, {F5}
       }
-    if (!cue && InStr(el_id, "myMp4"))
-      PopUp("original sent to recycle bin",999,0,0)
-    GuiControl, Indexer:, GuiInd
-    return
+    }
+  }
+  if (fldr == folder && !playing)
+  {
+    if (!select)
+      index := 1						; prevent blank page when indexing whole folder
+    else
+      index := StrSplit(select, ",").1
+    CreateList(1)
+    RenderPage(0)						; use 0 so internal F5 + title wait runs cleanly
+  }
+  if (!cue && InStr(el_id, "myMp4"))
+    PopUp("original sent to recycle bin",999,0,0)
+  GuiControl, Indexer:, GuiInd
+  return
 
 
   SlowTimer:								; every half second
