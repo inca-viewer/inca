@@ -74,7 +74,7 @@
   Global index = 0				; scroll to index
   Global allFav					; all favorite shortcuts consolidated
   Global showSubs
-  Global paused := 0				; default pause
+  Global defPause = 0				; default pause
   Global dur					; media duration
   Global mute					; global mute
   Global start := 0				; default start time
@@ -286,8 +286,8 @@
       addHistory()
     else if (command == "Pause")					; set default paused
       {
-      config := RegExReplace(config, "Pause/[^|]*", "Pause/" . value)
-      IniWrite, %config%, %inca%\ini.ini, Settings, config
+      defPause := value
+      renderPage(1)
       }
     else if (command == "Mute")						; set default mute
       {
@@ -856,10 +856,13 @@ Edited() 								; Save edited json, text or SRT file
   {
   json := value
   value := 0
-  PopUp("saved", 0, 0.46, 0.48)
   RegExMatch(json, """src"":\s*""([^""]+)""", m)
   jsonSrc := StrReplace(m1, server)
   jsonSrc := StrReplace(jsonSrc, "/", "\")
+  SplitPath, jsonSrc,,,ext,media					; use jsonSrc as truth
+  if (!media || !ext || ext == "htm")
+    return
+  PopUp("saved", 0, 0.46, 0.46)
   texts := []
   foundPos := 1
   Loop {
@@ -872,7 +875,7 @@ Edited() 								; Save edited json, text or SRT file
     texts.Push(text) 
     foundPos += StrLen(match)
     }
-  SplitPath, jsonSrc,,,ext,media					; use jsonSrc as truth
+
   if json
     {
     FileRecycle, %inca%\cache\json\%media%.json
@@ -898,7 +901,8 @@ Edited() 								; Save edited json, text or SRT file
           continue
         if (RegExMatch(line, """voice""\s*:\s*""(/[^""]+)""", m))
           {
-          p := StrReplace(m1, "/", "\")
+          p := StrReplace(m1, server)
+          p := StrReplace(p, "/", "\")
           if (SubStr(p, 1, 5) = "\inca")
             p := inca . SubStr(p, 6)
           else if (SubStr(p, 1, 6) = "/inca")
@@ -1175,38 +1179,60 @@ Edited() 								; Save edited json, text or SRT file
     }
 
 
-  GetTabSettings(all)							; from line 1 of .htm cache file
+GetTabSettings(all)							; from line 1 of .htm cache file
+  {
+  listView  := 0
+  filt      := 0
+  toggles   :=
+  defPause  := 0
+  sort      := "Shuffle"
+  if (command == "SearchBox")
+    sort := "Duration"
+  if playlist
+    sort := "Playlist"
+  FileReadLine, line, %inca%\cache\html\%folder%.htm, 1
+  if (line && InStr(line, "<!--"))
     {
-    listView := 0
-    filt := 0
-    toggles =
-    sort = Shuffle
-    if (command == "SearchBox")
-      sort = Duration
-    if playlist								; default playlist sort
-      sort = Playlist
-    FileReadLine, array, %inca%\cache\html\%folder%.htm, 1		; embedded page data as top html comment
-    if (array && SubStr(array, 1, 4) = "<!--")
+    line := RegExReplace(line, "^<!--\s*|\s*-->$", "")
+    Loop, Parse, line, |
       {
-      StringReplace, array, array, /, \, All
-      array := StrSplit(array,", ")
-      sort := array.2
-      toggles := array.3
-      listView := array.4
-      if all
+      if RegExMatch(A_LoopField, "^\s*(\w+)=(.*)$", m)
         {
-        playlist := array.5
-        path := array.6
-        searchPath := array.7
-        searchTerm := array.8
-        if searchTerm
-          folder := searchTerm
-        subfolders := array.9
+        key := m1
+        val := m2
+        if (key = "sort")
+          sort := val
+        else if (key = "toggles")
+          toggles := val
+        else if (key = "listView")
+          listView := val
+        else if (key = "defPause")
+          defPause := val
+        else if (all)
+          {
+          if (key = "path" || key = "playlist" || key = "searchPath" || key = "subfolders")
+            val := StrReplace(val, "/", "\")
+          if (key = "playlist")
+            playlist := val
+          else if (key = "path")
+            path := val
+          else if (key = "searchPath")
+            searchPath := val
+          else if (key = "searchTerm")
+            {
+            searchTerm := val
+            if searchTerm
+              folder := searchTerm
+            }
+          else if (key = "subfolders")
+            subfolders := val
         }
       }
-    else if RegExMatch(path, "i)music|books|audio|text|pdf")
-      listView := 1
     }
+  }
+  else if RegExMatch(path, "i)music|books|audio|text|pdf")
+    listView := 1
+}
 
 
   Gesture()
@@ -2088,9 +2114,6 @@ if ErrorLevel
   if subfolders
     subs = sub
   StringReplace, folder_s, folder, `', &apos, All			; htm cannot pass '
-  if 1*Setting("Pause")
-    paused := 1
-  else paused := 0
   if 1*Setting("Mute")
     mute = yes
   else mute = no
@@ -2100,9 +2123,9 @@ if ErrorLevel
   if (command == "View")
     keepSelected := selected
 
-header = <!--, %sort%, %toggles%, %listView%, %playlist%, %path%, %searchPath%, %searchTerm%, %subfolders%, -->`n<!doctype html>`n<html>`n<head>`n<meta charset="UTF-8">`n<title>Inca - %title%</title>`n<meta name="viewport" content="width=device-width, initial-scale=1">`n<link rel="icon" href="data:image/x-icon;base64,AAABAAEAEBAAAAEAIABoBAAAFgAAACgAAAAQAAAAIAAAAAEAIAAAAAAAQAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAJGI/zqShf87AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAI+D/0CLg/61joP+tY2B/0EAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAJCF/0ONgv+6mZn/CpmZ/wqNgv+6lIX/QwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAJCF/0ONgv+6m5v+EgAAAAAAAAAAm5v+Eo2C/7qUhf9DAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAJCF/0ONgv+6m5v+EgAAAAAAAAAAAAAAAAAAAACbm/4SjYL/upSF/0MAAAAAAAAAAAAAAAAAAAAAAAAAAIuD/0KNgv+6m5v+EgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAJub/hKNgv+6koP/QgAAAAAAAAAAAAAAAI6C/yuLgv+7m5v+EgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAm5v+EouC/7uOgv8rAAAAAAAAAACNg/2dlon/JwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACWif8njYP9nQAAAACVjP4djYH9lAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAI2B/ZSVjP4dmYz/KIyB/YoAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACMgf2KmYz/KKmp/gmOg/+j////AQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD///8BjoP/o6mp/gkAAAAAjIL/ZI2C/o0AAAAAAAAAAAAAAAAAAAAAj4//KY+P/ykAAAAAAAAAAAAAAAAAAAAAjYL+jYyC/2QAAAAAAAAAAAAAAACNgf6Ei4P9pZGF/1SKg/9GjYP/fIuC/q6Lgv6ujYP/fIqD/0aRhf9UjYT+pIuB/oQAAAAAAAAAAAAAAAAAAAAAAAAAAJCF/y6NhP9wjIL+e5CB/1EAAAAAAAAAAJCB/1GMgv57jYT/cJCF/y4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==">`n<link rel="stylesheet" href="%server%%inca%/css.css">`n</head>`n`n
+header = <!-- sort=%sort%|toggles=%toggles%|listView=%listView%|playlist=%playlist%|path=%path%|searchPath=%searchPath%|searchTerm=%searchTerm%|subfolders=%subfolders%|defPause=%defPause% -->`n<!doctype html>`n<html>`n<head>`n<meta charset="UTF-8">`n<title>Inca - %title%</title>`n<meta name="viewport" content="width=device-width, initial-scale=1">`n<link rel="icon" href="data:image/x-icon;base64,AAABAAEAEBAAAAEAIABoBAAAFgAAACgAAAAQAAAAIAAAAAEAIAAAAAAAQAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAJGI/zqShf87AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAI+D/0CLg/61joP+tY2B/0EAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAJCF/0ONgv+6mZn/CpmZ/wqNgv+6lIX/QwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAJCF/0ONgv+6m5v+EgAAAAAAAAAAm5v+Eo2C/7qUhf9DAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAJCF/0ONgv+6m5v+EgAAAAAAAAAAAAAAAAAAAACbm/4SjYL/upSF/0MAAAAAAAAAAAAAAAAAAAAAAAAAAIuD/0KNgv+6m5v+EgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAJub/hKNgv+6koP/QgAAAAAAAAAAAAAAAI6C/yuLgv+7m5v+EgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAm5v+EouC/7uOgv8rAAAAAAAAAACNg/2dlon/JwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACWif8njYP9nQAAAACVjP4djYH9lAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAI2B/ZSVjP4dmYz/KIyB/YoAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACMgf2KmYz/KKmp/gmOg/+j////AQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD///8BjoP/o6mp/gkAAAAAjIL/ZI2C/o0AAAAAAAAAAAAAAAAAAAAAj4//KY+P/ykAAAAAAAAAAAAAAAAAAAAAjYL+jYyC/2QAAAAAAAAAAAAAAACNgf6Ei4P9pZGF/1SKg/9GjYP/fIuC/q6Lgv6ujYP/fIqD/0aRhf9UjYT+pIuB/oQAAAAAAAAAAAAAAAAAAAAAAAAAAJCF/y6NhP9wjIL+e5CB/1EAAAAAAAAAAJCB/1GMgv57jYT/cJCF/y4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==">`n<link rel="stylesheet" href="%server%%inca%/css.css">`n</head>`n`n
 
-body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals('%folder_s%', %wheelDir%, '%mute%', %paused%, '%sort%', %filt%, %listView%, '%keepSelected%', '%playlist%', %index%, %listSize%); %scroll%.scrollIntoView()">`n`n
+body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals('%folder_s%', %wheelDir%, '%mute%', %defPause%, '%sort%', %filt%, %listView%, '%keepSelected%', '%playlist%', %index%, %listSize%); %scroll%.scrollIntoView()">`n`n
 
   <div id="editor">
     <div id="ribbon">

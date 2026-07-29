@@ -2,7 +2,6 @@
 // captionmania paradise engineering
 
 
-
   let wheel = 0								// wheel count
   let wheelDir = 0		 					// wheel direction
   let index = 1								// thumb index (e.g. thumb14)
@@ -126,7 +125,7 @@
     myAlt.style.display = isAlt ? '' : 'block'
     myDefault.style.display = isAlt ? 'block' : 'none'})
   searchHeader.addEventListener('wheel', nextMatch)
-  mediaContent.addEventListener('mouseleave', () => {mediaContent.style.display = 'none'})
+  mediaContent.addEventListener('mouseleave', () => {myPlayer.src = originalPlayerSrc; mediaContent.style.display = 'none'})
   searchHeader.addEventListener('mouseleave', () => {searchInput.placeholder='🔍︎'})
   searchHeader.addEventListener('click', (e) => {
     searchTerm = searchInput.value = ''; blocks.forEach(b => {b.style.color = ''; b.textContent = b.textContent})})
@@ -138,6 +137,7 @@
   viewport.addEventListener('input', () => {
     if (editingBlock?.innerText.length < 3) editingBlock.dataset.start = myPlayer.currentTime
     editing = 1; userPlay = 0 }, { passive: true })
+
 
 
   function mouseDown(e) {
@@ -231,7 +231,7 @@
       else myNav.classList.remove('editor-mode')
       if (!longClick && !myNav.style.display) {
         myNav.style.display = 'block'; myNav.style.left = xPos-90+'px'; myNav.style.top = yPos-32+'px'; delay = 200; return}
-      if (longClick || captions) return}
+      if (longClick) return}
 
     if (lastClick == 2) {  								// Middle click
       if (editing) return
@@ -335,8 +335,8 @@
       if (favicon.matches(':hover')) getSrt(1)
       else if (overTitle && Click && blocks.length) previewMode ? getSrt(lastBlock) : getSrt(1)
       else if (captions || type == 'document') getSrt()}
-    if (el = document.getElementById('title'+lastMedia)) el.style.color = null
-    title.style.color = 'pink'
+    if (el = document.getElementById('title'+lastMedia)) el.style.color = el.style.fontWeight = null
+    title.style.color = 'pink'; title.style.fontWeight = 'bold'
     if (type == 'document' || type == 'audio' || playlist.match('/inca/music/')) scaleY = 0.25
     if (playlist.match('/inca/music/') && !thumbSheet) {start = 0; myPlayer.muted = 0}
     if (type == 'audio' && !captions) myPlayer.style.borderBottom = '1px solid pink'
@@ -586,8 +586,10 @@
     if (playing) {
       myCancel.innerText = editing ? (myCancel.innerText !== 'Sure ?' ? '✕' : 'Sure ?') : '⌒'
       myCancel.style.color = myCancel.innerText == '⌒' ? 'pink' : 'red'
-      userPlay ? myPlayer.play() : myPlayer.pause()
-      userPlay && !!editingBlock?._voice?.src ? myVoice.play() : myVoice.pause()
+      userPlay ? myPlayer.play().catch(() => {}) : myPlayer.pause()
+      userPlay && !!editingBlock?._voice?.src
+        ? myVoice.play().catch(() => {})
+        : myVoice.pause()
       positionMedia(0)
       if (captions) showStart()
       myVol.innerHTML = editingBlock?._volume == 1 ? 'Volume' : `Volume ${editingBlock?._volume*100}`
@@ -791,8 +793,8 @@
     let params = entry.dataset.params.split(',')
     type = params[0]								// media type eg. video
     defStart = Number(params[1])
-    if (thumb.src != vid.src) thumb.src = vid.src
-    dur = Number(params[2]) || thumb.duration || 0				// duration
+    dur = Number(params[2]) || thumb.duration || 0				// to stop console errors on txt
+    if (dur && thumb.src != vid.src) thumb.src = vid.src
     size = Number(params[3])							// file size
     skinny = 1
     rate = dur ? defRate : 1
@@ -845,6 +847,7 @@
   function getSrt(scroll) {
     lastBlock = scroll
     const src = document.getElementById('dat' + index)?.getAttribute('data');
+    if (editor.style.display === 'flex') editor.style.opacity = 1		// resume visible after Play()
     if (!src || editor.style.display === 'flex') return
     editor.style.display = 'flex'
     captions = captions ? captions : 2
@@ -855,12 +858,15 @@
 
 
   function getPreview() { 							// captions in title el
+    const thisIndex = index
     const src = document.getElementById('dat' + index)?.getAttribute('data');
     if (src.length > 25) {							// not just http://localhost:3000/
       fetch(src)
         .then(response => {return response.text()})
         .then(data => {
+          if (index !== thisIndex) return
           blocks = []
+          viewport.replaceChildren()
           const parsed = parseInputText(data)
           if (parsed?.blocks?.length) {
             parsed.blocks.forEach(b => {addBlock(b.number || (blocks.length + 1), b.startTime || 0, b.text || '')})
@@ -968,14 +974,14 @@
 
 
   function overThumb(id) {
-    if (zoom == 1) thumb.src = ''						// release media from server
+    if (dur && zoom == 1) thumb.src = ''					// release media from server
     if (Click) return								// faster for click & slide selecting
     index = id
     Param(id)
     blocks = []									// for preview
     previewMode = 0
     thumb.style.opacity = 1
-    if (settings.view <= 30 && zoom == 1 && !title.matches(':hover')) {
+    if (dur && settings.view <= 30 && zoom == 1 && !title.matches(':hover')) {
       thumb.load(); thumb.playbackRate = 0.7; thumb.currentTime = start = defStart + 0.04}}
 
 
@@ -1024,7 +1030,7 @@
 
 
   function openEditor(text) {
-    originalPlayerSrc = decodeURIComponent(type === 'video' ? myPlayer.src : thumb.src)
+    projectMedia.defaultSrc = originalPlayerSrc = decodeURIComponent(type === 'video' ? myPlayer.src : thumb.src)
     captions = type === 'image' && text ? 1 : 2;
     lastBlock = type === 'image' ? 1 : lastBlock;
     editor.style.transition = 'opacity 1s'
@@ -1048,7 +1054,6 @@
         block._volume = b.volume || 1
         block._rate = b.rate || 1
         block._delay = b.delay || 0});
-    projectMedia.defaultSrc = originalPlayerSrc || null;
     if (projectMedia.defaultSrc) swapPlayerMedia(projectMedia.defaultSrc, 0)
     let first = blocks[0];
     const lastNum = lastBlock > 0 ? lastBlock : (parsed.lastSelectedId || 0)
@@ -1072,7 +1077,8 @@
 
 const activateBlock = (block, play) => {
   if (!blocks.length) blocks = [...document.querySelectorAll('.text-block')]
-  if (overBlock) blocks.forEach(b => {
+  if (editingBlock) editingBlock.querySelector('.voice-btns')?.remove()
+  if (overBlock && searchTerm) blocks.forEach(b => {
     b.style.color = '';									// remove search word highlights
     b.querySelectorAll('mark').forEach( m => { 
       while(m.firstChild) m.parentNode.insertBefore(m.firstChild,m); m.remove()})})
@@ -1098,7 +1104,6 @@ const activateBlock = (block, play) => {
     editingBlock = block;
     timestamps = blocks.map(b => ({
       sec: parseFloat(b.dataset.start) || 0,
-      top: b.offsetTop,
       block: b}))}
   myPlayer.volume = myVoice.volume = block._volume || 1
   userPlay = play
@@ -1117,6 +1122,7 @@ const activateBlock = (block, play) => {
     editor.style.pointerEvents = ''
     editor.style.background = ''
     editor.style.resize = ''}
+    blocks.forEach(b => renderVoiceButtons(b))
   block.dataset.hasMedia = (block._voice?.src || myPlayer.src.includes('mp4')) ? "1" : "0"}
 
 
@@ -1250,9 +1256,9 @@ const activateBlock = (block, play) => {
   none.onclick = () => {
     let lastSrc = editingBlock?._voice?.src || null;
     if (editingBlock) {
-        delete editingBlock._media;
-        if (editingBlock._voice?.src) delete editingBlock._voice.src
-    } else projectMedia.defaultSrc = null
+        delete editingBlock._media
+        delete editingBlock._voice
+        if (editingBlock._voice?.src) delete editingBlock._voice.src}
     swapPlayerMedia(originalPlayerSrc, myPlayer.currentTime);
     editing = 1;
     setTimeout(() => {
@@ -1310,15 +1316,16 @@ const activateBlock = (block, play) => {
           if (editingBlock) {
             if (row.dataset.isVoiceAsset === 'true') {
             if (!editingBlock._voice) editingBlock._voice = {};
-            editingBlock._voice.src = item.url;
+            editingBlock._voice.src = '/' + decodeURIComponent(item.url.replace(/^https?:\/\/[^/]+\/?/i, ''))
+              .replace(/\\/g, '/')
+              .replace(/^.*?\/inca\//i, 'inca/')
             editingBlock._voiceName = editingBlock._voiceName || lastVoice || '';
               myVoice.src = item.url}
             else {
               editingBlock._media = mediaObj;
               editingBlock.dataset.start = item.startSec
               }
-            editing = 1;
-          } else projectMedia.defaultSrc = mediaObj.src
+            editing = 1}
           swapPlayerMedia(mediaObj.src, item.startSec);
           mediaContent.style.display = 'none'
           activateBlock(editingBlock, 1)
@@ -1383,11 +1390,39 @@ function populateVoices() {
   }
 
 
+function renderVoiceButtons(block) {
+  block.querySelector('.voice-btns')?.remove()
+  const used = block === editingBlock ? [...new Set(blocks.map(b => b._voiceName).filter(Boolean))] : [block._voiceName].filter(Boolean)
+  if (!used.length) return
+  const strip = document.createElement('div')
+  strip.className = 'voice-btns'
+  strip.contentEditable = false
+  strip.style.cssText = 'position:absolute;bottom:3px;right:20px;display:flex;gap:3px;z-index:2'
+  used.forEach(name => {
+    const btn = document.createElement('button')
+    btn.dataset.name = name.slice(0, 8)
+    btn.style.color = block !== editingBlock ? '#ffc0cb20' : name === (block._voiceName || '') ? '#ffc0cb60' : '#ffc0cb20'
+    btn.onmousedown = e => {
+      e.preventDefault()
+      e.stopPropagation()
+      editingBlock = block
+      block._voiceName = name
+      Chatterbox('myChatterbox')}
+    strip.appendChild(btn)})
+  block.style.position = 'relative'
+  block.appendChild(strip)}
+
+
+
 function makeJSON() {
   const data = {
-    defaultMedia: projectMedia.defaultSrc ? {
-      src: projectMedia.defaultSrc.replace(/\\/g, '/')
-    } : null,    ui: {
+  defaultMedia: (s = [myPlayer.src, thumb.src,
+    document.getElementById('dat' + index)?.getAttribute('data'),
+    document.getElementById('vid' + index)?.src]
+    .find(u => u && !u.includes('.htm'))) && s
+    ? { src: decodeURIComponent(s).replace(/\\/g, '/') }
+    : null,
+    ui: {
       width: editor.style.width,
       height: editor.style.height
     },
@@ -1408,8 +1443,7 @@ function makeJSON() {
       };
     })
   };
-  return JSON.stringify(data, null, 2);
-}
+  return JSON.stringify(data, null, 2);}
 
 
 
@@ -1451,8 +1485,7 @@ function makeJSON() {
     if (!blocksOut.length && text) {
       blocksOut.push({ number: 1, startTime: 0, text: text, extras: {} });
     }
-    return { blocks: blocksOut };
-  }
+    return { blocks: blocksOut };}
 
 
   function parseSrtTimeFlexible(t) {
@@ -1460,8 +1493,7 @@ function makeJSON() {
     const parts = t.split(':').map(p => parseFloat(p) || 0);
     if (parts.length === 3) return parts[0] * 3600 + parts[1] * 60 + parts[2];
     if (parts.length === 2) return parts[0] * 60 + parts[1];
-    return parseFloat(t) || 0;
-  }
+    return parseFloat(t) || 0;}
 
 
   function splitIfNeeded(e) {
@@ -1664,7 +1696,7 @@ function Backspace(e) {
     let provider = 'chatterbox'
     if (id == 'myElevenLabs') provider = 'chatterbox'
     userPlay = 0
-    delay = 100; myAlert.innerText = voiceName + ' ...'
+    delay = 100; myAlert.innerText = voiceName
     fetch("http://localhost:3000/generate-voice", {
         method: "POST",
         headers: { "Content-Type": "application/json" },

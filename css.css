@@ -47,7 +47,8 @@
     color: pink;
     background: #1b1814ff;
     width: 15em !important;
-    min-width: 15em !important;}
+    min-width: 15em !important;
+    translate: 0 -3em !important;}
 
   #editor { box-sizing:border-box; display:none; flex-direction:column; width:500px; max-width:100%; height:24em;
     background:#0a0a0a; border-radius:12px; box-shadow:0 12px 32px rgba(0,0,0,0.6); font-size:16px; 
@@ -121,11 +122,8 @@
 
   .text-block.editing { background: #0e0e0e; color: #ffc0cbaa }
 
-.text-block.has-voice::after { content: '*'; }
 .text-block[data-fav="1"]::after { content: '❤'; }
-.text-block.has-voice[data-fav="1"]::after { content: '❤\A*'; white-space: pre }
 
-.text-block.has-voice::after,
 .text-block[data-fav="1"]::after {
   position: absolute;
   opacity: 0.5;
@@ -136,13 +134,20 @@
   z-index: 3;
   pointer-events: none}
 
+.voice-btns button {
+  font: 10px/1 sans-serif;
+  background: inherit;
+  border: none;
+  cursor: pointer;
+  padding: 1px 3px;}
 
+.voice-btns button::after { content: attr(data-name) }
 
 .text-block.editing[data-has-media="1"]::before {
     content: '';
     position: absolute;
-    left: 100px;
-    right: 100px;
+    left: 35%;
+    right: 35%;
     bottom: 0.6em;
     height: 2px;
     border-radius: 1px;
