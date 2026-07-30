@@ -3,8 +3,8 @@ const fs = require('fs');
 const fsPromises = require('fs').promises;
 const path = require('path');
 const SCRIPT_DIR = path.dirname(__filename);
-const DRIVE_ROOT = SCRIPT_DIR[0] + ':\\';
-const CACHE_DIR = path.join(DRIVE_ROOT, 'inca', 'cache', 'html');
+const DRIVE_ROOT = path.resolve(SCRIPT_DIR, '../..');
+const CACHE_DIR = path.join(DRIVE_ROOT, 'cache', 'html');
 const inputFilePath = path.join(CACHE_DIR, 'in.txt');
 const tempFilePath  = path.join(CACHE_DIR, 'out.txt');
 
@@ -14,7 +14,7 @@ let VENICE_API_KEY = null;
 let VENICE_MODEL = "elevenlabs-tts-v3";
 const voiceMap = new Map();
 
-const keyFilePath = path.join(DRIVE_ROOT, 'inca', 'cache', 'apps', 'elevenLabs_api.txt');
+const keyFilePath = path.join(DRIVE_ROOT, 'cache', 'apps', 'elevenLabs_api.txt');
 
 try {
     const content = fs.readFileSync(keyFilePath, 'utf8');
@@ -72,7 +72,7 @@ const server = http.createServer(async (req, res) => {
 
  if (provider === 'chatterbox') {
     const refFilename = (voiceName || 'Clone') + '.mp3';
-    const voicePath = path.join(DRIVE_ROOT, 'inca', 'cache', 'voices', refFilename);
+    const voicePath = path.join(DRIVE_ROOT, 'cache', 'voices', refFilename);
     const fileBuffer = await fsPromises.readFile(voicePath);
     const uploadForm = new FormData();
     uploadForm.append('files', new Blob([fileBuffer], { type: 'audio/mpeg' }), refFilename);
@@ -129,11 +129,11 @@ let textSize = 36 - safeVoice.length
 const safeText = clean(text + ' QQQ').slice(0, textSize).replace(/\s+\S*$/, '').replace(/[.,;—…]+$/, '').trim();
 const timestamp = new Date().toLocaleString('sv').replace(/:/g, '.');
 const filename = `${safeVoice} - ${safeText} - ${timestamp}.mp3`;
-const fullDir = path.join(DRIVE_ROOT, 'inca', 'cache', 'speech', mediaTitle.trim());
+const fullDir = path.join(DRIVE_ROOT, 'cache', 'speech', mediaTitle.trim());
 await fsPromises.mkdir(fullDir, { recursive: true });
 
 if (provider === 'chatterbox') {
-  const ffmpeg = path.join(DRIVE_ROOT, 'inca', 'cache', 'apps', 'ffmpeg.exe');
+  const ffmpeg = path.join(DRIVE_ROOT, 'cache', 'apps', 'ffmpeg.exe');
   const tmp = path.join(fullDir, '_tmp.wav');
   const norm = path.join(fullDir, '_norm.mp3');
   await fsPromises.writeFile(tmp, buffer);

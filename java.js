@@ -265,6 +265,7 @@
             else {userPlay = 0; return}}
           else if (wasOsk && overBlock) {userPlay = 0; return}
           else {userPlay ^= 1; return}}}
+      if (!title.matches(':hover') && overTitle == 2) {closeOsk(); overTitle = 0; return}
       if (overTitle && (longClick || overTitle == 2)) {
         if (overTitle != 2) title.value = title.defaultValue.trim()
         overTitle = 2; lastMedia = index; return}
@@ -582,7 +583,8 @@
     mySpeed2.innerHTML = defRate !=1 ? "s" : ''
     if (!overMedia || overMedia && ym < trigger) fade = 3
     seekbar()
-    if (playing || !overTitle) {title.classList.remove('preview'); title.value = title.defaultValue}
+    if (playing || !overTitle) {
+      title.classList.remove('preview'); title.value = title.defaultValue; title.style.height = ''}
     if (playing) {
       myCancel.innerText = editing ? (myCancel.innerText !== 'Sure ?' ? '✕' : 'Sure ?') : '⌒'
       myCancel.style.color = myCancel.innerText == '⌒' ? 'pink' : 'red'
@@ -612,7 +614,9 @@
         previewMode = xm < 0.6 && previewMode ? 2 : previewMode
         if (!previewMode) title.value = title.defaultValue
         else if (previewMode == 1) title.value = lastText
-        else { title.value = block.innerText.trim(); lastBlock = block.dataset.num }}
+        else {title.value = block.innerText.trim(); lastBlock = block.dataset.num }}
+      title.style.height = previewMode || overTitle == 2 ? '4em' : ''
+      title.style.width = listView ? '100%' : ''
       myInca.textContent = '...'
       myMask.style.pointerEvents = null
       if (zoom > 1 && overMedia) myMask.style.opacity = 0.9
@@ -698,7 +702,8 @@
   function setThumb() {									// sets src, poster, thumbsheet & dimensions
     myPic.style.backgroundImage = null
     if (type == 'video') {
-      let filename = thumb.src.match(/\/([^\/]+?)(?:\.[^.]*?)?$/)[1]
+      const match = thumb.src.match(/\/([^\/]+?)(?:\.[^.]*?)?$/);
+      const filename = match ? match[1] : null;
       let path = thumb.poster.replace(/\/posters\//, '/thumbs/').replace(/\/[^\/]*$/, '')
       sheetUrl = path + '/' + filename + '.jpg'
       if (settings.view > 30) thumb.poster = sheetUrl					// show sheets instead of posters
@@ -821,7 +826,7 @@
     filter('my'+so)								// show filter heading in red
     for (x of selected.split(',')) {
       if(el = document.getElementById('title'+x)) {el.style.outline = '1px solid red'; el.style.opacity = 1}}
-    for (lastIndex = 1; Param(lastIndex); lastIndex++) {}			// process null cues (eg. skinny, start, rate)		
+    for (lastIndex = 1; Param(lastIndex); lastIndex++) {}			// process null cues (eg. skinny, start, rate)
     if (!ix) index = 1
     else index = ix
     lastMedia = index								// set htm thumb widths and heights
@@ -829,6 +834,7 @@
     if (ix && title) {								// eg. after switch thumbs/listview
       title.style.opacity = 1							// highlight thumb
       title.style.color = 'pink'
+      title.style.fontWeight = 'bold'
       title.scrollIntoView({ block: 'center' })}}
 
 
@@ -966,7 +972,6 @@
     overTitle = 0
     if (closeOsk()) return
     else if (playing) closePlayer()
-    else if (overTitle > 1) overTitle = 0
     else if (thumb.style.pop > 1) closePic()
     else if (longClick) window.close()
     else if (myContent.scrollTop > 50) myContent.scrollTo(0,0)			// else scroll to page top
