@@ -210,7 +210,7 @@
       Favorite()
     else if (command == "Delete")					; delete media
       Delete() 
-    else if (command == "Add" && address)
+    else if (command == "Add" && address)				; add new search term
       Add()
     else if (command == "Ffmpeg")					; index folder (create thumbsheets)
       SetTimer, Ffmpeg, -10, -2						; run asynchromously
@@ -846,7 +846,9 @@
     if (type == "audio" || type == "video")
       Runwait, %inca%\cache\apps\ffmpeg.exe -ss %value% -i "%src%" -y -vf scale=1280:1280/dar -vframes 1 "%inca%\cache\posters\%media%%A_Space%%value%.jpg",, Hide
     AllFav()								; update consolidated fav list
-    index := StrSplit(selected, ",").1 + 1
+    index := StrSplit(selected, ",").1
+    if !index
+      index := 0
     if playlist
       reload := 3
     }
@@ -920,11 +922,11 @@ Edited() 								; Save edited json, text or SRT file
       FileMoveDir, %inca%\cache\temp\%media%, %inca%\cache\speech\%media%, 1
       }
   index := StrSplit(selected, ",").1
-  reload := 0
+  reload := 1
   }
 
 
-  Add()
+  Add()									; add new search term
     {
     popup = Added
     StringUpper, searchTerm, address, T
@@ -1907,6 +1909,8 @@ if ErrorLevel
     Critical								; stop pause key & timer interrupts
     if !path
       return
+    if !index
+      index := 0
     menu_item =
     mediaList =
     str := StrSplit(path,"\")
@@ -2382,7 +2386,7 @@ mediaList(j, input, start, fold)					; spool sorted media files into web page
     caption = <pre id="dat%j%" style='display: none' type="text/plain" data=%data%></pre>`n
 
     if listView
-mediaList = %mediaList%%foldr%<div id='entry%j%' class='entry-row' data-params='%type%,%start%,%dur%,%size%' onmouseenter='if (gesture) sel(%j%)' onmouseover='overThumb(%j%)'`n onmouseout="thumb%j%.style.opacity=0"><div><video id='thumb%j%' class='thumb2' onwheel='if (zoom > 1) wheelEvent(event)'`n %poster% preload=%preload% muted loop disableRemotePlayback type="video/mp4"></video><video id="vid%j%" style='display: none'`n src=%src% preload='none' type='video/mp4'></video>`n </div><div>%j%</div><div>%ext%</div><div>%size%</div><div style='min-width: 6em'>%durT%</div><div>%date%</div><div id='myFavicon%j%' class='favicon' style='position: relative; text-align: right; translate:1.6em 0.4em'>%favicon%</div><div class='title-cell'><textarea id="title%j%" class='title' style='top:0.1em' autocomplete='off' onmouseenter='overThumb(%j%)'>`n %media_s%</textarea></div>%fo%</div>`n %caption%<span id='cues%j%' style='display: none'>%cues%</span>`n`n
+mediaList = %mediaList%%foldr%<div id='entry%j%' class='entry-row' data-params='%type%,%start%,%dur%,%size%' onmouseenter='if (gesture) sel(%j%)' onmouseover='overThumb(%j%); thumb%j%.style.opacity=1'`n onmouseout="thumb%j%.style.opacity=0"><div class="thumb-wrap"><video id='thumb%j%' class='thumb2' onwheel='if (zoom > 1) wheelEvent(event)'`n %poster% preload=%preload% muted loop disableRemotePlayback type="video/mp4"></video><video id="vid%j%" style='display: none'`n src=%src% preload='none' type='video/mp4'></video>`n </div><div>%j%</div><div>%ext%</div><div>%size%</div><div style='min-width: 6em'>%durT%</div><div>%date%</div><div id='myFavicon%j%' class='favicon' style='position: relative; text-align: right; translate:1.6em 0.4em'>%favicon%</div><div class='title-cell'><textarea id="title%j%" class='title' style='top:0.1em' autocomplete='off' onmouseenter='overThumb(%j%)'>`n %media_s%</textarea></div>%fo%</div>`n %caption%<span id='cues%j%' style='display: none'>%cues%</span>`n`n
 
     else mediaList = %mediaList%<div id="entry%j%" class='entry' data-params='%type%,%start%,%dur%,%size%'>`n <span id='myFavicon%j%' onmouseenter='overThumb(%j%)' class='favicon'>%favicon%</span>`n <textarea id='title%j%' class='title' style='opacity:0.7' type='text'`n onmouseenter='overThumb(%j%)'>%media_s%</textarea>`n <div class="thumb-wrap">`n <video id="thumb%j%" class='thumb' onwheel='if (zoom > 1) wheelEvent(event)' onmouseenter="overThumb(%j%); if (gesture && !playing) sel(%j%)"`n onmouseout="thumb.pause()"`n onmouseup='if (gesture && !playing) Param(%j%)' %poster%`n preload=%preload% loop muted disableRemotePlayback type='video/mp4'></video></div>`n <video id="vid%j%" style='display: none' src=%src% preload='none' type='video/mp4'></video>%noIndex%`n <span id='cues%j%' style='display: none'>%cues%</span></div>`n %caption%`n
     }
@@ -2440,9 +2444,9 @@ Ffmpeg: 								; mp3, mp4, indexing - async processing
   sta := 0
   end := 0
   if cue
-    if (tim > cue + 1)
-      sta := cue, end := tim
-    else if (tim < cue - 1) 
+if (tim > cue + 0.1)
+  sta := cue, end := tim
+else if (tim < cue - 0.1)
       sta := tim, end := cue
     else if (tim >= cue)
       sta := cue
