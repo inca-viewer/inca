@@ -1,3 +1,4 @@
+// add gap to ribbon
 
 
   let wheel = 0								// wheel count
@@ -100,7 +101,7 @@
   document.addEventListener('mouseup', mouseUp)
   document.addEventListener('mousemove', mouseMove)
   document.addEventListener('keydown', keyDown)
-  myContent.addEventListener('scroll', () => seekTimer = 0)
+  myContent.addEventListener('scroll', () => seekTimer = cursor = 0)
   document.addEventListener('dragstart', () => gesture = 1)
   document.addEventListener('drop', (e) => {Click = 0; gesture = 0; if (overEditor) activateBlock(e.target.closest('.text-block'),0)})
   myPlayer.addEventListener('ended', nextMedia)
@@ -214,7 +215,7 @@
       inca('Export', txt, index)}
     if (lastClick == 4) {mouseBack(); return}						// Back Click
 
-    if (lastClick == 3) {
+    if (lastClick == 3) {								// right click
       if (gesture) return
       if (overEditor) {
         lastId = editingBlock
@@ -256,7 +257,7 @@
         const block = overBlock ? overBlock : editingBlock
         if (longClick && overBlock && overBlock !== editingBlock) activateBlock(block, 0)
         if (longClick && overEditor) {osk(); activateBlock(block, 0); return}
-        if (!gesture) {
+        if (!longClick) {
           if (id != 'myMask' && overBlock !== editingBlock) {myVoice.currentTime = 0; myPlayer.currentTime = block.dataset.start}
           if (captions == 1 && xm>0 && xm<1 && ym>1 && ym<1.3) {captions = 2; activateBlock(block)}
           if (overBlock && overBlock !== editingBlock) {activateBlock(block, 1); return}
@@ -398,7 +399,7 @@
   function wheelEvent(e) {
     if (e.target.closest('#voiceSub')) return						// scroll within submenu
     if (e.target.closest('#emotionSub')) return
-    event.preventDefault()									// stop html scrolling
+    e.preventDefault()									// stop htm scroll during thumb zoom
     let id = e.target.id 								// faster hover detection
     wheel += Math.ceil(Math.abs(e.deltaY))
     if (wheel < delay) return
@@ -606,8 +607,9 @@
       if (myPlayer.duration) dur = myPlayer.duration
       if (cues.innerHTML && !thumbSheet && type !='image' && dur) myCues(myPlayer.currentTime)}
     else {
+      if (!overTitle) blocks = []
       if (overTitle == 1 && favicon.innerText.includes('©') && !blocks.length) getPreview()
-      if (blocks.length && overTitle && overTitle != 2) {
+      if (seekTimer > 3 && blocks.length && overTitle && overTitle != 2) {
         let idx = Math.floor(xm * blocks.length)
         const block = blocks[Math.min(idx, blocks.length - 1)]
         previewMode = xm > 0.6 && !previewMode ? 1 : previewMode
@@ -615,6 +617,9 @@
         if (!previewMode) title.value = title.defaultValue
         else if (previewMode == 1) title.value = lastText
         else {title.value = block.innerText.trim(); lastBlock = block.dataset.num }}
+      if (cursor && overMedia && type == 'video' && zoom == 1) {
+        if (!thumb.readyState) {thumb.load(); thumb.currentTime = defStart + 0.04}
+        if (thumb.readyState === 4 && thumb.paused && !overTitle) thumb.play()}
       title.style.height = previewMode || overTitle == 2 ? '4em' : ''
       title.style.overflowY = previewMode || overTitle == 2 ? 'auto' : ''
       title.style.width = listView ? '100%' : ''
@@ -1096,6 +1101,7 @@ function closePic() {
 
 
 const activateBlock = (block, play) => {
+  const startDelay = Click ? 0 : block._delay * 1000 || 0
   if (!blocks.length) blocks = [...document.querySelectorAll('.text-block')]
   if (editingBlock) editingBlock.querySelector('.voice-btns')?.remove()
   if (overBlock && searchTerm) blocks.forEach(b => {
@@ -1126,7 +1132,8 @@ const activateBlock = (block, play) => {
       sec: parseFloat(b.dataset.start) || 0,
       block: b}))}
   myPlayer.volume = myVoice.volume = block._volume || 1
-  userPlay = play
+  userPlay = 0
+  setTimeout(() => userPlay = play, startDelay)
   if (captions == 1) {									// compact captions
     const rec = editingBlock.getBoundingClientRect()
     editor.style.height = rec.height + 'px'
@@ -1507,7 +1514,7 @@ function makeJSON() {
 
 
   function splitIfNeeded(e) {
-    if (!editingBlock) return;
+    if (!editingBlock || e.target.id) return
     e.preventDefault()
     const block = editingBlock
     const sel = window.getSelection()

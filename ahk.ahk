@@ -214,8 +214,6 @@
       Add()
     else if (command == "Ffmpeg")					; index folder (create thumbsheets)
       SetTimer, Ffmpeg, -10, -2						; run asynchromously
-    else if (command == "Scroll")					; update scroll, width, height
-      Scroll()
     else if (command == "Rename")					; rename media
       Rename()
     else if (command == "Edited")					; save browser text editing
@@ -556,19 +554,6 @@
       WinActivate, Notepad
       sleep 20
       }
-    }
-
-
-  Scroll()
-    {
-    FileRead, cues, %inca%\cache\cues\%media%.txt
-    if cues
-      Loop, Parse, cues, `n, `r						; each line of cues
-        if A_LoopField
-          if !InStr(A_LoopField, "0.00|scroll")				; remember text scroll position
-            newCue = %newCue%%A_LoopField%`r`n
-    FileDelete, %inca%\cache\cues\%media%.txt
-    FileAppend, %newCue%0.00|scroll|%value%, %inca%\cache\cues\%media%.txt, UTF-8
     }
 
 
@@ -1162,7 +1147,7 @@ Edited() 								; Save edited json, text or SRT file
     if (A_LoopField)
       {
       StringSplit, array, A_LoopField, |
-      if (array2 in rate,skinny && array1 = cue)
+       if ((array2 = "rate" || array2 = "skinny") && array1 = cue)
         {
         i := array2 = "rate" ? 1 : array2 = "skinny" ? 2 : 3
         if (vals%i% = "undefined")
@@ -1869,13 +1854,15 @@ else
 }
 
 ; 1. Try the fast 5090 gpu first
-cmd = -hwaccel cuda -hwaccel_output_format cuda -y -i file:"%src%" %ss% %to% -vf scale_cuda=%Resolution% -c:v h264_nvenc -preset p4 -rc vbr -b:v %MaxBitrate%k -bufsize %BufSize%k -spatial_aq 1 -temporal_aq 1 -force_key_frames "expr:gte(t,n_forced*2)" -g %GOPFrames% -keyint_min %GOPFrames% -maxrate %MaxBitrate%k -c:a aac -b:a 128k -ar 48000 -ac 2 -map 0:v:0 -map 0:a? -map 0:s? -c:s copy -f mp4 -movflags +faststart+separate_moof -metadata:s:v:0 handler_name=Inca file:"%new%"
-RunWait %COMSPEC% /c %inca%\cache\apps\ffmpeg.exe %cmd%, , Hide
+cmd = -hwaccel cuda -hwaccel_output_format cuda -y -i file:"%src%" %ss% %to% -vf scale_cuda=%Resolution% -c:v h264_nvenc -profile:v high -pix_fmt yuv420p -preset p4 -rc vbr -b:v %MaxBitrate%k -bufsize %BufSize%k -spatial_aq 1 -temporal_aq 1 -force_key_frames "expr:gte(t,n_forced*2)" -g %GOPFrames% -keyint_min %GOPFrames% -maxrate %MaxBitrate%k -c:a aac -b:a 128k -ar 48000 -ac 2 -map 0:v:0 -map 0:a? -map 0:s? -c:s copy -f mp4 -movflags +faststart+separate_moof -metadata:s:v:0 handler_name=Inca file:"%new%"
+
+handler_name=Inca file:"%new%"
+ RunWait %COMSPEC% /c %inca%\cache\apps\ffmpeg.exe %cmd%, , Hide
 
 ; 2. If it failed, fall back to AMF then CPU
-if ErrorLevel || !FileExist(new)
+ if ErrorLevel || !FileExist(new)
 {
-  encoders := "-c:v h264_amf -rc cqp -qp_i 22 -qp_p 24|-c:v libx264 -preset medium -crf 23 -pix_fmt yuv420p"
+  encoders := "-c:v h264_amf -rc cqp -qp_i 22 -qp_p 24 -pix_fmt yuv420p|-c:v libx264 -preset medium -crf 23 -pix_fmt yuv420p"
   Loop, Parse, encoders, |
   {
     encoder := A_LoopField

@@ -271,14 +271,13 @@
   border-radius: 1em;
   overflow: visible;
   padding: 0.3em;
-  padding-bottom: 1.5em}
+  padding-bottom: 1.2em}
 
 .thumb-wrap {
   position: relative;
   display: inline-block;
   border-radius: 1em;
   line-height: 0}
-
 
 .thumb-wrap:not(.popped)::after {
   content: '';
@@ -421,8 +420,9 @@
 
 .myview {
   --max-size: 8em;
-  position: relative;
   display: flex;
+  flex-wrap: wrap;
+  position: relative;
   margin: auto;
   justify-content: space-around;
   flex-wrap: wrap;
@@ -541,6 +541,7 @@
     top: 0;
     opacity: 0;
     visibility: hidden;
+    scrollbar-width: thin;
     background: #121010f0;
     border: 1px solid #333;
     border-radius: 0.7em;
