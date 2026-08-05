@@ -2120,6 +2120,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
 
   <div id="editor">
     <div id="ribbon">
+      <span id="edPause" style="position:absolute;left:10px;color:orange;opacity:0;transition:0.3s"></span>
       <div id="media-header" class="dropdown">
         <div class="header"></div>
         <div class="dropdown-content"><div>No media</div></div>`n
