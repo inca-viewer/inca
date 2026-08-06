@@ -1,4 +1,6 @@
 
+// easy way to duplicate a json media to new story
+// way to set start and end state of my player on voiced
 
 
   let wheel = 0								// wheel count
@@ -141,6 +143,7 @@
     if (editingBlock?.innerText.length < 3) editingBlock.dataset.start = myPlayer.currentTime
     editing = 1; syncPlay = 0 }, { passive: true })
   viewport.addEventListener('scroll', () => {
+    if (xm > 0.1) return
     let best = null
     const mid = viewport.getBoundingClientRect().top + viewport.clientHeight / 2
     for (const b of blocks) if (b.getBoundingClientRect().top + 20 <= mid) best = b; else break
@@ -193,7 +196,7 @@
     if (e.target.closest('#emotionSub')) document.execCommand('insertText', false, emotion)
     if (!playing && !listView && longClick && !gesture && overMedia && !overTitle) popThumb()	// pop thumb out of flow
     if (['myCut', 'myCopy', 'myPaste'].includes(id)) {
-      lastId.focus()
+      if (lastId) lastId.focus()
       inca('CutCopyPaste',id); return}
     if (longClick == 1 && !gesture && !playing && playlist && selected && overMedia) {inca('Move', overMedia); return}
     if (['myIndex', 'myMp3', 'myMp4', 'myJoin', 'myJpg', 'mySrt'].includes(id)) {Ffmpeg(id); cue = 0; return}
@@ -263,14 +266,16 @@
       if (id == 'myCap') {capButton(); return}
       if (id == 'myCue' && playing) {
         cue = myPlayer.currentTime = Math.max(0.01, +myPlayer.currentTime.toFixed(2)); syncPlay = 0; return}
-      if (playing && longClick && !gesture) {
+      if (playing && longClick && !gesture && overMedia && ym > 0.8) {
         if (!captions) {captions = 1; defStart = myPlayer.currentTime; getSrt(); return}  // toggle captions
         else if (captions == 1) {captions = 0; editor.style.display = 'none'; return}}
       if (captions && !overMedia) {
         const wasOsk = document.getElementById('osk')
         const block = overBlock ? overBlock : editingBlock
-        if (longClick && overEditor) {osk(); return}
+        if (longClick && overBlock && overBlock !== editingBlock) activateBlock(block, 0)
+        if (longClick && !gesture && overEditor) {osk(); return}
         if (!longClick) {
+          if (overBlock && overBlock !== editingBlock) {activateBlock(block, 1); userPlay = 1; return}
           if (captions == 1 && xm>0 && xm<1 && ym>1 && ym<1.3) {captions = 2; activateBlock(block)}
           if (!block?._voice?.src && id === 'myMask' && myPlayer.currentTime >= (block._end - 0.3 || Infinity)) {
             activateBlock(block.nextElementSibling || block, 1); return}
@@ -278,7 +283,7 @@
           else {
             if (myPlayer.paused) {
               userPlay = 1
-              if (!editingBlock?._voice?.src && myPlayer.currentTime >= (editingBlock._end - 0.3 || Infinity))
+              if (myVoice.currentTime > myVoice.dur - 0.3 || myPlayer.currentTime > editingBlock._end - 0.3)
               myPlayer.currentTime = +editingBlock.dataset.start}
             else userPlay ^= 1
             syncPlay = userPlay}
@@ -471,8 +476,6 @@
       if (!thumbSheet) myPlayer.currentTime = start
       setThumb(); positionMedia(0); delay = 140}
     else if (Click && playing) { 							// zoom myPlayer
-      captions = 0; 
-      editor.style.display = null; 
       let x = rect.left+rect.width/2-xPos
       let y = rect.top+rect.height / 2 - yPos
       let z = clickMedia && Click && (xm < 0.2 || xm > 0.8 || ym < 0.2 || ym > 0.8) ? wheel / 1300 : 0
@@ -1082,6 +1085,7 @@ function closePic() {
     if (type === 'image' && text) captions = 1
     lastBlock = type === 'image' ? 1 : lastBlock;
     editor.style.transition = 'opacity 1s'
+    editor.style.height = 0
     editor.style.opacity = 1
     document.querySelectorAll('.dropdown-content').forEach(c => c.style.display = 'none');
     const parsed = parseInputText(text);
@@ -1605,6 +1609,7 @@ function Backspace(e) {
   e.preventDefault()
   syncPlay = 0
   if (captions) editing = 1
+if (editingBlock.textContent.endsWith('\u200B')) document.execCommand('Delete')
   const sel = window.getSelection()
   let atStart = false
   if (sel.rangeCount && editingBlock) {
