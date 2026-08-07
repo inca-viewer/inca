@@ -284,7 +284,7 @@ if (key === "‹" || key === "›" || key === "↑" || key === "↓") {
     else if (key === "Del") {
       if (active.isContentEditable) document.execCommand('forwardDelete');
       else {
-        let pos = active.selectionStart || 0;
+        let pos = active.selectionStart ?? 0;
         active.value = active.value.slice(0, pos) + active.value.slice(pos+1);
         active.selectionStart = active.selectionEnd = pos;
       }
@@ -310,7 +310,7 @@ if (key === "‹" || key === "›" || key === "↑" || key === "↓") {
     if (active.isContentEditable) {
       document.execCommand('insertText', false, char);
     } else {
-      let pos = active.selectionStart || active.value.length;
+      let pos = active.selectionStart ?? active.value.length;
       active.value = active.value.slice(0, pos) + char + active.value.slice(active.selectionEnd);
       active.selectionStart = active.selectionEnd = pos + 1;
     }

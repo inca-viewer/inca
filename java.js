@@ -1,6 +1,4 @@
-
-// easy way to duplicate a json media to new story
-// way to set start and end state of my player on voiced
+// inner worlds
 
 
   let wheel = 0								// wheel count
@@ -28,7 +26,7 @@
   let overTitle = 0							// text input fields, allow cut paste
   let overEditor = 0							// over editor panel
   let editing = 0							// 1 = over textarea 2 = editing
-  let incaBusy = ''							// messaging to server
+  let incaBusy = 0							// messaging to server
   let Zindex = 1							// element zIndex
   let rect								// element dimensions
   let size = 0								// file size (from inca)
@@ -116,7 +114,15 @@
   myPlayer.addEventListener('timeupdate', playerProgress)
   window.addEventListener('beforeunload', (e) => {if (playing && editing) e.preventDefault()})
   myNav.addEventListener('wheel', wheelEvent)
-  myNav.addEventListener('mouseleave', () => myNav.style.display = myDefault.style.display = myAlt.style.display = null)
+  myNav.addEventListener('mouseleave', () => {
+    if (editingBlock && myPlayer.paused) {
+      if (editingBlock.dataset.start != myPlayer.currentTime) editing = 1
+      editingBlock.dataset.start = myPlayer.currentTime}
+    myNav.style.display = myDefault.style.display = myAlt.style.display = null
+    if (thumb.style.rate || thumb.style.skinny) {
+    let x = thumb.style.rate + ',' + thumb.style.skinny
+    let y = playing ? myPlayer.currentTime : 0
+    if (type) inca('addCue', x, index, y)}})
   myStart.addEventListener('wheel', wheelEvent)
   myStart.addEventListener('mouseenter', () => {			// play short sample
     if (!Click && editingBlock) {
@@ -130,8 +136,8 @@
     myAlt.style.display = isAlt ? '' : 'block'
     myDefault.style.display = isAlt ? 'block' : 'none'})
   searchHeader.addEventListener('wheel', nextMatch)
-  mediaContent.addEventListener('mouseleave', () => {myPlayer.src = originalPlayerSrc; mediaContent.style.display = 'none'})
-  searchHeader.addEventListener('mouseleave', () => {searchInput.placeholder='🔍︎'})
+  mediaContent.addEventListener('mouseleave', () => mediaContent.style.display = 'none')
+  searchHeader.addEventListener('mouseleave', () => searchInput.placeholder='🔍︎')
   searchHeader.addEventListener('click', (e) => {
     searchTerm = searchInput.value = ''; blocks.forEach(b => {b.style.color = ''; b.textContent = b.textContent})})
   searchHeader.addEventListener('mouseenter', (e) => {
@@ -197,13 +203,13 @@
     if (!playing && !listView && longClick && !gesture && overMedia && !overTitle) popThumb()	// pop thumb out of flow
     if (['myCut', 'myCopy', 'myPaste'].includes(id)) {
       if (lastId) lastId.focus()
-      inca('CutCopyPaste',id); return}
+      inca('CutCopyPaste',id,index); return}
     if (longClick == 1 && !gesture && !playing && playlist && selected && overMedia) {inca('Move', overMedia); return}
     if (['myIndex', 'myMp3', 'myMp4', 'myJoin', 'myJpg', 'mySrt'].includes(id)) {Ffmpeg(id); cue = 0; return}
     if (id == 'myClone') {newClone(); return}
     if (id == 'myLoudnorm') {inca('loudNorm',0,index); return}
     if (id == 'myInca') {inca('Settings'); return}
-    if (id == 'myStart' && editingBlock) {editingBlock.dataset.start = myPlayer.currentTime; editing = 1; return}
+    if (id == 'myStart' && editingBlock) { myPlayer.currentTime = editingBlock.dataset.start; editing = 1; return}
     if (id == 'ribbon' && !longClick) {viewport.scrollTo({top:0,behavior:'smooth'}); return}
     if (id == 'myFavorite') {addFavorite(); return}
     if (id == 'myDelete') if (selected || type) {inca('Delete','',index); return}
@@ -353,7 +359,7 @@
     else myPlayer.muted = defMute
     if (!thumbSheet) {
       if (favicon.matches(':hover')) getSrt(1)
-      else if (overTitle && Click && blocks.length) previewMode ? getSrt(lastBlock) : getSrt(1)
+      else if (overTitle && Click && favicon.innerText.includes('©')) previewMode ? getSrt(lastBlock) : getSrt(1)
       else if (captions || type == 'document') getSrt()}
     if (el = document.getElementById('title'+lastMedia)) el.style.color = el.style.fontWeight = null
     title.style.color = 'pink'; title.style.fontWeight = 'bold'
@@ -579,12 +585,14 @@
     mySpeed.innerHTML = mySkinny.innerHTML = null
     let currentRate = editingBlock?._voice?.src ? myVoice.playbackRate : rate
     if (type) {
+      mySpeed.style.color = currentRate == 1 ? null : 'red'
       mySpeed.innerHTML = currentRate == 1 ? 'Speed' : `Speed ${currentRate.toFixed(2)}`
       mySkinny.innerHTML = skinny == 1 ? 'Skinny' : `Skinny ${skinny.toFixed(2)}`
       mySelect.innerHTML = 'Select '+index
       myPlayer.style.outline = title.style.outline
       myFlip.innerHTML = 'Flip'}
     else {
+      mySpeed.style.color = defRate == 1 ? null : 'red'
       mySpeed.innerHTML = defRate === 1 ? 'Speed' : 'Speed ' + defRate
       mySelect.innerHTML = 'Select'
       myFlip.innerHTML = mySelect.style.outline = null}
@@ -595,7 +603,6 @@
     else myDelete.innerHTML = null
     myInput.style.color = myInput.value ? 'red' : null
     mySkinny.style.color = skinny == 1 ? null : 'red'
-    mySpeed.style.color = currentRate == 1 ? null : 'red'
     myPitch.style.color = pitch ? 'red' : null
     myPause.style.color = defPause ? 'red' : null
     myMute.style.color = defMute ? 'red' : null
@@ -709,7 +716,7 @@
       if (dur) mySeek.style.opacity = 1
       if (xm>0 && xm<1 && (ym > trigger || yw > 0.95) && ym < 1 && !thumbSheet && delay < 30) myPic.style.opacity = 1
       else myPic.style.opacity = 0
-      if (!sheetUrl || myPic.style.backgroundImage === '') setThumb()   		// lazy loading thumbSheet
+      if (type == 'video' && (!sheetUrl || myPic.style.backgroundImage === '')) setThumb()  // lazy loading thumbSheet
       myPic.style.top = Math.min(rect.top + rect.height, innerHeight) - myPic.offsetHeight + 'px'
       if (playing) myPic.style.left = xPos - skinny * myPic.offsetWidth / 2 + 'px'
       else myPic.style.left = rect.left + rect.width / 2 - skinny * myPic.offsetWidth / 2 + 'px'
@@ -742,7 +749,7 @@
       if (thumbSheet) {myPlayer.poster = sheetUrl; myPlayer.load()}
       else myPlayer.poster = null
       if (myPlayer.src != thumb.src) myPlayer.src = thumb.src
-      myPic.style.backgroundImage = 'url(\"'+sheetUrl+'\")'}				// use 6x6 thumbsheet as poster
+      myPic.style.backgroundImage = 'url(\"'+sheetUrl+'\")'}						// use 6x6 thumbsheet as poster
     else if (type == 'audio') myPlayer.src = thumb.src
     else myPlayer.src = null
     if (!thumbSheet && dur) myPlayer.currentTime = start
@@ -777,13 +784,8 @@
   function inca(command,value,select,address) {					// server messaging to inca.ahk
     more = 4
     if (incaBusy) return
-    incaBusy = '1'
+    incaBusy = true
     try {
-        let messages = ''
-        for (i = 1; el = document.getElementById('thumb'+i); i++) {
-          if ((el.style.rate || el.style.skinny) && !el.style.posted) {
-            messages += '#editCues#'+el.style.rate+','+el.style.skinny+','+'#'+i+'#';
-            el.style.posted = 1}}
         if (select) {select += ','} else select = ''
         if (selected) select = selected
         value = typeof value === 'string' ? value.replaceAll('#', '𝌇') : value ?? ''
@@ -791,7 +793,7 @@
         if (command == 'Delete' || command == 'Rename' || value.toString().includes('|myMp4') || (select && command == 'Path')) {
           selected = ''
           for (x of select.split(',')) if (el = document.getElementById('thumb'+x)) el.remove()}
-        messages += '#'+command+'#'+value+'#'+select+'#'+address
+        let messages = '#'+command+'#'+value+'#'+select+'#'+address
         return fetch(server + 'generate-html', {method: 'POST', headers: {'Content-Type': 'text/plain'}, body: messages})
           .then(response => {if (response.status === 204) {return null} return response.text()})
           .then(data => {
@@ -807,7 +809,7 @@
               return content}
             return null})
           .catch(err => { return null })
-          .finally(() => { incaBusy = '' })}
+          .finally(() => { incaBusy = false })}
         finally {}}
 
 
@@ -843,7 +845,7 @@
     folder = fo; filt = fi; wheelDir = wd; defPause = pa; listView = lv; selected = se; playlist = pl; listSize = ls
     defMute = (mu == 'yes') ? 1 : 0
     settings = JSON.parse(localStorage.getItem(folder) || '{}')
-    settings.pageWidth = (isNaN(settings.pageWidth) || settings.pageWidth > innerWidth) ? '700' : settings.pageWidth
+    settings.pageWidth = (isNaN(settings.pageWidth) || settings.pageWidth > innerWidth) ? '640' : settings.pageWidth
     settings.view = (isNaN(settings.view) || settings.view < 6 || settings.view > 300) ? '10' : settings.view
     settings.defRate = (isNaN(settings.defRate) || settings.defRate < 0.2 || settings.defRate > 5) ? '1' : settings.defRate
     settings.pitch = settings.pitch == 1 ? 1 : 0
@@ -912,13 +914,10 @@
     val = Math.round(1000 * val) / 1000
     if (editingBlock && item == 'rate' && !cue) {
       editingBlock._rate = myPlayer.playbackRate = myVoice.playbackRate = val; editing = 1; return}
-    if (cue && (item === 'skinny' || item === 'rate')) {
-      if (item === 'skinny') thumb.style.rate = null
-      else thumb.style.skinny = null}
-    thumb.style[item] = val
-    thumb.style.posted = 0
-    if (item == 'skinny') {skinny = val; thumb.parentElement.style.transform = 'scale('+val+',1)'}
-    if (type) {if (!playing) Param(); positionMedia(0.2); if (item == 'rate') rate = val}
+    if (type) {
+      thumb.style[item] = val
+      if (item == 'skinny') {skinny = val; thumb.parentElement.style.transform = 'scale('+val+',1)'}
+      if (!playing) Param(); positionMedia(0.2); if (item == 'rate') rate = val}
     else if (item == 'rate') {rate = defRate = val; settings.defRate = String(defRate); localStorage.setItem(folder, JSON.stringify(settings))}}
 
 
@@ -933,9 +932,7 @@
     else if (time >= cue) time = cue
     else {time = '0.00'; end = cue}
     myCue.innerHTML = (playing && dur) ? 'Add Cue '+formatTime(myPlayer.currentTime) : 'Show Cues'
-    if (cue && thumb.style.skinny) myCap.innerHTML = 'Cue Skinny ' + skinny
-    else if (cue && thumb.style.rate) myCap.innerHTML = 'Cue Speed ' + rate
-    else if (cue && end != dur) myCap.innerHTML = 'GoTo ' + formatTime(end)
+    if (cue && end != dur) myCap.innerHTML = 'GoTo ' + formatTime(end)
     if (cue) myDur.innerHTML = formatTime(time)+' - '+formatTime(end)
     else if (dur && playing) myDur.innerHTML = formatTime(myPlayer.currentTime)+' - '+formatTime(dur)
     else if (dur) myDur.innerHTML = formatTime(dur)
@@ -945,10 +942,7 @@
   function capButton() {							// context menu Caption button
     start = myPlayer.currentTime
     let x = cue+'|goto|'+start.toFixed(1)
-    if (thumb.style.skinny) x = cue+'|skinny|'+thumb.style.skinny+'\n'+lastSeek.toFixed(1)+'|skinny|1'
-    if (thumb.style.rate) x = cue+'|rate|'+thumb.style.rate+'\n'+lastSeek.toFixed(1)+'|rate|1'
-    thumb.style.skinny = thumb.style.rate = 0
-    if (cue) inca('addCue', x, index)						// add cues to media
+    if (cue) inca('Goto', x, index)						// add goto cue to media
     else {captions = 2; Play()}}
 
 
@@ -1026,22 +1020,23 @@
 
 async function closePlayer() {
   closeOsk()
-  if (cue) thumb.style.rate = thumb.style.skinny = ''
+  let reload = thumb.style.rate || thumb.style.skinny ? 1 : 0
+  thumb.style.rate = thumb.style.skinny = ''
   try {
     if (editing) {
       editing = 0
       let json = makeJSON().replaceAll('#', '𝌇')
       await inca('Edited', json, index)}
-    else inca('Reload', 0, index)}
+    else inca('Reload', reload, index)}
   finally {
     try { closePic() } catch (_) {}
     myPlayer.muted = myVoice.muted = true
     Click = playing = start = captions = thumbSheet = cue = overTitle = 0
     mySeek.style.width = myVig.style.opacity = myPlayer.style.opacity = editor.style.opacity = 0
+    myPanel.style.top = myView.style.top = ''
+    myMask.style = myDur.innerHTML = myVoice.src = myPlayer.src = ''
     editingBlock = editor.style.display = myNav.style.display = null
     myVig.style.visibility = myPlayer.style.visibility = null
-    myMask.style = myDur.innerHTML = myVoice.src = myPlayer.src = ''
-    myPanel.style.top = myView.style.top = ''
     setThumb()
     try { thumb.scrollIntoView({ block: 'nearest' }) } catch (_) {}}}
 
@@ -1347,11 +1342,12 @@ const activateBlock = (block, play) => {
 
         row.addEventListener('mouseleave', () => {
           if (mediaContent.style.display != 'none') {
-            myPlayer.src = originalPlayerSrc;
-            myPlayer.poster = '';
-            myPlayer.load();
+            myPlayer.src = originalPlayerSrc.replace(/#/g, '%23')
+            myPlayer.poster = ''
+            myPlayer.load()
+            myPlayer.currentTime = editingBlock.dataset.start
             syncPlay = 0
-            currentPreviewItem = null;
+            currentPreviewItem = null
           }
         });
 
@@ -1435,6 +1431,7 @@ function populateVoices() {
 
 function renderVoiceButtons(block) {
   block.querySelector('.voice-btns')?.remove()
+  if (!block._voice?.src) return
   const used = block === editingBlock
     ? [...new Set(blocks.map(b => b._voiceName).filter(Boolean))]
     : (block._voice?.src ? [block._voiceName].filter(Boolean) : [])
@@ -1609,7 +1606,7 @@ function Backspace(e) {
   e.preventDefault()
   syncPlay = 0
   if (captions) editing = 1
-if (editingBlock.textContent.endsWith('\u200B')) document.execCommand('Delete')
+if (captions && editingBlock.textContent.endsWith('\u200B')) document.execCommand('Delete')
   const sel = window.getSelection()
   let atStart = false
   if (sel.rangeCount && editingBlock) {

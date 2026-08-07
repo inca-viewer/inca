@@ -92,7 +92,7 @@
     Run, cmd.exe /c cd /d "%inca%\cache\apps" && node\node.exe server.js, , Hide
     Run, cmd.exe /c cd /d "%inca%\cache\apps\Chatterbox-TTS-Server" && "python_embedded\python.exe" start.py, , Hide
     WinActivate, ahk_group Browsers
-    path = %profile%\Pictures\
+    path = %profile%\pictures\
     startPage = #Path###%path%			; default start page
     if GetBrowser()				; gets incaTab settings
       startPage = #Path###%path%
@@ -204,8 +204,8 @@
   ProcessMessage()							; messages from java/browser html
     {
     PopUp(".",0,0,0)
-    if (command == "editCues")						; update media cues skinny, rate
-      editCues()
+    if (command == "addCue")						; update media cues skinny, rate
+      addCue()
     else if (command == "Favorite")					; add media favorite to New.m3u
       Favorite()
     else if (command == "Delete")					; delete media
@@ -258,7 +258,7 @@
       index := value							; for scrollToIndex() in java
       reload := 1
       }
-    else if (command == "addCue")					; add skinny, speed, goto at scroll
+    else if (command == "Goto")						; add go to cue
       {
       FileAppend, `r`n%value%, %inca%\cache\cues\%media%.txt, UTF-8
       index := StrSplit(selected, ",").1
@@ -1123,6 +1123,8 @@ Edited() 								; Save edited json, text or SRT file
         ClipBoard := StrReplace(ClipBoard, "#cut#")
         array := StrSplit(ClipBoard,"|")
         address := path
+        if playlist
+          address := playlist
         folder := array.1
         selected := array.2
         MoveFiles()
@@ -1134,10 +1136,10 @@ Edited() 								; Save edited json, text or SRT file
       }
 
 
-  editCues() 
+  addCue()
     {   
     StringSplit, vals, value, `,  					; Split into rate, skinny
-    cue := "0.00"
+    cue := Format("{:.2f}", address)
     if (1*val[1]+1*val[2] > 4)
       return
     cueFile := inca . "\cache\cues\" . media . ".txt"
@@ -1276,7 +1278,7 @@ GetTabSettings(all)							; from line 1 of .htm cache file
     year = 2017
     x := in
     year += x, seconds
-    FormatTime, in, %year%, H:mm:ss					; show duration in hours:mins format
+    FormatTime, in, %year%, H:mm:ss				; show duration in hours:mins format
     if (x < 3600)
       FormatTime, in, %year%, mm:ss
     if (x < 600)
@@ -1298,82 +1300,130 @@ GetTabSettings(all)							; from line 1 of .htm cache file
     }
 
 
-  MoveFiles()								; or playlist .m3u entries
+MoveFiles()							; or playlist .m3u entries
+{
+  if (lastClick != "LButton")
+    return
+  fail =
+  if (playlist && !InStr(address, "\inca\") && !longClick)
+    popup = Cannot Move Shortcuts . . .
+  else Loop, Parse, selected, `,
+  {
+    if A_LoopField is not number
+      continue
+    getMedia(A_LoopField)
+    if longClick
+      popup = Copying %A_Index%
+    else popup = Moving %A_Index%
+    if (!InStr(path, "\inca\") && InStr(address, "\inca\"))
+      popup = Added %A_Index%
+
+    if (InStr(address, "inca\fav") || InStr(address, "inca\music"))
     {
-    if (lastClick != "LButton")
-      return
-    fail =
-    if (playlist && !InStr(address, "\inca\") && !longClick)
-      popup = Cannot Move Shortcuts . . .
-    else Loop, Parse, selected, `,
+      FileRead, plStr, %address%
+      if (InStr(plStr, target) && longClick)			; already exists → full media clone
       {
-      if A_LoopField is not number
-        continue
-      getMedia(A_LoopField)
-      if longClick
-        popup = Copying %A_Index%
-      else popup = Moving %A_Index%
-      if (!InStr(path, "\inca\") && InStr(address, "\inca\"))
-        popup = Added %A_Index%
-      if (InStr(address, "inca\fav") || InStr(address, "inca\music"))
+        Loop 9999
         {
-        PopUp("Adding",0,0,0)
-        FileAppend, %target%`r`n, %address%, UTF-8			; add media entry to playlist
-        if (src && !InStr(path, "\inca\"))
-          Runwait, %inca%\cache\apps\ffmpeg.exe -i "%src%" -y -vf scale=1280:1280/dar -vframes 1 "%inca%\cache\posters\%media%%A_Space%0.0.jpg",, Hide
-        }
-      else if src							; to folder not playlist
-        {
-        FileGetSize, x, %address%%media%.%ext%				; if x, then name already exists in target folder
-        FileGetSize, y, %src%						; get source file size
-        z=								; new 'Copy -' addendum
-        if (x && !playlist)						; filename exists in target folder
-          Loop 9999							; Copy (index) suffix attempt
-            {
-            z = \%media% - Copy (%A_Index%).%ext%
-            FileGetSize, w,  %address%%z%
-            if !w							; if Copy name not exist 
-              break
-            }
-        if z
-          {
-          SplitPath, z,,,, newMedia
-          FileCopy, %inca%\cache\durations\%media%.txt, %inca%\cache\durations\%newMedia%.txt, 1
-          FileCopy, %inca%\cache\posters\%media%.jpg, %inca%\cache\posters\%newMedia%.jpg, 1
-          FileCopy, %inca%\cache\thumbs\%media%.jpg,  %inca%\cache\thumbs\%newMedia%.jpg, 1
-          }
-        if (!longClick && x == y)
-          {
-          fail = failed
-          popup = Duplicate %A_Index%
-          continue
-          }         
-        Loop, 4
-          {
-          if !longClick
-            FileMove, %src%, %address%%z%				; move file to new folder
-          else FileCopy, %src%, %address%%z%
-          if !ErrorLevel
+          newMedia := media " - Copy (" A_Index ")"
+          IfNotExist, %mediaPath%\%newMedia%.%ext%
             break
-          sleep 50							; time for browser to release media
-          }
+        }
+        FileCopy, %src%, %mediaPath%\%newMedia%.%ext%, 1
         if ErrorLevel
-          {
+        {
           fail = failed
           popup = Failed %A_Index%
-          }
+          continue
         }
-      PopUp(popup,0,0,0)
+        ; copy every asset (same set used for real-file conflicts)
+        FileCopy, %inca%\cache\durations\%media%.txt, %inca%\cache\durations\%newMedia%.txt, 1
+        FileCopy, %inca%\cache\posters\%media%.jpg, %inca%\cache\posters\%newMedia%.jpg, 1
+        FileCopy, %inca%\cache\thumbs\%media%.jpg, %inca%\cache\thumbs\%newMedia%.jpg, 1
+        FileCopy, %inca%\cache\json\%media%.json, %inca%\cache\json\%newMedia%.json, 1
+        FileCopy, %inca%\cache\cues\%media%.txt, %inca%\cache\cues\%newMedia%.txt, 1
+        FileCopy, %inca%\cache\srt\%media%.srt, %inca%\cache\srt\%newMedia%.srt, 1
+        FileCopy, %inca%\cache\posters\%media% %seek%.jpg, %inca%\cache\posters\%newMedia% %seek%.jpg, 1
+        FileCopyDir, %inca%\cache\speech\%media%, %inca%\cache\speech\%newMedia%, 1
+        IfExist, %inca%\cache\json\%newMedia%.json
+        {
+          FileRead, json, %inca%\cache\json\%newMedia%.json
+          json := RegExReplace(json, "i)\Q/cache/speech/" media "\E", "/cache/speech/" newMedia)
+          FileDelete, %inca%\cache\json\%newMedia%.json
+          FileAppend, %json%, %inca%\cache\json\%newMedia%.json, UTF-8
+        }
+        src := mediaPath "\" newMedia "." ext
+        target := src "|" seek
+        media := newMedia
+        popup = Copied as %newMedia%
       }
-    if (popup && !longClick)
-      if (InStr(address, "inca\fav") || InStr(address, "inca\music"))
-        DeleteEntries()
-    if fail
-      PopUp("failed",900,0,0)
-    else if popup
-      PopUp(popup,500,0,0)
-    return
-    }  
+      FileAppend, %target%`r`n, %address%, UTF-8
+      if (src && !InStr(path, "\inca\"))
+        Runwait, %inca%\cache\apps\ffmpeg.exe -i "%src%" -y -vf scale=1280:1280/dar -vframes 1 "%inca%\cache\posters\%media%%A_Space%0.0.jpg",, Hide
+    }
+    else if src							; to folder not playlist
+    {
+      FileGetSize, x, %address%%media%.%ext%
+      FileGetSize, y, %src%
+      z=
+      if (x && !playlist)
+        Loop 9999
+        {
+          z = \%media% - Copy (%A_Index%).%ext%
+          FileGetSize, w, %address%%z%
+          if !w
+            break
+        }
+      if z
+      {
+        SplitPath, z,,,, newMedia
+        FileCopy, %inca%\cache\durations\%media%.txt, %inca%\cache\durations\%newMedia%.txt, 1
+        FileCopy, %inca%\cache\posters\%media%.jpg, %inca%\cache\posters\%newMedia%.jpg, 1
+        FileCopy, %inca%\cache\thumbs\%media%.jpg, %inca%\cache\thumbs\%newMedia%.jpg, 1
+        FileCopy, %inca%\cache\json\%media%.json, %inca%\cache\json\%newMedia%.json, 1
+        FileCopy, %inca%\cache\cues\%media%.txt, %inca%\cache\cues\%newMedia%.txt, 1
+        FileCopy, %inca%\cache\srt\%media%.srt, %inca%\cache\srt\%newMedia%.srt, 1
+        FileCopy, %inca%\cache\posters\%media% %seek%.jpg, %inca%\cache\posters\%newMedia% %seek%.jpg, 1
+        FileCopyDir, %inca%\cache\speech\%media%, %inca%\cache\speech\%newMedia%, 1
+        IfExist, %inca%\cache\json\%newMedia%.json
+        {
+          FileRead, json, %inca%\cache\json\%newMedia%.json
+          json := RegExReplace(json, "i)\Q/cache/speech/" media "\E", "/cache/speech/" newMedia)
+          FileDelete, %inca%\cache\json\%newMedia%.json
+          FileAppend, %json%, %inca%\cache\json\%newMedia%.json, UTF-8
+        }
+      }
+      if (!longClick && x == y)
+      {
+        fail = failed
+        popup = Duplicate %A_Index%
+        continue
+      }
+      Loop, 4
+      {
+        if !longClick
+          FileMove, %src%, %address%%z%
+        else FileCopy, %src%, %address%%z%
+        if !ErrorLevel
+          break
+        sleep 50
+      }
+      if ErrorLevel
+      {
+        fail = failed
+        popup = Failed %A_Index%
+      }
+    }
+    PopUp(popup,0,0,0)
+  }
+  if (popup && !longClick)
+    if (InStr(address, "inca\fav") || InStr(address, "inca\music"))
+      DeleteEntries()
+  if fail
+    PopUp("failed",900,0,0)
+  else if popup
+    PopUp(popup,500,0,0)
+}
 
 
   DeleteEntries()							; playlist entries
