@@ -106,6 +106,7 @@
   document.addEventListener('mousemove', mouseMove)
   document.addEventListener('keydown', keyDown)
   myContent.addEventListener('scroll', () => seekTimer = cursor = 0)
+  viewport.addEventListener('scroll', () => {if (xm > 0.95) gesture = 1})	// prevent osk from scroll bar
   document.addEventListener('dragstart', () => gesture = 1)
   document.addEventListener('drop', (e) => {Click = 0; gesture = 0; if (overEditor) activateBlock(e.target.closest('.text-block'),0)})
   myPlayer.addEventListener('ended', nextMedia)
@@ -116,7 +117,7 @@
   myNav.addEventListener('wheel', wheelEvent)
   myNav.addEventListener('mouseleave', () => {
     if (editingBlock && myPlayer.paused) {
-      if (editingBlock.dataset.start != myPlayer.currentTime) editing = 1
+     if (editingBlock.dataset.start != myPlayer.currentTime) editing = 1
       editingBlock.dataset.start = myPlayer.currentTime}
     myNav.style.display = myDefault.style.display = myAlt.style.display = null
     if (thumb.style.rate || thumb.style.skinny) {
@@ -145,9 +146,7 @@
     if (sel) {searchTerm = searchInput.value = sel}
     else searchInput.placeholder='❤'})
   searchInput.addEventListener('input', newSearch)
-  viewport.addEventListener('input', () => {
-    if (editingBlock?.innerText.length < 3) editingBlock.dataset.start = myPlayer.currentTime
-    editing = 1; syncPlay = 0 }, { passive: true })
+  viewport.addEventListener('input', () => {editing = 1; syncPlay = 0 })
   viewport.addEventListener('scroll', () => {
     if (xm > 0.1) return
     let best = null
@@ -224,7 +223,7 @@
     if (id == 'myFlip') {Flip(); return}
     if (id == 'myElevenLabs' || id == 'myChatterbox') Chatterbox(id)
     if (id == 'myCancel') {
-      if (!editing) {captions = 1; activateBlock(editingBlock,1); editingBlock.scrollIntoView({block: 'center' }); return}
+      if (!editing) {captions = 1; activateBlock(editingBlock,0); editingBlock.scrollIntoView({block: 'center' }); return}
       else if (myCancel.innerHTML != 'Sure ?') myCancel.innerHTML = 'Sure ?' 
       else { editing = 0; closePlayer() }}
     if (id == 'myBookmark') {
@@ -240,9 +239,7 @@
       if (overEditor) {
         lastId = editingBlock
         myVoice.currentTime = 0
-        if (overBlock) {
-          activateBlock(overBlock, 0)
-          if (overBlock.innerText.length > 1) myPlayer.currentTime = overBlock.dataset.start}
+        if (overBlock) {myPlayer.currentTime = overBlock.dataset.start; activateBlock(overBlock, 0)}
         if (longClick) Chatterbox(id)
         populateVoices()
         myNav.classList.add('editor-mode')} 
@@ -272,8 +269,8 @@
       if (id == 'myCap') {capButton(); return}
       if (id == 'myCue' && playing) {
         cue = myPlayer.currentTime = Math.max(0.01, +myPlayer.currentTime.toFixed(2)); syncPlay = 0; return}
-      if (playing && longClick && !gesture && overMedia && ym > 0.8) {
-        if (!captions) {captions = 1; defStart = myPlayer.currentTime; getSrt(); return}  // toggle captions
+      if (playing && longClick && !gesture && overMedia && ym < trigger) {
+        if (!captions) {captions = 1; userPlay = 0; defStart = myPlayer.currentTime; getSrt(); return}  // toggle captions
         else if (captions == 1) {captions = 0; editor.style.display = 'none'; return}}
       if (captions && !overMedia) {
         const wasOsk = document.getElementById('osk')
@@ -287,7 +284,7 @@
             activateBlock(block.nextElementSibling || block, 1); return}
           if (overBlock == editingBlock && (wasOsk || editing)) syncPlay = 0
           else {
-            if (myPlayer.paused) {
+            if (editingBlock?._voice?.src ? myVoice.paused : myPlayer.paused) {
               userPlay = 1
               if (myVoice.currentTime > myVoice.dur - 0.3 || myPlayer.currentTime > editingBlock._end - 0.3)
               myPlayer.currentTime = +editingBlock.dataset.start}
@@ -337,7 +334,7 @@
       let ps = 5 * ((row * 6) + col)
       ps = (ps - 1) / 200								// see index() in inca.ahk to explain
       if (overMedia && yw < 0.9) start = (offset - (ps * offset) + dur * ps)}
-    else if (!longClick && lastClick == 1 && playing) {syncPlay ^= 1; return}
+    else if (!longClick && lastClick == 1 && playing) {userPlay = syncPlay ^= 1; return}
     if (lastClick && lastClick != 2) thumbSheet = 0
     if (!gesture) return 1}								// return and continue
 
@@ -529,7 +526,9 @@
         myPlayer.currentTime = editingBlock.dataset.start
         editingBlock.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
         delay = 333}
-      else { myPlayer.currentTime += (wheelUp ? 0.02 : -0.02); delay = 60 }}		// nudge start time
+      else if (e.clientX - myNav.offsetLeft < 70) { myPlayer.currentTime += (wheelUp ? 1 : -1); delay = 60 }
+      else { myPlayer.currentTime += (wheelUp ? 0.02 : -0.02); delay = 60 }
+      if (myPlayer.currentTime >= dur) myPlayer.currentTime = dur}			// nudge start time
     else if (!thumbSheet) {
       delay = 124
       let interval = 0.06								// seek
@@ -561,7 +560,7 @@
     if (overTitle == 1 && seekTimer > 2) title.classList.add('preview')
     let top = 0
     let el = thumb
-    if (overEditor) el = editor
+    if (overEditor && !myNav.style.display) el = editor
     else if (playing) el = myPlayer
     else if (overTitle) el = title
     rect = el.getBoundingClientRect()
@@ -708,7 +707,7 @@
     if (rect.bottom > innerHeight) mySeek.style.top = innerHeight - 15 +'px'
     else mySeek.style.top = rect.top + rect.height - 6 + 'px'
     mySeek.style.left = cueX + 'px'
-    if (cue || (cursor >= 5 && playing && dur) || (seekTimer > 3 && dur) && zoom == 1 && !title.matches(':hover')) {
+    if (myNav.style.display || cue || (cursor >= 5 && playing && dur) || (seekTimer > 3 && dur) && zoom == 1 && !title.matches(':hover')) {
       mySeek.style.background = cue ? 'red' : null
       if (!playing && xm<1) cueW = rect.width * xm
       cueW = Math.min(cueW, rect.width)
@@ -890,7 +889,7 @@
       fetch(src)
         .then(response => {return response.text()})
         .then(data => {openEditor(data)})
-      .catch(() => {openEditor('')})}						// new caption
+      .catch(() => {openEditor('new caption')})}
 
 
   function getPreview() { 							// captions in title el
@@ -940,10 +939,11 @@
 
 
   function capButton() {							// context menu Caption button
-    start = myPlayer.currentTime
+    myNav.style.display = null
+    start = defStart = myPlayer.currentTime
     let x = cue+'|goto|'+start.toFixed(1)
     if (cue) inca('Goto', x, index)						// add goto cue to media
-    else {captions = 2; Play()}}
+    else {captions = 2; if (playing) {getSrt()} else Play()}}
 
 
   function sel(i) {								// highlight selected media in html
@@ -1012,10 +1012,11 @@
 
 
   function nextMedia() {							// myPlayer ended
+    if (captions) return
     if (playlist.match('/inca/music/')) {
       if (Param(index += 1)) {Play(); syncPlay = 1} else closePlayer(); return}
     else if (!defPause && delay < 30 && type != 'audio' && !longClick) {getStart(); syncPlay = 1}	// replay media
-    else {myPlayer.currentTime = dur+2; syncPlay = 0; delay = 60}}	// stay at end
+    else {myPlayer.currentTime = dur + 2; syncPlay = 0; delay = 60}}		// stay at end
 
 
 async function closePlayer() {
@@ -1102,17 +1103,11 @@ function closePic() {
         block._rate = b.rate || 1
         block._delay = b.delay || 0});
     if (projectMedia.defaultSrc) swapPlayerMedia(projectMedia.defaultSrc, 0)
-    let first = blocks[0];
-    const lastNum = lastBlock > 0 ? lastBlock : (parsed.lastSelectedId || 0)
-    if (!blocks.length) first = addBlock(1, start || 0, ' ')
-    if (captions == 1) first = blocks.findLast(b => b.dataset.start <= defStart)
-    else if (lastNum > 0) first = blocks.find(b => Number(b.dataset.num) === Number(lastNum)) || blocks[0]
-    if (longClick != 3) setTimeout(() => {
-      overMedia = 0
-      activateBlock(first, userPlay)
-      first.scrollIntoView({ block: 'center' })}, 100)
-    myPlayer.currentTime = first.dataset.start
-    if (!blocks.length) addBlock(1, myPlayer.currentTime, 'new caption')
+    let first = blocks[lastBlock - 1] || blocks[0];
+    overMedia = 0
+    if (first.innerHTML == 'new caption') first.dataset.start = defStart
+    activateBlock(first, userPlay)
+    first.scrollIntoView({ block: 'center' })
     matchCountSpan.textContent = ''
     if (captions == 2 && parsed.ui) {editor.style.width = parsed.ui.width || ''; editor.style.height = parsed.ui.height || ''}
     setTimeout(() => {editing = 0; first.focus(); if (defPause) {syncPlay = 0}}, 600)}
@@ -1135,7 +1130,7 @@ const activateBlock = (block, play) => {
   lastVoice = editingBlock?._voiceName || lastVoice;
   block.style.setProperty('--progress', '0%')
   block.style.transition = '0.4s'
-  block._end = block.nextElementSibling?.dataset.start
+  block._end = block.nextElementSibling?.dataset.start ?? (dur || Infinity)
   const isSameBlock = editingBlock === block
   const media = getEffectiveMedia(block);
   const time = isSameBlock ? myPlayer.currentTime : parseFloat(block.dataset.start)
@@ -1384,7 +1379,7 @@ function populateVoices() {
   const voiceSub = document.getElementById('voiceSub');
   voiceSub.innerHTML = '';
   voiceSub.style.padding = '0 1.5em 0 1.2em';
-  const current = editingBlock?._voiceName || '';
+  const current = editingBlock?._voiceName || lastVoice || '';
   myVoiceHeader.textContent = current || 'None';
   const addGap = () => {const gap = document.createElement('div'); gap.style.height = '8px'; voiceSub.appendChild(gap)}
   const none = document.createElement('div');
@@ -1576,7 +1571,7 @@ function makeJSON() {
     block.textContent = part1
     const newBlock = createBlock(
         null,
-        startSec + 0.5,
+        startSec + 2,
         part2,
         '0',
         {})
@@ -1606,7 +1601,7 @@ function Backspace(e) {
   e.preventDefault()
   syncPlay = 0
   if (captions) editing = 1
-if (captions && editingBlock.textContent.endsWith('\u200B')) document.execCommand('Delete')
+  if (overBlock && editingBlock.textContent.endsWith('\u200B')) document.execCommand('Delete')
   const sel = window.getSelection()
   let atStart = false
   if (sel.rangeCount && editingBlock) {
@@ -1643,7 +1638,7 @@ if (captions && editingBlock.textContent.endsWith('\u200B')) document.execComman
       renumberBlocks()
       return}
     return}
-  if (atStart) {document.execCommand('forwardDelete'); return}
+  if (overBlock && atStart) {document.execCommand('forwardDelete'); return}
   document.execCommand('delete')}
 
 
@@ -1757,35 +1752,36 @@ if (captions && editingBlock.textContent.endsWith('\u200B')) document.execComman
             if (voiceName) inca('addHistory',last,0,path)})}
 
 
-function playerProgress() {
-  if (!captions || !playing || !userPlay || !!editingBlock?._voice?.src) return
-  const currentBlock = blocks.findLast(b => b.dataset.start <= myPlayer.currentTime)
-  const nextBlock = currentBlock.nextElementSibling
-  if (nextBlock) {
-    const currentStart = currentBlock.dataset.start
-    const nextStart = nextBlock?.dataset.start
-    if (currentBlock !== editingBlock && myPlayer.currentTime < editingBlock.dataset.start) {
-      activateBlock(currentBlock, syncPlay)
-      currentBlock.scrollIntoView({ behavior: 'smooth', block: 'center' }) }
-    progress = ((myPlayer.currentTime - currentStart) / (nextStart - currentStart)) * 100
-    progress = Math.max(0, Math.min(100, progress))
-    currentBlock.style.setProperty('--progress', progress + '%')
-    if (myNav.style.display) return}							//   || !syncPlay
-  if (!nextBlock || myPlayer.currentTime > editingBlock._end) {
-    if (overEditor || overBlock === editingBlock) { progress = 100; syncPlay = 0; timerEvent() }
-    else {activateBlock(currentBlock, syncPlay); currentBlock.scrollIntoView({ behavior: 'smooth', block: 'center' })}}}
+  function playerProgress() {
+    if (myNav.style.display) return
+    if (!captions || !playing || !!editingBlock?._voice?.src) return
+    const currentBlock = blocks.findLast(b => b.dataset.start <= myPlayer.currentTime)
+    const nextBlock = currentBlock.nextElementSibling
+    if (nextBlock) {
+      const currentStart = currentBlock.dataset.start
+      const nextStart = nextBlock?.dataset.start
+      if (currentBlock !== editingBlock && myPlayer.currentTime < editingBlock.dataset.start && editingBlock.dataset.start < dur) {
+        activateBlock(currentBlock, syncPlay)
+        currentBlock.scrollIntoView({ behavior: 'smooth', block: 'center' }) }
+      progress = ((myPlayer.currentTime - currentStart) / (nextStart - currentStart)) * 100
+      progress = Math.max(0, Math.min(100, progress))
+      currentBlock.style.setProperty('--progress', progress + '%')
+      if (myNav.style.display) return}
+    if (myPlayer.currentTime > editingBlock._end) {
+     if (overEditor || overBlock === editingBlock) { progress = 100; syncPlay = 0; timerEvent() }
+     else {activateBlock(currentBlock, syncPlay); currentBlock.scrollIntoView({ behavior: 'smooth', block: 'center' })}}}
 
 
-function nextCaption(dir) {
-  if (ribbon.matches(':hover')) return							// new media preview
-  if (overEditor) syncPlay = 0
-  if (!captions || myNav.style.display || overEditor) return
-  let next = dir < 0 
-    ? (editingBlock?.previousElementSibling || blocks[0])
-    : (editingBlock?.nextElementSibling || blocks[0])
-  activateBlock(next, syncPlay)
-  if (dir < 0 && next._voice?.src) myVoice.currentTime = 1
-  next.scrollIntoView({ behavior: 'smooth', block: 'center' })}
+  function nextCaption(dir) {
+    if (ribbon.matches(':hover')) return						// new media preview
+    if (overEditor) syncPlay = 0
+    if (!captions || myNav.style.display || overEditor) return
+    let next = dir < 0
+      ? (editingBlock?.previousElementSibling || blocks[0])
+      : (editingBlock?.nextElementSibling || blocks[0])
+    activateBlock(next, syncPlay)
+    if (dir < 0 && next._voice?.src) myVoice.currentTime = 1
+    next.scrollIntoView({ behavior: 'smooth', block: 'center' })}
 
 
 

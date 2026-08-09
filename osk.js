@@ -53,17 +53,20 @@ function osk() {
   oskElement.addEventListener('mousedown', captureSelection, true);
 
 function updateSuggestions() {
-    requestAnimationFrame(() => {
-    if (!targetEl) return
-    const text = (targetEl.isContentEditable ? targetEl.innerText : targetEl.value).replace(/\u200B/g, '')
-    const { words } = predict(text, predictBuffer)
-    const btns = suggestionRow.querySelectorAll('.osk-suggestion')
+  requestAnimationFrame(() => {
+    if (!targetEl) return;
+    const text = (targetEl.isContentEditable ? targetEl.innerText : targetEl.value).replace(/\u200B/g, '');
+    const { words } = predict(text, predictBuffer);
+    const btns = suggestionRow.querySelectorAll('.osk-suggestion');
     btns.forEach((btn, i) => {
       if (i < 6) {
-        const w = words[i] || ''
-        btn.textContent = w
-        btn.onclick = w ? () => insertSuggestion(w) : null}})}
-  )}
+        const w = words[i] || '';
+        btn.textContent = w;
+        btn.onmouseup = w ? () => insertSuggestion(w) : null;
+      }
+    });
+  });
+}
 
   function insertSuggestion(s) {
     if (!targetEl || !restoreSelection() || gesture) return
