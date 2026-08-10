@@ -147,14 +147,7 @@
     else searchInput.placeholder='❤'})
   searchInput.addEventListener('input', newSearch)
   viewport.addEventListener('input', () => {editing = 1; syncPlay = 0 })
-  viewport.addEventListener('scroll', () => {
-    if (xm > 0.1) return
-    let best = null
-    const mid = viewport.getBoundingClientRect().top + viewport.clientHeight / 2
-    for (const b of blocks) if (b.getBoundingClientRect().top + 20 <= mid) best = b; else break
-    const Down = overEditor && best && best != editingBlock
-    if (Down && viewport.scrollTop < scrollY && scrollY - viewport.scrollTop < 60 && +best.dataset.num > 1) return	// hysteresis
-    if (Down) { scrollY = viewport.scrollTop; Click = 1; myPlayer.currentTime = best.dataset.start; activateBlock(best, userPlay); Click = 0 }})
+  viewport.addEventListener('wheel', wheelEvent)
 
 
   function mouseDown(e) {
@@ -288,8 +281,8 @@
               userPlay = 1
               if (myVoice.currentTime > myVoice.dur - 0.3 || myPlayer.currentTime > editingBlock._end - 0.3)
               myPlayer.currentTime = +editingBlock.dataset.start}
-            else userPlay ^= 1
-            syncPlay = userPlay}
+            else userPlay ^= 1}
+            syncPlay = userPlay
           return}}
       if (!title.matches(':hover') && overTitle == 2) {closeOsk(); overTitle = 0; return}
       if (overTitle && (longClick || overTitle == 2)) {
@@ -356,11 +349,10 @@
     else myPlayer.muted = defMute
     if (!thumbSheet) {
       if (favicon.matches(':hover')) getSrt(1)
-      else if (overTitle && Click && favicon.innerText.includes('©')) previewMode ? getSrt(lastBlock) : getSrt(1)
+      else if (overTitle && Click && favicon.innerText.includes('©')) previewMode ? getSrt() : getSrt(1)
       else if (captions || type == 'document') getSrt()}
     if (el = document.getElementById('title'+lastMedia)) el.style.color = el.style.fontWeight = null
     title.style.color = 'pink'; title.style.fontWeight = 'bold'
-    if (type == 'document' || type == 'audio' || playlist.match('/inca/music/')) scaleY = 0.25
     if (playlist.match('/inca/music/') && !thumbSheet) {start = 0; myPlayer.muted = 0}
     if (type == 'audio' && !captions) myPlayer.style.borderBottom = '1px solid pink'
     else myPlayer.style.border = null
@@ -423,8 +415,14 @@
   function wheelEvent(e) {
     if (e.target.closest('#voiceSub')) return						// scroll within submenu
     if (e.target.closest('#emotionSub')) return
-    e.preventDefault()									// stop htm scroll during thumb zoom
+    if (overEditor && xm > 0.1) return							// allow viewport scroll
+    e.preventDefault()									// stop htm scroll
     let id = e.target.id 								// faster hover detection
+    if (Math.abs(e.deltaY) > 1 && Date.now() - wheel > 500) {				// scroll caption blocks
+      wheel = Date.now()
+      syncPlay = userPlay
+      nextCaption(e.deltaY, 1)}
+    if (overEditor) return
     wheel += Math.ceil(Math.abs(e.deltaY))
     if (wheel < delay) return
     let wheelUp = wheelDir * e.deltaY > 0
@@ -670,8 +668,9 @@
       xyz = [mediaX, mediaY, sheetSize]}
     let x = mediaX
     let y = mediaY
-    let z = captions == 2 ? 0.3 : scaleY
-    y = captions == 2 ? y - 200 : y							// media moved up to fit captions
+    let z = captions == 2 ? 0.5 * scaleY : scaleY
+    if (type == 'document' || type == 'audio' || playlist.match('/inca/music/')) z *= 0.5
+    y = captions == 2 ? y - 240 : y							// media moved up to fit captions
     if (thumbSheet) { x = xyz[0]; y = xyz[1]; z = xyz[2] }
     skinny = thumb.style.skinny || skinny
     myPlayer.style.transition = 'opacity ' + time + 's, transform ' + time + 's'
@@ -1079,7 +1078,7 @@ function closePic() {
   function openEditor(text) {
     projectMedia.defaultSrc = originalPlayerSrc = decodeURIComponent(type === 'image' ? thumb.poster : thumb.src)
     if (type === 'image' && text) captions = 1
-    lastBlock = type === 'image' ? 1 : lastBlock;
+    lastBlock = type === 'image' ? 1 : lastBlock
     editor.style.transition = 'opacity 1s'
     editor.style.height = 0
     editor.style.opacity = 1
@@ -1103,8 +1102,9 @@ function closePic() {
         block._rate = b.rate || 1
         block._delay = b.delay || 0});
     if (projectMedia.defaultSrc) swapPlayerMedia(projectMedia.defaultSrc, 0)
-    let first = blocks[lastBlock - 1] || blocks[0];
     overMedia = 0
+    if (!lastBlock) lastBlock = parsed?.lastSelectedId || 1
+    let first = blocks[lastBlock - 1] || blocks[0];
     if (first.innerHTML == 'new caption') first.dataset.start = defStart
     activateBlock(first, userPlay)
     first.scrollIntoView({ block: 'center' })
@@ -1134,6 +1134,7 @@ const activateBlock = (block, play) => {
   const isSameBlock = editingBlock === block
   const media = getEffectiveMedia(block);
   const time = isSameBlock ? myPlayer.currentTime : parseFloat(block.dataset.start)
+  if (overEditor && xm < 0.1) myPlayer.currentTime = parseFloat(block.dataset.start)
   swapPlayerMedia(media?.src || originalPlayerSrc, time || 0)
   if (block._voice?.src) {
     if (!isSameBlock && decodeURIComponent(myVoice.src) != block._voice.src) myVoice.src = block._voice.src.replace(/#/g, '%23')
@@ -1677,13 +1678,11 @@ function Backspace(e) {
       if (e.key != 'Enter') return
       e.preventDefault()
       e.stopPropagation()
-      inp.remove() 
       let name = inp.value.trim() || 'clone'
       if (name = name.charAt(0).toUpperCase() + name.slice(1)) {
-        if (editingBlock) {
-          editingBlock._voiceName = name
-          activateBlock(editingBlock, 0)}
-        inca('newClone', myPlayer.currentTime.toFixed(1), index, name)}}}
+        if (editingBlock) { editingBlock._voiceName = name; activateBlock(editingBlock, 0) }
+        inca('newClone', myPlayer.currentTime.toFixed(1), index, name)}
+      inp.remove()}}
 
 
   function nextMatch(e) {
@@ -1772,15 +1771,14 @@ function Backspace(e) {
      else {activateBlock(currentBlock, syncPlay); currentBlock.scrollIntoView({ behavior: 'smooth', block: 'center' })}}}
 
 
-  function nextCaption(dir) {
+  function nextCaption(dir, force) {
     if (ribbon.matches(':hover')) return						// new media preview
-    if (overEditor) syncPlay = 0
-    if (!captions || myNav.style.display || overEditor) return
+    if (!captions || myNav.style.display) return
+    if (overEditor && (xm > 0.1 || !force)) {syncPlay = 0; return}
     let next = dir < 0
       ? (editingBlock?.previousElementSibling || blocks[0])
       : (editingBlock?.nextElementSibling || blocks[0])
     activateBlock(next, syncPlay)
-    if (dir < 0 && next._voice?.src) myVoice.currentTime = 1
     next.scrollIntoView({ behavior: 'smooth', block: 'center' })}
 
 
