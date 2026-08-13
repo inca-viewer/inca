@@ -596,7 +596,7 @@
       x := StrSplit(selected,",")
       index := x[x.MaxIndex()-1]					; scroll htm to end of selection
       MoveFiles()
-      if (!longClick && !(!playlist && InStr(address, "\inca\")))	; is copy or to pl so no change to folder
+      if !longClick							; is copy so no change to folder
         CreateList(1)							; silent list update
       if InStr(address, "\inca\")					; was to playlist
         RenderPage(0)							; normal render
@@ -834,8 +834,6 @@
     index := StrSplit(selected, ",").1
     if !index
       index := 0
-    if playlist
-      reload := 3
     }
 
 
@@ -2412,7 +2410,6 @@ mediaList(j, input, start, fold)					; spool sorted media files into web page
     StringReplace, media_s, media, `', &apos;, All
     if !size
       size = 0								; cannot have null size in Param()
-
 
 ;    if (type == "image")
 ;      media_s := "&#x2726; " . media_s					; highlight as image (not video)

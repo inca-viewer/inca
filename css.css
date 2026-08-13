@@ -96,7 +96,7 @@
     flex:1;
     cursor: default;
     overflow-y:auto; 
-    padding: 6em 1.6em 12em 2em; 
+    padding: 7em 1.6em 12em 2em; 
     display:flex; 
     flex-direction:column; 
     min-height:0;
@@ -106,17 +106,41 @@
     position: relative;
     mask-image: linear-gradient(
       to bottom,
-      transparent 0%,
-      black        6%,
-      black        94%,
-      transparent  100%)}
+      transparent 0,
+      transparent 6em,   /* fully gone for first 5em */
+      black 8em,         /* fully visible by 7em */
+      black 94%,
+      transparent 100%)}
 
   .text-block {
-    position: relative; background:transparent; border-radius:2em; white-space:pre-wrap; transition: 0; overflow: visible;
-    word-wrap:break-word; line-height:1.5; padding: 0.5em 1em 1.2em 1em; cursor: text; font-size: 0.82em;
-    color:#ffc0cb70; text-align:center; outline:none; width: 100%; align-self: center; border: 0; margin-bottom: 1em}
+    position: relative; background:transparent; border-radius:1.6em; white-space:pre-wrap; transition: 0.35s ease; overflow: visible;
+    word-wrap:break-word; line-height:1.5; padding: 0.5em 1.1em 1.2em 1.1em; min-width: 84%; cursor: text; font-size: 0.82em;
+    color:#ffc0cb70; text-align:center; margin-bottom: 2em; outline:none; width: auto; max-width: 84%; align-self: center; border: 0;
+    box-sizing: border-box}
 
-  .text-block.editing { background: #0e0e0e; color: #ffc0cbaa }
+  .text-block.align-left {
+    align-self: flex-start;
+    margin-left: 0.4em;
+    margin-right: auto;
+    text-align: centre}
+
+  .text-block.align-right {
+    align-self: flex-end;
+    margin-right: 0.4em;
+    margin-left: auto;
+    text-align: centre}
+
+  .text-block.align-center {
+    align-self: center;
+    margin-left: auto;
+    margin-right: auto;
+    border-radius: 1.6em;
+    text-align: center}
+
+  .text-block.editing {
+    background: #0e0e0e;
+    color: #ffc0cbaa;
+    border: 0.1px solid #ffc0cb20}
 
 .text-block[data-fav="1"]::after { content: '❤'; }
 
@@ -130,15 +154,70 @@
   z-index: 3;
   pointer-events: none}
 
-.voice-btns button {
-  font: 10px/1 sans-serif;
-  background: inherit;
-  border: none;
+#voice-faces {
+  position: absolute;          /* relative to #editor */
+  top: 38px;                   /* same offset you were using */
+  left: 50%;
+  transform: translateX(-50%);
+  display: none;
+  gap: 5em;
+  z-index: 10;                 /* above ribbon / viewport content */
+  pointer-events: none;        /* let clicks pass through empty space */
+}
+
+#voice-faces .voice-face-wrap {
+  pointer-events: auto;        /* faces themselves stay clickable */
+}
+
+.voice-face {
+  width: 3em;
+  height: 3em;
+  border-radius: 50%;
+  object-fit: cover;
+  opacity: 0.2;
+  transform: scale(1);
+  transition: 0.45s ease;
+  pointer-events: auto;
   cursor: pointer;
-  transition: 0.4s;
-  padding: 1px 3px;}
-.voice-btns button:hover { color: pink !important }
-.voice-btns button::after { content: attr(data-name) }
+  background: #0a0a0a;
+  mask-image: radial-gradient(circle at center,
+    #000 0%,
+    #000 35%,
+    transparent 74%);
+}
+
+.voice-face.active {
+  opacity: 0.8;
+  transform: scale(1.12);
+}
+
+.voice-face-wrap {
+  display: flex;
+  flex-direction: column;   /* stacks image then name */
+  align-items: center;
+  gap: 0.35em;
+  pointer-events: auto;
+}
+
+.voice-face-name {
+  font-size: 0.7em;
+  color: #ffc0cb88;
+  text-align: center;
+  white-space: nowrap;
+  max-width: 5.5em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  pointer-events: none;
+  transition: color 0.3s;
+}
+
+.voice-face-wrap:has(.voice-face.active) .voice-face-name {
+  color: #ffc0cb;           /* brighter when that face is active */
+}
+
+
+
+
 
 .text-block.editing[data-has-media="1"]::before {
     content: '';
@@ -348,17 +427,6 @@
   transition: 0.2s}
 .favicon:hover {opacity: 1}
 .favicon:empty {display:none}
-
-.capButton {					/* buttons over caption */
-  text-align: center;
-  min-width: 1.6em;
-  color: red;
-  transition: 0.3s;
-  background: inherit;
-  font-size: 1.2em;
-  border-radius: 1.6em}
-.capButton:hover {color: red; transform: scale(1.8,1.8)}
-.capButton:active {border: 0.1px solid transparent; background:red; transform: scale(1,1)}
 
 .myPanel {
   position: fixed;
