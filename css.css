@@ -188,7 +188,7 @@
 
 .voice-face.active {
   opacity: 0.8;
-  transform: scale(1.12);
+  transform: scale(1.16);
 }
 
 .voice-face-wrap {
@@ -214,10 +214,6 @@
 .voice-face-wrap:has(.voice-face.active) .voice-face-name {
   color: #ffc0cb;           /* brighter when that face is active */
 }
-
-
-
-
 
 .text-block.editing[data-has-media="1"]::before {
     content: '';

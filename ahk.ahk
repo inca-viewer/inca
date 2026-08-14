@@ -1089,7 +1089,7 @@ Edited() 								; Save edited json, text or SRT file
         if selected
           {
           Clipboard := "#cut#" . folder . "|" . selected
-          reload := 1
+   ;       reload := 1
           selected = 
           return
           }
@@ -1100,7 +1100,7 @@ Edited() 								; Save edited json, text or SRT file
         if selected
           {
           Clipboard := "#copy#" . folder . "|" . selected
-          reload := 1
+    ;      reload := 1
           selected = 
           return
           }
@@ -1127,7 +1127,7 @@ Edited() 								; Save edited json, text or SRT file
         selected := array.2
         MoveFiles()
         folder := incaTab
-        reload := 2
+  ;      reload := 2
         }
       else
         send, ^v

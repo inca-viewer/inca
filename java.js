@@ -2,6 +2,12 @@
 
 // cue pauses on captions needs syncPlay = 3 and add pause control
 
+// scroll bar not showing on htm
+
+// cutcopypaste from context menu in editor
+
+// scroll activate hysteresis failing on back forth
+
 
 
   let wheel = 0								// wheel count
@@ -157,11 +163,13 @@
   viewport.addEventListener('wheel', wheelEvent)
   viewport.addEventListener('scroll', () => {
     if (xm > 0.95) gesture = 3						// prevent osk from scroll bar
-    if (wheel > 9999 || Click || captions == 1 || document.getElementById('osk')) return
+    if (wheel > 9999 || Click || captions == 1) return
     let best = null
     const mid = viewport.getBoundingClientRect().top + viewport.clientHeight / 2
     for (const b of blocks) if (b.getBoundingClientRect().top + 10 <= mid) best = b; else break
     const Down = overEditor && best && best != editingBlock
+    if (lastBlock && lastBlock != best.dataset.num) return		// stop scroll activating until clicked block passes
+    lastBlock = 0
     if (Down && viewport.scrollTop < scrollY && scrollY - viewport.scrollTop < 60 && +best.dataset.num > 1) return	// hysteresis
     if (Down) { scrollY = viewport.scrollTop; Click = 1; myPlayer.currentTime = best.dataset.start; activateBlock(best, userPlay); Click = 0 }})
 
@@ -182,7 +190,6 @@
     clearTimeout(clickTimer)						// longClick timer
     if (!longClick) clickEvent(e)					// process click event
     longClick = wheel = gesture = Click = 0}
-// setTimeout(() => Click = 0,20)}				// stops grab editor scrollbar
 
 
   function keyDown(e) {							// keyboard events
@@ -285,13 +292,13 @@
       if (captions && !overMedia) {
         const wasOsk = document.getElementById('osk')
         const block = overBlock ? overBlock : editingBlock
-        if (longClick && overBlock && overBlock !== editingBlock) activateBlock(block, 0)
-        if (longClick && !gesture && overEditor) {osk(); return}
+        if (longClick && !gesture && overEditor) osk()
+        if (overBlock && overBlock !== editingBlock) {
+          lastBlock = block.dataset.num; userPlay = syncPlay = 1; activateBlock(block, !longClick); return}
         if (captions == 1 && xm>0 && xm<1 && ym>1 && ym<1.3) {captions = 2; activateBlock(block)}
         if (!longClick) {
-          if (wasOsk && overBlock && overBlock !== editingBlock) {syncPlay = 1; activateBlock(block, 1); return}
-          if (id == 'myMask' && myPlayer.currentTime < block._end && myPlayer.paused) {syncPlay = 1; return}
-          if (wasOsk && overBlock == editingBlock || (!userPlay && syncPlay && !overEditor)) syncPlay = 0
+          if (id == 'myMask' && myPlayer.currentTime < block._end && myPlayer.paused) {userPlay ^= 1; syncPlay = userPlay; return}
+          if (wasOsk && overBlock == editingBlock || (!userPlay && syncPlay && !overEditor)) userPlay = syncPlay = 0
           else {
             const paused = editingBlock?._voice?.src ? myVoice.paused : myPlayer.paused
             if (paused) {
@@ -301,6 +308,7 @@
             else userPlay ^= 1
             syncPlay = userPlay}
           return}}
+
       if (!title.matches(':hover') && overTitle == 2) {closeOsk(); overTitle = 0; return}
       if (overTitle && (longClick || overTitle == 2)) {
         if (overTitle != 2) title.value = title.defaultValue.trim()
@@ -369,8 +377,8 @@
       else if (overTitle && Click && favicon.innerText.includes('©')) previewMode ? getSrt() : getSrt(1)
       else if (captions || type == 'document') getSrt()}
     if (el = document.getElementById('title'+lastMedia)) el.style.color = el.style.fontWeight = null
-//    if (el = document.getElementById('thumb'+lastMedia)) el.style.outline = null
     title.style.color = 'pink'; title.style.fontWeight = 'bold'
+//    if (el = document.getElementById('thumb'+lastMedia)) el.style.outline = null
 //    thumb.style.outline = '1.8px dotted #ffc0cb66'
     if (playlist.match('/inca/music/') && !thumbSheet) {start = 0; myPlayer.muted = 0}
     if (type == 'audio' && !captions) myPlayer.style.borderBottom = '1px solid pink'
@@ -585,6 +593,8 @@
     if (wheel >= 10) wheel -= 10
     if (more) more--									// lazy loading holdback
     if (cursor) cursor--								// cursor hide timer
+//myAlert.innerHTML = lastBlock?.dataset?.num
+//delay = 222
     mySelected.textContent = String(selected).includes(',') ? selected.split(',').length - 1 : ''
     if (!playing || thumbSheet || overTitle) myBody.style.cursor = null			// show default cursor
     else if (!cursor) myBody.style.cursor = 'none'					// hide cursor
@@ -1111,13 +1121,14 @@
         b.text || '',
         b.fav || 0,
         b);
+      lastVoice = b.voiceName || lastVoice
+      block._voiceName = b.voiceName || ''
+      block._volume = b.volume || 1
+      block._rate = b.rate || 1
+      block._delay = b.delay || 0
       if (b.media) block._media = { src: b.media };
       if (b.voice) block._voice = { src: b.voice };
-        lastVoice = b.voiceName || lastVoice
-        block._voiceName = b.voiceName || ''
-        block._volume = b.volume || 1
-        block._rate = b.rate || 1
-        block._delay = b.delay || 0});
+      else lastVoice = block._voiceName = ''});
     if (projectMedia.defaultSrc) swapPlayerMedia(projectMedia.defaultSrc, 0)
     overMedia = 0
     if (!lastBlock) lastBlock = parsed?.lastSelectedId || 1
@@ -1151,7 +1162,8 @@ const activateBlock = (block, play) => {
   lastVoice = editingBlock?._voiceName || lastVoice;
   block.style.setProperty('--progress', '0%')
   block.style.transition = '0.4s'
-  block._end = block.nextElementSibling?.dataset.start ?? (dur || Infinity)
+  const next = +(block.nextElementSibling?.dataset.start || 0)
+  block._end = next > +block.dataset.start ? next : (dur || Infinity)
   const isSameBlock = editingBlock === block
   const media = getEffectiveMedia(block);
   const time = isSameBlock ? myPlayer.currentTime : parseFloat(block.dataset.start)
@@ -1868,6 +1880,7 @@ function Backspace(e) {
       if (myNav.style.display) return}
     if (myPlayer.currentTime > editingBlock._end) {
       if (editingBlock._voice?.src && !myVoice.paused) return				// let voice finish
+      if (overEditor) {progress; syncPlay = 0}
       if (!overEditor) { activateBlock(currentBlock, userPlay); currentBlock.scrollIntoView({ behavior: 'smooth', block: 'center' }) }}}
 
 
