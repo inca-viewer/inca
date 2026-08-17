@@ -107,52 +107,88 @@
     mask-image: linear-gradient(
       to bottom,
       transparent 0,
-      transparent 6em,   /* fully gone for first 5em */
-      black 8em,         /* fully visible by 7em */
+      transparent 1.2em,
+      black 3.5em,
       black 94%,
-      transparent 100%)}
+      transparent 100%),
+    linear-gradient(to left, black 0 14px, transparent 14px);}
+
+#editor:has(#voice-faces[style*="flex"]) .caption-viewport {
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent 6em,
+    black 8em,
+    black 94%,
+    transparent 100%),
+  linear-gradient(to left, black 0 14px, transparent 14px);}
 
   .text-block {
-    position: relative; background:transparent; border-radius:1.6em; white-space:pre-wrap; transition: 0.35s ease; overflow: visible;
-    word-wrap:break-word; line-height:1.5; padding: 0.5em 1.1em 1.2em 1.1em; min-width: 84%; cursor: text; font-size: 0.82em;
-    color:#ffc0cb70; text-align:center; margin-bottom: 2em; outline:none; width: auto; max-width: 84%; align-self: center; border: 0;
-    box-sizing: border-box}
-
-  .text-block.align-left {
-    align-self: flex-start;
-    margin-left: 0.4em;
-    margin-right: auto;
-    text-align: centre}
-
-  .text-block.align-right {
-    align-self: flex-end;
-    margin-right: 0.4em;
-    margin-left: auto;
-    text-align: centre}
-
-  .text-block.align-center {
-    align-self: center;
-    margin-left: auto;
-    margin-right: auto;
-    border-radius: 1.6em;
-    text-align: center}
+    position: relative; background: transparent; border-radius:1.6em; white-space:pre-wrap; transition: 0.35s ease; overflow: visible;
+    font-family: inherit; word-wrap:break-word; line-height:1.5; padding: 0.5em 1.1em 1.2em 1.1em; cursor: text;
+    color:#ffc0cb70; text-align:center; margin-bottom: 2em; outline: 0.1px solid #ffc0cb10; align-self: center; border: 0;
+    font-size: 0.92em; box-sizing: border-box; width: auto; background: #0e0e0e;}
 
   .text-block.editing {
-    background: #0e0e0e;
     color: #ffc0cbaa;
-    border: 0.1px solid #ffc0cb20}
+    animation: flashOutline .5s ease;
+    outline: 0.1px solid #ffc0cb22}
 
-.text-block[data-fav="1"]::after { content: '❤'; }
+@keyframes flashOutline {
+  from { outline-color: #ffc0cb60 }
+  to   { outline-color: #ffc0cb22 }}
 
 .text-block[data-fav="1"]::after {
+  content: '❤';
   position: absolute;
-  opacity: 0.5;
-  top: 1.8em;
-  left: -1.6em;
+  top: 1.2em;
+  left: -6%;
   font-size: 0.55em;
+  opacity: 0.5;
   color: #ffc0cb;
+  pointer-events: none;
   z-index: 3;
-  pointer-events: none}
+}
+
+.text-block.editing::after {
+  content: '⏸';
+  position: absolute;
+  top: 1.2em;
+  left: -6%;
+  font-size: 0.7em;
+  line-height: 1;
+  color: #ffc0cb;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s;
+  z-index: 3;
+}
+
+.text-block.editing.paused::after { opacity: 0.5; transition: opacity 1s; }
+
+.text-block.editing.paused[data-fav="1"]::after {
+  content: '❤⏸';
+  top: 1.2em;
+  left: -7%;
+  font-size: 0.65em;
+  opacity: 0.5;
+  letter-spacing: 0.15em;
+}
+
+.text-block.editing[data-has-media="1"]::before {
+    content: '';
+    position: absolute;
+    left: 35%;
+    right: 35%;
+    bottom: 0.6em;
+    height: 2px;
+    border-radius: 1px;
+    background: linear-gradient(to right, #ffc0cb20 0%, #ffc0cb20 50%, #ffc0cb0e 50%, #ffc0cb0e 100%);
+    background-size: 200% 100%;
+    background-repeat: no-repeat;
+    background-position: calc(100% - var(--progress, 0%)) 0;
+    transition: background-position 0.3s linear;
+    z-index: 1}
 
 #voice-faces {
   position: absolute;          /* relative to #editor */
@@ -174,6 +210,7 @@
   height: 3em;
   border-radius: 50%;
   object-fit: cover;
+  object-position: top;
   opacity: 0.2;
   transform: scale(1);
   transition: 0.45s ease;
@@ -211,24 +248,7 @@
   transition: color 0.3s;
 }
 
-.voice-face-wrap:has(.voice-face.active) .voice-face-name {
-  color: #ffc0cb;           /* brighter when that face is active */
-}
-
-.text-block.editing[data-has-media="1"]::before {
-    content: '';
-    position: absolute;
-    left: 35%;
-    right: 35%;
-    bottom: 0.6em;
-    height: 2px;
-    border-radius: 1px;
-    background: linear-gradient(to right, #ffc0cb20 0%, #ffc0cb20 50%, #ffc0cb0e 50%, #ffc0cb0e 100%);
-    background-size: 200% 100%;
-    background-repeat: no-repeat;
-    background-position: calc(100% - var(--progress, 0%)) 0;
-    transition: background-position 0.3s linear;
-    z-index: 1}
+.voice-face-wrap:has(.voice-face.active) .voice-face-name {color: #ffc0cb}
 
     #id-display { 
       border:none; color:#ffc0cbaa; font-size:12px; display: none;

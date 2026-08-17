@@ -873,37 +873,40 @@ Edited() 								; Save edited json, text or SRT file
         }
       }
     }
-  IfExist, %inca%\cache\json\%media%.json				; if speech exist in json
-    IfExist, %inca%\cache\speech\%media%\				; clear speech folder of any unused speech
+IfExist, %inca%\cache\json\%media%.json
+{
+  speechDir := inca "\cache\speech\" media
+  IfExist, %speechDir%\
+  {
+    FileRead, txt, %inca%\cache\json\%media%.json
+    used := {}
+    Loop, Parse, txt, `n, `r
+    {
+      line := A_LoopField
+      if (InStr(line, """voice""") = 0)
+        continue
+      if (RegExMatch(line, """voice""\s*:\s*""(/[^""]+)""", m))
       {
-      FileCreateDir, %inca%\cache\temp\%media%\
-      FileRead, txt, %inca%\cache\json\%media%.json
-      used := {}
-      Loop, Parse, txt, `n, `r
-        {
-        line := A_LoopField
-        if (InStr(line, """voice""") = 0)
-          continue
-        if (RegExMatch(line, """voice""\s*:\s*""(/[^""]+)""", m))
-          {
-          p := StrReplace(m1, server)
-          p := StrReplace(p, "/", "\")
-          if (SubStr(p, 1, 5) = "\inca")
-            p := inca . SubStr(p, 6)
-          else if (SubStr(p, 1, 6) = "/inca")
-            p := inca . SubStr(p, 7)
-          if (FileExist(p))
-            used[p] := 1
-          }
-        }
-      for src in used
-        {
-        SplitPath, src, fn
-        FileCopy, %src%, %inca%\cache\temp\%media%\%fn%, 1
-        }
-      FileRecycle, %inca%\cache\speech\%media%
-      FileMoveDir, %inca%\cache\temp\%media%, %inca%\cache\speech\%media%, 1
+        p := StrReplace(m1, server)
+        p := StrReplace(p, "/", "\")
+        if (SubStr(p, 1, 5) = "\inca")
+          p := inca . SubStr(p, 6)
+        else if (SubStr(p, 1, 6) = "/inca")
+          p := inca . SubStr(p, 7)
+        if (FileExist(p))
+          used[p] := 1
       }
+    }
+    Loop, Files, %speechDir%\*.*
+    {
+      full := A_LoopFileFullPath
+      if (!used.HasKey(full))
+        FileRecycle, %full%
+    }
+    Loop, Files, %speechDir%\*, D
+      FileRemoveDir, %A_LoopFileFullPath%, 0   ; only empty ones
+  }
+}
   index := StrSplit(selected, ",").1
   reload := 1
   }
@@ -1089,7 +1092,7 @@ Edited() 								; Save edited json, text or SRT file
         if selected
           {
           Clipboard := "#cut#" . folder . "|" . selected
-   ;       reload := 1
+          reload := 1
           selected = 
           return
           }
@@ -1100,7 +1103,7 @@ Edited() 								; Save edited json, text or SRT file
         if selected
           {
           Clipboard := "#copy#" . folder . "|" . selected
-    ;      reload := 1
+          reload := 1
           selected = 
           return
           }

@@ -1,14 +1,3 @@
-// inner worlds
-
-// cue pauses on captions needs syncPlay = 3 and add pause control
-
-// scroll bar not showing on htm
-
-// cutcopypaste from context menu in editor
-
-// scroll activate hysteresis failing on back forth
-
-
 
   let wheel = 0								// wheel count
   let wheelDir = 0		 					// wheel direction
@@ -90,15 +79,18 @@
   let syncPlay = 0
   let userPlay = 0
   let scrollY = 0
+  let isScrolling = 0
   let predictBuffer = '';
   let predictor = { words: {} }
   let scaleY = (innerHeight > innerWidth) ? 0.6 : 0.5			// myPlayer height (screen ratio)
-
+  let timeout = 0
+  let timeout1 = 0
   let leftVoice = ''
   let rightVoice = ''
   let centerVoice = ''							// reserved for future 3rd voice
   let voiceFaceLeft = null
   let voiceFaceRight = null
+  let voiceFaceCenter = null
 
   let entry = document.createElement('div')				// dummy thumb container
   let thumb = document.createElement('div')				// . thumb element
@@ -162,10 +154,12 @@
   viewport.addEventListener('input', () => {editing = 1; syncPlay = 0 })
   viewport.addEventListener('wheel', wheelEvent)
   viewport.addEventListener('scroll', () => {
-    if (xm > 0.95) gesture = 3						// prevent osk from scroll bar
-    if (wheel > 9999 || Click || captions == 1) return
+    isScrolling = 1
+    clearTimeout(timeout1);
+    timeout1 = setTimeout(() => isScrolling = 0, 100);
+    if (wheel || Click || captions == 1) return
     let best = null
-    const mid = viewport.getBoundingClientRect().top + viewport.clientHeight / 2
+    const mid = viewport.getBoundingClientRect().top + 180
     for (const b of blocks) if (b.getBoundingClientRect().top + 10 <= mid) best = b; else break
     const Down = overEditor && best && best != editingBlock
     if (lastBlock && lastBlock != best.dataset.num) return		// stop scroll activating until clicked block passes
@@ -181,13 +175,12 @@
     if (Click == 2) e.preventDefault()					// forward and back mouse buttons
     xRef = xPos; yRef = yPos
     clickMedia = overMedia
-    clickTimer = setTimeout( function() { 
-      longClick = Click; clickEvent(e)},280)}				// detect long click
+    timeout = setTimeout(() => {longClick = Click; clickEvent(e)},280)}	// detect long click
 
 
   function mouseUp(e) {
     if (!Click) return							// stop re-entry also if new page load
-    clearTimeout(clickTimer)						// longClick timer
+    clearTimeout(timeout)						// longClick timer
     if (!longClick) clickEvent(e)					// process click event
     longClick = wheel = gesture = Click = 0}
 
@@ -219,14 +212,15 @@
     if (!playing && !listView && longClick && !gesture && overMedia && !overTitle) popThumb()	// pop thumb out of flow
     if (['myCut', 'myCopy', 'myPaste'].includes(id)) {
       if (lastId) lastId.focus()
-      inca('CutCopyPaste',id,index); return}
+      const media = !playing && overMedia ? index : ''					// cutcopypaste text or files
+      inca('CutCopyPaste',id,media); return}
     if (longClick == 1 && !gesture && !playing && playlist && selected && overMedia) {inca('Move', overMedia); return}
     if (['myIndex', 'myMp3', 'myMp4', 'myJoin', 'myJpg', 'mySrt'].includes(id)) {Ffmpeg(id); cue = 0; return}
     if (id == 'myClone') {newClone(); return}
     if (id == 'myLoudnorm') {inca('loudNorm',0,index); return}
     if (id == 'myInca') {inca('Settings'); return}
+    if (id == 'ribbon') {viewport.scrollTo({top:0,behavior:'smooth'}); return}
     if (id == 'myStart' && editingBlock) { myPlayer.currentTime = editingBlock.dataset.start; editing = 1; return}
-    if (id == 'ribbon' && !longClick) {viewport.scrollTo({top:0,behavior:'smooth'}); return}
     if (id == 'myFavorite') {addFavorite(); return}
     if (id == 'myDelete') if (selected || type) {inca('Delete','',index); return}
     if (id == 'myMute' || id == 'myMute2') {defMute ^= 1; inca('Mute', defMute); myPlayer.muted = defMute; return}
@@ -256,8 +250,9 @@
       if (overEditor) {
         lastId = editingBlock
         myVoice.currentTime = 0
-        if (overBlock) {myPlayer.currentTime = overBlock.dataset.start; activateBlock(overBlock, 0)}
-        if (longClick) Chatterbox(id)
+        if (overBlock) {
+          myPlayer.currentTime = overBlock.dataset.start; activateBlock(overBlock, 0);
+          if (longClick) Chatterbox()}
         populateVoices()
         myNav.classList.add('editor-mode')} 
       else myNav.classList.remove('editor-mode')
@@ -286,14 +281,11 @@
       if (id == 'myCap') {capButton(); return}
       if (id == 'myCue' && playing) {
         cue = myPlayer.currentTime = Math.max(0.01, +myPlayer.currentTime.toFixed(2)); syncPlay = 0; return}
-      if (playing && longClick && !gesture && overMedia && ym < trigger) {
-        if (!captions) {captions = 1; userPlay = 0; defStart = myPlayer.currentTime; getSrt(); return}  // toggle captions
-        else if (captions == 1) {captions = 0; editor.style.display = 'none'; return}}
       if (captions && !overMedia) {
         const wasOsk = document.getElementById('osk')
         const block = overBlock ? overBlock : editingBlock
-        if (longClick && !gesture && overEditor) osk()
-        if (overBlock && overBlock !== editingBlock) {
+        if (longClick && !gesture && overEditor && xm < 0.95) osk()
+        if (overBlock && overBlock !== editingBlock && xm < 0.9) {
           lastBlock = block.dataset.num; userPlay = syncPlay = 1; activateBlock(block, !longClick); return}
         if (captions == 1 && xm>0 && xm<1 && ym>1 && ym<1.3) {captions = 2; activateBlock(block)}
         if (!longClick) {
@@ -376,10 +368,8 @@
       if (favicon.matches(':hover')) getSrt(1)
       else if (overTitle && Click && favicon.innerText.includes('©')) previewMode ? getSrt() : getSrt(1)
       else if (captions || type == 'document') getSrt()}
-    if (el = document.getElementById('title'+lastMedia)) el.style.color = el.style.fontWeight = null
+    if (el = document.getElementById('title'+lastMedia)) el.style.color = el.style.fontWeight = ''
     title.style.color = 'pink'; title.style.fontWeight = 'bold'
-//    if (el = document.getElementById('thumb'+lastMedia)) el.style.outline = null
-//    thumb.style.outline = '1.8px dotted #ffc0cb66'
     if (playlist.match('/inca/music/') && !thumbSheet) {start = 0; myPlayer.muted = 0}
     if (type == 'audio' && !captions) myPlayer.style.borderBottom = '1px solid pink'
     else myPlayer.style.border = null
@@ -441,14 +431,15 @@
       if (captions) projectMedia.uiHeight = editor.style.height}}
 
 
+
   function wheelEvent(e) {
     let id = e.target.id 								// faster hover detection
     if (e.target.closest('#voiceSub')) return						// scroll within submenu
     if (e.target.closest('#emotionSub')) return
-    if (overEditor && ym < 0.9 && !myNav.style.display) {wheel = 0; return}		// allow viewport scroll
+    if (overEditor && xm < 0.9 && !myNav.style.display) {wheel = 0; return}		// allow viewport scroll
     e.preventDefault()									// stop default scroll
-    if (!myNav.style.display && overEditor && ym > 0.9) {
-      if (Math.abs(e.deltaY) > 1 && Date.now() - wheel > 600) {				// 600mS hysteresis
+    if (!myNav.style.display && overEditor && xm > 0.9) {
+      if (Math.abs(e.deltaY) > 1 && Date.now() - wheel > 600) {				// hysteresis
         wheel = Date.now()
         nextCaption(e.deltaY, 1)
         myPlayer.currentTime = editingBlock.dataset.start}}				// scroll caption blocks
@@ -593,8 +584,6 @@
     if (wheel >= 10) wheel -= 10
     if (more) more--									// lazy loading holdback
     if (cursor) cursor--								// cursor hide timer
-//myAlert.innerHTML = lastBlock?.dataset?.num
-//delay = 222
     mySelected.textContent = String(selected).includes(',') ? selected.split(',').length - 1 : ''
     if (!playing || thumbSheet || overTitle) myBody.style.cursor = null			// show default cursor
     else if (!cursor) myBody.style.cursor = 'none'					// hide cursor
@@ -628,8 +617,6 @@
     myPitch.style.color = pitch ? 'red' : null
     myPause.style.color = defPause ? 'red' : null
     myMute.style.color = defMute ? 'red' : null
-    edPause.textContent = !userPlay ? '⏸' : ' '
-    edPause.style.opacity = !userPlay ? 1 : 0
     myPause2.innerHTML = defPause ? "⏸" : ''
     myMute2.innerHTML = defMute ? "🔇︎" : ''
     myPitch2.innerHTML = pitch ? "♪" : ''
@@ -641,6 +628,7 @@
     if (playing || !overTitle) {
       title.classList.remove('preview'); title.value = title.defaultValue; title.style.height = ''}
     if (playing) {
+      if (editingBlock) editingBlock.classList.toggle('paused', !userPlay)
       myCancel.innerText = editing ? (myCancel.innerText !== 'Sure ?' ? '✕' : 'Sure ?') : '⌒'
       myCancel.style.color = myCancel.innerText == '⌒' ? 'pink' : 'red'
       syncPlay ? myPlayer.play().catch(() => {}) : myPlayer.pause()
@@ -825,7 +813,7 @@
               const content = data.substring(data.indexOf('|') + 1)
               if (type == 'html') {
                 myView.insertAdjacentHTML('beforeend', content)
-                while (Param(lastIndex)) lastIndex++}
+                while (Param(lastIndex)) {setThumb(); lastIndex++}}
               else if (type == 'address') {
                 if (lastClick === 2) window.open(content, '_blank')
                 else window.location.href = content}
@@ -966,7 +954,7 @@
     start = defStart = myPlayer.currentTime
     let x = cue+'|goto|'+start.toFixed(1)
     if (cue) inca('Goto', x, index)						// add goto cue to media
-    else {captions = 2; if (playing) {getSrt()} else Play()}}
+    else {captions = 1; if (playing) {getSrt()} else Play()}}
 
 
   function sel(i) {								// highlight selected media in html
@@ -1177,12 +1165,9 @@ const activateBlock = (block, play) => {
     block.classList.remove('has-voice');
     myVoice.muted = true; myPlayer.muted = defMute}
   if (!isSameBlock) {
-    document.querySelectorAll('.text-block.editing').forEach(b => b.classList.remove('editing'));
+    if (editingBlock) editingBlock.classList.remove('editing', 'paused')
     block.classList.add('editing');
-    editingBlock = block;
-    timestamps = blocks.map(b => ({
-      sec: parseFloat(b.dataset.start) || 0,
-      block: b}))}
+    editingBlock = block}
   myPlayer.volume = myVoice.volume = block._volume || 1
   if (userPlay && !overEditor) {if (!syncPlay) syncPlay = 0; setTimeout(() => syncPlay = play, startDelay)}
   else syncPlay = play
@@ -1212,104 +1197,84 @@ const activateBlock = (block, play) => {
 
 function ensureVoiceFaces() {
   if (document.getElementById('voice-faces')) return
-
   const container = document.createElement('div')
   container.id = 'voice-faces'
-  editor.appendChild(container)          // ← was document.body
-
+  editor.appendChild(container)
   const mk = (side) => {
     const wrap = document.createElement('div')
     wrap.className = 'voice-face-wrap'
-
     const img = document.createElement('img')
     img.className = 'voice-face'
     img.dataset.side = side
     img.alt = side + ' voice'
     img.draggable = false
-
     const nameEl = document.createElement('div')
     nameEl.className = 'voice-face-name'
-
-    img.onmouseup = (e) => {
+    img.onclick = (e) => {
       e.stopPropagation()
       e.preventDefault()
       if (!editingBlock) return
-      const name = side === 'left' ? leftVoice : rightVoice
+      const name = side === 'left'   ? leftVoice
+                : side === 'center' ? centerVoice
+                : rightVoice
       if (!name) return
       editingBlock._voiceName = name
       editing = 1
       updateBlockAlignments()
       updateFaceHighlights()
-      if (longClick) Chatterbox()
+      Chatterbox()
     }
-
     wrap.appendChild(img)
     wrap.appendChild(nameEl)
     container.appendChild(wrap)
     img.nameEl = nameEl
     return img
   }
-
-  voiceFaceLeft  = mk('left')
-  voiceFaceRight = mk('right')}
+  voiceFaceLeft   = mk('left')
+  voiceFaceCenter = mk('center')
+  voiceFaceRight  = mk('right')}
 
 
 function updateBlockAlignments() {
   ensureVoiceFaces()
   const container = document.getElementById('voice-faces')
   if (!container) return
-
   if (!editor || editor.style.display === 'none' || !editor.offsetWidth || !captions) {
     container.style.display = 'none'
-    return
-  }
-
-  // Collect unique voices...
+    return}
   const unique = []
   blocks.forEach(b => {
     const v = (b._voiceName || '').trim()
-    if (v && !unique.includes(v)) unique.push(v)
-  })
-
-  if (!leftVoice && unique[0]) leftVoice = unique[0]
-  if (!rightVoice && unique[1]) rightVoice = unique[1]
-
+    if (v && !unique.includes(v)) unique.push(v)})
+  if (!leftVoice   && unique[0]) leftVoice   = unique[0]
+  if (!rightVoice  && unique[1]) rightVoice  = unique[1]
+  if (!centerVoice && unique[2]) centerVoice = unique[2]
   unique.forEach(v => {
-    if (v !== leftVoice && v !== rightVoice) {
-      if (!leftVoice) leftVoice = v
-      else if (!rightVoice) rightVoice = v
-    }
-  })
-
+    if (v !== leftVoice && v !== centerVoice && v !== rightVoice) {
+      if (!leftVoice)   leftVoice   = v
+      else if (!rightVoice)  rightVoice  = v
+      else if (!centerVoice) centerVoice = v}})
   if (leftVoice)  voiceFaceLeft.src  = `/inca/cache/voices/${encodeURIComponent(leftVoice)}.jpg`
   if (rightVoice) voiceFaceRight.src = `/inca/cache/voices/${encodeURIComponent(rightVoice)}.jpg`
-
-  blocks.forEach(b => {
-    b.classList.remove('align-left', 'align-right', 'align-center')
-    const v = (b._voiceName || '').trim()
-    if (!v)                     b.classList.add('align-center')
-    else if (v === leftVoice)   b.classList.add('align-left')
-    else if (v === rightVoice)  b.classList.add('align-right')
-    else                        b.classList.add('align-right')})
-
-  // Only visibility now — position is pure CSS
-  container.style.display = (leftVoice || rightVoice) ? 'flex' : 'none'
-
-  if (voiceFaceLeft?.nameEl)  voiceFaceLeft.nameEl.textContent  = leftVoice  || ''
-  if (voiceFaceRight?.nameEl) voiceFaceRight.nameEl.textContent = rightVoice || ''
-  voiceFaceLeft.parentElement.style.display  = leftVoice  ? '' : 'none'
-  voiceFaceRight.parentElement.style.display = rightVoice ? '' : 'none'}
+  if (centerVoice) voiceFaceCenter.src = `/inca/cache/voices/${encodeURIComponent(centerVoice)}.jpg`
+  container.style.display = (leftVoice || rightVoice || centerVoice) ? 'flex' : 'none'
+  if (voiceFaceLeft?.nameEl)   voiceFaceLeft.nameEl.textContent   = leftVoice   || ''
+  if (voiceFaceRight?.nameEl)  voiceFaceRight.nameEl.textContent  = rightVoice  || ''
+  if (voiceFaceCenter?.nameEl) voiceFaceCenter.nameEl.textContent = centerVoice || ''
+  voiceFaceLeft.parentElement.style.display   = leftVoice   ? '' : 'none'
+  voiceFaceRight.parentElement.style.display  = rightVoice  ? '' : 'none'
+  voiceFaceCenter.parentElement.style.display = centerVoice ? '' : 'none'}
 
 
-
-  function updateFaceHighlights() {
-    if (!voiceFaceLeft) return
-    const activeV = (editingBlock?._voiceName || '').trim()
-    const isLeft  = activeV && activeV === leftVoice
-    // Right face lights for the primary right voice OR any additional (non-left, non-centre)
-    const isRight = activeV && (activeV === rightVoice || (activeV !== leftVoice && activeV !== centerVoice))
-    voiceFaceLeft.classList.toggle('active', !!isLeft)
-    voiceFaceRight.classList.toggle('active', !!isRight)}
+function updateFaceHighlights() {
+  if (!voiceFaceLeft) return
+  const activeV = (editingBlock?._voiceName || '').trim()
+  const isLeft   = activeV && activeV === leftVoice
+  const isRight  = activeV && activeV === rightVoice
+  const isCenter = activeV && activeV === centerVoice
+  voiceFaceLeft.classList.toggle('active',   !!isLeft)
+  voiceFaceRight.classList.toggle('active',  !!isRight)
+  voiceFaceCenter.classList.toggle('active', !!isCenter)}
 
 
   function parseSrtTime(t) {
@@ -1374,6 +1339,7 @@ function updateBlockAlignments() {
     myNav.style.display = 'none'
     updateBlockAlignments()
     updateFaceHighlights()
+    Chatterbox()
     setTimeout(() => syncPlay = 0,20)}
 
 
@@ -1565,14 +1531,11 @@ function populateVoices() {
 
 
 function makeJSON() {
-  captions = 2; activateBlock(editingBlock,0)
+  captions = 2; activateBlock(editingBlock, 0)
   const data = {
-  defaultMedia: (s = [myPlayer.src, thumb.src,
-    document.getElementById('dat' + index)?.getAttribute('data'),
-    document.getElementById('vid' + index)?.src]
-    .find(u => u && !u.includes('.htm'))) && s
-    ? { src: decodeURIComponent(s).replace(/\\/g, '/') }
-    : null,
+    defaultMedia: originalPlayerSrc
+      ? { src: decodeURIComponent(originalPlayerSrc).replace(/\\/g, '/') }
+      : null,
     ui: {
       width: editor.style.width,
       height: editor.style.height
@@ -1594,7 +1557,7 @@ function makeJSON() {
       };
     })
   };
-  return JSON.stringify(data, null, 2);}
+  return JSON.stringify(data, null, 2)}
 
 
 
@@ -1838,7 +1801,6 @@ function Backspace(e) {
   function Chatterbox(id) {
     if (overBlock) editingBlock = overBlock
     const voiceName = editingBlock._voiceName || lastVoice || 'Tracy'
-    if (!voiceName) return
     let block = editingBlock
     myPlayer.currentTime = editingBlock.dataset.start
     let last = block?._voice?.src || projectMedia.defaultSrc
@@ -1865,7 +1827,7 @@ function Backspace(e) {
 
 
   function playerProgress() {
-    if (!captions || !playing || myNav.style.display) return
+    if (isScrolling || !captions || !playing || myNav.style.display) return
     const currentBlock = blocks.findLast(b => b.dataset.start <= myPlayer.currentTime)
     const nextBlock = currentBlock.nextElementSibling
     if (nextBlock) {
@@ -1876,11 +1838,10 @@ function Backspace(e) {
         currentBlock.scrollIntoView({ behavior: 'smooth', block: 'center' }) }
       progress = ((myPlayer.currentTime - currentStart) / (nextStart - currentStart)) * 100
       progress = Math.max(0, Math.min(100, progress))
-      currentBlock.style.setProperty('--progress', progress + '%')
-      if (myNav.style.display) return}
+      currentBlock.style.setProperty('--progress', progress + '%')}
     if (myPlayer.currentTime > editingBlock._end) {
       if (editingBlock._voice?.src && !myVoice.paused) return				// let voice finish
-      if (overEditor) {progress; syncPlay = 0}
+      if (overEditor) {progress = 100; syncPlay = 0}
       if (!overEditor) { activateBlock(currentBlock, userPlay); currentBlock.scrollIntoView({ behavior: 'smooth', block: 'center' }) }}}
 
 
