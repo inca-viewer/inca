@@ -1,4 +1,5 @@
 
+
   let wheel = 0								// wheel count
   let wheelDir = 0		 					// wheel direction
   let index = 1								// thumb index (e.g. thumb14)
@@ -117,7 +118,6 @@
   document.addEventListener('drop', (e) => {Click = 0; gesture = 0; if (overEditor) activateBlock(e.target.closest('.text-block'),0)})
   myPlayer.addEventListener('ended', nextMedia)
   myVoice.addEventListener('ended', nextCaption)
-  myVoice.addEventListener('timeupdate', voiceProgress)
   myPlayer.addEventListener('timeupdate', playerProgress)
   window.addEventListener('beforeunload', (e) => {if (playing && editing) e.preventDefault()})
   myNav.addEventListener('wheel', wheelEvent)
@@ -153,19 +153,7 @@
   searchInput.addEventListener('input', newSearch)
   viewport.addEventListener('input', () => {editing = 1; syncPlay = 0 })
   viewport.addEventListener('wheel', wheelEvent)
-  viewport.addEventListener('scroll', () => {
-    isScrolling = 1
-    clearTimeout(timeout1);
-    timeout1 = setTimeout(() => isScrolling = 0, 100);
-    if (wheel || Click || captions == 1) return
-    let best = null
-    const mid = viewport.getBoundingClientRect().top + 180
-    for (const b of blocks) if (b.getBoundingClientRect().top + 10 <= mid) best = b; else break
-    const Down = overEditor && best && best != editingBlock
-    if (lastBlock && lastBlock != best.dataset.num) return		// stop scroll activating until clicked block passes
-    lastBlock = 0
-    if (Down && viewport.scrollTop < scrollY && scrollY - viewport.scrollTop < 60 && +best.dataset.num > 1) return	// hysteresis
-    if (Down) { scrollY = viewport.scrollTop; Click = 1; myPlayer.currentTime = best.dataset.start; activateBlock(best, userPlay); Click = 0 }})
+  viewport.addEventListener('scroll', scrollActivate)
 
 
   function mouseDown(e) {
@@ -250,9 +238,8 @@
       if (overEditor) {
         lastId = editingBlock
         myVoice.currentTime = 0
-        if (overBlock) {
-          myPlayer.currentTime = overBlock.dataset.start; activateBlock(overBlock, 0);
-          if (longClick) Chatterbox()}
+        if (overBlock) {myPlayer.currentTime = overBlock.dataset.start; activateBlock(overBlock, 0)}
+        if (longClick) Chatterbox()
         populateVoices()
         myNav.classList.add('editor-mode')} 
       else myNav.classList.remove('editor-mode')
@@ -284,7 +271,7 @@
       if (captions && !overMedia) {
         const wasOsk = document.getElementById('osk')
         const block = overBlock ? overBlock : editingBlock
-        if (longClick && !gesture && overEditor && xm < 0.95) osk()
+        if (longClick && !gesture && overEditor && xm < 0.95) {syncPlay = userPlay = 0; osk()}
         if (overBlock && overBlock !== editingBlock && xm < 0.9) {
           lastBlock = block.dataset.num; userPlay = syncPlay = 1; activateBlock(block, !longClick); return}
         if (captions == 1 && xm>0 && xm<1 && ym>1 && ym<1.3) {captions = 2; activateBlock(block)}
@@ -560,7 +547,7 @@
         if (dur) myPlayer.addEventListener('seeked', () => delay = 40, {once: true})}	// min. 40
       else if (zoom != 1) thumb.currentTime += interval; 				// popped thumb
       if (!playing) seekTimer = 0							// hide seekbar in thumb popout
-      else cursor = 12									// show seekbar & dur too
+      else seekTimer = 5								// force seekbar while seeking
       thumb.pause()}
     wheel = 0}
 
@@ -628,7 +615,15 @@
     if (playing || !overTitle) {
       title.classList.remove('preview'); title.value = title.defaultValue; title.style.height = ''}
     if (playing) {
-      if (editingBlock) editingBlock.classList.toggle('paused', !userPlay)
+      edPause.style.opacity = !userPlay ? 1 : 0
+      edPause.textContent = !userPlay ? '⏸' : ' '
+      if (editingBlock?._voice?.src) progress = 100 * myVoice.currentTime / myVoice.duration
+      else if (editingBlock) {
+        progress = 100 * (myPlayer.currentTime - editingBlock.dataset.start) / (editingBlock._end - editingBlock.dataset.start)}
+      progress = Math.max(0, Math.min(100, progress))
+      if (captions && (dur || editingBlock?._voice?.src)) {
+        editingBlock?.style.setProperty('--progress', progress + '%')
+        editingBlock?.classList.toggle('paused', !userPlay)}
       myCancel.innerText = editing ? (myCancel.innerText !== 'Sure ?' ? '✕' : 'Sure ?') : '⌒'
       myCancel.style.color = myCancel.innerText == '⌒' ? 'pink' : 'red'
       syncPlay ? myPlayer.play().catch(() => {}) : myPlayer.pause()
@@ -719,7 +714,7 @@
     if (rect.bottom > innerHeight) mySeek.style.top = innerHeight - 15 +'px'
     else mySeek.style.top = rect.top + rect.height - 6 + 'px'
     mySeek.style.left = cueX + 'px'
-    if (myNav.style.display || cue || (cursor >= 5 && playing && dur) || (seekTimer > 3 && dur) && zoom == 1 && !title.matches(':hover')) {
+    if (myNav.style.display || cue || (seekTimer > 3 && dur && zoom == 1 && !title.matches(':hover'))) {
       mySeek.style.background = cue ? 'red' : null
       if (!playing && xm<1) cueW = rect.width * xm
       cueW = Math.min(cueW, rect.width)
@@ -1078,7 +1073,7 @@
     wrap.classList.remove('popped')
     Param()}
 
-  function Flip() {xPos = 0; skinny *=- 1; thumb.style.skinny = skinny; Param(); positionMedia(0.4)}
+  function Flip() {xPos = 0; skinny *=- 1; thumb.style.skinny = skinny; Param(); setThumb(); positionMedia(0.4)}
 
   function Time(z) {if (z < 0) return '0:00'; let y = Math.floor(z%60); let x = ':'+y; if (y<10) {x = ':0'+y}; return Math.floor(z/60)+x}
 
@@ -1149,7 +1144,6 @@ const activateBlock = (block, play) => {
   mediaHeader.textContent = title.value || null
   lastVoice = editingBlock?._voiceName || lastVoice;
   block.style.setProperty('--progress', '0%')
-  block.style.transition = '0.4s'
   const next = +(block.nextElementSibling?.dataset.start || 0)
   block._end = next > +block.dataset.start ? next : (dur || Infinity)
   const isSameBlock = editingBlock === block
@@ -1173,7 +1167,7 @@ const activateBlock = (block, play) => {
   else syncPlay = play
   if (captions == 1) {									// compact captions
     const rec = editingBlock.getBoundingClientRect()
-    editor.style.height = rec.height + 'px'
+    editor.style.height = rec.height + 4 + 'px'
     editor.style.resize = 'none'
     editor.style.pointerEvents = 'none'
     editor.style.background = 'transparent'
@@ -1186,7 +1180,7 @@ const activateBlock = (block, play) => {
     editor.style.pointerEvents = ''
     editor.style.background = ''
     editor.style.resize = ''}
-  block.dataset.hasMedia = (block._voice?.src || myPlayer.src.includes('mp4')) ? "1" : "0"
+  block.dataset.hasMedia = (!!block._voice?.src || dur) ? "1" : "0"
   updateBlockAlignments()
   updateFaceHighlights()}
 
@@ -1358,6 +1352,31 @@ function updateFaceHighlights() {
         myPlayer.load()}}
     if (Click || changed || editingBlock?._voice?.src) myPlayer.currentTime = time
     if (Click || changed) {positionMedia(0); myPlayer.style.opacity = 0; positionMedia(2); myPlayer.style.opacity = 1}}
+
+
+  function scrollActivate() {
+    isScrolling = 1
+    clearTimeout(timeout1)
+    timeout1 = setTimeout(() => isScrolling = 0, 100)
+    if (wheel || Click || captions == 1) return
+    if (!captions) return
+    const mid = viewport.getBoundingClientRect().top + 220
+    let best = null
+    for (const b of blocks) if (b.getBoundingClientRect().top + 10 <= mid) best = b; else break
+    if (!best || best === editingBlock) {scrollY = viewport.scrollTop; return}
+    if (lastBlock) {
+      const locked = blocks.find(b => b.dataset.num == lastBlock)
+      const scrollingDown = viewport.scrollTop > scrollY
+      if (locked) {
+        const lockedTop = locked.getBoundingClientRect().top + 10
+        if ((scrollingDown && lockedTop > mid) || (!scrollingDown && lockedTop < mid)) { scrollY = viewport.scrollTop; return}}
+    lastBlock = 0}
+    if (Math.abs(viewport.scrollTop - scrollY) < 40) return
+    scrollY = viewport.scrollTop
+    Click = 1
+    myPlayer.currentTime = best.dataset.start
+    activateBlock(best, userPlay)
+    Click = 0}
 
 
   function showStart() {
@@ -1625,20 +1644,15 @@ function makeJSON() {
     const afterText = fullText.substring(beforeText.length)
     const isSecondEnter = beforeText.endsWith('\n')
     if (!isSecondEnter) {
-        const newNode = document.createTextNode('\n')
-        range.deleteContents()
-        range.insertNode(newNode)
-        range.setStartAfter(newNode)
-        range.collapse(true)
-        if (afterText.trim() === '') {
-            const zwspNode = document.createTextNode('\u200B')
-            range.insertNode(zwspNode)
-            range.setStartAfter(zwspNode)
-            range.collapse(true)}
-        sel.removeAllRanges()
-        sel.addRange(range)
-        editing = 1
-        return}
+      const node = document.createTextNode('\n\u200B')
+      range.deleteContents()
+      range.insertNode(node)
+      range.setStart(node, 1)
+      range.collapse(true)
+      sel.removeAllRanges()
+      sel.addRange(range)
+      editing = 1
+      return}
     const part1 = beforeText.replace(/\n+$/, '').replace(/\u200B/g, '')
     const part2 = afterText.replace(/^\n+/, '').replace(/\u200B/g, '')
     if (!part1.trim() && !part2.trim()) return
@@ -1731,12 +1745,6 @@ function Backspace(e) {
         editingBlock.scrollIntoView({ behavior: 'smooth', block: 'center' })},100)}
 
 
-  function voiceProgress () {								// voice progress bar
-    if (editingBlock && editingBlock._voice?.src) {
-      progress = (myVoice.currentTime / myVoice.duration || 0) * 100
-      editingBlock.style.setProperty('--progress', progress + '%')}}
-
-
   function newClone() {
     let inp = document.createElement('input')
     inp.className = 'voice-input'
@@ -1823,7 +1831,8 @@ function Backspace(e) {
             block._rate = 1
             editing = 1
             activateBlock(block, 1)
-            if (voiceName) inca('addHistory',last,0,path)})}
+            userPlay = 1
+            inca('addHistory',last,0,path)})}
 
 
   function playerProgress() {
@@ -1835,13 +1844,10 @@ function Backspace(e) {
       const nextStart = nextBlock?.dataset.start
       if (currentBlock !== editingBlock && myPlayer.currentTime < editingBlock.dataset.start && editingBlock.dataset.start < dur) {
         activateBlock(currentBlock, userPlay)
-        currentBlock.scrollIntoView({ behavior: 'smooth', block: 'center' }) }
-      progress = ((myPlayer.currentTime - currentStart) / (nextStart - currentStart)) * 100
-      progress = Math.max(0, Math.min(100, progress))
-      currentBlock.style.setProperty('--progress', progress + '%')}
+        currentBlock.scrollIntoView({ behavior: 'smooth', block: 'center' }) }}
     if (myPlayer.currentTime > editingBlock._end) {
       if (editingBlock._voice?.src && !myVoice.paused) return				// let voice finish
-      if (overEditor) {progress = 100; syncPlay = 0}
+      if (overEditor) syncPlay = 0
       if (!overEditor) { activateBlock(currentBlock, userPlay); currentBlock.scrollIntoView({ behavior: 'smooth', block: 'center' }) }}}
 
 
