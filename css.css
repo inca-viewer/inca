@@ -48,7 +48,7 @@
     min-width: 15em !important;}
 
   #editor { box-sizing:border-box; display:none; flex-direction:column; width:500px; max-width:100%;
-    background:#0a0a0a; border-radius:12px; font-size:16px; max-height:80vh; overflow:hidden;
+    background:#ffffff0a; border-radius:12px; font-size:16px; max-height:80vh; overflow:hidden;
     position:fixed; left:50%; top:50%; transform:translate(-50%,-50%); z-index: 5002; height:0;
     height: 40px; min-width:250px; min-height:40px; resize:both; transition: 0}
 
@@ -96,8 +96,6 @@
     flex:1;
     cursor: default;
     overflow-y:auto; 
-    scroll-padding-top: 14em;
-    scroll-padding-bottom: 14em;
     padding: 9em 1.6em 9em 2em;
     display:flex; 
     flex-direction:column; 
@@ -126,14 +124,14 @@
   linear-gradient(to left, black 0 14px, transparent 14px);}
 
   .text-block {
-    position: relative; background: transparent; border-radius:2.2em; white-space:pre-wrap; transition: 0.35s ease; overflow: visible;
+    position: relative; border-radius:2.2em; white-space:pre-wrap; transition: 0.44s ease; overflow: visible;
     font-family: inherit; word-wrap:break-word; line-height:1.5; padding: 0.5em 1.1em 1.2em 1.1em; cursor: text;
-    color:#ffc0cb70; text-align:center; margin-bottom: 2em; outline: 0.1px solid #ffc0cb0c; align-self: center; border: 0;
-    font-size: 0.92em; box-sizing: border-box; width: auto; background: #0e0e0e;}
-
+    text-align:center; margin-bottom: 2em; outline: 0.1px solid #ffc0cb0c; align-self: center; border: 0;
+    font-size: 0.92em; box-sizing: border-box; width: auto; color:#ffc0cb80; background: #14141460; scroll-margin: 9em 0;}
 
   .text-block.editing {
-    color: #ffc0cbaa;
+    color: #ffc0cbee;
+    background: #14141480;
     animation: flashOutline 0.4s;
     outline: 0.1px solid #ffc0cb20}
 
@@ -178,7 +176,12 @@
   z-index: 10;                 /* above ribbon / viewport content */
   pointer-events: none}
 
-#voice-faces .voice-face-wrap { pointer-events: auto }
+
+#voice-faces { --fz: 1 }
+.voice-face-wrap { transform: scale(var(--fz)); }          /* wheel zoom: no transition */
+.voice-face { transition: opacity 0.5s, transform 0.5s }
+.voice-face.active { opacity: 0.8; transform: scale(1.16) } /* block change */
+
 
 .voice-face {
   width: 3em;
@@ -188,7 +191,7 @@
   object-position: top;
   opacity: 0.2;
   transform: scale(1);
-  transition: 0.45s ease;
+  transition: 0.5s;
   pointer-events: auto;
   cursor: pointer;
   background: #0a0a0a;
@@ -196,10 +199,6 @@
     #000 0%,
     #000 35%,
     transparent 74%)}
-
-.voice-face.active {
-  opacity: 0.8;
-  transform: scale(1.16)}
 
 .voice-face-wrap {
   display: flex;
