@@ -1,5 +1,6 @@
 // incorporate infinite talk when 50GB disk is free
 
+
   let wheel = 0								// wheel count
   let wheelTime = 0							// date() of wheel event
   let wheelDir = 0		 					// wheel direction
@@ -109,7 +110,7 @@
   const searchHeader = document.querySelector('#search-header')
   const searchInput = document.querySelector('#caption-search-input')
   const matchCountSpan  = document.querySelector('#search-match-count')
-
+  const myPlayerWrap = document.getElementById('myPlayerWrap')
 
   document.addEventListener('mousedown', mouseDown)
   document.addEventListener('mouseup', mouseUp)
@@ -155,6 +156,13 @@
   viewport.addEventListener('input', () => {editing = 1; syncPlay = 0 })
   viewport.addEventListener('wheel', wheelEvent)
   editor.addEventListener('wheel', wheelEvent)				// face zoom
+  viewport.addEventListener('scroll', () => {
+    if (crawl || !overEditor) return
+      const vr = viewport.getBoundingClientRect()
+      overBlock = blocks.find(b => {
+        const r = b.getBoundingClientRect()
+        return r.top >= vr.top +160 && r.top < vr.top + 220})
+      if (overBlock) {activateBlock(overBlock,0)}})
 
 
   function mouseDown(e) {
@@ -258,9 +266,7 @@
       if (zoom > 1) {Play(); return}
       if (!playing && !myNav.style.display) {inca('View',lastMedia); return}		// list/thumb view
       if (longClick) {index--} else index++						// next media
-      if (!Param()) {index = lastMedia; closePlayer(); return}
-      setThumb()
-      myPlayer.style.opacity = overMedia = 0}
+      if (!Param()) {index = lastMedia; closePlayer(); return}}
 
     if (lastClick == 1) {
       if (document.getElementById('osk')?.contains(document.elementFromPoint(xPos, yPos))) return
@@ -352,7 +358,7 @@
     userPlay = !defPause
     editor.style.transition = null
     editor.style.opacity = 0
-    if (!thumbSheet && lastClick) myPlayer.style.opacity = 0				// fade in player
+    if (!thumbSheet && lastClick) myPlayerWrap.style.opacity = 0			// fade in player
     if (!thumbSheet || type == 'image') myPlayer.poster = thumb.poster
     else if (!playing) lastSeek = defStart
     if (playlist.match('/inca/music/')) myPlayer.muted = 0
@@ -380,11 +386,10 @@
     setTimeout(async () => {
       if (!captions && !thumbSheet && defPause && !playlist.match('/inca/music/')) {myPlayer.currentTime = syncStart; syncPlay = 0}
       if (!more && lastIndex < listSize && index > lastIndex - 9) inca('More', lastIndex)
-      if (lastClick) positionMedia(0.4)
-      myVig.style.visibility = myPlayer.style.visibility = 'visible'
-      myPlayer.style.opacity = 0.98							// 0.98 fixes browser transition bug?
-      myVig.style.opacity = 1
-      if (!thumbSheet) await inca('History', myPlayer.currentTime.toFixed(1), lastMedia)},100)}
+      if (lastClick) positionMedia(0.34)
+      myPlayerWrap.style.visibility = 'visible'
+      myPlayerWrap.style.opacity = 1
+      if (!thumbSheet) await inca('History', myPlayer.currentTime.toFixed(1), lastMedia)},124)}
 
 
   function mouseMove(e) {
@@ -436,9 +441,10 @@
     if (e.target.closest('#voiceSub')) return						// scroll within submenu
     if (e.target.closest('#emotionSub')) return
     if (e.target.closest('.dropdown-content')) return
-    if (overEditor && xm > 0.16 && ym > 0.2 && !myNav.style.display && !overMedia) {wheel = 0; return} // allow viewport scroll
+    if (overEditor && xm > 0.16 && ym > 0.2 && !myNav.style.display && !overMedia) {	 // allow viewport scroll
+      wheel = 0; return}
     e.preventDefault()									// stop default scroll
-    if (!Click && captions && !myNav.style.display && (id == 'myMask' || xm < 0.16)) {
+    if (!Click && overEditor && !myNav.style.display && xm < 0.16) {
       if (Math.abs(e.deltaY) > 1 && Date.now() - wheelTime > 600) {			// hysteresis
         wheelTime = Date.now()
         scrollUntilBlock(e.deltaY)}
@@ -590,6 +596,7 @@
     if (more) more--									// lazy loading holdback
     if (cursor) cursor--								// cursor hide timer
     mySelected.textContent = String(selected).includes(',') ? selected.split(',').length - 1 : ''
+    viewport.style.cursor = overEditor && xm < 0.16 ? 'n-resize' : null
     if (!playing || thumbSheet || overTitle) myBody.style.cursor = null			// show default cursor
     else if (!cursor) myBody.style.cursor = 'none'					// hide cursor
     else myBody.style.cursor = 'crosshair'						// moving cursor over player
@@ -644,9 +651,9 @@
         editingBlock?.classList.toggle('paused', !userPlay)}
       myCancel.innerText = editing ? (myCancel.innerText !== 'Sure ?' ? '✕' : 'Sure ?') : '⌒'
       myCancel.style.color = myCancel.innerText == '⌒' ? 'pink' : 'red'
-      syncPlay ? myPlayer.play().catch(() => {}) : myPlayer.pause()
-      syncPlay && !!editingBlock?._voice?.src
-        ? myVoice.play().catch(() => {})
+      syncPlay ? myPlayer.play() : myPlayer.pause()
+      syncPlay && !!editingBlock?._voice?.src && !myVoice.ended
+        ? myVoice.play()
         : myVoice.pause()
       positionMedia(0)
       if (captions) { showStart() }
@@ -697,14 +704,10 @@
     if (type == 'document' || type == 'audio' || playlist.match('/inca/music/')) z *= 0.5
     if (thumbSheet) { x = xyz[0]; y = xyz[1]; z = xyz[2] }
     skinny = thumb.style.skinny || skinny
-    myPlayer.style.transition = 'opacity ' + time + 's, transform ' + time + 's'
-    myVig.style.transition = 'opacity ' + time/4 + 's, transform ' + time + 's'
-    myPlayer.style.left = myVig.style.left = (x - (window.screenX || 0)) - myPlayer.offsetWidth / 2 + "px"
-    myPlayer.style.top  = myVig.style.top  = (y - (outerHeight - innerHeight)) - myPlayer.offsetHeight / 2 + "px"
-    myPlayer.style.transform = myVig.style.transform = "scale(" + skinny * z + "," + z + ")"
-    myVig.style.setProperty('--scale', 20/z + 'px')
-    myVig.style.width = myPlayer.style.width
-    myVig.style.height = myPlayer.style.height
+    myPlayerWrap.style.transition = 'opacity ' + time + 's, transform ' + time + 's'
+    myPlayerWrap.style.left  = (x - (window.screenX || 0)) - myPlayer.offsetWidth  / 2 + 'px'
+    myPlayerWrap.style.top   = (y - (outerHeight - innerHeight)) - myPlayer.offsetHeight / 2 + 'px'
+    myPlayerWrap.style.transform = 'scale(' + skinny * z + ',' + z + ')'
     void myPlayer.offsetWidth
     const edRect = myPlayer.getBoundingClientRect()
     const ox = captions == 1 ? 0 : editorX
@@ -781,8 +784,8 @@
     let x = y = z = innerHeight
     if (aspect < 1) {x = z*aspect} else y = z/aspect					// portrait or landscape - normalised size
     myPlayer.style.width = x +'px'; myPlayer.style.height = y +'px'			// normalise player size
-    myVig.style.width = myPic.style.width = thumb.offsetWidth + 'px'
-    myVig.style.height = myPic.style.height = thumb.offsetHeight + 'px'
+    myPic.style.width = thumb.offsetWidth + 'px'
+    myPic.style.height = thumb.offsetHeight + 'px'
     thumb.parentElement.style.transform = 'scale('+skinny*zoom+','+zoom+')'
     myPic.style.transform = 'scale('+skinny+',1)'
     myPic.style.backgroundPosition = '0% 0%'}						// sets to frame 1 of 6x6 thumbSheet
@@ -1030,8 +1033,8 @@
 
 
   function overThumb(id) {
+    if (Click || captions) return						// faster for click & slide selecting
     if (zoom == 1) thumb.src = ''						// release media from server
-    if (Click) return								// faster for click & slide selecting
     index = id
     sheetUrl = ''
     Param(id)}
@@ -1058,11 +1061,11 @@
       if (faces) faces.style.display = 'none'
       myPlayer.muted = myVoice.muted = true
       Click = playing = start = captions = thumbSheet = cue = overTitle = editorX = editorY = mediaX = 0
-      mySeek.style.width = myVig.style.opacity = myPlayer.style.opacity = editor.style.opacity = 0
+      myPlayerWrap.style.opacity = mySeek.style.width = editor.style.opacity = 0
       myPanel.style.top = myView.style.top = ''
       myMask.style = myDur.innerHTML = myVoice.src = myPlayer.src = ''
       editingBlock = editor.style.display = myNav.style.display = null
-      myVig.style.visibility = myPlayer.style.visibility = null
+      myPlayerWrap.style.visibility = myPlayer.style.visibility = null
       scaleY = (innerHeight > innerWidth) ? 0.6 : 0.5
       setThumb()
       try { thumb.scrollIntoView({ block: 'nearest' }) } catch (_) {}}}
@@ -1277,7 +1280,7 @@ function updateBlockAlignments() {
 
 function updateFaceHighlights() {
   if (!voiceFaceLeft) return
-  const activeV = (editingBlock?._voiceName || '').trim()
+  const activeV = ((overBlock || editingBlock)?._voiceName || '').trim()
   const isLeft   = activeV && activeV === leftVoice
   const isRight  = activeV && activeV === rightVoice
   const isCenter = activeV && activeV === centerVoice

@@ -2185,9 +2185,11 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
     <div id="viewport" class="caption-viewport"></div>
   </div>`n`n
 
-<div id='myVig' class='vig'></div>`n
 <video id='myPic' class='pic' muted onwheel='wheelEvent(event)' onmouseout='thumb.pause()'></video>`n
-<video id="myPlayer" class='player' type="video/mp4" muted onwheel='wheelEvent(event)'></video>`n
+
+<div id="myPlayerWrap" class="player-wrap">`n
+<video id="myPlayer" class='player' type="video/mp4" muted onwheel='wheelEvent(event)'></video></div>`n
+
 <div id='mySeek' class='seekbar'><span id='myDur'></span></div>`n
 <span id='mySelected' class='selected'></span>`n
 <span id='myAlert' class='selected'></span>`n
