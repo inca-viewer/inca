@@ -126,18 +126,18 @@
   .text-block {
     position: relative; border-radius:2.2em; white-space:pre-wrap; transition: 0.44s ease; overflow: visible;
     font-family: inherit; word-wrap:break-word; line-height:1.5; padding: 0.5em 1.1em 1.2em 1.1em; cursor: text;
-    text-align:center; margin-bottom: 2em; outline: 0.1px solid #ffc0cb0c; align-self: center; border: 0;
+    text-align:center; margin-bottom: 2em; outline: 0.1px solid #ffc0cb0c; align-self: center; border: 0; min-width: 60%;
     font-size: 0.92em; box-sizing: border-box; width: auto; color:#ffc0cb80; background: #14141460; scroll-margin: 9em 0;}
 
   .text-block.editing {
     color: #ffc0cbee;
-    background: #14141480;
+    background: #14141430;
     animation: flashOutline 0.4s;
-    outline: 0.1px solid #ffc0cb20}
+    outline: 0.1px solid #ffc0cb34}
 
   @keyframes flashOutline {
-    from { outline-color: #ffc0cb60 }
-    to   { outline-color: #ffc0cb20 }}
+    from { outline-color: #ffc0cbc4 }
+    to   { outline-color: #ffc0cb34 }}
 
 .text-block[data-fav="1"]::after {
   content: '❤';
@@ -201,6 +201,7 @@
     transparent 74%)}
 
 .voice-face-wrap {
+  position: relative;
   display: flex;
   flex-direction: column;   /* stacks image then name */
   align-items: center;
@@ -209,7 +210,7 @@
 
 .voice-face-name {
   font-size: 0.7em;
-  color: #ffc0cb88;
+  color: #ffc0cb17;
   text-align: center;
   white-space: nowrap;
   max-width: 5.5em;

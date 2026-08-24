@@ -847,7 +847,7 @@ Edited() 								; Save edited json, text or SRT file
   SplitPath, jsonSrc,,,ext,media					; use jsonSrc as truth
   if (!media || !ext || ext == "htm")
     return
-  PopUp("saved", 0, 0.46, 0.46)
+  PopUp("saved", 0, 0.46, 0.56)
   texts := []
   foundPos := 1
   Loop {
@@ -2193,7 +2193,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
 <div id='mySeek' class='seekbar'><span id='myDur'></span></div>`n
 <span id='mySelected' class='selected'></span>`n
 <span id='myAlert' class='selected'></span>`n
-<div id='myContent' class='mycontent' onwheel='if (Click) wheelEvent(event)'>`n 
+<div id='myContent' class='mycontent' onwheel='if (mouseDown) wheelEvent(event)'>`n 
   <div id='myView' class='myview'>`n`n %mediaList%</div></div>`n`n
 
 <div id="myNav" class="context">
@@ -2426,9 +2426,9 @@ mediaList(j, input, start, fold)					; spool sorted media files into web page
     caption = <pre id="dat%j%" style='display: none' type="text/plain" data=%data%></pre>`n
 
     if listView
-mediaList = %mediaList%%foldr%<div id='entry%j%' class='entry-row' data-params='%type%,%start%,%dur%,%size%' onmouseenter='if (gesture) sel(%j%)' onmouseover='overThumb(%j%); thumb%j%.style.opacity=1'`n onmouseout="thumb%j%.style.opacity=0"><div class="thumb-wrap"><video id='thumb%j%' class='thumb2' onwheel='if (zoom > 1) wheelEvent(event)'`n %poster% preload=%preload% muted loop disableRemotePlayback type="video/mp4"></video><video id="vid%j%" style='display: none'`n src=%src% preload='none' type='video/mp4'></video>`n </div><div>%j%</div><div>%ext%</div><div>%size%</div><div style='min-width: 6em'>%durT%</div><div>%date%</div><div id='myFavicon%j%' class='favicon' style='position: relative; text-align: right; translate:1.6em 0.4em'>%favicon%</div><div class='title-cell'><textarea id="title%j%" class='title' style='top:0.1em' autocomplete='off' onmouseenter='overThumb(%j%)'>`n %media_s%</textarea></div>%fo%</div>`n %caption%<span id='cues%j%' style='display: none'>%cues%</span>`n`n
+mediaList = %mediaList%%foldr%<div id='entry%j%' class='entry-row' data-params='%type%,%start%,%dur%,%size%' onmouseenter='if (gesture) sel(%j%)' onmouseover='Param(%j%); thumb%j%.style.opacity=1'`n onmouseout="thumb%j%.style.opacity=0"><div class="thumb-wrap"><video id='thumb%j%' class='thumb2' onwheel='if (zoom > 1) wheelEvent(event)'`n %poster% preload=%preload% muted loop disableRemotePlayback type="video/mp4"></video><video id="vid%j%" style='display: none'`n src=%src% preload='none' type='video/mp4'></video>`n </div><div>%j%</div><div>%ext%</div><div>%size%</div><div style='min-width: 6em'>%durT%</div><div>%date%</div><div id='myFavicon%j%' class='favicon' style='position: relative; text-align: right; translate:1.6em 0.4em'>%favicon%</div><div class='title-cell'><textarea id="title%j%" class='title' style='top:0.1em' autocomplete='off' onmouseenter='Param(%j%)'>`n %media_s%</textarea></div>%fo%</div>`n %caption%<span id='cues%j%' style='display: none'>%cues%</span>`n`n
 
-    else mediaList = %mediaList%<div id="entry%j%" class='entry' data-params='%type%,%start%,%dur%,%size%'>`n <span id='myFavicon%j%' onmouseenter='overThumb(%j%)' class='favicon'>%favicon%</span>`n <textarea id='title%j%' class='title' style='opacity:0.7' type='text'`n onmouseenter='overThumb(%j%)'>%media_s%</textarea>`n <div class="thumb-wrap">`n <video id="thumb%j%" class='thumb' onwheel='if (zoom > 1) wheelEvent(event)' onmouseenter="overThumb(%j%); if (gesture && !playing) sel(%j%)"`n onmouseout="thumb.pause()"`n onmouseup='if (gesture && !playing) Param(%j%)' %poster%`n preload=%preload% loop muted disableRemotePlayback type='video/mp4'></video></div>`n <video id="vid%j%" style='display: none' src=%src% preload='none' type='video/mp4'></video>%noIndex%`n <span id='cues%j%' style='display: none'>%cues%</span></div>`n %caption%`n
+    else mediaList = %mediaList%<div id="entry%j%" class='entry' data-params='%type%,%start%,%dur%,%size%'>`n <span id='myFavicon%j%' onmouseenter='Param(%j%)' class='favicon'>%favicon%</span>`n <textarea id='title%j%' class='title' style='opacity:0.7' type='text'`n onmouseenter='Param(%j%)'>%media_s%</textarea>`n <div class="thumb-wrap">`n <video id="thumb%j%" class='thumb' onwheel='if (zoom > 1) wheelEvent(event)' onmouseenter="Param(%j%); if (gesture && !playing) sel(%j%)"`n onmouseout="thumb.pause()"`n %poster%`n preload=%preload% loop muted disableRemotePlayback type='video/mp4'></video></div>`n <video id="vid%j%" style='display: none' src=%src% preload='none' type='video/mp4'></video>%noIndex%`n <span id='cues%j%' style='display: none'>%cues%</span></div>`n %caption%`n
     }
 
 
