@@ -2,7 +2,6 @@
 
 
   let wheel = 0								// wheel count
-  let wheelTime = 0							// date() of wheel event
   let wheelDir = 0		 					// wheel direction
   let index = 1								// thumb index (e.g. thumb14)
   let listView = 0							// list or thumb view
@@ -161,6 +160,7 @@
 
 
   function activate(e) {
+    if (document.getElementById('osk')) return
     overBlock = overEditor && document.elementFromPoint(xPos, yPos)?.closest('.text-block') || null
     if (overBlock && myVoice.paused && myPlayer.paused) {
       lastId = overBlock
@@ -205,7 +205,7 @@
     delay = 80;										// 80 max
     let id = e.target.id								// id under cursor
     let emotion = '[' + e.target.dataset.tag + '] '
-    if (e.target.closest('#emotionSub')) document.execCommand('insertText', false, emotion)
+    if (e.target.closest('#emotionSub')) {document.execCommand('insertText', false, emotion); return}
     if ((e.target.closest('#voice-faces') || e.target.classList.contains('voice-face')) && !gesture) { newVoice(e); return }
     if (captions) overBlock = document.elementFromPoint(xPos, yPos)?.closest('.text-block') || 0
     if (!playing && !listView && longClick && !gesture && overMedia && !overTitle) popThumb()	// pop thumb out of flow
@@ -408,6 +408,7 @@
     let y = Math.abs(yPos-yRef)
     cursor = overMedia ? 12 : 4
     seekbar()
+    if (xm > 0.1) crawl = 0
     if (x + y > 7 && !gesture && mouseDown) {
       gesture = 1
       if (!playing && overMedia && zoom > 1) popThumb()
@@ -445,20 +446,19 @@
 
   function wheelEvent(e) {
     let id = e.target.id 								// faster hover detection
-    if (e.target.closest('#voiceSub')) return						// scroll within submenu
-    if (e.target.closest('#emotionSub')) return
-    if (e.target.closest('.dropdown-content')) return
-    if (overEditor && xm > 0.1 && ym > 0.2 && !myNav.style.display && !overMedia) {	 // allow viewport scroll
-      wheel = 0; return}
+    if (overEditor) {
+      if (e.target.closest('#voiceSub')) return						// scroll within submenu
+      if (e.target.closest('#emotionSub')) return
+      if (e.target.closest('.dropdown-content')) return
+      const vr = viewport.getBoundingClientRect()
+      const er = editingBlock?.getBoundingClientRect()
+      if (er.top < vr.top + 20 || er.top > vr.bottom) syncPlay = userPlay = 0
+      if (xm > 0.1 && ym > 0.2) {wheel = 0; return}}
     e.preventDefault()									// stop default scroll
-    if (!mouseDown && overEditor && !myNav.style.display && xm < 0.1) {
-      if (Math.abs(e.deltaY) > 1 && Date.now() - wheelTime > 600) {			// hysteresis
-        wheelTime = Date.now()
-        scrollUntilBlock(e.deltaY)}
-      return}
     wheel += Math.ceil(Math.abs(e.deltaY))
     if (wheel < delay) return
     let wheelUp = wheelDir * e.deltaY > 0
+    if (!mouseDown && overEditor && !myNav.style.display && xm < 0.1) {scrollUntilBlock(e.deltaY); wheel = 0; return}
     if (longClick && e.target.closest('#voice-faces')) {				// face zoom
       faceZoom = Math.max(1, Math.min(2.5, faceZoom * (wheelUp ? 1.03 : 0.97)))
       document.getElementById('voice-faces')?.style.setProperty('--fz', faceZoom)
@@ -612,6 +612,7 @@
     else if (!listView && title.matches(':hover')) overMedia = index
     else if (!overMedia && !playing) type = ''
     else overMedia = 0
+//myAlert.innerHTML = overEditor; delay = 222
     mySpeed.innerHTML = mySkinny.innerHTML = null
     let currentRate = editingBlock?._voice?.src ? myVoice.playbackRate : rate
     if (type) {
@@ -1064,7 +1065,7 @@
       editingBlock = editor.style.display = myNav.style.display = null
       myPlayerWrap.style.visibility = myPlayer.style.visibility = null
       scaleY = (innerHeight > innerWidth) ? 0.6 : 0.5
-      thumb.scrollIntoView({ block: 'nearest' })}}
+      thumb.scrollIntoView({ block: 'center' })}}
 
 
   function popThumb() {
@@ -1906,6 +1907,7 @@ function Backspace(e) {
       : (editingBlock?.nextElementSibling || editingBlock)
     activateBlock(next, userPlay)
     next.scrollIntoView({ behavior: 'smooth', block: 'center' })}
+
 
 
 
