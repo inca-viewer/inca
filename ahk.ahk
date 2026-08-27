@@ -1958,9 +1958,11 @@ if ErrorLevel
     if (command != "More")
       lastIndex := 0
     type = video							; prime for list parsing
-    if (index > 96)							; last index to scroll to
+    if (index > 192)							; last index to scroll to
       page := index
-    else page := 96							; media entries per chunk
+    else page := 192							; media entries per chunk
+if (playlist) 
+  page = 512
     if (command == "More")
       lastIndex := value - 1
     FileRead, list, %inca%\cache\temp\%folder%.txt

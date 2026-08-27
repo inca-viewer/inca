@@ -329,8 +329,8 @@
   border-radius: inherit;
   pointer-events: none;
   box-shadow:
-    inset 0 0 40px 30px #000,     /* very broad deep fall-off */
-    inset 0 0 10px 2px #000;       /* hard dark rim */
+    inset 0 0 40px 30px #000,
+    inset 0 0 10px 2px #000;
   z-index: 1;}
 
 .player {
