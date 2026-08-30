@@ -1,8 +1,7 @@
 // incorporate InfiniteTalk face animation when 50GB disk is free
 // undo?
 // check speed skinny full
-
-
+// captions on images check usability when voiced
 
   let wheel = 0								// wheel count
   let wheelDir = 0		 					// wheel direction
@@ -158,7 +157,9 @@
     if (sel) {searchTerm = searchInput.value = sel}
     else searchInput.placeholder='❤'})
   searchInput.addEventListener('input', newSearch)
-  viewport.addEventListener('input', () => {editing = 1; syncPlay = 0 })
+  viewport.addEventListener('input', () => {
+    editing = 1; syncPlay = 0; 
+    if (editingBlock?.childElementCount) editingBlock.textContent = editingBlock.textContent || '\u200B'})
   viewport.addEventListener('wheel', wheelEvent)
   editor.addEventListener('wheel', wheelEvent)				// face zoom
   viewport.addEventListener('scroll', activate)
@@ -168,10 +169,10 @@
     if (document.getElementById('osk')) return
     let b = overEditor && document.elementFromPoint(xPos, yPos)?.closest('.text-block') || null
     if (b !== overBlock) { clearTimeout(overTimer); overBlock = b; overTimer = 0; updateFaceHighlights() }
-    if (overBlock && !overTimer && myVoice.paused && myPlayer.paused)
+    if (overBlock && !overTimer)
       overTimer = setTimeout(() => {
         overTimer = 0
-        if (overBlock && myVoice.paused && myPlayer.paused) {
+        if (overBlock) {
           lastId = overBlock
           if (overBlock != editingBlock) activateBlock(overBlock, userPlay)}}, 244)}
 
@@ -291,7 +292,7 @@
         const wasOsk = document.getElementById('osk')
         const block = overBlock ? overBlock : editingBlock
         if (id == 'viewport') window.getSelection().removeAllRanges()
-        if (longClick && !gesture && overEditor && xm < 0.95 && ym > 0.3) {syncPlay = userPlay = 0; osk()}
+        if (longClick && !gesture && overBlock) {syncPlay = userPlay = 0; osk()}
         if (overBlock && !gesture && overBlock !== editingBlock) {
           lastBlock = block.dataset.num; userPlay = syncPlay = 1; activateBlock(block, !longClick); return}
         if (captions == 1) {
@@ -392,11 +393,10 @@
     positionMedia(0)
     myPic.style.top = '-999px'
     let syncStart = start								// because seekbar overwrites start
-    if (myPlayer.src != thumb.src) myPlayer.src = thumb.src
-    if (thumbSheet) {myPlayer.poster = sheetUrl; myPlayer.load()}
+    if (!thumbSheet) myPlayer.src = thumb.src
+    else {myPlayer.src = ''; myPlayer.poster = sheetUrl; myPlayer.load()}
     if (!thumbSheet && dur && !cue && !captions) {myPlayer.currentTime = syncStart; syncPlay = 1}
     setTimeout(async () => {
-      if (thumbSheet) {myPlayer.poster = sheetUrl; myPlayer.load()}
       if (!captions && !thumbSheet && defPause && !playlist.match('/inca/music/')) {myPlayer.currentTime = syncStart; syncPlay = 0}
       if (!more && lastIndex < listSize && index > lastIndex - 9) inca('More', lastIndex)
       if (lastClick) positionMedia(0.34)
@@ -465,8 +465,8 @@
     wheel += Math.ceil(Math.abs(e.deltaY))
     if (wheel < delay) return
     let wheelUp = wheelDir * e.deltaY > 0
-    if (!mouseDown && overEditor && !myNav.style.display && xm < 0.1) {
-      scrollUntilBlock(e.deltaY); wheel = 0; delay = 244; return}
+    if (!mouseDown && overEditor && !myNav.style.display && xm < 0.1) {			// scroll blocks
+      scrollUntilBlock(e.deltaY); wheel = 0; delay = 284; return}
     if (longClick && e.target.closest('#voice-faces')) {				// face zoom
       faceZoom = Math.max(1, Math.min(2.5, faceZoom * (wheelUp ? 1.03 : 0.97)))
       document.getElementById('voice-faces')?.style.setProperty('--fz', faceZoom)
@@ -671,7 +671,7 @@
         ? myVoice.play()
         : myVoice.pause()
       positionMedia(0)
-      if (captions) { editingBlock?.replace(/<[^>]*>/g, ''); showStart() }
+      if (captions) { showStart() }
       myVol.innerHTML = editingBlock?._volume == 1 ? 'Volume' : `Volume ${editingBlock?._volume*100}`
       myDelay.innerHTML = editingBlock?._delay == 0 ? 'Delay' : `Delay ${editingBlock?._delay*1000}`
       myRate.innerHTML = editingBlock?._rate == 1 ? 'Speed' : `Speed ${editingBlock?._rate}`
@@ -1697,7 +1697,7 @@ function Backspace(e) {
   e.preventDefault()
   syncPlay = 0
   if (captions) editing = 1
-  if (overBlock && editingBlock.textContent.endsWith('\u200B')) document.execCommand('Delete')
+//  if (overBlock && editingBlock.textContent.endsWith('\u200B')) document.execCommand('Delete')
   const sel = window.getSelection()
   let atStart = false
   if (sel.rangeCount && editingBlock) {
