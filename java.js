@@ -203,7 +203,7 @@
     let id = e.target.id								// id under cursor
     let emotion = '[' + e.target.dataset.tag + '] '
     if (e.target.closest('#emotionSub')) {document.execCommand('insertText', false, emotion); return}
-    if ((e.target.closest('#voice-faces') || e.target.classList.contains('voice-face')) && !gesture) { newVoice(e); return }
+    if (document.elementFromPoint(xPos, yPos)?.closest('#voice-faces')) { if (!longClick) newVoice(e); return }
     if (captions) overBlock = document.elementFromPoint(xPos, yPos)?.closest('.text-block') || 0
     if (!playing && !listView && longClick && !gesture && overMedia && !overTitle) popThumb()	// pop thumb out of flow
     if (['myCut', 'myCopy', 'myPaste'].includes(id)) {
@@ -442,21 +442,22 @@
 
   function wheelEvent(e) {
     let id = e.target.id 								// faster hover detection
+    const face = document.elementFromPoint(xPos, yPos)?.closest('#voice-faces')
     if (overEditor) {
       if (e.target.closest('#voiceSub')) return						// scroll within submenu
       if (e.target.closest('#emotionSub')) return
       if (e.target.closest('.dropdown-content')) return
-      if (xm > 0.1 && ym > 0.2 && !myNav.style.display) return}
+      if (xm > 0.1 && ym > 0.2 && !face && !myNav.style.display) return}
     e.preventDefault()									// stop default scroll
     wheel += Math.ceil(Math.abs(e.deltaY))
     if (wheel < delay) return
     let wheelUp = wheelDir * e.deltaY > 0
     if (!mouseDown && overEditor && !myNav.style.display && xm < 0.1) {			// scroll blocks
       scrollUntilBlock(e.deltaY); wheel = 0; delay = 284; return}
-    if (longClick && e.target.closest('#voice-faces')) {				// face zoom
+    if (face) {										// face zoom
       faceZoom = Math.max(1, Math.min(2.5, faceZoom * (wheelUp ? 1.03 : 0.97)))
       document.getElementById('voice-faces')?.style.setProperty('--fz', faceZoom)
-      editing = 1; wheel = 0; delay = 12}
+      editing = 1; wheel = 0; delay = 12; return}
     if (overEditor && !myNav.style.display && !overMedia) return
     let factor = 1 + (wheelUp ? wheel : -wheel) / 1500
     if (['myType', 'myAlpha', 'myDate', 'mySize', 'myDuration', 'mySearch'].includes(id)) {
