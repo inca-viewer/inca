@@ -126,7 +126,7 @@
   .text-block {
     position: relative; border-radius:2.2em; white-space:pre-wrap; transition: 0.44s ease; overflow: visible;
     font-family: inherit; word-wrap:break-word; line-height:1.5; padding: 0.5em 1.1em 1.2em 1.1em; cursor: text;
-    text-align:center; margin-bottom: 2em; outline: 0.1px solid transparent; align-self: center; border: 0; min-width: 60%;
+    text-align:center; margin-bottom: 1.6em; outline: 0.1px solid transparent; align-self: center; border: 0; min-width: 60%;
     font-size: 0.92em; box-sizing: border-box; width: auto; color:#ffc0cb80; background: none; scroll-margin: 9em 0;}
 
   .text-block.editing {

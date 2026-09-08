@@ -1961,8 +1961,8 @@ if ErrorLevel
     if (index > 192)							; last index to scroll to
       page := index
     else page := 192							; media entries per chunk
-if (playlist) 
-  page = 512
+    if (playlist) 
+      page = 512
     if (command == "More")
       lastIndex := value - 1
     FileRead, list, %inca%\cache\temp\%folder%.txt
@@ -2173,7 +2173,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
 
   <div id="editor">
     <div id="ribbon">
-      <span id="edPause" style="position:absolute;left:10px;color:orange;opacity:0;transition:0.3s"></span>
+      <span id="edPause" style="position:absolute;left:5px;color:orange;opacity:0;transition:0.3s"></span>
       <div id="media-header" class="dropdown">
         <div class="header"></div>
         <div class="dropdown-content"><div>No media</div></div>`n
@@ -2279,10 +2279,10 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
   </div>`n`n
 
   <div id='myRibbon2' class='ribbon' style='background:#1b1814' onwheel="wheelEvent(event)">`n
-  <a id='myMute2' style='width: 1px; color: red'></a>
-  <a id='myPitch2' style='width: 1px; color: red'></a>
-  <a id='myPause2' style='width: 1px; color: red'></a>
-  <a id='mySpeed2' style='width: 1px; color: red'></a>
+  <a id='myMute2' style='width: 1px; color: orange'></a>
+  <a id='myPitch2' style='width: 1px; color: orange'></a>
+  <a id='myPause2' style='width: 1px; color: orange'></a>
+  <a id='mySpeed2' style='width: 1px; color: orange'></a>
   <a id='myType' style='width: 3.5em; %x6%' onmousedown="inca('Type', filt)">%type%</a>`n
   <a id='myDate' style='%x4%' onmousedown="inca('Date', filt)">Date</a>`n
   <a id='myDuration' style='%x3%' onmousedown="inca('Duration', filt)"> Duration</a>`n
