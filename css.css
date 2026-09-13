@@ -97,11 +97,11 @@
     cursor: default;
     overflow-y:auto; 
     padding: 11em 1.6em 10em 2em;
+    scrollbar-width:thin;
+    scrollbar-color:#ddc0cb24 transparent; 
     display:flex; 
     flex-direction:column; 
     min-height:0;
-    scrollbar-width:thin; 
-    scrollbar-color:#ffc0cb20 transparent; 
     overflow-x: hidden;
     position: relative;
     mask-image: linear-gradient(
@@ -624,6 +624,8 @@
 #voiceSub:hover {visibility: visible; opacity: 1; transition: opacity 0.34s;}
 #myEmotion:hover + #emotionSub,
 #emotionSub:hover {visibility: visible; opacity: 1; transition: opacity 0.34s;}
+#mySounds:hover + #soundsSub,
+#soundsSub:hover {visibility: visible; opacity: 1; transition: opacity 0.34s;}
 
 #myNav[style*="display: block"] {opacity: 1; pointer-events: auto;}
 .context a:hover {background: #23202180;}
@@ -634,7 +636,7 @@
 
 .myBody {					/* whole body element */
   font-family: 'Yu Gothic', 'Calibri Light';
-  scrollbar-color:#ffd0db10 transparent;
+  scrollbar-color:#ddc0cb24 transparent; 
   background: #0e0c05;
   user-select: none;
   font-size: 0.85em;

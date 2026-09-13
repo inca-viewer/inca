@@ -2224,27 +2224,34 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
       <a id='myVol'>Volume</a>`n
       <a id="myVoiceHeader" style="color:pink">voice:</a>
       <div id="voiceSub" class="submenu"></div>
-      <a id='myChatterbox'>Chatterbox</a>`n
-      <a id='myElevenLabs'>Elevenlabs</a>`n
       <a id='myBookmark'>Bookmark <span style="font-size:0.64em; vertical-align:0.1em">&#x2764</span></a>`n
       <a id='myEmotion'>Emotion</a>`n
         <div id='emotionSub' class='submenu'>`n
-          <a data-tag='yarn'>yarn</a>`n
-          <a data-tag='breath'>breath</a>`n
-          <a data-tag='whisper'>whisper</a>`n
+          <a data-tag='crying'>crying</a>`n
+          <a data-tag='fear'>fear</a>`n
+          <a data-tag='angry'>angry</a>`n
+          <a data-tag='surprised'>surprised</a>`n
+          <a data-tag='whispering'>whispering</a>`n
+          <a data-tag='sarcastic'>sarcastic</a>`n
+          <a data-tag='happy'>happy</a>`n
+          <a data-tag='dramatic'>dramatic</a>`n
+        </div>
+      <a id='mySounds'>Sounds</a>`n
+        <div id='soundsSub' class='submenu'>`n
+          <a data-tag='clear throat'>clear throat</a>`n
           <a data-tag='sniff'>sniff</a>`n
           <a data-tag='groan'>groan</a>`n
           <a data-tag='shush'>shush</a>`n
-          <a data-tag='sigh'>sigh</a>`n
           <a data-tag='gasp'>gasp</a>`n
           <a data-tag='cough'>cough</a>`n
-          <a data-tag='laugh'>laugh</a>`n
+          <a data-tag='sigh'>sigh</a>`n
           <a data-tag='chuckle'>chuckle</a>`n
-          <a data-tag='clear throat'>clear throat</a>`n
+          <a data-tag='laugh'>laugh</a>`n
         </div>
+      <a id='myChatterbox'>Chatterbox</a>`n
+      <a id='myElevenLabs'>Elevenlabs</a>`n
       <a id='myExport'>Export</a>`n
     </div>
-
     <div class="menu default">`n
       <a id="mySelect">Select</a>`n
       <a id="myDelete">Delete</a>`n

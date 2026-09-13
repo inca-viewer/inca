@@ -202,7 +202,8 @@
     delay = 80;										// 80 max
     let id = e.target.id								// id under cursor
     let emotion = '[' + e.target.dataset.tag + '] '
-    if (e.target.closest('#emotionSub')) {document.execCommand('insertText', false, emotion); return}
+    if (e.target.closest('#emotionSub')) {document.execCommand('insertText', false, emotion); myNav.style.display = null; return}
+    if (e.target.closest('#soundsSub')) {document.execCommand('insertText', false, emotion); myNav.style.display = null; return}
     if (document.elementFromPoint(xPos, yPos)?.closest('#voice-faces')) { if (!longClick) newVoice(e); return }
     if (captions) overBlock = document.elementFromPoint(xPos, yPos)?.closest('.text-block') || 0
     if (!playing && !listView && longClick && !gesture && overMedia && !overTitle) popThumb()	// pop thumb out of flow
@@ -279,7 +280,7 @@
         const wasOsk = document.getElementById('osk')
         const block = overBlock ? overBlock : editingBlock
         if (id == 'viewport') window.getSelection().removeAllRanges()
-        if (longClick && !gesture && overBlock) {syncPlay = userPlay = 0; osk()}
+        if (longClick && !gesture && overEditor && xm < 0.95) {syncPlay = userPlay = 0; osk()}
         if (overBlock && !gesture && overBlock !== editingBlock) {
           lastBlock = block.dataset.num; userPlay = syncPlay = 1; activateBlock(block, !longClick); return}
         if (captions == 1) {
@@ -363,7 +364,7 @@
     else myPlayer.muted = defMute
     if (!thumbSheet) {
       if (favicon.matches(':hover')) getSrt(1)
-      else if (overTitle && mouseDown && favicon.innerText.includes('©')) previewMode ? getSrt(lastBlock) : getSrt(1)
+      else if (overTitle && mouseDown) previewMode ? getSrt(lastBlock) : getSrt(1)
       else if (captions || type == 'document') getSrt()}
     if (el = document.getElementById('title'+lastMedia)) el.style.color = el.style.fontWeight = ''
     title.style.color = 'pink'; title.style.fontWeight = 'bold'
@@ -444,8 +445,7 @@
     let id = e.target.id 								// faster hover detection
     const face = document.elementFromPoint(xPos, yPos)?.closest('#voice-faces')
     if (overEditor) {
-      if (e.target.closest('#voiceSub')) return						// scroll within submenu
-      if (e.target.closest('#emotionSub')) return
+      if (e.target.closest('#voiceSub, #emotionSub, #soundsSub')) return
       if (e.target.closest('.dropdown-content')) return
       if (xm > 0.1 && ym > 0.2 && !face && !myNav.style.display) return}
     e.preventDefault()									// stop default scroll
@@ -943,7 +943,7 @@
       editingBlock._rate = myVoice.playbackRate = val; editing = 1; return}
     else if (item == 'rate') {
       rate = val
-      if (!playing) defRate = val
+      if (!playing && !overMedia) defRate = val
       settings.defRate = String(defRate)
       localStorage.setItem(folder, JSON.stringify(settings))}
     if (type) {
@@ -1690,12 +1690,11 @@ function Backspace(e) {
   let atStart = false
   if (sel.rangeCount && editingBlock) {
     const range = sel.getRangeAt(0)
-if (range.collapsed && editingBlock.contains(range.startContainer)) {
+    if (range.collapsed && editingBlock.contains(range.startContainer)) {
       const preRange = document.createRange()
       preRange.selectNodeContents(editingBlock)
       preRange.setEnd(range.startContainer, range.startOffset)
       atStart = preRange.toString() === ''}}
-
   if (captions && e.target.id !== 'caption-search-input' && atStart) {
     const prev = editingBlock?.previousElementSibling
     if (prev) {
@@ -1811,7 +1810,7 @@ if (range.collapsed && editingBlock.contains(range.startContainer)) {
 
   function Chatterbox(id) {
     if (overBlock) editingBlock = overBlock
-    const voiceName = editingBlock._voiceName || lastVoice || 'Tracy'
+    const voiceName = editingBlock._voiceName || lastVoice || 'Amai'
     let block = editingBlock
     block._voiceName = voiceName
     myPlayer.currentTime = editingBlock.dataset.start
@@ -1824,7 +1823,7 @@ if (range.collapsed && editingBlock.contains(range.startContainer)) {
     syncPlay = 0
     editing = 1
     delay = 100
-    block.style.outline = '1.8px dotted green'
+    block.style.outline = '1.4px dotted orange'
     fetch(server + 'generate-voice', {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -1840,7 +1839,7 @@ if (range.collapsed && editingBlock.contains(range.startContainer)) {
             userPlay = 1
             editing = 1
             activateBlock(block, 1)
-            block.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    //        block.scrollIntoView({ behavior: 'smooth', block: 'center' })
             inca('addHistory',last,0,path)})
           .catch(() => {block.style.outline = ''; alert('chatterbox not responding')})}
 

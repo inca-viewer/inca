@@ -55,7 +55,7 @@ function osk() {
 function updateSuggestions() {
   requestAnimationFrame(() => {
     if (!targetEl) return;
-    const text = (targetEl.isContentEditable ? targetEl.innerText : targetEl.value).replace(/\u200B/g, '');
+    const text = (targetEl.isContentEditable ? targetEl.innerText : targetEl.value);
     const { words } = predict(text, predictBuffer);
     const btns = suggestionRow.querySelectorAll('.osk-suggestion');
     btns.forEach((btn, i) => {
@@ -70,7 +70,7 @@ function updateSuggestions() {
 
   function insertSuggestion(s) {
     if (!targetEl || !restoreSelection() || gesture) return
-    const text = (targetEl.isContentEditable ? targetEl.innerText : targetEl.value).replace(/\u200B/g, '')
+    const text = (targetEl.isContentEditable ? targetEl.innerText : targetEl.value)
     const partial = predictBuffer || (window.getSelection().anchorNode?.textContent || '').slice(0, window.getSelection().anchorOffset).match(/\S+$/)?.[0] || ''
     if (!s) return
     if (targetEl.isContentEditable) {
@@ -106,9 +106,9 @@ else {
   ];
 
   let numLayout = [
-    ["`","1","2","3","4","5","6","7","8","9","0",",",".","←","Del","Num"],
-    ["Shift","@","#","£","$","%","^","&","*","-","Enter",";",":","!","?"],
-    ["Ctrl","~","_","[","]","{","}","\\","","(",")","+","="]
+    ["-","1","2","3","4","5","6","7","8","9","0",",",".","←","Del","Num"],
+    ["Shift","@","#","£","$","%","^","&","*","/","Enter",";",":","+","="],
+    ["Ctrl","~","_","`","|","[","]","\\","","(",")","{","}"]
   ];
 
   function createKeyboard() {
@@ -385,7 +385,7 @@ function buildPredictor() {
       return r.text();
     })
     .then(dictText => {
-      const dictWords = dictText.replace(/\u200B/g, '').toLowerCase().match(/\b[\w']+\b/g) || [];
+      const dictWords = dictText.toLowerCase().match(/\b[\w']+\b/g) || [];
       dictWords.forEach(w => {
         predictor.words[w] = (predictor.words[w] || 0) + 8;  // dictionary gets priority
       });
@@ -396,7 +396,7 @@ function buildPredictor() {
     })
     .finally(() => {
       // 2. Always include words from current captions/blocks
-      const text = blocks.map(b => b.innerText).join(' ').replace(/\u200B/g, '').toLowerCase();
+      const text = blocks.map(b => b.innerText).join(' ').toLowerCase();
       const currentWords = text.match(/\b[\w']+\b/g) || [];
       currentWords.forEach(w => {
         predictor.words[w] = (predictor.words[w] || 0) + 1;
