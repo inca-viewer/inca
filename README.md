@@ -2,15 +2,9 @@
 # Inca<br>
 Windows - Chrome, Firefox, Edge, Opera or Brave<br>
 
-Warning. This is a powerful tool for engineering states of bliss<br>
-It allows you to build and edit the stories that get you there<br>
-Download only if you want that. It is highly addictive<br>
+YouTube style interface with AI tools<br>
+To build pathways and storyboards from your media<br>
 
-First release 1.0 expected october 2026
-
-It unifies the internet, music, local files with AI tools into your browser<br>
-
-YouTube style interface for your local media with AI creation tools<br>
 includes self hosted voice cloning, caption extraction and editing<br>
 create your own movies & stories with your own dialog and voices from your own assets<br>
 
