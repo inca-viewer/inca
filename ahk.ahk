@@ -943,7 +943,7 @@ IfExist, %inca%\cache\json\%media%.json
     if playlist
       {
       checkPlaylist()
-      folders := [inca "\fav", inca "\music"]
+      folders := [inca "\fav", inca "\music", inca "\cache\temp"]
       for k, f in folders
         Loop, Files, %f%\*.m3u
           {
@@ -978,6 +978,8 @@ IfExist, %inca%\cache\json\%media%.json
     if (listSize > 250000)
       PopUp("folder too big",999,0,0)
     StringTrimRight, list, list, 2					; remove end `r`n
+    if InStr(playlist, "\cache\temp\")
+      sort = Playlist
     if (InStr(toggles, "Reverse") && sort != "Date" && sort != "Playlist")
       reverse = R
     if (!InStr(toggles, "Reverse") && (sort == "Date" || sort == "Playlist"))
@@ -1966,16 +1968,23 @@ if ErrorLevel
     if (command == "More")
       lastIndex := value - 1
     FileRead, list, %inca%\cache\temp\%folder%.txt
+    src := history := inca "\cache\temp\" folder "-history.m3u"
+    if (!InStr(path, "\cache\temp\"))
+      FileDelete, %src%
+    seek = 0.0
+    History()
     Loop, Parse, list, `n, `r 						; split big list into smaller web pages
       if (A_Index > lastIndex && A_Index < lastIndex + page + 1)
         {
         item := StrSplit(A_LoopField, "/")				; sort filter \ src \ media type \ ext
         id := item.1
-        source := item.2
+        src := item.2
         type := item.3
-        start := item.4
+        seek := item.4
         fold := item.5
-        mediaList(A_Index, source, start, fold)			; append mediaList
+        if (!InStr(path, "\cache\temp\"))
+          FileAppend, %src%|0.0`r`n, %history%, UTF-8
+        mediaList(A_Index, src, seek, fold)				; append mediaList
         }
     if (command == "More")						; continuous scrolling
       {
@@ -2424,11 +2433,6 @@ mediaList(j, input, start, fold)					; spool sorted media files into web page
     StringReplace, media_s, media, `', &apos;, All
     if !size
       size = 0								; cannot have null size in Param()
-
-;    if (type == "image")
-;      media_s := "&#x2726; " . media_s					; highlight as image (not video)
-;    if (ext == "txt")
-;      src = "%server%%poster%"
     src = "%server%%src%"
     poster = poster = "%server%%poster%"
     data = "%server%%data%"

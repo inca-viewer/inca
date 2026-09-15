@@ -2,7 +2,6 @@
 // 3 text versions of each block
 
 
-
   let wheel = 0								// wheel count
   let wheelDir = 0		 					// wheel direction
   let index = 1								// thumb index (e.g. thumb14)
@@ -292,10 +291,8 @@
           if (wasOsk && overBlock == editingBlock || (!userPlay && syncPlay && !overEditor)) userPlay = syncPlay = 0
           else {
             const paused = editingBlock?._voice?.src ? myVoice.paused : myPlayer.paused
-            if (paused) {
-              userPlay = 1
-              myVoice.currentTime = 0
-              myPlayer.currentTime = +editingBlock.dataset.start}
+            if (myPlayer.currentTime > editingBlock._end) myPlayer.currentTime = editingBlock.dataset.start
+            if (paused) userPlay = 1
             else userPlay ^= 1
             syncPlay = userPlay}
           return}}
@@ -305,8 +302,10 @@
         if (overTitle != 2) title.value = title.defaultValue.trim()
         overTitle = 2; lastMedia = index; return}
       if (!playing && id != title.id && !gesture) {
-        if (!overTitle && longClick && myPanel.matches(':hover')) return 
-        if (id == 'myCue' || (overMedia && thumb.src.slice(-3) == 'm3u')
+        if (!overTitle && longClick && myPanel.matches(':hover')) return
+        if (overMedia && folder == 'History' && thumb.src.slice(-3) == 'm3u') {
+          inca('Path', '', '', thumb.src.replace(server, '').replace(/\//g, '\\')); return }
+        if (id == 'myCue' || overMedia && thumb.src.slice(-3) == 'm3u'
         || (longClick && ((overMedia && type == 'document')
         || (favicon && favicon.matches(':hover')))) 
         || (overMedia && thumb.src.endsWith('.pdf'))) {mouseDown = 0; inca('Notepad',id,index,favicon.matches(':hover')); return}}
@@ -1839,7 +1838,6 @@ function Backspace(e) {
             userPlay = 1
             editing = 1
             activateBlock(block, 1)
-    //        block.scrollIntoView({ behavior: 'smooth', block: 'center' })
             inca('addHistory',last,0,path)})
           .catch(() => {block.style.outline = ''; alert('chatterbox not responding')})}
 
@@ -1899,7 +1897,7 @@ function Backspace(e) {
 
 
   function nextCaption(dir, force) {
-    syncPlay = 0
+    myVoice.currentTime = syncPlay = 0
     if (ribbon.matches(':hover') || !userPlay) return
     if (!captions || myNav.style.display) return
     if (overEditor && !force && !overMedia) return
@@ -1909,15 +1907,23 @@ function Backspace(e) {
     next.scrollIntoView({ behavior: 'smooth', block: 'center' })}
 
 
-  function activate(e) {						// activate block on long hover
-    let b = overEditor && document.elementFromPoint(xPos, yPos)?.closest('.text-block') || null
-    if (b !== overBlock) { clearTimeout(overTimer); overBlock = b; overTimer = 0; updateFaceHighlights() }
-    if (overBlock && !overTimer)
-      overTimer = setTimeout(() => {
-        overTimer = 0
-        if (overBlock) {
-          lastId = overBlock
-          if (overBlock != editingBlock) activateBlock(overBlock, userPlay)}}, 244)}
+function activate() {
+  let b = overEditor && document.elementFromPoint(xPos, yPos)?.closest('.text-block') || null
+  if (b === overBlock) return
+  clearTimeout(overTimer)
+  const wasOsk = document.getElementById('osk')
+  const reenter = b && b === editingBlock
+  overBlock = b
+  updateFaceHighlights()
+  if (!b) return
+  overTimer = setTimeout(() => {
+    overTimer = 0
+    if (!overBlock) return
+    lastId = overBlock
+    if (overBlock !== editingBlock)
+      activateBlock(overBlock, userPlay)
+    else if (reenter && !wasOsk)
+      activateBlock(overBlock, userPlay, 1)}, 344)}
 
 
 
