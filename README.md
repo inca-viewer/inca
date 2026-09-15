@@ -1,7 +1,7 @@
 
 # Inca<br>
 Windows - Chrome, Firefox, Edge, Opera or Brave<br><br>
-Warning. This is a powerful tool for engineering bliss<br>
+Warning. This is a powerful tool for engineering states of bliss<br>
 It allows you to build and edit the stories that get you there<br>
 Know that before you download. It is very addictive<br><br>
 YouTube style interface for your local media with AI creation tools<br>
