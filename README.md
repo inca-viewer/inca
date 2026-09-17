@@ -2,16 +2,18 @@
 # Inca<br>
 Windows - Chrome, Firefox, Edge, Opera or Brave<br>
 
-YouTube style interface with AI tools<br>
-To build pathways and storyboards from your media<br>
+YouTube style browser tabs<br>
+To Build pathways and storyboards from your own media<br>
 
-includes self hosted voice cloning, caption extraction and editing<br>
-create your own movies & stories with your own dialog and voices from your own assets<br>
+Take any existing image, movie, text, captions<br>
+And change the names, the story, the voices, the cuts etc.<br>
+To create evolving story arcs from existing media
 
 Set start times, skips, pauses, skinny, pitch, speed<br>
-non destructive caption edits, cloned voices, cut ins, cut outs, cuts to<br><br>
+non destructive caption edits, cloned voices, cut ins, cut outs<br>
+
 General filing - move, delete, copy, favorite, mp3, jpg, cuts, joins, conversions<br>
-buttery smooth playback and seeking in browsers<br><br>
+buttery smooth playback and seeking in browsers from transcoded video<br><br>
 <img src="screens/xyZPE.svg" width="55%"><br>
 <img src="screens/computer arm 5.jpg" width="18%"> <img src="screens/computer arm 2.jpg" width="18%"> <img src="screens/computer arm 1.jpg" width="18%"><br><br>
 <img src="screens/Screen 1.jpg" width="25%"> <img src="screens/Screen 2.jpg" width="25%"><br>
@@ -24,7 +26,8 @@ Search, organize, edit & view media files in browser<br>
 Move, Copy, Rename files in browser<br>
 Create slideshows, favorites, clips, joins, conversions etc.<br>
 Create, edit or search captions and subtitles<br>
-Concurrent Music and playlists from browser tabs<br><br>
+Concurrent Music and playlists from browser tabs<br>
+
 New... uses node server instead of local files<br>
 New... uses Chatterbox and Faster Whisper for voice cloning and caption editing locally<br>
 New... supports elevenlabs and venice external api's<br>
@@ -34,7 +37,7 @@ Lightweight & portable (no installation)<br>
 Pure vanilla java / ahk script (ai can confirm is safe)<br>
 No IDE, no libraries, no external calls, no browser extensions<br> 
 Does not mess with any settings - see source code<br><br>
-All media types supported in browser - fast transcode if needed.<br>
+All media types supported in browser with transcode option.<br>
 Edit settings or source code in notepad, then run inca.exe<br>
 Compiles in less than 1 second<br>
 Browser will default to pictures folder, bookmark this tab<br>
@@ -63,12 +66,12 @@ Long left click
 Right click & slide
 - volume
 
-Double Right click
-- 6 x 6 thumb sheet
-
 Left click & slide
 - position player
 - select media
+
+Double Right click
+- 6 x 6 thumb sheet
 
 Wheel
 - Seek (+click = zoom)<br><br>
