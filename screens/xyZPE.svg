@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="420" viewBox="0 0 1600 420">
+  <defs>
+    <linearGradient id="panel" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#07141c" stop-opacity="0.92"/>
+      <stop offset="100%" stop-color="#0b1f2a" stop-opacity="0.88"/>
+    </linearGradient>
+    <filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="0" stdDeviation="5" flood-color="#3ee0c4" flood-opacity="0.35"/>
+    </filter>
+    <style>
+      .box { fill: url(#panel); stroke: #3ee0c4; stroke-width: 2; }
+      .label, .cap { font-family: "JetBrains Mono", "IBM Plex Mono", "Fira Code", monospace; font-size: 36px; font-weight: 600; text-anchor: middle; dominant-baseline: middle; letter-spacing: 0.4px; }
+      .label { fill: #e8fffa; }
+      .cap { fill: #9be8d8; }
+      .rail { stroke: #3ee0c4; stroke-width: 2.6; fill: none; opacity: 0.9; }
+      .arrow { stroke: #7cf0dd; stroke-width: 3; fill: none; marker-end: url(#ahC); }
+    </style>
+    <marker id="ahC" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#7cf0dd"/>
+    </marker>
+  </defs>
+  <g filter="url(#glow)">
+    <rect class="box" x="28" y="138" width="280" height="154" rx="20"/>
+    <rect class="box" x="356" y="138" width="280" height="154" rx="20"/>
+    <rect class="box" x="964" y="138" width="280" height="154" rx="20"/>
+    <rect class="box" x="1292" y="138" width="280" height="154" rx="20"/>
+  </g>
+  <text class="label" x="168" y="218">hard drive</text>
+  <text class="label" x="496" y="218">ahk</text>
+  <text class="label" x="1104" y="218">js</text>
+  <text class="label" x="1432" y="218">browser</text>
+  <line class="rail" x1="308" y1="198" x2="356" y2="198"/>
+  <line class="rail" x1="308" y1="232" x2="356" y2="232"/>
+  <line class="rail" x1="1244" y1="198" x2="1292" y2="198"/>
+  <line class="rail" x1="1244" y1="232" x2="1292" y2="232"/>
+  <line class="arrow" x1="656" y1="178" x2="944" y2="178"/>
+  <line class="arrow" x1="944" y1="252" x2="656" y2="252"/>
+  <text class="cap" x="800" y="64">new html content</text>
+  <text class="cap" x="800" y="368">node server</text>
+</svg>
