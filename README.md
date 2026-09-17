@@ -12,7 +12,7 @@ Set start times, skips, pauses, skinny, pitch, speed<br>
 non destructive caption edits, cloned voices, cut ins, cut outs, cuts to<br><br>
 General filing - move, delete, copy, favorite, mp3, jpg, cuts, joins, conversions<br>
 buttery smooth playback and seeking in browsers<br><br>
-<img src="screens/flowchart_tech.svg" width="55%"><br>
+<img src="screens/EPo2x.svg" width="55%"><br>
 <img src="screens/computer arm 5.jpg" width="18%"> <img src="screens/computer arm 2.jpg" width="18%"> <img src="screens/computer arm 1.jpg" width="18%"><br><br>
 <img src="screens/Screen 1.jpg" width="25%"> <img src="screens/Screen 2.jpg" width="25%"><br>
 
