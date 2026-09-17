@@ -2,17 +2,18 @@
 # Inca<br>
 Windows - Chrome, Firefox, Edge, Opera or Brave<br>
 
-YouTube style browser tabs<br>
-To Build pathways and storyboards from your own media<br>
+Windows File Explorer in a YouTube style browser tab<br>
+Build pathways and storyboards from your own media<br>
+Like the ElevenLabs website, but done locally<br>
 
-Take any existing image, movie, text, captions<br>
+Take any existing image, movie, text, caption...<br>
 And change the names, the story, the voices, the cuts etc.<br>
 To create evolving story arcs from existing media
 
 Set start times, skips, pauses, skinny, pitch, speed<br>
 non destructive caption edits, cloned voices, cut ins, cut outs<br>
 
-General filing - move, delete, copy, favorite, mp3, jpg, cuts, joins, conversions<br>
+General filing - move, delete, copy, favorite, cuts, joins, conversions<br>
 buttery smooth playback and seeking in browsers from transcoded video<br><br>
 <img src="screens/xyZPE.svg" width="55%"><br>
 <img src="screens/computer arm 5.jpg" width="18%"> <img src="screens/computer arm 2.jpg" width="18%"> <img src="screens/computer arm 1.jpg" width="18%"><br><br>
@@ -38,8 +39,8 @@ Pure vanilla java / ahk script (ai can confirm is safe)<br>
 No IDE, no libraries, no external calls, no browser extensions<br> 
 Does not mess with any settings - see source code<br><br>
 All media types supported in browser with transcode option.<br>
-Edit settings or source code in notepad, then run inca.exe<br>
-Compiles in less than 1 second<br>
+Use ai to help edit settings or source code in notepad, then run inca.exe<br>
+Self compiles in under a second<br>
 Browser will default to pictures folder, bookmark this tab<br>
 To exit, use taskbar or press ctrl + Esc<br>
 To 'uninstall', delete inca folder<br>
