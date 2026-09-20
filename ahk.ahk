@@ -1530,7 +1530,7 @@ MoveFiles()							; or playlist .m3u entries
   DecodeExt(ex)
     {
     StringLower ex, ex
-    if InStr("jpg png jpeg webp gif heic", ex)
+    if InStr("jpg png jpeg webp gif heic svg", ex)
       return "image"
     if InStr("mp4 wmv avi mov webm mpg mpeg flv divx mkv asf m4v mvb rmvb vob rm ts", ex)
       return "video"
@@ -1635,6 +1635,10 @@ MoveFiles()							; or playlist .m3u entries
     IniRead,search,%inca%\ini.ini,Settings,Search
     IniRead,fav,%inca%\ini.ini,Settings,Fav
     IniRead,music,%inca%\ini.ini,Settings,Music
+    StringReplace, fav, fav, |, |%inca%\, All
+    fav = %inca%\%fav%
+    StringReplace, music, music, |, |%inca%\, All
+    music = %inca%\%music%
     fol = %profile%\downloads\|%profile%\pictures\|%fol%
     }
 

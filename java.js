@@ -1,6 +1,4 @@
 // incorporate InfiniteTalk face animation when 50GB disk is free
-// 3 text versions of each block
-
 
   let wheel = 0								// wheel count
   let wheelDir = 0		 					// wheel direction
@@ -125,7 +123,7 @@
   myVoice.addEventListener('ended', nextCaption)
   myPlayer.addEventListener('timeupdate', playerProgress)
   window.addEventListener('beforeunload', (e) => {if (playing && editing) e.preventDefault()})
-  myNav.addEventListener('wheel', wheelEvent)
+  myNav.addEventListener('wheel', wheelEvent, { passive: false })
   myNav.addEventListener('mouseleave', () => {
     myNav.style.display = myDefault.style.display = myAlt.style.display = null
     if (overEditor && editingBlock && myPlayer.paused) {
@@ -136,7 +134,7 @@
       let x = thumb.style.rate + ',' + thumb.style.skinny
       let y = playing ? myPlayer.currentTime : 0
       if (type) inca('addCue', x, index, y)}})
-  myStart.addEventListener('wheel', wheelEvent)
+  myStart.addEventListener('wheel', wheelEvent, { passive: false })
   document.addEventListener('visibilitychange', function() {
     if (document.visibilityState=='visible' && folder=='Downloads' && !selected && !playing) inca('Reload',2,index)})
   myInca.addEventListener('mouseenter', () => {
@@ -247,9 +245,8 @@
       if (overEditor) {
         lastId = editingBlock
         myVoice.currentTime = 0
-        if (overBlock) {myPlayer.currentTime = overBlock.dataset.start; activateBlock(overBlock, 0)}
         if (longClick && ym > 0.2) Chatterbox()
-        else populateVoices()
+        else { populateVoices(); if (overBlock) {myPlayer.currentTime = overBlock.dataset.start; activateBlock(overBlock, 0)}}
         myNav.classList.add('editor-mode')} 
       else myNav.classList.remove('editor-mode')
       if (!longClick && !myNav.style.display) {
@@ -771,8 +768,7 @@
       const filename = match ? match[1] : null;
       let path = thumb.poster.replace(/\/posters\//, '/thumbs/').replace(/\/[^\/]*$/, '')
       sheetUrl = path + '/' + filename + '.jpg'
-      if (settings.view > 30) thumb.poster = sheetUrl					// show sheets instead of posters
-      else thumb.poster = thumb.poster.replace(/\/thumbs\//, '/posters/')
+      thumb.poster = thumb.poster.replace(/\/thumbs\//, '/posters/')
       myPic.style.backgroundImage = 'url(\"'+sheetUrl+'\")'				// use 6x6 thumbsheet as poster
       myPlayer.poster = sheetUrl}
     else myPlayer.src = null
@@ -888,7 +884,9 @@
     if (ix && title) {								// eg. after switch thumbs/listview
       title.style.color = 'pink'						// highlight thumb
       title.style.fontWeight = 'bold'
-      title.scrollIntoView({ block: 'center' })}}
+      const r = title.getBoundingClientRect();
+      if (r.top < 0 || r.bottom > innerHeight || r.left < 0 || r.right > innerWidth) title.scrollIntoView({ block: 'center' })
+      else title.scrollIntoView({ block: 'nearest' })}}
 
 
   function myCues(time) {
@@ -1637,15 +1635,11 @@ function makeJSON() {
     const afterText = fullText.substring(beforeText.length)
     const isSecondEnter = beforeText.endsWith('\n')
     if (!isSecondEnter) {
-      const node = document.createTextNode('\n ')
-      range.deleteContents()
-      range.insertNode(node)
-      range.setStart(node, 1)
-      range.collapse(true)
-      sel.removeAllRanges()
-      sel.addRange(range)
-      editing = 1
-      return}
+      const left = beforeText.replace(/[ \t]+$/, '')
+      block.textContent = (left + '\n ' + afterText.replace(/^[\n ]+/, '')) || ' '
+      const n = block.firstChild, p = left.length + 1
+      range.setStart(n, Math.min(p, n.length)); range.collapse(true)
+      sel.removeAllRanges(); sel.addRange(range); editing = 1; return}
     const part1 = beforeText.replace(/\n+$/, '')
     const part2 = afterText.replace(/^[\n ]+/, '')
     if (!part1.trim() && !part2.trim()) return
@@ -1742,7 +1736,6 @@ function Backspace(e) {
     inp.className = 'voice-input'
     inp.id = 'myVoiceInput'
     inp.value = editingBlock?._voiceName || ''
-    inp.placeholder = 'new voice'
     inp.onblur = () => inp.remove()
     inp.style.padding = '1em'
     inp.style.left = xPos+'px'
@@ -1809,12 +1802,13 @@ function Backspace(e) {
 
   function Chatterbox(id) {
     if (overBlock) editingBlock = overBlock
+    if (!editingBlock || Chatterbox.busy) return
+    Chatterbox.busy = 1
     const voiceName = editingBlock._voiceName || lastVoice || 'Amai'
     let block = editingBlock
     block._voiceName = voiceName
-    myPlayer.currentTime = editingBlock.dataset.start
-    updateBlockAlignments()
-    updateFaceHighlights()
+    activateBlock(block, 0)
+    myPlayer.currentTime = block.dataset.start
     let last = block?._voice?.src || projectMedia.defaultSrc
     let text = block.innerText.trim()
     let provider = 'chatterbox'
@@ -1837,9 +1831,10 @@ function Backspace(e) {
             block._rate = 1
             userPlay = 1
             editing = 1
-            activateBlock(block, 1)
+            requestAnimationFrame(() => activateBlock(block, 1))
             inca('addHistory',last,0,path)})
-          .catch(() => {block.style.outline = ''; alert('chatterbox not responding')})}
+          .catch(() => {block.style.outline = ''; alert('chatterbox not responding')})
+          .finally(() => { Chatterbox.busy = 0 })}
 
 
   function scrollUntilBlock(dir) {
@@ -1918,12 +1913,9 @@ function activate() {
   if (!b) return
   overTimer = setTimeout(() => {
     overTimer = 0
-    if (!overBlock) return
     lastId = overBlock
-    if (overBlock !== editingBlock)
-      activateBlock(overBlock, userPlay)
-    else if (reenter && !wasOsk)
-      activateBlock(overBlock, userPlay, 1)}, 344)}
+    if (myPlayer.paused && myVoice.paused || overBlock != editingBlock) 
+      activateBlock(overBlock, userPlay, (reenter && !wasOsk))}, 344)}
 
 
 

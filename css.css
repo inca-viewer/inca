@@ -8,6 +8,8 @@
   c {color: #826858cc; text-decoration: none; display: block; transition: 1s}	/* top panel text */
   c:hover {transition: 0.2s; transform: scale(1.1,1.1); color: pink}
   c:active {color: #0e0c05; transform: scale(0.8,0.8)}
+  body:has(#myVoiceInput) #osk { transform: translateY(-80%) }
+
 
 .title {					/* media title */
   display: block;
@@ -117,8 +119,8 @@
   mask-image: linear-gradient(
     to bottom,
     transparent 0,
-    transparent 6em,
-    black 8em,
+    transparent 7em,
+    black 10em,
     black 94%,
     transparent 100%),
   linear-gradient(to left, black 0 14px, transparent 14px);}
@@ -427,27 +429,25 @@
   left: 50%; 
   transform: translateX(-50%);
   top: 50px;
-  width: 95%;
-  max-width: 64.5em;
+  width: 65%;
+  max-width: 54.5em;
   background: #0e0c05}
 
 .panel {					/* Top panel element showing folders etc. */
   position: relative;
   font-size: 0.9em;
   font-weight: bold;
-  transform: translateX(-7%);
   white-space: nowrap;
   overflow: hidden;
   height: 7em;
-  max-width: 69em;				/* critical for sizing	*/
-  width: 90vw;
+  width: auto;
   box-sizing: border-box}
 
 .innerPanel {					/* rotated child of myPanel */
   position: relative;
   overflow: hidden;
   scrollbar-width: none;
-  transform: rotate(-90deg);
+  transform: rotate(-90deg) translateY(-12%);
   transform-origin: right top;
   background: inherit;
   max-height: 60em;				/* critical	*/
