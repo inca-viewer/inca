@@ -295,38 +295,20 @@
     }
 
 
-  GetBrowser() {
-    title =
-    WinGet, state, MinMax, ahk_group Browsers
-    if (state > -1)
-      WinGetTitle title, A
-    if InStr(title, "Inca - ",1)
-      incaTab := SubStr(title, 8)
-    else incaTab =
-    if InStr(title, "Mozilla Firefox",1)     
-      browser = mozilla firefox
-    else if InStr(title, "Firefox Nightly",1)     
-      browser = Firefox Nightly
-    else if InStr(title, "Google Chrome",1)     
-      browser = google chrome
-    else if InStr(title, "Brave",1)     
-      browser = Brave
-    else if InStr(title, "Opera",1)     
-      browser = Opera
-    else if InStr(title, "Profile 1 - Microsoft",1)     
-      browser = Profile 1 - Microsoft
-    StringGetPos, pos, incaTab, %browser%, R
-    StringLeft, incaTab, incaTab, % pos - 3
-    if InStr(incaTab, "Original profile")
-      incaTab := SubStr(incaTab, 1, StrLen(incaTab) - 19)
-    if (incaTab && folder != incaTab)					; has inca tab changed
-      {
-      subfolders =
-      folder := incaTab
-      GetTabSettings(1)							; get htm parameters
-      }
-    return incaTab
-    }
+GetBrowser() {
+  incaTab := ""
+  WinGet, state, MinMax, ahk_group Browsers
+  if (state > -1)
+    WinGetTitle, title, A
+  if RegExMatch(title, "i)Inca - (.+?)(?:\s+[-–—]\s+.+)?$", m)
+    incaTab := m1
+  if (incaTab && folder != incaTab) {
+    subfolders := ""
+    folder := incaTab
+    GetTabSettings(1)
+  }
+  return incaTab
+}
 
 
   Messages(input)							; check for messages from browser

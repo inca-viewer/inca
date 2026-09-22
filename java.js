@@ -62,7 +62,7 @@
   let more = 0
   let clickMedia = ''
   let lastId = ''
-  let trigger = 0.8							// trigger to show seekbar
+  let trigger = 0.9							// trigger to show seekbar
   let listSize = 0
   let favIndex = 0
   let matchIndex = 0
@@ -258,7 +258,7 @@
       blocks = []
       viewport.innerHTML = ''
       editor.style.display = null							// allow new srt
-      if (editing || myMenu.matches(':hover') || myPanel.matches(':hover')) return
+      if (myMenu.matches(':hover') || myPanel.matches(':hover')) return
       if (zoom > 1) {Play(); return}
       if (!playing && !myNav.style.display) {inca('View',lastMedia); return}		// list/thumb view
       if (longClick) {index--} else index++						// next media
@@ -293,7 +293,6 @@
             else userPlay ^= 1
             syncPlay = userPlay}
           return}}
-
       if (!title.matches(':hover') && overTitle == 2) {closeOsk(); overTitle = 0; return}
       if (overTitle && (longClick || overTitle == 2)) {
         if (overTitle != 2) title.value = title.defaultValue.trim()
@@ -322,7 +321,7 @@
       if (myNav.style.display && type == 'video') {myNav.style.display = null; thumbSheet ^= 1; start = lastSeek; return 1}}
     if (lastClick == 2 || !dur) start = defStart
     else if (zoom > 1) start = thumb.currentTime || start
-    if (!thumbSheet && playing && ym > trigger && overMedia || yw > 0.95) {
+    if (lastClick != 2 && !thumbSheet && playing && ym > trigger && overMedia || yw > 0.95) {
       if (longClick) {if (xm < 0.5) {myPlayer.currentTime = 0} else myPlayer.currentTime = defStart}
       else myPlayer.currentTime = start
       if (!mouseDown && captions && editingBlock?._voice?.src) nextCaption(-1)		// wheel only
@@ -363,7 +362,9 @@
       else if (overTitle && mouseDown) previewMode ? getSrt(lastBlock) : getSrt(1)
       else if (captions || type == 'document') getSrt()}
     if (el = document.getElementById('title'+lastMedia)) el.style.color = el.style.fontWeight = ''
+    document.getElementById('thumb'+lastMedia).style.border = ''
     title.style.color = 'pink'; title.style.fontWeight = 'bold'
+    thumb.style.border = '1px solid #ffc0cbaa'
     if (playlist.match('/inca/music/') && !thumbSheet) {start = 0; myPlayer.muted = 0}
     if (type == 'audio' && !captions) myPlayer.style.borderBottom = '1px solid pink'
     else myPlayer.style.border = null
@@ -639,6 +640,7 @@
     seekbar()
     if (playing || !overTitle) {title.classList.remove('preview'); title.value = title.defaultValue; title.style.height = ''}
     if (playing) {myPic.style.maxWidth = '160px'; myPic.style.maxHeight = 160 / aspect + 'px'}
+    trigger = playing ? 0.9 : 0.7							// when to show seekbar - ym
     if (playing) {
       edPause.style.opacity = (!userPlay || defMute) ? 1 : 0
       edPause.textContent = (!userPlay ? '⏸' : '') + (defMute ? '🔇︎' : '')
@@ -774,7 +776,6 @@
     else myPlayer.src = null
     if (!thumbSheet && dur) myPlayer.currentTime = start
     aspect = thumb.offsetWidth/thumb.offsetHeight
-    trigger = aspect > 1 ? 0.7 : 0.8							// when to show seekbar - ym
     let x = y = z = innerHeight
     if (aspect < 1) {x = z*aspect} else y = z/aspect					// portrait or landscape - normalised size
     myPlayer.style.width = x +'px'; myPlayer.style.height = y +'px'			// normalise player size
@@ -1408,9 +1409,8 @@ function updateFaceHighlights() {
       mediaContent.style.display = 'none'
       let lastSrc = editingBlock?._voice?.src || null;
       if (editingBlock) {
-        delete editingBlock._media
-        delete editingBlock._voice
-        delete editingBlock._voiceName
+        if (editingBlock._media) delete editingBlock._media
+        else { delete editingBlock._voice; delete editingBlock._voiceName }
         activateBlock(editingBlock, 1)
         setTimeout(() => myPlayer.currentTime = editingBlock.dataset.start,20)
         if (lastSrc) inca('addHistory', lastSrc) 
@@ -1873,22 +1873,14 @@ function Backspace(e) {
   function playerProgress() {
     if (myNav.style.display || mediaContent.style.display === 'flex') return
     if (crawl || !captions || !playing || (overEditor && myPlayer.paused)) return
-    const currentBlock = blocks.findLast(b => b.dataset.start <= myPlayer.currentTime)
-    if (!currentBlock) return
-    const nextBlock = currentBlock.nextElementSibling
-    if (nextBlock) {
-      const currentStart = currentBlock.dataset.start
-      const nextStart = nextBlock?.dataset.start
-      if (currentBlock !== editingBlock && 
-        myPlayer.currentTime < editingBlock.dataset.start && 
-        editingBlock.dataset.start < dur &&
-        !editingBlock._media?.src) {
-          activateBlock(currentBlock, userPlay)
-          currentBlock.scrollIntoView({ behavior: 'smooth', block: 'center' }) }}
+    if (!editingBlock) return
+    if (editingBlock._voice?.src && !myVoice.ended) return
     if (myPlayer.currentTime > editingBlock._end) {
-      if (editingBlock._voice?.src && overEditor) return
       if (overEditor && !overMedia) { userPlay = syncPlay = 0; return }
-      else { activateBlock(currentBlock, userPlay); currentBlock.scrollIntoView({ behavior: 'smooth', block: 'center' }) }}}
+      const next = editingBlock.nextElementSibling
+      if (!next) return
+      activateBlock(next, userPlay)
+      next.scrollIntoView({ behavior: 'smooth', block: 'center' })}}
 
 
   function nextCaption(dir, force) {
