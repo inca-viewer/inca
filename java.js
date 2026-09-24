@@ -1,4 +1,4 @@
-// incorporate InfiniteTalk face animation when 50GB disk is free
+// incorporate InfiniteTalk face animation ai model when 50GB disk is free
 
   let wheel = 0								// wheel count
   let wheelDir = 0		 					// wheel direction
@@ -119,7 +119,7 @@
   myContent.addEventListener('scroll', () => seekTimer = cursor = 0)
   document.addEventListener('dragstart', () => gesture = 1)
   document.addEventListener('drop', (e) => {mouseDown = 0; gesture = 0; if (overEditor) activateBlock(e.target.closest('.text-block'),0)})
-  myPlayer.addEventListener('ended', nextMedia)
+  myPlayer.addEventListener('ended', playerEnded)
   myVoice.addEventListener('ended', nextCaption)
   myPlayer.addEventListener('timeupdate', playerProgress)
   window.addEventListener('beforeunload', (e) => {if (playing && editing) e.preventDefault()})
@@ -288,7 +288,8 @@
           if (wasOsk && overBlock == editingBlock || (!userPlay && syncPlay && !overEditor)) userPlay = syncPlay = 0
           else {
             const paused = editingBlock?._voice?.src ? myVoice.paused : myPlayer.paused
-            if (myPlayer.currentTime > editingBlock._end) myPlayer.currentTime = editingBlock.dataset.start
+            if (myPlayer.currentTime > editingBlock._end - 0.05 || myVoice.ended) {
+              myVoice.currentTime = 0; myPlayer.currentTime = editingBlock.dataset.start}
             if (paused) userPlay = 1
             else userPlay ^= 1
             syncPlay = userPlay}
@@ -321,7 +322,7 @@
       if (myNav.style.display && type == 'video') {myNav.style.display = null; thumbSheet ^= 1; start = lastSeek; return 1}}
     if (lastClick == 2 || !dur) start = defStart
     else if (zoom > 1) start = thumb.currentTime || start
-    if (lastClick != 2 && !thumbSheet && playing && ym > trigger && overMedia || yw > 0.95) {
+    if (lastClick != 2 && !thumbSheet && playing && ((ym > trigger && overMedia) || yw > 0.95)) {
       if (longClick) {if (xm < 0.5) {myPlayer.currentTime = 0} else myPlayer.currentTime = defStart}
       else myPlayer.currentTime = start
       if (!mouseDown && captions && editingBlock?._voice?.src) nextCaption(-1)		// wheel only
@@ -362,9 +363,9 @@
       else if (overTitle && mouseDown) previewMode ? getSrt(lastBlock) : getSrt(1)
       else if (captions || type == 'document') getSrt()}
     if (el = document.getElementById('title'+lastMedia)) el.style.color = el.style.fontWeight = ''
-    document.getElementById('thumb'+lastMedia).style.border = ''
-    title.style.color = 'pink'; title.style.fontWeight = 'bold'
+    document.getElementById('thumb' + lastMedia).style.border = ''
     thumb.style.border = '1px solid #ffc0cbaa'
+    title.style.color = 'pink'; title.style.fontWeight = 'bold'
     if (playlist.match('/inca/music/') && !thumbSheet) {start = 0; myPlayer.muted = 0}
     if (type == 'audio' && !captions) myPlayer.style.borderBottom = '1px solid pink'
     else myPlayer.style.border = null
@@ -638,14 +639,16 @@
     myMute2.innerHTML = defMute ? "🔇︎" : ''
     myPitch2.innerHTML = pitch ? "♪" : ''
     mySpeed2.innerHTML = defRate !=1 ? "s" : ''
+    mySelect.style.color = (','+selected).includes(','+index+',') ? 'red' : ''
+    trigger = playing ? 0.9 : 0.7							// when to show seekbar - ym
     seekTimer = ((overMedia && (ym > trigger || yw > 0.95)) || overTitle == 1) 
       ? Math.min(seekTimer + 1, 5) 
       : Math.max(seekTimer - 1, 0)
     seekbar()
     if (playing || !overTitle) {title.classList.remove('preview'); title.value = title.defaultValue; title.style.height = ''}
-    if (playing) {myPic.style.maxWidth = '160px'; myPic.style.maxHeight = 160 / aspect + 'px'}
-    trigger = playing ? 0.9 : 0.7							// when to show seekbar - ym
     if (playing) {
+      myPic.style.maxWidth = '160px'
+      myPic.style.maxHeight = 160 / aspect + 'px'
       edPause.style.opacity = (!userPlay || defMute) ? 1 : 0
       edPause.textContent = (!userPlay ? '⏸' : '') + (defMute ? '🔇︎' : '')
       if (editingBlock?._voice?.src) progress = 100 * myVoice.currentTime / myVoice.duration
@@ -836,8 +839,9 @@
 
 
   function Param(i) {								// get media parameters
-    i = index = i || index
-    if (previewMode) return
+    i = i || index
+    if (previewMode && i === index) return
+    index = i
     if (zoom == 1) thumb.src = ''						// release media from server
     if (!playing) myPlayer.poster = myPlayer.src = ''				// release from server
     if (!(document.getElementById('thumb'+i))) return				// end of media list
@@ -889,6 +893,7 @@
     if (ix && title) {								// eg. after switch thumbs/listview
       title.style.color = 'pink'						// highlight thumb
       title.style.fontWeight = 'bold'
+      thumb.style.border = '1px solid #ffc0cbaa'
       const r = title.getBoundingClientRect();
       if (r.top < 0 || r.bottom > innerHeight || r.left < 0 || r.right > innerWidth) title.scrollIntoView({ block: 'center' })
       else title.scrollIntoView({ block: 'nearest' })}}
@@ -1038,14 +1043,6 @@
     else {inca('Reload',2,0)}}							// or finally, reload page & clear selected
 
 
-  function nextMedia() {							// myPlayer ended
-    if (captions) { syncPlay = userPlay = 0; return }
-    if (playlist.match('/inca/music/')) {
-      if (Param(index += 1)) {Play(); syncPlay = 1} else closePlayer(); return}
-    else if (!defPause && delay < 30 && type != 'audio' && !longClick) {getStart(); syncPlay = 1}	// replay media
-    else {myPlayer.currentTime = dur + 2; syncPlay = 0; delay = 60}}		// stay at end
-
-
   async function closePlayer() {
     closeOsk()
     try {
@@ -1066,7 +1063,7 @@
       myPlayerWrap.style.visibility = myPlayer.style.visibility = null
       scaleY = (innerHeight > innerWidth) ? 0.6 : 0.5
       const r = title.getBoundingClientRect();
-      if (r.top < 0 || r.bottom > innerHeight || r.left < 0 || r.right > innerWidth) title.scrollIntoView({ block: 'center' })}}
+      if (r.top < 0 + 140 || r.bottom > innerHeight - 80 || r.left < 0 || r.right > innerWidth) title.scrollIntoView({ block: 'center' })}}
 
 
   function popThumb() {
@@ -1149,7 +1146,7 @@
           ;[['L', voiceFaceLeft], ['C', voiceFaceCenter], ['R', voiceFaceRight]].forEach(([k, el]) => {
             if (el && u.facePos[k]) { el.parentElement.style.left = u.facePos[k].left; el.parentElement.style.top = u.facePos[k].top }})}
       if (captions == 2) {
-        faceZoom = u.faceZoom || 2
+        faceZoom = u.faceZoom || 1
         document.getElementById('voice-faces')?.style.setProperty('--fz', faceZoom)
         editor.style.width = u.width || '500px'
         editor.style.height = u.height || '360px'
@@ -1835,7 +1832,7 @@ function Backspace(e) {
             block._rate = 1
             userPlay = 1
             editing = 1
-            requestAnimationFrame(() => activateBlock(block, 1))
+            requestAnimationFrame(() => activateBlock(block, 1, 1))
             inca('addHistory',last,0,path)})
           .catch(() => {block.style.outline = ''; alert('chatterbox not responding')})
           .finally(() => { Chatterbox.busy = 0 })}
@@ -1888,14 +1885,26 @@ function Backspace(e) {
 
 
   function nextCaption(dir, force) {
-    myVoice.currentTime = syncPlay = 0
+    syncPlay = 0
     if (ribbon.matches(':hover') || !userPlay) return
     if (!captions || myNav.style.display) return
     if (overEditor && !force && !overMedia) return
     let next = dir < 0 ? (editingBlock?.previousElementSibling) : (editingBlock?.nextElementSibling)
-    if (!next) {userPlay = syncPlay = 0; return}
+    if (!next) {userPlay = 0; return}
+    myVoice.currentTime = 0
     activateBlock(next, userPlay)
     next.scrollIntoView({ behavior: 'smooth', block: 'center' })}
+
+
+  function playerEnded() {										// myPlayer ended
+    if (captions) { 
+      if (myVoice.ended) {syncPlay = userPlay = 0}
+      myPlayer.currentTime = dur - 0.05
+      return }
+    if (playlist.match('/inca/music/')) {
+      if (Param(index += 1)) {Play(); syncPlay = 1} else closePlayer(); return}
+    else if (!defPause && delay < 30 && type != 'audio' && !longClick) {getStart(); syncPlay = 1}	// replay media
+    else {myPlayer.currentTime = dur + 2; syncPlay = 0; delay = 60}}					// stay at end
 
 
 function activate() {
