@@ -296,20 +296,21 @@
     }
 
 
-GetBrowser() {
-  incaTab := ""
-  WinGet, state, MinMax, ahk_group Browsers
-  if (state > -1)
-    WinGetTitle, title, A
-  if RegExMatch(title, "i)Inca - (.+?)(?:\s+[-–—]\s+.+)?$", m)
-    incaTab := m1
-  if (incaTab && folder != incaTab) {
-    subfolders := ""
-    folder := incaTab
-    GetTabSettings(1)
-  }
-  return incaTab
-}
+  GetBrowser() {
+    incaTab := ""
+    IfWinActive, ahk_group Browsers
+      {
+      WinGetTitle, title, A
+      if RegExMatch(title, "i)Inca - (.+?)(?:\s+[-–—]\s+.+)?$", m)
+        incaTab := m1
+      if (folder != incaTab) {
+        subfolders := ""
+        folder := incaTab
+        GetTabSettings(1)
+        }
+      }
+    return incaTab
+    }
 
 
   Messages(input)							; check for messages from browser

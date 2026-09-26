@@ -1158,6 +1158,7 @@
 
 
 const activateBlock = (block, play, force) => {
+  if (Chatterbox.busy) return
   const startDelay = mouseDown ? 0 : block._delay * 1000 || 0
   block.style.setProperty('--progress', '0%')
   if (!blocks.length) blocks = [...document.querySelectorAll('.text-block')]
@@ -1774,23 +1775,24 @@ function Backspace(e) {
     if (matches.length) matches[0].scrollIntoView({ behavior: 'smooth', block: 'center' })}
 
 
-  function newVoice(e) {
-    const side = e.target.dataset.side
-    const name = side === 'left' ? leftVoice : side === 'center' ? centerVoice : rightVoice
-    if (!name || !editingBlock) return
-    editingBlock._voiceName = name
-    userPlay = 0
-    Chatterbox()}
+function newVoice() {
+  const side = document.elementFromPoint(xPos, yPos)?.closest('.voice-face-wrap')
+    ?.querySelector('.voice-face')?.dataset.side
+  const name = side === 'left' ? leftVoice : side === 'center' ? centerVoice : rightVoice
+  if (!name || !editingBlock) return
+  editingBlock._voiceName = name
+  userPlay = 0
+  Chatterbox()}
 
 
   function Chatterbox(id) {
     if (overBlock) editingBlock = overBlock
     if (!editingBlock || Chatterbox.busy) return
-    Chatterbox.busy = 1
     const voiceName = editingBlock._voiceName || lastVoice || 'Amai'
     let block = editingBlock
     block._voiceName = voiceName
     activateBlock(block, 0)
+    Chatterbox.busy = 1
     myPlayer.currentTime = block.dataset.start
     let last = block?._voice?.src || projectMedia.defaultSrc
     let text = block.innerText.trim()
