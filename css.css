@@ -375,8 +375,8 @@
   --rate;
   --skinny;
   box-sizing: border-box;
-  border: 1px solid transparent;
   position: relative;
+  border: 1px solid transparent;
   max-width: var(--max-size);
   max-height: var(--max-size);
   outline: none;
@@ -403,7 +403,7 @@
   outline: 3px solid #0e0c05;
   transform-origin: top left;
   transition: opacity 0.6s;  
-  // filter: blur(0.4vmin);
+/* filter: blur(0.4vmin); */
   pointer-events: none;
   border-radius: 0.9em}
 
@@ -714,7 +714,7 @@
 #osk button:active,
 #osk button.highlight { background: pink; color: black; }
 #osk button.locked,
-#osk button.active { color: pink; }
+#osk button.active { color: red; }
 
 #osk .osk-suggestion {
   flex: 1;

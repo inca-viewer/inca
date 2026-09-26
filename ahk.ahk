@@ -91,6 +91,7 @@
     sleep 200
     Run, cmd.exe /c cd /d "%inca%\cache\apps" && node\node.exe server.js, , Hide
     Run, cmd.exe /c cd /d "%inca%\cache\apps\Chatterbox-TTS-Server" && "python_embedded\python.exe" start.py, , Hide
+    sleep 94
     WinActivate, ahk_group Browsers
     path = %profile%\pictures\
     startPage = #Path###%path%			; default start page
@@ -479,7 +480,7 @@ GetBrowser() {
     send, {Lbutton up}
     if (address && WinActive("ahk_group Browsers"))			;  long clicked selected text    
       {
-      if (StrLen(address) < 3)
+      if (command == "cancelFind" || StrLen(address) < 3)
         return
       click =
       reload := 2
@@ -966,6 +967,8 @@ IfExist, %inca%\cache\json\%media%.json
       reverse = R
     if (!InStr(toggles, "Reverse") && (sort == "Date" || sort == "Playlist"))
       reverse = R
+    if InStr(playlist, "-history.m3u")
+      reverse =
     if (sort == "Playlist" && !playlist)
       sort = Shuffle
     if (sort == "Type")
@@ -1958,7 +1961,8 @@ if ErrorLevel
     if (!InStr(path, "\cache\temp\"))
       FileDelete, %src%
     seek = 0.0
-    History()
+    if (!InStr(folder, "-history") && !InStr(playlist, "History.m3u"))
+      History()
     Loop, Parse, list, `n, `r 						; split big list into smaller web pages
       if (A_Index > lastIndex && A_Index < lastIndex + page + 1)
         {
@@ -2385,7 +2389,7 @@ mediaList(j, input, start, fold)					; spool sorted media files into web page
       date = %sort_date% d
     if (type == "audio" || type == "m3u")
       thumb = %inca%\cache\icons\music.png
-    if (type == "document")
+    if (type == "document" || InStr(media, "-history"))
       thumb = %inca%\cache\icons\ebook.png
     if (type == "document" && listView)
       thumb =
