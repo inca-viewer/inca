@@ -551,9 +551,9 @@
       delay = 2
       positionMedia(0)}
     else if (!thumbSheet) {
-      if (captions && !dur) {
+      if (captions) {
         const n = wheelUp ? editingBlock?.nextElementSibling : editingBlock?.previousElementSibling
-        if (n) { activateBlock(n, userPlay); n.scrollIntoView({ behavior: 'smooth', block: 'center' }) }
+        if (n) { activateBlock(n, userPlay); n.scrollIntoView({ block: 'center' }) }
         wheel = 0; delay = 124; return }
       delay = 124
       let interval = 0.06								// seek
@@ -569,12 +569,7 @@
         myPlayer.addEventListener('seeked', () => delay = 40, { once: true })}		// min. 40
       if (!playing) seekTimer = 0							// hide seekbar in thumb popout
       else seekTimer = 5								// force seekbar while seeking
-      thumb.pause()
-      if (captions) {
-        const floor = wheelUp && +editingBlock?.dataset.start || 0
-        const currentBlock = blocks.findLast(b => +b.dataset.start <= myPlayer.currentTime && +b.dataset.start >= floor)
-        if (currentBlock?.nextElementSibling && currentBlock !== editingBlock) {
-          activateBlock(currentBlock, userPlay); currentBlock.scrollIntoView({ behavior: 'smooth', block: 'center' }) }}}
+      thumb.pause()}
     wheel = 0}
 
 
