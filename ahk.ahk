@@ -2173,7 +2173,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
 
   <div id="editor">
     <div id="ribbon">
-      <span id="edPause" style="position:absolute;left:5px;color:orange;opacity:0;transition:0.3s"></span>
+      <span id="edPause" style="position:absolute;left:5px;color:red;opacity:0;transition:0.3s"></span>
       <div id="media-header" class="dropdown">
         <div class="header"></div>
         <div class="dropdown-content"><div>No media</div></div>`n
@@ -2236,7 +2236,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
           <a data-tag='happy'>happy</a>`n
           <a data-tag='dramatic'>dramatic</a>`n
         </div>
-      <a id='mySounds'>Sounds</a>`n
+      <a id='mySounds'>Reactions</a>`n
         <div id='soundsSub' class='submenu'>`n
           <a data-tag='clear throat'>clear throat</a>`n
           <a data-tag='sniff'>sniff</a>`n
@@ -2257,8 +2257,8 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
       <a id="myDelete">Delete</a>`n
       <a id="myFavorite">Fav</a>`n
       <a id="myMute">Mute</a>`n
-      <a id="myPitch">Pitch</a>`n
       <a id="myPause">Pause</a>`n
+      <a id="myPitch">Pitch</a>`n
       <a id="mySpeed"></a>`n
       <a id="mySkinny"></a>`n
       <a id="myFlip">Flip</a>`n
@@ -2285,11 +2285,11 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
   <a id='Add' style='width:1em; font-size:1.2em; color: red' onmousedown="inca('Add','','',myInput.value)">%add%</a>`n
   </div>`n`n
 
-  <div id='myRibbon2' class='ribbon' style='background:#1b1814' onwheel="wheelEvent(event)">`n
-  <a id='myMute2' style='width: 1px; color: orange'></a>
-  <a id='myPitch2' style='width: 1px; color: orange'></a>
-  <a id='myPause2' style='width: 1px; color: orange'></a>
-  <a id='mySpeed2' style='width: 1px; color: orange'></a>
+  <div id='myRibbon2' class='ribbon' style='width: 92`%; background:#1b1814' onwheel="wheelEvent(event)">`n
+  <a id='mySpeed2' style='width: auto; color: red'></a>
+  <a id='myPause2' style='width: auto; color: red'></a>
+  <a id='myMute2' style='width: auto; color: red'></a>
+  <a id='myPitch2' style='width: auto; color: red'></a>
   <a id='myType' style='width: 3.5em; %x6%' onmousedown="inca('Type', filt)">%type%</a>`n
   <a id='myDate' style='%x4%' onmousedown="inca('Date', filt)">Date</a>`n
   <a id='myDuration' style='%x3%' onmousedown="inca('Duration', filt)"> Duration</a>`n

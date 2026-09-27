@@ -1,7 +1,6 @@
 
 // incorporate InfiniteTalk face animation ai model when 50GB disk is free
 
-
   let wheel = 0								// wheel count
   let wheelDir = 0		 					// wheel direction
   let index = 1								// thumb index (e.g. thumb14)
@@ -353,8 +352,7 @@
     closePic()
     Param()
     thumb.pause()
-    syncPlay = 0
-    userPlay = !defPause
+    userPlay = syncPlay = 0
     editor.style.transition = null
     editor.style.opacity = 0
     if (!thumbSheet && lastClick) myPlayerWrap.style.opacity = 0			// fade in player
@@ -383,7 +381,9 @@
     if (!thumbSheet) myPlayer.src = thumb.src
     else {myPlayer.src = ''; myPlayer.poster = sheetUrl; myPlayer.load()}
     setTimeout(async () => {
-      if (!captions && !thumbSheet && defPause && !playlist.match('/inca/music/')) {myPlayer.currentTime = syncStart; syncPlay = 0}
+      myPlayer.currentTime = syncStart
+      if (!dur || thumbSheet || captions) userPlay = syncPlay = 0
+      else userPlay = syncPlay = !(defPause && !playlist.match('/inca/music/'))
       if (!more && lastIndex < listSize && index > lastIndex - 9) inca('More', lastIndex)
       if (lastClick) positionMedia(0.34)
       myPlayerWrap.style.visibility = 'visible'
@@ -551,6 +551,10 @@
       delay = 2
       positionMedia(0)}
     else if (!thumbSheet) {
+      if (captions && !dur) {
+        const n = wheelUp ? editingBlock?.nextElementSibling : editingBlock?.previousElementSibling
+        if (n) { activateBlock(n, userPlay); n.scrollIntoView({ behavior: 'smooth', block: 'center' }) }
+        wheel = 0; delay = 124; return }
       delay = 124
       let interval = 0.06								// seek
       if (dur > 200) interval = 0.2
@@ -567,7 +571,8 @@
       else seekTimer = 5								// force seekbar while seeking
       thumb.pause()
       if (captions) {
-        const currentBlock = blocks.findLast(b => b.dataset.start <= myPlayer.currentTime)
+        const floor = wheelUp && +editingBlock?.dataset.start || 0
+        const currentBlock = blocks.findLast(b => +b.dataset.start <= myPlayer.currentTime && +b.dataset.start >= floor)
         if (currentBlock?.nextElementSibling && currentBlock !== editingBlock) {
           activateBlock(currentBlock, userPlay); currentBlock.scrollIntoView({ behavior: 'smooth', block: 'center' }) }}}
     wheel = 0}
@@ -626,10 +631,10 @@
     myPitch.style.color = pitch ? 'red' : null
     myPause.style.color = defPause ? 'red' : null
     myMute.style.color = defMute ? 'red' : null
+    mySpeed2.innerHTML = defRate !=1 ? defRate : ''
     myPause2.innerHTML = defPause ? "⏸" : ''
     myMute2.innerHTML = defMute ? "🔇︎" : ''
     myPitch2.innerHTML = pitch ? "♪" : ''
-    mySpeed2.innerHTML = defRate !=1 ? "s" : ''
     mySelect.style.color = (','+selected).includes(','+index+',') ? 'red' : ''
     trigger = playing ? 0.9 : 0.7							// when to show seekbar - ym
     seekTimer = ((overMedia && (ym > trigger || yw > 0.95)) || overTitle == 1) 
