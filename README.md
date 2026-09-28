@@ -30,7 +30,7 @@ Create, edit or search captions and subtitles<br>
 Concurrent Music and playlists from browser tabs<br>
 
 New... uses node server instead of local files<br>
-New... uses Chatterbox and Faster Whisper for voice cloning and caption editing locally<br>
+New... uses Chatterbox and Parakeet for voice cloning and caption editing locally<br>
 New... supports elevenlabs and venice external api's<br>
 New... top and tail jpg's and clip splits and joins for AI generated content<br>
 
