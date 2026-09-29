@@ -21,20 +21,20 @@ Works in Chrome, Firefox, Edge, Opera, and Brave on Windows.
 
 Inca is a portable media viewer for media you already own.
 
-It treats your folders like a library you can *play* and *reshape*: shuffle a folder, build a playlist, write captions, clone a voice, change pitch and speed, cut and join clips, then keep going. Originals stay safe. Edits are non-destructive.
+Think of it as a new way to enjoy existing media locally, through the process of active creation rather than passive playback  
 
-Think of it as a new way to enjoy existing media locally — not another cloud editor.
+It treats your folders like a library you can *play* and *reshape*: shuffle a folder, build a playlist, write captions, clone a voice, change pitch and speed, cut and join clips, then keep going. Originals stay safe. Edits are non-destructive.
 
 Use it to:
 
 - Play music and video with smooth seeking
 - File and organize (move, copy, rename, favorite, convert)
 - Edit captions and subtitles
-- Create cascading ASMR triggers
 - Clone voices locally or via APIs
 - Build persistent pathways and storyboards from your own files
 - Remix names, voices, cuts, timing, and story into evolving arcs
 - So take any media source and build your own story from it
+- Or build cascading ASMR triggers from it
 
 ---
 
