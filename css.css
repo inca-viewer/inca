@@ -50,7 +50,7 @@
     min-width: 15em !important;}
 
   #editor { box-sizing:border-box; display:none; flex-direction:column; width:500px; max-width:100%;
-    background:#ffffff0a; border-radius:12px; font-size:16px; max-height:80vh; overflow:hidden;
+    background:#ffffff0a; border-radius:1em; font-size:16px; max-height:80vh; overflow:hidden;
     position:fixed; left:50%; top:50%; transform:translate(-50%,-50%); z-index: 5002; height:0;
     height: 40px; min-width:250px; min-height:40px; resize:both; transition: 0}
 

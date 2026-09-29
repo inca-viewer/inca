@@ -53,24 +53,21 @@ function osk() {
   oskElement.addEventListener('mousedown', captureSelection, true);
 
 function updateSuggestions() {
-  requestAnimationFrame(() => {
-    if (!targetEl) return;
-    const text = (targetEl.isContentEditable ? targetEl.innerText : targetEl.value);
-    const { words } = predict(text, predictBuffer);
-    const btns = suggestionRow.querySelectorAll('.osk-suggestion');
+    requestAnimationFrame(() => {
+    if (!targetEl) return
+    const text = (targetEl.isContentEditable ? targetEl.innerText : targetEl.value).replace(/\u200B/g, '')
+    const { words } = predict(text, predictBuffer)
+    const btns = suggestionRow.querySelectorAll('.osk-suggestion')
     btns.forEach((btn, i) => {
       if (i < 6) {
-        const w = words[i] || '';
-        btn.textContent = w;
-        btn.onmouseup = w ? () => insertSuggestion(w) : null;
-      }
-    });
-  });
-}
+        const w = words[i] || ''
+        btn.textContent = w
+        btn.onclick = w ? () => insertSuggestion(w) : null}})}
+  )}
 
   function insertSuggestion(s) {
     if (!targetEl || !restoreSelection() || gesture) return
-    const text = (targetEl.isContentEditable ? targetEl.innerText : targetEl.value)
+    const text = (targetEl.isContentEditable ? targetEl.innerText : targetEl.value).replace(/\u200B/g, '')
     const partial = predictBuffer || (window.getSelection().anchorNode?.textContent || '').slice(0, window.getSelection().anchorOffset).match(/\S+$/)?.[0] || ''
     if (!s) return
     if (targetEl.isContentEditable) {
@@ -101,14 +98,14 @@ else {
 
   let currentLayout = [
     ["-","q","w","e","r","t","y","u","i","o","p",",",".","←","Del","Num"],
-    ["Shift","a","s","d","f","g","h","j","k","l","Enter","'",'"',"!","?"],
+    ["Shift","a","s","d","f","g","h","j","k","l","Enter","!","?","'",'"'],
     ["Ctrl","z","x","c","v","b","n","m","",'‹','›',"↑","↓"]
   ];
 
   let numLayout = [
-    ["-","1","2","3","4","5","6","7","8","9","0",",",".","←","Del","Num"],
-    ["Shift","@","#","£","$","%","^","&","*","/","Enter",";",":","+","="],
-    ["Ctrl","~","_","`","|","[","]","\\","","(",")","{","}"]
+    ["`","1","2","3","4","5","6","7","8","9","0",",",".","←","Del","Num"],
+    ["Shift","@","#","£","$","%","^","&","*","-","Enter","!","?",";",":"],
+    ["Ctrl","~","_","[","]","{","}","\\","","(",")","+","="]
   ];
 
   function createKeyboard() {
@@ -287,7 +284,7 @@ if (key === "‹" || key === "›" || key === "↑" || key === "↓") {
     else if (key === "Del") {
       if (active.isContentEditable) document.execCommand('forwardDelete');
       else {
-        let pos = active.selectionStart ?? 0;
+        let pos = active.selectionStart || 0;
         active.value = active.value.slice(0, pos) + active.value.slice(pos+1);
         active.selectionStart = active.selectionEnd = pos;
       }
@@ -313,7 +310,7 @@ if (key === "‹" || key === "›" || key === "↑" || key === "↓") {
     if (active.isContentEditable) {
       document.execCommand('insertText', false, char);
     } else {
-      let pos = active.selectionStart ?? active.value.length;
+      let pos = active.selectionStart || active.value.length;
       active.value = active.value.slice(0, pos) + char + active.value.slice(active.selectionEnd);
       active.selectionStart = active.selectionEnd = pos + 1;
     }
@@ -385,7 +382,7 @@ function buildPredictor() {
       return r.text();
     })
     .then(dictText => {
-      const dictWords = dictText.toLowerCase().match(/\b[\w']+\b/g) || [];
+      const dictWords = dictText.replace(/\u200B/g, '').toLowerCase().match(/\b[\w']+\b/g) || [];
       dictWords.forEach(w => {
         predictor.words[w] = (predictor.words[w] || 0) + 8;  // dictionary gets priority
       });
@@ -396,7 +393,7 @@ function buildPredictor() {
     })
     .finally(() => {
       // 2. Always include words from current captions/blocks
-      const text = blocks.map(b => b.innerText).join(' ').toLowerCase();
+      const text = blocks.map(b => b.innerText).join(' ').replace(/\u200B/g, '').toLowerCase();
       const currentWords = text.match(/\b[\w']+\b/g) || [];
       currentWords.forEach(w => {
         predictor.words[w] = (predictor.words[w] || 0) + 1;

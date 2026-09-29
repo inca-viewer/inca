@@ -470,16 +470,27 @@
     }
 
 
-  Find() 
+Find()
     {
     clp := Clipboard
     Clipboard =
     send, ^c
     sleep 24
     address := Clipboard
+    if !incaTab
+      {
+      send, +{Right}
+      sleep 24
+      send, ^c
+      sleep 24
+      probe := Clipboard
+      send, +{Left}
+      if (StrLen(address) > 2 && StrLen(probe) <= 2)
+        address :=
+      }
     Clipboard := clp
     send, {Lbutton up}
-    if (address && WinActive("ahk_group Browsers"))			;  long clicked selected text    
+    if (address && WinActive("ahk_group Browsers"))
       {
       if (command == "cancelFind" || StrLen(address) < 3)
         return
@@ -1950,16 +1961,14 @@ if ErrorLevel
     if (command != "More")
       lastIndex := 0
     type = video							; prime for list parsing
-    if (index > 192)							; last index to scroll to
+    if (index > 96)							; last index to scroll to
       page := index
-    else page := 192							; media entries per chunk
-    if (playlist) 
-      page = 512
-    if (command == "More")
-      lastIndex := value - 1
+    else page := 32							; media entries per chunk
     FileRead, list, %inca%\cache\temp\%folder%.txt
     src := history := inca "\cache\temp\" folder "-history.m3u"
-    if (!InStr(path, "\cache\temp\"))
+    if (command == "More")
+      lastIndex := value - 1
+    else if !InStr(path, "\cache\temp\")
       FileDelete, %src%
     seek = 0.0
     if (!InStr(folder, "-history") && !InStr(playlist, "History.m3u"))
@@ -2488,13 +2497,13 @@ Ffmpeg: 								; mp3, mp4, indexing - async processing
   sta := 0
   end := 0
   if cue
-if (tim > cue + 0.1)
-  sta := cue, end := tim
-else if (tim < cue - 0.1)
-      sta := tim, end := cue
-    else if (tim >= cue)
-      sta := cue
-    else sta := 0, end := cue
+  if (tim > cue + 0.1)
+    sta := cue, end := tim
+  else if (tim < cue - 0.1)
+    sta := tim, end := cue
+  else if (tim >= cue)
+    sta := cue
+  else sta := 0, end := cue
 
   if InStr(el_id, "Join")
     Join(select)
@@ -2537,16 +2546,15 @@ else if (tim < cue - 0.1)
         GuiControl, Indexer:, GuiInd, %A_Index% - processing - %med%
         output = %profile%\Downloads\%med% @%tim%.jpg
         outputDir := inca . "\cache\srt"
-        whisper = %inca%\cache\apps\Faster-Whisper-XXL\faster-whisper-xxl.exe
         if InStr(el_id, "mySrt")
-          runwait, "%whisper%" "%source%" --model tiny.en --language en --output_format srt --compute_type float32 --output_dir "%inca%\cache\srt" --sentence --beep_off, , Hide
+          ParakeetSrt(source, med)
         else if InStr(el_id, "myJpg")
-        {
+          {
           if  DetectMedia(source) == "image"
             cmd = %inca%\cache\apps\ffmpeg.exe -i "%source%" -vf "scale=iw*%skinny%:ih" -y "%output%"
           else cmd = %inca%\cache\apps\ffmpeg.exe -ss %tim% -i "%source%" -vf "scale=iw*%skinny%:ih" -y "%output%"
           FileAppend, %output%|0.0`r`n, %inca%\fav\History.m3u, UTF-8
-        }
+          }
         if InStr(el_id, "myIndex")
           Index(source, 1)
         if InStr(el_id, "myJpg")
@@ -2570,6 +2578,66 @@ else if (tim < cue - 0.1)
     PopUp("original sent to recycle bin",999,0,0)
   GuiControl, Indexer:, GuiInd
   return
+
+
+ParakeetSrt(source, med)
+  {
+  global inca
+  parakeet = %inca%\cache\apps\Parakeet\parakeet-cli-cpu.exe
+  RunWait, %ComSpec% /c nvidia-smi -L > "%inca%\cache\temp\gpu.txt" 2>nul,, Hide
+  FileRead, gpu, %inca%\cache\temp\gpu.txt
+  if InStr(gpu, "NVIDIA")
+    parakeet = %inca%\cache\apps\Parakeet\parakeet-cli.exe
+  pmodel = %inca%\cache\apps\Parakeet\models\tdt-0.6b-v3-q8_0.gguf
+  wav = %inca%\cache\temp\%med%.wav
+  txt = %inca%\cache\temp\%med%.txt
+  srt = %inca%\cache\srt\%med%.srt
+  RunWait, %inca%\cache\apps\ffmpeg.exe -y -i "%source%" -ac 1 -ar 16000 -vn "%wav%",, Hide
+  RunWait, %ComSpec% /c ""%parakeet%" transcribe --model "%pmodel%" --input "%wav%" --decoder tdt --timestamps > "%txt%" 2>nul",, Hide
+  FileRead, raw, %txt%
+  cueN := 0
+  cueText =
+  cueStart =
+  cueEnd =
+  srtBody =
+  Loop, Parse, raw, `n, `r
+    {
+    if !RegExMatch(A_LoopField, "^\s*([0-9]+\.[0-9]+)\s*-\s*([0-9]+\.[0-9]+)\s+(\S+)", m)
+      continue
+    if (cueStart = "")
+      cueStart := m1
+    cueEnd := m2
+    cueText .= m3 . " "
+    flush := 0
+    if RegExMatch(m3, "[.?!]$")
+      flush := 1
+    if (cueEnd - cueStart >= 4)
+      flush := 1
+    StringReplace, tmp, cueText, %A_Space%, %A_Space%, UseErrorLevel
+    if (ErrorLevel >= 12)
+      flush := 1
+    if flush
+      {
+      cueN += 1
+      cueText = %cueText%
+      srtBody .= cueN . "`r`n" . srtTime(cueStart) . " --> " . srtTime(cueEnd) . "`r`n" . cueText . "`r`n`r`n"
+      cueText =
+      cueStart =
+      }
+    }
+  if cueText
+    {
+    cueN += 1
+    cueText = %cueText%
+    srtBody .= cueN . "`r`n" . srtTime(cueStart) . " --> " . srtTime(cueEnd) . "`r`n" . cueText . "`r`n`r`n"
+    }
+  FileDelete, %srt%
+  if srtBody
+    FileAppend, %srtBody%, %srt%, UTF-8
+  else FileAppend, %raw%, %srt%, UTF-8
+  FileDelete, %wav%
+  FileDelete, %txt%
+  }
 
 
   SlowTimer:								; every half second

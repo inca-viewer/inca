@@ -85,7 +85,7 @@
   let currentPreviewItem = null;
   let server = 'http://localhost:3000/'
   let projectMedia = { defaultSrc: null, ui: {} }
-  let scaleY = (innerHeight > innerWidth) ? 0.6 : 0.5			// myPlayer height (screen ratio)
+  let scaleY = (innerHeight > innerWidth) ? 0.7 : 0.6			// myPlayer height (screen ratio)
   let timeout = 0
   let overTimer = 0
 
@@ -220,7 +220,7 @@
     if (id == 'myStart' && editingBlock) { myPlayer.currentTime = editingBlock.dataset.start; editing = 1; return}
     if (id == 'myFavorite') {addFavorite(); return}
     if (id == 'myDelete') if (selected || type) {inca('Delete','',index); return}
-    if (id == 'myMute' || id == 'myMute2') {defMute ^= 1; inca('Mute', defMute); myPlayer.muted = defMute; return}
+    if (id == 'myMute' || id == 'myMute2' || id == 'edPause') {defMute ^= 1; inca('Mute', defMute); myVoice.muted = myPlayer.muted = defMute; return}
     if (id == 'myPause' || id == 'myPause2') {defPause ^= 1; inca('Pause',defPause); syncPlay ^= 1; return}
     if (id == 'myPitch' || id == 'myPitch2') {setPitch(pitch ^= 1); return}
     if (id == 'mySpeed' || id == 'mySpeed2') {updateCue('rate',1); return}
@@ -304,7 +304,8 @@
       if (!playing && id != title.id && !gesture) {
         if (!overTitle && longClick && myPanel.matches(':hover')) return
         if (overMedia && folder == 'History' && thumb.src.slice(-3) == 'm3u') {
-          inca('Path', '', '', thumb.src.replace(server, '').replace(/\//g, '\\')); return }
+          let p = decodeURIComponent(thumb.src.replace(server, ''))
+          inca('Path', '', '', p.replace(/\//g, '\\'))}
         if (id == 'myCue' || overMedia && thumb.src.slice(-3) == 'm3u'
         || (longClick && ((overMedia && type == 'document')
         || (favicon && favicon.matches(':hover')))) 
@@ -664,7 +665,7 @@
       myPlayer.playbackRate = mediaContent.style.display == 'flex' ? 1 : rate
       myMask.style.pointerEvents = 'auto'
       if (dur && !thumbSheet) lastSeek = myPlayer.currentTime
-      if (playlist.match('/inca/music/') && scaleY < 0.6) myMask.style.opacity = 0.7
+      if (playlist.match('/inca/music/') && scaleY < 0.7) myMask.style.opacity = 0.7
       else myMask.style.opacity = 1
       if (myPlayer.duration) dur = myPlayer.duration
       if (cues.innerHTML && !thumbSheet && type !='image' && dur && !myNav.style.display) myCues(myPlayer.currentTime)}
@@ -801,7 +802,7 @@
 
 
   function inca(command,value,select,address) {					// server messaging to inca.ahk
-    more = 4
+    more = 1
     if (incaBusy) return
     incaBusy = true
     try {
@@ -1055,7 +1056,7 @@
       myMask.style = myDur.innerHTML = myVoice.src = myPlayer.src = ''
       editingBlock = editor.style.display = myNav.style.display = null
       myPlayerWrap.style.visibility = myPlayer.style.visibility = null
-      scaleY = (innerHeight > innerWidth) ? 0.6 : 0.5
+      scaleY = (innerHeight > innerWidth) ? 0.7 : 0.6
       const r = title.getBoundingClientRect();
       if (r.top < 0 + 140 || r.bottom > innerHeight - 80 || r.left < 0 || r.right > innerWidth) title.scrollIntoView({ block: 'center' })}}
 
@@ -1632,7 +1633,8 @@ function makeJSON() {
     const isSecondEnter = beforeText.endsWith('\n')
     if (!isSecondEnter) {
       const left = beforeText.replace(/[ \t]+$/, '')
-      block.textContent = (left + '\n ' + afterText.replace(/^[\n ]+/, '')) || ' '
+      const rest = afterText.replace(/^[\n ]+/, '')
+      block.textContent = (left + '\n' + (rest || ' ')) || ' '
       const n = block.firstChild, p = left.length + 1
       range.setStart(n, Math.min(p, n.length)); range.collapse(true)
       sel.removeAllRanges(); sel.addRange(range); editing = 1; return}
