@@ -4,10 +4,16 @@ Windows - Chrome, Firefox, Edge, Opera or Brave<br>
 Grok can summarise all the features
 
 Windows File Explorer in a YouTube style browser tab<br>
-So you can navigate and enjoy your own media without leaving browser
+So you can enjoy your own media without leaving browser
 
-Play music, filing, create new content, clone voices etc. with local ai<br>
-create & edit captions, persistent and evolving pathways and storyboards
+The basic idea is you can enjoy existing media much more than you think<br>
+With a beautiful and powerful media centric inteface<br>
+
+A whole new entertainment catagory of non destructive editing of your own content<br>
+Such as creating your own cascading asmr trigger pathways
+
+Play music, filing, create new content, write stories, edit captions<br>
+Clone voices, Create persistent and evolving pathways and storyboards
 
 Take any existing image, movie, text, caption etc.<br>
 And change the names, the story, the voices, the cuts etc.<br>
@@ -48,6 +54,10 @@ Browser will default to pictures folder, bookmark this tab<br>
 To exit, use taskbar or press ctrl + Esc<br>
 To 'uninstall', delete inca folder
 
+'index' creates 6 x 6 thumbsheets<br>
+'mp4' converts to browser optimized mp4 video<br>
+text or mp4 generation sends original copies to trash / recycle bin so you can restore
+
 
 Middle click
 - next media (long click for previous)<br>
@@ -80,9 +90,6 @@ Double Right click
 Wheel
 - Seek (+click = zoom)<br><br>
 
-index creates 6 x 6 thumbsheets<br>
-mp4 converts video to browser optimized mp4 <br>
-text or mp4 editing sends original copies to trash / recycle bin<br><br>
 <img src="screens/mouse.jpg" width="12.6%"> <img src="screens/computer arm 3.jpg" width="15.9%">   <img src="screens/computer arm 4.jpg" width="25%"><br>
 1m x 12mm threaded rod, 2 x nuts + heatshrink<br>
 drill 12mm hole in wood to bend arm and for cables<br>
