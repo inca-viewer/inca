@@ -161,4 +161,4 @@ Optional: Chatterbox / Parakeet for local voice; ElevenLabs or Venice if you use
 
 ## Source
 
-JavaScript, AutoHotkey, CSS, and a small Node server. Everything is in the repo. Read it before you run it.
+JavaScript, AutoHotkey, CSS, and a small Node server. Everything is in the repo.
