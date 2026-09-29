@@ -34,7 +34,7 @@ Use it to:
 - Build persistent pathways and storyboards from your own files
 - Change names, voices, cuts, timing, captions and story into evolving arcs
 - So take any media source and build your own story from it
-- Or build cascading ASMR triggers from it
+- Build cascading ASMR triggers from it
 
 ---
 
