@@ -1,98 +1,164 @@
+# Inca
 
-# Inca<br>
-Windows - Chrome, Firefox, Edge, Opera or Brave<br>
-Grok can summarise all the features
+**Windows File Explorer, in a YouTube-style browser tab.**
 
-Windows File Explorer in a YouTube style browser tab<br>
-So you can enjoy your own media without leaving browser
+Browse, play, file, and remix your own photos, videos, audio, captions, and text — without leaving the browser.
 
-The basic idea is you can enjoy existing media much more than you think<br>
-With a beautiful and powerful media centric inteface<br>
+Works in Chrome, Firefox, Edge, Opera, and Brave on Windows.
 
-A whole new entertainment catagory of non destructive editing of your own content<br>
-Such as creating your own cascading asmr trigger pathways
+<p align="center">
+  <img src="screens/xyZPE.svg" width="70%" alt="Inca interface diagram">
+</p>
 
-Play music, filing, create new content, write stories, edit captions<br>
-Clone voices, Create persistent and evolving pathways and storyboards
+<p align="center">
+  <img src="screens/Screen 1.jpg" width="46%" alt="Inca screenshot 1">
+  <img src="screens/Screen 2.jpg" width="46%" alt="Inca screenshot 2">
+</p>
 
-Take any existing image, movie, text, caption etc.<br>
-And change the names, the story, the voices, the cuts etc.<br>
-To create evolving video, audio & story arcs from existing media
+---
 
-Set start times, skips, pauses, skinny, pitch, speed<br>
-non destructive caption edits, cloned voices, cut ins, cut outs
+## What it is
 
-General filing - move, delete, copy, favorite, cuts, joins, conversions<br>
-buttery smooth playback and seeking in browsers from transcoded video<br><br>
-<img src="screens/xyZPE.svg" width="55%"><br>
-<img src="screens/computer arm 5.jpg" width="18%"> <img src="screens/computer arm 2.jpg" width="18%"> <img src="screens/computer arm 1.jpg" width="18%"><br><br>
-<img src="screens/Screen 1.jpg" width="25%"> <img src="screens/Screen 2.jpg" width="25%">
+Inca is a portable media viewer for media you already own.
 
-# Features:<br>
-beautiful fast interface<br>
-6 x 6 video thumbsheets<br>
-Shuffle folders & playlists<br>
-Search, organize, edit & view media files in browser<br>
-Move, Copy, Rename files in browser<br>
-Create slideshows, favorites, clips, joins, conversions etc.<br>
-Create, edit or search captions and subtitles<br>
-Concurrent Music and playlists from browser tabs
+It treats your folders like a library you can *play* and *reshape*: shuffle a folder, build a playlist, write captions, clone a voice, change pitch and speed, cut and join clips, then keep going. Originals stay safe. Edits are non-destructive.
 
-New... uses node server instead of local files<br>
-New... uses Chatterbox and Parakeet for voice cloning and caption editing locally<br>
-New... supports elevenlabs and venice external api's<br>
-New... top and tail jpg's and clip splits and joins for AI generated content
+Think of it as a new way to enjoy existing media locally — not another cloud editor.
 
-Lightweight & portable (no installation)<br>
-Pure vanilla java / ahk script (ai can confirm is safe)<br>
-No IDE, no libraries, no external calls, no browser extensions<br> 
-Does not mess with any settings - see source code<br><br>
-All media types supported in browser with transcode option.<br>
-Use ai to help edit settings or source code in notepad, then run inca.exe<br>
-Self compiles in under a second<br>
-Browser will default to pictures folder, bookmark this tab<br>
-To exit, use taskbar or press ctrl + Esc<br>
-To 'uninstall', delete inca folder
+Use it to:
 
-'index' creates 6 x 6 thumbsheets<br>
-'mp4' converts to browser optimized mp4 video<br>
-text or mp4 generation sends original copies to trash / recycle bin so you can restore
+- Play music and video with smooth seeking
+- File and organize (move, copy, rename, favorite, convert)
+- Edit captions and subtitles
+- Create cascading ASMR triggers
+- Clone voices locally or via APIs
+- Build persistent pathways and storyboards from your own files
+- Remix names, voices, cuts, timing, and story into evolving arcs
+- So take any media source and build your own story from it
 
+---
 
-Middle click
-- next media (long click for previous)<br>
-- toggle list view or thumb view
+## Features
 
-Back click
-- exit media, context or osk
-- or top of page
-- or reload page
+### Browse and play
 
-Long back click
-- close browser tab or close window
+- Fast, media-first interface
+- 6×6 video thumbsheets
+- Shuffle folders and playlists
+- Search, sort, and view files in the browser
+- Concurrent music / playlists across browser tabs
+- Smooth playback and seeking from browser-optimized (transcoded) video
+- Most media types supported, with an optional transcode to MP4
 
-Long left click
-- over text - opens on screen keyboard
-- over selected text in browser - lists file matches on pc
-- over thumb - pops thumb out of page flow
-- over folder - copies selected files (instead of move)
+### File without leaving the tab
 
-Right click & slide
-- volume
+- Move, copy, rename, delete
+- Favorites and history
+- Slideshows, clips, joins, conversions
+- `index` builds 6×6 thumbsheets
+- `mp4` converts to a browser-friendly video
+- Generated text or MP4 copies go to Recycle Bin so you can restore the original
 
-Left click & slide
-- position player
-- select media
+### Remix, don’t destroy
 
-Double Right click
-- 6 x 6 thumb sheet
+- Set start times, skips, pauses, skinny, pitch, and speed
+- Cut in / cut out
+- Non-destructive caption and subtitle create / edit / search
+- Change names, story, voices, and cuts on existing images, movies, text, or captions
+- Build cascading pathways and storyboards that persist and evolve
+- Top-and-tail JPGs plus clip split/join — useful for AI-generated content
 
-Wheel
-- Seek (+click = zoom)<br><br>
+### Voice
 
-<img src="screens/mouse.jpg" width="12.6%"> <img src="screens/computer arm 3.jpg" width="15.9%">   <img src="screens/computer arm 4.jpg" width="25%"><br>
-1m x 12mm threaded rod, 2 x nuts + heatshrink<br>
-drill 12mm hole in wood to bend arm and for cables<br>
-drill 20mm hole for top and bottom nuts<br><br>
+- Local voice cloning and caption work with **Chatterbox** and **Parakeet**
+- Optional external APIs: **ElevenLabs** and **Venice**
 
+### Built to stay out of the way
 
+- Lightweight and portable — no installer
+- Vanilla JavaScript + AutoHotkey + a small Node server
+- No IDE, no extra libraries, no browser extensions
+- Does not change Windows or browser settings
+- Source is plain files you can open in Notepad
+- `inca.exe` self-compiles in under a second
+
+---
+
+## Mouse and gestures
+
+| Action | What it does |
+| --- | --- |
+| **Middle click** | Next media *(long click = previous)*. Also toggles list / thumb view |
+| **Back click** | Exit media, context menu, or on-screen keyboard — or jump to top / reload |
+| **Long back click** | Close the tab or window |
+| **Long left click** | Over text → on-screen keyboard. Over selected text → find matching files on the PC. Over a thumb → pop it out of the page. Over a folder → copy selected files (instead of move) |
+| **Right click + slide** | Volume |
+| **Left click + slide** | Move the player, or select media |
+| **Double right click** | 6×6 thumbsheet |
+| **Wheel** | Seek *(wheel + click = zoom)* |
+
+<p align="center">
+  <img src="screens/mouse.jpg" width="18%" alt="Mouse controls">
+</p>
+
+---
+
+## Getting started
+
+1. Run `inca.exe` from the Inca folder. No install.
+2. The browser opens on your **Pictures** folder. Bookmark that tab.
+3. Play, file, caption, or remix from there.
+
+**Exit:** taskbar, or `Ctrl + Esc`.
+
+**Remove:** delete the Inca folder.
+
+Want to tweak behavior? Edit the source or settings in Notepad (an assistant can help), then run `inca.exe` again. It recompiles instantly.
+
+---
+
+## How editing stays safe
+
+Edits are non-destructive.
+
+- Playback tweaks (pitch, speed, start, skips, skinny) live on the pathway, not as a baked-over original.
+- Caption changes do not have to overwrite the source subtitle.
+- When Inca generates a new MP4 or text file, the previous file is sent to the Recycle Bin so you can restore it.
+
+The idea is a growing web of versions and pathways from media you already have — not a one-way render.
+
+---
+
+## Optional desk arm
+
+Since it's mouse focused, it's fully useable for disabled or bedridden. An onscreen keyboard appears when needed for searches, editing captions or filenames etc.
+
+1. 1 m × 12 mm threaded rod, two nuts, heatshrink
+2. Drill a 12 mm hole in wood to bend the arm and run cables
+3. Drill a 20 mm hole for the top and bottom nuts
+
+<p align="center">
+  <img src="screens/computer arm 5.jpg" width="22%" alt="Desk arm 1">
+  <img src="screens/computer arm 2.jpg" width="22%" alt="Desk arm 2">
+  <img src="screens/computer arm 1.jpg" width="22%" alt="Desk arm 3">
+</p>
+<p align="center">
+  <img src="screens/computer arm 3.jpg" width="22%" alt="Desk arm 4">
+  <img src="screens/computer arm 4.jpg" width="30%" alt="Desk arm 5">
+</p>
+
+---
+
+## Requirements
+
+- Windows
+- Chrome, Firefox, Edge, Opera, or Brave
+- No extra installers, IDEs, or extensions
+
+Optional: Chatterbox / Parakeet for local voice; ElevenLabs or Venice if you use those APIs.
+
+---
+
+## Source
+
+JavaScript, AutoHotkey, CSS, and a small Node server. Everything is in the repo. Read it before you run it.
