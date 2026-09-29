@@ -1,13 +1,13 @@
 
 # Inca<br>
-Windows - Chrome, Firefox, Edge, Opera or Brave
+Windows - Chrome, Firefox, Edge, Opera or Brave<br>
+Grok can summarise all the features
 
-Windows File Explorer in a YouTube style browser tab
-Use ai to list all features
+Windows File Explorer in a YouTube style browser tab<br>
+So you can navigate and enjoy your own media without leaving browser
 
-Stay in browser to play music & manage local files<br>
-create new content, clone voices, create & edit captions<br>
-create persistent pathways and storyboards with ai tools
+Play music, filing, create new content, clone voices etc. with local ai<br>
+create & edit captions, persistent and evolving pathways and storyboards
 
 Take any existing image, movie, text, caption etc.<br>
 And change the names, the story, the voices, the cuts etc.<br>
