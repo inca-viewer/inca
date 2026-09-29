@@ -29,7 +29,7 @@ Use it to:
 
 - Play music and video with smooth seeking
 - File and organize (move, copy, rename, favorite, convert)
-- Edit captions and subtitles
+- Edit captions, subtitles and voices
 - Clone voices locally or via APIs
 - Build persistent pathways and storyboards from your own files
 - Change names, voices, cuts, timing, captions and story into evolving arcs
