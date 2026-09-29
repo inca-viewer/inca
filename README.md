@@ -80,7 +80,7 @@ Use it to:
 - No IDE, no extra libraries, no browser extensions
 - Does not change Windows or browser settings
 - Source is plain files you can open in Notepad
-- `inca.exe` self-compiles in under a second
+- `inca.exe` self-compiles instantly
 
 ---
 
