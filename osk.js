@@ -53,21 +53,24 @@ function osk() {
   oskElement.addEventListener('mousedown', captureSelection, true);
 
 function updateSuggestions() {
-    requestAnimationFrame(() => {
-    if (!targetEl) return
-    const text = (targetEl.isContentEditable ? targetEl.innerText : targetEl.value).replace(/\u200B/g, '')
-    const { words } = predict(text, predictBuffer)
-    const btns = suggestionRow.querySelectorAll('.osk-suggestion')
+  requestAnimationFrame(() => {
+    if (!targetEl) return;
+    const text = (targetEl.isContentEditable ? targetEl.innerText : targetEl.value);
+    const { words } = predict(text, predictBuffer);
+    const btns = suggestionRow.querySelectorAll('.osk-suggestion');
     btns.forEach((btn, i) => {
       if (i < 6) {
-        const w = words[i] || ''
-        btn.textContent = w
-        btn.onclick = w ? () => insertSuggestion(w) : null}})}
-  )}
+        const w = words[i] || '';
+        btn.textContent = w;
+        btn.onmouseup = w ? () => insertSuggestion(w) : null;
+      }
+    });
+  });
+}
 
   function insertSuggestion(s) {
     if (!targetEl || !restoreSelection() || gesture) return
-    const text = (targetEl.isContentEditable ? targetEl.innerText : targetEl.value).replace(/\u200B/g, '')
+    const text = (targetEl.isContentEditable ? targetEl.innerText : targetEl.value)
     const partial = predictBuffer || (window.getSelection().anchorNode?.textContent || '').slice(0, window.getSelection().anchorOffset).match(/\S+$/)?.[0] || ''
     if (!s) return
     if (targetEl.isContentEditable) {
@@ -77,17 +80,22 @@ function updateSuggestions() {
         range.setStart(range.startContainer, Math.max(0, range.startOffset - partial.length))
         sel.removeAllRanges(); sel.addRange(range)}
       const r = window.getSelection().getRangeAt(0)
-      const before = (r.startContainer.textContent?.slice(0, r.startOffset) || '')
-      document.execCommand('insertText', false, (before.endsWith(' ') || before === '' ? '' : ' ') + s + ' ')}
-else {
-    const pos = targetEl.selectionStart ?? targetEl.value.length
-    const before = targetEl.value.slice(0, pos)
-    const after = targetEl.value.slice(pos)
-    const base = partial ? before.slice(0, Math.max(0, before.length - partial.length)) : before
-    const prefix = base === '' || base.endsWith(' ') ? '' : ' '
-    targetEl.value = base + prefix + s + ' ' + after
-    const newPos = (base + prefix + s + ' ').length
-    targetEl.selectionStart = targetEl.selectionEnd = newPos}
+      const nodeText = r.startContainer.textContent || ''
+      const before = nodeText.slice(0, r.startOffset)
+      const after = nodeText.slice(r.endOffset)
+      const prefix = before === '' || /\s$/.test(before) ? '' : ' '
+      const suffix = /^\s/.test(after) ? '' : ' '
+      document.execCommand('insertText', false, prefix + s + suffix)}
+    else {
+      const pos = targetEl.selectionStart ?? targetEl.value.length
+      const before = targetEl.value.slice(0, pos)
+      const after = targetEl.value.slice(pos)
+      const base = partial ? before.slice(0, Math.max(0, before.length - partial.length)) : before
+      const prefix = base === '' || /\s$/.test(base) ? '' : ' '
+      const suffix = /^\s/.test(after) ? '' : ' '
+      targetEl.value = base + prefix + s + suffix + after
+      const newPos = (base + prefix + s + suffix).length
+      targetEl.selectionStart = targetEl.selectionEnd = newPos}
 
     predictBuffer = ''
     captureSelection()
@@ -98,14 +106,14 @@ else {
 
   let currentLayout = [
     ["-","q","w","e","r","t","y","u","i","o","p",",",".","←","Del","Num"],
-    ["Shift","a","s","d","f","g","h","j","k","l","Enter","!","?","'",'"'],
+    ["Shift","a","s","d","f","g","h","j","k","l","Enter","'",'"',"!","?"],
     ["Ctrl","z","x","c","v","b","n","m","",'‹','›',"↑","↓"]
   ];
 
   let numLayout = [
-    ["`","1","2","3","4","5","6","7","8","9","0",",",".","←","Del","Num"],
-    ["Shift","@","#","£","$","%","^","&","*","-","Enter","!","?",";",":"],
-    ["Ctrl","~","_","[","]","{","}","\\","","(",")","+","="]
+    ["-","1","2","3","4","5","6","7","8","9","0",",",".","←","Del","Num"],
+    ["Shift","@","#","£","$","%","^","&","*","/","Enter",";",":","+","="],
+    ["Ctrl","~","_","`","|","[","]","\\","","(",")","{","}"]
   ];
 
   function createKeyboard() {
@@ -164,7 +172,7 @@ else {
 
         btn.addEventListener('click', () => {
             handleKey(key, btn);
-            if (!["Num", "Shift", "Ctrl", "↑", "↓", "‹", "›", "←", "Del", "Enter"].includes(key)) 
+            if (!["Num", "Shift", "Ctrl", "↑", "↓", "‹", "›", "Del", "Enter"].includes(key)) 
               setTimeout(() => {
                 captureSelection();
                 requestAnimationFrame(updateSuggestions);
@@ -284,7 +292,7 @@ if (key === "‹" || key === "›" || key === "↑" || key === "↓") {
     else if (key === "Del") {
       if (active.isContentEditable) document.execCommand('forwardDelete');
       else {
-        let pos = active.selectionStart || 0;
+        let pos = active.selectionStart ?? 0;
         active.value = active.value.slice(0, pos) + active.value.slice(pos+1);
         active.selectionStart = active.selectionEnd = pos;
       }
@@ -310,7 +318,7 @@ if (key === "‹" || key === "›" || key === "↑" || key === "↓") {
     if (active.isContentEditable) {
       document.execCommand('insertText', false, char);
     } else {
-      let pos = active.selectionStart || active.value.length;
+      let pos = active.selectionStart ?? active.value.length;
       active.value = active.value.slice(0, pos) + char + active.value.slice(active.selectionEnd);
       active.selectionStart = active.selectionEnd = pos + 1;
     }
@@ -382,7 +390,7 @@ function buildPredictor() {
       return r.text();
     })
     .then(dictText => {
-      const dictWords = dictText.replace(/\u200B/g, '').toLowerCase().match(/\b[\w']+\b/g) || [];
+      const dictWords = dictText.toLowerCase().match(/\b[\w']+\b/g) || [];
       dictWords.forEach(w => {
         predictor.words[w] = (predictor.words[w] || 0) + 8;  // dictionary gets priority
       });
@@ -393,7 +401,7 @@ function buildPredictor() {
     })
     .finally(() => {
       // 2. Always include words from current captions/blocks
-      const text = blocks.map(b => b.innerText).join(' ').replace(/\u200B/g, '').toLowerCase();
+      const text = blocks.map(b => b.innerText).join(' ').toLowerCase();
       const currentWords = text.match(/\b[\w']+\b/g) || [];
       currentWords.forEach(w => {
         predictor.words[w] = (predictor.words[w] || 0) + 1;

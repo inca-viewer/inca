@@ -301,8 +301,10 @@
     IfWinActive, ahk_group Browsers
       {
       WinGetTitle, title, A
-      if RegExMatch(title, "i)Inca - (.+?)(?:\s+[-–—]\s+.+)?$", m)
-        incaTab := m1
+      title := RegExReplace(title, "i)\s*(Mozilla Firefox|Firefox Developer Edition|Nightly|Google Chrome|Microsoft Edge|Opera|Brave)\s*$")
+      title := RegExReplace(title, "[\s\-\x{2013}\x{2014}]+$", "")
+      if RegExMatch(title, "i)^Inca\s*-\s*(.+)$", m)
+        incaTab := Trim(m1)
       if (folder != incaTab) {
         subfolders := ""
         folder := incaTab

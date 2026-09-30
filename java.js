@@ -261,8 +261,8 @@
       blocks = []
       viewport.innerHTML = ''
       editor.style.display = null							// allow new srt
-      if (myMenu.matches(':hover') || myPanel.matches(':hover')) return
-      if (zoom > 1) {Play(); return}
+//      if (myMenu.matches(':hover') || myPanel.matches(':hover')) return
+//      if (zoom > 1) {Play(); return}
       if (!playing && !myNav.style.display) {inca('View',lastMedia); return}		// list/thumb view
       if (longClick) {index--} else index++						// next media
       if (!Param()) {index = lastMedia; closePlayer(); return}}
@@ -490,7 +490,7 @@
       settings.view = String(view)
       myView.style.setProperty('--max-size', view + 'em')
       localStorage.setItem(folder, JSON.stringify(settings))
-      Param(); thumb.load()								// show poster or sheet
+      Param(); thumb.load()
       thumb.parentElement.style.opacity = thumb.style.opacity = 1
       myContent.scrollTo(0,0)
       delay = 9}
@@ -641,8 +641,9 @@
     if (playing) {
       myPic.style.maxWidth = '160px'
       myPic.style.maxHeight = 160 / aspect + 'px'
-      edPause.style.opacity = (!userPlay || defMute) ? 1 : 0
-      edPause.textContent = (!userPlay ? '⏸' : '') + (defMute ? '🔇︎' : '')
+      const vRate = editingBlock?._rate || 1
+      edPause.style.opacity = (!userPlay || defMute || vRate != 1) ? 1 : 0
+      edPause.textContent = (!userPlay ? '⏸' : '') + (defMute ? '🔇︎' : '') + (vRate != 1 ? ' ' + vRate : '')
       if (editingBlock?._voice?.src) progress = 100 * myVoice.currentTime / myVoice.duration
       else if (editingBlock) {
         progress = 100 * (myPlayer.currentTime - editingBlock.dataset.start) / (editingBlock._end - editingBlock.dataset.start)}
@@ -819,7 +820,7 @@
               const content = data.substring(data.indexOf('|') + 1)
               if (type == 'html') {
                 myView.insertAdjacentHTML('beforeend', content)
-                while (Param(lastIndex)) {lastIndex++}}
+                while (Param(lastIndex)) {lastIndex++} index = lastMedia}
               else if (type == 'address') {
                 if (lastClick === 2) window.open(content, '_blank')
                 else window.location.href = content}
@@ -883,7 +884,7 @@
     for (lastIndex = 1; Param(lastIndex); lastIndex++) {}			// process null cues (eg. skinny, start, rate)
     if (!ix) index = 1
     else index = ix
-    lastMedia = index								// set htm thumb widths and heights
+    lastMedia = index
     Param()									// initialise current media
     if (ix && title) {								// eg. after switch thumbs/listview
       title.style.opacity = 1

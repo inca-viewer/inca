@@ -65,8 +65,8 @@
   justify-content: space-around;
   cursor:default;}
 
- #media-header {width: 34%}
- #search-header {min-width: 34%}
+ #media-header {padding-left: 1em; width: 30%}
+ #search-header {min-width: 30%}
 
 #media-header > .header > * { 
   display: inline-flex;
