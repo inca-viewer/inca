@@ -59,7 +59,7 @@ Use it to:
 ### Remix, don’t destroy
 
 - Set start times, skips, pauses, skinny, pitch, and speed
-- Cut in / cut out
+- Cut scenes in or out of existing media or edit them in place
 - Non-destructive caption and subtitle create / edit / search
 - Change names, story, voices, and cuts on existing images, movies, text, or captions
 - Build cascading pathways and storyboards that persist and evolve
