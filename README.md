@@ -27,14 +27,12 @@ It treats your folders like a library you can *play* and *reshape*: shuffle a fo
 
 Use it to:
 
-- Play music and video with smooth seeking
 - File and organize (move, copy, rename, favorite, convert)
-- Edit captions, subtitles and voices
+- Edit captions, subtitles and voices on images, video or text
 - Clone voices locally or via APIs
 - Build persistent pathways and storyboards from your own files
 - Change names, voices, cuts, timing, captions and story into evolving arcs
-- So take any media source and build your own story from it
-- Or build cascading ASMR triggers from it
+- So take any media sources and build your own story from it
 
 ---
 
@@ -47,8 +45,7 @@ Use it to:
 - Shuffle folders and playlists
 - Search, sort, and view files in the browser
 - Concurrent music / playlists across browser tabs
-- Smooth playback and seeking from browser-optimized (transcoded) video
-- Most media types supported, with an optional transcode to MP4
+- Smooth playback of any media format using transcode
 
 ### File without leaving the tab
 
