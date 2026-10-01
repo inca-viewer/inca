@@ -2,13 +2,11 @@
 
 **Windows File Explorer, in a YouTube-style browser tab.**
 
-Browse, play, file, and remix your own photos, videos, audio, captions, and text — without leaving the browser.
+Browse, play, file, and remix your own photos, videos, audio, captions, and text.
 
 Works in Chrome, Firefox, Edge, Opera, and Brave on Windows.
 
-<p align="center">
-  <img src="screens/xyZPE.svg" width="70%" alt="Inca interface diagram">
-</p>
+<img src="screens/xyZPE.svg" width="70%" alt="Inca interface diagram">
 
 ---
 
@@ -16,9 +14,13 @@ Works in Chrome, Firefox, Edge, Opera, and Brave on Windows.
 
 Inca is a portable media viewer for media you already own.
 
-Think of it as a new way to enjoy existing media locally, through the process of active creation rather than passive playback  
+Think of it as a new way to enjoy existing media locally<br>
+through the process of active creation rather than passive playback  
 
-It treats your folders like a library you can *play* and *reshape*: shuffle a folder, build a playlist, write captions, clone a voice, change pitch and speed, cut and join clips, then keep going. Originals stay safe. Edits are non-destructive.
+It treats your folders like a library you can *play* and *reshape*<br>
+shuffle a folder, build a playlist, write captions<br>
+clone a voice, change pitch and speed, cut and join clips<br>
+then keep going. Originals stay safe. Edits are non-destructive.
 
 Use it to:
 
@@ -27,7 +29,7 @@ Use it to:
 - Clone voices locally or via APIs
 - Build persistent pathways and storyboards from your own files
 - Change names, voices, cuts, timing, captions and story into evolving arcs
-- So take any media sources and build your own story from it
+- So take any media sources and build your own story from them
 
 ---
 
@@ -80,10 +82,10 @@ Use it to:
 
 | Action | What it does |
 | --- | --- |
-| **Middle click** | Next media *(long click = previous)*. Also toggles list / thumb view |
-| **Back click** | Exit media, context menu, or on-screen keyboard — or jump to top / reload |
+| **Middle click** | Next media *(long click = previous)*<br>Toggles list / thumb view |
+| **Back click** | Exit media / menu / on-screen keyboard<br>jump to top or reload |
 | **Long back click** | Close the tab or window |
-| **Long left click** | Over text → on-screen keyboard. Over selected text → find matching files on the PC. Over a thumb → pop it out of the page. Over a folder → copy selected files (instead of move) |
+| **Long left click** | Over text → on-screen keyboard<br>Over selected text → find matching files on the PC<br>Over a thumb → pop it out of the page<br>Over a folder → copy selected files (instead of move) |
 | **Right click + slide** | Volume |
 | **Left click + slide** | Move the player, or select media |
 | **Double right click** | 6×6 thumbsheet |
@@ -103,7 +105,9 @@ Use it to:
 
 **Remove:** delete the Inca folder.
 
-Want to tweak behavior? Edit the source or settings in Notepad (an assistant can help), then run `inca.exe` again. It recompiles instantly.
+Want to tweak behavior?<br>
+Edit the source or settings in Notepad (an assistant can help)<br>
+then run `inca.exe` again. It recompiles instantly.
 
 ---
 
