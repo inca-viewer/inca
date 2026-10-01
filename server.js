@@ -169,7 +169,7 @@ res.end(JSON.stringify({ path: publicPath, voiceName: finalVoiceName, filename }
                 let responseSent = false;
 
 const waitForTempFile = async () => {
-    const pollInterval = 200;
+    const pollInterval = 50;
     let lastMtime = 0;
     let lastActivity = Date.now();
     while (true) {
@@ -181,7 +181,7 @@ const waitForTempFile = async () => {
                     lastActivity = Date.now(); // reset timeout on change
                 }
                 const content = await fsPromises.readFile(tempFilePath, 'utf8');
-                if (content.trim() !== 'working') return true;
+                if (content.trim() && content.trim() !== 'working') return true;
             }
         } catch (err) {}
         if (Date.now() - lastActivity > 3000) return false; 

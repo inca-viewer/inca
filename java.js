@@ -1,6 +1,7 @@
 
 // incorporate InfiniteTalk face animation ai model when 50GB disk is free
 
+
   let wheel = 0								// wheel count
   let wheelDir = 0		 					// wheel direction
   let index = 1								// thumb index (e.g. thumb14)
@@ -261,8 +262,7 @@
       blocks = []
       viewport.innerHTML = ''
       editor.style.display = null							// allow new srt
-//      if (myMenu.matches(':hover') || myPanel.matches(':hover')) return
-//      if (zoom > 1) {Play(); return}
+      if (zoom > 1) {Play(); return}
       if (!playing && !myNav.style.display) {inca('View',lastMedia); return}		// list/thumb view
       if (longClick) {index--} else index++						// next media
       if (!Param()) {index = lastMedia; closePlayer(); return}}
@@ -1754,6 +1754,7 @@ function Backspace(e) {
       favIndex = (favIndex + (e.deltaY > 0 ? 1 : -1) + favs.length) % favs.length
       matchCountSpan.textContent = `${favIndex + 1} : ${favs.length}`
       favs[favIndex].scrollIntoView({ behavior: 'smooth', block: 'center' })
+      activateBlock(favs[favIndex], userPlay)
       return}
     const term = searchInput.value.trim().toLowerCase();
     matches = blocks.filter(b => b.innerHTML.toLowerCase().includes(term))
@@ -1809,8 +1810,7 @@ function newVoice() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ voiceName, text, provider, title: title?.defaultValue.trim() })})
-          .then(async res => {if (!res.ok) throw 0; return res.json()})
-          .then(data => data.path)
+          .then(async res => { const data = await res.json(); if (!res.ok) throw data.error || res.status; return data.path })
           .then(path => {
             block.style.outline = ''
             if (!block._voice) block._voice = {}
@@ -1821,7 +1821,7 @@ function newVoice() {
             editing = 1
             requestAnimationFrame(() => activateBlock(block, 1, 1))
             inca('addHistory',last,0,path)})
-          .catch(() => {block.style.outline = ''; alert('chatterbox not responding')})
+          .catch(err => {block.style.outline = ''; alert(err || 'chatterbox not responding')})
           .finally(() => { Chatterbox.busy = 0 })}
 
 

@@ -70,7 +70,6 @@ function updateSuggestions() {
 
   function insertSuggestion(s) {
     if (!targetEl || !restoreSelection() || gesture) return
-    const text = (targetEl.isContentEditable ? targetEl.innerText : targetEl.value)
     const partial = predictBuffer || (window.getSelection().anchorNode?.textContent || '').slice(0, window.getSelection().anchorOffset).match(/\S+$/)?.[0] || ''
     if (!s) return
     if (targetEl.isContentEditable) {
@@ -80,20 +79,32 @@ function updateSuggestions() {
         range.setStart(range.startContainer, Math.max(0, range.startOffset - partial.length))
         sel.removeAllRanges(); sel.addRange(range)}
       const r = window.getSelection().getRangeAt(0)
-      const nodeText = r.startContainer.textContent || ''
-      const before = nodeText.slice(0, r.startOffset)
-      const after = nodeText.slice(r.endOffset)
+      const nodeText = r.startContainer.nodeType === 3
+        ? (r.startContainer.textContent || '')
+        : (r.startContainer.textContent || '')
+      const before = r.startContainer.nodeType === 3
+        ? nodeText.slice(0, r.startOffset)
+        : (r.startContainer.textContent || '').slice(0, Math.min(r.startOffset, (r.startContainer.textContent || '').length))
+      const after = r.startContainer.nodeType === 3
+        ? nodeText.slice(r.endOffset)
+        : ''
+      const atLineStart = before === '' || /[\n\r]$/.test(before)
       const prefix = before === '' || /\s$/.test(before) ? '' : ' '
-      const suffix = /^\s/.test(after) ? '' : ' '
-      document.execCommand('insertText', false, prefix + s + suffix)}
+      const suffix = (!atLineStart && /^\s/.test(after)) ? '' : ' '
+      document.execCommand('insertText', false, prefix + s + suffix)
+      if (atLineStart && /^\s/.test(after)) {
+        document.execCommand('forwardDelete')}
+    }
     else {
       const pos = targetEl.selectionStart ?? targetEl.value.length
       const before = targetEl.value.slice(0, pos)
       const after = targetEl.value.slice(pos)
       const base = partial ? before.slice(0, Math.max(0, before.length - partial.length)) : before
+      const atLineStart = base === '' || /[\n\r]$/.test(base)
       const prefix = base === '' || /\s$/.test(base) ? '' : ' '
-      const suffix = /^\s/.test(after) ? '' : ' '
-      targetEl.value = base + prefix + s + suffix + after
+      const suffix = (!atLineStart && /^\s/.test(after)) ? '' : ' '
+      const rest = (atLineStart && /^\s/.test(after)) ? after.replace(/^\s/, '') : after
+      targetEl.value = base + prefix + s + suffix + rest
       const newPos = (base + prefix + s + suffix).length
       targetEl.selectionStart = targetEl.selectionEnd = newPos}
 

@@ -303,7 +303,8 @@
       WinGetTitle, title, A
       title := RegExReplace(title, "i)\s*(Mozilla Firefox|Firefox Developer Edition|Nightly|Google Chrome|Microsoft Edge|Opera|Brave)\s*$")
       title := RegExReplace(title, "[\s\-\x{2013}\x{2014}]+$", "")
-      if RegExMatch(title, "i)^Inca\s*-\s*(.+)$", m)
+if RegExMatch(title, "^Inca - \s*(.+)$", m)
+  incaTab := Trim(m1)
         incaTab := Trim(m1)
       if (folder != incaTab) {
         subfolders := ""
@@ -1963,8 +1964,10 @@ if ErrorLevel
     if (command != "More")
       lastIndex := 0
     type = video							; prime for list parsing
-    if (index > 96)							; last index to scroll to
+    if (index > 32)							; last index to scroll to
       page := index
+    else if (folder == "History")
+      page := 96
     else page := 32							; media entries per chunk
     FileRead, list, %inca%\cache\temp\%folder%.txt
     src := history := inca "\cache\temp\" folder "-history.m3u"
