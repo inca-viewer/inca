@@ -90,7 +90,7 @@ Use it to:
 | **Wheel** | Seek *(wheel + click = zoom)* |
 
 <p align="center">
-  <img src="screens/mouse.jpg" width="18%" alt="Mouse controls">
+  <img src="screens/mouse1.jpg" width="18%" alt="Mouse controls">
 </p>
 
 ---
