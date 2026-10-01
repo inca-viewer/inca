@@ -89,9 +89,7 @@ Use it to:
 | **Double right click** | 6×6 thumbsheet |
 | **Wheel** | Seek *(wheel + click = zoom)* |
 
-<p align="center">
-  <img src="screens/mouse1.png" width="18%" alt="Mouse controls">
-</p>
+<img src="screens/mouse1.png" width="18%" alt="Mouse controls">
 
 ---
 
