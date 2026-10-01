@@ -121,7 +121,7 @@ The idea is a growing web of versions and pathways from media you already have â
 
 ## Optional desk arm
 
-Because it is mouse-focused, it is usable for people who are disabled or bedridden. An on-screen keyboard appears when needed for search, captions, filenames, and other text.
+Because it is mouse-focused, it is usable for people who are disabled or bedridden. An on-screen keyboard appears when needed for search, captions etc.
 
 1. 1 m Ã— 12 mm threaded rod, two nuts, heatshrink
 2. Drill a 12 mm hole in wood to bend the arm and run cables
