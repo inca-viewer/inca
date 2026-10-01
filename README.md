@@ -127,15 +127,7 @@ Because it is mouse-focused, it is usable for people who are disabled or bedridd
 2. Drill a 12 mm hole in wood to bend the arm and run cables
 3. Drill a 20 mm hole for the top and bottom nuts
 
-<p align="center">
-  <img src="screens/computer arm 5.jpg" width="22%" alt="Desk arm 1">
-  <img src="screens/computer arm 2.jpg" width="22%" alt="Desk arm 2">
-  <img src="screens/computer arm 1.jpg" width="22%" alt="Desk arm 3">
-</p>
-<p align="center">
-  <img src="screens/computer arm 3.jpg" width="22%" alt="Desk arm 4">
-  <img src="screens/computer arm 4.jpg" width="30%" alt="Desk arm 5">
-</p>
+  <img src="screens/computer arm 5.jpg" width="16%" alt="Desk arm 1">  <img src="screens/computer arm 2.jpg" width="16%" alt="Desk arm 2">  <img src="screens/computer arm 1.jpg" width="16%" alt="Desk arm 3">  <img src="screens/computer arm 3.jpg" width="11.7%" alt="Desk arm 4">  <img src="screens/computer arm 4.jpg" width="18.5%" alt="Desk arm 5">
 
 ---
 
