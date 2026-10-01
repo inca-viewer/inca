@@ -29,7 +29,7 @@ Use it to:
 - Clone voices locally or via APIs
 - Build persistent pathways and storyboards from your own files
 - Change names, voices, cuts, timing, captions and story into evolving arcs
-- So take any media sources and build your own story from them
+- So take any media sources and build your own stories around them
 
 ---
 
