@@ -10,11 +10,6 @@ Works in Chrome, Firefox, Edge, Opera, and Brave on Windows.
   <img src="screens/xyZPE.svg" width="70%" alt="Inca interface diagram">
 </p>
 
-<p align="center">
-  <img src="screens/Screen 1.jpg" width="46%" alt="Inca screenshot 1">
-  <img src="screens/Screen 2.jpg" width="46%" alt="Inca screenshot 2">
-</p>
-
 ---
 
 ## What it is
