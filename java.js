@@ -1,5 +1,5 @@
 
-// incorporate InfiniteTalk face animation ai model when 50GB disk is free
+// incorporate InfiniteTalk or flashHead face animation ai model when 50GB disk is free
 
 
   let wheel = 0								// wheel count
@@ -286,7 +286,7 @@
           editor.style.pointerEvents = 'auto'
           overBlock = document.elementFromPoint(xPos, yPos)?.closest('.text-block') || 0
           editor.style.pointerEvents = 'none'
-          if (overBlock) {captions = 2; activateBlock(block)}}
+          if (overBlock) {captions = 2; activateBlock(block); return}}
         if (!longClick) {
           if (wasOsk && overBlock == editingBlock || (!userPlay && syncPlay && !overEditor)) userPlay = syncPlay = 0
           else {
@@ -378,11 +378,11 @@
     lastMedia = index
     positionMedia(0)
     myPic.style.top = '-999px'
-    let syncStart = start								// because seekbar overwrites start
+    let syncStart = captions ? 0 : start							// because seekbar overwrites start
     if (!thumbSheet) myPlayer.src = thumb.src
     else {myPlayer.src = ''; myPlayer.poster = sheetUrl; myPlayer.load()}
     setTimeout(async () => {
-      myPlayer.currentTime = syncStart
+      if (!captions) myPlayer.currentTime = syncStart
       if (!dur || thumbSheet || captions) userPlay = syncPlay = 0
       else userPlay = syncPlay = !(defPause && !playlist.match('/inca/music/'))
       if (!more && lastIndex < listSize && index > lastIndex - 9) inca('More', lastIndex)
@@ -641,9 +641,8 @@
     if (playing) {
       myPic.style.maxWidth = '160px'
       myPic.style.maxHeight = 160 / aspect + 'px'
-      const vRate = editingBlock?._rate || 1
-      edPause.style.opacity = (!userPlay || defMute || vRate != 1) ? 1 : 0
-      edPause.textContent = (!userPlay ? '⏸' : '') + (defMute ? '🔇︎' : '') + (vRate != 1 ? ' ' + vRate : '')
+      edPause.style.opacity = (!userPlay || defMute) ? 1 : 0
+      edPause.textContent = (!userPlay ? '⏸' : '') + (defMute ? '🔇︎' : '')
       if (editingBlock?._voice?.src) progress = 100 * myVoice.currentTime / myVoice.duration
       else if (editingBlock) {
         progress = 100 * (myPlayer.currentTime - editingBlock.dataset.start) / (editingBlock._end - editingBlock.dataset.start)}
@@ -1254,9 +1253,6 @@ function updateBlockAlignments() {
   blocks.forEach(b => {
     const v = (b._voiceName || '').trim()
     if (v && !unique.includes(v)) unique.push(v)})
-  if (!leftVoice   && unique[0]) leftVoice   = unique[0]
-  if (!rightVoice  && unique[1]) rightVoice  = unique[1]
-  if (!centerVoice && unique[2]) centerVoice = unique[2]
   unique.forEach(v => {
     if (v !== leftVoice && v !== centerVoice && v !== rightVoice) {
       if (!leftVoice)   leftVoice   = v

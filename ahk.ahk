@@ -1967,7 +1967,7 @@ if ErrorLevel
     if (index > 32)							; last index to scroll to
       page := index
     else if (folder == "History")
-      page := 96
+      page := 300
     else page := 32							; media entries per chunk
     FileRead, list, %inca%\cache\temp\%folder%.txt
     src := history := inca "\cache\temp\" folder "-history.m3u"
