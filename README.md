@@ -1,7 +1,4 @@
 
-
-https://github.com/user-attachments/assets/00ba6ba7-26cb-40a8-b672-da419ad4685f
-
 # Inca
 
 **Windows File Explorer, in a YouTube-style browser tab.**
@@ -25,6 +22,8 @@ It treats your folders like a library you can *play* and *reshape*<br>
 shuffle a folder, build a playlist, write captions<br>
 clone a voice, change pitch and speed, cut and join clips<br>
 then keep going. Originals stay safe. Edits are non-destructive.
+
+<video src="https://github.com/user-attachments/assets/00ba6ba7-26cb-40a8-b672-da419ad4685f" width="480"></video>
 
 Use it to:
 
