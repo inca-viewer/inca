@@ -23,7 +23,14 @@ shuffle a folder, build a playlist, write captions<br>
 clone a voice, change pitch and speed, cut and join clips<br>
 then keep going. Originals stay safe. Edits are non-destructive.
 
-
+<table>
+<tr>
+<td align="center" width="25%">selecting</td>
+<td align="center" width="25%">second</td>
+<td align="center" width="25%">third</td>
+<td align="center" width="25%">fourth</td>
+</tr>
+</table>
 <p>
 <a href="https://github.com/user-attachments/assets/00ba6ba7-26cb-40a8-b672-da419ad4685f"><img src="screens/selecting.jpg" width="24%"></a>
 <a href="https://github.com/user-attachments/assets/00ba6ba7-26cb-40a8-b672-da419ad4685f"><img src="screens/selecting.jpg" width="24%"></a>
