@@ -25,6 +25,18 @@ then keep going. Originals stay safe. Edits are non-destructive.
 
 <a href="https://github.com/user-attachments/assets/00ba6ba7-26cb-40a8-b672-da419ad4685f"><img src="screens/selecting.jpg" width="120" alt="selecting"></a><br>selecting
 
+
+<table>
+<tr>
+<td align="center">selecting<br><a href="https://github.com/user-attachments/assets/00ba6ba7-26cb-40a8-b672-da419ad4685f"><img src="screens/selecting.jpg" width="100%"></a></td>
+<td align="center">cloning<br><a href="https://github.com/user-attachments/assets/00ba6ba7-26cb-40a8-b672-da419ad4685f"><img src="screens/selecting.jpg" width="100%"></a></td>
+<td align="center">editing<br><a href="https://github.com/user-attachments/assets/00ba6ba7-26cb-40a8-b672-da419ad4685f"><img src="screens/selecting.jpg" width="100%"></a></td>
+<td align="center">skinny<br><a href="https://github.com/user-attachments/assets/00ba6ba7-26cb-40a8-b672-da419ad4685f"><img src="screens/selecting.jpg" width="100%"></a></td>
+</tr>
+</table>
+
+
+
 Use it to:
 
 - File and organize (move, copy, rename, favorite, convert)
