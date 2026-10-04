@@ -23,8 +23,7 @@ shuffle a folder, build a playlist, write captions<br>
 clone a voice, change pitch and speed, cut and join clips<br>
 then keep going. Originals stay safe. Edits are non-destructive.
 
-<a href="https://github.com/user-attachments/assets/00ba6ba7-26cb-40a8-b672-da419ad4685f">
-  <img src="poster.jpg" width="480" alt="demo"></a>
+<a href="https://github.com/user-attachments/assets/00ba6ba7-26cb-40a8-b672-da419ad4685f"><img src="PASTE_THE_POSTER_URL_HERE" width="480"></a>
 
 Use it to:
 
