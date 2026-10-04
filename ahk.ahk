@@ -376,12 +376,13 @@ if RegExMatch(title, "^Inca - \s*(.+)$", m)
     }
 
 
-  History()
-      {
-      FileRead, history, %inca%\fav\History.m3u
-      if (folder != "History" && !InStr(history, src) && StrLen(src) > 4)
-        FileAppend, %src%|%seek%`r`n, %inca%\fav\History.m3u, UTF-8
-      }
+History()
+    {
+    FileRead, history, %inca%\fav\History.m3u
+    start := (command == "History" && value != "") ? value : "0.0"
+    if (folder != "History" && !InStr(history, src) && StrLen(src) > 4)
+      FileAppend, %src%|%start%`r`n, %inca%\fav\History.m3u, UTF-8
+    }
 
 
   addHistory()								; add last and new voice to history
@@ -1976,7 +1977,7 @@ if ErrorLevel
     else if !InStr(path, "\cache\temp\")
       FileDelete, %src%
     seek = 0.0
-    if (!InStr(folder, "-history") && !InStr(playlist, "History.m3u"))
+    if (list && !InStr(folder, "-history") && !InStr(playlist, "History.m3u"))
       History()
     Loop, Parse, list, `n, `r 						; split big list into smaller web pages
       if (A_Index > lastIndex && A_Index < lastIndex + page + 1)
