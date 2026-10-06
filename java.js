@@ -1,5 +1,6 @@
 // try InfiniteTalk / flashHead face animation when 50GB disk is free
 
+
   let wheel = 0								// wheel count
   let wheelDir = 0		 					// wheel direction
   let index = 1								// thumb index (e.g. thumb14)
@@ -132,8 +133,7 @@
         editingBlock.dataset.start = myPlayer.currentTime}}
     else if (thumb.style.rate || thumb.style.skinny) {
       let x = thumb.style.rate + ',' + thumb.style.skinny
-      let y = playing ? myPlayer.currentTime : 0
-      if (type) inca('addCue', x, index, y)}})
+      if (type) inca('addCue', x, index, cue)}})
   myStart.addEventListener('wheel', wheelEvent, { passive: false })
   document.addEventListener('visibilitychange', function() {
     if (document.visibilityState=='visible' && folder=='Downloads' && !selected && !playing) inca('Reload',2,index)})
@@ -157,7 +157,7 @@
   viewport.addEventListener('input', () => {editing = 1; syncPlay = 0})
   viewport.addEventListener('wheel', wheelEvent)
   editor.addEventListener('wheel', wheelEvent)				// face zoom
-  viewport.addEventListener('scroll', activate)
+  viewport.addEventListener('scroll', showFace)
 
 
 
@@ -373,6 +373,7 @@
     playing = index
     seekTimer = 0
     zoom = 1
+    previewMode = 0
     lastMedia = index
     positionMedia(0)
     myPic.style.top = '-999px'
@@ -392,7 +393,6 @@
   function mouseMove(e) {
     let id = e.target.id
     if (!myNav.style.display) overEditor = !overMedia && captions && id != 'myMask' ? 1 : 0
-    activate(e)
     if (innerHeight == outerHeight) {xPos = e.screenX; yPos = e.screenY}
     else {xPos = e.clientX; yPos = e.clientY}
     myAlert.style.left = mySelected.style.left = xPos + 30 +'px'
@@ -799,9 +799,9 @@
 
 
   function inca(command,value,select,address) {					// server messaging to inca.ahk
-    more = 1
     if (incaBusy) return
     incaBusy = true
+    more = 1
     try {
         if (select) {select += ','} else select = ''
         if (selected) select = selected
@@ -947,8 +947,9 @@
       localStorage.setItem(folder, JSON.stringify(settings))}
     if (type) {
       thumb.style[item] = val
-      if (item == 'skinny') {skinny = val; thumb.parentElement.style.transform = 'scale('+val+',1)'}
-      if (!playing) Param(); positionMedia(0.2); if (item == 'rate') rate = val}}
+      if (item == 'skinny') skinny = val
+      if (!playing) Param(index)
+      positionMedia(0.2)}}
 
 
   function updateContext() {							// innerHTML values
@@ -1082,7 +1083,7 @@
       myPlayerWrap.style.opacity = mySeek.style.width = editor.style.opacity = 0
       myPanel.style.top = myView.style.top = ''
       myMask.style = myDur.innerHTML = myVoice.src = myPlayer.src = ''
-      editingBlock = editor.style.display = myNav.style.display = null
+      overBlock = editingBlock = editor.style.display = myNav.style.display = null
       myPlayerWrap.style.visibility = myPlayer.style.visibility = null
       scaleY = (innerHeight > innerWidth) ? 0.7 : 0.6
       const r = title.getBoundingClientRect();
@@ -1113,7 +1114,7 @@
         const block = addBlock(
         b.number || (blocks.length + 1),
         parseFloat(b.startTime) || 0,
-        (b.text || '').replace(/<[^>]*>|\u200B/g, ' '),
+        (b.text || '').replace(/<[^>]*>|[\u200B\u00A0]/g, ' '),
         b.fav || 0,
         b);
       lastVoice = b.voiceName || lastVoice
@@ -1788,12 +1789,12 @@ function newVoice() {
 
 
   function Chatterbox(id) {
-    if (overBlock) editingBlock = overBlock
     if (!editingBlock || Chatterbox.busy) return
     const voiceName = editingBlock._voiceName || lastVoice || 'Amai'
+editingBlock._voiceName = voiceName
+    if (overBlock) activateBlock(overBlock, 0)
     let block = editingBlock
     block._voiceName = voiceName
-    activateBlock(block, 0)
     Chatterbox.busy = 1
     myPlayer.currentTime = block.dataset.start
     let last = block?._voice?.src || projectMedia.defaultSrc
@@ -1888,20 +1889,10 @@ function newVoice() {
     else {myPlayer.currentTime = dur + 2; syncPlay = 0; delay = 60}}					// stay at end
 
 
-function activate() {
-  let b = overEditor && document.elementFromPoint(xPos, yPos)?.closest('.text-block') || null
-  if (b === overBlock) return
-  clearTimeout(overTimer)
-  const wasOsk = document.getElementById('osk')
-  const reenter = b && b === editingBlock
-  overBlock = b
-  updateFaceHighlights()
-  if (!b) return
-  overTimer = setTimeout(() => {
-    overTimer = 0
-    lastId = overBlock
-    if (myPlayer.paused && myVoice.paused || overBlock != editingBlock) 
-      activateBlock(overBlock, userPlay, (reenter && !wasOsk))}, 344)}
+  function showFace() {
+    if (!overEditor) return
+    overBlock = document.elementFromPoint(xPos, yPos)?.closest('.text-block') || null
+    if (overBlock) updateFaceHighlights()}
 
 
 

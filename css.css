@@ -54,6 +54,9 @@
     position:fixed; left:50%; top:50%; transform:translate(-50%,-50%); z-index: 5002; height:0;
     height: 40px; min-width:250px; min-height:40px; resize:both; transition: 0}
 
+  #editor:has(#media-header .dropdown-content[style*="flex"]) { z-index: 5012 }
+  #media-header .dropdown-content { z-index: 30 }
+
 #ribbon {
   font-size:12px; 
   background:#0a0a0a; 

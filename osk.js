@@ -88,7 +88,7 @@ function insertSuggestion(s) {
       : ''
     const atLineStart = before === '' || /[\n\r]$/.test(before)
     const prefix = before === '' || /\s$/.test(before) ? '' : ' '
-    const suffix = (!atLineStart && /^\s/.test(after)) ? '' : ' '
+    const suffix = /^[ \t\u00a0]/.test(after) ? '' : '\u00a0'
     document.execCommand('insertText', false, prefix + s + suffix)
     if (atLineStart && /^\s/.test(after)) {
       document.execCommand('forwardDelete')
@@ -385,6 +385,7 @@ oskElement.prepend(suggestionRow);
       const block = overBlock?.getBoundingClientRect();
       left = block.left + block.width/2 - kbWidth / 2; 
       top = block.bottom + 12}
+    top = Math.max(8, Math.min(top, innerHeight - kbHeight - 8))
     oskElement.style.left = left + 'px'
     oskElement.style.top  = top + 'px'
   }
