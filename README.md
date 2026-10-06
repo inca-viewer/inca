@@ -28,7 +28,7 @@ then keep going. Originals stay safe. Edits are non-destructive.
 <td align="center">popouts<br><a href="https://github.com/user-attachments/assets/87c49aa8-e0d8-48d6-8690-6a53d85cd679"><img src="screens/pop thumbs.jpg" width="100%"></a></td>
 <td align="center">voice cloning<br><a href="https://github.com/user-attachments/assets/7b528d4c-d857-40ea-bae5-4fd9559f3d38"><img src="screens/cloning.jpg" width="100%"></a></td>
 <td align="center">selecting<br><a href="https://github.com/user-attachments/assets/00ba6ba7-26cb-40a8-b672-da419ad4685f"><img src="screens/selecting.jpg" width="100%"></a></td>
-  <td align="center">youtube clips<br><a href="https://github.com/user-attachments/assets/d5d88675-df15-4b7b-9551-6baa537b3a9a"><img src="screens/youtube.jpg" width="100%"></a></td>
+  <td align="center">youtube clip downloads<br><a href="https://github.com/user-attachments/assets/d5d88675-df15-4b7b-9551-6baa537b3a9a"><img src="screens/youtube.jpg" width="100%"></a></td>
     <td align="center">caption editor<br><a href="https://github.com/user-attachments/assets/ce960816-f89d-4cfc-8673-415929fd217d"><img src="screens/caption editor.jpg" width="100%"></a></td>
 </tr></table>
 
@@ -84,8 +84,9 @@ Use it to:
 - No IDE, no extra libraries, no browser extensions
 - Does not change Windows or browser settings
 - Source is plain files you can open and edit in Notepad
-- `inca.exe` self-compiles instantly
 - Use AI to explain, add or change features
+- `inca.exe` self-compiles instantly
+
 
 ---
 
@@ -112,13 +113,12 @@ Use it to:
 2. The browser opens on your **Pictures** folder. Bookmark that tab.
 3. Play, file, caption, or remix from there.
 
-**Exit:** taskbar, or `Ctrl + Esc`.
-
+**Exit:** taskbar, or `Ctrl + Esc`.<br>
 **Remove:** delete the Inca folder.
 
 Want to tweak behavior?<br>
 Edit the source or settings in Notepad (an AI assistant can help)<br>
-then run `inca.exe` It recompiles under a second.
+`inca.exe` self-compiles instantly
 
 ---
 
@@ -134,9 +134,9 @@ The idea is a growing web of versions and pathways from media you already have â
 
 ---
 
-## Optional desk arm
+## Disabled or bedridden
 
-Because it is mouse-focused, it is usable for people who are disabled or bedridden<br>An on-screen keyboard appears when needed for search, captions etc.
+Left or right hand mouse-focused<br>An on-screen keyboard appears when needed for search, captions etc.
 
 1. 1 m Ã— 12 mm threaded rod, two nuts, heatshrink
 2. Drill a 12 mm hole in wood to bend the arm and run cables
