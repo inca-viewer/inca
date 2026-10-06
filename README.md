@@ -61,7 +61,7 @@ Use it to:
 - Slideshows, clips, joins, conversions
 - `index` builds 6×6 thumbsheets
 - `mp4` converts to a browser-friendly video
-- Generated text or MP4 copies go to Recycle Bin so you can restore the original
+- Use Recycle Bin to undo mp4 or json changes
 
 ### Remix, don’t destroy
 
