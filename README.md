@@ -1,11 +1,9 @@
 
 # Inca
 
-**Windows File Explorer, in a YouTube-style browser tab.**
-
-Browse, play, file, and remix your own photos, videos, audio, captions, and text.
-
-Works in Chrome, Firefox, Edge, Opera, and Brave on Windows.
+**Windows File Explorer, in a YouTube-style browser tab** - Portable no install needed<br>
+Browse, play, file, and remix your own photos, videos, audio, captions, and text<br>
+Works in Chrome, Firefox, Edge, Opera, and Brave on Windows<br>
 
 <img src="screens/xyZPE.svg" width="70%" alt="Inca interface diagram">
 
@@ -13,15 +11,11 @@ Works in Chrome, Firefox, Edge, Opera, and Brave on Windows.
 
 ## What it is
 
-Inca is a portable media viewer for media you already own.
-
-Think of it as a new way to enjoy existing media locally<br>
-through the process of active creation rather than passive playback  
-
-It treats your folders like a library you can *play* and *reshape*<br>
+Inca is a platform for finding, organising and manipulating local media<br>
+Think of it as a way to enhance existing or stale media files<br>
+through the process of active creation rather than passive playback<br>
 shuffle a folder, build a playlist, write captions<br>
-clone a voice, change pitch and speed, cut and join clips<br>
-then keep going. Originals stay safe. Edits are non-destructive.
+clone a voice, change pitch and speed, cut and join clips
 
 <table><tr>
 <td align="center">page layout<br><a href="https://github.com/user-attachments/assets/7bcd15ce-d788-4f07-aae4-c66bb40cd234"><img src="screens/page layout.jpg" width="100%"></a></td>
@@ -60,7 +54,7 @@ Use it to:
 - Favorites and history
 - Slideshows, clips, joins, conversions
 - `index` builds 6×6 thumbsheets
-- `mp4` converts to a browser-friendly video
+- `mp4` converts to a browser-friendly mp4 format
 - Use Recycle Bin to undo mp4 or json changes
 
 ### Remix, don’t destroy
@@ -109,12 +103,12 @@ Use it to:
 
 ## Getting started
 
-1. Run `inca.exe` from the Inca folder. No install.
-2. The browser opens on your **Pictures** folder. Bookmark that tab.
-3. Play, file, caption, or remix from there.
+1. Run `inca.exe` from the Inca folder. No install
+2. The browser opens on your **Pictures** folder. Bookmark that tab
+3. Play, file, caption, or remix from there
 
-**Exit:** taskbar, or `Ctrl + Esc`.<br>
-**Remove:** delete the Inca folder.
+**Exit:** taskbar, or `Ctrl + Esc`<br>
+**Remove:** delete the Inca folder
 
 Want to tweak behavior?<br>
 Edit the source or settings in Notepad (an AI assistant can help)<br>
@@ -124,7 +118,7 @@ Edit the source or settings in Notepad (an AI assistant can help)<br>
 
 ## How editing stays safe
 
-Edits are non-destructive.
+Edits are non-destructive
 
 - Playback tweaks (pitch, speed, start, skips, skinny) live on the pathway, not as a baked-over original.
 - Caption changes do not have to overwrite the source subtitle.
@@ -151,8 +145,8 @@ Left or right hand mouse-focused<br>An on-screen keyboard appears when needed fo
 - Windows
 - Chrome, Firefox, Edge, Opera, or Brave
 - No extra installers, IDEs, or extensions
-
-Optional: Chatterbox / Parakeet for local voice; ElevenLabs or Venice if you use those APIs.
+- Or use AI assistant to install Chatterbox or Parakeet in inca\cache\apps\ for local models
+- Or to use ElevenLabs or Venice APIs<br>
 
 ---
 
