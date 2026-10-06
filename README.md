@@ -117,8 +117,8 @@ Use it to:
 **Remove:** delete the Inca folder.
 
 Want to tweak behavior?<br>
-Edit the source or settings in Notepad (an assistant can help)<br>
-then run `inca.exe` again. It recompiles instantly.
+Edit the source or settings in Notepad (an AI assistant can help)<br>
+then run `inca.exe` It recompiles under a second.
 
 ---
 
