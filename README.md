@@ -25,7 +25,7 @@ then keep going. Originals stay safe. Edits are non-destructive.
 
 <table><tr>
 <td align="center">page layout<br><a href="https://github.com/user-attachments/assets/b66c71e4-4bc9-40c0-907f-9300661e038d"><img src="screens/page layout.jpg" width="100%"></a></td>
-<td align="center">pop thumbs<br><a href="https://github.com/user-attachments/assets/0fc036ff-bfeb-496d-88d2-a35d9d34d33c"><img src="screens/pop thumbs.jpg" width="100%"></a></td>
+<td align="center">popouts<br><a href="https://github.com/user-attachments/assets/87c49aa8-e0d8-48d6-8690-6a53d85cd679"><img src="screens/pop thumbs.jpg" width="100%"></a></td>
 <td align="center">voice cloning<br><a href="https://github.com/user-attachments/assets/7b528d4c-d857-40ea-bae5-4fd9559f3d38"><img src="screens/cloning.jpg" width="100%"></a></td>
 <td align="center">selecting<br><a href="https://github.com/user-attachments/assets/00ba6ba7-26cb-40a8-b672-da419ad4685f"><img src="screens/selecting.jpg" width="100%"></a></td></tr></table>
 
