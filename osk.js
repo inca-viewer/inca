@@ -182,14 +182,15 @@ function insertSuggestion(s) {
 
         btn.addEventListener('mouseleave', () => clearTimeout(repeatTimer));
 
-        btn.addEventListener('click', () => {
-            handleKey(key, btn);
-            if (!["Num", "Shift", "Ctrl", "↑", "↓", "‹", "›", "Del", "Enter"].includes(key)) 
-              setTimeout(() => {
-                captureSelection();
-                requestAnimationFrame(updateSuggestions);
-            }, 8);
-        });
+btn.addEventListener('mouseup', () => {
+  clearTimeout(pressTimer);
+  clearTimeout(repeatTimer);
+  if (gesture > 1) return;
+  const cap = longClick && /^[a-z]$/i.test(key);
+  handleKey(cap ? key.toUpperCase() : key, btn);
+  if (!["Num", "Shift", "Ctrl", "↑", "↓", "‹", "›", "Del", "Enter"].includes(key))
+    setTimeout(() => { captureSelection(); requestAnimationFrame(updateSuggestions); }, 8);
+});
 
         btn.addEventListener('mousedown', () => {
           if (key !== "←") return;
@@ -322,9 +323,7 @@ if (key === "‹" || key === "›" || key === "↑" || key === "↓") {
       if (isShift) {
         const shiftMap = {";":":", ",":"<", ".":">", "'":"\"", "-":"_", "?":"/", "£":"~"};
         char = shiftMap[key] || key.toUpperCase();
-      } else {
-        char = key.toLowerCase();
-      }
+      } else char = key !== key.toLowerCase() ? key : key.toLowerCase();
     }
 
     if (active.isContentEditable) {

@@ -303,8 +303,7 @@
       WinGetTitle, title, A
       title := RegExReplace(title, "i)\s*(Mozilla Firefox|Firefox Developer Edition|Nightly|Google Chrome|Microsoft Edge|Opera|Brave)\s*$")
       title := RegExReplace(title, "[\s\-\x{2013}\x{2014}]+$", "")
-if RegExMatch(title, "^Inca - \s*(.+)$", m)
-  incaTab := Trim(m1)
+      if RegExMatch(title, "^Inca - \s*(.+)$", m)
         incaTab := Trim(m1)
       if (folder != incaTab) {
         subfolders := ""
@@ -2315,6 +2314,8 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
   <a style='width: 2.5em'></a>
   <a id='myThumbs' onmouseup="inca('View',0)">Thumb</a>`n 
   <a id='myWidth'>Width</a>
+  <a id='myHelp'>?</a>`n
+  </div></div></div>`n`n
   <a style='width: 1.5em'></a></div></div></div>`n`n
 <div id='myMask' class="mask" onwheel="wheelEvent(event)"></div>`n`n
 
@@ -2469,6 +2470,7 @@ mediaList = %mediaList%%foldr%<div id='entry%j%' class='entry-row' data-params='
     sleep 44
     FileDelete, %TmpExe%
     }
+
 
 
 
