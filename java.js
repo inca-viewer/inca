@@ -1766,7 +1766,7 @@ function Backspace(e) {
       if (!favs.length) return
       favIndex = (favIndex + (e.deltaY > 0 ? 1 : -1) + favs.length) % favs.length
       matchCountSpan.textContent = `${favIndex + 1} : ${favs.length}`
-      favs[favIndex].scrollIntoView({ behavior: 'smooth', block: 'center' })
+      favs[favIndex].scrollIntoView({ block: 'center' })
       activateBlock(favs[favIndex], userPlay)
       return}
     const term = searchInput.value.trim().toLowerCase();
@@ -1774,7 +1774,7 @@ function Backspace(e) {
     if (!matches.length) return
     matchIndex = (matchIndex + (e.deltaY > 0 ? 1 : -1) + matches.length) % matches.length
     matchCountSpan.textContent = String(matchIndex + 1) + ' : ' + String(matches.length)
-    matches[matchIndex].scrollIntoView({ behavior: 'smooth', block: 'center' })}
+    matches[matchIndex].scrollIntoView({ block: 'center' })}
 
 
 
@@ -1791,7 +1791,7 @@ function Backspace(e) {
       return 1})
     CSS.highlights.set('search', hl)
     matchCountSpan.textContent = matches.length > 0 ? `1 : ${matches.length}` : '0 : 0'
-    if (matches.length) matches[0].scrollIntoView({ behavior: 'smooth', block: 'center' })}
+    if (matches.length) matches[0].scrollIntoView({ block: 'center' })}
 
 
 function newVoice() {
