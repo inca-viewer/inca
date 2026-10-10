@@ -2187,7 +2187,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
 
   <div id="editor">
     <div id="ribbon">
-      <span id="edPause" style="position:absolute;left:5px;color:red;opacity:0;transition:0.3s"></span>
+      <span id="edPause" style="position:absolute;left:5px;color:red;transition:0.3s"></span>
       <div id="media-header" class="dropdown">
         <div class="header"></div>
         <div class="dropdown-content"><div>No media</div></div>`n
@@ -2233,12 +2233,12 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
   <div id='myDefault'>
     <div class="menu editor">`n
       <a id='myStart'>- : -- . -</a>`n
-      <a id='myDelay'>Delay</a>`n
+      <a id='myBookmark'>Bookmark <span style="font-size:0.64em; vertical-align:0.1em">&#x2764</span></a>`n
       <a id='myRate'>Speed</a>`n
       <a id='myVol'>Volume</a>`n
-      <a id="myVoiceHeader" style="color:pink">voice:</a>
+       <a id='myDelay'>Delay</a>`n
+     <a id="myVoiceHeader" style="color:pink">voice:</a>
       <div id="voiceSub" class="submenu"></div>
-      <a id='myBookmark'>Bookmark <span style="font-size:0.64em; vertical-align:0.1em">&#x2764</span></a>`n
       <a id='myEmotion'>Emotion</a>`n
         <div id='emotionSub' class='submenu'>`n
           <a data-tag='crying'>crying</a>`n

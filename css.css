@@ -339,6 +339,8 @@
     inset 0 0 12px 3px #000;
   z-index: 1;}
 
+.player-wrap:not(:has(.player[src], .player[poster]:not([poster=""])))::after {display: none}
+
 .player {
   display: block;
   border-radius: inherit;}
