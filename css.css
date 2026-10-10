@@ -118,6 +118,8 @@
       transparent 100%),
     linear-gradient(to left, black 0 14px, transparent 14px);}
 
+.caption-viewport { container-type: inline-size; }
+
 #editor:has(#voice-faces[style*="flex"]) .caption-viewport {
   mask-image: linear-gradient(
     to bottom,
@@ -148,7 +150,7 @@
   content: '❤';
   position: absolute;
   top: 1.2em;
-  left: -6%;
+  left: calc(50% - 50cqw - 32px + 6mm);
   font-size: 0.55em;
   opacity: 0.5;
   color: #ffc0cb;
@@ -265,7 +267,7 @@
     #caption-search-input::placeholder { color: #ffc0cb44; transition: color 1s; }
     #caption-search-input:focus::placeholder { color: transparent }
     #search-match-count { color: #ffc0cbaa; font-size: 0.8em; margin-left: auto;}
-    mark { background: inherit; color: #ffc0cb }
+    ::highlight(search) { color: #ffc0cb; background: none }
 
 .voice-input{
   position:fixed;

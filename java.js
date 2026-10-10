@@ -1180,10 +1180,7 @@ const activateBlock = (block, play, force) => {
   const startDelay = overEditor ? 0 : block._delay * 1000 || 0
   block.style.setProperty('--progress', '0%')
   if (!blocks.length) blocks = [...document.querySelectorAll('.text-block')]
-  if (overBlock && searchTerm) blocks.forEach(b => {
-    b.style.color = '';									// remove search word highlights
-    b.querySelectorAll('mark').forEach( m => { 
-      while(m.firstChild) m.parentNode.insertBefore(m.firstChild,m); m.remove()})})
+  if (overBlock && searchTerm) CSS.highlights.delete('search')
   mediaHeader.textContent = title.value || null
   lastVoice = editingBlock?._voiceName || lastVoice;
   const next = +(block.nextElementSibling?.dataset.start || 0)
@@ -1773,24 +1770,26 @@ function Backspace(e) {
       activateBlock(favs[favIndex], userPlay)
       return}
     const term = searchInput.value.trim().toLowerCase();
-    matches = blocks.filter(b => b.innerHTML.toLowerCase().includes(term))
+    matches = blocks.filter(b => b.textContent.toLowerCase().includes(term))
     if (!matches.length) return
     matchIndex = (matchIndex + (e.deltaY > 0 ? 1 : -1) + matches.length) % matches.length
     matchCountSpan.textContent = String(matchIndex + 1) + ' : ' + String(matches.length)
     matches[matchIndex].scrollIntoView({ behavior: 'smooth', block: 'center' })}
 
 
+
   function newSearch() {
     const term = searchInput.value.trim().toLowerCase()
     if (term) searchTerm = term
-    if (term.length < 3) {matchIndex = 0; blocks.forEach(b => {if (b.querySelector('mark')) b.innerHTML = b.innerText}); return}
-    matches = blocks.filter(b => b.innerText.toLowerCase().includes(term))
-    matches.forEach(b => {
-        const text = b.innerText
-        const lowerText = text.toLowerCase()
-        const idx = lowerText.indexOf(term)
-        b.innerHTML = text.slice(0, idx) + '<mark>' + text.slice(idx, idx + term.length) + '</mark>' + text.slice(idx + term.length)})
-    blocks.filter(b => !matches.includes(b)).forEach(b => {if (b.querySelector('mark')) b.innerHTML = b.innerText})
+    CSS.highlights.delete('search')
+    if (term.length < 3) {matchIndex = 0; return}
+    const hl = new Highlight()
+    matches = blocks.filter(b => {
+      const n = b.firstChild, i = n?.data?.toLowerCase().indexOf(term)
+      if (!(i >= 0)) return 0
+      const r = new Range(); r.setStart(n, i); r.setEnd(n, i + term.length); hl.add(r)
+      return 1})
+    CSS.highlights.set('search', hl)
     matchCountSpan.textContent = matches.length > 0 ? `1 : ${matches.length}` : '0 : 0'
     if (matches.length) matches[0].scrollIntoView({ behavior: 'smooth', block: 'center' })}
 
