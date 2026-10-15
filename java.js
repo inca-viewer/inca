@@ -1,6 +1,7 @@
 // try InfiniteTalk / flashHead face animation when 50GB disk is free
 
 
+
   let wheel = 0								// wheel count
   let wheelDir = 0		 					// wheel direction
   let index = 1								// thumb index (e.g. thumb14)
@@ -88,6 +89,7 @@
   let scaleY = (innerHeight > innerWidth) ? 0.65 : 0.55			// myPlayer height (screen ratio)
   let timeout = 0
   let overTimer = 0
+  let matches = 0
 
   let leftVoice = ''
   let rightVoice = ''
@@ -123,6 +125,7 @@
   myPlayer.addEventListener('ended', playerEnded)
   myVoice.addEventListener('ended', nextCaption)
   myPlayer.addEventListener('timeupdate', playerProgress)
+  document.addEventListener('dblclick', () => { if (playing && !captions) scaleY = scaleY > 0.65 ? 0.5 : 0.8 })
   myPlayer.addEventListener('loadedmetadata', () => { fitPlayer(myPlayer.videoWidth, myPlayer.videoHeight) })
   window.addEventListener('beforeunload', (e) => { if (playing && editing) e.preventDefault() })
   myNav.addEventListener('wheel', wheelEvent, { passive: false })
@@ -182,7 +185,7 @@
     else if (e.key === 'Backspace') Backspace(e)
     else if (e.shiftKey && editingBlock && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
       const sib = e.key === 'ArrowUp' ? editingBlock.previousElementSibling : editingBlock.nextElementSibling
-      if (sib) { e.key === 'ArrowUp' ? sib.before(editingBlock) : sib.after(editingBlock); editing = 1}}
+      if (sib) { e.key === 'ArrowUp' ? sib.before(editingBlock) : sib.after(editingBlock); editing = 1} renumberBlocks()}
     else if (!overTitle && !captions && playing) {
       if (e.key == 'ArrowRight') myPlayer.currentTime += 10
       else if (e.key == 'ArrowLeft') myPlayer.currentTime -= 10
@@ -818,8 +821,12 @@ function fitPlayer(w, h) {
               const type = data.substring(0, data.indexOf('|'))
               const content = data.substring(data.indexOf('|') + 1)
               if (type == 'html') {
+                const keep = index
+                const before = lastIndex
                 myView.insertAdjacentHTML('beforeend', content)
-                while (Param(lastIndex)) {lastIndex++} index = lastMedia}
+                while (Param(lastIndex)) { lastIndex++ }
+                if (lastIndex === before) lastIndex = listSize
+                Param(keep)}
               else if (type == 'address') {
                 if (lastClick === 2) window.open(content, '_blank')
                 else window.location.href = content}
@@ -1414,18 +1421,19 @@ function swapMedia(src, time) {
     none.textContent = 'Default Media';
     none.style.marginLeft = '1.7em';
 
-    none.onclick = (e) => {
-      e.stopPropagation();
-      mediaContent.style.display = 'none'
-      let lastSrc = editingBlock?._voice?.src || null;
-      if (editingBlock) {
-        const custom = (getEffectiveMedia(editingBlock)?.src || '') !== (projectMedia.defaultSrc || '')
-        if (editingBlock._voice && !custom) { delete editingBlock._voice; delete editingBlock._voiceName }
-        else editingBlock._media = false
-        activateBlock(editingBlock, 1)
-        setTimeout(() => myPlayer.currentTime = editingBlock.dataset.start,20)
-        if (lastSrc) inca('addHistory', lastSrc) 
-       editing = 1}}
+  none.onclick = (e) => {
+    e.stopPropagation();
+    mediaContent.style.display = 'none'
+    let lastSrc = editingBlock?._voice?.src || null;
+    if (editingBlock) {
+      const custom = (getEffectiveMedia(editingBlock)?.src || '') !== (projectMedia.defaultSrc || '')
+      if (editingBlock._voice && !custom) { delete editingBlock._voice; delete editingBlock._voiceName }
+      else editingBlock._media = false
+      editing = 1
+      swapMedia(projectMedia.defaultSrc || originalPlayerSrc, editingBlock.dataset.start)
+      activateBlock(editingBlock, 1)
+      setTimeout(() => myPlayer.currentTime = editingBlock.dataset.start,20)
+      if (lastSrc) inca('addHistory', lastSrc)}}
 
     mediaContent.appendChild(none)
 
@@ -1689,8 +1697,10 @@ function makeJSON() {
 
 function Backspace(e) {
   e.preventDefault()
+  const fromOsk = !e.isTrusted									// new
   syncPlay = 0
   if (captions) editing = 1
+  if (!fromOsk && overBlock && editingBlock != overBlock) activateBlock(e.target.closest('.text-block'),0)	// changed
   const sel = window.getSelection()
   let atStart = false
   if (sel.rangeCount && editingBlock) {
@@ -1700,7 +1710,7 @@ function Backspace(e) {
       preRange.selectNodeContents(editingBlock)
       preRange.setEnd(range.startContainer, range.startOffset)
       atStart = preRange.toString() === ''}}
-  if (captions && e.target.id !== 'caption-search-input' && atStart) {
+  if (captions && e.target.id !== 'caption-search-input' && atStart) {				// merge always allowed
     const prev = editingBlock?.previousElementSibling
     if (prev) {
       const prevText = prev.textContent
@@ -1727,7 +1737,7 @@ function Backspace(e) {
       renumberBlocks()
       return}
     return}
-  if (overBlock && atStart) {document.execCommand('forwardDelete'); return}
+  if (!fromOsk && overBlock && atStart) {document.execCommand('forwardDelete'); return}		// changed
   document.execCommand('delete')}
 
 
@@ -1813,7 +1823,7 @@ function newVoice() {
     Chatterbox.busy = 1
     myPlayer.currentTime = block.dataset.start
     let last = block?._voice?.src || projectMedia.defaultSrc
-    let text = block.innerText.trim()
+    let text = block.innerText.replace(/<[^>]*>|[\u200B\u00A0]/g, ' ').trim()
     let provider = 'chatterbox'
     if (id == 'myElevenLabs') provider = 'chatterbox'
     syncPlay = 0
@@ -1854,6 +1864,8 @@ function newVoice() {
     requestAnimationFrame(tick)
     function line() {
       return viewport.getBoundingClientRect().top + faces + 80}
+
+
     function tick() {
       if (!crawl) return
       let y = viewport.scrollTop

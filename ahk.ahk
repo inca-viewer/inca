@@ -1,5 +1,5 @@
 
-  ; Browser Based media explorer - server side 
+  ; Browser Based media explorer - server side
 
 
   #NoEnv
@@ -122,8 +122,8 @@
 
   XButton1::					; Back button
     Critical
-    longClick = 
-    lastClick = 
+    longClick =
+    lastClick =
     timer := A_TickCount + 350
     SetTimer, Timer_up, -350
     return
@@ -144,7 +144,7 @@
       send, {F24}				; close java media player
     else send, {XButton1}
     sleep 100
-    MouseGetPos,,, cur 				; get window under cursor
+    MouseGetPos,,, cur				; get window under cursor
     WinActivate, ahk_id %cur%
     return
 
@@ -153,7 +153,6 @@
     {
     Critical								; pause timed events
     longClick := gesture := 0
-    wasCursor := A_Cursor
     timer := A_TickCount + 300						; set future timout 300mS
     MouseGetPos, xRef, yRef, winId, ctrl
     WinGet, ctrlList, ControlList, ahk_id %winId%
@@ -172,21 +171,7 @@
         longClick = true
         Critical off							; allow timer interrupts
         }
-      if (click == "LButton")						; see if youtube download request
-        {
-        WinGetTitle title, A
-        if InStr(title, "YouTube")
-          {
-          clp := ClipBoard
-          ClipBoard =
-          ClipWait, 0.5
-          cmd = %inca%\cache\apps\yt-dlp.exe --no-mtime -P "%profile%\Downloads" -f bestvideo+bestaudio "%ClipBoard%"
-          if InStr(Clipboard, "https://youtu")
-            Run %COMSPEC% /c %cmd%, , Hide
-          ClipBoard := clp
-          }
-        }
-      if (!gesture && longClick && click == "LButton" && wasCursor == "IBeam")		; longClick for osk or file search
+      if (!gesture && click == "LButton")				; longClick for osk or file search
         Find()
       if (!GetKeyState("LButton", "P") && !GetKeyState("RButton", "P"))	; click up
         {
@@ -210,7 +195,7 @@
     else if (command == "Favorite")					; add media favorite to New.m3u
       Favorite()
     else if (command == "Delete")					; delete media
-      Delete() 
+      Delete()
     else if (command == "Add" && address)				; add new search term
       Add()
     else if (command == "Ffmpeg")					; index folder (create thumbsheets)
@@ -296,16 +281,20 @@
     }
 
 
-  GetBrowser() {
+  GetBrowser()
+    {
     incaTab := ""
     IfWinActive, ahk_group Browsers
       {
       WinGetTitle, title, A
-      title := RegExReplace(title, "i)\s*(Mozilla Firefox|Firefox Developer Edition|Nightly|Google Chrome|Microsoft Edge|Opera|Brave)\s*$")
+      title := RegExReplace(title, "i)\s*[\-\x{2013}\x{2014}]\s*(Mozilla Firefox|Nightly
+      |Firefox Developer Edition|Google Chrome|Microsoft[\x{200B}\s]*Edge|Opera|Brave).*$")
+      title := RegExReplace(title, "i)\s*[\-\x{2013}\x{2014}]\s*(Profile \d+|Personal|and \d+ more pages?).*$")
       title := RegExReplace(title, "[\s\-\x{2013}\x{2014}]+$", "")
       if RegExMatch(title, "^Inca - \s*(.+)$", m)
         incaTab := Trim(m1)
-      if (folder != incaTab) {
+      if (folder != incaTab && incaTab != "")
+        {
         subfolders := ""
         folder := incaTab
         GetTabSettings(1)
@@ -375,7 +364,7 @@
     }
 
 
-History()
+  History()
     {
     FileRead, history, %inca%\fav\History.m3u
     start := (command == "History" && value != "") ? value : "0.0"
@@ -385,28 +374,28 @@ History()
 
 
   addHistory()								; add last and new voice to history
-        {
-        value := StrReplace(value, server)
-        value := StrReplace(value, "/", "\")
-        address := StrReplace(address, server)
-        address := StrReplace(address, "/", "\")
-        Drive := SubStr(A_ScriptDir, 1, 2)  ; e.g. "D:\"
-        if !RegExMatch(value, "^[a-zA-Z]:\\")
-          value := Drive . value
-        if !RegExMatch(address, "^[a-zA-Z]:\\")
-          address := Drive . address
-        if (!InStr(history, value) && StrLen(value) > 4)
-          FileAppend, %value%|0.0`r`n, %inca%\fav\History.m3u, UTF-8
-        if (!InStr(history, address) && StrLen(address) > 4 && value != address)
-          FileAppend, %address%|0.0`r`n, %inca%\fav\History.m3u, UTF-8
-        }
+    {
+    value := StrReplace(value, server)
+    value := StrReplace(value, "/", "\")
+    address := StrReplace(address, server)
+    address := StrReplace(address, "/", "\")
+    Drive := SubStr(A_ScriptDir, 1, 2)  ; e.g. "D:\"
+    if !RegExMatch(value, "^[a-zA-Z]:\\")
+      value := Drive . value
+    if !RegExMatch(address, "^[a-zA-Z]:\\")
+      address := Drive . address
+    if (!InStr(history, value) && StrLen(value) > 4)
+      FileAppend, %value%|0.0`r`n, %inca%\fav\History.m3u, UTF-8
+    if (!InStr(history, address) && StrLen(address) > 4 && value != address)
+      FileAppend, %address%|0.0`r`n, %inca%\fav\History.m3u, UTF-8
+    }
 
 
   loudNorm()
-      {
-      Critical, Off                          				; allows RClick to fire
-      Loop, Parse, selected, `,						; index selected files
-       if getMedia(A_LoopField)
+    {
+    Critical, Off							; allows RClick to fire
+    Loop, Parse, selected, `,						; index selected files
+      if getMedia(A_LoopField)
         {
         if (type == "video" || type == "audio")
           {
@@ -433,28 +422,28 @@ History()
             }
           }
         }
-      GuiControl, Indexer:, GuiInd
-      sleep 200
-      index := StrSplit(selected, ",").1
-      reload := 3
-      }
+    GuiControl, Indexer:, GuiInd
+    sleep 200
+    index := StrSplit(selected, ",").1
+    reload := 3
+    }
 
 
   newClone()
+    {
+    if !address
+      PopUp("no name",999,0,0)
+    else if (type == "video" || type == "audio")
       {
-      if !address
-        PopUp("no name",999,0,0)
-      else if (type == "video" || type == "audio")
-        {
-        end := Round(value + 20,1)
-        popup = %address% created
-        IfExist, %inca%\cache\voices\%address%.mp3
-          FileRecycle, %inca%\cache\voices\%address%.mp3
-        RunWait, %inca%\cache\apps\ffmpeg.exe -ss %value% -to %end% -i "%src%" -y file:"%inca%\cache\voices\%address%.mp3",,Hide
-        PopUp(popup,999,0,0)
-        }
-      else PopUp("no media",999,0,0)
+      end := Round(value + 20,1)
+      popup = %address% created
+      IfExist, %inca%\cache\voices\%address%.mp3
+        FileRecycle, %inca%\cache\voices\%address%.mp3
+      RunWait, %inca%\cache\apps\ffmpeg.exe -ss %value% -to %end% -i "%src%" -y file:"%inca%\cache\voices\%address%.mp3",,Hide
+      PopUp(popup,999,0,0)
       }
+    else PopUp("no media",999,0,0)
+    }
 
 
   getVoices()
@@ -473,8 +462,25 @@ History()
     }
 
 
-Find()
+  Find()
     {
+    if (!longClick && A_Cursor != "IBeam")
+      {
+      WinGetTitle title, A
+      if InStr(title, "YouTube")					; see if youtube download request
+        {
+        clp := ClipBoard
+        ClipBoard =
+        ClipWait, 0.5
+        cmd = %inca%\cache\apps\yt-dlp.exe --no-mtime -P "%profile%\Downloads" -f bestvideo+bestaudio "%ClipBoard%"
+        if InStr(Clipboard, "https://youtu")
+          Run %COMSPEC% /c %cmd%, , Hide
+        ClipBoard := clp
+        }
+      return
+      }
+    if (!longClick || A_Cursor != "IBeam")
+      return
     clp := Clipboard
     Clipboard =
     send, ^c
@@ -519,7 +525,7 @@ Find()
         {
         sleep 5
         IfWinExist, ahk_class OSKMainClass
-        WinMove, ahk_class OSKMainClass, , %x%, %y%
+          WinMove, ahk_class OSKMainClass, , %x%, %y%
         }
       }
     }
@@ -670,7 +676,7 @@ Find()
           StringReplace, toggles, toggles, Reverse			; remove reverse
         }
       else if (sort != "Shuffle")
-      command = Reverse
+        command = Reverse
       if InStr(toggle_list, command)
         if !InStr(toggles, command)					; toggle the sort switches
           toggles = %toggles%%command%					; add switch
@@ -682,7 +688,7 @@ Find()
     if searchTerm
       Search()								; in case sorting within search
     }
- 
+
 
   Search()
     {
@@ -777,7 +783,7 @@ Find()
         }
     FileAppend,  %str%, %inca%\cache\temp\temp1.txt, utf-8
     x = @echo off`r`nset `"temp=(pause & pause & pause)>nul`"`r`ntype `%1|(`%temp`% & findstr `"^`")`r`n
-    FileAppend, %x%, %inca%\cache\temp\temp.bat 
+    FileAppend, %x%, %inca%\cache\temp\temp.bat
     runwait, %inca%\cache\temp\temp.bat %inca%\cache\temp\temp1.txt > %inca%\cache\temp\temp.txt,,Hide
     runwait, %inca%\cache\apps\ffmpeg.exe -f concat -safe 0 -i "%inca%\cache\temp\temp.txt" -c copy "%mediaPath%\%media% -join.%ext%",, Hide
     if ErrorLevel
@@ -803,14 +809,14 @@ Find()
       if !playlist
         {
         Loop, Parse, selected, `,
-        if getMedia(A_LoopField)
-          {
-          FileRecycle, %src%
-          if ErrorLevel
-            popup = Error %A_Index%
-          else popup = Deleted %A_Index%
-          popup(popup,0,0,0)
-          }
+          if getMedia(A_LoopField)
+            {
+            FileRecycle, %src%
+            if ErrorLevel
+              popup = Error %A_Index%
+            else popup = Deleted %A_Index%
+            popup(popup,0,0,0)
+            }
         }
       else DeleteEntries()
       x := StrSplit(selected,",")
@@ -835,79 +841,81 @@ Find()
     }
 
 
-Edited() 								; Save edited json, text or SRT file
-  {
-  json := value
-  value := 0
-  RegExMatch(json, """src"":\s*""([^""]+)""", m)
-  jsonSrc := StrReplace(m1, server)
-  jsonSrc := StrReplace(jsonSrc, "/", "\")
-  SplitPath, jsonSrc,,,ext,media					; use jsonSrc as truth
-  if (!media || !ext || ext == "htm")
-    return
-  PopUp("saved", 0, 0.46, 0.56)
-  texts := []
-  foundPos := 1
-  Loop {
-    foundPos := RegExMatch(json, "(?s)""text""\s*:\s*""(.*?)(?=""\s*[,}])", match, foundPos)
-    if (!foundPos)
-        break
-    text := StrReplace(match1, "\\", "\")     ; first unescape backslashes
-    text := StrReplace(text, "\n", "`n")      ; convert JSON \n → real newline
-    text := StrReplace(text, "\r", "`r")      ; convert JSON \r → real CR (if any)
-    texts.Push(text) 
-    foundPos += StrLen(match)
-    }
-
-  if json
+  Edited()								; Save edited json, text or SRT file
     {
-    FileRecycle, %inca%\cache\json\%media%.json
-    FileAppend, %json%, %inca%\cache\json\%media%.json, UTF-8
-    if (ext == "txt")							; at end because can take too long
+    json := value
+    value := 0
+    RegExMatch(json, """src"":\s*""([^""]+)""", m)
+    jsonSrc := StrReplace(m1, server)
+    jsonSrc := StrReplace(jsonSrc, "/", "\")
+    SplitPath, jsonSrc,,,ext,media					; use jsonSrc as truth
+    if (!media || !ext || ext == "htm")
+      return
+    PopUp("saved", 0, 0.46, 0.56)
+    texts := []
+    foundPos := 1
+    Loop
       {
-      FileRecycle, %jsonSrc%
-      for i, t in texts {
-        FileAppend, %t%`n`n, %jsonSrc%, UTF-8
+      foundPos := RegExMatch(json, "(?s)""text""\s*:\s*""(.*?)(?=""\s*[,}])", match, foundPos)
+      if (!foundPos)
+        break
+      text := StrReplace(match1, "\\", "\")     ; first unescape backslashes
+      text := StrReplace(text, "\n", "`n")      ; convert JSON \n → real newline
+      text := StrReplace(text, "\r", "`r")      ; convert JSON \r → real CR (if any)
+      texts.Push(text)
+      foundPos += StrLen(match)
+      }
+
+    if json
+      {
+      FileRecycle, %inca%\cache\json\%media%.json
+      FileAppend, %json%, %inca%\cache\json\%media%.json, UTF-8
+      if (ext == "txt")							; at end because can take too long
+        {
+        FileRecycle, %jsonSrc%
+        for i, t in texts
+          {
+          FileAppend, %t%`n`n, %jsonSrc%, UTF-8
+          }
         }
       }
-    }
-IfExist, %inca%\cache\json\%media%.json
-{
-  speechDir := inca "\cache\speech\" media
-  IfExist, %speechDir%\
-  {
-    FileRead, txt, %inca%\cache\json\%media%.json
-    used := {}
-    Loop, Parse, txt, `n, `r
-    {
-      line := A_LoopField
-      if (InStr(line, """voice""") = 0)
-        continue
-      if (RegExMatch(line, """voice""\s*:\s*""(/[^""]+)""", m))
+    IfExist, %inca%\cache\json\%media%.json
       {
-        p := StrReplace(m1, server)
-        p := StrReplace(p, "/", "\")
-        if (SubStr(p, 1, 5) = "\inca")
-          p := inca . SubStr(p, 6)
-        else if (SubStr(p, 1, 6) = "/inca")
-          p := inca . SubStr(p, 7)
-        if (FileExist(p))
-          used[p] := 1
+      speechDir := inca "\cache\speech\" media
+      IfExist, %speechDir%\
+        {
+        FileRead, txt, %inca%\cache\json\%media%.json
+        used := {}
+        Loop, Parse, txt, `n, `r
+          {
+          line := A_LoopField
+          if (InStr(line, """voice""") = 0)
+            continue
+          if (RegExMatch(line, """voice""\s*:\s*""(/[^""]+)""", m))
+            {
+            p := StrReplace(m1, server)
+            p := StrReplace(p, "/", "\")
+            if (SubStr(p, 1, 5) = "\inca")
+              p := inca . SubStr(p, 6)
+            else if (SubStr(p, 1, 6) = "/inca")
+              p := inca . SubStr(p, 7)
+            if (FileExist(p))
+              used[p] := 1
+            }
+          }
+        Loop, Files, %speechDir%\*.*
+          {
+          full := A_LoopFileFullPath
+          if (!used.HasKey(full))
+            FileRecycle, %full%
+          }
+        Loop, Files, %speechDir%\*, D
+          FileRemoveDir, %A_LoopFileFullPath%, 0   ; only empty ones
+        }
       }
+    index := StrSplit(selected, ",").1
+    reload := 1
     }
-    Loop, Files, %speechDir%\*.*
-    {
-      full := A_LoopFileFullPath
-      if (!used.HasKey(full))
-        FileRecycle, %full%
-    }
-    Loop, Files, %speechDir%\*, D
-      FileRemoveDir, %A_LoopFileFullPath%, 0   ; only empty ones
-  }
-}
-  index := StrSplit(selected, ",").1
-  reload := 1
-  }
 
 
   Add()									; add new search term
@@ -925,7 +933,7 @@ IfExist, %inca%\cache\json\%media%.json
     }
 
 
-   CreateList(silent)							; list of files in path
+  CreateList(silent)							; list of files in path
     {
     Critical
     if !searchPath
@@ -953,14 +961,14 @@ IfExist, %inca%\cache\json\%media%.json
           FileRead, str, %A_LoopFileFullPath%
           Loop, Parse, str, `n, `r
             if A_LoopField
-              {  
+              {
               source := StrSplit(A_Loopfield, "|").1
               start := StrSplit(A_Loopfield, "|").2
               if (SubStr(source, 1, 1) != "#")
-                if (!searchTerm || InStr(source, searchTerm)) 
-                list .= spool(source, A_Index, start, fold, silent)
+                if (!searchTerm || InStr(source, searchTerm))
+                  list .= spool(source, A_Index, start, fold, silent)
               }
-        }
+          }
       }
     else Loop, Parse, searchPath, `|
       {
@@ -1018,8 +1026,8 @@ IfExist, %inca%\cache\json\%media%.json
         {
         array := StrSplit(searchTerm,"+")
         Loop, % array.MaxIndex()
-        if (!InStr(filen, array[A_Index]))
-          return
+          if (!InStr(filen, array[A_Index]))
+            return
         }
       if (sort == "Type")
         listId := ex
@@ -1088,37 +1096,37 @@ IfExist, %inca%\cache\json\%media%.json
 
 
   CutCopyPaste()
+    {
+    if (value == "myCut")
       {
-      if (value == "myCut")
+      if selected
         {
-        if selected
-          {
-          Clipboard := "#cut#" . folder . "|" . selected
-          reload := 1
-          selected = 
-          return
-          }
-        send, ^x
+        Clipboard := "#cut#" . folder . "|" . selected
+        reload := 1
+        selected =
+        return
         }
-      if (value == "myCopy")
+      send, ^x
+      }
+    if (value == "myCopy")
+      {
+      if selected
         {
-        if selected
-          {
-          Clipboard := "#copy#" . folder . "|" . selected
-          reload := 1
-          selected = 
-          return
-          }
-        Clipboard =
-        send, ^c
-        Clipwait,0.1
-        if !Clipboard
-          send, ^a
-        sleep 100
-        send, ^c
+        Clipboard := "#copy#" . folder . "|" . selected
+        reload := 1
+        selected =
+        return
         }
-      if (value == "myPaste")
-       if (InStr(ClipBoard, "#copy#") || InStr(ClipBoard, "#cut#"))
+      Clipboard =
+      send, ^c
+      Clipwait,0.1
+      if !Clipboard
+        send, ^a
+      sleep 100
+      send, ^c
+      }
+    if (value == "myPaste")
+      if (InStr(ClipBoard, "#copy#") || InStr(ClipBoard, "#cut#"))
         {
         if InStr(ClipBoard, "#copy#")
           longClick = LButton
@@ -1132,16 +1140,16 @@ IfExist, %inca%\cache\json\%media%.json
         selected := array.2
         MoveFiles()
         folder := incaTab
-  ;      reload := 2
+        ;      reload := 2
         }
-      else
-        send, ^v
-      }
+    else
+      send, ^v
+    }
 
 
   addCue()
-    {   
-    StringSplit, vals, value, `,  					; Split into rate, skinny
+    {
+    StringSplit, vals, value, `,					; Split into rate, skinny
     cue := Format("{:.2f}", address)
     if (1*val[1]+1*val[2] > 4)
       return
@@ -1149,17 +1157,17 @@ IfExist, %inca%\cache\json\%media%.json
     updatedCues := ""
     FileRead, cues, %cueFile%
     Loop, Parse, cues, `n, `r
-    if (A_LoopField)
-      {
-      StringSplit, array, A_LoopField, |
-       if ((array2 = "rate" || array2 = "skinny") && array1 = cue)
+      if (A_LoopField)
         {
-        i := array2 = "rate" ? 1 : array2 = "skinny" ? 2 : 3
-        if (vals%i% = "undefined")
-          updatedCues .= A_LoopField . "`r`n"
-        } 
+        StringSplit, array, A_LoopField, |
+        if ((array2 = "rate" || array2 = "skinny") && array1 = cue)
+          {
+          i := array2 = "rate" ? 1 : array2 = "skinny" ? 2 : 3
+          if (vals%i% = "undefined")
+            updatedCues .= A_LoopField . "`r`n"
+          }
         else updatedCues .= A_LoopField . "`r`n"
-      }
+        }
     for i, type in ["rate", "skinny"]
       if 1*vals%i%
         updatedCues .= cue . "|" . type . "|" . vals%i% . "`r`n"
@@ -1171,60 +1179,60 @@ IfExist, %inca%\cache\json\%media%.json
     }
 
 
-GetTabSettings(all)							; from line 1 of .htm cache file
-  {
-  listView  := 0
-  filt      := 0
-  toggles   :=
-  defPause  := 0
-  sort      := "Shuffle"
-  if (command == "SearchBox")
-    sort := "Duration"
-  if playlist
-    sort := "Playlist"
-  FileReadLine, line, %inca%\cache\html\%folder%.htm, 1
-  if (line && InStr(line, "<!--"))
+  GetTabSettings(all)							; from line 1 of .htm cache file
     {
-    line := RegExReplace(line, "^<!--\s*|\s*-->$", "")
-    Loop, Parse, line, |
+    listView  := 0
+    filt      := 0
+    toggles   :=
+    defPause  := 0
+    sort      := "Shuffle"
+    if (command == "SearchBox")
+      sort := "Duration"
+    if playlist
+      sort := "Playlist"
+    FileReadLine, line, %inca%\cache\html\%folder%.htm, 1
+    if (line && InStr(line, "<!--"))
       {
-      if RegExMatch(A_LoopField, "^\s*(\w+)=(.*)$", m)
+      line := RegExReplace(line, "^<!--\s*|\s*-->$", "")
+      Loop, Parse, line, |
         {
-        key := m1
-        val := m2
-        if (key = "sort")
-          sort := val
-        else if (key = "toggles")
-          toggles := val
-        else if (key = "listView")
-          listView := val
-        else if (key = "defPause")
-          defPause := val
-        else if (all)
+        if RegExMatch(A_LoopField, "^\s*(\w+)=(.*)$", m)
           {
-          if (key = "path" || key = "playlist" || key = "searchPath" || key = "subfolders")
-            val := StrReplace(val, "/", "\")
-          if (key = "playlist")
-            playlist := val
-          else if (key = "path")
-            path := val
-          else if (key = "searchPath")
-            searchPath := val
-          else if (key = "searchTerm")
+          key := m1
+          val := m2
+          if (key = "sort")
+            sort := val
+          else if (key = "toggles")
+            toggles := val
+          else if (key = "listView")
+            listView := val
+          else if (key = "defPause")
+            defPause := val
+          else if (all)
             {
-            searchTerm := val
-            if searchTerm
-              folder := searchTerm
+            if (key = "path" || key = "playlist" || key = "searchPath" || key = "subfolders")
+              val := StrReplace(val, "/", "\")
+            if (key = "playlist")
+              playlist := val
+            else if (key = "path")
+              path := val
+            else if (key = "searchPath")
+              searchPath := val
+            else if (key = "searchTerm")
+              {
+              searchTerm := val
+              if searchTerm
+                folder := searchTerm
+              }
+            else if (key = "subfolders")
+              subfolders := val
             }
-          else if (key = "subfolders")
-            subfolders := val
+          }
         }
       }
+    else if RegExMatch(path, "i)music|books|audio|text|pdf")
+      listView := 1
     }
-  }
-  else if RegExMatch(path, "i)music|books|audio|text|pdf")
-    listView := 1
-}
 
 
   Gesture()
@@ -1272,8 +1280,8 @@ GetTabSettings(all)							; from line 1 of .htm cache file
     }
 
   volTimer:
-      SoundSet, volume
-  return
+    SoundSet, volume
+    return
 
 
   Time(in)
@@ -1303,130 +1311,130 @@ GetTabSettings(all)							; from line 1 of .htm cache file
     }
 
 
-MoveFiles()							; or playlist .m3u entries
-{
-  if (lastClick != "LButton")
-    return
-  fail =
-  if (playlist && !InStr(address, "\inca\") && !longClick)
-    popup = Cannot Move Shortcuts . . .
-  else Loop, Parse, selected, `,
-  {
-    if A_LoopField is not number
-      continue
-    getMedia(A_LoopField)
-    if longClick
-      popup = Copying %A_Index%
-    else popup = Moving %A_Index%
-    if (!InStr(path, "\inca\") && InStr(address, "\inca\"))
-      popup = Added %A_Index%
-
-    if (InStr(address, "inca\fav") || InStr(address, "inca\music"))
+  MoveFiles()							; or playlist .m3u entries
     {
-      FileRead, plStr, %address%
-      if (InStr(plStr, target) && longClick)			; already exists → full media clone
+    if (lastClick != "LButton")
+      return
+    fail =
+    if (playlist && !InStr(address, "\inca\") && !longClick)
+      popup = Cannot Move Shortcuts . . .
+    else Loop, Parse, selected, `,
       {
-        Loop 9999
+      if A_LoopField is not number
+        continue
+      getMedia(A_LoopField)
+      if longClick
+        popup = Copying %A_Index%
+      else popup = Moving %A_Index%
+      if (!InStr(path, "\inca\") && InStr(address, "\inca\"))
+        popup = Added %A_Index%
+
+      if (InStr(address, "inca\fav") || InStr(address, "inca\music"))
         {
-          newMedia := media " - Copy (" A_Index ")"
-          IfNotExist, %mediaPath%\%newMedia%.%ext%
-            break
+        FileRead, plStr, %address%
+        if (InStr(plStr, target) && longClick)			; already exists → full media clone
+          {
+          Loop 9999
+            {
+            newMedia := media " - Copy (" A_Index ")"
+            IfNotExist, %mediaPath%\%newMedia%.%ext%
+              break
+            }
+          FileCopy, %src%, %mediaPath%\%newMedia%.%ext%, 1
+          if ErrorLevel
+            {
+            fail = failed
+            popup = Failed %A_Index%
+            continue
+            }
+          ; copy every asset (same set used for real-file conflicts)
+          FileCopy, %inca%\cache\durations\%media%.txt, %inca%\cache\durations\%newMedia%.txt, 1
+          FileCopy, %inca%\cache\posters\%media%.jpg, %inca%\cache\posters\%newMedia%.jpg, 1
+          FileCopy, %inca%\cache\thumbs\%media%.jpg, %inca%\cache\thumbs\%newMedia%.jpg, 1
+          FileCopy, %inca%\cache\json\%media%.json, %inca%\cache\json\%newMedia%.json, 1
+          FileCopy, %inca%\cache\cues\%media%.txt, %inca%\cache\cues\%newMedia%.txt, 1
+          FileCopy, %inca%\cache\srt\%media%.srt, %inca%\cache\srt\%newMedia%.srt, 1
+          FileCopy, %inca%\cache\posters\%media% %seek%.jpg, %inca%\cache\posters\%newMedia% %seek%.jpg, 1
+          FileCopyDir, %inca%\cache\speech\%media%, %inca%\cache\speech\%newMedia%, 1
+          IfExist, %inca%\cache\json\%newMedia%.json
+            {
+            FileRead, json, %inca%\cache\json\%newMedia%.json
+            json := RegExReplace(json, "i)\Q/cache/speech/" media "\E", "/cache/speech/" newMedia)
+            FileDelete, %inca%\cache\json\%newMedia%.json
+            FileAppend, %json%, %inca%\cache\json\%newMedia%.json, UTF-8
+            }
+          src := mediaPath "\" newMedia "." ext
+          target := src "|" seek
+          media := newMedia
+          popup = Copied as %newMedia%
+          }
+        FileAppend, %target%`r`n, %address%, UTF-8
+        if (src && !InStr(path, "\inca\"))
+          Runwait, %inca%\cache\apps\ffmpeg.exe -i "%src%" -y -vf scale=1280:1280/dar -vframes 1 "%inca%\cache\posters\%media%%A_Space%0.0.jpg",, Hide
         }
-        FileCopy, %src%, %mediaPath%\%newMedia%.%ext%, 1
-        if ErrorLevel
+      else if src						; to folder not playlist
         {
+        FileGetSize, x, %address%%media%.%ext%
+        FileGetSize, y, %src%
+        z=
+        if (x && !playlist)
+          Loop 9999
+            {
+            z = \%media% - Copy (%A_Index%).%ext%
+            FileGetSize, w, %address%%z%
+            if !w
+              break
+            }
+        if z
+          {
+          SplitPath, z,,,, newMedia
+          FileCopy, %inca%\cache\durations\%media%.txt, %inca%\cache\durations\%newMedia%.txt, 1
+          FileCopy, %inca%\cache\posters\%media%.jpg, %inca%\cache\posters\%newMedia%.jpg, 1
+          FileCopy, %inca%\cache\thumbs\%media%.jpg, %inca%\cache\thumbs\%newMedia%.jpg, 1
+          FileCopy, %inca%\cache\json\%media%.json, %inca%\cache\json\%newMedia%.json, 1
+          FileCopy, %inca%\cache\cues\%media%.txt, %inca%\cache\cues\%newMedia%.txt, 1
+          FileCopy, %inca%\cache\srt\%media%.srt, %inca%\cache\srt\%newMedia%.srt, 1
+          FileCopy, %inca%\cache\posters\%media% %seek%.jpg, %inca%\cache\posters\%newMedia% %seek%.jpg, 1
+          FileCopyDir, %inca%\cache\speech\%media%, %inca%\cache\speech\%newMedia%, 1
+          IfExist, %inca%\cache\json\%newMedia%.json
+            {
+            FileRead, json, %inca%\cache\json\%newMedia%.json
+            json := RegExReplace(json, "i)\Q/cache/speech/" media "\E", "/cache/speech/" newMedia)
+            FileDelete, %inca%\cache\json\%newMedia%.json
+            FileAppend, %json%, %inca%\cache\json\%newMedia%.json, UTF-8
+            }
+          }
+        if (!longClick && x == y)
+          {
+          fail = failed
+          popup = Duplicate %A_Index%
+          continue
+          }
+        Loop, 4
+          {
+          if !longClick
+            FileMove, %src%, %address%%z%
+          else FileCopy, %src%, %address%%z%
+          if !ErrorLevel
+            break
+          sleep 50
+          }
+        if ErrorLevel
+          {
           fail = failed
           popup = Failed %A_Index%
-          continue
+          }
         }
-        ; copy every asset (same set used for real-file conflicts)
-        FileCopy, %inca%\cache\durations\%media%.txt, %inca%\cache\durations\%newMedia%.txt, 1
-        FileCopy, %inca%\cache\posters\%media%.jpg, %inca%\cache\posters\%newMedia%.jpg, 1
-        FileCopy, %inca%\cache\thumbs\%media%.jpg, %inca%\cache\thumbs\%newMedia%.jpg, 1
-        FileCopy, %inca%\cache\json\%media%.json, %inca%\cache\json\%newMedia%.json, 1
-        FileCopy, %inca%\cache\cues\%media%.txt, %inca%\cache\cues\%newMedia%.txt, 1
-        FileCopy, %inca%\cache\srt\%media%.srt, %inca%\cache\srt\%newMedia%.srt, 1
-        FileCopy, %inca%\cache\posters\%media% %seek%.jpg, %inca%\cache\posters\%newMedia% %seek%.jpg, 1
-        FileCopyDir, %inca%\cache\speech\%media%, %inca%\cache\speech\%newMedia%, 1
-        IfExist, %inca%\cache\json\%newMedia%.json
-        {
-          FileRead, json, %inca%\cache\json\%newMedia%.json
-          json := RegExReplace(json, "i)\Q/cache/speech/" media "\E", "/cache/speech/" newMedia)
-          FileDelete, %inca%\cache\json\%newMedia%.json
-          FileAppend, %json%, %inca%\cache\json\%newMedia%.json, UTF-8
-        }
-        src := mediaPath "\" newMedia "." ext
-        target := src "|" seek
-        media := newMedia
-        popup = Copied as %newMedia%
+      PopUp(popup,0,0,0)
       }
-      FileAppend, %target%`r`n, %address%, UTF-8
-      if (src && !InStr(path, "\inca\"))
-        Runwait, %inca%\cache\apps\ffmpeg.exe -i "%src%" -y -vf scale=1280:1280/dar -vframes 1 "%inca%\cache\posters\%media%%A_Space%0.0.jpg",, Hide
+    if (popup && !longClick)
+      if (InStr(address, "inca\fav") || InStr(address, "inca\music"))
+        DeleteEntries()
+    if fail
+      PopUp("failed",900,0,0)
+    else if popup
+      PopUp(popup,500,0,0)
     }
-    else if src							; to folder not playlist
-    {
-      FileGetSize, x, %address%%media%.%ext%
-      FileGetSize, y, %src%
-      z=
-      if (x && !playlist)
-        Loop 9999
-        {
-          z = \%media% - Copy (%A_Index%).%ext%
-          FileGetSize, w, %address%%z%
-          if !w
-            break
-        }
-      if z
-      {
-        SplitPath, z,,,, newMedia
-        FileCopy, %inca%\cache\durations\%media%.txt, %inca%\cache\durations\%newMedia%.txt, 1
-        FileCopy, %inca%\cache\posters\%media%.jpg, %inca%\cache\posters\%newMedia%.jpg, 1
-        FileCopy, %inca%\cache\thumbs\%media%.jpg, %inca%\cache\thumbs\%newMedia%.jpg, 1
-        FileCopy, %inca%\cache\json\%media%.json, %inca%\cache\json\%newMedia%.json, 1
-        FileCopy, %inca%\cache\cues\%media%.txt, %inca%\cache\cues\%newMedia%.txt, 1
-        FileCopy, %inca%\cache\srt\%media%.srt, %inca%\cache\srt\%newMedia%.srt, 1
-        FileCopy, %inca%\cache\posters\%media% %seek%.jpg, %inca%\cache\posters\%newMedia% %seek%.jpg, 1
-        FileCopyDir, %inca%\cache\speech\%media%, %inca%\cache\speech\%newMedia%, 1
-        IfExist, %inca%\cache\json\%newMedia%.json
-        {
-          FileRead, json, %inca%\cache\json\%newMedia%.json
-          json := RegExReplace(json, "i)\Q/cache/speech/" media "\E", "/cache/speech/" newMedia)
-          FileDelete, %inca%\cache\json\%newMedia%.json
-          FileAppend, %json%, %inca%\cache\json\%newMedia%.json, UTF-8
-        }
-      }
-      if (!longClick && x == y)
-      {
-        fail = failed
-        popup = Duplicate %A_Index%
-        continue
-      }
-      Loop, 4
-      {
-        if !longClick
-          FileMove, %src%, %address%%z%
-        else FileCopy, %src%, %address%%z%
-        if !ErrorLevel
-          break
-        sleep 50
-      }
-      if ErrorLevel
-      {
-        fail = failed
-        popup = Failed %A_Index%
-      }
-    }
-    PopUp(popup,0,0,0)
-  }
-  if (popup && !longClick)
-    if (InStr(address, "inca\fav") || InStr(address, "inca\music"))
-      DeleteEntries()
-  if fail
-    PopUp("failed",900,0,0)
-  else if popup
-    PopUp(popup,500,0,0)
-}
 
 
   DeleteEntries()							; playlist entries
@@ -1447,7 +1455,7 @@ MoveFiles()							; or playlist .m3u entries
     }
 
 
-  MoveEntry() 								; within playlist
+  MoveEntry()								; within playlist
     {
     if (sort != "Playlist")
       {
@@ -1462,7 +1470,7 @@ MoveFiles()							; or playlist .m3u entries
         if (A_LoopField == value)
           continue
         getMedia(A_LoopField)
-        source = %target%            					; entry to move
+        source = %target%						; entry to move
         getMedia(value)							; new position
         FileRead, str, %playlist%
         FileDelete, %playlist%
@@ -1481,7 +1489,7 @@ MoveFiles()							; or playlist .m3u entries
       return 1
     FileMove, %src%, %mediaPath%\%new_name%.%ext%			; FileMove = FileRename
     if ErrorLevel
-      return 1         
+      return 1
     new_entry := StrReplace(target, media, new_name)
     folders = %inca%\fav\*.m3u|%inca%\music\*.m3u
     Loop, Parse, folders, `|						; rename any entries within favorites
@@ -1505,8 +1513,8 @@ MoveFiles()							; or playlist .m3u entries
             FileMove, %inca%\cache\posters\%media% %seek%.jpg, %inca%\cache\posters\%new_name% %seek%.jpg, 1
             }
           }
-      FileAppend, %str%, %A_LoopFileFullPath%, UTF-8
-      }
+        FileAppend, %str%, %A_LoopFileFullPath%, UTF-8
+        }
     FileMove, %inca%\cache\cues\%media%.txt, %inca%\cache\cues\%new_name%.txt, 1
     FileMove, %inca%\cache\durations\%media%.txt, %inca%\cache\durations\%new_name%.txt, 1
     FileMove, %inca%\cache\thumbs\%media%.jpg, %inca%\cache\thumbs\%new_name%.jpg, 1
@@ -1596,30 +1604,30 @@ MoveFiles()							; or playlist .m3u entries
   AllFav()
     {
     FileDelete, %inca%\fav\all fav.m3u
-    Loop, Files, %inca%\fav\*.m3u, FR					; create consolidated 'All' playlist 
+    Loop, Files, %inca%\fav\*.m3u, FR					; create consolidated 'All' playlist
       if !InStr(A_LoopFileFullPath, "\History.m3u")
         {
         FileRead, str, %A_LoopFileFullPath%
         FileAppend, %str%, %inca%\fav\all fav.m3u, UTF-8
         }
-    FileRead, allFav, %inca%\fav\all fav.m3u    
+    FileRead, allFav, %inca%\fav\all fav.m3u
     }
 
 
   showTime()
-      {
-      FormatTime, time,, h:mm
-      x =
-      if volume
-        x := Round(volume)
-      ctime := time
-      Gui, Status:+lastfound
-      WinSet, TransColor, 0 30
-      Gui, Status:Font, s20 cWhite, Segoe UI
-      GuiControl, Status:Font, GuiSta
-      GuiControl, Status:, GuiSta, %time%  %x%
-      Gui, Status: Show, NA
-      }
+    {
+    FormatTime, time,, h:mm
+    x =
+    if volume
+      x := Round(volume)
+    ctime := time
+    Gui, Status:+lastfound
+    WinSet, TransColor, 0 30
+    Gui, Status:Font, s20 cWhite, Segoe UI
+    GuiControl, Status:Font, GuiSta
+    GuiControl, Status:, GuiSta, %time%  %x%
+    Gui, Status: Show, NA
+    }
 
 
   LoadSettings()
@@ -1708,31 +1716,31 @@ MoveFiles()							; or playlist .m3u entries
     }
 
 
-   checkPlaylist()							; in case src files moved
-     {
-     FileRead, str, %playlist%
-     Loop, Parse, str, `n, `r
-     if A_LoopField
-       {  
-       source := StrSplit(A_Loopfield, "|").1
-       start := StrSplit(A_Loopfield, "|").2
-       detectMedia(source)
-       searchSpace := searchFolders . "|" . indexFolders
-       IfNotExist, %source%
-         Loop, Parse, searchSpace, `|
-           IfExist, %A_LoopField%%media%.%ext%
-             {
-             flag := 1
-             y = %A_LoopField%%media%.%ext%
-             str := StrReplace(str, source, y)
-             }
-       }
-     if flag
-       {
-       FileDelete, %playlist%
-       FileAppend, %str%, %playlist%, UTF-8
-       }
-     }
+  checkPlaylist()							; in case src files moved
+    {
+    FileRead, str, %playlist%
+    Loop, Parse, str, `n, `r
+      if A_LoopField
+        {
+        source := StrSplit(A_Loopfield, "|").1
+        start := StrSplit(A_Loopfield, "|").2
+        detectMedia(source)
+        searchSpace := searchFolders . "|" . indexFolders
+        IfNotExist, %source%
+          Loop, Parse, searchSpace, `|
+            IfExist, %A_LoopField%%media%.%ext%
+              {
+              flag := 1
+              y = %A_LoopField%%media%.%ext%
+              str := StrReplace(str, source, y)
+              }
+        }
+    if flag
+      {
+      FileDelete, %playlist%
+      FileAppend, %str%, %playlist%, UTF-8
+      }
+    }
 
 
   Wheel(dir)					; browser zoom
@@ -1749,12 +1757,13 @@ MoveFiles()							; or playlist .m3u entries
     }
 
 
-  fill(in) {  
+  fill(in)
+    {
     panelList = %panelList%<div style="height:10`%; padding:0.5em; transform:rotate(90deg)">`n%in%</div>`n
     }
 
 
-  Index(src, force)							; create thumbs, posters & durations cache
+  Index(src, force := 0, doThumb := 1)							; create thumbs, posters & durations cache
     {
     if InStr(src, "|")
       {
@@ -1769,55 +1778,87 @@ MoveFiles()							; or playlist .m3u entries
     FileGetSize, size, %source%, K
     if (med == "video" && size < 100)
       return
-    dur =
-    if (med == "video")
-      cmd = %inca%\cache\apps\ffprobe.exe -v quiet -print_format json -show_streams -select_streams v:0 "%source%"
-    else cmd = %inca%\cache\apps\ffprobe.exe -v quiet -print_format json -show_streams -select_streams a:0 "%source%"
-    RunWait, %ComSpec% /c %cmd% > "%inca%\cache\temp\meta.txt",, Hide
-    if ErrorLevel
-      return
-    FileRead, MetaContent, %inca%\cache\temp\meta.txt
-    if RegExMatch(MetaContent, """duration""\s*:\s*""?([\d\.]+)""?", n)		; normal case
-      || RegExMatch(MetaContent, """DURATION""\s*:\s*""?([^""]+)""?", n)	; Google encoding
+
+    ; duration — skip if already present
+    durFile := inca "\cache\durations\" filen ".txt"
+    if (!FileExist(durFile) || force)
       {
-      durRaw := n1
-      if RegExMatch(durRaw, "(\d+):(\d+):(\d+\.?\d*)", t)
-        dur := (t1*3600) + (t2*60) + t3
+      if (med == "video")
+        cmd = %inca%\cache\apps\ffprobe.exe -v quiet -print_format json -show_streams -select_streams v:0 "%source%"
       else
-        dur := durRaw + 0							; force numeric
+        cmd = %inca%\cache\apps\ffprobe.exe -v quiet -print_format json -show_streams -select_streams a:0 "%source%"
+      RunWait, %ComSpec% /c %cmd% > "%inca%\cache\temp\meta.txt",, Hide
+      if ErrorLevel
+        return
+      FileRead, MetaContent, %inca%\cache\temp\meta.txt
+      if RegExMatch(MetaContent, """duration""\s*:\s*""?([\d\.]+)""?", n)
+        || RegExMatch(MetaContent, """DURATION""\s*:\s*""?([^""]+)""?", n)
+        {
+        durRaw := n1
+        if RegExMatch(durRaw, "(\d+):(\d+):(\d+\.?\d*)", t)
+          dur := (t1*3600) + (t2*60) + t3
+        else
+          dur := durRaw + 0
+        }
+      dur := Round(dur,2)
+      FileDelete, %durFile%
+      FileAppend, %dur%, %durFile%, UTF-8
       }
-    dur := Round(dur,2)
-    FileDelete, %inca%\cache\durations\%filen%.txt
-    FileAppend, %dur%, %inca%\cache\durations\%filen%.txt, UTF-8
+    else
+      FileRead, dur, %durFile%
+
     if (med == "audio")
       return
-    thumb := 0
-    IfNotExist, %inca%\cache\thumbs\%filen%.jpg
-      thumb := 1
-    t := 0
-    if (dur > 61)
+
+    ; timing values used by both poster and thumbs
+    t := (dur > 61) ? 20 : 0
+    dur -= t
+    r := 40 / dur
+    t += dur / 50
+
+    ; poster — skip if already present
+    if InStr(src, "|")
+      poster := inca "\cache\posters\" filen " " seek ".jpg"
+    else
+      poster := inca "\cache\posters\" filen ".jpg"
+    if (!FileExist(poster) || force)
       {
-      t := 20   							; try to skip any video intro banners
-      dur -= 20
+      PopUp("indexing", 0, 0, 0)
+      FileDelete, %inca%\cache\html\out.txt
+      FileAppend, working, %inca%\cache\html\out.txt, UTF-8
+      if InStr(src, "|")
+        Run, %inca%\cache\apps\ffmpeg.exe -ss %seek% -i "%source%" -y -vf scale=1280:1280/dar -vframes 1 "%poster%",, Hide
+      else
+        RunWait, %inca%\cache\apps\ffmpeg.exe -ss %t% -i "%source%" -y -vf scale=480:480/dar -vframes 1 "%poster%",, Hide
+      Gui PopUp:Cancel
       }
-    loop 180
+
+    ; thumbs only when requested
+    if (doThumb)
       {
-      y := Round(A_Index / 5)						; 36 video frames in thumbsheet
-      if !Mod(A_Index,5)
+      thumb := 0
+      IfNotExist, %inca%\cache\thumbs\%filen%.jpg
+        thumb := 1
+      if (thumb || force)
         {
-        runwait, %inca%\cache\apps\ffmpeg.exe -ss %t% -i "%source%" -y -vf scale=480:480/dar -vframes 1 "%inca%\cache\temp\%y%.jpg",, Hide
-        if (A_Index == 5)
-          if InStr(src, "|")
-            Run, %inca%\cache\apps\ffmpeg.exe -ss %seek% -i "%source%" -y -vf scale=1280:1280/dar -vframes 1 "%inca%\cache\posters\%filen%%A_Space%%seek%.jpg",, Hide
-          else FileCopy, %inca%\cache\temp\1.jpg, %inca%\cache\posters\%filen%.jpg, 1	; 1st thumb is poster
-        if (A_Index == 5)
-          if (!thumb && !force)
-            break
+        if (dur < 300)
+          cmd = %inca%\cache\apps\ffmpeg.exe -ss %t% -i "%source%" -an -filter_complex "setpts=PTS-STARTPTS,fps=%r%:round=up,scale=480:480/dar,tile=6x6" -frames:v 1 -update 1 -y "%inca%\cache\thumbs\%filen%.jpg"
+        else
+          {
+          in := "", fc := "", cat := ""
+          Loop, 36
+            {
+            n := A_Index - 1
+            ts := t + n * dur / 40
+            in .= " -ss " ts " -t 0.05 -i """ source """"
+            fc .= "[" n ":v]scale=480:480/dar,trim=end_frame=1,setpts=PTS-STARTPTS[v" n "];"
+            cat .= "[v" n "]"
+            }
+          cmd := inca "\cache\apps\ffmpeg.exe" in " -an -filter_complex """ fc cat "concat=n=36:v=1:a=0,tile=6x6"" -frames:v 1 -update 1 -y """ inca "\cache\thumbs\" filen ".jpg"""
+          }
+        RunWait, %cmd%,, Hide
         }
-      t += (dur / 200)
       }
-    if (thumb || force)
-      Runwait %inca%\cache\apps\ffmpeg -i %inca%\cache\temp\`%d.jpg -filter_complex "tile=6x6" -y "%inca%\cache\thumbs\%filen%.jpg",, Hide
     return 1
     }
 
@@ -1831,7 +1872,7 @@ MoveFiles()							; or playlist .m3u entries
       to = -to %end%
     if start
       suffix = @%start%
-    else if end 
+    else if end
       suffix = @%end%
     else suffix =
     SplitPath, src, , foldr, type, filen
@@ -1885,53 +1926,52 @@ MoveFiles()							; or playlist .m3u entries
       Resolution := OutWidth ":" OutHeight
       GOPFrames := Round(FrameRate)					; every second
 
-MaxBitrate := 6000
-BufSize := 12000
-LongSide := OutWidth > OutHeight ? OutWidth : OutHeight
+      MaxBitrate := 6000
+      BufSize := 12000
+      LongSide := OutWidth > OutHeight ? OutWidth : OutHeight
 
-if (Bitrate > 0)
-{
-  MaxBitrate := Round(Bitrate * 3 / 2)
-  if (MaxBitrate > 6000)
-    MaxBitrate := 6000
-  BufSize := MaxBitrate * 2
-}
-else
-{
-  if (LongSide <= 720)
-  {
-    MaxBitrate := 2500
-    BufSize := 5000
-  }
-  else
-  {
-    MaxBitrate := 6000
-    BufSize := 12000
-  }
-}
+      if (Bitrate > 0)
+        {
+        MaxBitrate := Round(Bitrate * 3 / 2)
+        if (MaxBitrate > 6000)
+          MaxBitrate := 6000
+        BufSize := MaxBitrate * 2
+        }
+      else
+        {
+        if (LongSide <= 720)
+          {
+          MaxBitrate := 2500
+          BufSize := 5000
+          }
+        else
+          {
+          MaxBitrate := 6000
+          BufSize := 12000
+          }
+        }
 
-; 1. Try the fast 5090 gpu first
-cmd = -hwaccel cuda -hwaccel_output_format cuda -y -i file:"%src%" %ss% %to% -vf scale_cuda=%Resolution% -c:v h264_nvenc -profile:v high -pix_fmt yuv420p -preset p4 -rc vbr -b:v %MaxBitrate%k -bufsize %BufSize%k -spatial_aq 1 -temporal_aq 1 -force_key_frames "expr:gte(t,n_forced*2)" -g %GOPFrames% -keyint_min %GOPFrames% -maxrate %MaxBitrate%k -c:a aac -b:a 128k -ar 48000 -ac 2 -map 0:v:0 -map 0:a? -map 0:s? -c:s copy -f mp4 -movflags +faststart+separate_moof -metadata:s:v:0 handler_name=Inca file:"%new%"
+      ; 1. Try the fast 5090 gpu first
+      cmd = -hwaccel cuda -hwaccel_output_format cuda -y -i file:"%src%" %ss% %to% -vf scale_cuda=%Resolution% -c:v h264_nvenc -profile:v high -pix_fmt yuv420p -preset p4 -rc vbr -b:v %MaxBitrate%k -bufsize %BufSize%k -spatial_aq 1 -temporal_aq 1 -force_key_frames "expr:gte(t,n_forced*2)" -g %GOPFrames% -keyint_min %GOPFrames% -maxrate %MaxBitrate%k -c:a aac -b:a 128k -ar 48000 -ac 2 -map 0:v:0 -map 0:a? -map 0:s? -c:s copy -f mp4 -movflags +faststart+separate_moof -metadata:s:v:0 handler_name=Inca file:"%new%"
 
-handler_name=Inca file:"%new%"
- RunWait %COMSPEC% /c %inca%\cache\apps\ffmpeg.exe %cmd%, , Hide
+      RunWait %COMSPEC% /c %inca%\cache\apps\ffmpeg.exe %cmd%, , Hide
 
-; 2. If it failed, fall back to AMF then CPU
- if ErrorLevel || !FileExist(new)
-{
-  encoders := "-c:v h264_amf -rc cqp -qp_i 22 -qp_p 24 -pix_fmt yuv420p|-c:v libx264 -preset medium -crf 23 -pix_fmt yuv420p"
-  Loop, Parse, encoders, |
-  {
-    encoder := A_LoopField
-    cmd = -y -i file:"%src%" %ss% %to% %encoder% -vf scale=%Resolution%,setsar=1:1 -force_key_frames "expr:gte(t,n_forced*2)" -sc_threshold 0 -g %GOPFrames% -keyint_min %GOPFrames% -maxrate %MaxBitrate%k -bufsize %BufSize%k -c:a aac -b:a 128k -ar 48000 -ac 2 -map 0:v:0 -map 0:a? -map 0:s? -c:s copy -f mp4 -movflags +faststart+separate_moof -metadata:s:v:0 handler_name=Inca file:"%new%"
-    RunWait %COMSPEC% /c %inca%\cache\apps\ffmpeg.exe %cmd%, , Hide
-    if !ErrorLevel
-      break
-  }
-}
+      ; 2. If it failed, fall back to AMF then CPU
+      if ErrorLevel || !FileExist(new)
+        {
+        encoders := "-c:v h264_amf -rc cqp -qp_i 22 -qp_p 24 -pix_fmt yuv420p|-c:v libx264 -preset medium -crf 23 -pix_fmt yuv420p"
+        Loop, Parse, encoders, |
+          {
+          encoder := A_LoopField
+          cmd = -y -i file:"%src%" %ss% %to% %encoder% -vf scale=%Resolution%,setsar=1:1 -force_key_frames "expr:gte(t,n_forced*2)" -sc_threshold 0 -g %GOPFrames% -keyint_min %GOPFrames% -maxrate %MaxBitrate%k -bufsize %BufSize%k -c:a aac -b:a 128k -ar 48000 -ac 2 -map 0:v:0 -map 0:a? -map 0:s? -c:s copy -f mp4 -movflags +faststart+separate_moof -metadata:s:v:0 handler_name=Inca file:"%new%"
+          RunWait %COMSPEC% /c %inca%\cache\apps\ffmpeg.exe %cmd%, , Hide
+          if !ErrorLevel
+            break
+          }
+        }
 
-if ErrorLevel
-  return
+      if ErrorLevel
+        return
       }
     if (!suffix && exten != "mp3")
       {
@@ -1978,7 +2018,7 @@ if ErrorLevel
     seek = 0.0
     if (list && !InStr(folder, "-history") && !InStr(playlist, "History.m3u"))
       History()
-    Loop, Parse, list, `n, `r 						; split big list into smaller web pages
+    Loop, Parse, list, `n, `r						; split big list into smaller web pages
       if (A_Index > lastIndex && A_Index < lastIndex + page + 1)
         {
         item := StrSplit(A_LoopField, "/")				; sort filter \ src \ media type \ ext
@@ -1987,16 +2027,18 @@ if ErrorLevel
         type := item.3
         seek := item.4
         fold := item.5
+        if (type = "video")
+          Index(src, 0, 0)
         if (!InStr(path, "\cache\temp\"))
           FileAppend, %src%|0.0`r`n, %history%, UTF-8
         mediaList(A_Index, src, seek, fold)				; append mediaList
         }
     if (command == "More")						; continuous scrolling
       {
-      FileDelete, %inca%\cache\html\out.txt				; server polling file
-      if (lastIndex - listSize < page && listSize > page)
-        FileAppend, html|%mediaList%, %inca%\cache\html\out.txt, UTF-8
-      else lastIndex := listSize
+      FileDelete, %inca%\cache\html\out.txt
+      FileAppend, html|%mediaList%, %inca%\cache\html\out.txt, UTF-8
+      if (lastIndex + page >= listSize || !mediaList)
+        lastIndex := listSize
       return
       }
     x = %folder%\
@@ -2016,10 +2058,10 @@ if ErrorLevel
             else subfolders = %A_LoopFileFullPath%\
       }
     if (playlist || searchTerm)
-      subfolders = 
-    if InStr(fol, x) 
-      showSubs = 
-    title := folder 
+      subfolders =
+    if InStr(fol, x)
+      showSubs =
+    title := folder
     FileRead, ini, %inca%\ini.ini
     ini := StrReplace(ini, "`r`n", "|")					; java cannot accept cr in strings
     ini := StrReplace(ini, "'", ">")					; java cannot accept ' in strings
@@ -2140,7 +2182,7 @@ if ErrorLevel
     if container
       fill(container)
 
-    ch = 
+    ch =
     count := 0
     container =
     Loop, Parse, search, `|
@@ -2166,20 +2208,20 @@ if ErrorLevel
     if container
       fill(container)
 
-  x = %searchTerm%|
-  if (searchTerm && !InStr(search, x))
-    add = &#xFF0B;
-  if subfolders
-    subs = sub
-  StringReplace, folder_s, folder, `', &apos, All			; htm cannot pass '
-  if 1*Setting("Mute")
-    mute = yes
-  else mute = no
-  if 1*Setting("WheelDir")
-    wheelDir := 1
-  else wheelDir := -1
-  if (command == "View")
-    keepSelected := selected
+    x = %searchTerm%|
+    if (searchTerm && !InStr(search, x))
+      add = &#xFF0B;
+    if subfolders
+      subs = sub
+    StringReplace, folder_s, folder, `', &apos, All			; htm cannot pass '
+    if 1*Setting("Mute")
+      mute = yes
+    else mute = no
+    if 1*Setting("WheelDir")
+      wheelDir := 1
+    else wheelDir := -1
+    if (command == "View")
+      keepSelected := selected
 
 header = <!-- sort=%sort%|toggles=%toggles%|listView=%listView%|playlist=%playlist%|path=%path%|searchPath=%searchPath%|searchTerm=%searchTerm%|subfolders=%subfolders%|defPause=%defPause% -->`n<!doctype html>`n<html>`n<head>`n<meta charset="UTF-8">`n<title>Inca - %title%</title>`n<meta name="viewport" content="width=device-width, initial-scale=1">`n<link rel="icon" href="data:image/x-icon;base64,AAABAAEAEBAAAAEAIABoBAAAFgAAACgAAAAQAAAAIAAAAAEAIAAAAAAAQAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAJGI/zqShf87AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAI+D/0CLg/61joP+tY2B/0EAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAJCF/0ONgv+6mZn/CpmZ/wqNgv+6lIX/QwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAJCF/0ONgv+6m5v+EgAAAAAAAAAAm5v+Eo2C/7qUhf9DAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAJCF/0ONgv+6m5v+EgAAAAAAAAAAAAAAAAAAAACbm/4SjYL/upSF/0MAAAAAAAAAAAAAAAAAAAAAAAAAAIuD/0KNgv+6m5v+EgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAJub/hKNgv+6koP/QgAAAAAAAAAAAAAAAI6C/yuLgv+7m5v+EgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAm5v+EouC/7uOgv8rAAAAAAAAAACNg/2dlon/JwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACWif8njYP9nQAAAACVjP4djYH9lAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAI2B/ZSVjP4dmYz/KIyB/YoAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACMgf2KmYz/KKmp/gmOg/+j////AQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD///8BjoP/o6mp/gkAAAAAjIL/ZI2C/o0AAAAAAAAAAAAAAAAAAAAAj4//KY+P/ykAAAAAAAAAAAAAAAAAAAAAjYL+jYyC/2QAAAAAAAAAAAAAAACNgf6Ei4P9pZGF/1SKg/9GjYP/fIuC/q6Lgv6ujYP/fIqD/0aRhf9UjYT+pIuB/oQAAAAAAAAAAAAAAAAAAAAAAAAAAJCF/y6NhP9wjIL+e5CB/1EAAAAAAAAAAJCB/1GMgv57jYT/cJCF/y4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==">`n<link rel="stylesheet" href="%server%%inca%/css.css">`n</head>`n`n
 
@@ -2339,8 +2381,8 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
       WinActivate, ahk_group Browsers
       }
     else IfWinActive, ahk_group Browsers
-      { 
-      if (incaTab == folder) 
+      {
+      if (incaTab == folder)
         send {F5}
       else FileAppend, address|%htm%, %inca%\cache\html\out.txt, UTF-8	; trigger node server
       }
@@ -2353,16 +2395,16 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
         break
       Sleep, 100
       }
-  lastClick =
-  }
+    lastClick =
+    }
 
 
-mediaList(j, input, start, fold)					; spool sorted media files into web page
+  mediaList(j, input, start, fold)					; spool sorted media files into web page
     {
     Critical
     poster =
     if (InStr(transcoding, input) || (transcoding && InStr(input, "temp_")))
-      input = 								; hide locked files
+      input =								; hide locked files
     if DetectMedia(input)
       thumb := src
     if (searchTerm || InStr(toggles, "Recurse"))
@@ -2402,7 +2444,7 @@ mediaList(j, input, start, fold)					; spool sorted media files into web page
     years := floor(sort_date / 365)
     if years
       date = %years% y
-    else if sort_date 
+    else if sort_date
       date = %sort_date% d
     if (type == "audio" || type == "m3u")
       thumb = %inca%\cache\icons\music.png
@@ -2429,7 +2471,7 @@ mediaList(j, input, start, fold)					; spool sorted media files into web page
     IfExist, %inca%\cache\json\%media%.json
       data = %inca%/cache/json/%media%.json
     if (data)
-      favicon =  %favicon% &#169 					; © copyright symbol		
+      favicon =  %favicon% &#169					; © copyright symbol
     IfNotExist, %src%
       noIndex = <span class='warning'>disk ?</span>
     src = %src%
@@ -2446,7 +2488,7 @@ mediaList(j, input, start, fold)					; spool sorted media files into web page
     caption = <pre id="dat%j%" style='display: none' type="text/plain" data=%data%></pre>`n
 
     if listView
-mediaList = %mediaList%%foldr%<div id='entry%j%' class='entry-row' data-params='%type%,%start%,%dur%,%size%' onmouseenter='if (gesture) sel(%j%)' onmouseover='Param(%j%); thumb%j%.style.opacity=1'`n onmouseout="thumb%j%.style.opacity=0"><div class="thumb-wrap"><video id='thumb%j%' class='thumb2' onwheel='if (zoom > 1) wheelEvent(event)'`n %poster% preload=%preload% muted loop disableRemotePlayback type="video/mp4"></video><video id="vid%j%" style='display: none'`n src=%src% preload='none' type='video/mp4'></video>`n </div><div>%j%</div><div>%ext%</div><div>%size%</div><div style='min-width: 6em'>%durT%</div><div>%date%</div><div id='myFavicon%j%' class='favicon' style='position: relative; text-align: right; translate:1.6em 0.4em'>%favicon%</div><div class='title-cell'><textarea id="title%j%" class='title' style='top:0.1em' autocomplete='off' onmouseenter='Param(%j%)'>`n %media_s%</textarea></div>%fo%</div>`n %caption%<span id='cues%j%' style='display: none'>%cues%</span>`n`n
+      mediaList = %mediaList%%foldr%<div id='entry%j%' class='entry-row' data-params='%type%,%start%,%dur%,%size%' onmouseenter='if (gesture) sel(%j%)' onmouseover='Param(%j%); thumb%j%.style.opacity=1'`n onmouseout="thumb%j%.style.opacity=0"><div class="thumb-wrap"><video id='thumb%j%' class='thumb2' onwheel='if (zoom > 1) wheelEvent(event)'`n %poster% preload=%preload% muted loop disableRemotePlayback type="video/mp4"></video><video id="vid%j%" style='display: none'`n src=%src% preload='none' type='video/mp4'></video>`n </div><div>%j%</div><div>%ext%</div><div>%size%</div><div style='min-width: 6em'>%durT%</div><div>%date%</div><div id='myFavicon%j%' class='favicon' style='position: relative; text-align: right; translate:1.6em 0.4em'>%favicon%</div><div class='title-cell'><textarea id="title%j%" class='title' style='top:0.1em' autocomplete='off' onmouseenter='Param(%j%)'>`n %media_s%</textarea></div>%fo%</div>`n %caption%<span id='cues%j%' style='display: none'>%cues%</span>`n`n
 
     else mediaList = %mediaList%<div id="entry%j%" class='entry' data-params='%type%,%start%,%dur%,%size%'>`n <span id='myFavicon%j%' onmouseenter='Param(%j%)' class='favicon'>%favicon%</span>`n <textarea id='title%j%' class='title' style='opacity:0.7' type='text'`n onmouseenter='Param(%j%)'>%media_s%</textarea>`n <div class="thumb-wrap">`n <video id="thumb%j%" class='thumb' onwheel='if (zoom > 1) wheelEvent(event)' onmouseenter="Param(%j%); if (gesture && !playing) sel(%j%)"`n onmouseout="thumb.pause()"`n %poster%`n preload=%preload% loop muted disableRemotePlayback type='video/mp4'></video></div>`n <video id="vid%j%" style='display: none' src=%src% preload='none' type='video/mp4'></video>%noIndex%`n <span id='cues%j%' style='display: none'>%cues%</span></div>`n %caption%`n
     }
@@ -2474,178 +2516,178 @@ mediaList = %mediaList%%foldr%<div id='entry%j%' class='entry-row' data-params='
 
 
 
-Ffmpeg: 								; mp3, mp4, indexing - async processing
-  Critical, off							; allow RClick
-  PopUp(Chr(0x2713),600,0,0)
-  GuiControl, Indexer:, GuiInd, processing ...
-  transcoding =
-  select := selected							; preserve selected
-  selected =
-  fldr := folder
-  serverTimout := A_TickCount
-  tim := Round(address, 2)
-  cue := Round(StrSplit(value, "|").1, 2)
-  el_id := StrSplit(value, "|").2
-  skinny := StrSplit(value, "|").3
-  playing := StrSplit(value, "|").4
-  auxSrc := StrSplit(value, "|").5
-  auxStart := StrSplit(value, "|").6
-  auxSrc := StrReplace(auxSrc, server)
-  auxSrc := StrReplace(auxSrc, "/", "\")
-  fileList =
-  FileRead, str, %inca%\cache\temp\%folder%.txt			; list of media in htm
-  Loop, Parse, str, `n, `r
-    fileList .= StrSplit(A_LoopField, "/").2 . "|" . Round(StrSplit(A_LoopField, "/").4,1) . "`r`n"
-  if (select && !InStr(el_id, "Index"))
-    Loop, Parse, select, `,						; index selected files
-      transcoding .= StrSplit(fileList,"`r`n")[A_LoopField]		; media to lock
-  RenderPage(1)							; lock htm
-  transcoding =							; lock off
-  Critical Off
-  sta := 0
-  end := 0
-  if cue
-  if (tim > cue + 0.1)
-    sta := cue, end := tim
-  else if (tim < cue - 0.1)
-    sta := tim, end := cue
-  else if (tim >= cue)
-    sta := cue
-  else sta := 0, end := cue
+  Ffmpeg:								; mp3, mp4, indexing - async processing
+    Critical, off						; allow RClick
+    PopUp(Chr(0x2713),600,0,0)
+    GuiControl, Indexer:, GuiInd, processing ...
+    transcoding =
+    select := selected							; preserve selected
+    selected =
+    fldr := folder
+    serverTimout := A_TickCount
+    tim := Round(address, 2)
+    cue := Round(StrSplit(value, "|").1, 2)
+    el_id := StrSplit(value, "|").2
+    skinny := StrSplit(value, "|").3
+    playing := StrSplit(value, "|").4
+    auxSrc := StrSplit(value, "|").5
+    auxStart := StrSplit(value, "|").6
+    auxSrc := StrReplace(auxSrc, server)
+    auxSrc := StrReplace(auxSrc, "/", "\")
+    fileList =
+    FileRead, str, %inca%\cache\temp\%folder%.txt		; list of media in htm
+    Loop, Parse, str, `n, `r
+      fileList .= StrSplit(A_LoopField, "/").2 . "|" . Round(StrSplit(A_LoopField, "/").4,1) . "`r`n"
+    if (select && !InStr(el_id, "Index"))
+      Loop, Parse, select, `,						; index selected files
+        transcoding .= StrSplit(fileList,"`r`n")[A_LoopField]		; media to lock
+    RenderPage(1)						; lock htm
+    transcoding =						; lock off
+    Critical Off
+    sta := 0
+    end := 0
+    if cue
+      if (tim > cue + 0.1)
+        sta := cue, end := tim
+      else if (tim < cue - 0.1)
+        sta := tim, end := cue
+      else if (tim >= cue)
+        sta := cue
+      else sta := 0, end := cue
 
-  if InStr(el_id, "Join")
-    Join(select)
-  else if (el_id == "myIndex" && !select)				; index whole folder / current list
-  {
-    if (playlist || searchTerm)
-    {
-      Loop, Parse, filelist, `n, `r
+    if InStr(el_id, "Join")
+      Join(select)
+    else if (el_id == "myIndex" && !select)				; index whole folder / current list
       {
-        GuiControl, Indexer:, GuiInd, %A_Loopfield%
-        Index(A_Loopfield, 0)
-      }
-    }
-    else
-    {
-      Loop, Files, %path%*.*
-      {
-        GuiControl, Indexer:, GuiInd, %A_LoopFileFullPath%
-        Index(A_LoopFileFullPath, 0)
-      }
-    }
-  }
-  else								; selected items (mp3/mp4/join/jpg/srt/index)
-  {
-    Loop, Parse, select, `,
-    {
-      if A_LoopField
-      {
-        entry := StrSplit(fileList, "`r`n")[A_LoopField]
-        source := StrSplit(entry, "|").1
-        SplitPath, source,,,ex
-        if (ex == "txt")
+      if (playlist || searchTerm)
         {
-          source := auxSrc
-          tim := auxStart
-        }
-        if (playlist && InStr(el_id, "myIndex"))
-          source := entry						; use start time for poster
-        SplitPath, source,,,,med
-        GuiControl, Indexer:, GuiInd, %A_Index% - processing - %med%
-        output = %profile%\Downloads\%med% @%tim%.jpg
-        outputDir := inca . "\cache\srt"
-        if InStr(el_id, "mySrt")
-          ParakeetSrt(source, med)
-        else if InStr(el_id, "myJpg")
+        Loop, Parse, filelist, `n, `r
           {
-          if  DetectMedia(source) == "image"
-            cmd = %inca%\cache\apps\ffmpeg.exe -i "%source%" -vf "scale=iw*%skinny%:ih" -y "%output%"
-          else cmd = %inca%\cache\apps\ffmpeg.exe -ss %tim% -i "%source%" -vf "scale=iw*%skinny%:ih" -y "%output%"
-          FileAppend, %output%|0.0`r`n, %inca%\fav\History.m3u, UTF-8
+          GuiControl, Indexer:, GuiInd, %A_Loopfield%
+          Index(A_Loopfield, 0)
           }
-        if InStr(el_id, "myIndex")
-          Index(source, 1)
-        if InStr(el_id, "myJpg")
-          runwait, %cmd%,, Hide
-        if (InStr(el_id, "myMp3") || InStr(el_id, "myMp4"))
-          if (new := Transcode(el_id, source, sta, end))
-            Index(new, 1)
+        }
+      else
+        {
+        Loop, Files, %path%*.*
+          {
+          GuiControl, Indexer:, GuiInd, %A_LoopFileFullPath%
+          Index(A_LoopFileFullPath, 0)
+          }
+        }
       }
-    }
-  }
-  if (fldr == folder && !playing)
-  {
-    if (!select)
-      index := 1						; prevent blank page when indexing whole folder
-    else
-      index := StrSplit(select, ",").1
-    CreateList(1)
-    RenderPage(0)						; use 0 so internal F5 + title wait runs cleanly
-  }
-  if (!cue && InStr(el_id, "myMp4"))
-    PopUp("original sent to recycle bin",999,0,0)
-  GuiControl, Indexer:, GuiInd
-  return
+    else							; selected items (mp3/mp4/join/jpg/srt/index)
+      {
+      Loop, Parse, select, `,
+        {
+        if A_LoopField
+          {
+          entry := StrSplit(fileList, "`r`n")[A_LoopField]
+          source := StrSplit(entry, "|").1
+          SplitPath, source,,,ex
+          if (ex == "txt")
+            {
+            source := auxSrc
+            tim := auxStart
+            }
+          if (playlist && InStr(el_id, "myIndex"))
+            source := entry						; use start time for poster
+          SplitPath, source,,,,med
+          GuiControl, Indexer:, GuiInd, %A_Index% - processing - %med%
+          output = %profile%\Downloads\%med% @%tim%.jpg
+          outputDir := inca . "\cache\srt"
+          if InStr(el_id, "mySrt")
+            ParakeetSrt(source, med)
+          else if InStr(el_id, "myJpg")
+            {
+            if  DetectMedia(source) == "image"
+              cmd = %inca%\cache\apps\ffmpeg.exe -i "%source%" -vf "scale=iw*%skinny%:ih" -y "%output%"
+            else cmd = %inca%\cache\apps\ffmpeg.exe -ss %tim% -i "%source%" -vf "scale=iw*%skinny%:ih" -y "%output%"
+            FileAppend, %output%|0.0`r`n, %inca%\fav\History.m3u, UTF-8
+            }
+          if InStr(el_id, "myIndex")
+            Index(source, 1)
+          if InStr(el_id, "myJpg")
+            runwait, %cmd%,, Hide
+          if (InStr(el_id, "myMp3") || InStr(el_id, "myMp4"))
+            if (new := Transcode(el_id, source, sta, end))
+              Index(new, 1)
+          }
+        }
+      }
+    if (!playing && (InStr(el_id, "mySrt") || fldr == folder))
+      {
+      if (!select)
+        index := 1						; prevent blank page when indexing whole folder
+      else
+        index := StrSplit(select, ",").1
+      CreateList(1)
+      RenderPage(0)						; use 0 so internal F5 + title wait runs cleanly
+      }
+    if (!cue && InStr(el_id, "myMp4"))
+      PopUp("original sent to recycle bin",999,0,0)
+    GuiControl, Indexer:, GuiInd
+    return
 
 
-ParakeetSrt(source, med)
-  {
-  global inca
-  parakeet = %inca%\cache\apps\Parakeet\parakeet-cli-cpu.exe
-  RunWait, %ComSpec% /c nvidia-smi -L > "%inca%\cache\temp\gpu.txt" 2>nul,, Hide
-  FileRead, gpu, %inca%\cache\temp\gpu.txt
-  if InStr(gpu, "NVIDIA")
-    parakeet = %inca%\cache\apps\Parakeet\parakeet-cli.exe
-  pmodel = %inca%\cache\apps\Parakeet\models\tdt-0.6b-v3-q8_0.gguf
-  wav = %inca%\cache\temp\%med%.wav
-  txt = %inca%\cache\temp\%med%.txt
-  srt = %inca%\cache\srt\%med%.srt
-  RunWait, %inca%\cache\apps\ffmpeg.exe -y -i "%source%" -ac 1 -ar 16000 -vn "%wav%",, Hide
-  RunWait, %ComSpec% /c ""%parakeet%" transcribe --model "%pmodel%" --input "%wav%" --decoder tdt --timestamps > "%txt%" 2>nul",, Hide
-  FileRead, raw, %txt%
-  cueN := 0
-  cueText =
-  cueStart =
-  cueEnd =
-  srtBody =
-  Loop, Parse, raw, `n, `r
+  ParakeetSrt(source, med)
     {
-    if !RegExMatch(A_LoopField, "^\s*([0-9]+\.[0-9]+)\s*-\s*([0-9]+\.[0-9]+)\s+(\S+)", m)
-      continue
-    if (cueStart = "")
-      cueStart := m1
-    cueEnd := m2
-    cueText .= m3 . " "
-    flush := 0
-    if RegExMatch(m3, "[.?!]$")
-      flush := 1
-    if (cueEnd - cueStart >= 4)
-      flush := 1
-    StringReplace, tmp, cueText, %A_Space%, %A_Space%, UseErrorLevel
-    if (ErrorLevel >= 12)
-      flush := 1
-    if flush
+    global inca
+    parakeet = %inca%\cache\apps\Parakeet\parakeet-cli-cpu.exe
+    RunWait, %ComSpec% /c nvidia-smi -L > "%inca%\cache\temp\gpu.txt" 2>nul,, Hide
+    FileRead, gpu, %inca%\cache\temp\gpu.txt
+    if InStr(gpu, "NVIDIA")
+      parakeet = %inca%\cache\apps\Parakeet\parakeet-cli.exe
+    pmodel = %inca%\cache\apps\Parakeet\models\tdt-0.6b-v3-q8_0.gguf
+    wav = %inca%\cache\temp\%med%.wav
+    txt = %inca%\cache\temp\%med%.txt
+    srt = %inca%\cache\srt\%med%.srt
+    RunWait, %inca%\cache\apps\ffmpeg.exe -y -i "%source%" -ac 1 -ar 16000 -vn "%wav%",, Hide
+    RunWait, %ComSpec% /c ""%parakeet%" transcribe --model "%pmodel%" --input "%wav%" --decoder tdt --timestamps > "%txt%" 2>nul",, Hide
+    FileRead, raw, %txt%
+    cueN := 0
+    cueText =
+    cueStart =
+    cueEnd =
+    srtBody =
+    Loop, Parse, raw, `n, `r
+      {
+      if !RegExMatch(A_LoopField, "^\s*([0-9]+\.[0-9]+)\s*-\s*([0-9]+\.[0-9]+)\s+(\S+)", m)
+        continue
+      if (cueStart = "")
+        cueStart := m1
+      cueEnd := m2
+      cueText .= m3 . " "
+      flush := 0
+      if RegExMatch(m3, "[.?!]$")
+        flush := 1
+      if (cueEnd - cueStart >= 4)
+        flush := 1
+      StringReplace, tmp, cueText, %A_Space%, %A_Space%, UseErrorLevel
+      if (ErrorLevel >= 12)
+        flush := 1
+      if flush
+        {
+        cueN += 1
+        cueText = %cueText%
+        srtBody .= cueN . "`r`n" . srtTime(cueStart) . " --> " . srtTime(cueEnd) . "`r`n" . cueText . "`r`n`r`n"
+        cueText =
+        cueStart =
+        }
+      }
+    if cueText
       {
       cueN += 1
       cueText = %cueText%
       srtBody .= cueN . "`r`n" . srtTime(cueStart) . " --> " . srtTime(cueEnd) . "`r`n" . cueText . "`r`n`r`n"
-      cueText =
-      cueStart =
       }
+    FileDelete, %srt%
+    if srtBody
+      FileAppend, %srtBody%, %srt%, UTF-8
+    else FileAppend, %raw%, %srt%, UTF-8
+    FileDelete, %wav%
+    FileDelete, %txt%
     }
-  if cueText
-    {
-    cueN += 1
-    cueText = %cueText%
-    srtBody .= cueN . "`r`n" . srtTime(cueStart) . " --> " . srtTime(cueEnd) . "`r`n" . cueText . "`r`n`r`n"
-    }
-  FileDelete, %srt%
-  if srtBody
-    FileAppend, %srtBody%, %srt%, UTF-8
-  else FileAppend, %raw%, %srt%, UTF-8
-  FileDelete, %wav%
-  FileDelete, %txt%
-  }
 
 
   SlowTimer:								; every half second
@@ -2667,16 +2709,12 @@ ParakeetSrt(source, med)
             index(A_LoopFileFullPath,1)					; get duration
             }
           if (A_Now - downloads > 20 && A_Now - downloads < 60)		; finished downloading
-            {
-            type := DecodeExt(ext)
-            if (type == "video" && ext == "webm")
-              if 1*Setting("AutoIndex")
-                {
-                Index(A_LoopFileFullPath, 1)
-                if Transcode("myMp4", A_LoopFileFullPath, 0, 0)
-                  PopUp(nameNoExt,999,0.5,0.5)
-                }
-            }
+            if (ext == "webm" && 1*Setting("AutoIndex"))
+              {
+              Index(A_LoopFileFullPath, 1)
+              if Transcode("myMp4", A_LoopFileFullPath, 0, 0)
+                PopUp(nameNoExt,999,0.5,0.5)
+              }
           FileRead, history, %inca%\fav\History.m3u
           }
     x := Setting("Sleep Timer") * 60000
