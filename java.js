@@ -134,15 +134,11 @@
   document.addEventListener('visibilitychange', function() {
     if (document.visibilityState == 'visible' && folder == 'downloads' && !selected && !playing) inca('Reload',2,index)})
   myInca.addEventListener('mouseenter', () => {
-    const isAlt = myAlt.style.display === 'block'			// toggle context menus
+    const isAlt = myAlt.style.display === 'block'					// toggle context menus
     myAlt.style.display = isAlt ? '' : 'block'
     myDefault.style.display = isAlt ? 'block' : 'none'})
   searchHeader.addEventListener('wheel', nextMatch)
-  mediaContent.addEventListener('mouseleave', () => {
-    myPlayer.removeAttribute('src')
-    mediaContent.style.display = 'none'
-    document.getElementById('voice-faces')?.style.removeProperty('display')
-    updateBlockAlignments()})
+  mediaContent.addEventListener('mouseleave', closeMenu)
   searchHeader.addEventListener('mouseleave', () => searchInput.placeholder='🔍︎')
   searchHeader.addEventListener('click', (e) => {
     searchTerm = searchInput.value = ''; blocks.forEach(b => {b.style.color = ''; b.textContent = b.textContent})})
@@ -153,7 +149,7 @@
   searchInput.addEventListener('input', newSearch)
   viewport.addEventListener('input', () => {editing = 1; userPlay = syncPlay = 0})
   viewport.addEventListener('wheel', wheelEvent)
-  editor.addEventListener('wheel', wheelEvent)				// face zoom
+  editor.addEventListener('wheel', wheelEvent)						// face zoom
   viewport.addEventListener('scroll', showFace)
 
 
@@ -161,26 +157,26 @@
     longClick = gesture = 0
     if (e.key == 'F22') mouseDown = lastClick = 3
     else if (e.button != 2) mouseDown = lastClick = e.button + 1
-    if (mouseDown == 2) e.preventDefault()				// forward and back mouse buttons
+    if (mouseDown == 2) e.preventDefault()						// forward and back mouse buttons
     xRef = xPos; yRef = yPos
     clickMedia = overMedia
-    timeout = setTimeout(() => {longClick = mouseDown; clickEvent(e)},280)}	// detect long click
+    timeout = setTimeout(() => {longClick = mouseDown; clickEvent(e)},280)}		// detect long click
 
 
   function mouseUp(e) {
-    if (!mouseDown) return						// stop re-entry also if new page load
-    clearTimeout(timeout)						// longClick timer
-    if (!longClick) clickEvent(e)					// process click event
+    if (!mouseDown) return								// stop re-entry also if new page load
+    clearTimeout(timeout)								// longClick timer
+    if (!longClick) clickEvent(e)							// process click event
     longClick = wheel = gesture = mouseDown = 0}
 
 
-  function keyDown(e) {							// keyboard events
+  function keyDown(e) {									// keyboard events
     if (e.key == 'Enter' && captions) {e.preventDefault(); e.stopImmediatePropagation(); splitIfNeeded(e)}
     else if (e.key == 'Enter' && !playing) {
-      if (overTitle == 2) inca('Rename', title.value, lastMedia)	// rename title
-      else inca('SearchBox','','',myInput.value)}			// search for media
-    else if (e.key == 'F22') Click(e)					// R click down
-    else if (e.key == 'F23') mouseUp(e)					// R click up
+      if (overTitle == 2) inca('Rename', title.value, lastMedia)			// rename title
+      else inca('SearchBox','','',myInput.value)}					// search for media
+    else if (e.key == 'F22') Click(e)							// R click down
+    else if (e.key == 'F23') mouseUp(e)							// R click up
     else if (e.key == 'F24' || (e.code == 'ArrowLeft' && e.shiftKey)) mouseBack()
     else if (e.key === 'Backspace') Backspace(e)
     else if (e.shiftKey && editingBlock && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
@@ -708,6 +704,7 @@
     myPlayerWrap.style.top   = (y - (outerHeight - innerHeight)) - myPlayer.offsetHeight / 2 + 'px'
     myPlayerWrap.style.transform = 'scale(' + skinny * z + ',' + z + ')'
     void myPlayer.offsetWidth
+    if (!gesture && captions && (mediaContent.style.display === 'flex' || getEffectiveMedia(editingBlock)?.src !== projectMedia.defaultSrc)) return
     const edRect = myPlayer.getBoundingClientRect()
     const ox = captions == 1 ? 0 : editorX
     const oy = captions == 1 ? 0 : editorY
@@ -1394,6 +1391,14 @@ function swapMedia(src, time) {
       { myStart.style.color = 'lightgreen'; myStart.textContent = num + '\u2003\u2003' + shortFormatTime(current) }
     else {myStart.style.color = null; myStart.textContent = current ? num + '\u2003\u2003' + shortFormatTime(current) : '- : -- . -'}}
 
+  function closeMenu() {
+    mediaContent.style.display = 'none'
+    document.getElementById('voice-faces')?.style.removeProperty('display')
+    const media = getEffectiveMedia(editingBlock)
+    swapMedia(media?.src || originalPlayerSrc, editingBlock?.dataset.start || 0)
+    syncPlay = 0
+    currentPreviewItem = null
+    updateBlockAlignments()}
 
   document.querySelector('#media-header').addEventListener('click', async (e) => {
     e.stopPropagation()
