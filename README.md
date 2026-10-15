@@ -1,9 +1,8 @@
 
 # Inca
 
-**Windows File Explorer, in a YouTube-style browser tab** - Portable no install needed<br>
-Browse, play, file, and remix your own photos, videos, audio, captions, and text<br>
-Works in Chrome, Firefox, Edge, Opera, and Brave on Windows<br>
+**Windows File Explorer - AI storyboard creator - in a browser tab**<br><br>
+Portable - no install needed - Chrome, Firefox, Edge, Opera or Brave
 
 <img src="screens/xyZPE.svg" width="70%" alt="Inca interface diagram">
 
@@ -12,9 +11,8 @@ Works in Chrome, Firefox, Edge, Opera, and Brave on Windows<br>
 ## What it is
 
 Inca is a platform for finding, organising and manipulating local media<br>
-Think of it as a way to enhance existing or stale media files<br>
-through the process of active creation rather than passive playback<br>
-shuffle a folder, build a playlist, write captions<br>
+and creating new content using AI tools <br>
+shuffle a folder, build a playlist, write or edit captions<br>
 clone a voice, change pitch and speed, cut and join clips
 
 <table><tr>
@@ -29,11 +27,11 @@ clone a voice, change pitch and speed, cut and join clips
 Use it to:
 
 - File and organize (move, copy, rename, favorite, convert)
-- Edit captions, subtitles and voices on images, video or text
+- Edit captions. Add subtitles or voices to images, video or text
 - Clone voices locally or via APIs
 - Build persistent pathways and storyboards from your own files
 - Change names, voices, cuts, timing, captions and story into evolving arcs
-- So take any media sources and build your own stories around them
+- Put yourself and your own name into new or existing characters
 
 ---
 
