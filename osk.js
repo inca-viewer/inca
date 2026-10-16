@@ -70,37 +70,40 @@ function updateSuggestions() {
 
 function insertSuggestion(s) {
   if (!targetEl || !restoreSelection() || gesture) return
+  const partial = predictBuffer || (window.getSelection().anchorNode?.textContent || '').slice(0, window.getSelection().anchorOffset).match(/\S+$/)?.[0] || ''
   if (!s) return
-
-  const sel = window.getSelection()
-  if (!sel.rangeCount) return
-  const range = sel.getRangeAt(0)
-
-  // remove any partial word before the caret
-  const partial = predictBuffer ||
-    (range.startContainer.textContent || '')
-      .slice(0, range.startOffset)
-      .match(/\S+$/)?.[0] || ''
-
-  if (partial && range.startContainer.nodeType === 3) {
-    range.setStart(range.startContainer, Math.max(0, range.startOffset - partial.length))
-    sel.removeAllRanges()
-    sel.addRange(range)
-  }
-
   if (targetEl.isContentEditable) {
-    // always insert word + normal space; let the browser handle the rest
-    document.execCommand('insertText', false, s + ' ')
-  } else {
+    if (partial) {
+      const sel = window.getSelection()
+      const range = sel.getRangeAt(0)
+      range.setStart(range.startContainer, Math.max(0, range.startOffset - partial.length))
+      sel.removeAllRanges(); sel.addRange(range)}
+    const r = window.getSelection().getRangeAt(0)
+    const nodeText = r.startContainer.textContent || ''
+    const before = r.startContainer.nodeType === 3
+      ? nodeText.slice(0, r.startOffset)
+      : nodeText.slice(0, Math.min(r.startOffset, nodeText.length))
+    const after = r.startContainer.nodeType === 3
+      ? nodeText.slice(r.endOffset)
+      : ''
+    const atLineStart = before === '' || /[\n\r]$/.test(before)
+    const prefix = before === '' || /\s$/.test(before) ? '' : ' '
+    const suffix = /^[ \t\u00a0]/.test(after) ? '' : '\u00a0'
+    document.execCommand('insertText', false, prefix + s + suffix)
+    if (!suffix && /^[ \u00a0]/.test(after)) { window.getSelection().modify('move', 'forward', 'character') }
+  }
+  else {
     const pos = targetEl.selectionStart ?? targetEl.value.length
     const before = targetEl.value.slice(0, pos)
-    const after  = targetEl.value.slice(pos)
-    const base   = partial ? before.slice(0, Math.max(0, before.length - partial.length)) : before
-    const prefix = (base === '' || /\s$/.test(base)) ? '' : ' '
-    targetEl.value = base + prefix + s + ' ' + after
-    const newPos = (base + prefix + s + ' ').length
-    targetEl.selectionStart = targetEl.selectionEnd = newPos
-  }
+    const after = targetEl.value.slice(pos)
+    const base = partial ? before.slice(0, Math.max(0, before.length - partial.length)) : before
+    const atLineStart = base === '' || /[\n\r]$/.test(base)
+    const prefix = base === '' || /\s$/.test(base) ? '' : ' '
+    const suffix = (!atLineStart && /^\s/.test(after)) ? '' : ' '
+    const rest = (atLineStart && /^\s/.test(after)) ? after.replace(/^\s/, '') : after
+    targetEl.value = base + prefix + s + suffix + rest
+    const newPos = (base + prefix + s + suffix).length + (!suffix && /^ /.test(after) ? 1 : 0)
+    targetEl.selectionStart = targetEl.selectionEnd = newPos}
 
   predictBuffer = ''
   captureSelection()

@@ -1,7 +1,6 @@
 // try InfiniteTalk / flashHead face animation when 50GB disk is free
 
 
-
   let wheel = 0								// wheel count
   let wheelDir = 0		 					// wheel direction
   let index = 1								// thumb index (e.g. thumb14)
@@ -423,9 +422,9 @@
         if (id == 'myMask' || (id == 'viewport' && ym < 0.2))  {mediaX += dx; mediaY += dy}
         else if (overMedia) {
           mediaX += dx; mediaY += dy
-          if (captions) { editorX -= dx; editorY -= dy }}
-        if (captions && (overMedia || id == 'myMask' || id == 'viewport')) editing = 1}
-      positionMedia(0)}
+          positionMedia(0)
+          if (captions) { editorX -= dx; editorY -= dy; positionEditor()}}
+        if (captions && (overMedia || id == 'myMask' || id == 'viewport')) editing = 1}}
     if (gesture) {
       xRef = xPos; yRef = yPos
       if (captions == 2) projectMedia.uiHeight = editor.style.height}}
@@ -703,8 +702,10 @@
     myPlayerWrap.style.left  = (x - (window.screenX || 0)) - myPlayer.offsetWidth  / 2 + 'px'
     myPlayerWrap.style.top   = (y - (outerHeight - innerHeight)) - myPlayer.offsetHeight / 2 + 'px'
     myPlayerWrap.style.transform = 'scale(' + skinny * z + ',' + z + ')'
-    void myPlayer.offsetWidth
-    if (!gesture && captions && (mediaContent.style.display === 'flex' || getEffectiveMedia(editingBlock)?.src !== projectMedia.defaultSrc)) return
+    void myPlayer.offsetWidth}
+
+
+  function positionEditor() {
     const edRect = myPlayer.getBoundingClientRect()
     const ox = captions == 1 ? 0 : editorX
     const oy = captions == 1 ? 0 : editorY
@@ -1170,6 +1171,8 @@ function fitPlayer(w, h) {
         projectMedia.uiHeight = editor.style.height
         if (u.editorX) { editorX = u.editorX; editorY = u.editorY }}
       if (u.mediaX) { mediaX = u.mediaX; mediaY = u.mediaY }
+positionMedia()
+      positionEditor()
       if (u.scaleY > 0) scaleY = u.scaleY}
     setTimeout(() => {editing = 0; first.focus(); if (defPause) {first.scrollIntoView({ block: 'center' }); syncPlay = 0}}, 200)}
 
