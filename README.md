@@ -1,7 +1,7 @@
 
 # Inca
 
-**Windows File Explorer - AI storyboard creator - in a browser tab**<br><br>
+**Windows File Explorer and storyboard creator in browser tab**<br><br>
 Portable - no install needed - Chrome, Firefox, Edge, Opera or Brave
 
 <img src="screens/xyZPE.svg" width="70%" alt="Inca interface diagram">
@@ -31,7 +31,8 @@ Use it to:
 - Clone voices locally or via APIs
 - Build persistent pathways and storyboards from your own files
 - Change names, voices, cuts, timing, captions and story into evolving arcs
-- Put yourself and your own name into new or existing characters
+- Insert yourself into existing media with new dialogs
+- Characters use your name as if talking directly to you
 
 ---
 
