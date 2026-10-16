@@ -31,7 +31,7 @@ Use it to:
 - Clone voices locally or via APIs
 - Build persistent pathways and storyboards from your own files
 - Change names, voices, cuts, timing, captions and story into evolving arcs
-- Insert yourself into existing media with new dialogs
+- Insert yourself into existing media scenes with new dialogs
 - Characters use your name as if talking directly to you
 
 ---
