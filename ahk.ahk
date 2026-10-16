@@ -2116,6 +2116,21 @@
       if searchTerm							; on load scroll top panel to search letter eg 'M'
         scroll = my%x%
 
+    container = <div id='Music' style='font-size:2em; color:pink; text-align:center'>&#x266B;</div>`n
+    container := fill(container)
+    Loop, Parse, music, `|
+      if A_LoopField
+        {
+        SplitPath, A_Loopfield,,,,x
+        if (x == folder)
+          container = %container%<c class='p2' style='color:pink' onmousedown="inca('Path','','','music|%A_Index%')">%x%</c>`n
+        else container = %container%<c class='p2' onmousedown="inca('Path',index,'','music|%A_Index%')">%x%</c>`n
+        if !Mod(A_Index,4)
+          container := fill(container)
+        }
+    if container
+      fill(container)
+
     if subfolders							; add list to top panel element
       {
       container = <div id='Sub' style='font-size:2em; color:pink; text-align:center'>&#x1F4BB;&#xFE0E;</div>`n
@@ -2161,21 +2176,6 @@
         if (x == folder)
           container = %container%<c class='p2' style='color:pink; font-size:0.9em; margin-left:0.2em' onmousedown="inca('Path','','','fav|%A_Index%')">%x%</c>`n
         else container = %container%<c class='p2' onmousedown="inca('Path',index,'','fav|%A_Index%')">%x%</c>`n
-        if !Mod(A_Index,4)
-          container := fill(container)
-        }
-    if container
-      fill(container)
-
-    container = <div id='Music' style='font-size:2em; color:pink; text-align:center'>&#x266B;</div>`n
-    container := fill(container)
-    Loop, Parse, music, `|
-      if A_LoopField
-        {
-        SplitPath, A_Loopfield,,,,x
-        if (x == folder)
-          container = %container%<c class='p2' style='color:pink' onmousedown="inca('Path','','','music|%A_Index%')">%x%</c>`n
-        else container = %container%<c class='p2' onmousedown="inca('Path',index,'','music|%A_Index%')">%x%</c>`n
         if !Mod(A_Index,4)
           container := fill(container)
         }
