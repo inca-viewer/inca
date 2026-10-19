@@ -89,7 +89,6 @@
   let timeout = 0
   let overTimer = 0
   let matches = 0
-
   let leftVoice = ''
   let rightVoice = ''
   let centerVoice = ''
@@ -124,7 +123,6 @@
   myPlayer.addEventListener('ended', playerEnded)
   myVoice.addEventListener('ended', nextCaption)
   myPlayer.addEventListener('timeupdate', playerProgress)
-  document.addEventListener('dblclick', () => { if (playing && !captions) scaleY = scaleY > 0.65 ? 0.5 : 0.8 })
   myPlayer.addEventListener('loadedmetadata', () => { fitPlayer(myPlayer.videoWidth, myPlayer.videoHeight) })
   window.addEventListener('beforeunload', (e) => { if (playing && editing) e.preventDefault() })
   myNav.addEventListener('wheel', wheelEvent, { passive: false })
@@ -192,9 +190,9 @@
     delay = 80;										// 80 max
     let id = e.target.id								// id under cursor
     let emotion = '[' + e.target.dataset.tag + '] '
+    if (document.elementFromPoint(xPos, yPos)?.closest('#voice-faces')) { newVoice(e); return }
     if (e.target.closest('#emotionSub')) {document.execCommand('insertText', false, emotion); myNav.style.display = null; return}
     if (e.target.closest('#soundsSub')) {document.execCommand('insertText', false, emotion); myNav.style.display = null; return}
-    if (document.elementFromPoint(xPos, yPos)?.closest('#voice-faces')) { newVoice(e); return }
     if (captions) overBlock = document.elementFromPoint(xPos, yPos)?.closest('.text-block') || 0
     if (!playing && !listView && longClick && !gesture && overMedia && !overTitle) popThumb()	// pop thumb out of flow
     if (['myCut', 'myCopy', 'myPaste'].includes(id)) {
@@ -317,11 +315,9 @@
       if (myNav.style.display && type == 'video') {myNav.style.display = null; thumbSheet ^= 1; start = lastSeek; return 1}}
     if (lastClick == 2 || !dur) start = defStart
     else if (zoom > 1) start = thumb.currentTime || start
-    if (lastClick != 2 && !thumbSheet && playing && ((ym > trigger && overMedia) || yw > 0.95)) {
-      if (longClick) {if (xm < 0.5) {myPlayer.currentTime = 0} else myPlayer.currentTime = defStart}
-      else myPlayer.currentTime = start
-      if (!mouseDown && captions && editingBlock?._voice?.src) nextCaption(-1)		// wheel only
-      return }
+    if (playing && !thumbSheet && lastClick != 2 && overMedia && ym > trigger) {
+      if (longClick) myPlayer.currentTime = (xm < 0.5 || defStart < 2) ? 0 : defStart
+      else myPlayer.currentTime = start; return }
     if (longClick && longClick != 2 && !title.matches(':hover')) return
     if (dur < 200 && start < defStart + 2 && !playlist && !favicon.textContent.includes('\u2764')) start = 0
     if (!playing && !longClick && overMedia && !dur) return 1				// show image or text files
@@ -417,15 +413,14 @@
       editing = 1}
     else if (playing && (mouseDown == 1 || gesture == 2 || delay == 1)) {		// move myPlayer / editor
       const dx = xPos - xRef, dy = yPos - yRef
+      if (captions) {
+        overBlock = document.elementFromPoint(xPos, yPos)?.closest('.text-block') || 0
+        if (overBlock && overBlock != editingBlock) activateBlock(overBlock, 0)}
       if (thumbSheet) { xyz[0] += dx; xyz[1] += dy }
-      else if (!overBlock) {
-        if (id == 'myMask' || (id == 'viewport' && ym < 0.2))  {mediaX += dx; mediaY += dy}
-        else if (overMedia) {
-          mediaX += dx; mediaY += dy
-          positionMedia(0)
-          if (captions) { editorX -= dx; editorY -= dy; positionEditor()}}
-        if (captions && (overMedia || id == 'myMask' || id == 'viewport')) editing = 1}}
-    if (gesture) {
+      else if (!overBlock && !(overEditor && xm > 0.9) && !(overEditor && ym > 0.3)) {
+        mediaX += dx; mediaY += dy; positionMedia(0)
+        if (captions) { editing = 1; if (overMedia) { editorX -= dx; editorY -= dy } else positionEditor() }}}
+        if (gesture) {
       xRef = xPos; yRef = yPos
       if (captions == 2) projectMedia.uiHeight = editor.style.height}}
 
@@ -702,6 +697,7 @@
     myPlayerWrap.style.left  = (x - (window.screenX || 0)) - myPlayer.offsetWidth  / 2 + 'px'
     myPlayerWrap.style.top   = (y - (outerHeight - innerHeight)) - myPlayer.offsetHeight / 2 + 'px'
     myPlayerWrap.style.transform = 'scale(' + skinny * z + ',' + z + ')'
+    if (!mouseDown && !mediaContent.style.display) positionEditor()
     void myPlayer.offsetWidth}
 
 
@@ -759,31 +755,31 @@
     else {mySeek.style.opacity = myPic.style.opacity = 0; start = defStart}}
 
 
-function setThumb() {									// sets src, poster, thumbsheet & dimensions
-  if (type == 'video') {
-    const match = thumb.src.match(/\/([^\/]+?)(?:\.[^.]*?)?$/);
-    const filename = match ? match[1] : null;
-    let path = thumb.poster.replace(/\/posters\//, '/thumbs/').replace(/\/[^\/]*$/, '')
-    sheetUrl = path + '/' + filename + '.jpg'
-    thumb.poster = thumb.poster.replace(/\/thumbs\//, '/posters/')
-    myPic.style.backgroundImage = 'url(\"'+sheetUrl+'\")'				// use 6x6 thumbsheet as poster
-    myPlayer.poster = sheetUrl}
-  else myPlayer.removeAttribute('src')
-  if (!thumbSheet && dur) myPlayer.currentTime = start
-  fitPlayer(thumb.offsetWidth, thumb.offsetHeight)
-  myPic.style.width = thumb.offsetWidth + 'px'
-  myPic.style.height = thumb.offsetHeight + 'px'
-  thumb.parentElement.style.transform = 'scale('+skinny*zoom+','+zoom+')'
-  myPic.style.transform = 'scale('+skinny+',1)'
-  myPic.style.backgroundPosition = '0% 0%'}						// sets to frame 1 of 6x6 thumbSheet
+  function setThumb() {									// sets src, poster, thumbsheet & dimensions
+    if (type == 'video') {
+      const match = thumb.src.match(/\/([^\/]+?)(?:\.[^.]*?)?$/);
+      const filename = match ? match[1] : null;
+      let path = thumb.poster.replace(/\/posters\//, '/thumbs/').replace(/\/[^\/]*$/, '')
+      sheetUrl = path + '/' + filename + '.jpg'
+      thumb.poster = thumb.poster.replace(/\/thumbs\//, '/posters/')
+      myPic.style.backgroundImage = 'url(\"'+sheetUrl+'\")'				// use 6x6 thumbsheet as poster
+      myPlayer.poster = sheetUrl}
+    else myPlayer.removeAttribute('src')
+    if (!thumbSheet && dur) myPlayer.currentTime = start
+    fitPlayer(thumb.offsetWidth, thumb.offsetHeight)
+    myPic.style.width = thumb.offsetWidth + 'px'
+    myPic.style.height = thumb.offsetHeight + 'px'
+    thumb.parentElement.style.transform = 'scale('+skinny*zoom+','+zoom+')'
+    myPic.style.transform = 'scale('+skinny+',1)'
+    myPic.style.backgroundPosition = '0% 0%'}						// sets to frame 1 of 6x6 thumbSheet
 
 
-function fitPlayer(w, h) {
-  if (!w || !h) return
-  aspect = w / h
-  const z = innerHeight
-  myPlayer.style.width = (aspect < 1 ? z * aspect : z) + 'px'
-  myPlayer.style.height = (aspect < 1 ? z : z / aspect) + 'px'}
+  function fitPlayer(w, h) {
+    if (!w || !h) return
+    aspect = w / h
+    const z = innerHeight
+    myPlayer.style.width = (aspect < 1 ? z * aspect : z) + 'px'
+    myPlayer.style.height = (aspect < 1 ? z : z / aspect) + 'px'}
 
 
   function filter(id) {									// for htm ribbon headings
@@ -1171,10 +1167,10 @@ function fitPlayer(w, h) {
         projectMedia.uiHeight = editor.style.height
         if (u.editorX) { editorX = u.editorX; editorY = u.editorY }}
       if (u.mediaX) { mediaX = u.mediaX; mediaY = u.mediaY }
-positionMedia()
-      positionEditor()
+      positionMedia()
+      void myPlayerWrap.offsetWidth
       if (u.scaleY > 0) scaleY = u.scaleY}
-    setTimeout(() => {editing = 0; first.focus(); if (defPause) {first.scrollIntoView({ block: 'center' }); syncPlay = 0}}, 200)}
+    setTimeout(() => {positionEditor(); editing = 0; first.focus(); if (defPause) {first.scrollIntoView({ block: 'center' }); syncPlay = 0}}, 200)}
 
 
 
@@ -1437,6 +1433,9 @@ function swapMedia(src, time) {
       const custom = (getEffectiveMedia(editingBlock)?.src || '') !== (projectMedia.defaultSrc || '')
       if (editingBlock._voice && !custom) { delete editingBlock._voice; delete editingBlock._voiceName }
       else editingBlock._media = false
+      const prev = editingBlock.previousElementSibling
+      const newStart = prev ? (parseFloat(prev.dataset.start) || 0) + 2 : 0
+      editingBlock.dataset.start = newStart
       editing = 1
       swapMedia(projectMedia.defaultSrc || originalPlayerSrc, editingBlock.dataset.start)
       activateBlock(editingBlock, 1)
@@ -1677,7 +1676,7 @@ function makeJSON() {
     block.textContent = part1
     const newBlock = createBlock(
         null,
-        startSec + 2,
+        startSec + 4,
         part2,
         '0',
         {})

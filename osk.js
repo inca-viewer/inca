@@ -162,35 +162,44 @@ function insertSuggestion(s) {
         let repeatTimer;
 
         btn.addEventListener('mousedown', () => {
-          if (!['Shift', 'Num'].includes(key)) return;
-          
-          pressTimer = setTimeout(() => {
-            btn.classList.add('locked');
-            if (key === "Shift")  window.shiftLocked = true;
-            if (key === "Num")    window.numLocked   = true;
-          }, 320);
+          if (['Shift', 'Num'].includes(key)) {
+            pressTimer = setTimeout(() => {
+              btn.classList.add('locked');
+              if (key === "Shift") window.shiftLocked = true;
+              if (key === "Num")   window.numLocked   = true;
+            }, 320);
+            return;
+          }
+
+          if (key === "↑" || key === "↓" || /^[a-z]$/i.test(key)) {
+            pressTimer = setTimeout(() => {
+              if (gesture > 1) return;
+              const shiftArrow = key === "↑" || key === "↓";
+              if (shiftArrow) isShift = true;
+              handleKey(/^[a-z]$/i.test(key) ? key.toUpperCase() : key, btn);
+              if (shiftArrow) isShift = false;
+              btn.dataset.fired = "1";
+            }, 280);
+          }
         });
 
         btn.addEventListener('mouseup', () => {
           clearTimeout(pressTimer);
           clearTimeout(repeatTimer);
+          if (gesture > 1 || btn.dataset.fired) {
+            delete btn.dataset.fired;
+            return;
+          }
+          const cap = longClick && /^[a-z]$/i.test(key);
+          handleKey(cap ? key.toUpperCase() : key, btn);
+          if (!["Num", "Shift", "Ctrl", "↑", "↓", "‹", "›", "Del", "Enter"].includes(key))
+            setTimeout(() => { captureSelection(); requestAnimationFrame(updateSuggestions); }, 8);
         });
 
         btn.addEventListener('mouseleave', () => clearTimeout(repeatTimer));
 
-btn.addEventListener('mouseup', () => {
-  clearTimeout(pressTimer);
-  clearTimeout(repeatTimer);
-  if (gesture > 1) return;
-  const cap = longClick && /^[a-z]$/i.test(key);
-  handleKey(cap ? key.toUpperCase() : key, btn);
-  if (!["Num", "Shift", "Ctrl", "↑", "↓", "‹", "›", "Del", "Enter"].includes(key))
-    setTimeout(() => { captureSelection(); requestAnimationFrame(updateSuggestions); }, 8);
-});
-
         btn.addEventListener('mousedown', () => {
           if (key !== "←") return;
-          
           const repeat = () => {
             handleKey("←", btn);
             repeatTimer = setTimeout(repeat, 60);
