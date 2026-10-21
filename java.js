@@ -315,7 +315,7 @@
       if (myNav.style.display && type == 'video') {myNav.style.display = null; thumbSheet ^= 1; start = lastSeek; return 1}}
     if (lastClick == 2 || !dur) start = defStart
     else if (zoom > 1) start = thumb.currentTime || start
-    if (playing && !thumbSheet && lastClick != 2 && overMedia && ym > trigger) {
+    if (playing && !thumbSheet && lastClick != 2 && overMedia && (ym > trigger || yw > 0.95)) {
       if (longClick) myPlayer.currentTime = (xm < 0.5 || defStart < 2) ? 0 : defStart
       else myPlayer.currentTime = start; return }
     if (longClick && longClick != 2 && !title.matches(':hover')) return
@@ -697,7 +697,7 @@
     myPlayerWrap.style.left  = (x - (window.screenX || 0)) - myPlayer.offsetWidth  / 2 + 'px'
     myPlayerWrap.style.top   = (y - (outerHeight - innerHeight)) - myPlayer.offsetHeight / 2 + 'px'
     myPlayerWrap.style.transform = 'scale(' + skinny * z + ',' + z + ')'
-    if (!mouseDown && !mediaContent.style.display) positionEditor()
+    if (!mouseDown && mediaContent.style.display != 'flex') positionEditor()
     void myPlayer.offsetWidth}
 
 
@@ -1503,7 +1503,7 @@ function swapMedia(src, time) {
               }
             editing = 1}
           swapMedia(mediaObj.src, item.startSec);
-          activateBlock(editingBlock, 1)
+          setTimeout(()=> activateBlock(editingBlock, 1), 100)
           if (!editingBlock._voice?.src) myPlayer.currentTime = editingBlock.dataset.start
         });
       });

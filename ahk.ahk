@@ -1140,7 +1140,7 @@
         selected := array.2
         MoveFiles()
         folder := incaTab
-        ;      reload := 2
+        reload := 2
         }
     else
       send, ^v
