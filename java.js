@@ -499,7 +499,7 @@ myPlayer.addEventListener('seeked', () => {
       filter(id); delay = 90}
     else if (id == 'mySpeed') { 							// rate
       let val = cue ? rate : (overEditor ? (editingBlock?._rate ?? rate) : rate)
-      if (wheelUp) {val -= 0.02} else val += 0.02
+      if (wheelUp) {val -= 0.01} else val += 0.01
       updateCue('rate',val); delay = 80}
     else if (id == 'mySkinny' && type) {						// skinny
       if (wheelUp) {skinny -= 0.01} else skinny += 0.01
