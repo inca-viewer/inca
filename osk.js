@@ -396,6 +396,7 @@ oskElement.prepend(suggestionRow);
   createKeyboard();
   positionKeyboard();
   buildPredictor()
+restoreSelection();
 }
 
 function buildPredictor() {

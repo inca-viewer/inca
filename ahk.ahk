@@ -262,7 +262,10 @@
         index := StrSplit(selected, ",").1
       reload := value
       if (reload && sort == "Shuffle")
+        {
         reload := 1
+        PopUp(listSize, 0, 0, 0)
+        }
       }
     else if (command == "History")
       History()
@@ -601,7 +604,7 @@
       index := x[x.MaxIndex()-1]					; scroll htm to end of selection
       MoveFiles()
       if !longClick							; is copy so no change to folder
-        CreateList(1)							; silent list update
+        CreateList(0)							; silent list update
       if InStr(address, "\inca\")					; was to playlist
         RenderPage(0)							; normal render
       else RenderPage(999)						; 999 = top panel scrolls to target folder
@@ -2274,7 +2277,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
 
   <div id='myDefault'>
     <div class="menu editor">`n
-      <a id='myStart'>- : -- . -</a>`n
+      <a id='myStart'>0 : 00 . 0</a>`n
       <a id='myBookmark'>Bookmark <span style="font-size:0.64em; vertical-align:0.1em">&#x2764</span></a>`n
       <a id='myRate'>Speed</a>`n
       <a id='myVol'>Volume</a>`n

@@ -49,10 +49,24 @@
     width: 15em;
     min-width: 15em !important;}
 
-  #editor { box-sizing:border-box; display:none; flex-direction:column; width:500px; max-width:100%;
-    background:#ffffff0a; border-radius:1em; font-size:16px; max-height:80vh; overflow:hidden;
-    position:fixed; left:50%; top:50%; transform:translate(-50%,-50%); z-index: 5002; height:0;
-    height: 40px; min-width:250px; min-height:40px; resize:both; transition: 0}
+#editor {
+  box-sizing: border-box;
+  display: none;
+  flex-direction: column;
+  width: 500px;
+  max-width: 100%;
+  background: #ffffff0a;
+  border-radius: 1em;
+  font-size: 16px;
+  max-height: 80vh;
+  overflow: hidden;
+  position: fixed;
+  z-index: 5002;
+  height: 40px;
+  min-width: 250px;
+  min-height: 40px;
+  resize: both;
+  transition: none}
 
   #editor:has(#media-header .dropdown-content[style*="flex"]) { z-index: 5012 }
   #media-header .dropdown-content { z-index: 30 }
@@ -61,6 +75,7 @@
   font-size:12px; 
   background:#0a0a0a; 
   display:flex;
+  order: 1;
   align-items:center; 
   flex-wrap:wrap; 
   user-select:none; 
@@ -68,7 +83,7 @@
   justify-content: space-around;
   cursor:default;}
 
- #media-header {padding-left: 1em; width: 30%}
+ #media-header {position: static; padding-left: 1em; width: 30%}
  #search-header {min-width: 30%}
 
 #media-header > .header > * { 
@@ -81,7 +96,7 @@
   min-width: 0}
 
 #media-header > .header { padding: 0 0.2em; display: flex; color: #ffc0cb44; overflow-x: hidden; width: auto;}
-#media-header .dropdown-content { height: 10em; padding: 0.5em 0.5em; line-height: 1.2; translate: 0 -2.2em}
+#media-header .dropdown-content { left: 0; right: 0; bottom: 0; top: auto; width: auto; height: 10em; padding: 0.5em 0.5em; line-height: 1.2; overflow-x: hidden;}
 #media-header .dropdown-content > div:active {border-left: 1px solid red}
 
   .dropdown { position:relative; display:inline-block;}
@@ -89,7 +104,7 @@
     color: #ffc0cb99; border-radius:0.9em; height: 1.8em; background: #0f0e0e;
     white-space:nowrap; display:flex; cursor:default; }
   .dropdown-content {
-    position: absolute; top:100%; min-width:50%; background: #0f0e0e;
+    position: absolute; top:auto; bottom:100%; min-width:50%; background: #0f0e0e;
     box-shadow:0 4px 12px rgba(0,0,0,0.5); border-radius: 6px;
     display:none; z-index:1; padding-bottom:8px;
     overflow-y:auto; flex-direction:column; gap:2px;}
@@ -114,7 +129,7 @@
       transparent 0,
       transparent 1.2em,
       black 3.5em,
-      black 94%,
+      black 74%,
       transparent 100%),
     linear-gradient(to left, black 0 14px, transparent 14px);}
 
@@ -126,7 +141,7 @@
     transparent 0,
     transparent 6em,
     black 9em,
-    black 94%,
+    black 74%,
     transparent 100%),
   linear-gradient(to left, black 0 14px, transparent 14px);}
 
@@ -180,7 +195,7 @@
   transform: translateX(-50%);
   display: none;
   gap: 4em;
-  z-index: 10;                 /* above ribbon / viewport content */
+  z-index: 20;                 /* above ribbon / viewport content */
   pointer-events: none}
 
 
@@ -237,7 +252,7 @@
       text-align:center; font-size:0.9em; font-family:inherit; border-radius:4px;}
 
     #myCancel {
-      position: absolute; top: 0.3em; z-index:999;
+      position: absolute; bottom: 0.3em; z-index:999;
       text-align:center; width: auto; padding: 0 0.5em;
       transition:0.6s; background:#1a1a1a00; cursor:pointer; font-size: 1em;}
     #myCancel:hover { transform: scale(1.4,1.4)}
