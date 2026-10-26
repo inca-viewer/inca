@@ -464,10 +464,9 @@ myPlayer.addEventListener('seeked', () => {
       if (thumbSheet) { xyz[0] += dx; xyz[1] += dy }
       else if (!overBlock && !(overEditor && xm > 0.9) && !(overEditor && ym > 0.3)) {
         mediaX += dx; mediaY += dy; positionMedia(0)
-        if (captions) { editing = 1; if (overMedia) { editorX -= dx; editorY -= dy } else positionEditor() }}}
-        if (gesture) {
-      xRef = xPos; yRef = yPos
-      if (captions == 2) projectMedia.uiHeight = editor.style.height}}
+        if (captions) overMedia ? (editorX -= dx, editorY -= dy) : positionEditor()
+        if (captions == 2) editing = 1}}
+    if (gesture) { xRef = xPos; yRef = yPos; if (captions == 2) projectMedia.uiHeight = editor.style.height }}
 
 
   function wheelEvent(e) {

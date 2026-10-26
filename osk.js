@@ -34,7 +34,7 @@ function osk() {
 
   function restoreSelection() {
     if (!targetEl) return false;
-    targetEl.focus();
+    targetEl.focus({ preventScroll: true });
     if (targetEl.isContentEditable && savedRange) {
       const sel = window.getSelection();
       sel.removeAllRanges();
