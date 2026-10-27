@@ -119,7 +119,6 @@
   myContent.addEventListener('scroll', () => seekTimer = cursor = 0)
   document.addEventListener('dragstart', () => gesture = 1)
   document.addEventListener('drop', (e) => { mouseDown = 0; gesture = 0; if (overEditor) activateBlock(e.target.closest('.text-block'),0) })
-  myVoice.addEventListener('ended', () => { let b = editingBlock; b && playing && !b._atEnd && myPlayer.currentTime < endOf(b) - 0.05 || nextCaption()})
   myPlayer.addEventListener('ended', playerEnded)
   myPlayer.addEventListener('timeupdate', playerProgress)
   myPlayer.addEventListener('play', () => { if (editingBlock) editingBlock._atEnd = 0 })
@@ -152,6 +151,12 @@
   viewport.addEventListener('scroll', showFace)
 
 
+myVoice.addEventListener('ended', () => {
+  const b = editingBlock
+  if (!b?.nextElementSibling) { userPlay = syncPlay = 0; myPlayer.pause(); return }
+  b && playing && !b._atEnd && myPlayer.currentTime < endOf(b) - 0.05 || nextCaption()})
+
+
   myPlayer.requestVideoFrameCallback(function onFrame(now, m) {				// frame accurate caption nudge control
     const b = editingBlock
     if (captions && b && playing && !crawl && !overMedia && !myPlayer.paused && (b._atEnd || overEditor) && m.mediaTime >= endOf(b) - 0.01) toEnd(b, 1)
@@ -177,7 +182,7 @@ const editMode = () => {
 const fitRate = b => {
   const v = b?._voice?.src && myVoice.duration / (b._rate || 1)
   const r = ((+b?.nextElementSibling?.dataset.start || b?._end) - b?.dataset.start) / v
-  return r >= 0.7 && r <= 1.5 ? r : v ? 1 : rate}
+  return r >= 0.5 && r <= 2 ? r : v ? 1 : rate}
 
 myPlayer.addEventListener('seeked', () => {
   const b = editingBlock, t = myPlayer.currentTime
@@ -241,7 +246,6 @@ myPlayer.addEventListener('seeked', () => {
     if (id == 'myClone') { newClone(); return }
     if (id == 'myLoudnorm') { inca('loudNorm',0,index); return }
     if (id == 'myInca') { inca('Settings'); return }
-    if (id == 'ribbon') { viewport.scrollTo({top:0,behavior:'smooth'}); return }
     if (id == 'myStart' && editingBlock) { myPlayer.currentTime = editingBlock.dataset.start; editing = 1; return }
     if (id == 'myFavorite') { addFavorite(); return }
     if (id == 'myDelete') if (selected || type) { inca('Delete','',index); return }
@@ -308,6 +312,7 @@ myPlayer.addEventListener('seeked', () => {
         const block = overBlock ? overBlock : editingBlock
         const pos = caret(block)?.pos
         const end = pos == 'end'
+        if (overEditor && ym < 0.1) { viewport.scrollTo({top:0,behavior:'smooth'}); return }
         if (block) { block._atEnd = 0; block._atStart = pos == 'start' }
         if (id == 'viewport') window.getSelection().removeAllRanges()
         if (longClick && !gesture && overEditor && xm < 0.95) { syncPlay = userPlay = 0; osk(); if (!getSelection().isCollapsed) inca('cancelFind') }
@@ -323,10 +328,11 @@ myPlayer.addEventListener('seeked', () => {
         if (!longClick) {
           if (wasOsk && overBlock == editingBlock || (!userPlay && syncPlay && !overEditor)) userPlay = syncPlay = 0
           else {
-            if (end) {toEnd(block); return}
+            if (end && overBlock) { toEnd(block); return }
             const voiceLive = editingBlock?._voice?.src && !myVoice.ended
             const paused = voiceLive ? myVoice.paused : myPlayer.paused
-            if (myPlayer.currentTime > editingBlock._end - 0.05) { myVoice.currentTime = 0; myPlayer.currentTime = editingBlock.dataset.start }
+            if ((editingBlock._voice?.src && myVoice.ended) || myPlayer.currentTime >= editingBlock._end - 0.05) {
+              myVoice.currentTime = 0; myPlayer.currentTime = +editingBlock.dataset.start; userPlay = syncPlay = 1; return }
             if (paused) userPlay = 1
             else userPlay ^= 1
             syncPlay = userPlay}
@@ -702,7 +708,6 @@ myPlayer.addEventListener('seeked', () => {
       if (editMode() && !editMode.on) { 
         editMode.on = 1; syncPlay = userPlay = 0; const b = editingBlock; if (b._atEnd) toEnd(b); else myPlayer.currentTime = b.dataset.start }
       else if (!editMode()) editMode.on = 0
-
       myMask.style.pointerEvents = 'auto'
       myMask.style.pointerEvents = 'auto'
       if (dur && !thumbSheet) lastSeek = myPlayer.currentTime

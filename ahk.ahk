@@ -917,7 +917,9 @@
         }
       }
     index := StrSplit(selected, ",").1
-    reload := 1
+    if (sort == "Shuffle") 
+      reload := 1
+    else CreateList(1)
     }
 
 
