@@ -1,6 +1,5 @@
 // try InfiniteTalk / flashHead face animation when 50GB disk is free
 
-
   let wheel = 0								// wheel count
   let wheelDir = 0		 					// wheel direction
   let index = 1								// thumb index (e.g. thumb14)
@@ -148,48 +147,45 @@
     if (editingBlock?.querySelector('.text-block')) editingBlock.innerText = editingBlock.innerText})
   viewport.addEventListener('wheel', wheelEvent)
   editor.addEventListener('wheel', wheelEvent)						// face zoom
-  viewport.addEventListener('scroll', showFace)
-
-
-myVoice.addEventListener('ended', () => {
-  const b = editingBlock
-  if (!b?.nextElementSibling) { userPlay = syncPlay = 0; myPlayer.pause(); return }
-  b && playing && !b._atEnd && myPlayer.currentTime < endOf(b) - 0.05 || nextCaption()})
-
-
+  viewport.addEventListener('scroll', () => {
+    const b = editingBlock
+    updateFaceHighlights()
+    if (!b || crawl) return
+    const v = viewport.getBoundingClientRect(), r = b.getBoundingClientRect()
+    const n = r.bottom < v.top + 140 ? b.nextElementSibling : r.top > v.bottom - 50 ? b.previousElementSibling : null
+    n && activateBlock(n, userPlay)})
+  myVoice.addEventListener('ended', () => {
+    const b = editingBlock
+    if (!b?.nextElementSibling) { userPlay = syncPlay = 0; myPlayer.pause(); return }
+    b && playing && !b._atEnd && myPlayer.currentTime < endOf(b) - 0.05 || nextCaption()})
   myPlayer.requestVideoFrameCallback(function onFrame(now, m) {				// frame accurate caption nudge control
     const b = editingBlock
     if (captions && b && playing && !crawl && !overMedia && !myPlayer.paused && (b._atEnd || overEditor) && m.mediaTime >= endOf(b) - 0.01) toEnd(b, 1)
     myPlayer.requestVideoFrameCallback(onFrame)})
-
   const endOf = b => b._end
   const toEnd = (b, stay) => {
     b._atEnd = 1; userPlay = syncPlay = 0; myPlayer.pause()
     const e = endOf(b); if (!stay && isFinite(e)) myPlayer.currentTime = e }
-
-const caret = b => {
-  const s = getSelection(); if (!s.isCollapsed || !b?.contains(s.anchorNode)) return
-  const r = new Range(); r.selectNodeContents(b); r.setEnd(s.anchorNode, s.anchorOffset)
-  const n = r.toString().length, len = b.textContent.trimEnd().length
-  return { f: Math.min(n / (len || 1), 1), pos: n >= len ? 'end' : n ? 0 : 'start' }}
-
-const editMode = () => {
-  const b = editingBlock
-  if (!dur || captions < 2 || !overMedia || !b) return false
-  const pos = caret(b)?.pos
-  return pos === 'start' || pos === 'end'}
-
-const fitRate = b => {
-  const v = b?._voice?.src && myVoice.duration / (b._rate || 1)
-  const r = ((+b?.nextElementSibling?.dataset.start || b?._end) - b?.dataset.start) / v
-  return r >= 0.5 && r <= 2 ? r : v ? 1 : rate}
-
-myPlayer.addEventListener('seeked', () => {
-  const b = editingBlock, t = myPlayer.currentTime
-  if (!captions || !b || !overMedia || !(b._atEnd || b._atStart)) return
-  if (b._atEnd) { b._end = t; if (b.nextElementSibling) b.nextElementSibling.dataset.start = t }
-  else b.dataset.start = Math.max(0, t)
-  editing = 1})
+  const caret = b => {
+    const s = getSelection(); if (!s.isCollapsed || !b?.contains(s.anchorNode)) return
+    const r = new Range(); r.selectNodeContents(b); r.setEnd(s.anchorNode, s.anchorOffset)
+    const n = r.toString().length, len = b.textContent.trimEnd().length
+    return { f: Math.min(n / (len || 1), 1), pos: n >= len ? 'end' : n ? 0 : 'start' }}
+  const editMode = () => {
+    const b = editingBlock
+    if (!dur || captions < 2 || !overMedia || !b) return false
+    const pos = caret(b)?.pos
+    return pos === 'start' || pos === 'end'}
+  const fitRate = b => {
+    const v = b?._voice?.src && myVoice.duration / (b._rate || 1)
+    const r = ((+b?.nextElementSibling?.dataset.start || b?._end) - b?.dataset.start) / v
+    return r >= 0.5 && r <= 2 ? r : v ? 1 : rate}
+  myPlayer.addEventListener('seeked', () => {
+    const b = editingBlock, t = myPlayer.currentTime
+    if (!captions || !b || !overMedia || !(b._atEnd || b._atStart)) return
+    if (b._atEnd) { b._end = t; if (b.nextElementSibling) b.nextElementSibling.dataset.start = t }
+    else b.dataset.start = Math.max(0, t)
+    editing = 1})
 
 
   function Click(e) {
@@ -312,7 +308,7 @@ myPlayer.addEventListener('seeked', () => {
         const block = overBlock ? overBlock : editingBlock
         const pos = caret(block)?.pos
         const end = pos == 'end'
-        if (overEditor && ym < 0.1) { viewport.scrollTo({top:0,behavior:'smooth'}); return }
+        if (overEditor && ym < 0.1 && xm < 0.95) { viewport.scrollTo({top:0,behavior:'smooth'}); return }
         if (block) { block._atEnd = 0; block._atStart = pos == 'start' }
         if (id == 'viewport') window.getSelection().removeAllRanges()
         if (longClick && !gesture && overEditor && xm < 0.95) { syncPlay = userPlay = 0; osk(); if (!getSelection().isCollapsed) inca('cancelFind') }
@@ -1037,7 +1033,7 @@ myPlayer.addEventListener('seeked', () => {
     start = defStart = myPlayer.currentTime
     let x = cue+'|goto|'+start.toFixed(1)
     if (cue) inca('Goto', x, index)						// add goto cue to media
-    else {captions = 1; if (playing) {getSrt()} else Play()}}
+    else {captions = 2; if (playing) {getSrt()} else Play()}}
 
 
   function sel(i) {								// highlight selected media in html
@@ -1190,10 +1186,10 @@ myPlayer.addEventListener('seeked', () => {
       else lastVoice = block._voiceName = ''});
     if (projectMedia.defaultSrc) swapMedia(projectMedia.defaultSrc, 0)
     overMedia = 0
-    if (type === 'image' && text || blocks.length < 2) captions = 1
     if (!lastBlock) lastBlock = parsed?.lastSelectedId || 1
     let first = blocks[lastBlock - 1] || blocks[0];
     if (first.innerHTML == 'new caption') first.dataset.start = defStart
+    else if (blocks.length < 3) captions = 1
     activateBlock(first, userPlay)
     myPlayer.currentTime = first.dataset.start
     matchCountSpan.textContent = ''
@@ -1409,11 +1405,6 @@ function swapMedia(src, time) {
     editingBlock._voiceName = myVoiceHeader.textContent = name
     myNav.style.display = 'none'
     Chatterbox()}
-
-  function showFace() {
-    if (!overEditor) return
-    overBlock = document.elementFromPoint(xPos, yPos)?.closest('.text-block') || null
-    if (overBlock) updateFaceHighlights()}
 
   function showStart() {
     let num = editingBlock?.dataset.num
@@ -1917,7 +1908,7 @@ function newVoice() {
       if (!crawl) return
       const dt = tick.t ? Math.min(t - tick.t, 50) : 16; tick.t = t
       let y = viewport.scrollTop
-      viewport.scrollTop += crawl * Math.max(1, Math.round(0.16 * dt))
+      viewport.scrollTop += crawl * Math.max(1, Math.round(0.2 * dt))		// crawl speed
       if (viewport.scrollTop === y) { crawl = 0; return }
       let top = want.getBoundingClientRect().top
       if (crawl > 0 ? top <= line() : top >= line()) {
