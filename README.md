@@ -1,7 +1,10 @@
 
 # Inca
 
-**Windows File Explorer and storyboard creator in browser tab**<br><br>
+**Storyboard Creator<br>
+Voice Cloning Caption Editor<br>
+and Windows File Explorer<br>
+in a Browser Tab**<br><br>
 Portable - no install needed - Chrome, Firefox, Edge, Opera or Brave
 
 <img src="screens/xyZPE.svg" width="70%" alt="Inca interface diagram">
