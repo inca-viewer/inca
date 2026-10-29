@@ -3,8 +3,7 @@
 
 **Storyboard Creator<br>
 Voice Cloning Caption Editor<br>
-and Windows File Explorer<br>
-in a Browser Tab**<br><br>
+and Windows File Explorer in a Browser Tab**<br><br>
 Portable - no install needed - Chrome, Firefox, Edge, Opera or Brave
 
 <img src="screens/xyZPE.svg" width="70%" alt="Inca interface diagram">
