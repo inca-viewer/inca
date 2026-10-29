@@ -147,8 +147,8 @@ Left or right hand mouse-focused<br>An on-screen keyboard appears when needed fo
 - Chrome, Firefox, Edge, Opera, or Brave
 - No extra installers, IDEs, or extensions
 - Use AI assistant to install Chatterbox or Parakeet
-- Or to use ElevenLabs or Venice APIs
-- Put models in inca\cache\apps\<br>
+- Or use ElevenLabs or Venice APIs
+- Put models in inca\cache\apps\
 
 ---
 
