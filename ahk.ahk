@@ -247,8 +247,9 @@
     else if (command == "Goto")						; add go to cue
       {
       FileAppend, `r`n%value%, %inca%\cache\cues\%media%.txt, UTF-8
-      index := StrSplit(selected, ",").1
-      reload := 2
+      FileRead, updatedCues, %inca%\cache\cues\%media%.txt
+      FileDelete, %inca%\cache\html\out.txt
+      FileAppend, cues|%updatedCues%, %inca%\cache\html\out.txt, UTF-8
       }
     else if (command == "Move")						; move entry within playlist
       {
@@ -358,7 +359,7 @@
     if reload
       RenderPage(0)
     longClick =
-    if (!reload && command != "More" && command != "getVoices" && command != "createRef")	; these return data
+    if (!reload && command != "More" && command != "getVoices" && command != "createRef" && command != "addCue" && command != "Goto" && command != "Edited")	; these return data
       {
       FileDelete, %inca%\cache\html\out.txt				; the rest are commands
       FileAppend, done, %inca%\cache\html\out.txt, UTF-8		; so allow server to close
@@ -604,7 +605,7 @@
       index := x[x.MaxIndex()-1]					; scroll htm to end of selection
       MoveFiles()
       if !longClick							; is copy so no change to folder
-        CreateList(0)							; silent list update
+        CreateList(0)
       if InStr(address, "\inca\")					; was to playlist
         RenderPage(0)							; normal render
       else RenderPage(999)						; 999 = top panel scrolls to target folder
@@ -854,7 +855,7 @@
     SplitPath, jsonSrc,,,ext,media					; use jsonSrc as truth
     if (!media || !ext || ext == "htm")
       return
-    PopUp("saved", 0, 0.46, 0.56)
+    PopUp("saved", 0, 0, 0)
     texts := []
     foundPos := 1
     Loop
@@ -917,9 +918,9 @@
         }
       }
     index := StrSplit(selected, ",").1
-    if (sort == "Shuffle") 
-      reload := 1
-    else CreateList(1)
+    hasMedia := (FileExist(inca "\cache\srt\" media ".srt") || FileExist(inca "\cache\json\" media ".json")) ? 1 : 0
+    FileDelete, %inca%\cache\html\out.txt
+    FileAppend, edited|%hasMedia%|%index%, %inca%\cache\html\out.txt, UTF-8
     }
 
 
@@ -1181,6 +1182,8 @@
     FileDelete, %cueFile%
     if (updatedCues != cues)
       FileAppend, % RegExReplace(updatedCues, "\r?\n$"), %cueFile%, UTF-8
+    FileDelete, %inca%\cache\html\out.txt
+    FileAppend, cues|%updatedCues%, %inca%\cache\html\out.txt, UTF-8
     }
 
 
