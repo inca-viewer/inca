@@ -199,6 +199,7 @@
 
 
   function keyDown(e) {									// keyboard events
+    if (captions && editingBlock) userPlay = syncPlay = 0
     if (e.key == 'Enter' && captions) {e.preventDefault(); e.stopImmediatePropagation(); splitIfNeeded(e)}
     else if (e.key == 'Enter' && !playing) {
       if (overTitle == 2) inca('Rename', title.value, lastMedia)			// rename title
@@ -231,7 +232,7 @@
       const media = !playing && overMedia ? index : ''					// cutcopypaste text or files
       inca('CutCopyPaste',id,media); return}
     if (longClick == 1 && !gesture && !playing && playlist && selected && overMedia) { inca('Move', overMedia); return }
-    if (longClick && !gesture && playing && overMedia) myPlayer.currentTime = longClick == 1 ? defStart : 0
+    if (longClick && !gesture && playing) myPlayer.currentTime = longClick == 1 ? defStart : 0
     if (['myIndex', 'myMp3', 'myMp4', 'myJoin', 'myJpg', 'mySrt'].includes(id)) { Ffmpeg(id); cue = 0; return }
     if (id == 'myClone') { newClone(); return }
     if (id == 'myLoudnorm') { inca('loudNorm',0,index); return }
@@ -299,9 +300,9 @@
       if (id.includes('search-input')) return
       if (id == 'myCap') {capButton(); return}
       if (id == 'myCue' && playing) {
-        cue = myPlayer.currentTime = Math.max(0.01, +myPlayer.currentTime.toFixed(2)); syncPlay = 0; return}
+        const _t = Math.max(0.01, +myPlayer.currentTime.toFixed(2)); myPlayer.currentTime = _t; cue = +(_t + 0.1).toFixed(2); syncPlay = 0; return}
       if (captions && !overMedia) {
-        const wasOsk = document.getElementById('osk')
+        const wasOsk = !!document.getElementById('osk')
         const block = overBlock ? overBlock : editingBlock
         const pos = caret(block)?.pos
         const end = pos == 'end'
@@ -328,7 +329,7 @@
           if (paused) userPlay = 1
           else userPlay ^= 1
           syncPlay = userPlay
-          if (!wasOsk && ((editingBlock._voice?.src && myVoice.ended) || myPlayer.currentTime >= editingBlock._end - 0.05)) {
+          if (((editingBlock._voice?.src && myVoice.ended) || myPlayer.currentTime >= editingBlock._end - 0.05)) {
             myVoice.currentTime = 0; myPlayer.currentTime = +editingBlock.dataset.start; userPlay = syncPlay = 1 }
           return}}
       if (!title.matches(':hover') && overTitle == 2) {closeOsk(); overTitle = 0; return}
@@ -471,8 +472,8 @@
     const under = document.elementFromPoint(xPos, yPos)
     const id = under?.closest('#myNav') ? under.id : e.target.id
     const face = under?.closest('#voice-faces')
-    if (myNav.style.display) e.preventDefault()
-    if (myNav.style.display) e.preventDefault()
+    if (myNav.style.display && !e.target.closest('#voiceSub, #emotionSub, #soundsSub, #myDelay, #myRate, #myVol, #myStart, #mySpeed, #mySkinny, #myCue')) {
+      e.preventDefault(); return}
     if (overEditor) {
       if (e.target.closest('#voiceSub, #emotionSub, #soundsSub')) return
       if (e.target.closest('.dropdown-content')) return
@@ -563,10 +564,12 @@
       vol = Math.round(vol * 10) / 10
       editingBlock._volume = myVoice.volume = vol}
     else if (id == 'myStart' && captions && editingBlock) {
-      const coarse = e.clientX - myNav.offsetLeft < 70
-      const step = coarse ? 1 : 0.02
-      myPlayer.currentTime = Math.max(0, Math.min(dur, myPlayer.currentTime + (wheelUp ? step : -step)))
-      delay = coarse ? 60 : 74}
+      const pos = caret(editingBlock)?.pos
+      if (pos === 'start' || pos === 'end') {
+        const coarse = e.clientX - myNav.offsetLeft < 70
+        const step = coarse ? 1 : 0.02
+        myPlayer.currentTime = Math.max(0, Math.min(dur, myPlayer.currentTime + (wheelUp ? step : -step)))
+        delay = coarse ? 60 : 74}}
     else if (!myNav.style.display && playing && (mouseDown || type == 'image')) {
       let x = rect.left+rect.width/2-(clickMedia ? xPos : innerWidth/2)			// zoom myPlayer
       let y = rect.top+rect.height/2-(clickMedia ? yPos : innerHeight/2)
@@ -621,7 +624,10 @@
     if (myStart.matches(':hover') && editingBlock) {
       const b = editingBlock, d = Math.round(100 * (myPlayer.currentTime - (b._atEnd ? b._end : b.dataset.start))) / 100 || 0
       if (!b._atEnd && b.previousElementSibling && !b.previousElementSibling.dataset.end && Math.abs(myPlayer.currentTime - b._s0) > 1)
-        b._unl = 1; myAlert.innerText = (d > 0 ? '+' : '') + d.toFixed(1) + (b._unl || b._orig != null ? ' Unlinked' : ''); delay = 10 }
+        b._unl = 1
+        myAlert.innerText = d ? (d > 0 ? '+' : '') + d.toFixed(1) + (b._unl || b._orig != null ? ' Unlinked' : '')
+                        : (b._unl || b._orig != null ? 'Unlinked' : '')
+        delay = 10}
     else if (delay >= 30) delay -= 10							// wheel/timer blocking
     else myAlert.innerText = ''
     if (wheel >= 10) wheel -= 10
@@ -1000,7 +1006,6 @@
       settings.defRate = String(defRate)
       localStorage.setItem(folder, JSON.stringify(settings))}
     if (type) {
-      if (playing && !cue) cue = +(myPlayer.currentTime + 0.1).toFixed(2)
       thumb.style[item] = val
       if (item == 'skinny') skinny = val
       if (!playing) Param(index)
@@ -1057,7 +1062,8 @@
 
   function Ffmpeg(id) {
     myNav.style.display = null
-    let target = cue + '|' + id + '|' + skinny + '|' + playing + '|' + decodeURIComponent(myPlayer.src) + '|' + myPlayer.currentTime.toFixed(2)
+    let c = cue ? +(cue - 0.1).toFixed(2) : 0
+    let target = c + '|' + id + '|' + skinny + '|' + playing + '|' + decodeURIComponent(myPlayer.src) + '|' + myPlayer.currentTime.toFixed(2)
     let select = playing || selected || overMedia || 0
     inca('Ffmpeg', target, select, (myPlayer.currentTime === dur ? dur - 0.1 : myPlayer.currentTime).toFixed(2))}
 
@@ -1115,29 +1121,16 @@
       else if (b.dataset.start != t) { editing = b._fit = 1; setStart(b, t) }}   // otherwise set start
     else if (thumb.style.rate || thumb.style.skinny) {
       if (type) {
-        const setRate = parseFloat(thumb.style.rate) || 0
-        const setSkinny = parseFloat(thumb.style.skinny) || 0
+        let x = (thumb.style.rate || '') + ',' + (thumb.style.skinny || '')
         const now = +myPlayer.currentTime.toFixed(2)
-        const seekedForward = now > cue + 0.1
-        // 1) Send cue with user's values at the original cue time
-        const p1 = inca('addCue', setRate + ',' + setSkinny, index, cue)
-        if (seekedForward) {
-          const reset = () => {
-            // 2) Send return-to-default cue at the current (seeked-forward) time
-            //    only for the items the user actually changed
-            const resetRate = setRate ? '1.0' : '0'
-            const resetSkinny = setSkinny ? '1.0' : '0'
-            const p2 = inca('addCue', resetRate + ',' + resetSkinny, index, now)
-            const chain2 = (p2 && p2.then) ? p2 : Promise.resolve()
-            chain2.then(() => {
-              // 3) Set myPlayer back to default
-              thumb.style.rate = ''
-              thumb.style.skinny = ''
-              if (setRate) { rate = 1; myPlayer.playbackRate = 1 }
-              if (setSkinny) { skinny = 1; positionMedia(0.2) }})}
-          const chain1 = (p1 && p1.then) ? p1 : Promise.resolve()
-          chain1.then(reset)}
-        cue = 0} else cue = 0}}
+        if (cue) {							// cue set → write user cue + reset cue
+          const r = x.split(',').map(v => v ? '1.0' : '0').join(',')
+          Promise.resolve(inca('addCue', x, index, cue)).then(() => {
+            inca('addCue', r, index, now)				// now ≈ cue-0.1 (player paused), so reset fires first
+            thumb.style.rate = thumb.style.skinny = ''
+            rate = 1; skinny = 1; myPlayer.playbackRate = 1; positionMedia(0.2)})}
+        else inca('addCue', x, index, cue)				// plain save (writes 0.00|... if cue=0)
+        cue = 0}}}
 
 
   async function closePlayer() {

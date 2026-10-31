@@ -921,6 +921,7 @@
     hasMedia := (FileExist(inca "\cache\srt\" media ".srt") || FileExist(inca "\cache\json\" media ".json")) ? 1 : 0
     FileDelete, %inca%\cache\html\out.txt
     FileAppend, edited|%hasMedia%|%index%, %inca%\cache\html\out.txt, UTF-8
+    sleep, 394
     }
 
 
