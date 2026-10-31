@@ -269,6 +269,7 @@ const waitForTempFile = async () => {
             '.vtt': 'text/vtt',
             '.srt': 'text/plain',
             '.bat': 'text/plain',
+            '.json': 'application/json',
             '.m3u': 'audio/x-mpegurl'
         };
 
@@ -276,7 +277,9 @@ const waitForTempFile = async () => {
         const headers = {
             'Accept-Ranges': 'bytes',
             'Content-Type': contentType,
-            'Cache-Control': 'no-cache, no-store',
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0',
             'Content-Disposition': 'inline'
         };
 
