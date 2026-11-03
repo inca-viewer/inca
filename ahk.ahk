@@ -855,7 +855,7 @@
     SplitPath, jsonSrc,,,ext,media					; use jsonSrc as truth
     if (!media || !ext || ext == "htm")
       return
-    PopUp("saved", 0, 0, 0)
+    PopUp("saved", 0, 0.47, 0.74)
     texts := []
     foundPos := 1
     Loop
@@ -921,7 +921,7 @@
     hasMedia := (FileExist(inca "\cache\srt\" media ".srt") || FileExist(inca "\cache\json\" media ".json")) ? 1 : 0
     FileDelete, %inca%\cache\html\out.txt
     FileAppend, edited|%hasMedia%|%index%, %inca%\cache\html\out.txt, UTF-8
-    sleep, 394
+    sleep, 224
     }
 
 

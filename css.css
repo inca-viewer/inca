@@ -127,23 +127,23 @@
     mask-image: linear-gradient(
       to bottom,
       transparent 0,
-      transparent 1.2em,
-      black 3.5em,
-      black 74%,
+      transparent 1em,
+      black 2.5em,
+      black 84%,
       transparent 100%),
     linear-gradient(to left, black 0 14px, transparent 14px);}
 
 .caption-viewport { container-type: inline-size; }
 
-#editor:has(#voice-faces[style*="flex"]) .caption-viewport {
+#editor:has(.text-block[data-has-media="1"]) .caption-viewport {
   mask-image: linear-gradient(
     to bottom,
     transparent 0,
-    transparent 6em,
-    black 9em,
-    black 74%,
+    transparent 7em,
+    black 8em,
+    black 84%,
     transparent 100%),
-  linear-gradient(to left, black 0 14px, transparent 14px);}
+  linear-gradient(to left, black 0 14px, transparent 14px)}
 
   .text-block {
     position: relative; border-radius:2.2em; white-space:pre-wrap; transition: 0.44s ease; overflow: visible;
@@ -191,8 +191,8 @@
 #voice-faces {
   position: absolute;          /* relative to #editor */
   top: 38px;                   /* same offset you were using */
-  left: 50%;
-  transform: translateX(-50%);
+  right: 1em;
+  left: auto;
   display: none;
   gap: 4em;
   z-index: 20;                 /* above ribbon / viewport content */
