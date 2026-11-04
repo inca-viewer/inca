@@ -1,7 +1,5 @@
 // try InfiniteTalk / flashHead face animation when 50GB disk is free
 
-
-
   let wheel = 0								// wheel count
   let wheelDir = 0		 					// wheel direction
   let index = 1								// thumb index (e.g. thumb14)
@@ -298,10 +296,18 @@
       if (!playing && !myNav.style.display) {inca('View',lastMedia); return}		// list/thumb view
       if (longClick) {index--} else index++						// next media
       if (!Param()) {index = lastMedia; closePlayer(); return}}
-
     if (lastClick == 1) {
       if (document.getElementById('osk')?.contains(document.elementFromPoint(xPos, yPos))) return
       predictBuffer = ''
+      if (captions && editingBlock && overMedia && !longClick && ym < trigger()) {
+        const b = editingBlock, n = b.nextElementSibling, p = b.previousElementSibling
+        if (xm > 0.5 && b._voice?.src && isFinite(myVoice.duration)) {
+          const t = +(+b.dataset.start + myVoice.duration * rate).toFixed(2)
+          myPlayer.currentTime = t
+          b._end = t
+          if (n) { n.dataset.start = t; delete b.dataset.end } else b.dataset.end = t }
+        else if (xm < 0.5 && p) { delete p.dataset.end; p._end = +b.dataset.start }
+        editing = 1; return }
       if (longClick && (overTitle || ['myInput', 'caption-search-input', 'inp', 'myVoiceInput'].includes(id))) osk()
       if (id.includes('search-input')) return
       if (id == 'myCap') {capButton(); return}
@@ -314,14 +320,14 @@
         const block = overBlock ? overBlock : editingBlock
         const pos = caret(block)?.pos
         const end = pos == 'end'
-        if (overEditor && ym < 0.25 && xm < 0.95) { viewport.scrollTo({top:0,behavior:'smooth'}); return }
+        if (overEditor && ym < 0.1 && xm < 0.95) { viewport.scrollTo({top:0,behavior:'smooth'}); return }
         if (block) block._atEnd = 0
         if (id == 'viewport') window.getSelection().removeAllRanges()
+        if (!longClick && !wasOsk) { activateBlock(block, syncPlay); scrollUntilBlock(1, block) }
         if (longClick && !gesture && overEditor && xm < 0.95) { syncPlay = userPlay = 0; osk(); if (!getSelection().isCollapsed) inca('cancelFind') }
         if (overBlock && !gesture && overBlock !== editingBlock) {
           lastBlock = block.dataset.num; userPlay = syncPlay = 1
           activateBlock(block, !longClick && !end); if (end) setTimeout(toEnd, 50, block)	// after activateBlock's own seek
-          scrollUntilBlock(1, block)
           return}
         if (captions == 1) {
           editor.style.pointerEvents = 'auto'
@@ -331,7 +337,7 @@
         if (!longClick) {
           if (overBlock) {
             if (end) { toEnd(block); return }
-            if (wasOsk) { myPlayer.currentTime = block.dataset.start; userPlay = syncPlay = 0; return }}
+            if (wasOsk) { myPlayer.currentTime = block.dataset.start; myVoice.currentTime = userPlay = syncPlay = 0; return }}
           const voiceLive = editingBlock?._voice?.src && !myVoice.ended
           const paused = voiceLive ? myVoice.paused : myPlayer.paused
           if (paused) userPlay = 1
@@ -369,7 +375,14 @@
       if (myNav.style.display && type == 'video') {thumbSheet ^= 1; start = lastSeek; return 1}}
     if (lastClick == 2 || !dur) start = defStart
     else if (zoom > 1) start = thumb.currentTime || start
-    if (playing && !thumbSheet && lastClick != 2 && overMedia && (ym > trigger() || yw > 0.95)) { myPlayer.currentTime = start; return }
+    if (playing && !thumbSheet && lastClick != 2 && overMedia && (ym > trigger() || yw > 0.95)) {
+      myPlayer.currentTime = start
+      if (captions && editingBlock) {
+        const b = editingBlock, s = +start.toFixed(2)
+        setStart(b, s)
+        if (b._voice?.src && isFinite(myVoice.duration)) b.dataset.end = b._end = +(s + myVoice.duration * rate).toFixed(2)
+        editing = 1 }
+      return }
     if (longClick && longClick != 2 && !title.matches(':hover')) return
     if (dur < 200 && start < defStart + 2 && !playlist && !favicon.textContent.includes('\u2764')) start = 0
     if (!playing && !longClick && overMedia && !dur) return 1				// show image or text files
@@ -441,7 +454,6 @@
     let y = Math.abs(yPos-yRef)
     cursor = overMedia ? 12 : 4
     seekbar()
-    if (xm > 0.1) crawl = 0
     if (x + y > 7 && !gesture && mouseDown) {
       gesture = 1
       if (!playing && overMedia && zoom > 1) popThumb()
@@ -577,10 +589,8 @@
       b._atEnd = end ? 1 : 0
       if (end) {
         b._end = t
-        if (n) {
-          if (Math.abs(t - b._e0) > 1) b.dataset.end = t
-          else { n.dataset.start = t; delete b.dataset.end }
-        } else b.dataset.end = t }
+        if (n && !b.dataset.end && Math.abs(t - b._e0) <= 1) n.dataset.start = t
+        else b.dataset.end = t }
       else setStart(b, t)
       offset = +(offset + d).toFixed(2)
       myAlert.innerText = offset ? (offset > 0 ? '+' : '') + offset.toFixed(2) : ''
@@ -809,8 +819,11 @@
       if (dur) mySeek.style.opacity = 1
       if (xm > 0 && xm < 1 && (ym > trigger() || yw > 0.95) && ym < 1 && !thumbSheet && delay < 30) myPic.style.opacity = 1
       else myPic.style.opacity = 0
+      const fit = playing && scaleY <= 0.4
+      myPic.style.width = (fit ? rect.width : thumb.offsetWidth) + 'px'
+      myPic.style.height = (fit ? rect.height : thumb.offsetHeight) + 'px'
       myPic.style.top = Math.min(rect.top + rect.height, innerHeight) - myPic.offsetHeight + 'px'
-      if (playing) myPic.style.left = xPos - skinny * myPic.offsetWidth / 2 + 'px'
+      if (playing && !fit) myPic.style.left = xPos - skinny * myPic.offsetWidth / 2 + 'px'
       else myPic.style.left = rect.left + rect.width / 2 - skinny * myPic.offsetWidth / 2 + 'px'
       let x = (xPos - rect.left) / rect.width						// set myPic sprite and set start
       let thumbIndex = Math.ceil(x * 35)
@@ -1050,7 +1063,8 @@
 
 
   function capButton() {							// context menu Caption button
-    start = defStart = myPlayer.currentTime
+    if (playing) start = defStart = +myPlayer.currentTime.toFixed(2)
+    else start = defStart
     let x = cue+'|goto|'+start.toFixed(1)
     if (cue) inca('Goto', x, index)						// add goto cue to media
     else {captions = 2; if (playing) {getSrt()} else Play()}}
@@ -1163,6 +1177,7 @@
 
   function openEditor(text) {
     projectMedia.defaultSrc = originalPlayerSrc = decodeURIComponent(type === 'image' ? thumb.poster : thumb.src)
+    if (type === 'document') myPlayerWrap.style.pointerEvents = 'none'
     editorX = editorY = mediaX = mediaY = 0
     lastBlock = type === 'image' ? 1 : lastBlock
     leftVoice = rightVoice = centerVoice = ''
@@ -1239,7 +1254,7 @@
     if (force) editingBlock = null
     const isSameBlock = editingBlock === block
     const media = getEffectiveMedia(block);
-    const time = isSameBlock ? myPlayer.currentTime : parseFloat(block.dataset.start) + 0.04
+    const time = isSameBlock ? myPlayer.currentTime : (Number.isFinite(+block.dataset.start) ? +block.dataset.start + 0.04 : 0)
     if (!isSameBlock) { block._atEnd = 0; block._s0 = +block.dataset.start; block._e0 = block._end }
     swapMedia(media?.src || originalPlayerSrc, time || 0)
     if (block._voice?.src) {
@@ -1914,6 +1929,7 @@
 
 
   function nextBlock() {
+    if (document.getElementById('osk')) return
     const b = editingBlock
     updateFaceHighlights()
     if (!b || crawl || Date.now() - crawlEnd < 150) return
@@ -1921,7 +1937,7 @@
     const nextLine = v.top + bound()
     const n = r.bottom < nextLine
       ? b.nextElementSibling
-      : r.top > v.bottom - 120
+      : (r.top > v.bottom - 120 || viewport.scrollTop < 40)
         ? b.previousElementSibling
         : null
     n && activateBlock(n, userPlay)}
