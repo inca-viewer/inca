@@ -218,6 +218,24 @@
     else if (e.key == 'F23') mouseUp(e)							// R click up
     else if (e.key == 'F24' || (e.code == 'ArrowLeft' && e.shiftKey)) mouseBack()
     else if (e.key === 'Backspace') Backspace(e)
+    else if (captions && editingBlock && !e.shiftKey && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
+      const c = caret(editingBlock)
+      let sib = e.key === 'ArrowUp' ? editingBlock.previousElementSibling : editingBlock.nextElementSibling
+      if (!sib && e.key === 'ArrowUp' && c?.pos === 'start') {
+        sib = createBlock(1, +editingBlock.dataset.start || 0, '', '0')
+        editingBlock.before(sib)
+        blocks.unshift(sib)
+        renumberBlocks()}
+      if (sib && ((e.key === 'ArrowUp' && c?.pos === 'start') || (e.key === 'ArrowDown' && c?.pos === 'end'))) {
+        e.preventDefault()
+        activateBlock(sib, userPlay)
+        setTimeout(() => { 
+          sib.focus()
+          const range = document.createRange()
+          range.selectNodeContents(sib)
+          range.collapse(e.key === 'ArrowUp')
+          getSelection().removeAllRanges()
+          getSelection().addRange(range)}, 0)}}
     else if (e.shiftKey && editingBlock && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
       const sib = e.key === 'ArrowUp' ? editingBlock.previousElementSibling : editingBlock.nextElementSibling
       if (sib) { e.key === 'ArrowUp' ? sib.before(editingBlock) : sib.after(editingBlock); editing = 1} renumberBlocks()}
@@ -324,7 +342,7 @@
         if (overEditor && !overBlock && ym < 0.1 && xm < 0.95) { viewport.scrollTo({top:0,behavior:'smooth'}); return }
         if (block) block._atEnd = 0
         if (id == 'viewport') window.getSelection().removeAllRanges()
-        if (!longClick && !wasOsk) { activateBlock(block, syncPlay); scrollUntilBlock(1, block) }
+        if (!longClick && !wasOsk) { activateBlock(block, syncPlay); if (block !== editingBlock) scrollUntilBlock(1, block) }
         if (longClick && !gesture && overEditor && xm < 0.95) { syncPlay = userPlay = 0; osk(); if (!getSelection().isCollapsed) inca('cancelFind') }
         if (overBlock && !gesture && overBlock !== editingBlock) {
           lastBlock = block.dataset.num; userPlay = syncPlay = 1

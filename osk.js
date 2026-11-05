@@ -262,7 +262,7 @@ function insertSuggestion(s) {
 
 
 
-if ((key === "↑" || key === "↓") && isShift) {
+if (key === "↑" || key === "↓") {
   const ev = new KeyboardEvent('keydown', {
     key: key === "↑" ? 'ArrowUp' : 'ArrowDown',
     code: key === "↑" ? 'ArrowUp' : 'ArrowDown',
