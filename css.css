@@ -135,11 +135,13 @@
 
 .caption-viewport { container-type: inline-size; }
 
+
+#editor:has(#voice-faces[style*="flex"]) .caption-viewport,
 #editor:has(.text-block[data-has-media="1"]) .caption-viewport {
   mask-image: linear-gradient(
     to bottom,
     transparent 0,
-    transparent 7em,
+    transparent 6em,
     black 8em,
     black 84%,
     transparent 100%),

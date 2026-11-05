@@ -872,6 +872,7 @@
 
     if json
       {
+      reload := !FileExist(inca "\cache\json\" media ".json") ? 1 : reload
       FileRecycle, %inca%\cache\json\%media%.json
       FileAppend, %json%, %inca%\cache\json\%media%.json, UTF-8
       if (ext == "txt")							; at end because can take too long

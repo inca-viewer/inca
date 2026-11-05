@@ -1,5 +1,6 @@
 // try InfiniteTalk / flashHead face animation when 50GB disk is free
 
+
   let wheel = 0								// wheel count
   let wheelDir = 0		 					// wheel direction
   let index = 1								// thumb index (e.g. thumb14)
@@ -260,7 +261,7 @@
     if (id == 'myHelp') { window.open('help.htm'); return }
     if (id == 'myElevenLabs' || id == 'myChatterbox') Chatterbox(id)
     if (id == 'myCancel') {
-      if (!editing) {captions = 1; activateBlock(editingBlock,0); editingBlock.scrollIntoView({block: 'center' }); return}
+      if (!editing) {captions = 1; activateBlock(editingBlock,0); scrollUntilBlock(1, editingBlock); return}
       else if (myCancel.innerHTML != 'Sure ?') myCancel.innerHTML = 'Sure ?' 
       else { editing = 0; closePlayer() }
       return}
@@ -320,7 +321,7 @@
         const block = overBlock ? overBlock : editingBlock
         const pos = caret(block)?.pos
         const end = pos == 'end'
-        if (overEditor && ym < 0.1 && xm < 0.95) { viewport.scrollTo({top:0,behavior:'smooth'}); return }
+        if (overEditor && !overBlock && ym < 0.1 && xm < 0.95) { viewport.scrollTo({top:0,behavior:'smooth'}); return }
         if (block) block._atEnd = 0
         if (id == 'viewport') window.getSelection().removeAllRanges()
         if (!longClick && !wasOsk) { activateBlock(block, syncPlay); scrollUntilBlock(1, block) }
@@ -583,7 +584,7 @@
       else if (vol > 0.1) vol -= 0.1
       vol = Math.round(vol * 10) / 10
       editingBlock._volume = myVoice.volume = vol}
-    else if (!mouseDown && captions && editingBlock && overMedia && ym < trigger()) {	// OSK nudge: shift start/end by 0.02s
+    else if (!mouseDown && captions == 2 && editingBlock && overMedia && ym < trigger()) {	// OSK nudge: shift start/end by 0.02s
       const b = editingBlock, n = b.nextElementSibling, end = xm > 0.5, d = wheelUp ? 0.02 : -0.02
       const t = Math.min(end ? dur || Infinity : b._end, Math.max(end ? +b.dataset.start : 0, +((end ? b._end : +b.dataset.start) + d).toFixed(2)))
       b._atEnd = end ? 1 : 0
@@ -698,6 +699,7 @@
     if (playing) {
       myPic.style.maxWidth = '160px'
       myPic.style.maxHeight = 160 / aspect + 'px'
+      myPlayerWrap.style.pointerEvents = myPlayer.src ? 'auto' : 'none'
       if (dur || myVoice.duration) edPause.textContent = (userPlay ? '' : '⏸') + (defMute ? '🔇︎' : '')
       else edPause.textContent = ''
       if (editingBlock?._voice?.src) progress = 100 * myVoice.currentTime / myVoice.duration
@@ -1177,7 +1179,6 @@
 
   function openEditor(text) {
     projectMedia.defaultSrc = originalPlayerSrc = decodeURIComponent(type === 'image' ? thumb.poster : thumb.src)
-    if (type === 'document') myPlayerWrap.style.pointerEvents = 'none'
     editorX = editorY = mediaX = mediaY = 0
     lastBlock = type === 'image' ? 1 : lastBlock
     leftVoice = rightVoice = centerVoice = ''
@@ -1608,11 +1609,13 @@
       defaultMedia: originalPlayerSrc
         ? { src: decodeURIComponent(originalPlayerSrc).replace(/\\/g, '/') }
         : null,
-      ui: { width: editor.style.width, height: editor.style.height, mediaX, mediaY, editorX, editorY, scaleY, faceZoom,
-    facePos: {
-      L: voiceFaceLeft   && {left: voiceFaceLeft.parentElement.style.left,   top: voiceFaceLeft.parentElement.style.top},
-      C: voiceFaceCenter && {left: voiceFaceCenter.parentElement.style.left, top: voiceFaceCenter.parentElement.style.top},
-      R: voiceFaceRight  && {left: voiceFaceRight.parentElement.style.left,  top: voiceFaceRight.parentElement.style.top}}},
+      ui: { width: editor.style.width, height: editor.style.height, mediaX, mediaY, editorX, editorY, 
+        scaleY: (captions == 2 && !projectMedia.ui.scaleY) ? 0.3 * scaleY : scaleY, 
+        faceZoom,
+        facePos: {
+          L: voiceFaceLeft   && {left: voiceFaceLeft.parentElement.style.left,   top: voiceFaceLeft.parentElement.style.top},
+          C: voiceFaceCenter && {left: voiceFaceCenter.parentElement.style.left, top: voiceFaceCenter.parentElement.style.top},
+          R: voiceFaceRight  && {left: voiceFaceRight.parentElement.style.left,  top: voiceFaceRight.parentElement.style.top}}},
       lastSelectedId: editingBlock ? parseInt(editingBlock.dataset.num) : 0,
       blocks: blocks.map(b => {
         const start = parseFloat(b.dataset.start);
@@ -1628,9 +1631,7 @@
           volume: b._volume,
           rate: b._rate,
           delay: b._delay
-        };
-      })
-    };
+        }})}
     return JSON.stringify(data, null, 2)}
 
 
@@ -1903,6 +1904,7 @@
 
   function scrollUntilBlock(dir, target) {
     let want = target || (dir > 0 ? editingBlock?.nextElementSibling : editingBlock?.previousElementSibling)
+    if (captions == 1) { target.scrollIntoView({ block: 'center' }); return }
     if (crawl || !want) return
     crawl = dir > 0 ? 1 : -1
     lastBlock = 0
@@ -1932,7 +1934,7 @@
     if (document.getElementById('osk')) return
     const b = editingBlock
     updateFaceHighlights()
-    if (!b || crawl || Date.now() - crawlEnd < 150) return
+    if (!b || crawl || captions == 1 || Date.now() - crawlEnd < 150) return
     const v = viewport.getBoundingClientRect(), r = b.getBoundingClientRect()
     const nextLine = v.top + bound()
     const n = r.bottom < nextLine
