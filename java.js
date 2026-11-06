@@ -1,6 +1,7 @@
 // try InfiniteTalk / flashHead face animation when 50GB disk is free
 
 
+
   let wheel = 0								// wheel count
   let wheelDir = 0		 					// wheel direction
   let index = 1								// thumb index (e.g. thumb14)
@@ -126,7 +127,7 @@
   myPlayer.addEventListener('loadedmetadata', () => { fitPlayer(myPlayer.videoWidth, myPlayer.videoHeight) })
   window.addEventListener('beforeunload', (e) => { if (playing && editing) e.preventDefault() })
   myNav.addEventListener('wheel', wheelEvent, { passive: false })
-  myNav.addEventListener('mouseleave', () => { myNav.style.display = myDefault.style.display = myAlt.style.display = viewport.style.overflowY = null })
+  myNav.addEventListener('mouseleave', closeContext)
   myStart.addEventListener('wheel', wheelEvent, { passive: false })
   document.addEventListener('visibilitychange', function() {
     if (document.visibilityState == 'visible' && folder == 'downloads' && !selected && !playing) inca('Reload',2,index)})
@@ -163,12 +164,11 @@
     myPlayer.requestVideoFrameCallback(onFrame)})
   const endOf = b => b._end
   const voiceBusy = b => b?._voice?.src && !myVoice.ended
-  const setStart = (b, t) => {
-    const p = b.previousElementSibling
-    if (p) {
-      if (Math.abs(t - b._s0) > 1) { if (!p.dataset.end) p.dataset.end = b._s0 }
-      else if (p.dataset.end == b._s0) delete p.dataset.end }
-    b.dataset.start = t }
+  const setEnd = (b, t) => {								// coupled: next block start follows; uncoupled (json end) or last block: only the end
+    const n = b.nextElementSibling
+    b._end = +t
+    if (n && !b.dataset.end) n.dataset.start = t
+    else b.dataset.end = t }
   const toEnd = (b, stay) => {
     b._atEnd = 1; myPlayer.pause()
     if (!voiceBusy(b)) syncPlay = 0
@@ -187,7 +187,8 @@
     return Math.min(0.9, Math.max(0.75, 0.75 + ((thumb.offsetHeight / innerHeight) - 0.12) * 0.8))}
   const bound = () => (dur || !!(leftVoice || centerVoice || rightVoice)) ? 140 : 60
 
-
+let crop = 0
+const myCrop = Object.assign(document.createElement('div'), {style: 'position:fixed;display:none;border:1px dashed red;pointer-events:none;z-index:99999'})
 
 
 
@@ -202,9 +203,10 @@
 
 
   function mouseUp(e) {
-    if (!mouseDown) return								// stop re-entry also if new page load
-    clearTimeout(timeout)								// longClick timer
-    if (!longClick) clickEvent(e)							// process click event
+    if (!mouseDown) return
+    clearTimeout(timeout)
+    if (crop && cropSend()) { longClick = gesture = mouseDown = 0; return }
+    if (!longClick) clickEvent(e)
     longClick = wheel = gesture = mouseDown = 0}
 
 
@@ -260,7 +262,7 @@
       const media = !playing && overMedia ? index : ''					// cutcopypaste text or files
       inca('CutCopyPaste',id,media); return}
     if (longClick == 1 && !gesture && !playing && playlist && selected && overMedia) { inca('Move', overMedia); return }
-    if (longClick && !gesture && playing && !captions) myPlayer.currentTime = longClick == 1 ? defStart : 0
+    if (longClick && !gesture && playing && !captions && !overMedia) myPlayer.currentTime = longClick == 1 ? defStart : 0
     if (['myIndex', 'myMp3', 'myMp4', 'myJoin', 'myJpg', 'mySrt'].includes(id)) { Ffmpeg(id); cue = 0; return }
     if (id == 'myClone') { newClone(); return }
     if (id == 'myLoudnorm') { inca('loudNorm',0,index); return }
@@ -315,17 +317,21 @@
       if (!playing && !myNav.style.display) {inca('View',lastMedia); return}		// list/thumb view
       if (longClick) {index--} else index++						// next media
       if (!Param()) {index = lastMedia; closePlayer(); return}}
+
     if (lastClick == 1) {
       if (document.getElementById('osk')?.contains(document.elementFromPoint(xPos, yPos))) return
       predictBuffer = ''
-      if (captions && editingBlock && overMedia && !longClick && ym < trigger()) {
-        const b = editingBlock, n = b.nextElementSibling, p = b.previousElementSibling
-        if (xm > 0.5 && b._voice?.src && isFinite(myVoice.duration)) {
-          const t = +(+b.dataset.start + myVoice.duration * rate).toFixed(2)
-          myPlayer.currentTime = t
-          b._end = t
-          if (n) { n.dataset.start = t; delete b.dataset.end } else b.dataset.end = t }
-        else if (xm < 0.5 && p) { delete p.dataset.end; p._end = +b.dataset.start }
+      if (captions && editingBlock && overMedia && longClick && ym < trigger()) {
+        offset = 0
+        const b = editingBlock, e = xm > 0.5 ? b : b.previousElementSibling
+        if (e) {
+          if (e.dataset.end) {
+            const next = +e.nextElementSibling?.dataset.start || 0
+            delete e.dataset.end; e._end = next > +e.dataset.start ? next : (dur || Infinity)
+            if (e === b && b._atEnd && isFinite(e._end)) myPlayer.currentTime = e._end }
+          else {
+            const t = xm > 0.5 ? b._end : +b.dataset.start
+            if (isFinite(t)) e.dataset.end = e._end = t }}
         editing = 1; return }
       if (longClick && (overTitle || ['myInput', 'caption-search-input', 'inp', 'myVoiceInput'].includes(id))) osk()
       if (id.includes('search-input')) return
@@ -338,11 +344,11 @@
         const wasOsk = !!document.getElementById('osk')
         const block = overBlock ? overBlock : editingBlock
         const pos = caret(block)?.pos
-        const end = pos == 'end'
-        if (overEditor && !overBlock && ym < 0.1 && xm < 0.95) { viewport.scrollTo({top:0,behavior:'smooth'}); return }
+        const end = 0
+        if (overEditor && ym < 0.1 && xm < 0.95) { viewport.scrollTo({top:0,behavior:'smooth'}); return }
         if (block) block._atEnd = 0
         if (id == 'viewport') window.getSelection().removeAllRanges()
-        if (!longClick && !wasOsk) { activateBlock(block, syncPlay); if (block !== editingBlock) scrollUntilBlock(1, block) }
+        if (!longClick && !wasOsk && block !== editingBlock) scrollUntilBlock(1, block)
         if (longClick && !gesture && overEditor && xm < 0.95) { syncPlay = userPlay = 0; osk(); if (!getSelection().isCollapsed) inca('cancelFind') }
         if (overBlock && !gesture && overBlock !== editingBlock) {
           lastBlock = block.dataset.num; userPlay = syncPlay = 1
@@ -382,6 +388,7 @@
         if (id == 'mySelect') {if (type) {sel(index)} else {for (i = 1; document.getElementById('thumb'+i); i++) {sel(i)}}; return}
         if (!playing && !overMedia && !myNav.style.display) return}
       if (myNav.matches(':hover') || gesture) return}
+
     if (!getStart(id)) return
     if (lastClick == 1 && overBlock) return
     if (!playing && lastClick == 2) return
@@ -398,8 +405,8 @@
       myPlayer.currentTime = start
       if (captions && editingBlock) {
         const b = editingBlock, s = +start.toFixed(2)
-        setStart(b, s)
-        if (b._voice?.src && isFinite(myVoice.duration)) b.dataset.end = b._end = +(s + myVoice.duration * rate).toFixed(2)
+        b.dataset.start = s
+        if (b._voice?.src && isFinite(myVoice.duration)) setEnd(b, +(s + myVoice.duration * rate).toFixed(2))
         editing = 1 }
       return }
     if (longClick && longClick != 2 && !title.matches(':hover')) return
@@ -428,12 +435,12 @@
     editor.style.transition = null
     editor.style.opacity = 0
     if (!thumbSheet && lastClick) myPlayerWrap.style.opacity = 0			// fade in player
-    if (!thumbSheet || type == 'image') myPlayer.poster = thumb.poster
+    if (!thumbSheet || type == 'image' || type == 'audio') myPlayer.poster = thumb.poster
     else if (!playing) lastSeek = defStart
     if (playlist.match('/inca/music/')) myPlayer.muted = 0
     else myPlayer.muted = defMute
     if (!thumbSheet) {
-      if (favicon.matches(':hover')) getSrt(1)
+      if (favicon.matches(':hover')) getSrt(0)
       else if (overTitle && mouseDown) previewMode ? getSrt(lastBlock) : getSrt(1)
       else if (captions || type == 'document') getSrt()}
     if (el = document.getElementById('title'+lastMedia)) el.style.color = el.style.fontWeight = ''
@@ -474,7 +481,8 @@
     cursor = overMedia ? 12 : 4
     seekbar()
     if (x + y > 7 && !gesture && mouseDown) {
-      gesture = 1
+      gesture = longClick ? 4 : 1
+      gesture = id.includes('osk') ? 3 : gesture
       if (!playing && overMedia && zoom > 1) popThumb()
       if (!playing && overMedia && !longClick && zoom == 1 && !myNav.style.display) sel(index)}
     if (!gesture || !mouseDown) {gesture = 0; return}
@@ -485,8 +493,7 @@
       const wrap = thumb.parentElement
       wrap.style.left = parseInt(wrap.style.left||0) + xPos - xRef + 'px'
       wrap.style.top  = parseInt(wrap.style.top ||0) + yPos - yRef + 'px'}
-    else if (mouseDown == 1 && (gesture == 3 || id.includes('osk'))) {			// move osk
-      gesture = 3
+    else if (gesture == 3) {								// move osk
       wasOsk.style.left = parseInt(wasOsk.style.left || 0) + xPos - xRef + 'px'
       wasOsk.style.top  = parseInt(wasOsk.style.top || 0) + yPos - yRef + 'px'}
     else if (e.target.classList.contains('voice-face')) {				// move face
@@ -494,6 +501,11 @@
       wrap.style.left = parseInt(wrap.style.left||0) + xPos - xRef + 'px'
       wrap.style.top  = parseInt(wrap.style.top ||0) + yPos - yRef + 'px'
       editing = 1}
+    else if (gesture == 4 && playing && myPlayer.paused && !thumbSheet && overMedia) {
+      crop ||= [e.clientX, e.clientY]
+      crop[2] = e.clientX; crop[3] = e.clientY
+      document.body.append(myCrop)
+      myCrop.style.cssText = `position:fixed;z-index:99999;pointer-events:none;border:1px dashed red;left:${Math.min(crop[0], crop[2])}px;top:${Math.min(crop[1], crop[3])}px;width:${Math.abs(crop[2] - crop[0])}px;height:${Math.abs(crop[3] - crop[1])}px`}
     else if (playing && (mouseDown == 1 || gesture == 2 || delay == 1)) {		// move myPlayer / editor
       const dx = xPos - xRef, dy = yPos - yRef
       if (captions) {
@@ -511,8 +523,6 @@
     const under = document.elementFromPoint(xPos, yPos)
     const id = under?.closest('#myNav') ? under.id : e.target.id
     const face = under?.closest('#voice-faces')
-    if (myNav.style.display && !e.target.closest('#voiceSub, #emotionSub, #soundsSub, #myDelay, #myRate, #myVol, #mySpeed, #mySkinny, #myCue')) {
-      e.preventDefault(); return}
     if (overEditor) {
       if (e.target.closest('#voiceSub, #emotionSub, #soundsSub')) return
       if (e.target.closest('.dropdown-content')) return
@@ -602,17 +612,14 @@
       else if (vol > 0.1) vol -= 0.1
       vol = Math.round(vol * 10) / 10
       editingBlock._volume = myVoice.volume = vol}
-    else if (!mouseDown && captions == 2 && editingBlock && overMedia && ym < trigger()) {	// OSK nudge: shift start/end by 0.02s
-      const b = editingBlock, n = b.nextElementSibling, end = xm > 0.5, d = wheelUp ? 0.02 : -0.02
+    else if (captions && myNav.style.display) return 
+    else if (captions && !mouseDown && captions == 2 && editingBlock && overMedia && ym < trigger()) {
+      const b = editingBlock, end = xm > 0.5, d = wheelUp ? 0.02 : -0.02
       const t = Math.min(end ? dur || Infinity : b._end, Math.max(end ? +b.dataset.start : 0, +((end ? b._end : +b.dataset.start) + d).toFixed(2)))
       b._atEnd = end ? 1 : 0
-      if (end) {
-        b._end = t
-        if (n && !b.dataset.end && Math.abs(t - b._e0) <= 1) n.dataset.start = t
-        else b.dataset.end = t }
-      else setStart(b, t)
+      if (end) setEnd(b, t)
+      else { b.dataset.start = t; myVoice.currentTime = 0 }
       offset = +(offset + d).toFixed(2)
-      myAlert.innerText = offset ? (offset > 0 ? '+' : '') + offset.toFixed(2) : ''
       myPlayer.currentTime = t; editing = 1; delay = 74}
     else if (!myNav.style.display && playing && (mouseDown || type == 'image')) {
       let x = rect.left+rect.width/2-(clickMedia ? xPos : innerWidth/2)			// zoom myPlayer
@@ -717,7 +724,7 @@
     if (playing) {
       myPic.style.maxWidth = '160px'
       myPic.style.maxHeight = 160 / aspect + 'px'
-      myPlayerWrap.style.pointerEvents = myPlayer.src ? 'auto' : 'none'
+      myPlayerWrap.style.pointerEvents = (myPlayer.src || thumbSheet) ? 'auto' : 'none'
       if (dur || myVoice.duration) edPause.textContent = (userPlay ? '' : '⏸') + (defMute ? '🔇︎' : '')
       else edPause.textContent = ''
       if (editingBlock?._voice?.src) progress = 100 * myVoice.currentTime / myVoice.duration
@@ -739,18 +746,20 @@
       myRate.innerHTML = editingBlock?._rate == 1 ? 'Speed' : `Speed ${editingBlock?._rate}`
       myVoice.playbackRate = editingBlock?._rate || 1
       myPlayer.playbackRate = mediaContent.style.display == 'flex' ? 1 : captions ? fitRate(editingBlock) : rate
-      const nudge = dur && captions == 2 && overMedia && ym < trigger() && !document.getElementById('osk')
+      const nudge = dur && captions == 2 && overMedia && ym < trigger()
       if (nudge) {
         const b = editingBlock
-        const n = b?.nextElementSibling
-        const outOfOrder = n && (+n.dataset.start < +b?.dataset.start || +n.dataset.start < b?._end)
-        const hasEnd = xm < 0.5 ? b?.previousElementSibling?.dataset.end : (b?.dataset.end || outOfOrder)
-        const c = hasEnd ? 'red' : 'orange'
-        myPlayerWrap.style.boxShadow = xm < 0.5 ? '-6px 0 0 0 ' + c : '6px 0 0 0 ' + c }
+        const uncoupled = (xm < 0.5 ? b?.previousElementSibling : b)?.dataset.end
+        const w = uncoupled ? 12 : 6
+        myPlayerWrap.style.boxShadow = (xm < 0.5 ? -w : w) + 'px 0 0 0 ' + (uncoupled ? 'red' : 'orange')
+        myAlert.innerText = offset ? (offset > 0 ? '+' : '') + offset.toFixed(2) : '' }
       else myPlayerWrap.style.boxShadow = ''
       if (nudge) syncPlay = 0
-      if (nudge && editingBlock && delay < 40 && (xm > 0.5) != !!editingBlock._atEnd) {
+      const atStart = !editingBlock?._atEnd && Math.abs(myPlayer.currentTime - editingBlock?.dataset.start) < 0.05
+      const parked = xm > 0.5 ? editingBlock?._atEnd : atStart
+      if (nudge && editingBlock && delay < 40 && !parked) {
         const b = editingBlock
+        offset = 0
         if (xm > 0.5) toEnd(b)
         else { b._atEnd = 0; myPlayer.currentTime = b.dataset.start }}
       if (!syncPlay) { myVoice.pause(); myPlayer.pause() }
@@ -797,7 +806,7 @@
     if (type == 'document' || type == 'audio' || playlist.match('/inca/music/')) z *= 0.5
     if (thumbSheet) { x = xyz[0]; y = xyz[1]; z = xyz[2] }
     skinny = thumb.style.skinny || skinny
-    myPlayerWrap.style.transition = 'opacity ' + time + 's, transform ' + time + 's'
+    myPlayerWrap.style.transition = 'opacity ' + time + 's, transform ' + time + 's, box-shadow 0.2s'
     myPlayerWrap.style.left  = (x - (window.screenX || 0)) - myPlayer.offsetWidth  / 2 + 'px'
     myPlayerWrap.style.top   = (y - (outerHeight - innerHeight)) - myPlayer.offsetHeight / 2 + 'px'
     myPlayerWrap.style.transform = 'scale(' + skinny * z + ',' + z + ')'
@@ -1120,6 +1129,16 @@
     inca('Ffmpeg', target, select, (myPlayer.currentTime === dur ? dur - 0.1 : myPlayer.currentTime).toFixed(2))}
 
 
+  function cropSend() {								// drag released → send x,y,w,h fractions + time
+    const c = crop, r = myPlayer.getBoundingClientRect()
+    crop = 0; myCrop.style.display = 'none'
+    if (Math.abs(c[2] - c[0]) < 8 || Math.abs(c[3] - c[1]) < 8) return 0	// tiny drag = normal click
+    const f = (v, o, s) => Math.min(1, Math.max(0, (v - o) / s))
+    const x = [c[0], c[2]].map(v => f(v, r.left, r.width)), y = [c[1], c[3]].map(v => f(v, r.top, r.height))
+    inca('Crop', [Math.min(...x), Math.min(...y), Math.abs(x[0] - x[1]), Math.abs(y[0] - y[1])].map(v => v.toFixed(4)), index, myPlayer.currentTime.toFixed(2))
+    return 1}
+
+
   function formatTime(seconds) {
     let h = Math.floor(seconds / 3600)
     let m = Math.floor((seconds % 3600) / 60)
@@ -1164,6 +1183,32 @@
     Param()}
 
 
+  function closeContext() {
+    myNav.style.display = myDefault.style.display = myAlt.style.display = viewport.style.overflowY = null
+    if (overEditor && editingBlock && myPlayer.paused) {
+      const b = editingBlock, t = myPlayer.currentTime, n = b.nextElementSibling
+      if (b._atEnd || dur && t >= dur - 0.05) {
+        if (b._end != t) { editing = b._fit = 1
+          const coupled = n && !b.dataset.end
+          setEnd(b, t)
+          if (coupled && !(+n.dataset.end > t || +n.nextElementSibling?.dataset.start > t)) {		// next block now has no valid end
+            n.dataset.end = t + 4
+            if (n._voice?.src) Object.assign(new Audio(n._voice.src.replace(/#/g, '%23')), {onloadedmetadata() { n.dataset.end = (t + this.duration / (n._rate || 1) * rate).toFixed(2) }})}}}
+      else if (b.dataset.start != t) { editing = b._fit = 1; b.dataset.start = t }}   // otherwise set start
+    else if (thumb.style.rate || thumb.style.skinny) {
+      if (type) {
+        let x = (thumb.style.rate || '') + ',' + (thumb.style.skinny || '')
+        const now = +myPlayer.currentTime.toFixed(2)
+        if (cue) {							// cue set → write user cue + reset cue
+          const r = x.split(',').map(v => v ? '1.0' : '0').join(',')
+          Promise.resolve(inca('addCue', x, index, cue)).then(() => {
+            inca('addCue', r, index, now)				// now ≈ cue-0.1 (player paused), so reset fires first
+            thumb.style.rate = thumb.style.skinny = ''
+            rate = 1; skinny = 1; myPlayer.playbackRate = 1; positionMedia(0.2)})}
+        else inca('addCue', x, index, cue)				// plain save (writes 0.00|... if cue=0)
+        cue = 0}}}
+
+
   async function closePlayer() {
     closeOsk()
     const t = myPlayer.currentTime
@@ -1195,63 +1240,66 @@
 
 
 
-  function openEditor(text) {
-    projectMedia.defaultSrc = originalPlayerSrc = decodeURIComponent(type === 'image' ? thumb.poster : thumb.src)
-    editorX = editorY = mediaX = mediaY = 0
-    lastBlock = type === 'image' ? 1 : lastBlock
-    leftVoice = rightVoice = centerVoice = ''
-    editor.style.transition = 'opacity 1s'
-    editor.style.height = 0
-    editor.style.opacity = 1
-    document.querySelectorAll('.dropdown-content').forEach(c => c.style.display = 'none');
-    const parsed = parseInputText(text);
-    viewport.replaceChildren();
-    viewport.innerHTML = '';
-    blocks = [];
-    (parsed?.blocks || []).forEach(b => {
-        const block = addBlock(
-        b.number || (blocks.length + 1),
-        parseFloat(b.startTime) || 0,
-        (b.text || '').replace(/<[^>]*>|[\u200B\u00A0]/g, ' '),
-        b.fav || 0,
-        b);
-      lastVoice = b.voiceName || lastVoice
-      block._voiceName = b.voiceName || ''
-      block._volume = b.volume || 1
-      block._rate = b.rate || 1
-      block._delay = b.delay || 0
-      if (b.endTime) block.dataset.end = b.endTime
-      if (b.voice) block._voice = { src: b.voice };
-      else lastVoice = block._voiceName = ''});
-    if (projectMedia.defaultSrc) swapMedia(projectMedia.defaultSrc, 0)
-    overMedia = 0
-    if (!lastBlock) lastBlock = parsed?.lastSelectedId || 1
-    let first = blocks[lastBlock - 1] || blocks[0];
-    if (first.innerHTML == 'new caption') first.dataset.start = defStart
-    else if (blocks.length < 3) captions = 1
-    activateBlock(first, userPlay)
-    myPlayer.currentTime = first.dataset.start
-    matchCountSpan.textContent = ''
-    setTimeout(() => updateBlockAlignments(),10)
-    projectMedia.ui = parsed.ui || {}
-    if (parsed.ui) {
-      const u = parsed.ui
-        if (u.facePos) {
-          ensureVoiceFaces();
-          ;[['L', voiceFaceLeft], ['C', voiceFaceCenter], ['R', voiceFaceRight]].forEach(([k, el]) => {
-            if (el && u.facePos[k]) { el.parentElement.style.left = u.facePos[k].left; el.parentElement.style.top = u.facePos[k].top }})}
-      if (captions == 2) {
-        faceZoom = u.faceZoom || 1
-        document.getElementById('voice-faces')?.style.setProperty('--fz', faceZoom)
-        editor.style.width = u.width || '500px'
-        editor.style.height = u.height || '360px'
-        projectMedia.uiHeight = editor.style.height
-        if (u.editorX) { editorX = u.editorX; editorY = u.editorY }}
-      if (u.mediaX) { mediaX = u.mediaX; mediaY = u.mediaY }
-      if (parsed.ui.scaleY > 0) scaleY = parsed.ui.scaleY
-      void myPlayerWrap.offsetWidth
-      if (u.scaleY > 0) scaleY = u.scaleY}
-    setTimeout(() => {positionEditor(); editing = 0; first.focus(); scrollUntilBlock(1, first); syncPlay = 0}, 240)}
+function openEditor(text) {
+  projectMedia.defaultSrc = originalPlayerSrc = decodeURIComponent(type === 'image' ? thumb.poster : thumb.src)
+  editorX = editorY = mediaX = mediaY = 0
+  lastBlock = type === 'image' ? 1 : lastBlock
+  leftVoice = rightVoice = centerVoice = ''
+  editor.style.transition = 'opacity 1s'
+  editor.style.height = 0
+  editor.style.opacity = 1
+  document.querySelectorAll('.dropdown-content').forEach(c => c.style.display = 'none');
+  const parsed = parseInputText(text);
+  viewport.replaceChildren();
+  viewport.innerHTML = '';
+  blocks = [];
+  (parsed?.blocks || []).forEach(b => {
+      const block = addBlock(
+      b.number || (blocks.length + 1),
+      parseFloat(b.startTime) || 0,
+      (b.text || '').replace(/<[^>]*>|[\u200B\u00A0]/g, ' '),
+      b.fav || 0,
+      b);
+    lastVoice = b.voiceName || lastVoice
+    block._voiceName = b.voiceName || ''
+    block._volume = b.volume || 1
+    block._rate = b.rate || 1
+    block._delay = b.delay || 0
+    if (b.endTime) block.dataset.end = b.endTime
+    if (b.voice) block._voice = { src: b.voice };
+    else lastVoice = block._voiceName = ''});
+  if (projectMedia.defaultSrc) swapMedia(projectMedia.defaultSrc, lastBlock === 1 ? (defStart || 0) : 0)
+  overMedia = 0
+  if (lastBlock === 1) {
+    const i = blocks.findIndex(b => +b.dataset.start >= (defStart || 0))
+    lastBlock = (i > 0 ? i - 1 : i === 0 ? 0 : blocks.length - 1) + 1}
+  else if (!lastBlock) lastBlock = 1
+  let first = blocks[lastBlock - 1] || blocks[0];
+  if (first.innerHTML == 'new caption') first.dataset.start = defStart
+  else if (blocks.length < 3) captions = 1
+  activateBlock(first, userPlay)
+  myPlayer.currentTime = first.dataset.start
+  matchCountSpan.textContent = ''
+  setTimeout(() => updateBlockAlignments(),10)
+  projectMedia.ui = parsed.ui || {}
+  if (parsed.ui) {
+    const u = parsed.ui
+      if (u.facePos) {
+        ensureVoiceFaces();
+        ;[['L', voiceFaceLeft], ['C', voiceFaceCenter], ['R', voiceFaceRight]].forEach(([k, el]) => {
+          if (el && u.facePos[k]) { el.parentElement.style.left = u.facePos[k].left; el.parentElement.style.top = u.facePos[k].top }})}
+    if (captions == 2) {
+      faceZoom = u.faceZoom || 1
+      document.getElementById('voice-faces')?.style.setProperty('--fz', faceZoom)
+      editor.style.width = u.width || '500px'
+      editor.style.height = u.height || '360px'
+      projectMedia.uiHeight = editor.style.height
+      if (u.editorX) { editorX = u.editorX; editorY = u.editorY }}
+    if (u.mediaX) { mediaX = u.mediaX; mediaY = u.mediaY }
+    if (parsed.ui.scaleY > 0) scaleY = parsed.ui.scaleY
+    void myPlayerWrap.offsetWidth
+    if (u.scaleY > 0) scaleY = u.scaleY}
+  setTimeout(() => {positionEditor(); editing = 0; first.focus(); scrollUntilBlock(1, first); syncPlay = 0}, 240)}
 
 
 
@@ -1274,7 +1322,7 @@
     const isSameBlock = editingBlock === block
     const media = getEffectiveMedia(block);
     const time = isSameBlock ? myPlayer.currentTime : (Number.isFinite(+block.dataset.start) ? +block.dataset.start + 0.04 : 0)
-    if (!isSameBlock) { block._atEnd = 0; block._s0 = +block.dataset.start; block._e0 = block._end }
+    if (!isSameBlock) block._atEnd = 0
     swapMedia(media?.src || originalPlayerSrc, time || 0)
     if (block._voice?.src) {
       if (!isSameBlock && decodeURIComponent(myVoice.src) != block._voice.src) myVoice.src = block._voice.src.replace(/#/g, '%23')
@@ -1388,7 +1436,7 @@
     if (changed && decodeURIComponent(myPlayer.poster || myPlayer.src || '') !== src) myPlayerWrap.style.opacity = 0
     if (isImage) { myPlayer.removeAttribute('src'); myPlayer.poster = newSrc; myPlayer.load() }
     else if (isText) { myPlayer.poster = ''; myPlayer.removeAttribute('src'); myPlayer.load() }
-    else { myPlayer.poster = ''; if (changed) { myPlayer.src = newSrc; myPlayer.load() }}
+    else { if (type !== 'audio') myPlayer.poster = ''; if (changed) { myPlayer.src = newSrc; myPlayer.load() }}
     if (Math.abs(myPlayer.currentTime - time) > 0.5) myPlayer.currentTime = time
     if ((mouseDown || changed || editingBlock?._voice?.src) && Math.abs(myPlayer.currentTime - time) > 0.02 || Math.abs(myPlayer.currentTime - time) > 0.5)
       myPlayer.currentTime = time
@@ -1910,9 +1958,7 @@
             myVoice.addEventListener('loadedmetadata', () => {
             if (isFinite(myVoice.duration)) {
               const t = (+block.dataset.start + myVoice.duration * rate).toFixed(2)
-              const next = block.nextElementSibling
-              if (next) { next.dataset.start = t; delete block.dataset.end }
-              else { block.dataset.end = t; block._end = +t }}
+              if (!block.dataset.end || !block.nextElementSibling) setEnd(block, t)}		// uncoupled: leave the boundary
             window.getSelection().removeAllRanges()
             activateBlock(block, 1, 1)}, { once: true })
             inca('addHistory',last,0,path)})

@@ -198,6 +198,8 @@
       Delete()
     else if (command == "Add" && address)				; add new search term
       Add()
+    else if (command == "Crop")						; crop image
+      Crop()
     else if (command == "Ffmpeg")					; index folder (create thumbsheets)
       SetTimer, Ffmpeg, -10, -2						; run asynchromously
     else if (command == "Rename")					; rename media
@@ -392,6 +394,18 @@
       FileAppend, %value%|0.0`r`n, %inca%\fav\History.m3u, UTF-8
     if (!InStr(history, address) && StrLen(address) > 4 && value != address)
       FileAppend, %address%|0.0`r`n, %inca%\fav\History.m3u, UTF-8
+    }
+
+
+  Crop()								; value = x,y,w,h fractions, address = seek time
+    {
+    if !getMedia(StrSplit(selected, ",").1)
+      return
+    c := StrSplit(value, ",")
+    cx := c.1, cy := c.2, cw := c.3, ch := c.4
+    ss := DetectMedia(src) == "image" ? "" : "-ss " address
+    RunWait, %inca%\cache\apps\ffmpeg.exe %ss% -i "%src%" -vf "crop=iw*%cw%:ih*%ch%:iw*%cx%:ih*%cy%" -vframes 1 -y "%profile%\Downloads\%media% - %ch%.jpg",, Hide
+    Popup("Downloads",900,0.45,0.2)
     }
 
 
@@ -1657,7 +1671,7 @@
     fav = %inca%\%fav%
     StringReplace, music, music, |, |%inca%\, All
     music = %inca%\%music%
-    fol = %profile%\downloads\|%profile%\pictures\|%fol%
+    fol = %profile%\Downloads\|%profile%\Pictures\|%fol%
     }
 
 
