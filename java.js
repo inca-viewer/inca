@@ -1,7 +1,6 @@
 // try InfiniteTalk / flashHead face animation when 50GB disk is free
 
 
-
   let wheel = 0								// wheel count
   let wheelDir = 0		 					// wheel direction
   let index = 1								// thumb index (e.g. thumb14)
@@ -89,14 +88,9 @@
   let timeout = 0
   let overTimer = 0
   let matches = 0
-  let leftVoice = ''
-  let rightVoice = ''
-  let centerVoice = ''
+  let voices = []
   let faceZoom = 1
   let offset = 0
-  let voiceFaceLeft = null
-  let voiceFaceRight = null
-  let voiceFaceCenter = null
 
   let entry = document.createElement('div')				// dummy thumb container
   let thumb = document.createElement('div')				// . thumb element
@@ -185,7 +179,7 @@
   const trigger = () => {
     if (playing) return Math.min(0.95, Math.max(0.85, 0.85 + (scaleY - 0.5) * 0.2))
     return Math.min(0.9, Math.max(0.75, 0.75 + ((thumb.offsetHeight / innerHeight) - 0.12) * 0.8))}
-  const bound = () => (dur || !!(leftVoice || centerVoice || rightVoice)) ? 140 : 60
+  const bound = () => (dur || voices.length) ? 140 : 60
 
 let crop = 0
 const myCrop = Object.assign(document.createElement('div'), {style: 'position:fixed;display:none;border:1px dashed red;pointer-events:none;z-index:99999'})
@@ -496,12 +490,7 @@ const myCrop = Object.assign(document.createElement('div'), {style: 'position:fi
     else if (gesture == 3) {								// move osk
       wasOsk.style.left = parseInt(wasOsk.style.left || 0) + xPos - xRef + 'px'
       wasOsk.style.top  = parseInt(wasOsk.style.top || 0) + yPos - yRef + 'px'}
-    else if (e.target.classList.contains('voice-face')) {				// move face
-      const wrap = e.target.parentElement
-      wrap.style.left = parseInt(wrap.style.left||0) + xPos - xRef + 'px'
-      wrap.style.top  = parseInt(wrap.style.top ||0) + yPos - yRef + 'px'
-      editing = 1}
-    else if (gesture == 4 && playing && myPlayer.paused && !thumbSheet && overMedia) {
+    else if (gesture == 4 && playing && myPlayer.paused && !thumbSheet && overMedia && !captions) {
       crop ||= [e.clientX, e.clientY]
       crop[2] = e.clientX; crop[3] = e.clientY
       document.body.append(myCrop)
@@ -724,7 +713,7 @@ const myCrop = Object.assign(document.createElement('div'), {style: 'position:fi
     if (playing) {
       myPic.style.maxWidth = '160px'
       myPic.style.maxHeight = 160 / aspect + 'px'
-      myPlayerWrap.style.pointerEvents = (myPlayer.src || thumbSheet) ? 'auto' : 'none'
+      myPlayerWrap.style.pointerEvents = (myPlayer.src || myPlayer.poster || thumbSheet) ? 'auto' : 'none'
       if (dur || myVoice.duration) edPause.textContent = (userPlay ? '' : '⏸') + (defMute ? '🔇︎' : '')
       else edPause.textContent = ''
       if (editingBlock?._voice?.src) progress = 100 * myVoice.currentTime / myVoice.duration
@@ -1027,7 +1016,7 @@ const myCrop = Object.assign(document.createElement('div'), {style: 'position:fi
       else if (el[1] == 'pause') { syncPlay = 0; if (el[2]) setTimeout(function () { syncPlay = 1 }, 1000 * el[2]) }}}
 
 
-  function getSrt(scroll) {
+  function getSrt(scroll = 1) {
     lastBlock = scroll
     const src = document.getElementById('dat' + index)?.getAttribute('data');
     if (editor.style.display === 'flex') editor.style.opacity = 1		// resume visible after Play()
@@ -1243,8 +1232,9 @@ const myCrop = Object.assign(document.createElement('div'), {style: 'position:fi
 function openEditor(text) {
   projectMedia.defaultSrc = originalPlayerSrc = decodeURIComponent(type === 'image' ? thumb.poster : thumb.src)
   editorX = editorY = mediaX = mediaY = 0
-  lastBlock = type === 'image' ? 1 : lastBlock
-  leftVoice = rightVoice = centerVoice = ''
+  lastBlock = type === 'image' && lastBlock ? 1 : lastBlock
+crawlEnd = Date.now() + 400
+  voices = []
   editor.style.transition = 'opacity 1s'
   editor.style.height = 0
   editor.style.opacity = 1
@@ -1270,10 +1260,7 @@ function openEditor(text) {
     else lastVoice = block._voiceName = ''});
   if (projectMedia.defaultSrc) swapMedia(projectMedia.defaultSrc, lastBlock === 1 ? (defStart || 0) : 0)
   overMedia = 0
-  if (lastBlock === 1) {
-    const i = blocks.findIndex(b => +b.dataset.start >= (defStart || 0))
-    lastBlock = (i > 0 ? i - 1 : i === 0 ? 0 : blocks.length - 1) + 1}
-  else if (!lastBlock) lastBlock = 1
+  if (!lastBlock) lastBlock = parsed?.lastSelectedId || 1
   let first = blocks[lastBlock - 1] || blocks[0];
   if (first.innerHTML == 'new caption') first.dataset.start = defStart
   else if (blocks.length < 3) captions = 1
@@ -1284,10 +1271,6 @@ function openEditor(text) {
   projectMedia.ui = parsed.ui || {}
   if (parsed.ui) {
     const u = parsed.ui
-      if (u.facePos) {
-        ensureVoiceFaces();
-        ;[['L', voiceFaceLeft], ['C', voiceFaceCenter], ['R', voiceFaceRight]].forEach(([k, el]) => {
-          if (el && u.facePos[k]) { el.parentElement.style.left = u.facePos[k].left; el.parentElement.style.top = u.facePos[k].top }})}
     if (captions == 2) {
       faceZoom = u.faceZoom || 1
       document.getElementById('voice-faces')?.style.setProperty('--fz', faceZoom)
@@ -1336,7 +1319,7 @@ function openEditor(text) {
       block.classList.add('editing');
       editingBlock = block}
     myPlayer.volume = myVoice.volume = block._volume || 1
-    if (userPlay && !overEditor) {if (!syncPlay) syncPlay = 0; setTimeout(() => syncPlay = play, startDelay)}
+    if (userPlay && !overEditor && startDelay) setTimeout(() => syncPlay = play, startDelay)
     else syncPlay = play
     if (captions == 1) {									// compact captions
       const rec = block.getBoundingClientRect()
@@ -1364,67 +1347,22 @@ function openEditor(text) {
 
 
 
-  function ensureVoiceFaces() {
-    if (document.getElementById('voice-faces')) return
-    const container = document.createElement('div')
-    container.id = 'voice-faces'
-    editor.appendChild(container)
-    const mk = (side) => {
-      const wrap = document.createElement('div')
-      wrap.className = 'voice-face-wrap'
-      const img = document.createElement('img')
-      img.className = 'voice-face'
-      img.dataset.side = side
-      img.alt = side + ' voice'
-      img.draggable = false
-      const nameEl = document.createElement('div')
-      nameEl.className = 'voice-face-name'
-      wrap.appendChild(img)
-      wrap.appendChild(nameEl)
-      container.appendChild(wrap)
-      img.nameEl = nameEl
-      return img
-    }
-    voiceFaceLeft   = mk('left')
-    voiceFaceCenter = mk('center')
-    voiceFaceRight  = mk('right')}
-
-
   function updateBlockAlignments() {
-    ensureVoiceFaces()
-    const container = document.getElementById('voice-faces')
-    if (!container) return
-    if (!editor || editor.style.display === 'none' || !editor.offsetWidth || !captions) {
-      container.style.display = 'none'
-      return}
-    const unique = []
-    blocks.forEach(b => {
-      const v = (b._voiceName || '').trim()
-      if (v && !unique.includes(v)) unique.push(v)})
-    unique.forEach(v => {
-      if (v !== leftVoice && v !== centerVoice && v !== rightVoice) {
-        if (!leftVoice)   leftVoice   = v
-        else if (!rightVoice)  rightVoice  = v
-        else if (!centerVoice) centerVoice = v}})
-    if (leftVoice)  voiceFaceLeft.src  = `/inca/cache/voices/${encodeURIComponent(leftVoice)}.jpg`
-    if (rightVoice) voiceFaceRight.src = `/inca/cache/voices/${encodeURIComponent(rightVoice)}.jpg`
-    if (centerVoice) voiceFaceCenter.src = `/inca/cache/voices/${encodeURIComponent(centerVoice)}.jpg`
-    container.style.display = (leftVoice || rightVoice || centerVoice) ? 'flex' : 'none'
-    if (voiceFaceLeft?.nameEl)   voiceFaceLeft.nameEl.textContent   = leftVoice   || ''
-    if (voiceFaceRight?.nameEl)  voiceFaceRight.nameEl.textContent  = rightVoice  || ''
-    if (voiceFaceCenter?.nameEl) voiceFaceCenter.nameEl.textContent = centerVoice || ''
-    voiceFaceLeft.parentElement.style.display   = leftVoice   ? '' : 'none'
-    voiceFaceRight.parentElement.style.display  = rightVoice  ? '' : 'none'
-    voiceFaceCenter.parentElement.style.display = centerVoice ? '' : 'none'}
+    const box = document.getElementById('voice-faces') || editor.appendChild(Object.assign(document.createElement('div'), {id: 'voice-faces'}))
+    const list = [...new Set(blocks.map(b => (b._voiceName || '').trim()).filter(Boolean))].slice(0, 6)
+    if (list + '' !== voices + '') {
+      voices = list
+      box.replaceChildren(...list.map(v => {
+        const w = Object.assign(document.createElement('div'), {className: 'voice-face-wrap', innerHTML: '<img class="voice-face" draggable="false"><div class="voice-face-name"></div>'})
+        w.dataset.voice = v; w.firstChild.src = `/inca/cache/voices/${encodeURIComponent(v)}.jpg`; w.lastChild.textContent = v
+        return w}))}
+    box.style.setProperty('--fz', faceZoom)
+    box.style.display = list.length && editor.offsetWidth && captions ? 'flex' : 'none'}
 
 
   function updateFaceHighlights(block) {
-    if (!voiceFaceLeft) return
-    const b = block || editingBlock
-    const activeV = (b?._voiceName || '').trim()
-    voiceFaceLeft.classList.toggle('active',   activeV && activeV === leftVoice)
-    voiceFaceRight.classList.toggle('active',  activeV && activeV === rightVoice)
-    voiceFaceCenter.classList.toggle('active', activeV && activeV === centerVoice)}
+    const v = ((block || editingBlock)?._voiceName || '').trim()
+    document.querySelectorAll('.voice-face-wrap').forEach(w => w.firstChild.classList.toggle('active', w.dataset.voice === v))}
 
 
   function swapMedia(src, time) {
@@ -1677,11 +1615,7 @@ function openEditor(text) {
         : null,
       ui: { width: editor.style.width, height: editor.style.height, mediaX, mediaY, editorX, editorY, 
         scaleY: (captions == 2 && !projectMedia.ui.scaleY) ? 0.3 * scaleY : scaleY, 
-        faceZoom,
-        facePos: {
-          L: voiceFaceLeft   && {left: voiceFaceLeft.parentElement.style.left,   top: voiceFaceLeft.parentElement.style.top},
-          C: voiceFaceCenter && {left: voiceFaceCenter.parentElement.style.left, top: voiceFaceCenter.parentElement.style.top},
-          R: voiceFaceRight  && {left: voiceFaceRight.parentElement.style.left,  top: voiceFaceRight.parentElement.style.top}}},
+        faceZoom},
       lastSelectedId: editingBlock ? parseInt(editingBlock.dataset.num) : 0,
       blocks: blocks.map(b => {
         const start = parseFloat(b.dataset.start);
@@ -1917,9 +1851,7 @@ function openEditor(text) {
 
 
   function newVoice() {
-    const side = document.elementFromPoint(xPos, yPos)?.closest('.voice-face-wrap')
-      ?.querySelector('.voice-face')?.dataset.side
-    const name = side === 'left' ? leftVoice : side === 'center' ? centerVoice : rightVoice
+    const name = document.elementFromPoint(xPos, yPos)?.closest('.voice-face-wrap')?.dataset.voice
     if (!name || !editingBlock) return
     editingBlock._voiceName = name
     userPlay = 0
