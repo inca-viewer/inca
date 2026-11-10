@@ -91,6 +91,7 @@
   let voices = []
   let faceZoom = 1
   let offset = 0
+  let crop = 0
 
   let entry = document.createElement('div')				// dummy thumb container
   let thumb = document.createElement('div')				// . thumb element
@@ -158,7 +159,7 @@
     myPlayer.requestVideoFrameCallback(onFrame)})
   const endOf = b => b._end
   const voiceBusy = b => b?._voice?.src && !myVoice.ended
-  const setEnd = (b, t) => {								// coupled: next block start follows; uncoupled (json end) or last block: only the end
+  const setEnd = (b, t) => {
     const n = b.nextElementSibling
     b._end = +t
     if (n && !b.dataset.end) n.dataset.start = t
@@ -180,10 +181,8 @@
     if (playing) return Math.min(0.95, Math.max(0.85, 0.85 + (scaleY - 0.5) * 0.2))
     return Math.min(0.9, Math.max(0.75, 0.75 + ((thumb.offsetHeight / innerHeight) - 0.12) * 0.8))}
   const bound = () => (dur || voices.length) ? 140 : 60
-
-let crop = 0
-const myCrop = Object.assign(document.createElement('div'), {style: 'position:fixed;display:none;border:1px dashed red;pointer-events:none;z-index:99999'})
-
+  const myCrop = Object.assign(document.createElement('div'), {style: 'position:fixed;display:none;border:1px dashed red;pointer-events:none;z-index:9999'})
+  const natEnd = b => { const n = b.nextElementSibling; return Math.max(+b.dataset.start, n ? +n.dataset.start || 0 : dur || Infinity) }
 
 
   function Click(e) {
@@ -315,18 +314,22 @@ const myCrop = Object.assign(document.createElement('div'), {style: 'position:fi
     if (lastClick == 1) {
       if (document.getElementById('osk')?.contains(document.elementFromPoint(xPos, yPos))) return
       predictBuffer = ''
-      if (captions && editingBlock && overMedia && longClick && ym < trigger()) {
-        offset = 0
-        const b = editingBlock, e = xm > 0.5 ? b : b.previousElementSibling
-        if (e) {
-          if (e.dataset.end) {
-            const next = +e.nextElementSibling?.dataset.start || 0
-            delete e.dataset.end; e._end = next > +e.dataset.start ? next : (dur || Infinity)
-            if (e === b && b._atEnd && isFinite(e._end)) myPlayer.currentTime = e._end }
-          else {
-            const t = xm > 0.5 ? b._end : +b.dataset.start
-            if (isFinite(t)) e.dataset.end = e._end = t }}
-        editing = 1; return }
+      let b = editingBlock
+      if (captions == 2 && editingBlock && overMedia && ym < trigger()) {
+        if (longClick) {
+          offset = 0
+          const e = xm > 0.5 ? b : b.previousElementSibling
+          if (e) {
+            if (e.dataset.end) {
+              delete e.dataset.end; e._end = natEnd(e)
+              if (e === b && b._atEnd && isFinite(e._end)) myPlayer.currentTime = e._end }
+              else { const t = xm > 0.5 ? endOf(b) : +b.dataset.start; if (isFinite(t)) e.dataset.end = e._end = t }}}
+        else {
+          const t = +(myPlayer.currentTime - offset).toFixed(2)
+          offset = 0
+          if (xm > 0.5) { setEnd(b, t); toEnd(b) }
+          else { b.dataset.start = Math.max(0, t); b._atEnd = 0; myPlayer.currentTime = b.dataset.start }}
+        editing = 1; return}
       if (longClick && (overTitle || ['myInput', 'caption-search-input', 'inp', 'myVoiceInput'].includes(id))) osk()
       if (id.includes('search-input')) return
       if (id == 'myCap') {capButton(); return}
@@ -362,7 +365,7 @@ const myCrop = Object.assign(document.createElement('div'), {style: 'position:fi
           if (paused) userPlay = 1
           else userPlay ^= 1
           syncPlay = userPlay
-          if (((editingBlock._voice?.src && myVoice.ended) || myPlayer.currentTime >= editingBlock._end - 0.05)) {
+          if (editingBlock._voice?.src ? myVoice.ended : myPlayer.currentTime >= editingBlock._end - 0.05) {
             myVoice.currentTime = 0; myPlayer.currentTime = +editingBlock.dataset.start; userPlay = syncPlay = 1 }
           return}}
       if (!title.matches(':hover') && overTitle == 2) {closeOsk(); overTitle = 0; return}
@@ -604,10 +607,10 @@ const myCrop = Object.assign(document.createElement('div'), {style: 'position:fi
     else if (captions && myNav.style.display) return 
     else if (captions && !mouseDown && captions == 2 && editingBlock && overMedia && ym < trigger()) {
       const b = editingBlock, end = xm > 0.5, d = wheelUp ? 0.02 : -0.02
-      const t = Math.min(end ? dur || Infinity : b._end, Math.max(end ? +b.dataset.start : 0, +((end ? b._end : +b.dataset.start) + d).toFixed(2)))
+      const t = Math.min(dur || Infinity, Math.max(end ? +b.dataset.start : 0, +((end ? b._end : +b.dataset.start) + d).toFixed(2)))
       b._atEnd = end ? 1 : 0
       if (end) setEnd(b, t)
-      else { b.dataset.start = t; myVoice.currentTime = 0 }
+      else { b.dataset.start = t; myVoice.currentTime = 0; if (t >= b._end) b.dataset.end = b._end = +(t + 1).toFixed(2) }
       offset = +(offset + d).toFixed(2)
       myPlayer.currentTime = t; editing = 1; delay = 74}
     else if (!myNav.style.display && playing && (mouseDown || type == 'image')) {
@@ -1233,7 +1236,7 @@ function openEditor(text) {
   projectMedia.defaultSrc = originalPlayerSrc = decodeURIComponent(type === 'image' ? thumb.poster : thumb.src)
   editorX = editorY = mediaX = mediaY = 0
   lastBlock = type === 'image' && lastBlock ? 1 : lastBlock
-crawlEnd = Date.now() + 400
+  crawlEnd = Date.now() + 400
   voices = []
   editor.style.transition = 'opacity 1s'
   editor.style.height = 0
@@ -1275,7 +1278,7 @@ crawlEnd = Date.now() + 400
       faceZoom = u.faceZoom || 1
       document.getElementById('voice-faces')?.style.setProperty('--fz', faceZoom)
       editor.style.width = u.width || '500px'
-      editor.style.height = u.height || '360px'
+      editor.style.height = u.height || '400px'
       projectMedia.uiHeight = editor.style.height
       if (u.editorX) { editorX = u.editorX; editorY = u.editorY }}
     if (u.mediaX) { mediaX = u.mediaX; mediaY = u.mediaY }
@@ -1299,8 +1302,7 @@ crawlEnd = Date.now() + 400
     if (overBlock && searchTerm) CSS.highlights.delete('search')
     mediaHeader.textContent = title.value || null
     lastVoice = editingBlock?._voiceName || lastVoice;
-    const next = +(block.nextElementSibling?.dataset.start || 0)
-    block._end = +block.dataset.end || (next > +block.dataset.start ? next : (dur || Infinity))
+    block._end = +block.dataset.end || natEnd(block)
     if (force) editingBlock = null
     const isSameBlock = editingBlock === block
     const media = getEffectiveMedia(block);
@@ -1332,7 +1334,7 @@ crawlEnd = Date.now() + 400
       viewport.style.overflowY = 'hidden' }
     else {										// caption editor mode
       viewport.style.overflowY = ''
-      editor.style.height = projectMedia.uiHeight || '360px'
+      editor.style.height = projectMedia.uiHeight || '400px'
       block.style.background = ''
       editor.style.pointerEvents = ''
       editor.style.background = ''
@@ -1647,7 +1649,7 @@ crawlEnd = Date.now() + 400
     paragraphs.forEach((para, i) => {
       const lines = para.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
       if (!lines.length) return;
-      let startSec = i * 3.5; 
+      let startSec = i * 4; 
       let caption  = para.trim();
       if (/^\d+$/.test(lines[0])) {
         const m = (lines[1] || '').match(/(\d{1,2}:[\d.,:]+)\s*--?>\s*\d/);

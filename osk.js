@@ -347,7 +347,7 @@ if (key === "‹" || key === "›" || key === "↑" || key === "↓") {
       
       isShift = isCtrl = isNumMode = false;
       window.shiftLocked = window.ctrlLocked = window.numLocked = false;
-      createKeyboard();
+      setTimeout(createKeyboard);
     }
   }
 

@@ -15,8 +15,8 @@
 .title {					/* media title */
   display: block;
   position: absolute;
-  left: 0.9em;
   top: -0.9em;
+  left: 0.9em;
   resize: none;
   overflow: hidden;
   word-break: break-all;
@@ -279,6 +279,7 @@
   grid-template-columns: 4em 4em 4em 4em 4em 3.5em 1em auto 1em;
   width: 100%}
 
+.entry-row:first-child { color: pink !important }
 .entry-row:hover { background: #141211 }
 .entry-row::before {content: ''}
 .entry-row[data-params^="document"] .thumb-wrap {display: none !important;}
@@ -485,6 +486,8 @@
   width: 40%;
   padding-top:3.4em;
   padding-bottom: 68vh}
+
+.myview:has(.entry-row) { margin-top: -1em }
 
 .ribbon {					/* menu, fol, fav, search ... */
   position: relative;

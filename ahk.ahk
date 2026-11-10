@@ -2065,6 +2065,8 @@
         lastIndex := listSize
       return
       }
+    else if listView
+      mediaList := "<div class='entry-row' style='pointer-events:none; color:#826858'><div></div><div>Date</div><div>Size</div><div>Type</div><div>Duration</div><div></div><div></div><div></div></div>`n" . mediaList
     x = %folder%\
     if (InStr(fol, x) || playlist)
       showSubs =
@@ -2370,12 +2372,12 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
   <a id='myPause2' style='width: auto; color: red'></a>
   <a id='myMute2' style='width: auto; color: red'></a>
   <a id='myPitch2' style='width: auto; color: red'></a>
+  <a id='myDate' style='width: 3.5em; %x4%' onmousedown="inca('Date', filt)">Date</a>`n
+  <a id='mySize' style='width: 3.5em; %x5%' onmousedown="inca('Size', filt)">Size</a>`n
   <a id='myType' style='width: 3.5em; %x6%' onmousedown="inca('Type', filt)">%type%</a>`n
-  <a id='myDate' style='%x4%' onmousedown="inca('Date', filt)">Date</a>`n
   <a id='myDuration' style='%x3%' onmousedown="inca('Duration', filt)"> Duration</a>`n
   <a id='myPlaylist' style='%x13%' onmousedown="inca('Playlist')">%pl%</a>`n
   <a id='myShuffle' style='%x1%' onmousedown="inca('Shuffle')">Shuffle</a>`n
-  <a id='mySize' style='%x5%' onmousedown="inca('Size', filt)">Size</a>`n
   <a id='myAlpha' style='%x2%' onmousedown="inca('Alpha', filt)">Alpha</a>`n
   <a style='width: 2.5em'></a>
   <a id='myThumbs' onmouseup="inca('View',0)">Thumb</a>`n 
@@ -2512,7 +2514,7 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
     caption = <pre id="dat%j%" style='display: none' type="text/plain" data=%data%></pre>`n
 
     if listView
-      mediaList = %mediaList%%foldr%<div id='entry%j%' class='entry-row' data-params='%type%,%start%,%dur%,%size%' onmouseenter='if (gesture) sel(%j%)' onmouseover='Param(%j%); thumb%j%.style.opacity=1'`n onmouseout="thumb%j%.style.opacity=0"><div class="thumb-wrap"><video id='thumb%j%' class='thumb2' onwheel='if (zoom > 1) wheelEvent(event)'`n %poster% preload=%preload% muted loop disableRemotePlayback type="video/mp4"></video><video id="vid%j%" style='display: none'`n src=%src% preload='none' type='video/mp4'></video>`n </div><div>%j%</div><div>%ext%</div><div>%size%</div><div style='min-width: 6em'>%durT%</div><div>%date%</div><div id='myFavicon%j%' class='favicon' style='position: relative; text-align: right; translate:1.6em 0.4em'>%favicon%</div><div class='title-cell'><textarea id="title%j%" class='title' style='top:0.1em' autocomplete='off' onmouseenter='Param(%j%)'>`n %media_s%</textarea></div>%fo%</div>`n %caption%<span id='cues%j%' style='display: none'>%cues%</span>`n`n
+      mediaList = %mediaList%%foldr%<div id='entry%j%' class='entry-row' data-params='%type%,%start%,%dur%,%size%' onmouseenter='if (gesture) sel(%j%)' onmouseover='Param(%j%); thumb%j%.style.opacity=1'`n onmouseout="thumb%j%.style.opacity=0"><div class="thumb-wrap"><video id='thumb%j%' class='thumb2' onwheel='if (zoom > 1) wheelEvent(event)'`n %poster% preload=%preload% muted loop disableRemotePlayback type="video/mp4"></video><video id="vid%j%" style='display: none'`n src=%src% preload='none' type='video/mp4'></video>`n </div><div>%j%</div><div>%date%</div><div>%size%</div><div>%ext%</div><div>%durT%</div><div id='myFavicon%j%' class='favicon' style='position: relative; text-align: right; translate:1.6em 0.4em'>%favicon%</div><div class='title-cell'><textarea id="title%j%" class='title' style='top:0.1em' autocomplete='off' onmouseenter='Param(%j%)'>`n %media_s%</textarea></div>%fo%</div>`n %caption%<span id='cues%j%' style='display: none'>%cues%</span>`n`n
 
     else mediaList = %mediaList%<div id="entry%j%" class='entry' data-params='%type%,%start%,%dur%,%size%'>`n <span id='myFavicon%j%' onmouseenter='Param(%j%)' class='favicon'>%favicon%</span>`n <textarea id='title%j%' class='title' style='opacity:0.7' type='text'`n onmouseenter='Param(%j%)'>%media_s%</textarea>`n <div class="thumb-wrap">`n <video id="thumb%j%" class='thumb' onwheel='if (zoom > 1) wheelEvent(event)' onmouseenter="Param(%j%); if (gesture && !playing) sel(%j%)"`n onmouseout="thumb.pause()"`n %poster%`n preload=%preload% loop muted disableRemotePlayback type='video/mp4'></video></div>`n <video id="vid%j%" style='display: none' src=%src% preload='none' type='video/mp4'></video>%noIndex%`n <span id='cues%j%' style='display: none'>%cues%</span></div>`n %caption%`n
     }
