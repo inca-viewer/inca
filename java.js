@@ -242,13 +242,14 @@
 
 
   async function clickEvent(e) {
-    delay = 80;										// 80 max
+    delay = 80										// 80 max
     let id = e.target.id								// id under cursor
     let emotion = '[' + e.target.dataset.tag + '] '
+    overBlock = document.elementFromPoint(xPos, yPos)?.closest('.text-block') || 0
+    let block = overBlock || editingBlock || document.querySelector('.text-block.editing')
     if (document.elementFromPoint(xPos, yPos)?.closest('#voice-faces')) { if (longClick != 1) newVoice(e); return }
     if (e.target.closest('#emotionSub')) {document.execCommand('insertText', false, emotion); myNav.style.display = null; return}
     if (e.target.closest('#soundsSub')) {document.execCommand('insertText', false, emotion); myNav.style.display = null; return}
-    if (captions) overBlock = document.elementFromPoint(xPos, yPos)?.closest('.text-block') || 0
     if (!playing && !listView && longClick && !gesture && overMedia && !overTitle) popThumb()	// pop thumb out of flow
     if (['myCut', 'myCopy', 'myPaste'].includes(id)) {
       if (lastId) lastId.focus()
@@ -257,6 +258,7 @@
     if (longClick == 1 && !gesture && !playing && playlist && selected && overMedia) { inca('Move', overMedia); return }
     if (longClick && !gesture && playing && !captions && !overMedia) myPlayer.currentTime = longClick == 1 ? defStart : 0
     if (['myIndex', 'myMp3', 'myMp4', 'myJoin', 'myJpg', 'mySrt'].includes(id)) { Ffmpeg(id); cue = 0; return }
+    if (id == 'myBookmark') { block.dataset.fav = block.dataset.fav === '1' ? '0' : '1'; activateBlock(block, 0); editing = 1 }
     if (id == 'myClone') { newClone(); return }
     if (id == 'myLoudnorm') { inca('loudNorm',0,index); return }
     if (id == 'myInca') { inca('Settings'); return }
@@ -278,9 +280,6 @@
       else if (myCancel.innerHTML != 'Sure ?') myCancel.innerHTML = 'Sure ?' 
       else { editing = 0; closePlayer() }
       return}
-    if (id == 'myBookmark') {
-      editingBlock.dataset.fav = editingBlock.dataset.fav === '1' ? '0' : '1';
-      editing = 1; overBlock = editingBlock}
     if (id == 'myExport') {
       let txt = blocks.map(b => b.innerText.trim()).filter(Boolean).join('\n\n').replaceAll('#', '𝌇')
       inca('Export', txt, index)}
@@ -339,7 +338,6 @@
         cue = _t; syncPlay = 0; return}
       if (captions && !overMedia) {
         const wasOsk = !!document.getElementById('osk')
-        const block = overBlock ? overBlock : editingBlock
         const pos = caret(block)?.pos
         const end = 0
         if (overEditor && ym < 0.1 && xm < 0.95) { viewport.scrollTo({top:0,behavior:'smooth'}); return }

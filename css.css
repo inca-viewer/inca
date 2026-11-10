@@ -276,10 +276,9 @@
   font-size: 0.8em;
   border-radius: 1em;
   transition: color 0.3s;
-  grid-template-columns: 4em 4em 4em 4em 4em 3.5em 1em auto 1em;
+  grid-template-columns: 4em 4em 4em 4em 4em 3.4em 1em auto 1em;
   width: 100%}
 
-.entry-row:first-child { color: pink !important }
 .entry-row:hover { background: #141211 }
 .entry-row::before {content: ''}
 .entry-row[data-params^="document"] .thumb-wrap {display: none !important;}
