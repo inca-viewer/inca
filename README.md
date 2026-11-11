@@ -138,7 +138,6 @@ Left or right hand mouse-focused<br>An on-screen keyboard appears when needed fo
 3. Drill a 20 mm hole for the top and bottom nuts
 
   <img src="screens/computer arm 5.jpg" width="17.6%" alt="Desk arm 1"> <img src="screens/computer arm 4.jpg" width="20.7%" alt="Desk arm 5"> <img src="screens/computer arm 1.jpg" width="18%" alt="Desk arm 3"> <img src="screens/computer arm 2.jpg" width="18.2%" alt="Desk arm 2"> <img src="screens/computer arm 3.jpg" width="13.2%" alt="Desk arm 4">
-https://github.com/user-attachments/assets/4f5f8120-554c-4a40-b83d-22841b9a0d1d
 
 ---
 
