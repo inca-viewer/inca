@@ -19,7 +19,7 @@ clone a voice, change pitch and speed, cut and join clips
 
 <table><tr>
 <td align="center">page layout<br><a href="https://github.com/user-attachments/assets/7bcd15ce-d788-4f07-aae4-c66bb40cd234"><img src="screens/page layout.jpg" width="100%"></a></td>
-<td align="center">popouts<br><a href="https://github.com/user-attachments/assets/87c49aa8-e0d8-48d6-8690-6a53d85cd679"><img src="screens/pop thumbs.jpg" width="100%"></a></td>
+<td align="center">popouts<br><a href="https://github.com/user-attachments/assets/4f5f8120-554c-4a40-b83d-22841b9a0d1d"><img src="screens/pop thumbs.jpg" width="100%"></a></td>
 <td align="center">voice cloning<br><a href="https://github.com/user-attachments/assets/7b528d4c-d857-40ea-bae5-4fd9559f3d38"><img src="screens/cloning.jpg" width="100%"></a></td>
 <td align="center">selecting<br><a href="https://github.com/user-attachments/assets/00ba6ba7-26cb-40a8-b672-da419ad4685f"><img src="screens/selecting.jpg" width="100%"></a></td>
   <td align="center">youtube downloads<br><a href="https://github.com/user-attachments/assets/d5d88675-df15-4b7b-9551-6baa537b3a9a"><img src="screens/youtube.jpg" width="100%"></a></td>
