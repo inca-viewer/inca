@@ -194,7 +194,7 @@
     z-index: 1}
 
 #voice-faces {
-  position: absolute; top: 38px; right: 3em; display: none; gap: 10px;
+  position: absolute; top: 30px; right: 3em; display: none; gap: 10px;
   z-index: 20; pointer-events: none; --fz: 1 }
 
 .voice-face-wrap {

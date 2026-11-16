@@ -1,4 +1,7 @@
-// try InfiniteTalk / flashHead face animation when 50GB disk is free
+
+
+// why are caption 1 being saved after zoom
+// 
 
 
   let wheel = 0								// wheel count
@@ -77,7 +80,7 @@
   let seekTimer = 0							// hide myPic
   let syncPlay = 0
   let userPlay = 0
-  let crawl = 0								// myMask block crawl
+  let crawl = 0								// crawl to next block
   let crawlEnd = 0
   let predictBuffer = '';
   let predictor = { words: {} }
@@ -314,7 +317,7 @@
       if (document.getElementById('osk')?.contains(document.elementFromPoint(xPos, yPos))) return
       predictBuffer = ''
       let b = editingBlock
-      if (captions == 2 && editingBlock && overMedia && ym < trigger()) {
+      if (captions == 2 && editingBlock && overMedia && !gesture && ym < trigger()) {
         if (longClick) {
           offset = 0
           const e = xm > 0.5 ? b : b.previousElementSibling
@@ -363,8 +366,8 @@
           if (paused) userPlay = 1
           else userPlay ^= 1
           syncPlay = userPlay
-          if (editingBlock._voice?.src ? myVoice.ended : myPlayer.currentTime >= editingBlock._end - 0.05) {
-            myVoice.currentTime = 0; myPlayer.currentTime = +editingBlock.dataset.start; userPlay = syncPlay = 1 }
+          if (userPlay && (myPlayer.currentTime >= editingBlock._end - 0.05 || editingBlock._voice?.src && myVoice.ended)) {
+            myVoice.currentTime = 0; myPlayer.currentTime = +editingBlock.dataset.start }
           return}}
       if (!title.matches(':hover') && overTitle == 2) {closeOsk(); overTitle = 0; return}
       if (overTitle && (longClick || overTitle == 2)) {
@@ -610,10 +613,10 @@
       if (end) setEnd(b, t)
       else { b.dataset.start = t; myVoice.currentTime = 0; if (t >= b._end) b.dataset.end = b._end = +(t + 1).toFixed(2) }
       offset = +(offset + d).toFixed(2)
-      myPlayer.currentTime = t; editing = 1; delay = 74}
-    else if (!myNav.style.display && playing && (mouseDown || type == 'image')) {
-      let x = rect.left+rect.width/2-(clickMedia ? xPos : innerWidth/2)			// zoom myPlayer
-      let y = rect.top+rect.height/2-(clickMedia ? yPos : innerHeight/2)
+      myVoice.currentTime = 0; myPlayer.currentTime = t; editing = 1; delay = 74}
+    else if (playing && !myNav.style.display && (mouseDown || (type == 'image' && !captions))) {
+      let x = rect.left+rect.width/2-(clickMedia ? xPos : innerWidth/2)
+      let y = rect.top+rect.height/2-(clickMedia ? yPos : innerHeight/2)		// zoom myPlayer
       let z = mouseDown && clickMedia && overMedia ? wheel / 1300 : 0
       if (captions || !overMedia || !mouseDown) z = 0
       let array = thumbSheet ? [...xyz] : [mediaX, mediaY, scaleY]
@@ -1375,9 +1378,8 @@ function openEditor(text) {
     if (isImage) { myPlayer.removeAttribute('src'); myPlayer.poster = newSrc; myPlayer.load() }
     else if (isText) { myPlayer.poster = ''; myPlayer.removeAttribute('src'); myPlayer.load() }
     else { if (type !== 'audio') myPlayer.poster = ''; if (changed) { myPlayer.src = newSrc; myPlayer.load() }}
-    if (Math.abs(myPlayer.currentTime - time) > 0.5) myPlayer.currentTime = time
-    if ((mouseDown || changed || editingBlock?._voice?.src) && Math.abs(myPlayer.currentTime - time) > 0.02 || Math.abs(myPlayer.currentTime - time) > 0.5)
-      myPlayer.currentTime = time
+    const d = Math.abs(myPlayer.currentTime - time)
+    if (d > 0.5 || (mouseDown || changed || editingBlock?._voice?.src) && d > 0.02) myPlayer.currentTime = time
     if (mouseDown || changed || isImage) setTimeout(() => { positionMedia(2.4); myPlayerWrap.style.opacity = 1 }, 50)
     if (isImage) { const img = new Image(); img.onload = () => { fitPlayer(img.naturalWidth, img.naturalHeight) }; img.src = newSrc }
     else if (changed && !isText) myPlayer.onloadedmetadata = () => { fitPlayer(myPlayer.videoWidth, myPlayer.videoHeight) }}
@@ -1607,8 +1609,7 @@ function openEditor(text) {
 
 
   function makeJSON() {
-    captions = 2
-    activateBlock(editingBlock, 0)
+    if (captions == 1) { editing = 0; return }
     const data = {
       defaultMedia: originalPlayerSrc
         ? { src: decodeURIComponent(originalPlayerSrc).replace(/\\/g, '/') }
@@ -1701,7 +1702,7 @@ function openEditor(text) {
     const isSecondEnter = beforeText.endsWith('\n')
     if (!isSecondEnter) {
       const left = beforeText.replace(/[ \t]+$/, '')
-      const rest = afterText.replace(/^[\n ]+/, '')
+      const rest = afterText.replace(/^ +/, '')
       block.textContent = (left + '\n' + (rest || '\u200B')) || '\u200B'
       const n = block.firstChild, p = left.length + 1
       range.setStart(n, Math.min(p, n.length)); range.collapse(true)
@@ -1950,6 +1951,7 @@ function openEditor(text) {
     const next = b.nextElementSibling
     if (!next || b._atEnd || overEditor || t <= b._end || voiceBusy(b)) return
     activateBlock(next, userPlay)
+    crawlEnd = Date.now() + 100
     next.scrollIntoView({ behavior: 'smooth', block: 'center' })}
 
 
