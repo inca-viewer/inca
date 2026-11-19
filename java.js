@@ -1,9 +1,4 @@
 
-
-// why are caption 1 being saved after zoom
-// 
-
-
   let wheel = 0								// wheel count
   let wheelDir = 0		 					// wheel direction
   let index = 1								// thumb index (e.g. thumb14)
@@ -162,6 +157,7 @@
     myPlayer.requestVideoFrameCallback(onFrame)})
   const endOf = b => b._end
   const voiceBusy = b => b?._voice?.src && !myVoice.ended
+  const voiceLen = b => b?._voice?.src && isFinite(myVoice.duration) ? myVoice.duration * rate : 0
   const setEnd = (b, t) => {
     const n = b.nextElementSibling
     b._end = +t
@@ -277,7 +273,7 @@
     if (id == 'mySkinny') { updateCue('skinny',1); editing = captions; return }
     if (id == 'myFlip') { Flip(); return }
     if (id == 'myHelp') { window.open('help.htm'); return }
-    if (id == 'myElevenLabs' || id == 'myChatterbox') Chatterbox(id)
+    if (['myChatterbox','myQwen','myKitten','myElevenLabs'].includes(id)) { Chatterbox(id); return }
     if (id == 'myCancel') {
       if (!editing) {captions = 1; activateBlock(editingBlock,0); scrollUntilBlock(1, editingBlock); return}
       else if (myCancel.innerHTML != 'Sure ?') myCancel.innerHTML = 'Sure ?' 
@@ -320,12 +316,12 @@
       if (captions == 2 && editingBlock && overMedia && !gesture && ym < trigger()) {
         if (longClick) {
           offset = 0
-          const e = xm > 0.5 ? b : b.previousElementSibling
+          const e = xm > 0.5 && b
           if (e) {
             if (e.dataset.end) {
               delete e.dataset.end; e._end = natEnd(e)
               if (e === b && b._atEnd && isFinite(e._end)) myPlayer.currentTime = e._end }
-              else { const t = xm > 0.5 ? endOf(b) : +b.dataset.start; if (isFinite(t)) e.dataset.end = e._end = t }}}
+              else { const t = endOf(b); if (isFinite(t)) e.dataset.end = e._end = t }}}
         else {
           const t = +(myPlayer.currentTime - offset).toFixed(2)
           offset = 0
@@ -404,7 +400,7 @@
       if (captions && editingBlock) {
         const b = editingBlock, s = +start.toFixed(2)
         b.dataset.start = s
-        if (b._voice?.src && isFinite(myVoice.duration)) setEnd(b, +(s + myVoice.duration * rate).toFixed(2))
+        if (voiceLen(b)) setEnd(b, +(s + voiceLen(b)).toFixed(2))
         editing = 1 }
       return }
     if (longClick && longClick != 2 && !title.matches(':hover')) return
@@ -611,7 +607,7 @@
       const t = Math.min(dur || Infinity, Math.max(end ? +b.dataset.start : 0, +((end ? b._end : +b.dataset.start) + d).toFixed(2)))
       b._atEnd = end ? 1 : 0
       if (end) setEnd(b, t)
-      else { b.dataset.start = t; myVoice.currentTime = 0; if (t >= b._end) b.dataset.end = b._end = +(t + 1).toFixed(2) }
+      else { b.dataset.start = t; myVoice.currentTime = 0; if (t >= b._end) setEnd(b, +(t + (voiceLen(b) || 1)).toFixed(2)) }
       offset = +(offset + d).toFixed(2)
       myVoice.currentTime = 0; myPlayer.currentTime = t; editing = 1; delay = 74}
     else if (playing && !myNav.style.display && (mouseDown || (type == 'image' && !captions))) {
@@ -742,7 +738,7 @@
       const nudge = dur && captions == 2 && overMedia && ym < trigger()
       if (nudge) {
         const b = editingBlock
-        const uncoupled = (xm < 0.5 ? b?.previousElementSibling : b)?.dataset.end
+        const uncoupled = xm > 0.5 && b?.dataset.end
         const w = uncoupled ? 12 : 6
         myPlayerWrap.style.boxShadow = (xm < 0.5 ? -w : w) + 'px 0 0 0 ' + (uncoupled ? 'red' : 'orange')
         myAlert.innerText = offset ? (offset > 0 ? '+' : '') + offset.toFixed(2) : '' }
@@ -1311,7 +1307,7 @@ function openEditor(text) {
     if (!isSameBlock) block._atEnd = 0
     swapMedia(media?.src || originalPlayerSrc, time || 0)
     if (block._voice?.src) {
-      if (!isSameBlock && decodeURIComponent(myVoice.src) != block._voice.src) myVoice.src = block._voice.src.replace(/#/g, '%23')
+      if (!isSameBlock && decodeURIComponent(myVoice.src) != block._voice.src) myVoice.src = block._voice.src.replace(/%/g, '%25').replace(/#/g, '%23')
       myPlayer.muted = true; myVoice.muted = defMute
       block.classList.add('has-voice')}
     else {
@@ -1521,8 +1517,9 @@ function openEditor(text) {
 
         row.addEventListener('mouseleave', () => {
           if (mediaContent.style.display != 'none') {
-            myPlayer.src = (getEffectiveMedia(editingBlock)?.src || originalPlayerSrc).replace(/#/g, '%23')
+            myPlayer.src = (getEffectiveMedia(editingBlock)?.src || originalPlayerSrc).replace(/%/g, '%25').replace(/#/g, '%23')
             myPlayer.poster = ''
+            myVoice.muted = false; myPlayer.muted = !!editingBlock._voice?.src
             myPlayer.load()
             myPlayer.currentTime = editingBlock.dataset.start
             syncPlay = 0
@@ -1536,6 +1533,7 @@ function openEditor(text) {
           const mediaObj = { src: item.url, name: item.short };
           if (editingBlock) {
             if (row.dataset.isVoiceAsset === 'true') {
+            if (editingBlock._voice?.src) inca('addHistory', editingBlock._voice.src)
             if (!editingBlock._voice) editingBlock._voice = {};
             editingBlock._voice.src = '/' + decodeURIComponent(item.url.replace(/^https?:\/\/[^/]+\/?/i, ''))
               .replace(/\\/g, '/')
@@ -1612,7 +1610,7 @@ function openEditor(text) {
     if (captions == 1) { editing = 0; return }
     const data = {
       defaultMedia: originalPlayerSrc
-        ? { src: decodeURIComponent(originalPlayerSrc).replace(/\\/g, '/') }
+        ? { src: originalPlayerSrc.replace(/\\/g, '/') }
         : null,
       ui: { width: editor.style.width, height: editor.style.height, mediaX, mediaY, editorX, editorY, 
         scaleY: (captions == 2 && !projectMedia.ui.scaleY) ? 0.3 * scaleY : scaleY, 
@@ -1860,6 +1858,7 @@ function openEditor(text) {
 
 
   function Chatterbox(id) {
+    myNav.style.display = null
     if (!editingBlock || Chatterbox.busy || gesture) return
     let block = overBlock || editingBlock
     userPlay = syncPlay = block._atEnd = 0
@@ -1870,8 +1869,8 @@ function openEditor(text) {
     myPlayer.currentTime = block.dataset.start
     let last = block?._voice?.src || projectMedia.defaultSrc
     let text = block.innerText.replace(/<[^>]*>|[\u200B\u00A0]/g, ' ').trim()
-    let provider = 'chatterbox'
-    if (id == 'myElevenLabs') provider = 'chatterbox'
+    let provider = {myQwen:'qwen', myKitten:'kitten', myElevenLabs:'elevenlabs'}
+    [id] || 'chatterbox'
     editing = 1
     delay = 100
     block.style.outline = '1.4px dotted orange'
@@ -1883,7 +1882,7 @@ function openEditor(text) {
           .then(path => {
             block.style.outline = ''
             if (!block._voice) block._voice = {}
-            myVoice.src = path.replace(/#/g, '%23')
+            myVoice.src = path.replace(/%/g, '%25').replace(/#/g, '%23')
             block._voice.src = path
             block._rate = 1; block._fit = 0
             userPlay = 1
@@ -1919,9 +1918,9 @@ function openEditor(text) {
       const dt = tick.t ? Math.min(t - tick.t, 50) : 16; tick.t = t
       let y = viewport.scrollTop
      viewport.scrollTop += crawl * Math.max(1, Math.round(0.2 * dt))		// crawl speed
-      if (viewport.scrollTop === y) { crawl = 0; return }
-      let top = want.getBoundingClientRect().top
-      if (crawl > 0 ? top <= line() : top >= line()) {
+     const stuck = viewport.scrollTop === y
+     let top = want.getBoundingClientRect().top
+     if (stuck || (crawl > 0 ? top <= line() : top >= line())) {
         if (!target) { myPlayer.currentTime = +want.dataset.start + 0.04; activateBlock(want, userPlay = 1) }
         crawl = 0; crawlEnd = Date.now()}
       else requestAnimationFrame(tick)}}
@@ -1971,8 +1970,9 @@ function openEditor(text) {
     if (!playing || (editingBlock?._voice?.src && !myVoice.ended)) return
     syncPlay = userPlay = 0
     myPlayer.currentTime = myPlayer.duration + 2
-    if (playlist.match('/inca/music/')) { if (Param(index += 1)) {Play(); syncPlay = 1} else closePlayer() }
-    else if (!captions && !defPause && delay < 30 && type != 'audio' && !longClick) {getStart(); syncPlay = 1}
+    if (playlist.match('/inca/music/')) { if (Param(index += 1)) {Play(); syncPlay = 1 } else closePlayer() }
+    else if (!captions && !defPause && delay < 30 && type != 'audio' && !longClick) { getStart(); syncPlay = 1 }
+    title.scrollIntoView({ block: 'center' })
     delay = 60}
 
 

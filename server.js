@@ -56,7 +56,7 @@ const server = http.createServer(async (req, res) => {
                     }
                     let buffer;
                     let finalVoiceName = voiceName;
-                    if (provider === 'chatterbox' && text) {
+                    if ((['chatterbox','qwen','kitten'].includes(provider)) && text) {
                         text = text
                             .replace(/\n+/g, '. ')      // newlines → sentence break
                             .replace(/\s+/g, ' ')       // normalize spaces
@@ -70,23 +70,20 @@ const server = http.createServer(async (req, res) => {
 
 
 
- if (provider === 'chatterbox') {
+ if (['chatterbox','qwen','kitten'].includes(provider)) {
     const refFilename = (voiceName || 'Clone') + '.mp3';
     const voicePath = path.join(DRIVE_ROOT, 'cache', 'voices', refFilename);
     const fileBuffer = await fsPromises.readFile(voicePath);
     const uploadForm = new FormData();
     uploadForm.append('files', new Blob([fileBuffer], { type: 'audio/mpeg' }), refFilename);
-    const uploadRes = await fetch('http://127.0.0.1:8004/api/reference-audio', { method: 'POST', body: uploadForm });
-    const ttsRes = await fetch('http://127.0.0.1:8004/tts', {
+
+    if (!require('fs').existsSync(voicePath)) throw new Error(`voice not found: ${voicePath}`);
+    const ttsRes = await fetch(`http://127.0.0.1:${({ qwen: 8005, kitten: 8006 })[provider] || 8004}/tts`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            text,
-            exaggeration: 1.4,
-            voice_mode: 'clone',
-            reference_audio_filename: refFilename
-        })
+        body: JSON.stringify({ text, voice: voicePath })
     });
+
     if (!ttsRes.ok) {
         const errText = await ttsRes.text();
         throw new Error(`Chatterbox ${ttsRes.status}: ${errText}`);
@@ -132,7 +129,7 @@ const filename = `${safeVoice} - ${safeText} - ${timestamp}.mp3`;
 const fullDir = path.join(DRIVE_ROOT, 'cache', 'speech', mediaTitle.trim());
 await fsPromises.mkdir(fullDir, { recursive: true });
 
-if (provider === 'chatterbox') {
+if (['chatterbox','qwen','kitten'].includes(provider)) {
   const ffmpeg = path.join(DRIVE_ROOT, 'cache', 'apps', 'ffmpeg.exe');
   const tmp = path.join(fullDir, '_tmp.wav');
   const norm = path.join(fullDir, '_norm.mp3');
@@ -205,6 +202,7 @@ const waitForTempFile = async () => {
         }
 
         let relativePath = decodeURIComponent(req.url.slice(1)).replace(/%20/g, ' ');
+        if (/^inca[\\/]/i.test(relativePath)) relativePath = path.join(DRIVE_ROOT, relativePath.slice(5));
 
         if (!relativePath || relativePath === '/' || relativePath.toLowerCase() === 'null') {
             res.writeHead(200, { 'Content-Type': 'text/plain' });
@@ -269,7 +267,6 @@ const waitForTempFile = async () => {
             '.vtt': 'text/vtt',
             '.srt': 'text/plain',
             '.bat': 'text/plain',
-            '.json': 'application/json',
             '.m3u': 'audio/x-mpegurl'
         };
 
@@ -277,9 +274,7 @@ const waitForTempFile = async () => {
         const headers = {
             'Accept-Ranges': 'bytes',
             'Content-Type': contentType,
-            'Cache-Control': 'no-cache, no-store, must-revalidate',
-            'Pragma': 'no-cache',
-            'Expires': '0',
+            'Cache-Control': 'no-cache, no-store',
             'Content-Disposition': 'inline'
         };
 

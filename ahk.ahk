@@ -90,7 +90,12 @@
     Process, Close, node.exe
     sleep 200
     Run, cmd.exe /c cd /d "%inca%\cache\apps" && node\node.exe server.js, , Hide
-    Run, cmd.exe /c cd /d "%inca%\cache\apps\Chatterbox-TTS-Server" && "python_embedded\python.exe" start.py, , Hide
+    if AiReady()
+      Run, cmd.exe /c cd /d "%inca%\cache\apps" && ai\ai-env.bat ai\inca_ai.py serve > "%inca%\cache\temp\chatterbox.log" 2>&1, , Hide
+    IfExist, %inca%\cache\apps\ai\qwen-ready
+      Run, cmd.exe /c cd /d "%inca%\cache\apps" && ai\ai-env.bat ai\inca_ai.py serve --engine qwen > "%inca%\cache\temp\qwen.log" 2>&1, , Hide
+    IfExist, %inca%\cache\apps\ai\kitten-ready
+      Run, cmd.exe /c cd /d "%inca%\cache\apps" && ai\ai-env.bat ai\inca_ai.py serve --engine kitten > "%inca%\cache\temp\kitten.log" 2>&1, , Hide
     sleep 94
     WinActivate, ahk_group Browsers
     path = %profile%\pictures\
@@ -381,19 +386,21 @@
 
   addHistory()								; add last and new voice to history
     {
-    value := StrReplace(value, server)
-    value := StrReplace(value, "/", "\")
-    address := StrReplace(address, server)
-    address := StrReplace(address, "/", "\")
-    Drive := SubStr(A_ScriptDir, 1, 2)  ; e.g. "D:\"
-    if !RegExMatch(value, "^[a-zA-Z]:\\")
-      value := Drive . value
-    if !RegExMatch(address, "^[a-zA-Z]:\\")
-      address := Drive . address
-    if (!InStr(history, value) && StrLen(value) > 4)
-      FileAppend, %value%|0.0`r`n, %inca%\fav\History.m3u, UTF-8
-    if (!InStr(history, address) && StrLen(address) > 4 && value != address)
-      FileAppend, %address%|0.0`r`n, %inca%\fav\History.m3u, UTF-8
+    FileRead, history, %inca%\fav\History.m3u
+    for i, p in [value, address]
+      {
+      p := StrReplace(p, server)
+      p := StrReplace(p, "/", "\")
+      if RegExMatch(p, "i)^\\?inca\\")
+        p := inca . "\" . RegExReplace(p, "i)^\\?inca\\")
+      else if !RegExMatch(p, "^[a-zA-Z]:\\")
+        p := SubStr(A_ScriptDir, 1, 2) . p
+      if (StrLen(p) > 4 && !InStr(history, p . "|"))
+        {
+        FileAppend, %p%|0.0`r`n, %inca%\fav\History.m3u, UTF-8
+        history .= p . "|"
+        }
+      }
     }
 
 
@@ -1341,7 +1348,7 @@
       return
     fail =
     if (playlist && !InStr(address, "\inca\") && !longClick)
-      popup = Cannot Move Shortcuts . . .
+      popup = Use Long Click
     else Loop, Parse, selected, `,
       {
       if A_LoopField is not number
@@ -1457,7 +1464,7 @@
     if fail
       PopUp("failed",900,0,0)
     else if popup
-      PopUp(popup,500,0,0)
+      PopUp(popup,700,0,0)
     }
 
 
@@ -2329,6 +2336,8 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
           <a data-tag='laugh'>laugh</a>`n
         </div>
       <a id='myChatterbox'>Chatterbox</a>`n
+      <a id='myKitten'>Kitten</a>`n
+      <a id='myQwen'>Qwen</a>`n
       <a id='myElevenLabs'>Elevenlabs</a>`n
       <a id='myExport'>Export</a>`n
     </div>
@@ -2656,61 +2665,36 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
 
   ParakeetSrt(source, med)
     {
+    if !AiReady()
+      return
     global inca
-    parakeet = %inca%\cache\apps\Parakeet\parakeet-cli-cpu.exe
-    RunWait, %ComSpec% /c nvidia-smi -L > "%inca%\cache\temp\gpu.txt" 2>nul,, Hide
-    FileRead, gpu, %inca%\cache\temp\gpu.txt
-    if InStr(gpu, "NVIDIA")
-      parakeet = %inca%\cache\apps\Parakeet\parakeet-cli.exe
-    pmodel = %inca%\cache\apps\Parakeet\models\tdt-0.6b-v3-q8_0.gguf
+    ai = %inca%\cache\apps\ai
     wav = %inca%\cache\temp\%med%.wav
-    txt = %inca%\cache\temp\%med%.txt
     srt = %inca%\cache\srt\%med%.srt
+    log = %inca%\cache\temp\parakeet.log
     RunWait, %inca%\cache\apps\ffmpeg.exe -y -i "%source%" -ac 1 -ar 16000 -vn "%wav%",, Hide
-    RunWait, %ComSpec% /c ""%parakeet%" transcribe --model "%pmodel%" --input "%wav%" --decoder tdt --timestamps > "%txt%" 2>nul",, Hide
-    FileRead, raw, %txt%
-    cueN := 0
-    cueText =
-    cueStart =
-    cueEnd =
-    srtBody =
-    Loop, Parse, raw, `n, `r
-      {
-      if !RegExMatch(A_LoopField, "^\s*([0-9]+\.[0-9]+)\s*-\s*([0-9]+\.[0-9]+)\s+(\S+)", m)
-        continue
-      if (cueStart = "")
-        cueStart := m1
-      cueEnd := m2
-      cueText .= m3 . " "
-      flush := 0
-      if RegExMatch(m3, "[.?!]$")
-        flush := 1
-      if (cueEnd - cueStart >= 4)
-        flush := 1
-      StringReplace, tmp, cueText, %A_Space%, %A_Space%, UseErrorLevel
-      if (ErrorLevel >= 12)
-        flush := 1
-      if flush
-        {
-        cueN += 1
-        cueText = %cueText%
-        srtBody .= cueN . "`r`n" . srtTime(cueStart) . " --> " . srtTime(cueEnd) . "`r`n" . cueText . "`r`n`r`n"
-        cueText =
-        cueStart =
-        }
-      }
-    if cueText
-      {
-      cueN += 1
-      cueText = %cueText%
-      srtBody .= cueN . "`r`n" . srtTime(cueStart) . " --> " . srtTime(cueEnd) . "`r`n" . cueText . "`r`n`r`n"
-      }
     FileDelete, %srt%
-    if srtBody
-      FileAppend, %srtBody%, %srt%, UTF-8
-    else FileAppend, %raw%, %srt%, UTF-8
+    RunWait, %ComSpec% /c ""%ai%\ai-env.bat" "%ai%\inca_ai.py" srt "%wav%" "%srt%" > "%log%" 2>&1",, Hide
     FileDelete, %wav%
-    FileDelete, %txt%
+    }
+
+
+  AiReady()
+    {
+    global inca
+    ai = %inca%\cache\apps\ai
+    IfExist, %ai%\ready
+      return 1
+    IfExist, %ai%\declined
+      return 0
+    MsgBox, 4, Inca voice tools, Captions and voice cloning need a one-time download of about 7 GB (Python, Chatterbox and Parakeet). Everything stays inside the Inca folder.`n`nDownload now?
+    IfMsgBox, No
+      {
+      FileAppend,, %ai%\declined
+      return 0
+      }
+    RunWait, "%ai%\setup.bat" -Yes, %inca%\cache\apps
+    return FileExist(ai "\ready") ? 1 : 0
     }
 
 

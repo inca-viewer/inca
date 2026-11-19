@@ -286,7 +286,8 @@
 .entry-row .thumb-wrap {				/* thumb2 position	*/
   pointer-events: none;
   position:absolute;
-  translate: 160px 60px;
+  bottom: 0;
+  translate: 160px 0;
   z-index: 2;
   opacity: 0;}
 
@@ -326,7 +327,7 @@
     inset 0 0 12px 3px #000;
   z-index: 1;}
 
-.player-wrap:not(:has(.player[src], .player[poster]:not([poster=""])))::after {display: none}
+.player-wrap:not(:has(.player[src], .player[poster]:not([poster=""]))) {visibility: hidden !important}
 
 .player {
   display: block;
@@ -598,6 +599,7 @@
     left: 100%;
     top: 0;
     opacity: 0;
+    min-height: 100%;
     visibility: hidden;
     scrollbar-width: thin;
     background: #121010f0;
