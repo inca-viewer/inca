@@ -11,6 +11,7 @@
   let cues = ''								// list of cue actions at media times
   let playing = 0							// myPlayer active
   let thumbSheet = 0							// 6x6 thumbsheet mode
+  let sheets = 0								// htm thumbs show 6x6 sheets
   let mouseDown = 0							// state is cleared after mouseup
   let lastClick = 0							// state is preserved after mouseup
   let lastMedia = 0							// previous media
@@ -121,6 +122,12 @@
   window.addEventListener('beforeunload', (e) => { if (playing && editing) e.preventDefault() })
   myNav.addEventListener('wheel', wheelEvent, { passive: false })
   myNav.addEventListener('mouseleave', closeContext)
+
+  myPanel.querySelector('.panel').addEventListener('wheel', e => {
+    e.preventDefault()
+    wheel += Math.ceil(Math.abs(e.deltaY))
+    if (wheel < delay) return
+    panelStep(Math.sign(e.deltaY)); wheel = 0; delay = 150}, { passive: false })
   myStart.addEventListener('wheel', wheelEvent, { passive: false })
   document.addEventListener('visibilitychange', function() {
     if (document.visibilityState == 'visible' && folder == 'downloads' && !selected && !playing) inca('Reload',2,index)})
@@ -272,7 +279,8 @@
     if (id == 'myRate') { editingBlock._rate = 1; editing = captions; return }
     if (id == 'mySkinny') { updateCue('skinny',1); editing = captions; return }
     if (id == 'myFlip') { Flip(); return }
-    if (id == 'myHelp') { window.open('help.htm'); return }
+    if (id == 'myHelp') { window.open('/inca/cache/icons/help.htm'); return }
+    if (id == 'myLayout') { longClick ? (thumbSheet ^= 1, inca('View', lastMedia)) : (sheets ^= 1, setThumbSize(), sheetPosters()); return }
     if (['myChatterbox','myQwen','myKitten','myElevenLabs'].includes(id)) { Chatterbox(id); return }
     if (id == 'myCancel') {
       if (!editing) {captions = 1; activateBlock(editingBlock,0); scrollUntilBlock(1, editingBlock); return}
@@ -295,6 +303,8 @@
           activateBlock(b, 0)}}
         myNav.classList.add('editor-mode')} 
       else myNav.classList.remove('editor-mode')
+      if (overMedia && type == 'video')
+        inca('Thumb', '', index)
       if (!longClick && !myNav.style.display) {
         myNav.style.display = 'block'; myNav.style.left = xPos-90+'px'; myNav.style.top = yPos-32+'px'; delay = 200; return}
       if (longClick) return}
@@ -389,6 +399,17 @@
     if (lastClick) Play()}
 
 
+  function setThumbSize() { myView.style.setProperty('--max-size', (+settings.view * (sheets ? 3 : 1)) + 'em') }
+
+  function sheetTime(xm, ym, dur, skinny) {					// 6x6 sheet → media time (shared)
+    if (skinny < 0) xm = 1 - xm
+    const row = Math.floor(ym * 6)
+    const col = Math.ceil(xm * 6)
+    const offset = dur > 60 ? 20 : 0
+    let ps = 5 * ((row * 6) + col)
+    ps = (ps - 1) / 200
+    return offset - (ps * offset) + dur * ps}
+
   function getStart(id) {
     if (lastClick == 3) {
       if (!playing && !overMedia) {index = lastMedia; start = lastSeek; return 1}
@@ -407,14 +428,8 @@
     if (dur < 200 && start < defStart + 2 && !playlist && !favicon.textContent.includes('\u2764')) start = 0
     if (!playing && !longClick && overMedia && !dur) return 1				// show image or text files
     if (myPlayer.currentTime > dur - 0.5) myPlayer.load()				// restart media
-    if (!longClick && thumbSheet && id != 'myPic') {					// clicked thumb on 6x6 thumbsheet
-      if (skinny < 0) xm = 1-xm								// if flipped media
-      let row = Math.floor(ym * 6)							// get media seek time from thumbsheet xy
-      let col = Math.ceil(xm * 6)
-      let offset = dur > 60 ? 20 : 0							// skip movie credits...
-      let ps = 5 * ((row * 6) + col)
-      ps = (ps - 1) / 200								// see index() in inca.ahk to explain
-      if (overMedia && yw < 0.9) start = (offset - (ps * offset) + dur * ps)}
+    if (!longClick && (thumbSheet || (sheets && !playing && overMedia && type == 'video')) && id != 'myPic') {	// clicked on 6x6 thumbsheet
+      if (overMedia && yw < 0.9) start = sheetTime(xm, ym, dur, skinny)}
     else if (!longClick && lastClick == 1 && playing) {userPlay = syncPlay ^= 1; return}
     if (lastClick && lastClick != 2) thumbSheet = 0
     if (!gesture) return 1}								// return and continue
@@ -450,7 +465,7 @@
     previewMode = 0
     lastMedia = index
     myPic.style.top = '-999px'
-    let syncStart = captions ? 0 : start							// because seekbar overwrites start
+    let syncStart = captions ? 0 : start						// because seekbar overwrites start
     if (!thumbSheet) myPlayer.src = thumb.src
     else {myPlayer.removeAttribute('src'); myPlayer.poster = sheetUrl; myPlayer.load()}
     setTimeout(async () => {
@@ -528,12 +543,14 @@
       editing = 1; wheel = 0; delay = 12; return}
     if (overEditor && !myNav.style.display && !overMedia) return
     let factor = 1 + (wheelUp ? wheel : -wheel) / 1500
-    if (['myType', 'myAlpha', 'myDate', 'mySize', 'myDuration', 'mySearch'].includes(id)) {
+    if (['myType', 'myAlpha', 'myDate', 'mySize', 'myLength', 'mySearch'].includes(id)) {
       if (wheelUp) filt++
       else if (filt) filt--								// filter
       if ((id == 'myAlpha' || id == 'mySearch') && filt > 26) filt = 26
       if (id == 'myType' && filt > 4) filt = 4
       filter(id); delay = 90}
+    else if (['myMusic', 'mySub', 'myFol', 'myFav'].includes(id)) {			// page through top panel
+      panelOpen(id.slice(2), 1); panelStep(wheelUp ? 1 : -1); delay = 150}
     else if (id == 'mySpeed') { 							// rate
       let val = cue ? rate : (overEditor ? (editingBlock?._rate ?? rate) : rate)
       if (wheelUp) {val -= 0.01} else val += 0.01
@@ -549,14 +566,14 @@
       thumb.parentElement.style.transform = 'scale('+Math.abs(skinny)*zoom+','+zoom+')'
       start = thumb.currentTime
       delay = 8}
-    else if (id == 'myThumbs' || (!playing && mouseDown)) { 				// zoom all thumbs
+    else if (id == 'myLayout') { 							// zoom all thumbs
       let z = wheel/1500
       let view = settings.view
       if (view < 300 && wheelUp) view *= 1+z
       else if (!wheelUp) view /= 1+z
       if (view < 8) view = 8
       settings.view = String(view)
-      myView.style.setProperty('--max-size', view + 'em')
+      setThumbSize()
       localStorage.setItem(folder, JSON.stringify(settings))
       Param(); thumb.load()
       thumb.parentElement.style.opacity = thumb.style.opacity = 1
@@ -564,11 +581,11 @@
       delay = 9}
     else if (id == 'myWidth' && !playing) {						// page width
       let x = 1*myView.style.width.slice(0,-2); let z = wheel/2000
-      if (!wheelUp) x *= 1+z
-      else if (wheelUp && x / 1+z > 100) x /= 1+z
+      if (wheelUp) x *= 1+z
+      else if (!wheelUp && x / 1+z > 100) x /= 1+z
       if (x > innerWidth-20) x = innerWidth - 20
       myView.style.width = x.toFixed(2)+'px'
-      settings.pageWidth = String(x); localStorage.setItem(folder, JSON.stringify(settings))
+      localStorage.setItem('pageWidth', String(x))
       delay = 8}
     else if (id == 'mySelect' && !captions) {
       mouseDown = longClick = lastClick = 0
@@ -694,7 +711,6 @@
     let qty = String(selected).split(',').length - 1 || 1
     if (selected || type) {myDelete.innerHTML = `Delete ${qty}`; myDelete.style.color = 'red'}
     else myDelete.innerHTML = null
-    myInput.style.color = myInput.value ? 'red' : null
     mySkinny.style.color = skinny == 1 ? null : 'red'
     myPitch.style.color = pitch ? 'red' : null
     myPause.style.color = defPause ? 'red' : null
@@ -770,7 +786,7 @@
         if (!previewMode) title.value = title.defaultValue
         else if (previewMode == 1) title.value = lastText
         else {title.value = block.innerText.trim(); lastBlock = block.dataset.num }}
-      if (cursor && type == 'video' && zoom == 1 && thumb.matches(':hover')) {
+      if (cursor && type == 'video' && zoom == 1 && !sheets && thumb.matches(':hover')) {
         if (!thumb.readyState) {thumb.load(); thumb.currentTime = defStart + 0.04}
         if (thumb.readyState === 4 && thumb.paused && !overTitle) thumb.play()}
       title.style.height = overTitle == 2 || (previewMode && !listView) ? '4em' : ''
@@ -783,8 +799,8 @@
 
 
   function positionMedia(time) {							// position myPlayer in window
-    myPanel.style.top = '50px'
-    myView.style.top = '200px'
+    myPanel.style.top = '40px'
+    myView.style.top = 'var(--bar-h)'
     let sheetSize = aspect > 1 ? 1.4 : 1
     if (!mediaX) {
       mediaX = screen.width / 2
@@ -866,7 +882,7 @@
       const filename = match ? match[1] : null;
       let path = thumb.poster.replace(/\/posters\//, '/thumbs/').replace(/\/[^\/]*$/, '')
       sheetUrl = path + '/' + filename + '.jpg'
-      thumb.poster = thumb.poster.replace(/\/thumbs\//, '/posters/')
+      if (!sheets) thumb.poster = thumb.poster.replace(/\/thumbs\//, '/posters/')
       myPic.style.backgroundImage = 'url(\"'+sheetUrl+'\")'				// use 6x6 thumbsheet as poster
       myPlayer.poster = sheetUrl}
     else myPlayer.removeAttribute('src')
@@ -887,23 +903,56 @@
     myPlayer.style.height = (aspect < 1 ? z : z / aspect) + 'px'}
 
 
+  function panelLoad() {								// sections from ahk data: Music Sub Fol Fav + one per search letter
+    const d = myPanel.dataset
+    const list = s => (s || '').split('|').map((v, i) => [v, i + 1]).filter(e => e[0])	// keep ahk list index
+    const base = (v, ext) => { v = v.replace(/\/$/, '').split('/').pop(); return ext ? v.replace(/\.[^.]*$/, '') : v }
+    const paths = (s, key, ext) => list(s).map(([v, n]) => { const t = base(v, ext); return {t, k: key + '|' + n, c: 'Path', on: t == d.cur} })
+    pnl = {Music: paths(d.music, 'music', 1), Sub: paths(d.sub, 'subs'), Fol: paths(d.fol, 'fol', 1), Fav: paths(d.fav, 'fav', 1)}
+    for (const [v, n] of list(d.search)) (pnl[v[0].toUpperCase()] ||= []).push({t: v, k: 'search|' + n, c: 'Search', on: v == d.term})}
+
+  function panelDraw() {								// one page of up to 8 centered entries
+    const items = pnl[pnlSec] || [], box = myPanel.querySelector('.innerPanel')
+    pnlPg = Math.max(0, Math.min(Math.ceil(items.length / PANEL) - 1, pnlPg))
+    box.replaceChildren()
+    for (const e of items.slice(pnlPg * PANEL, (pnlPg + 1) * PANEL)) {
+      const c = document.createElement('c')
+      c.className = 'p2'; c.textContent = e.t; c.dataset.c = e.c; c.dataset.k = e.k; c.dataset.on = e.on ? 1 : ''
+      if (e.on) c.style.color = 'pink'
+      box.append(c)}}
+
+  function panelOpen(id, keep) {							// Music, Sub, Fol, Fav or myA (search letter A)
+    const s = id.startsWith('my') ? id.slice(2) : id
+    if (!pnl[s]?.length) { if (!pnlSec && s != 'Fol') panelOpen('Fol'); return }
+    if (s != pnlSec || !keep) pnlPg = 0
+    pnlSec = s; panelDraw()
+    searchIcon()}
+
+  function searchIcon() {								
+    const ch = myPanel.classList.contains('open') && pnlSec.length == 1 && !primed && pnlSec
+    mySearch.classList.toggle('letter', !!ch); mySearch.innerHTML = ch || '&#x1F50D;&#xFE0E;'}
+
+  function panelStep(d) {								// next or previous page, stops at section end
+    const n = pnlPg + d
+    if (n >= 0 && n * PANEL < (pnl[pnlSec] || []).length) { pnlPg = n; panelDraw() }}
+
+
   function filter(id) {									// for htm ribbon headings
-    let ch = String.fromCharCode(filt + 65)
-    let el = document.getElementById('my'+ch)
-    if (id == 'mySearch') {el.scrollIntoView(); return}					// search letter in top menu
+    let ch = String.fromCharCode(filt + 65), el
+    if (id == 'mySearch') { panelOpen('my' + ch); return }
     let units = ''; let x = filt							// eg 30 minutes, 2 months, alpha 'A'
     el = document.getElementById(id)
     if (id == 'myType') {x = ''; units = { 1: 'Video', 2: 'Image', 3: 'Audio', 4: 'Fav' }[filt] || units}
     if (id == 'myAlpha') x = String.fromCharCode(filt + 64)
     if (id == 'mySize') {x *= 10; units = " Mb"}
     if (id == 'myDate') units = " months"
-    if (id == 'myDuration') units = " minutes"
+    if (id == 'myLength') units = " minutes"
     el.style.color = filt ? 'red' : 'pink'
-    el.innerHTML = filt ? x+' '+units : id.slice(2)
+    if (id != 'myPlaylist') el.innerHTML = filt ? x+' '+units : id.slice(2)
     if (myType.innerHTML != 'Type') myType.style.color = 'red'}
 
 
-  function inca(command,value,select,address) {					// server messaging to inca.ahk
+  function inca(command,value,select,address) {						// server messaging to inca.ahk
     if (incaBusy) return
     incaBusy = true
     more = 1
@@ -923,6 +972,7 @@
                 const keep = index
                 const before = lastIndex
                 myView.insertAdjacentHTML('beforeend', content)
+                if (sheets) sheetPosters()
                 while (Param(lastIndex)) { lastIndex++ }
                 if (lastIndex === before) lastIndex = listSize
                 Param(keep)}
@@ -978,12 +1028,13 @@
     folder = fo; filt = fi; wheelDir = wd; defPause = pa; listView = lv; selected = se; playlist = pl; listSize = ls
     defMute = (mu == 'yes') ? 1 : 0
     settings = JSON.parse(localStorage.getItem(folder) || '{}')
-    settings.pageWidth = (isNaN(settings.pageWidth) || settings.pageWidth > innerWidth) ? '640' : settings.pageWidth
+    settings.pageWidth = localStorage.getItem('pageWidth') || '720'
+    settings.pageWidth = (isNaN(settings.pageWidth) || settings.pageWidth > innerWidth) ? '720' : settings.pageWidth
     settings.view = (isNaN(settings.view) || settings.view < 6 || settings.view > 300) ? '10' : settings.view
     settings.defRate = (isNaN(settings.defRate) || settings.defRate < 0.2 || settings.defRate > 5) ? '1' : settings.defRate
     settings.pitch = settings.pitch == 1 ? 1 : 0
     myView.style.width = parseFloat(settings.pageWidth) + 'px'
-    myView.style.setProperty('--max-size', settings.view + 'em')
+    setThumbSize()
     defRate = parseFloat(settings.defRate)
     pitch = parseFloat(settings.pitch)
     filter('my'+so)								// show filter heading in red
@@ -1121,7 +1172,7 @@
   function cropSend() {								// drag released → send x,y,w,h fractions + time
     const c = crop, r = myPlayer.getBoundingClientRect()
     crop = 0; myCrop.style.display = 'none'
-    if (Math.abs(c[2] - c[0]) < 8 || Math.abs(c[3] - c[1]) < 8) return 0	// tiny drag = normal click
+    if (Math.abs(c[2] - c[0]) < 8 || Math.abs(c[3] - c[1]) < 50) return 0	// tiny drag = normal click
     const f = (v, o, s) => Math.min(1, Math.max(0, (v - o) / s))
     const x = [c[0], c[2]].map(v => f(v, r.left, r.width)), y = [c[1], c[3]].map(v => f(v, r.top, r.height))
     inca('Crop', [Math.min(...x), Math.min(...y), Math.abs(x[0] - x[1]), Math.abs(y[0] - y[1])].map(v => v.toFixed(4)), index, myPlayer.currentTime.toFixed(2))
@@ -1133,6 +1184,15 @@
     let m = Math.floor((seconds % 3600) / 60)
     let s = Math.floor(seconds % 60).toString().padStart(2, '0')
     return h ? `${h}:${m.toString().padStart(2, '0')}:${s}` : `${m}:${s}`}
+
+
+  function sheetPosters() {							// htm video thumbs: poster <-> 6x6 sheet
+    for (const v of document.querySelectorAll('video[id^=thumb]')) {
+      const i = v.id.slice(5), e = document.getElementById('entry' + i), vid = document.getElementById('vid' + i)
+      if (!e?.dataset.params?.startsWith('video') || !vid) continue
+      v.dataset.poster0 ||= v.poster
+      const name = vid.src.match(/\/([^\/]+?)(?:\.[^.]*?)?$/)?.[1]
+      v.poster = sheets ? v.dataset.poster0.replace(/\/posters\//, '/thumbs/').replace(/\/[^\/]*$/, '/') + name + '.jpg' : v.dataset.poster0}}
 
 
   function Flip() {xPos = 0; skinny *=- 1; thumb.style.skinny = skinny; Param(); positionMedia(0.4)}
@@ -1180,21 +1240,21 @@
         if (b._end != t) { editing = b._fit = 1
           const coupled = n && !b.dataset.end
           setEnd(b, t)
-          if (coupled && !(+n.dataset.end > t || +n.nextElementSibling?.dataset.start > t)) {		// next block now has no valid end
+          if (coupled && !(+n.dataset.end > t || +n.nextElementSibling?.dataset.start > t)) {	// next block now has no valid end
             n.dataset.end = t + 4
             if (n._voice?.src) Object.assign(new Audio(n._voice.src.replace(/#/g, '%23')), {onloadedmetadata() { n.dataset.end = (t + this.duration / (n._rate || 1) * rate).toFixed(2) }})}}}
-      else if (b.dataset.start != t) { editing = b._fit = 1; b.dataset.start = t }}   // otherwise set start
+      else if (b.dataset.start != t) { editing = b._fit = 1; b.dataset.start = t }} 	// otherwise set start
     else if (thumb.style.rate || thumb.style.skinny) {
       if (type) {
         let x = (thumb.style.rate || '') + ',' + (thumb.style.skinny || '')
         const now = +myPlayer.currentTime.toFixed(2)
-        if (cue) {							// cue set → write user cue + reset cue
+        if (cue) {									// cue set → write user cue + reset cue
           const r = x.split(',').map(v => v ? '1.0' : '0').join(',')
           Promise.resolve(inca('addCue', x, index, cue)).then(() => {
-            inca('addCue', r, index, now)				// now ≈ cue-0.1 (player paused), so reset fires first
+            inca('addCue', r, index, now)						// now ≈ cue-0.1 (player paused), so reset fires first
             thumb.style.rate = thumb.style.skinny = ''
             rate = 1; skinny = 1; myPlayer.playbackRate = 1; positionMedia(0.2)})}
-        else inca('addCue', x, index, cue)				// plain save (writes 0.00|... if cue=0)
+        else inca('addCue', x, index, cue)						// plain save (writes 0.00|... if cue=0)
         cue = 0}}}
 
 
@@ -1320,7 +1380,7 @@ function openEditor(text) {
     myPlayer.volume = myVoice.volume = block._volume || 1
     if (userPlay && !overEditor && startDelay) setTimeout(() => syncPlay = play, startDelay)
     else syncPlay = play
-    if (captions == 1) {									// compact captions
+    if (captions == 1) {								// compact captions
       const rec = block.getBoundingClientRect()
       editor.style.height = rec.height + 'px'
       editor.style.resize = 'none'
@@ -1714,7 +1774,7 @@ function openEditor(text) {
     block.textContent = part1
     const newBlock = createBlock(
         null,
-        startSec + 4,
+        (startSec + (parseFloat(block.nextElementSibling?.dataset.start) || startSec + 4)) / 2,
         part2,
         '0',
         {})
@@ -1881,6 +1941,7 @@ function openEditor(text) {
           .then(async res => { const data = await res.json(); if (!res.ok) throw data.error || res.status; return data.path })
           .then(path => {
             block.style.outline = ''
+            if (!editingBlock) { inca('addHistory', last, 0, path); return }		// editor closed: just save it
             if (!block._voice) block._voice = {}
             myVoice.src = path.replace(/%/g, '%25').replace(/#/g, '%23')
             block._voice.src = path
@@ -1890,7 +1951,7 @@ function openEditor(text) {
             myVoice.addEventListener('loadedmetadata', () => {
             if (isFinite(myVoice.duration)) {
               const t = (+block.dataset.start + myVoice.duration * rate).toFixed(2)
-              if (!block.dataset.end || !block.nextElementSibling) setEnd(block, t)}		// uncoupled: leave the boundary
+              if (!block.dataset.end || !block.nextElementSibling) setEnd(block, t)}	// uncoupled: leave the boundary
             window.getSelection().removeAllRanges()
             activateBlock(block, 1, 1)}, { once: true })
             inca('addHistory',last,0,path)})
@@ -1976,5 +2037,26 @@ function openEditor(text) {
     delay = 60}
 
 
-
-
+  // top panel open/close
+  const PANEL = 6									// entries per page
+  let pnl = {}, pnlSec = '', pnlPg = 0, primed = 0					// sections, current section, page
+  const icons = [...document.querySelectorAll('#myMusic, #myFav, #myFol, #mySub, #mySearch')]
+  const hot = [myPanel.querySelector('.panel'), myRibbon1, ...icons]
+  let dwell, grace
+  icons.forEach(a => {
+    a.addEventListener('mouseenter', () => {
+      clearTimeout(grace)
+      dwell = setTimeout(() => {
+        myPanel.classList.add('open')
+        a.id == 'mySearch' ? filter('mySearch') : panelOpen(a.id.slice(2))
+        searchIcon()}, 240)})
+    a.addEventListener('mouseleave', () => clearTimeout(dwell))})
+  hot.forEach(e => e.addEventListener('mouseleave', () => {
+    clearTimeout(grace)
+    grace = setTimeout(() => hot.some(x => x.matches(':hover')) || (myPanel.classList.remove('open'), searchIcon()), 100)}))
+  panelLoad()
+  for (const ev of ['input', 'click'])
+    myInput.addEventListener(ev, () => { primed = !!myInput.value; searchIcon() })
+  myPanel.addEventListener('mousedown', e => {						// top panel entry click
+    const c = e.target.closest('c')
+    if (c) inca(c.dataset.c, c.dataset.c == 'Path' && c.dataset.on ? '' : index, '', c.dataset.k)})

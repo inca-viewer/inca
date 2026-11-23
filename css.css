@@ -11,6 +11,12 @@
   body:has(#myVoiceInput) #osk { transform: translateY(-80%) }
 
 
+:root {--bar-h: 118px}							/* height of top menu bar */
+#myMusic, #myFav, #myFol, #mySearch {clip-path: inset(0 calc(50% - 0.7em))}
+.innerPanel {opacity: 0; transition: opacity 0.6s}
+#myRibbon2 {position: absolute; top: -3px; left: 0; margin: 0; height: 2em; transition: opacity 0.6s}
+#myPanel.open .innerPanel {opacity: 1; transition: opacity 0.2s}
+#myPanel.open #myRibbon2 {opacity: 0; pointer-events: none; transition: opacity 0.2s}
 
 .title {					/* media title */
   display: block;
@@ -422,38 +428,44 @@
   position: fixed;
   left: 50%; 
   transform: translateX(-50%);
-  top: 50px;
+  top: 40px;
   width: 65%;
   max-width: 54.5em;
   background: #0e0c05}
 
 .panel {					/* Top panel element showing folders etc. */
   position: relative;
+  top: -3px;
   font-size: 0.9em;
   font-weight: bold;
   white-space: nowrap;
   overflow: hidden;
-  height: 7em;
+  height: 2em;
   width: auto;
   box-sizing: border-box}
 
-.innerPanel {					/* rotated child of myPanel */
+.innerPanel {					/* one-row horizontal strip */
   position: relative;
+  display: flex;
+  align-items: center;
   overflow: hidden;
-  scrollbar-width: none;
-  transform: rotate(-90deg) translateY(-12%);
-  transform-origin: right top;
+  justify-content: center;
+  gap: 0.75em;
   background: inherit;
-  max-height: 60em;				/* critical	*/
-  height: 95vw;
-  width: 7em}
-.innerPanel:hover {overflow-y: scroll; width:7.01em}	/* firefox bug	*/
+  height: 100%;
+  width: auto}
+#mySearch.letter {color: red !important; font-size: 1.3em}			/* large red alpha letter */
 
-.p2 {						/* panel entries */
-  overflow: hidden;
+.p2 {						/* panel entries: pill buttons */
+  flex: none;
+  font-size: 1em;
+  margin: 0 0.25em;
+  padding: 0 0.5em;
+  border-radius:1em;
   line-height: 1.6em;
   white-space: nowrap}
-.p2:hover {overflow: visible}
+.p2:hover {border-color: #ffc0cb99; background: #ffc0cb1a}
+.p2 {transition: opacity 0.2s}
 
 .fade {						/* between menu and scrolled thumbs */
   position: absolute;
@@ -482,7 +494,7 @@
   margin: auto;
   justify-content: space-around;
   flex-wrap: wrap;
-  top: 200px;
+  top: var(--bar-h);
   width: 40%;
   padding-top:3.4em;
   padding-bottom: 68vh}
@@ -513,14 +525,12 @@
 
 .searchbox {					/* input searchbox in htm tab */
   text-overflow: ellipsis;
-  display: inline;
-  width: 30%; 
-  flex: 1 1 30%; 
+  width: 12em;
+  translate: 0 -1px;
   min-width: 0;
   border-radius: 1em; 
   color: pink;
   border: none;
-  translate: 0 -2px;
   background: inherit;
   font-weight: bold;
   font-size: 1em;
@@ -529,6 +539,7 @@
   outline: none;
   overflow: hidden;
   white-space: nowrap}
+::placeholder { color: pink }
 
 .selected {					/* red popup following cursor */
   display: block; 
