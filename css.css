@@ -75,7 +75,7 @@
   overflow: hidden;
   position: fixed;
   z-index: 5002;
-  top: calc(3em + var(--edT, 0px)); bottom: calc(6em + var(--edB, 0px)); left: 50%; translate: -50%;	/* --edT/--edB: editorFrame() */
+  top: 3em; bottom: 6em; left: 50%; translate: -50%;
   min-width: 250px;
   transition: none}
 
@@ -129,7 +129,7 @@
     flex:1;
     cursor: default;
     overflow-y:auto; 
-    padding: calc(50vh - 9.5em - (var(--edT, 0px) + var(--edB, 0px)) / 2) 1.6em 8em 2em;	
+    padding: calc(50vh - 9.5em) 1.6em 8em 2em;
     scrollbar-width:thin;
     scrollbar-color:#ddc0cb24 transparent; 
     display:flex; 
@@ -152,9 +152,9 @@ linear-gradient(to left, black 0 14px, transparent 14px)}
   mask-image: linear-gradient(
     to bottom,
     transparent 0,
-    transparent calc(var(--fade, 7em) + 1em),
-    rgb(0 0 0 / .15) calc(var(--fade, 7em) + 2.5em),
-    black calc(var(--fade, 7em) + 5em),
+    transparent calc(var(--fade, 7em) - 0.5em),
+    rgb(0 0 0 / .05) calc(var(--fade, 7em) + 1em),
+    black calc(var(--fade, 7em) + 2.5em),
     black 84%,
     transparent 100%),
   linear-gradient(to left, black 0 14px, transparent 14px)}

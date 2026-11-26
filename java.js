@@ -1,3 +1,5 @@
+// .ini switch to stop browser top bottom edge lock
+
 
   let wheel = 0								// wheel count
   let wheelDir = 0		 					// wheel direction
@@ -124,7 +126,6 @@
   myContent.addEventListener('scroll', () => seekTimer = cursor = 0)
   document.addEventListener('dragstart', () => gesture = 1)
   for (const d of [myUndo, mediaHeader.parentElement]) { d.addEventListener('mouseleave', dropLeave); d.addEventListener('mouseenter', dropStay) }
-  addEventListener('resize', editorFrame); editorFrame()
   document.addEventListener('drop', (e) => { mouseDown = 0; gesture = 0; if (overEditor) activateBlock(e.target.closest('.text-block'),0) })
   myPlayer.addEventListener('ended', playerEnded)
   myPlayer.addEventListener('timeupdate', playerProgress)
@@ -873,13 +874,6 @@
     d.style.left = w.offsetLeft + (w.offsetWidth - sw) / 2 + 'px'; d.style.width = sw + 'px'; d.style.top = w.offsetTop + w.offsetHeight + 'px'
     d.firstChild.textContent = rate && rate != 1 && rate != defRate ? +(+rate).toFixed(2) : ''	// own speed only
     d.lastChild.textContent = skinny && skinny != 1 ? +(+skinny).toFixed(2) : ''}
-
-
-  function editorFrame() {							// fullscreen: editor keeps its windowed screen box, like myPlayer
-    const vt = screenY + outerHeight - innerHeight				// viewport top on screen
-    if (outerHeight != innerHeight) { editorFrame.box = [vt, vt + innerHeight]; editor.style.removeProperty('--edT'); editor.style.removeProperty('--edB'); return }
-    const b = editorFrame.box; if (!b) return
-    editor.style.setProperty('--edT', b[0] - vt + 'px'); editor.style.setProperty('--edB', vt + innerHeight - b[1] + 'px')}
 
 
   function positionEditor() {								// compact captions sit under myPlayer
