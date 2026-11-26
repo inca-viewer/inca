@@ -1,18 +1,23 @@
 
-  ::placeholder {color: lightsalmon}
+:root {--bg: #0a0804; --bar-h: 118px}		/* page background (was #0e0c05); height of top menu bar */
+#z2 {background: linear-gradient(var(--bg), transparent) !important}
   ::selection {color: #cccccc; background: #222222}
   ::-webkit-search-cancel-button {appearance: none}
   ::-webkit-resizer {background: transparent}
-  @supports (not selector(::-webkit-scrollbar)) {html {scrollbar-color: #2b2824 #0e0c05}}
+  @supports (not selector(::-webkit-scrollbar)) {html {scrollbar-color: #2b2824 var(--bg)}}
   a {color: #826858; text-decoration: none; outline: none}			/* default text */
   c {color: #826858cc; text-decoration: none; display: block; transition: 1s}	/* top panel text */
   c:hover {transition: 0.2s; transform: scale(1.1,1.1); color: pink}
-  c:active {color: #0e0c05; transform: scale(0.8,0.8)}
+  c:active {color: var(--bg); transform: scale(0.8,0.8)}
   body:has(#myVoiceInput) #osk { transform: translateY(-80%) }
 
 
-:root {--bar-h: 118px}							/* height of top menu bar */
-#myMusic, #myFav, #myFol, #mySearch {clip-path: inset(0 calc(50% - 0.7em))}
+#myRibbon1 {display: flex; align-items: center; width: 42rem; margin: auto; translate: 0.6rem; padding-top: 1em; font-size: 1.35em; font-weight: bold; line-height: 1.2em; white-space: nowrap}	/* 6 icon slots | search | add, count */
+#myRibbon1 a {flex: none; width: 4rem; text-align: center; transition: 0.8s}
+#myMusic, #myFav, #myFol, #mySearch, #mySub {clip-path: inset(0 calc(50% - 0.7em))}	/* hover only near the glyph */
+#myBack {font-size: 1.4em}
+#myRibbon1 #Add {width: 1.2rem; color: red}
+#myRibbon1 #myList {width: 3rem; font-size: 0.8em; text-align: left}
 .innerPanel {opacity: 0; transition: opacity 0.6s}
 #myRibbon2 {position: absolute; top: -3px; left: 0; margin: 0; height: 2em; transition: opacity 0.6s}
 #myPanel.open .innerPanel {opacity: 1; transition: opacity 0.2s}
@@ -62,19 +67,16 @@
   box-sizing: border-box;
   display: none;
   flex-direction: column;
-  width: 500px;
+  width: 40vw;
   max-width: 100%;
   background: #ffffff0a;
   border-radius: 1em;
   font-size: 16px;
-  max-height: 80vh;
   overflow: hidden;
   position: fixed;
   z-index: 5002;
-  height: 40px;
+  top: calc(3em + var(--edT, 0px)); bottom: calc(6em + var(--edB, 0px)); left: 50%; translate: -50%;	/* --edT/--edB: editorFrame() */
   min-width: 250px;
-  min-height: 40px;
-  resize: both;
   transition: none}
 
   #editor:has(#media-header .dropdown-content[style*="flex"]) { z-index: 5012 }
@@ -83,17 +85,18 @@
 #ribbon {
   font-size:12px; 
   background:#0a0a0a; 
-  display:flex;
-  order: 1;
+  display: grid; order: 1;				/* ribbon below the captions */
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);	/* centre group pinned at editor centre */
+  justify-items: center;
+  position: relative;
   align-items:center; 
-  flex-wrap:wrap; 
   user-select:none; 
   flex-shrink:0; 
-  justify-content: space-around;
+  column-gap: 0.4em; padding: 0 0.4em;			/* min gaps when narrow */
   cursor:default;}
 
- #media-header {position: static; padding-left: 1em; width: 30%}
- #search-header {min-width: 30%}
+ #media-header {position: static; padding-left: 1em; width: calc(16em + 12px); max-width: 90%; min-width: 0; box-sizing: border-box}
+ #myCentre {display: flex; align-items: center; justify-content: center; gap: 0.5em}
 
 #media-header > .header > * { 
   display: inline-flex;
@@ -104,8 +107,9 @@
   width: 100%;
   min-width: 0}
 
-#media-header > .header { padding: 0 0.2em; display: flex; color: #ffc0cb44; overflow-x: hidden; width: auto;}
-#media-header .dropdown-content { left: 0; right: 0; bottom: 0; top: auto; width: auto; height: 10em; padding: 0.5em 0.5em; line-height: 1.2; overflow-x: hidden;}
+#media-header > .header { padding: 0 0.2em; display: block; line-height: 1.8em; text-overflow: ellipsis; color: #ffc0cb44; overflow-x: hidden; width: auto;}
+#media-header .dropdown-content { left: 0; right: 0; bottom: 100%; top: auto; width: auto; max-height: 18.75em; padding: 0.5em 0.5em; line-height: 1.2; overflow-x: hidden;
+  scrollbar-width: thin; scrollbar-color: #ddc0cb24 transparent}	/* 10 rows then scroll */
 #media-header .dropdown-content > div:active {border-left: 1px solid red}
 
   .dropdown { position:relative; display:inline-block;}
@@ -125,7 +129,7 @@
     flex:1;
     cursor: default;
     overflow-y:auto; 
-    padding: 11em 1.6em 10em 2em;
+    padding: calc(50vh - 9.5em - (var(--edT, 0px) + var(--edB, 0px)) / 2) 1.6em 8em 2em;	
     scrollbar-width:thin;
     scrollbar-color:#ddc0cb24 transparent; 
     display:flex; 
@@ -133,16 +137,14 @@
     min-height:0;
     overflow-x: hidden;
     position: relative;
-    mask-image: linear-gradient(
-      to bottom,
-      transparent 0,
-      transparent 1em,
-      black 2.5em,
-      black 84%,
-      transparent 100%),
-    linear-gradient(to left, black 0 14px, transparent 14px);}
-
-.caption-viewport { container-type: inline-size; }
+    container-type: inline-size;
+mask-image: linear-gradient(
+  to bottom,
+  transparent 0,
+  black 2em,
+  black 84%,
+  transparent 100%),
+linear-gradient(to left, black 0 14px, transparent 14px)}
 
 
 #editor:has(#voice-faces[style*="flex"]) .caption-viewport,
@@ -150,21 +152,22 @@
   mask-image: linear-gradient(
     to bottom,
     transparent 0,
-    transparent 7em,
-    black 9em,
+    transparent calc(var(--fade, 7em) + 1em),
+    rgb(0 0 0 / .15) calc(var(--fade, 7em) + 2.5em),
+    black calc(var(--fade, 7em) + 5em),
     black 84%,
     transparent 100%),
   linear-gradient(to left, black 0 14px, transparent 14px)}
 
   .text-block {
     position: relative; border-radius:2.2em; white-space:pre-wrap; transition: 0.44s ease; overflow: visible;
-    font-family: inherit; word-wrap:break-word; line-height:1.5; padding: 0.5em 1.1em 1.2em 1.1em; cursor: text;
-    text-align:center; margin-bottom: 1.6em; outline: 0.1px solid transparent; align-self: center; border: 0; min-width: 60%;
-    font-size: 0.92em; box-sizing: border-box; width: auto; color:#ffc0cb80; background: none; scroll-margin: 9em 0;}
+    font-family: inherit; word-wrap:break-word; line-height:1.5; padding: 0.375em 1.1em 0.9em 1.1em; cursor: text;
+    text-align:center; margin-bottom: 1.2em; outline: 0.1px solid transparent; align-self: center; border: 0; min-width: 60%; max-width: calc(100% - 16px);
+    font-size: 0.92em; box-sizing: border-box; width: auto; color:#ffc0cb80; background: none;}
 
   .text-block.editing {
     color: #ffc0cbee;
-    background: #141414;
+    background-color: #141414;
     animation: flashOutline 0.4s;
     outline: 0.1px solid #ffc0cb20}
 
@@ -176,7 +179,7 @@
   content: '❤';
   position: absolute;
   top: 1.2em;
-  left: calc(50% - 50cqw - 32px + 6mm);
+  right: calc(50% - 50cqw - 32px + 6mm);
   font-size: 0.55em;
   opacity: 0.5;
   color: #ffc0cb;
@@ -184,23 +187,14 @@
   z-index: 3}
 
 
-.text-block.editing[data-has-media="1"]::before {
-    content: '';
-    position: absolute;
-    left: 35%;
-    right: 35%;
-    bottom: 0.6em;
-    height: 2px;
-    border-radius: 1px;
-    background: linear-gradient(to right, #ffc0cb24 0%, #ffc0cb24 50%, #ffc0cb0e 50%, #ffc0cb0e 100%);
-    background-size: 200% 100%;
-    background-repeat: no-repeat;
-    background-position: calc(100% - var(--progress, 0%)) 0;
-    transition: background-position 0.2s;
-    z-index: 1}
+.text-block.editing[data-has-media="1"] {			/* progress line */
+    background-image: linear-gradient(to right, #ffc0cb24 var(--progress, 0%), #ffc0cb0e 0);
+    background-size: 30% 2px;
+    background-position: 50% calc(100% - 0.45em);
+    background-repeat: no-repeat}
 
 #voice-faces {
-  position: absolute; top: 30px; right: 3em; display: none; gap: 10px;
+  position: absolute; top: calc(30px + 1em); right: 3em; display: none; gap: 10px;
   z-index: 20; pointer-events: none; --fz: 1 }
 
 .voice-face-wrap {
@@ -228,14 +222,18 @@
       text-align:center; font-size:0.9em; font-family:inherit; border-radius:4px;}
 
     #myCancel {
-      position: absolute; bottom: 0.3em; z-index:999;
+      position: relative; z-index:999;
       text-align:center; width: auto; padding: 0 0.5em;
       transition:0.6s; background:#1a1a1a00; cursor:pointer; font-size: 1em;}
     #myCancel:hover { transform: scale(1.4,1.4)}
+    #myEdWidth {
+      font-weight: bold; cursor: ew-resize; transition: color 0.8s}
+    #myEdWidth:hover { color: pink; transition: color 0.2s }
 
     #search-header {
-      width: 12em;
-      max-width: 12em;
+      position: relative;
+      width: 16em;
+      min-width: 0; max-width: calc(100% - 12px);
       border-radius: 0.9em;
       overflow: hidden;
       display: flex;
@@ -249,7 +247,11 @@
     #search-header:hover { transform: scale(1.14,1.14) }
 
     #caption-search-input {
-      width: 8em;
+      width: 10em;
+      min-width: 0;
+      flex: 0 1 auto;
+      padding: 0 2px;
+      text-overflow: ellipsis;
       background: transparent;
       color: #ffc0cbaa; 
       border: none;
@@ -259,6 +261,23 @@
     #caption-search-input:focus::placeholder { color: transparent }
     #search-match-count { color: #ffc0cbaa; font-size: 0.8em; margin-left: auto;}
     ::highlight(search) { color: #ffc0cb; background: none }
+    #search-ov { position: absolute; top: 0; height: 100%; display: none; align-items: center; padding: 0 2px; box-sizing: border-box;
+      white-space: pre; overflow: hidden; pointer-events: none; color: #ffc0cb66 }
+    #search-header.repl #search-ov { display: flex }
+    #search-header.repl #caption-search-input { color: transparent; caret-color: pink }
+    #search-ov i { font-style: normal; color: #ff6060 }
+    #search-ov b { font-weight: normal; color: #70d070 }
+    #myUndo { position: relative; z-index: 999; cursor: pointer }
+    #myUndo > a { display: block; width: 2.2em; text-align: center; transition: color 0.8s }
+    #myUndo:hover > a { color: pink; transition: color 0.2s }
+    #myUndo .undo-list { position: absolute; display: flex; flex-direction: column; gap: 2px; bottom: 100%; left: 50%; translate: -50%; width: 16em; max-height: 14em;
+      overflow-y: auto; scrollbar-width: thin; scrollbar-color: #ddc0cb24 transparent; background: #0f0e0e; box-shadow: 0 4px 12px rgba(0,0,0,0.5); border-radius: 6px; padding: 0.3em 0;
+      opacity: 0; pointer-events: none; transition: opacity 0.2s }
+    #myUndo.open .undo-list:not(:empty) { opacity: 1; pointer-events: auto; transition: opacity 0.2s }
+    #myUndo .undo-list > div { display: flex; gap: 0.6em; padding-right: 0.6em; flex: none; font-size: 12.5px; white-space: nowrap; border-radius: 10px }
+    #myUndo .undo-list > div:hover { color: #ffc0cbaa; background: black }
+    #myUndo .undo-list span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; text-align: left }
+    #myUndo .undo-list b { flex: none; width: 2.2em; text-align: center; font-weight: normal; color: #ffc0cb66 }
 
 .voice-input{
   position:fixed;
@@ -328,9 +347,9 @@
   inset: -3px;
   border-radius: inherit;
   pointer-events: none;
-  box-shadow:
-    inset 0 0 50px 36px #000,
-    inset 0 0 12px 3px #000;
+  box-shadow: 
+    inset 0 0 6px 6px var(--bg),
+    inset 0 0 30px 30px var(--bg);
   z-index: 1;}
 
 .player-wrap:not(:has(.player[src], .player[poster]:not([poster=""]))) {visibility: hidden !important}
@@ -354,13 +373,21 @@
   border-radius: 1em;
   line-height: 0}
 
+.thumb-info {					/* hover: speed and skinny numbers */
+  position: absolute; display: flex; margin-top: -0.4em;
+  font-size: 0.75em; line-height: 1.6; color: #ffc0cb; white-space: nowrap;
+  pointer-events: none; opacity: 0; transition: opacity 0.5s}
+.thumb-info span { flex: 1; text-align: center }	/* speed centred at 25%, skinny at 75% */
+.thumb-wrap:hover ~ .thumb-info { opacity: 0.35 }
+@starting-style { .thumb-wrap:hover ~ .thumb-info { opacity: 0 } }
+
 .thumb-wrap:not(.popped)::after {
   content: '';
   position: absolute;
   inset: 0;
   border-radius: inherit;
   pointer-events: none;
-  box-shadow: inset 0 0 6px 6px #0e0c05;}
+  box-shadow: inset 0 0 6px 6px var(--bg);}
 
 .thumb-wrap.popped .thumb {
   mask-image: linear-gradient(to top, black calc(100% - 6px), transparent 100%),
@@ -398,8 +425,8 @@
   position: absolute;
   background-size: 600%;			/* for thumb extraction from thumbSheet */
   background-repeat: no-repeat;
-  box-shadow: inset 0 0 6px 6px rgba(14, 12, 5, 1);	/* also removes edge artifacts */
-  outline: 3px solid #0e0c05;
+  box-shadow: inset 0 0 6px 6px var(--bg);	/* also removes edge artifacts */
+  outline: 3px solid var(--bg);
   transform-origin: top left;
   transition: opacity 0.6s;  
 /* filter: blur(0.4vmin); */
@@ -431,7 +458,9 @@
   top: 40px;
   width: 65%;
   max-width: 54.5em;
-  background: #0e0c05}
+  background: var(--bg)}
+
+.myPanel::before {content: ''; position: absolute; left: 0; right: 0; bottom: 100%; height: 40px}
 
 .panel {					/* Top panel element showing folders etc. */
   position: relative;
@@ -457,12 +486,15 @@
 #mySearch.letter {color: red !important; font-size: 1.3em}			/* large red alpha letter */
 
 .p2 {						/* panel entries: pill buttons */
-  flex: none;
+  flex: 0 1 auto;				/* long entries shrink only when the row is full */
+  min-width: 0;
   font-size: 1em;
-  margin: 0 0.25em;
-  padding: 0 0.5em;
+  margin: 0 0.3em;
+  padding: 0 0.7em;
   border-radius:1em;
   line-height: 1.6em;
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap}
 .p2:hover {border-color: #ffc0cb99; background: #ffc0cb1a}
 .p2 {transition: opacity 0.2s}
@@ -472,7 +504,7 @@
   display: block;
   width: 99vw;
   height: 0.8em;
-  background: #0e0c05;
+  background: var(--bg);
   pointer-events: none}
 
 .mycontent {
@@ -521,11 +553,11 @@
   margin-bottom: 0.4em;
   font-size: 0.9em}
 .ribbon a {width: 4em; transition: 0.8s; border-radius: 1em; flex-shrink: 0}
-.ribbon a:hover {transition: 0.2s; color: pink}
+.ribbon a:hover, #myRibbon1 a:hover {transition: 0.2s; color: pink}
 
 .searchbox {					/* input searchbox in htm tab */
   text-overflow: ellipsis;
-  width: 12em;
+  flex: 1;
   translate: 0 -1px;
   min-width: 0;
   border-radius: 1em; 
@@ -539,6 +571,13 @@
   outline: none;
   overflow: hidden;
   white-space: nowrap}
+#myTimes {					/* start / end under myPlayer: 25% and 75% */
+  position: fixed; z-index: 5004; display: flex; font-size: 13px; line-height: 1.6; color: #ffc0cb59; white-space: nowrap;
+  pointer-events: none; opacity: 0; transition: opacity 0.5s}	/* #ffc0cb59 = thumb label's 0.35 */
+#myTimes.on { opacity: 1 }
+#myTimes span { flex: 1; text-align: center }
+#myTimes .red { color: red }
+
 ::placeholder { color: pink }
 
 .selected {					/* red popup following cursor */
@@ -645,7 +684,7 @@
 .myBody {					/* whole body element */
   font-family: 'Yu Gothic', 'Calibri Light';
   scrollbar-color:#ddc0cb24 transparent; 
-  background: #0e0c05;
+  background: var(--bg);
   user-select: none;
   font-size: 0.85em;
   overflow: hidden;
@@ -656,6 +695,9 @@
   height: 100%;
   color: #826858;
   transition: 0s}
+
+body { animation: pageIn 0.7s ease }
+@keyframes pageIn { from { opacity: 0 } }
 
 
 #osk {

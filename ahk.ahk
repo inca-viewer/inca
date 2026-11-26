@@ -1893,7 +1893,9 @@
             }
           cmd := inca "\cache\apps\ffmpeg.exe" in " -an -filter_complex """ fc cat "concat=n=36:v=1:a=0,tile=6x6"" -frames:v 1 -update 1 -y """ inca "\cache\thumbs\" filen ".jpg"""
           }
+        PopUp("indexing", 0, 0, 0)
         RunWait, %cmd%,, Hide
+        Gui PopUp:Cancel
         }
       }
     return 1
@@ -2089,12 +2091,12 @@
       {
       if (!showSubs) ; || InStr(fol, x))
         subfolders =
+      newSubs =
       Loop, Files,%path%*.*, D
         if A_LoopFileAttrib not contains H,S
-          if !InStr(subfolders, A_LoopFileFullPath)
-            if subfolders
-              subfolders = %subfolders%|%A_LoopFileFullPath%\
-            else subfolders = %A_LoopFileFullPath%\
+          if !InStr(subfolders, A_LoopFileFullPath "\")
+            newSubs = %newSubs%%A_LoopFileFullPath%\|
+      subfolders := Trim(newSubs . subfolders, "|")
       }
     if (playlist || searchTerm)
       subfolders =
@@ -2200,7 +2202,6 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
 
 <div id='mySeek' class='seekbar'><span id='myDur'></span></div>`n
 <span id='mySelected' class='selected'></span>`n
-<span id='myAlert' class='selected'></span>`n
 <div id='myContent' class='mycontent' onwheel='if (mouseDown) wheelEvent(event)'>`n 
   <div id='myView' class='myview'>`n`n %mediaList%</div></div>`n`n
 
@@ -2280,21 +2281,21 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
   <div id='z1' class='fade' style='height:var(--bar-h)'></div><div id='z2' class='fade' style='top:var(--bar-h); height:10px; background: linear-gradient(#0e0c05ff, #0e0c0500)'></div>`n
   <div id='myPanel' class='myPanel' data-music="%pdMusic%" data-sub="%pdSub%" data-fol="%pdFol%" data-fav="%pdFav%" data-search="%pdSearch%" data-cur="%pdCur%" data-term="%pdTerm%"><div class='panel'><div class='innerPanel'></div></div>`n`n
 
-<div id='myRibbon1' class='ribbon' style='font-size: 1.5em; justify-content: center; translate:-5em -0.2em; padding-top: 1em'>`n
-  <a style='font-size: 1.4em; width: 6em' onmousedown='window.history.back()'>&#129028;</a>`n
-  <a id='mySub' onwheel="wheelEvent(event)" style='width: auto; font-size:0.9em; translate:-0.5em; %x8%' onmousedown="inca('Recurse')">%subs%</a>`n
-  <a id='myMusic' onwheel="wheelEvent(event)" style='width: 3em; %x22%' onmousedown="inca('Path','','','music|1')">&#x266B;</a>`n
-  <a id='myFol' onwheel="wheelEvent(event)" style='width:4.5em; %x21%' onmousedown="inca('Path','','','fol|2')">&#x1F4BB;&#xFE0E;</a>`n
-  <a id='myFav' onwheel="wheelEvent(event)" style='width:3em; translate: -0.4em; %x23%' onmousedown="inca('Path','','','fav|1')">&#10084;</a>`n
-  <a id='mySearch' style='width: 2em; %x20%' onwheel="wheelEvent(event)" onmousedown="inca('SearchBox','','',myInput.value)">&#x1F50D;&#xFE0E;</a>`n
+<div id='myRibbon1'>`n
+  <a id='myBack' onmousedown='window.history.back()'>&#129028;</a>`n
+  <a id='mySub' onwheel="wheelEvent(event)" style='%x8%' onmousedown="inca('Recurse')">%subs%</a>`n
+  <a id='myMusic' onwheel="wheelEvent(event)" style='%x22%' onmousedown="inca('Path','','','music|1')">&#x266B;</a>`n
+  <a id='myFol' onwheel="wheelEvent(event)" style='%x21%' onmousedown="inca('Path','','','fol|2')">&#x1F4BB;&#xFE0E;</a>`n
+  <a id='myFav' onwheel="wheelEvent(event)" style='%x23%' onmousedown="inca('Path','','','fav|1')">&#10084;</a>`n
+  <a id='mySearch' style='%x20%' onwheel="wheelEvent(event)" onmousedown="inca('SearchBox','','',myInput.value)">&#x1F50D;&#xFE0E;</a>`n
   <input id='myInput' class='searchbox' type='search' autocomplete='off' placeholder='%heading%' value='%st%' onclick="if (this.value=='%st%') {this.value='%lastSearch%'; this.select()}" onmouseover="overText=1; this.focus()" onmouseout='overText=0'>
-  <a id='Add' style='width:1em; font-size:1em; color: red' onmousedown="inca('Add','','',myInput.value)">%add%</a>`n
-  <a id='myList' style='min-width: 4em; overflow: hidden; font-size: 0.8em; padding: 0 0.6em'>%listSize%</a>`n
+  <a id='Add' onmousedown="inca('Add','','',myInput.value)">%add%</a>`n
+  <a id='myList'>%listSize%</a>`n
   </div>`n`n
 
   <div id='myRibbon2' class='ribbon' style='width: 100`%; background:#ffc0cb06' onwheel="wheelEvent(event)">`n
   <a id='myWidth' style='padding-left: 2em; width: 2.6em'>|&harr;|</a>
-  <a id='myLayout' style='width: 2.6em'><svg width="0.9em" height="0.9em" viewBox="0 0 24 24" fill="currentColor" style="pointer-events:none"><path d="M0 0h10v10H0zM14 0h10v10H14zM0 14h10v10H0zM14 14h10v10H14z"/></svg></a>`n 
+  <a id='myThumbs' style='width: 2.6em'><svg width="0.9em" height="0.9em" viewBox="0 0 24 24" fill="currentColor" style="pointer-events:none"><path d="M0 0h10v10H0zM14 0h10v10H14zM0 14h10v10H0zM14 14h10v10H14z"/></svg></a>`n 
   <a id='myPlaylist' style='%x13%' onmousedown="inca('Playlist')">%pl%</a>`n
   <a id='myDate' style='width: 3.5em; %x4%' onmousedown="inca('Date', filt)">Date</a>`n
   <a id='myLength' style='width: 5em; %x3%' onmousedown="inca('Length', filt)">Length</a>`n

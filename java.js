@@ -46,8 +46,6 @@
   let aspect = 1							// media width to height ratio
   let mediaX = 0							// centre of myPlayer
   let mediaY = 0
-  let editorX = 0
-  let editorY = 0
   let xyz = []								// thumbSheet x,y scaleY
   let folder = ''							// browser tab name = media folder
   let defRate = 1							// default speed
@@ -77,7 +75,6 @@
   let syncPlay = 0
   let userPlay = 0
   let crawl = 0								// crawl to next block
-  let crawlEnd = 0
   let predictBuffer = '';
   let predictor = { words: {} }
   let currentPreviewItem = null;
@@ -87,9 +84,12 @@
   let timeout = 0
   let overTimer = 0
   let matches = 0
+  let undo = []								// undo snapshots (caption JSON)
+  let repl = []								// find & replace: [block, old text]
   let voices = []
   let faceZoom = 1
   let offset = 0
+  let nudgeAt = 0, nudgeEnd = 0							// last wheel nudge: time, end side
   let crop = 0
 
   let entry = document.createElement('div')				// dummy thumb container
@@ -107,6 +107,15 @@
   const searchInput = document.querySelector('#caption-search-input')
   const matchCountSpan  = document.querySelector('#search-match-count')
   const myPlayerWrap = document.getElementById('myPlayerWrap')
+  const myCentre = Object.assign(document.createElement('div'), {id: 'myCentre'})		// tight centre group: width, cancel, undo
+  document.getElementById('media-header').after(myCentre); myCentre.append(myCancel)
+  myCancel.before(Object.assign(document.createElement('a'), {id: 'myEdWidth', innerHTML: '|&harr;|'}))	// editor width control
+  const myUndo = Object.assign(document.createElement('div'), {id: 'myUndo', innerHTML: '<a>&#x21B6;</a><div class="undo-list"></div>'})
+  myCancel.after(myUndo)								// undo dropdown, rows built on hover
+  const myTimes = Object.assign(document.createElement('div'), {id: 'myTimes', innerHTML: '<span></span><span></span>'})
+  document.body.append(myTimes)							// start / end under myPlayer
+  const searchOv = Object.assign(document.createElement('div'), {id: 'search-ov'})	// replace mode colours
+  searchInput.after(searchOv); searchOv.style.font = getComputedStyle(searchInput).font
 
   document.addEventListener('mousedown', Click)
   document.addEventListener('mouseup', mouseUp)
@@ -114,11 +123,15 @@
   document.addEventListener('keydown', keyDown)
   myContent.addEventListener('scroll', () => seekTimer = cursor = 0)
   document.addEventListener('dragstart', () => gesture = 1)
+  for (const d of [myUndo, mediaHeader.parentElement]) { d.addEventListener('mouseleave', dropLeave); d.addEventListener('mouseenter', dropStay) }
+  addEventListener('resize', editorFrame); editorFrame()
   document.addEventListener('drop', (e) => { mouseDown = 0; gesture = 0; if (overEditor) activateBlock(e.target.closest('.text-block'),0) })
   myPlayer.addEventListener('ended', playerEnded)
   myPlayer.addEventListener('timeupdate', playerProgress)
   myPlayer.addEventListener('play', () => { if (editingBlock) editingBlock._atEnd = 0 })
   myPlayer.addEventListener('loadedmetadata', () => { fitPlayer(myPlayer.videoWidth, myPlayer.videoHeight) })
+  document.addEventListener('loadedmetadata', fitThumb, true)
+  document.addEventListener('mouseover', thumbHover)
   window.addEventListener('beforeunload', (e) => { if (playing && editing) e.preventDefault() })
   myNav.addEventListener('wheel', wheelEvent, { passive: false })
   myNav.addEventListener('mouseleave', closeContext)
@@ -136,21 +149,21 @@
     myAlt.style.display = isAlt ? '' : 'block'
     myDefault.style.display = isAlt ? 'block' : 'none'})
   searchHeader.addEventListener('wheel', nextMatch)
-  mediaContent.addEventListener('mouseleave', closeMenu)
-  searchHeader.addEventListener('mouseleave', () => {searchInput.placeholder='🔍︎'; if (matchIndex) activateBlock(matches[matchIndex], 0)})
+  searchHeader.addEventListener('mouseleave', () => {searchInput.placeholder='🔍︎'; const m = repl.at(-1)?.[0] || matchIndex > 0 && matches[matchIndex]; if (m) activateBlock(m, 0)})
   searchHeader.addEventListener('click', (e) => {
-    searchTerm = searchInput.value = ''; blocks.forEach(b => {b.style.color = ''; b.textContent = b.textContent})})
+    searchTerm = searchInput.value = ''; paintSearch(); blocks.forEach(b => {b.style.color = ''; b.textContent = b.textContent})})
   searchHeader.addEventListener('mouseenter', (e) => {
     let sel = window.getSelection().toString()
     if (sel) {searchTerm = searchInput.value = sel}
     else searchInput.placeholder='❤'})
   searchInput.addEventListener('input', newSearch)
+  searchInput.addEventListener('input', paintSearch)
+  searchInput.addEventListener('keydown', e => e.key == 'ArrowRight' && replArrow() && e.preventDefault())	// replace mode
   viewport.addEventListener('input', () => {
     editing = 1; userPlay = syncPlay = 0;
     if (editingBlock?.querySelector('.text-block')) editingBlock.innerText = editingBlock.innerText})
   viewport.addEventListener('wheel', wheelEvent)
   editor.addEventListener('wheel', wheelEvent)						// face zoom
-  viewport.addEventListener('scroll', nextBlock)
   myVoice.addEventListener('ended', () => {
     const b = editingBlock
     if (b?._atEnd) { syncPlay = 0; return }
@@ -186,7 +199,11 @@
   const trigger = () => {
     if (playing) return Math.min(0.95, Math.max(0.85, 0.85 + (scaleY - 0.5) * 0.2))
     return Math.min(0.9, Math.max(0.75, 0.75 + ((thumb.offsetHeight / innerHeight) - 0.12) * 0.8))}
-  const bound = () => (dur || voices.length) ? 140 : 60
+  const line = () => { const v = viewport.getBoundingClientRect(); return v.top + v.height / 2 - 64 }	// target line, 4em above centre
+  const toLine = (b, smooth) => {								// crawl, myMask, search: block onto the target line
+    if (!b) return; if (captions == 1) return b.scrollIntoView({ block: 'center' })
+    viewport.scrollBy({ top: b.getBoundingClientRect().top - line(), behavior: smooth ? 'smooth' : 'instant' })}
+  const mmss = (t, cs) => Math.floor(t / 60) + ':' + (cs ? (t % 60).toFixed(2).padStart(5, '0') : String(Math.floor(t % 60)).padStart(2, '0'))
   const myCrop = Object.assign(document.createElement('div'), {style: 'position:fixed;display:none;border:1px dashed red;pointer-events:none;z-index:9999'})
   const natEnd = b => { const n = b.nextElementSibling; return Math.max(+b.dataset.start, n ? +n.dataset.start || 0 : dur || Infinity) }
 
@@ -219,6 +236,7 @@
     else if (e.key == 'F23') mouseUp(e)							// R click up
     else if (e.key == 'F24' || (e.code == 'ArrowLeft' && e.shiftKey)) mouseBack()
     else if (e.key === 'Backspace') Backspace(e)
+    else if (e.key === 'Delete' && captions && editingBlock?.nextElementSibling && caret(editingBlock)?.pos === 'end') mergeNext(e)
     else if (captions && editingBlock && !e.shiftKey && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
       const c = caret(editingBlock)
       let sib = e.key === 'ArrowUp' ? editingBlock.previousElementSibling : editingBlock.nextElementSibling
@@ -280,10 +298,11 @@
     if (id == 'mySkinny') { updateCue('skinny',1); editing = captions; return }
     if (id == 'myFlip') { Flip(); return }
     if (id == 'myHelp') { window.open('/inca/cache/icons/help.htm'); return }
-    if (id == 'myLayout') { longClick ? (thumbSheet ^= 1, inca('View', lastMedia)) : (sheets ^= 1, setThumbSize(), sheetPosters()); return }
+    if (id == 'myThumbs') { longClick ? (thumbSheet ^= 1, inca('View', lastMedia)) : (sheets ^= 1, setThumbSize(), sheetPosters()); return }
     if (['myChatterbox','myQwen','myKitten','myElevenLabs'].includes(id)) { Chatterbox(id); return }
+    if (lastClick == 1 && dropClick(e.target)) return
     if (id == 'myCancel') {
-      if (!editing) {captions = 1; activateBlock(editingBlock,0); scrollUntilBlock(1, editingBlock); return}
+      if (!editing) {captions = 1; activateBlock(editingBlock,0); toLine(editingBlock); return}
       else if (myCancel.innerHTML != 'Sure ?') myCancel.innerHTML = 'Sure ?' 
       else { editing = 0; closePlayer() }
       return}
@@ -347,16 +366,14 @@
         cue = _t; syncPlay = 0; return}
       if (captions && !overMedia) {
         const wasOsk = !!document.getElementById('osk')
-        const pos = caret(block)?.pos
-        const end = 0
-        if (overEditor && ym < 0.1 && xm < 0.95) { viewport.scrollTo({top:0,behavior:'smooth'}); return }
+        if (overEditor && ym < 0.1 && xm < 0.95 && !ribbon.contains(e.target)) { 
+          getSelection().removeAllRanges(); viewport.scrollTo({top:0,behavior:'smooth'}); return }	// top 10%: to top, no activate
         if (block) block._atEnd = 0
         if (id == 'viewport') window.getSelection().removeAllRanges()
-        if (!longClick && !wasOsk && block !== editingBlock) scrollUntilBlock(1, block)
         if (longClick && !gesture && overEditor && xm < 0.95) { syncPlay = userPlay = 0; osk(); if (!getSelection().isCollapsed) inca('cancelFind') }
         if (overBlock && !gesture && overBlock !== editingBlock) {
           lastBlock = block.dataset.num; userPlay = syncPlay = 1
-          activateBlock(block, !longClick && !end); if (end) setTimeout(toEnd, 50, block)	// after activateBlock's own seek
+          activateBlock(block, !longClick)
           return}
         if (captions == 1) {
           editor.style.pointerEvents = 'auto'
@@ -364,9 +381,7 @@
           editor.style.pointerEvents = 'none'
           if (overBlock && longClick && !gesture) {captions = 2; activateBlock(block); return}}
         if (!longClick) {
-          if (overBlock) {
-            if (end) { toEnd(block); return }
-            if (wasOsk) { myPlayer.currentTime = block.dataset.start; myVoice.currentTime = userPlay = syncPlay = 0; return }}
+          if (overBlock && wasOsk) { myPlayer.currentTime = block.dataset.start; myVoice.currentTime = userPlay = syncPlay = 0; return }
           const voiceLive = editingBlock?._voice?.src && !myVoice.ended
           const paused = voiceLive ? myVoice.paused : myPlayer.paused
           if (paused) userPlay = 1
@@ -398,17 +413,6 @@
     if (!playing && lastClick == 2) return
     if (lastClick) Play()}
 
-
-  function setThumbSize() { myView.style.setProperty('--max-size', (+settings.view * (sheets ? 3 : 1)) + 'em') }
-
-  function sheetTime(xm, ym, dur, skinny) {					// 6x6 sheet → media time (shared)
-    if (skinny < 0) xm = 1 - xm
-    const row = Math.floor(ym * 6)
-    const col = Math.ceil(xm * 6)
-    const offset = dur > 60 ? 20 : 0
-    let ps = 5 * ((row * 6) + col)
-    ps = (ps - 1) / 200
-    return offset - (ps * offset) + dur * ps}
 
   function getStart(id) {
     if (lastClick == 3) {
@@ -483,8 +487,8 @@
     if (!myNav.style.display) overEditor = !overMedia && captions && id != 'myMask' ? 1 : 0
     if (innerHeight == outerHeight) {xPos = e.screenX; yPos = e.screenY}
     else {xPos = e.clientX; yPos = e.clientY}
-    myAlert.style.left = mySelected.style.left = xPos + 30 +'px'
-    myAlert.style.top = mySelected.style.top = yPos + 20 +'px'
+    mySelected.style.left = xPos + 30 +'px'
+    mySelected.style.top = yPos + 20 +'px'
     let x = Math.abs(xPos-xRef)
     let y = Math.abs(yPos-yRef)
     cursor = overMedia ? 12 : 4
@@ -495,38 +499,38 @@
       if (!playing && overMedia && zoom > 1) popThumb()
       if (!playing && overMedia && !longClick && zoom == 1 && !myNav.style.display) sel(index)}
     if (!gesture || !mouseDown) {gesture = 0; return}
-    const wasOsk = document.getElementById('osk')
     if (gesture == 1 && y > x + 1) gesture = 2
-    if (id == 'editor') editing = 1
     if (thumb.style.pop > 1 && id.includes('thumb')) {					// move popped thumb
       const wrap = thumb.parentElement
       wrap.style.left = parseInt(wrap.style.left||0) + xPos - xRef + 'px'
       wrap.style.top  = parseInt(wrap.style.top ||0) + yPos - yRef + 'px'}
-    else if (gesture == 3) {								// move osk
-      wasOsk.style.left = parseInt(wasOsk.style.left || 0) + xPos - xRef + 'px'
-      wasOsk.style.top  = parseInt(wasOsk.style.top || 0) + yPos - yRef + 'px'}
+    else if (gesture == 3) {}								// osk drags itself (osk.js)
     else if (gesture == 4 && playing && myPlayer.paused && !thumbSheet && overMedia && !captions) {
       crop ||= [e.clientX, e.clientY]
       crop[2] = e.clientX; crop[3] = e.clientY
       document.body.append(myCrop)
       myCrop.style.cssText = `position:fixed;z-index:99999;pointer-events:none;border:1px dashed red;left:${Math.min(crop[0], crop[2])}px;top:${Math.min(crop[1], crop[3])}px;width:${Math.abs(crop[2] - crop[0])}px;height:${Math.abs(crop[3] - crop[1])}px`}
-    else if (playing && (mouseDown == 1 || gesture == 2 || delay == 1)) {		// move myPlayer / editor
+    else if (playing && (mouseDown == 1 || gesture == 2 || delay == 1)) {		// move myPlayer
       const dx = xPos - xRef, dy = yPos - yRef
       if (captions) {
         overBlock = document.elementFromPoint(xPos, yPos)?.closest('.text-block') || 0
         if (overBlock && overBlock != editingBlock) activateBlock(overBlock, 0)}
       if (thumbSheet) { xyz[0] += dx; xyz[1] += dy }
-      else if (!overBlock && !(overEditor && xm > 0.9) && !(overEditor && ym > 0.3)) {
+      else if (!overBlock && !overEditor) {
         mediaX += dx; mediaY += dy; positionMedia(0)
-        if (captions) overMedia ? (editorX -= dx, editorY -= dy) : positionEditor()
         if (captions == 2) editing = 1}}
-    if (gesture) { xRef = xPos; yRef = yPos; if (captions == 2) projectMedia.uiHeight = editor.style.height }}
+    if (gesture) { xRef = xPos; yRef = yPos }}
 
 
   function wheelEvent(e) {
     const under = document.elementFromPoint(xPos, yPos)
     const id = under?.closest('#myNav') ? under.id : e.target.id
     const face = under?.closest('#voice-faces')
+    if (id == 'myEdWidth') {								// editor width
+      e.preventDefault(); wheel += Math.ceil(Math.abs(e.deltaY)); if (wheel < delay) return
+      const z = 1 + wheel / 2000, x = editor.offsetWidth
+      editor.style.width = Math.max(250, Math.min(innerWidth - 20, wheelDir * e.deltaY > 0 ? x * z : x / z)).toFixed(0) + 'px'
+      editing = 1; wheel = 0; delay = 8; return}
     if (overEditor) {
       if (e.target.closest('#voiceSub, #emotionSub, #soundsSub')) return
       if (e.target.closest('.dropdown-content')) return
@@ -566,7 +570,7 @@
       thumb.parentElement.style.transform = 'scale('+Math.abs(skinny)*zoom+','+zoom+')'
       start = thumb.currentTime
       delay = 8}
-    else if (id == 'myLayout') { 							// zoom all thumbs
+    else if (id == 'myThumbs' || (!playing && mouseDown)) { 				// zoom all thumbs
       let z = wheel/1500
       let view = settings.view
       if (view < 300 && wheelUp) view *= 1+z
@@ -626,8 +630,9 @@
       if (end) setEnd(b, t)
       else { b.dataset.start = t; myVoice.currentTime = 0; if (t >= b._end) setEnd(b, +(t + (voiceLen(b) || 1)).toFixed(2)) }
       offset = +(offset + d).toFixed(2)
+      nudgeAt = Date.now(); nudgeEnd = end; playerTimes()
       myVoice.currentTime = 0; myPlayer.currentTime = t; editing = 1; delay = 74}
-    else if (playing && !myNav.style.display && (mouseDown || (type == 'image' && !captions))) {
+    else if (playing && !myNav.style.display && (mouseDown || ((thumbSheet || type == 'image') && !captions))) {
       let x = rect.left+rect.width/2-(clickMedia ? xPos : innerWidth/2)
       let y = rect.top+rect.height/2-(clickMedia ? yPos : innerHeight/2)		// zoom myPlayer
       let z = mouseDown && clickMedia && overMedia ? wheel / 1300 : 0
@@ -644,7 +649,7 @@
     else if (!thumbSheet) {
       if (captions && !overMedia) {
         const n = wheelUp ? editingBlock?.nextElementSibling : editingBlock?.previousElementSibling
-        if (n) { activateBlock(n, userPlay); n.scrollIntoView({ block: 'center' }) }
+        if (n) { activateBlock(n, userPlay); toLine(n) }
         wheel = 0; delay = 124; return }
       delay = 124
       let interval = 0.06								// seek
@@ -679,7 +684,6 @@
     xm = (xPos - rect.left) / rect.width
     ym = (yPos - rect.top) / rect.height
     if (delay >= 30) delay -= 10
-    else myAlert.innerText = ''
     if (wheel >= 10) wheel -= 10
     if (more) more--									// lazy loading holdback
     if (cursor) cursor--								// cursor hide timer
@@ -752,14 +756,8 @@
       myVoice.playbackRate = editingBlock?._rate || 1
       myPlayer.playbackRate = mediaContent.style.display == 'flex' ? 1 : captions ? fitRate(editingBlock) : rate
       const nudge = dur && captions == 2 && overMedia && ym < trigger()
-      if (nudge) {
-        const b = editingBlock
-        const uncoupled = xm > 0.5 && b?.dataset.end
-        const w = uncoupled ? 12 : 6
-        myPlayerWrap.style.boxShadow = (xm < 0.5 ? -w : w) + 'px 0 0 0 ' + (uncoupled ? 'red' : 'orange')
-        myAlert.innerText = offset ? (offset > 0 ? '+' : '') + offset.toFixed(2) : '' }
-      else myPlayerWrap.style.boxShadow = ''
       if (nudge) syncPlay = 0
+      playerTimes()
       const atStart = !editingBlock?._atEnd && Math.abs(myPlayer.currentTime - editingBlock?.dataset.start) < 0.05
       const parked = xm > 0.5 ? editingBlock?._atEnd : atStart
       if (nudge && editingBlock && delay < 40 && !parked) {
@@ -794,8 +792,21 @@
       title.style.width = listView ? '100%' : ''
       myInca.textContent = '...'
       myMask.style.pointerEvents = null
+      playerTimes()
       if (zoom > 1 && overMedia) myMask.style.opacity = 0.9
       else myMask.style.opacity = 0}}
+
+
+  function playerTimes() {								// start / end under myPlayer on hover, red while nudged
+    const on = captions == 2 && playing && overMedia && dur && !thumbSheet && type != 'image'
+    myTimes.classList.toggle('on', !!on)
+    if (!on) return
+    const r = myPlayer.getBoundingClientRect(), b = captions == 2 && editingBlock
+    const s = b ? +b.dataset.start || 0 : 0, e = b && isFinite(b._end) ? b._end : dur
+    const red = Date.now() - nudgeAt < 700
+    myTimes.style.left = r.left + 'px'; myTimes.style.top = r.bottom + 'px'; myTimes.style.width = r.width + 'px'
+    myTimes.firstChild.textContent = mmss(s, red && !nudgeEnd); myTimes.lastChild.textContent = mmss(e, red && nudgeEnd)
+    myTimes.firstChild.classList.toggle('red', red && !nudgeEnd); myTimes.lastChild.classList.toggle('red', red && !!nudgeEnd)}
 
 
   function positionMedia(time) {							// position myPlayer in window
@@ -811,21 +822,70 @@
     if (type == 'document' || type == 'audio' || playlist.match('/inca/music/')) z *= 0.5
     if (thumbSheet) { x = xyz[0]; y = xyz[1]; z = xyz[2] }
     skinny = thumb.style.skinny || skinny
-    myPlayerWrap.style.transition = 'opacity ' + time + 's, transform ' + time + 's, box-shadow 0.2s'
+    myPlayerWrap.style.transition = 'opacity ' + time + 's, transform ' + time + 's'
     myPlayerWrap.style.left  = (x - (window.screenX || 0)) - myPlayer.offsetWidth  / 2 + 'px'
     myPlayerWrap.style.top   = (y - (outerHeight - innerHeight)) - myPlayer.offsetHeight / 2 + 'px'
     myPlayerWrap.style.transform = 'scale(' + skinny * z + ',' + z + ')'
-    if (!mouseDown && mediaContent.style.display != 'flex') positionEditor()
+    if (myPlayerWrap._z != z) { myPlayerWrap._z = z; clearTimeout(myPlayerWrap._t)	// glow size unscaled, set after zoom settles
+      myPlayerWrap._t = setTimeout(() => myPlayerWrap.style.setProperty('--s', 1 / z + 'em'), 400) }
+    if (captions == 1) positionEditor()
+    setFade()
     void myPlayer.offsetWidth}
 
+  function hasMedia() { return !!(myPlayer.getAttribute('src') || myPlayer.poster) }	// true for jpg (poster) and video; dur is 0 for images
 
-  function positionEditor() {
-    const edRect = myPlayer.getBoundingClientRect()
-    const ox = captions == 1 ? 0 : editorX
-    const oy = captions == 1 ? 0 : editorY
-    editor.style.left = (edRect.left + edRect.width / 2 - editor.offsetWidth / 2 + ox) + 'px'
-    editor.style.top = captions == 2 ? (edRect.bottom - 90 + oy) + 'px' : (edRect.bottom + 9 + oy) + 'px'
-    editor.style.transform = 'none'}
+  function setFade() {								// caption fade line = final bottom of player (ignores transition)
+    if (!captions) return
+    const cs = getComputedStyle(myPlayerWrap), showing = hasMedia() && cs.display != 'none' && cs.visibility != 'hidden' && myPlayerWrap.offsetHeight	// no player showing = no link
+    const h = myPlayer.offsetHeight, z = myPlayerWrap._z || 1
+    const pb = parseFloat(myPlayerWrap.style.top) + h / 2 + h * z / 2
+    viewport.style.setProperty('--fade', (showing ? Math.max(0, pb - viewport.getBoundingClientRect().top) : 0) + 'px')}
+
+
+  function setThumbSize() { myView.style.setProperty('--max-size', (+settings.view * (sheets ? 3 : 1)) + 'em') }
+
+  function thumbHover(e) { if (e.target.classList?.contains('thumb')) requestAnimationFrame(() => thumbInfo(e.target)) }
+
+
+  function sheetTime(xm, ym, dur, skinny) {					// 6x6 sheet → media time (shared)
+    if (skinny < 0) xm = 1 - xm
+    const row = Math.floor(ym * 6)
+    const col = Math.ceil(xm * 6)
+    const offset = dur > 60 ? 20 : 0
+    let ps = 5 * ((row * 6) + col)
+    ps = (ps - 1) / 200
+    return offset - (ps * offset) + dur * ps}
+
+
+  function fitThumb(e) {
+    const t = e.target
+    if (!t.classList.contains('thumb') || !t.videoHeight) return
+    const ratio = t.videoWidth / t.videoHeight
+    t.style.width = `min(var(--max-size), calc(var(--max-size) * ${ratio}))`
+    requestAnimationFrame(() => thumbInfo(t))}				// label follows the new size
+
+
+  function thumbInfo(t) {								// faint speed / skinny under a video thumb
+    if (listView || playing || type != 'video' || t != thumb) return
+    let d = entry.querySelector('.thumb-info')
+    if (!d) entry.append(d = Object.assign(document.createElement('div'), {className: 'thumb-info', innerHTML: '<span></span><span></span>'}))
+    const w = t.parentElement, sw = w.offsetWidth * Math.abs(skinny)			// layout box, so no reflow wait on scale
+    d.style.left = w.offsetLeft + (w.offsetWidth - sw) / 2 + 'px'; d.style.width = sw + 'px'; d.style.top = w.offsetTop + w.offsetHeight + 'px'
+    d.firstChild.textContent = rate && rate != 1 && rate != defRate ? +(+rate).toFixed(2) : ''	// own speed only
+    d.lastChild.textContent = skinny && skinny != 1 ? +(+skinny).toFixed(2) : ''}
+
+
+  function editorFrame() {							// fullscreen: editor keeps its windowed screen box, like myPlayer
+    const vt = screenY + outerHeight - innerHeight				// viewport top on screen
+    if (outerHeight != innerHeight) { editorFrame.box = [vt, vt + innerHeight]; editor.style.removeProperty('--edT'); editor.style.removeProperty('--edB'); return }
+    const b = editorFrame.box; if (!b) return
+    editor.style.setProperty('--edT', b[0] - vt + 'px'); editor.style.setProperty('--edB', vt + innerHeight - b[1] + 'px')}
+
+
+  function positionEditor() {								// compact captions sit under myPlayer
+    const r = myPlayer.getBoundingClientRect()
+    editor.style.left = r.left + r.width / 2 + 'px'
+    editor.style.top = r.bottom + 24 + 'px'}
 
 
   function seekbar() {									// seekbar bar beneath player
@@ -900,7 +960,7 @@
     aspect = w / h
     const z = innerHeight
     myPlayer.style.width = (aspect < 1 ? z * aspect : z) + 'px'
-    myPlayer.style.height = (aspect < 1 ? z : z / aspect) + 'px'}
+    myPlayer.style.height = (aspect < 1 ? z : z / aspect) + 'px'; setFade()}
 
 
   function panelLoad() {								// sections from ahk data: Music Sub Fol Fav + one per search letter
@@ -919,6 +979,7 @@
       const c = document.createElement('c')
       c.className = 'p2'; c.textContent = e.t; c.dataset.c = e.c; c.dataset.k = e.k; c.dataset.on = e.on ? 1 : ''
       if (e.on) c.style.color = 'pink'
+      if (e.t.length < 12) c.style.flexShrink = 0						// short entries never shrink
       box.append(c)}}
 
   function panelOpen(id, keep) {							// Music, Sub, Fol, Fav or myA (search letter A)
@@ -1034,6 +1095,7 @@
     settings.defRate = (isNaN(settings.defRate) || settings.defRate < 0.2 || settings.defRate > 5) ? '1' : settings.defRate
     settings.pitch = settings.pitch == 1 ? 1 : 0
     myView.style.width = parseFloat(settings.pageWidth) + 'px'
+    if (!listView) myView.style.minWidth = 'min-content'
     setThumbSize()
     defRate = parseFloat(settings.defRate)
     pitch = parseFloat(settings.pitch)
@@ -1074,6 +1136,7 @@
     if (!src || editor.style.display === 'flex') return
     editor.style.display = 'flex'
     captions = captions ? captions : 2
+    undo = []
       fetch(src)
         .then(response => {return response.text()})
         .then(data => {openEditor(data)})
@@ -1272,7 +1335,7 @@
       const faces = document.getElementById('voice-faces')
       if (faces) faces.style.display = 'none'
       myPlayer.muted = myVoice.muted = true
-      mouseDown = start = captions = thumbSheet = cue = overTitle = editorX = editorY = mediaX = mySeek.style.width = 0
+      mouseDown = start = captions = thumbSheet = cue = overTitle = mediaX = mySeek.style.width = 0
       myPanel.style.top = myView.style.top = ''
       myMask.style = myDur.innerHTML = myVoice.src = ''
       overBlock = editingBlock = editor.style.display = myNav.style.display = null
@@ -1291,12 +1354,11 @@
 
 function openEditor(text) {
   projectMedia.defaultSrc = originalPlayerSrc = decodeURIComponent(type === 'image' ? thumb.poster : thumb.src)
-  editorX = editorY = mediaX = mediaY = 0
+  mediaX = mediaY = 0
   lastBlock = type === 'image' && lastBlock ? 1 : lastBlock
-  crawlEnd = Date.now() + 400
   voices = []
   editor.style.transition = 'opacity 1s'
-  editor.style.height = 0
+  editor.style.width = ''
   editor.style.opacity = 1
   document.querySelectorAll('.dropdown-content').forEach(c => c.style.display = 'none');
   const parsed = parseInputText(text);
@@ -1323,7 +1385,7 @@ function openEditor(text) {
   if (!lastBlock) lastBlock = parsed?.lastSelectedId || 1
   let first = blocks[lastBlock - 1] || blocks[0];
   if (first.innerHTML == 'new caption') first.dataset.start = defStart
-  else if (blocks.length < 3) captions = 1
+  else if (blocks.length < 3 && !undo.length) captions = 1
   activateBlock(first, userPlay)
   myPlayer.currentTime = first.dataset.start
   matchCountSpan.textContent = ''
@@ -1334,15 +1396,12 @@ function openEditor(text) {
     if (captions == 2) {
       faceZoom = u.faceZoom || 1
       document.getElementById('voice-faces')?.style.setProperty('--fz', faceZoom)
-      editor.style.width = u.width || '500px'
-      editor.style.height = u.height || '400px'
-      projectMedia.uiHeight = editor.style.height
-      if (u.editorX) { editorX = u.editorX; editorY = u.editorY }}
+      editor.style.width = u.width || ''}
     if (u.mediaX) { mediaX = u.mediaX; mediaY = u.mediaY }
     if (parsed.ui.scaleY > 0) scaleY = parsed.ui.scaleY
     void myPlayerWrap.offsetWidth
     if (u.scaleY > 0) scaleY = u.scaleY}
-  setTimeout(() => {positionEditor(); editing = 0; first.focus(); scrollUntilBlock(1, first); syncPlay = 0}, 240)}
+  setTimeout(() => {editing = 0; first.focus(); toLine(first); syncPlay = 0; undo.length || snap(first, 'opened')}, 240)}
 
 
 
@@ -1374,6 +1433,8 @@ function openEditor(text) {
       block.classList.remove('has-voice');
       myVoice.muted = true; myPlayer.muted = defMute}
     if (!isSameBlock) {
+      if (editingBlock && (undo.dirty || editingBlock._t0 != null && editingBlock.textContent != editingBlock._t0)) snap(editingBlock)
+      block._t0 = block.textContent
       if (editingBlock) editingBlock.classList.remove('editing', 'paused')
       block.classList.add('editing');
       editingBlock = block}
@@ -1383,21 +1444,20 @@ function openEditor(text) {
     if (captions == 1) {								// compact captions
       const rec = block.getBoundingClientRect()
       editor.style.height = rec.height + 'px'
-      editor.style.resize = 'none'
       editor.style.pointerEvents = 'none'
       editor.style.background = 'transparent'
-      block.style.background = 'transparent'
+      block.style.backgroundColor = 'transparent'
       block.style.outline = 'none'
       viewport.style.overflowY = 'hidden' }
     else {										// caption editor mode
       viewport.style.overflowY = ''
-      editor.style.height = projectMedia.uiHeight || '400px'
-      block.style.background = ''
+      editor.style.height = editor.style.top = editor.style.left = ''
+      block.style.backgroundColor = ''
       editor.style.pointerEvents = ''
       editor.style.background = ''
-      block.style.outline = ''
-      editor.style.resize = ''}
-    block.dataset.hasMedia = (!!block._voice?.src || dur) ? "1" : "0"
+      block.style.outline = ''}
+    block.dataset.hasMedia = (!!block._voice?.src || hasMedia()) ? "1" : "0"
+    setFade()
     updateBlockAlignments()
     updateFaceHighlights()}
 
@@ -1500,8 +1560,8 @@ function openEditor(text) {
     currentPreviewItem = null
     updateBlockAlignments()}
 
-  document.querySelector('#media-header').addEventListener('click', async (e) => {
-    e.stopPropagation()
+  async function historyOpen() {							// history dropdown, opened by click
+    if (mediaContent.style.display == 'flex') return
     document.querySelectorAll('.dropdown-content').forEach(c => c.style.display = 'none');
     mediaContent.style.display = 'flex';
     document.getElementById('voice-faces')?.style.setProperty('display', 'none')
@@ -1613,7 +1673,18 @@ function openEditor(text) {
     } catch (_) {
       mediaContent.innerHTML = '<div style="color:#ffc0cb66;padding:8px;">No media</div>';
     }
-  });
+  }
+
+
+  function dropClick(t) {							// click: open / close undo and history lists
+    const undoOn = myUndo.classList.contains('open'), histOn = mediaContent.style.display == 'flex'
+    if (t.closest('#myUndo > a')) { if (histOn) closeMenu(); undoOn ? undoClose() : undoOpen(); return 1 }
+    if (t.closest('#media-header > .header')) { undoClose(); histOn ? closeMenu() : historyOpen(); return 1 }
+    if (t.closest('[data-undo]')) { undoPick(t); undoClose(); return 1 }
+    if (t.closest('.undo-list, #media-header .dropdown-content')) return 1	// items handle their own clicks
+    if (undoOn) undoClose()
+    if (histOn) closeMenu()
+    return undoOn || histOn}
 
 
   function populateVoices() {
@@ -1672,7 +1743,7 @@ function openEditor(text) {
       defaultMedia: originalPlayerSrc
         ? { src: originalPlayerSrc.replace(/\\/g, '/') }
         : null,
-      ui: { width: editor.style.width, height: editor.style.height, mediaX, mediaY, editorX, editorY, 
+      ui: { width: editor.style.width, mediaX, mediaY, 
         scaleY: (captions == 2 && !projectMedia.ui.scaleY) ? 0.3 * scaleY : scaleY, 
         faceZoom},
       lastSelectedId: editingBlock ? parseInt(editingBlock.dataset.num) : 0,
@@ -1757,7 +1828,7 @@ function openEditor(text) {
     const beforeText = preRange.toString().replace(/\r\n/g, '\n')
     const fullText = block.innerText.replace(/\r\n/g, '\n')
     const afterText = fullText.substring(beforeText.length)
-    const isSecondEnter = beforeText.endsWith('\n')
+    const isSecondEnter = beforeText.endsWith('\n') || e.ctrlKey			// Ctrl+Enter splits at once
     if (!isSecondEnter) {
       const left = beforeText.replace(/[ \t]+$/, '')
       const rest = afterText.replace(/^ +/, '')
@@ -1772,12 +1843,8 @@ function openEditor(text) {
     const nextSibling = block.nextSibling
     const idx = blocks.indexOf(block)
     block.textContent = part1
-    const newBlock = createBlock(
-        null,
-        (startSec + (parseFloat(block.nextElementSibling?.dataset.start) || startSec + 4)) / 2,
-        part2,
-        '0',
-        {})
+    const end = +block.nextElementSibling?.dataset.start || dur || startSec + 4		// time split by text length
+    const newBlock = createBlock(null, +(startSec + (end - startSec) * part1.length / ((part1 + part2).length || 1)).toFixed(2), part2, '0', {})
     if (part2 === '' || part2 === '\u200B') newBlock.innerHTML = ' '
     if (block._voice) {
         newBlock._voice = Object.assign({}, block._voice)
@@ -1796,8 +1863,7 @@ function openEditor(text) {
     newRange.selectNodeContents(newBlock)
     newRange.collapse(false)
     sel.removeAllRanges()
-    sel.addRange(newRange)
-    setTimeout(() => { newBlock.scrollIntoView({ behavior: 'smooth', block: 'center' }) }, 100)}
+    sel.addRange(newRange)}
 
 
   function Backspace(e) {
@@ -1846,6 +1912,84 @@ function openEditor(text) {
     document.execCommand('delete')}
 
 
+  function mergeNext(e) {								// Delete at end: join next caption, keep first start
+    e.preventDefault()
+    const b = editingBlock, n = b.nextElementSibling, at = b.textContent.trimEnd().length
+    b.textContent = (b.textContent.trimEnd() + ' ' + n.textContent.trim()).trim() || ' '
+    n.dataset.end ? b.dataset.end = n.dataset.end : delete b.dataset.end
+    n.remove(); renumberBlocks(); editing = 1
+    getSelection().collapse(b.firstChild, Math.min(at, b.firstChild.length))}
+
+
+  function snap(b = editingBlock, label) {						// undo snapshot, skipped if unchanged
+    undo.dirty = 0
+    if (captions != 2 || !b) return
+    const json = makeJSON()
+    if (json == undo.at(-1)?.json) return
+    undo.push({json, t: Date.now(), text: label || b.textContent.trim() || '-'})
+    if (undo.length > 20) undo.shift()}
+
+
+  function restore(u) {								// reload a snapshot: captions, active caption, scroll
+    if (!u) return
+    lastBlock = 0; openEditor(u.json); setTimeout(() => editing = 1, 300)}
+
+
+  function undoOpen() {								// undo dropdown: build rows, newest first
+    editor.style.zIndex = 5012; myUndo.classList.add('open')
+    myUndo.lastChild.replaceChildren(...undo.map(undoRow).reverse())}
+
+
+  function undoRow(u, i) {							// one row: minutes ago, caption text
+    const r = document.createElement('div'); r.dataset.undo = i
+    r.append(Object.assign(document.createElement('b'), {textContent: Math.floor((Date.now() - u.t) / 60000) + 'm'}), Object.assign(document.createElement('span'), {textContent: u.text}))
+    return r}
+
+
+  function undoClose() { editor.style.zIndex = ''; myUndo.classList.remove('open') }
+
+
+  function dropLeave(e) {							// mouse left icon + list: close after a short grace
+    const d = e.currentTarget; clearTimeout(d._t)
+    d._t = setTimeout(d == myUndo ? undoClose : () => mediaContent.style.display == 'flex' && closeMenu(), 100)}
+
+
+  function dropStay(e) { clearTimeout(e.currentTarget._t) }			// back inside within the grace: stay open
+
+
+  function undoPick(el) { restore(undo[el.closest('[data-undo]').dataset.undo]) }
+
+
+  function replArrow() {							// search box: Right arrow at end starts replace mode
+    const v = searchInput.value
+    if (searchInput.selectionStart < v.length || !v.trim() || v.includes('⟶')) return 0
+    searchInput.value = v + ' ⟶ '; searchInput.selectionStart = searchInput.selectionEnd = v.length + 3
+    paintSearch(); return 1}
+
+
+  function paintSearch() {							// replace mode: old red, new green (on input only)
+    const [a, b] = searchInput.value.split('⟶'), on = b != null
+    searchHeader.classList.toggle('repl', on); repl = []
+    if (!on) return
+    searchOv.replaceChildren(Object.assign(document.createElement('i'), {textContent: a}), '⟶', Object.assign(document.createElement('b'), {textContent: b}))
+    searchOv.style.left = searchInput.offsetLeft + 'px'; searchOv.style.width = searchInput.clientWidth + 'px'
+    searchOv.scrollLeft = searchInput.scrollLeft}
+
+
+  function replaceNext(fwd) {							// wheel down: replace in next block, up: undo last
+    const [a, b] = searchInput.value.split('⟶').map(s => s.trim())
+    if (!fwd) { const r = repl.pop(); if (r) { r[0].textContent = r[1]; toLine(r[0]) } }
+    else if (a) {
+      const re = new RegExp('(?<!\\w)' + a.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '(?!\\w)', 'gi')	// whole words
+      const from = repl.length ? blocks.indexOf(repl.at(-1)[0]) + 1 : 0
+      const n = blocks.slice(from).find(x => x.textContent.search(re) >= 0)
+      if (!n) return
+      repl.push([n, n.textContent])
+      n.textContent = n.textContent.replace(re, () => b)
+      editing = undo.dirty = 1; toLine(n)}
+    matchCountSpan.textContent = repl.length + ' \u2713'}
+
+
   function newClone() {
     let inp = document.createElement('input')
     inp.className = 'voice-input'
@@ -1875,26 +2019,27 @@ function openEditor(text) {
     delay = 200; wheel = 0;
     if (!searchHeader.matches(':hover')) {if (mediaContent.style.display == 'none') nextCaption(e.deltaY); return}
     syncPlay = 0
+    if (searchHeader.classList.contains('repl')) return replaceNext(e.deltaY > 0)
     newSearch()
     if (!searchTerm || searchTerm.length < 3) {
       const favs = blocks.filter(b => b.dataset.fav === '1')				// bookmark search
       if (!favs.length) return
       favIndex = (favIndex + (e.deltaY > 0 ? 1 : -1) + favs.length) % favs.length
       matchCountSpan.textContent = `${favIndex + 1} : ${favs.length}`
-      favs[favIndex].scrollIntoView({ block: 'center' })
+      toLine(favs[favIndex])
       activateBlock(favs[favIndex], userPlay)
       return}
-    const term = searchInput.value.trim().toLowerCase();
+    const term = searchInput.value.split('⟶')[0].trim().toLowerCase();
     matches = blocks.filter(b => b.textContent.toLowerCase().includes(term))
     if (!matches.length) return
     matchIndex = (matchIndex + (e.deltaY > 0 ? 1 : -1) + matches.length) % matches.length
     matchCountSpan.textContent = String(matchIndex + 1) + ' : ' + String(matches.length)
-    matches[matchIndex].scrollIntoView({ block: 'center' })}
+    toLine(matches[matchIndex])}
 
 
 
   function newSearch() {
-    const term = searchInput.value.trim().toLowerCase()
+    const term = searchInput.value.split('⟶')[0].trim().toLowerCase()
     if (term) searchTerm = term
     CSS.highlights.delete('search')
     if (term.length < 3) {matchIndex = 0; return}
@@ -1906,7 +2051,7 @@ function openEditor(text) {
       return 1})
     CSS.highlights.set('search', hl)
     matchCountSpan.textContent = matches.length > 0 ? `1 : ${matches.length}` : '0 : 0'
-    if (matches.length) matches[0].scrollIntoView({ block: 'center' })}
+    if (matches.length) toLine(matches[0])}
 
 
   function newVoice() {
@@ -1953,27 +2098,18 @@ function openEditor(text) {
               const t = (+block.dataset.start + myVoice.duration * rate).toFixed(2)
               if (!block.dataset.end || !block.nextElementSibling) setEnd(block, t)}	// uncoupled: leave the boundary
             window.getSelection().removeAllRanges()
-            activateBlock(block, 1, 1)}, { once: true })
+            activateBlock(block, 1, 1); snap(block)}, { once: true })
             inca('addHistory',last,0,path)})
           .catch(err => {block.style.outline = ''; alert(err || 'chatterbox not responding')})
           .finally(() => { Chatterbox.busy = 0 })}
 
 
-  function scrollUntilBlock(dir, target) {
-    let want = target || (dir > 0 ? editingBlock?.nextElementSibling : editingBlock?.previousElementSibling)
-    if (captions == 1) { target.scrollIntoView({ block: 'center' }); return }
+  function scrollUntilBlock(dir) {								// wheel strip: crawl to next block
+    const want = dir > 0 ? editingBlock?.nextElementSibling : editingBlock?.previousElementSibling
     if (crawl || !want) return
     crawl = dir > 0 ? 1 : -1
     lastBlock = 0
-    const vr = viewport.getBoundingClientRect()
-    const er = editingBlock.getBoundingClientRect()
-    if (er.bottom < vr.top + bound() || er.top > vr.bottom) {
-      editingBlock.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
-      viewport.addEventListener('scrollend', () => requestAnimationFrame(tick), { once: true })
-      return}
     requestAnimationFrame(tick)
-    function line() {
-      return viewport.getBoundingClientRect().top + bound()}
     function tick(t) {
       if (!crawl) return
       const dt = tick.t ? Math.min(t - tick.t, 50) : 16; tick.t = t
@@ -1982,24 +2118,9 @@ function openEditor(text) {
      const stuck = viewport.scrollTop === y
      let top = want.getBoundingClientRect().top
      if (stuck || (crawl > 0 ? top <= line() : top >= line())) {
-        if (!target) { myPlayer.currentTime = +want.dataset.start + 0.04; activateBlock(want, userPlay = 1) }
-        crawl = 0; crawlEnd = Date.now()}
+        toLine(want); myPlayer.currentTime = +want.dataset.start + 0.04; activateBlock(want, userPlay = 1)
+        crawl = 0}
       else requestAnimationFrame(tick)}}
-
-
-  function nextBlock() {
-    if (document.getElementById('osk')) return
-    const b = editingBlock
-    updateFaceHighlights()
-    if (!b || crawl || captions == 1 || Date.now() - crawlEnd < 150) return
-    const v = viewport.getBoundingClientRect(), r = b.getBoundingClientRect()
-    const nextLine = v.top + bound()
-    const n = r.bottom < nextLine
-      ? b.nextElementSibling
-      : (r.top > v.bottom - 120 || viewport.scrollTop < 40)
-        ? b.previousElementSibling
-        : null
-    n && activateBlock(n, userPlay)}
 
 
   function playerProgress() {
@@ -2011,8 +2132,7 @@ function openEditor(text) {
     const next = b.nextElementSibling
     if (!next || b._atEnd || overEditor || t <= b._end || voiceBusy(b)) return
     activateBlock(next, userPlay)
-    crawlEnd = Date.now() + 100
-    next.scrollIntoView({ behavior: 'smooth', block: 'center' })}
+    toLine(next, 1)}
 
 
   function nextCaption(dir, force) {
@@ -2024,7 +2144,7 @@ function openEditor(text) {
     if (!next || overMedia) {userPlay = 0; return}
     myVoice.currentTime = 0
     activateBlock(next, userPlay)
-    next.scrollIntoView({ behavior: 'smooth', block: 'center' })}
+    toLine(next, 1)}
 
 
   function playerEnded() {
@@ -2038,25 +2158,27 @@ function openEditor(text) {
 
 
   // top panel open/close
-  const PANEL = 6									// entries per page
-  let pnl = {}, pnlSec = '', pnlPg = 0, primed = 0					// sections, current section, page
+  const PANEL = 6                                       // entries per page
+  let pnl = {}, pnlSec = '', pnlPg = 0, primed = 0      // sections, current section, page
   const icons = [...document.querySelectorAll('#myMusic, #myFav, #myFol, #mySub, #mySearch')]
-  const hot = [myPanel.querySelector('.panel'), myRibbon1, ...icons]
-  let dwell, grace
+  const hot = [myPanel, myRibbon1, ...icons]
+  let dwell
   icons.forEach(a => {
     a.addEventListener('mouseenter', () => {
-      clearTimeout(grace)
       dwell = setTimeout(() => {
         myPanel.classList.add('open')
         a.id == 'mySearch' ? filter('mySearch') : panelOpen(a.id.slice(2))
-        searchIcon()}, 240)})
+        searchIcon()}, 200)})
     a.addEventListener('mouseleave', () => clearTimeout(dwell))})
-  hot.forEach(e => e.addEventListener('mouseleave', () => {
-    clearTimeout(grace)
-    grace = setTimeout(() => hot.some(x => x.matches(':hover')) || (myPanel.classList.remove('open'), searchIcon()), 100)}))
+  hot.forEach(e => e.addEventListener('mouseleave', ev => {
+    if (!hot.some(x => x.contains(ev.relatedTarget))) (myPanel.classList.remove('open'), searchIcon())}))
   panelLoad()
+
+  const fit = () => myInput.style.fontSize = Math.max(0.65, Math.min(1, myInput.clientWidth / 12 / (myInput.value || myInput.placeholder).length)) + 'em'
+  fit()
   for (const ev of ['input', 'click'])
-    myInput.addEventListener(ev, () => { primed = !!myInput.value; searchIcon() })
+    myInput.addEventListener(ev, () => { primed = !!myInput.value; searchIcon(); fit() })
+
   myPanel.addEventListener('mousedown', e => {						// top panel entry click
     const c = e.target.closest('c')
     if (c) inca(c.dataset.c, c.dataset.c == 'Path' && c.dataset.on ? '' : index, '', c.dataset.k)})
