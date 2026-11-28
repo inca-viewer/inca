@@ -96,8 +96,10 @@
     IfExist, %inca%\cache\apps\ai\kitten-ready
       Run, cmd.exe /c cd /d "%inca%\cache\apps" && ai\ai-env.bat ai\inca_ai.py serve --engine kitten > "%inca%\cache\temp\kitten.log" 2>&1, , Hide
     sleep 94
-    WinActivate, ahk_group Browsers
-    path = %profile%\pictures\
+    if WinExist("ahk_exe chrome.exe")
+      WinActivate, ahk_exe chrome.exe
+    else WinActivate, ahk_group Browsers
+    path = %profile%\downloads\
     startPage = #Path###%path%			; default start page
     if GetBrowser()				; gets incaTab settings
       startPage = #Path###%path%
@@ -109,6 +111,7 @@
     SetTimer, FastTimer, 49			; every 49mS - process server requests
     SetTimer, SlowTimer, 499, -2		; check on youtube downloads
     return
+
 
 
   ^Esc up::
@@ -1012,7 +1015,7 @@
             list .= spool(A_LoopFileFullPath, A_Index, start, fold, silent)
       }
     if !silent
-      PopUp(listSize,0,0,0)
+      PopUp(folder,0,0,0)
     if (listSize > 250000)
       PopUp("folder too big",999,0,0)
     StringTrimRight, list, list, 2					; remove end `r`n
@@ -2107,32 +2110,26 @@
     ini := StrReplace(ini, "`r`n", "|")					; java cannot accept cr in strings
     ini := StrReplace(ini, "'", ">")					; java cannot accept ' in strings
     max_height := Floor(A_ScreenHeight * 0.34)				; max image height in web page
-    Loop, Parse, sortList, `|						; html ribbon highlighting
-      {
-      if InStr(A_LoopField, sort)
-        if InStr(toggles, "Reverse")
-          x%A_Index% = border-top:0.1px solid pink
-        else x%A_Index% = border-bottom:0.1px solid pink
-      if InStr(toggles, A_LoopField)
-        x%A_Index% = color:red
-      }
-    if x12								; filter videos, images audio from ribbon
+    if InStr(toggles, "Fav")							; filter videos, images audio from ribbon
       type = Fav
-    else if x11
+    else if InStr(toggles, "Audio")
       type = Audio
-    else if x10
+    else if InStr(toggles, "Image")
       type = Image
-    else if x9
+    else if InStr(toggles, "Video")
       type = Video
     else type = Type
-    if (searchTerm)
-      x20 = color:red
+    lit =								; ribbon icons shown red (see ribbonState in java.js)
+    if searchTerm
+      lit .= "Search "
+    if InStr(toggles, "Recurse")
+      lit .= "Sub "
     if (!playlist && InStr(fol,folder))
-      x21 = color:red
+      lit .= "Fol "
     else if (playlist && InStr(path,"\music\"))
-      x22 = color:red
+      lit .= "Music "
     else if (playlist && InStr(path,"\fav\"))
-      x23 = color:red
+      lit .= "Fav "
     pl := !playlist ? "" : InStr(path, "\music\") ? "&#x266B;" : "&#10084;"
     scroll = Fol							; for scroll to 'fol' in top panel
     if searchTerm
@@ -2140,7 +2137,6 @@
       st := searchTerm
       StringReplace, st, st, #, `%23, All				; html cannot have # or ' passing parameters
       StringReplace, st, st, `', &apos;, All
-      x24=All
       }
     else if (silent != 999)						; else stay in main folders
       {
@@ -2177,7 +2173,7 @@
 
 header = <!-- sort=%sort%|toggles=%toggles%|listView=%listView%|playlist=%playlist%|path=%path%|searchPath=%searchPath%|searchTerm=%searchTerm%|subfolders=%subfolders%|defPause=%defPause% -->`n<!doctype html>`n<html>`n<head>`n<meta charset="UTF-8">`n<title>Inca - %title%</title>`n<meta name="viewport" content="width=device-width, initial-scale=1">`n<link rel="icon" href="data:image/x-icon;base64,AAABAAEAEBAAAAEAIABoBAAAFgAAACgAAAAQAAAAIAAAAAEAIAAAAAAAQAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAJGI/zqShf87AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAI+D/0CLg/61joP+tY2B/0EAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAJCF/0ONgv+6mZn/CpmZ/wqNgv+6lIX/QwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAJCF/0ONgv+6m5v+EgAAAAAAAAAAm5v+Eo2C/7qUhf9DAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAJCF/0ONgv+6m5v+EgAAAAAAAAAAAAAAAAAAAACbm/4SjYL/upSF/0MAAAAAAAAAAAAAAAAAAAAAAAAAAIuD/0KNgv+6m5v+EgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAJub/hKNgv+6koP/QgAAAAAAAAAAAAAAAI6C/yuLgv+7m5v+EgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAm5v+EouC/7uOgv8rAAAAAAAAAACNg/2dlon/JwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACWif8njYP9nQAAAACVjP4djYH9lAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAI2B/ZSVjP4dmYz/KIyB/YoAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACMgf2KmYz/KKmp/gmOg/+j////AQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD///8BjoP/o6mp/gkAAAAAjIL/ZI2C/o0AAAAAAAAAAAAAAAAAAAAAj4//KY+P/ykAAAAAAAAAAAAAAAAAAAAAjYL+jYyC/2QAAAAAAAAAAAAAAACNgf6Ei4P9pZGF/1SKg/9GjYP/fIuC/q6Lgv6ujYP/fIqD/0aRhf9UjYT+pIuB/oQAAAAAAAAAAAAAAAAAAAAAAAAAAJCF/y6NhP9wjIL+e5CB/1EAAAAAAAAAAJCB/1GMgv57jYT/cJCF/y4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==">`n<link rel="stylesheet" href="%server%%inca%/css.css">`n</head>`n`n
 
-body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals('%folder_s%', %wheelDir%, '%mute%', %defPause%, '%sort%', %filt%, %listView%, '%keepSelected%', '%playlist%', %index%, %listSize%); panelOpen('%scroll%')">`n`n
+body = <body id='myBody' class='myBody' data-sort="%sort%" data-toggles="%toggles%" data-lit="%lit%" onload="myBody.style.opacity=1; globals('%folder_s%', %wheelDir%, '%mute%', %defPause%, '%sort%', %filt%, %listView%, '%keepSelected%', '%playlist%', %index%, %listSize%); panelOpen('%scroll%')">`n`n
 
   <div id="editor">
     <div id="ribbon">
@@ -2278,16 +2274,16 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
 </div>`n`n
 
 <div id='myMenu'>
-  <div id='z1' class='fade' style='height:var(--bar-h)'></div><div id='z2' class='fade' style='top:var(--bar-h); height:10px; background: linear-gradient(#0e0c05ff, #0e0c0500)'></div>`n
+  <div id='z1' class='fade'></div><div id='z2' class='fade'></div>`n
   <div id='myPanel' class='myPanel' data-music="%pdMusic%" data-sub="%pdSub%" data-fol="%pdFol%" data-fav="%pdFav%" data-search="%pdSearch%" data-cur="%pdCur%" data-term="%pdTerm%"><div class='panel'><div class='innerPanel'></div></div>`n`n
 
 <div id='myRibbon1'>`n
   <a id='myBack' onmousedown='window.history.back()'>&#129028;</a>`n
-  <a id='mySub' onwheel="wheelEvent(event)" style='%x8%' onmousedown="inca('Recurse')">%subs%</a>`n
-  <a id='myMusic' onwheel="wheelEvent(event)" style='%x22%' onmousedown="inca('Path','','','music|1')">&#x266B;</a>`n
-  <a id='myFol' onwheel="wheelEvent(event)" style='%x21%' onmousedown="inca('Path','','','fol|2')">&#x1F4BB;&#xFE0E;</a>`n
-  <a id='myFav' onwheel="wheelEvent(event)" style='%x23%' onmousedown="inca('Path','','','fav|1')">&#10084;</a>`n
-  <a id='mySearch' style='%x20%' onwheel="wheelEvent(event)" onmousedown="inca('SearchBox','','',myInput.value)">&#x1F50D;&#xFE0E;</a>`n
+  <a id='mySub' onwheel="wheelEvent(event)" onmousedown="inca('Recurse')">%subs%</a>`n
+  <a id='myMusic' onwheel="wheelEvent(event)" onmousedown="inca('Path','','','music|1')">&#x266B;</a>`n
+  <a id='myFol' onwheel="wheelEvent(event)" onmousedown="inca('Path','','','fol|2')">&#x1F4BB;&#xFE0E;</a>`n
+  <a id='myFav' onwheel="wheelEvent(event)" onmousedown="inca('Path','','','fav|1')">&#10084;</a>`n
+  <a id='mySearch' onwheel="wheelEvent(event)" onmousedown="inca('SearchBox','','',myInput.value)">&#x1F50D;&#xFE0E;</a>`n
   <input id='myInput' class='searchbox' type='search' autocomplete='off' placeholder='%heading%' value='%st%' onclick="if (this.value=='%st%') {this.value='%lastSearch%'; this.select()}" onmouseover="overText=1; this.focus()" onmouseout='overText=0'>
   <a id='Add' onmousedown="inca('Add','','',myInput.value)">%add%</a>`n
   <a id='myList'>%listSize%</a>`n
@@ -2296,13 +2292,13 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
   <div id='myRibbon2' class='ribbon' style='width: 100`%; background:#ffc0cb06' onwheel="wheelEvent(event)">`n
   <a id='myWidth' style='padding-left: 2em; width: 2.6em'>|&harr;|</a>
   <a id='myThumbs' style='width: 2.6em'><svg width="0.9em" height="0.9em" viewBox="0 0 24 24" fill="currentColor" style="pointer-events:none"><path d="M0 0h10v10H0zM14 0h10v10H14zM0 14h10v10H0zM14 14h10v10H14z"/></svg></a>`n 
-  <a id='myPlaylist' style='%x13%' onmousedown="inca('Playlist')">%pl%</a>`n
-  <a id='myDate' style='width: 3.5em; %x4%' onmousedown="inca('Date', filt)">Date</a>`n
-  <a id='myLength' style='width: 5em; %x3%' onmousedown="inca('Length', filt)">Length</a>`n
-  <a id='mySize' style='width: 3.5em; %x5%' onmousedown="inca('Size', filt)">Size</a>`n
-  <a id='myType' style='width: 3.5em; %x6%' onmousedown="inca('Type', filt)">%type%</a>`n
-  <a id='myShuffle' style='%x1%' onmousedown="inca('Shuffle')">Shuffle</a>`n
-  <a id='myAlpha' style='%x2%' onmousedown="inca('Alpha', filt)">Alpha</a>`n
+  <a id='myPlaylist' onmousedown="inca('Playlist')">%pl%</a>`n
+  <a id='myDate' style='width: 3.5em' onmousedown="inca('Date', filt)">Date</a>`n
+  <a id='myLength' style='width: 5em' onmousedown="inca('Length', filt)">Length</a>`n
+  <a id='mySize' style='width: 3.5em' onmousedown="inca('Size', filt)">Size</a>`n
+  <a id='myType' style='width: 3.5em' onmousedown="inca('Type', filt)">%type%</a>`n
+  <a id='myShuffle' onmousedown="inca('Shuffle')">Shuffle</a>`n
+  <a id='myAlpha' onmousedown="inca('Alpha', filt)">Alpha</a>`n
   <a style='width: 2.5em'></a>
   <a id='mySpeed2' style='width: 1em; color: red; translate:-1em 0.1em'></a>
   <a id='myPause2' style='width: 1em; color: red'></a>
@@ -2318,7 +2314,6 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
     script = <script src="%server%%inca%/cache/apps/pitch.js"></script>`n
     script = %script%<script src="%server%%inca%/cache/apps/osk.js"></script>`n
     script = %script%<script src="%server%%inca%/java.js"></script>`n
-; script = %script%<script src="%server%%inca%/studio.js"></script>`n
     htm = %header%%body%%script%`n</body>`n</html>`n
     FileDelete, %inca%\cache\html\%folder%.htm
     FileAppend, %htm%, %inca%\cache\html\%folder%.htm, UTF-8
@@ -2660,15 +2655,18 @@ body = <body id='myBody' class='myBody' onload="myBody.style.opacity=1; globals(
     if (w == A_ScreenWidth)
       fullscreen := 1
     else fullscreen := 0
-    y := A_ScreenHeight+16
-    z := A_ScreenWidth-600
-    if (!GetKeyState("LButton", "P"))
-      IfWinActive, ahk_group Browsers
-        if (h <= A_ScreenHeight - 4  &&  h >= A_ScreenHeight - 120)
-          WinMove, ahk_group Browsers,, %wx%, -2, %w%, %y%
-    IfWinActive, Notepad
-      if (wx != 622)
-        WinMove, ahk_class Notepad,, 622, -2, %z%, %y%
+    if (Setting("Ambiance"))
+      {
+      y := A_ScreenHeight+16
+      z := A_ScreenWidth-600
+      if (!GetKeyState("LButton", "P"))
+        IfWinActive, ahk_group Browsers
+          if (h <= A_ScreenHeight - 4 && h >= A_ScreenHeight - 120)
+            WinMove, ahk_group Browsers,, %wx%, -2, %w%, %y%
+      IfWinActive, Notepad
+        if (wx != 622)
+          WinMove, ahk_class Notepad,, 622, -2, %z%, %y%
+      }
     if incaTab
       {
       FileRead, input, *P65001 %inca%\cache\html\in.txt		; utf codepage

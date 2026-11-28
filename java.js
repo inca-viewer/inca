@@ -1,5 +1,3 @@
-// .ini switch to stop browser top bottom edge lock
-
 
   let wheel = 0								// wheel count
   let wheelDir = 0		 					// wheel direction
@@ -124,6 +122,11 @@
   document.addEventListener('mousemove', mouseMove)
   document.addEventListener('keydown', keyDown)
   myContent.addEventListener('scroll', () => seekTimer = cursor = 0)
+  function padTop() { myView.style.paddingTop = Math.max(0, innerHeight - 0.46 * screen.height) + 'px' }
+  padTop(); addEventListener('resize', padTop)
+  function barLine() { barLine.y = z1.getBoundingClientRect().top }			// top of the bottom bar: thumbs below it are hidden
+  function underBar() { return !playing && yPos > barLine.y }				// pointer over the bar, not the thumbs under it
+  barLine(); addEventListener('resize', barLine)
   document.addEventListener('dragstart', () => gesture = 1)
   for (const d of [myUndo, mediaHeader.parentElement]) { d.addEventListener('mouseleave', dropLeave); d.addEventListener('mouseenter', dropStay) }
   document.addEventListener('drop', (e) => { mouseDown = 0; gesture = 0; if (overEditor) activateBlock(e.target.closest('.text-block'),0) })
@@ -169,7 +172,7 @@
     const b = editingBlock
     if (b?._atEnd) { syncPlay = 0; return }
     if (!b?.nextElementSibling) { if (myPlayer.currentTime >= endOf(b) - 0.05) { userPlay = syncPlay = 0; myPlayer.pause() } return }
-    b && playing && !b._atEnd && myPlayer.currentTime < endOf(b) - 0.05 || nextCaption()})
+    b && playing && dur && !b._atEnd && myPlayer.currentTime < endOf(b) - 0.05 || nextCaption()})
   myPlayer.requestVideoFrameCallback(function onFrame(now, m) {
     const b = editingBlock
     const live = captions && b && playing && !crawl && !overMedia && !myPlayer.paused
@@ -215,6 +218,7 @@
     else if (e.button != 2) mouseDown = lastClick = e.button + 1
     if (mouseDown == 2) e.preventDefault()						// forward and back mouse buttons
     xRef = xPos; yRef = yPos
+    if (underBar()) overMedia = 0							// thumb under the bar: click as empty space
     clickMedia = overMedia
     timeout = setTimeout(() => {longClick = mouseDown; clickEvent(e)},280)}		// detect long click
 
@@ -299,7 +303,8 @@
     if (id == 'mySkinny') { updateCue('skinny',1); editing = captions; return }
     if (id == 'myFlip') { Flip(); return }
     if (id == 'myHelp') { window.open('/inca/cache/icons/help.htm'); return }
-    if (id == 'myThumbs') { longClick ? (thumbSheet ^= 1, inca('View', lastMedia)) : (sheets ^= 1, setThumbSize(), sheetPosters()); return }
+    if (id == 'myThumbs' && lastClick == 1) { 
+      longClick ? (thumbSheet ^= 1, inca('View', lastMedia)) : (sheets ^= 1, setThumbSize(), sheetPosters()); return }
     if (['myChatterbox','myQwen','myKitten','myElevenLabs'].includes(id)) { Chatterbox(id); return }
     if (lastClick == 1 && dropClick(e.target)) return
     if (id == 'myCancel') {
@@ -494,7 +499,7 @@
     let y = Math.abs(yPos-yRef)
     cursor = overMedia ? 12 : 4
     seekbar()
-    if (x + y > 7 && !gesture && mouseDown) {
+    if (x + y > 9 && !gesture && mouseDown) {
       gesture = longClick ? 4 : 1
       gesture = id.includes('osk') ? 3 : gesture
       if (!playing && overMedia && zoom > 1) popThumb()
@@ -578,11 +583,12 @@
       else if (!wheelUp) view /= 1+z
       if (view < 8) view = 8
       settings.view = String(view)
+      const anchor = zoomAnchor()
       setThumbSize()
       localStorage.setItem(folder, JSON.stringify(settings))
       Param(); thumb.load()
       thumb.parentElement.style.opacity = thumb.style.opacity = 1
-      myContent.scrollTo(0,0)
+      zoomKeep(anchor)
       delay = 9}
     else if (id == 'myWidth' && !playing) {						// page width
       let x = 1*myView.style.width.slice(0,-2); let z = wheel/2000
@@ -673,7 +679,8 @@
   function timerEvent() { 								// every 94mS
     xw = xPos / innerWidth
     yw = yPos / innerHeight
-    if (overTitle != 2) { overTitle = title.matches(':hover') ? 1 : 0; if (!overTitle) previewMode = 0 }
+ //   if (overTitle != 2) { overTitle = title.matches(':hover') ? 1 : 0; if (!overTitle) previewMode = 0 }
+    if (overTitle != 2) { overTitle = title.matches(':hover') && !underBar() ? 1 : 0; if (!overTitle) previewMode = 0 }
     if (overTitle == 1 && seekTimer > 2) title.classList.add('preview')
     let top = 0
     let el = thumb
@@ -693,7 +700,8 @@
     if (!playing || thumbSheet || overTitle) myBody.style.cursor = null			// show default cursor
     else if (!cursor) myBody.style.cursor = 'none'					// hide cursor
     else myBody.style.cursor = 'crosshair'						// moving cursor over player
-    if ((listView && thumb.style.opacity == 1) || favicon.matches(':hover') || myPic.matches(':hover')) overMedia = index
+    if (underBar()) { overMedia = 0; type = '' }					// no thumb hover under the bar
+    else if ((listView && thumb.style.opacity == 1) || favicon.matches(':hover') || myPic.matches(':hover')) overMedia = index
     else if (overMedia && myNav.style.display || myPlayer.matches(':hover') || thumb.matches(':hover')) overMedia = index
     else if (!listView && title.matches(':hover')) overMedia = index
     else if (!overMedia && !playing) type = ''
@@ -799,20 +807,21 @@
 
 
   function playerTimes() {								// start / end under myPlayer on hover, red while nudged
-    const on = captions == 2 && playing && overMedia && dur && !thumbSheet && type != 'image'
+    const on = (captions == 2 || !captions && ym > 0.8) && playing && overMedia && dur && !thumbSheet && type != 'image'
     myTimes.classList.toggle('on', !!on)
     if (!on) return
     const r = myPlayer.getBoundingClientRect(), b = captions == 2 && editingBlock
     const s = b ? +b.dataset.start || 0 : 0, e = b && isFinite(b._end) ? b._end : dur
-    const red = Date.now() - nudgeAt < 700
+    const red = captions && Date.now() - nudgeAt < 700
     myTimes.style.left = r.left + 'px'; myTimes.style.top = r.bottom + 'px'; myTimes.style.width = r.width + 'px'
-    myTimes.firstChild.textContent = mmss(s, red && !nudgeEnd); myTimes.lastChild.textContent = mmss(e, red && nudgeEnd)
-    myTimes.firstChild.classList.toggle('red', red && !nudgeEnd); myTimes.lastChild.classList.toggle('red', red && !!nudgeEnd)}
+    myTimes.firstChild.textContent = captions ? mmss(s, red && !nudgeEnd) : rate != 1 ? +(+rate).toFixed(2) : ''
+    myTimes.lastChild.textContent = captions ? mmss(e, red && nudgeEnd) : skinny != 1 ? +(+skinny).toFixed(2) : ''
+    myTimes.firstChild.classList.toggle('nudge', red && !nudgeEnd)
+    myTimes.lastChild.classList.toggle('nudge', red && !!nudgeEnd)
+    myTimes.lastChild.classList.toggle('red', !!(b && b.dataset.end))}
 
 
   function positionMedia(time) {							// position myPlayer in window
-    myPanel.style.top = '40px'
-    myView.style.top = 'var(--bar-h)'
     let sheetSize = aspect > 1 ? 1.4 : 1
     if (!mediaX) {
       mediaX = screen.width / 2
@@ -837,15 +846,25 @@
 
   function setFade() {								// caption fade line = final bottom of player (ignores transition)
     if (!captions) return
-    const cs = getComputedStyle(myPlayerWrap), showing = hasMedia() && cs.display != 'none' && cs.visibility != 'hidden' && myPlayerWrap.offsetHeight	// no player showing = no link
+    const cs = getComputedStyle(myPlayerWrap), showing = hasMedia() && cs.display != 'none' && cs.visibility != 'hidden' && myPlayerWrap.offsetHeight
     const h = myPlayer.offsetHeight, z = myPlayerWrap._z || 1
     const pb = parseFloat(myPlayerWrap.style.top) + h / 2 + h * z / 2
     viewport.style.setProperty('--fade', (showing ? Math.max(0, pb - viewport.getBoundingClientRect().top) : 0) + 'px')}
 
 
+  function zoomAnchor() {							
+    const z = zoomAnchor, now = Date.now()
+    if (!z.el || now - z.t > 600) z.el = [[xPos, yPos], ...[0.5, 0.4, 0.6, 0.3, 0.7].map(f => [innerWidth * f, innerHeight / 2])]
+      .map(([x, y]) => document.elementFromPoint(x, y)?.closest('.entry')).find(e => e)?.querySelector('.thumb')
+    z.t = now
+    return z.el && [z.el, z.el.getBoundingClientRect().top]}
+
+
+  function zoomKeep(a) { if (a) myContent.scrollTop += a[0].getBoundingClientRect().top - a[1] }	// same screen height after the resize
+
   function setThumbSize() { myView.style.setProperty('--max-size', (+settings.view * (sheets ? 3 : 1)) + 'em') }
 
-  function thumbHover(e) { if (e.target.classList?.contains('thumb')) requestAnimationFrame(() => thumbInfo(e.target)) }
+  function thumbHover(e) { if (e.target.classList?.contains('thumb') && e.clientY < barLine.y) requestAnimationFrame(() => thumbInfo(e.target)) }
 
 
   function sheetTime(xm, ym, dur, skinny) {					// 6x6 sheet → media time (shared)
@@ -867,7 +886,7 @@
 
 
   function thumbInfo(t) {								// faint speed / skinny under a video thumb
-    if (listView || playing || type != 'video' || t != thumb) return
+    if (listView || playing || t != thumb) return
     let d = entry.querySelector('.thumb-info')
     if (!d) entry.append(d = Object.assign(document.createElement('div'), {className: 'thumb-info', innerHTML: '<span></span><span></span>'}))
     const w = t.parentElement, sw = w.offsetWidth * Math.abs(skinny)			// layout box, so no reflow wait on scale
@@ -992,19 +1011,28 @@
     if (n >= 0 && n * PANEL < (pnl[pnlSec] || []).length) { pnlPg = n; panelDraw() }}
 
 
+  const FILT = {										// ribbon heading label for the wheel filter value
+    myType:   f => ['', 'Video', 'Image', 'Audio', 'Fav'][f] || '',
+    myAlpha:  f => String.fromCharCode(f + 64),
+    mySize:   f => f * 10 + ' Mb',
+    myDate:   f => f + ' months',
+    myLength: f => f + ' minutes'}
+
   function filter(id) {									// for htm ribbon headings
-    let ch = String.fromCharCode(filt + 65), el
-    if (id == 'mySearch') { panelOpen('my' + ch); return }
-    let units = ''; let x = filt							// eg 30 minutes, 2 months, alpha 'A'
-    el = document.getElementById(id)
-    if (id == 'myType') {x = ''; units = { 1: 'Video', 2: 'Image', 3: 'Audio', 4: 'Fav' }[filt] || units}
-    if (id == 'myAlpha') x = String.fromCharCode(filt + 64)
-    if (id == 'mySize') {x *= 10; units = " Mb"}
-    if (id == 'myDate') units = " months"
-    if (id == 'myLength') units = " minutes"
+    if (id == 'mySearch') return panelOpen('my' + String.fromCharCode(filt + 65))
+    const el = document.getElementById(id)
     el.style.color = filt ? 'red' : 'pink'
-    if (id != 'myPlaylist') el.innerHTML = filt ? x+' '+units : id.slice(2)
-    if (myType.innerHTML != 'Type') myType.style.color = 'red'}
+    if (FILT[id]) el.textContent = filt ? FILT[id](filt) : id.slice(2)
+    if (myType.textContent != 'Type') myType.style.color = 'red'}
+
+
+  function ribbonState() {								// highlight ribbon from body data set by ahk RenderPage
+    const {sort = '', toggles = '', lit = ''} = document.body.dataset
+    for (const a of myRibbon2.querySelectorAll('a[id]')) {
+      const n = a.id.slice(2)
+      if (n == sort) a.classList.add('sorted')
+      if (toggles.includes(n)) a.classList.add('on')}
+    for (const n of lit.split(' ')) if (n) document.getElementById('my' + n)?.classList.add('on')}
 
 
   function inca(command,value,select,address) {						// server messaging to inca.ahk
@@ -1093,6 +1121,7 @@
     setThumbSize()
     defRate = parseFloat(settings.defRate)
     pitch = parseFloat(settings.pitch)
+    ribbonState()								// ribbon highlight from body data
     filter('my'+so)								// show filter heading in red
     for (x of selected.split(',')) {
       if(el = document.getElementById('title'+x)) {el.style.outline = '1px solid red'; el.style.opacity = 1}}
@@ -1330,7 +1359,6 @@
       if (faces) faces.style.display = 'none'
       myPlayer.muted = myVoice.muted = true
       mouseDown = start = captions = thumbSheet = cue = overTitle = mediaX = mySeek.style.width = 0
-      myPanel.style.top = myView.style.top = ''
       myMask.style = myDur.innerHTML = myVoice.src = ''
       overBlock = editingBlock = editor.style.display = myNav.style.display = null
       myPlayerWrap.style.visibility = myPlayer.style.visibility = null

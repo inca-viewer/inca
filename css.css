@@ -1,6 +1,7 @@
 
-:root {--bg: #0a0804; --bar-h: 118px}		/* page background (was #0e0c05); height of top menu bar */
-#z2 {background: linear-gradient(var(--bg), transparent) !important}
+:root {--bg: #0a0804; --bar-h: 50mm}		/* page background (was #0e0c05); height of top menu bar */
+#z1 {bottom: 0; height: var(--bar-h)}
+#z2 {bottom: var(--bar-h); height: 10px; background: linear-gradient(to top, var(--bg), transparent) !important}
   ::selection {color: #cccccc; background: #222222}
   ::-webkit-search-cancel-button {appearance: none}
   ::-webkit-resizer {background: transparent}
@@ -12,14 +13,13 @@
   body:has(#myVoiceInput) #osk { transform: translateY(-80%) }
 
 
-#myRibbon1 {display: flex; align-items: center; width: 42rem; margin: auto; translate: 0.6rem; padding-top: 1em; font-size: 1.35em; font-weight: bold; line-height: 1.2em; white-space: nowrap}	/* 6 icon slots | search | add, count */
+#myRibbon1 {display: flex; align-items: center; width: 42rem; margin: auto; translate: 0.6rem; padding-bottom: 1em; font-size: 1.35em; font-weight: bold; line-height: 1.2em; white-space: nowrap}	/* 6 icon slots | search | add, count */
 #myRibbon1 a {flex: none; width: 4rem; text-align: center; transition: 0.8s}
-#myMusic, #myFav, #myFol, #mySearch, #mySub {clip-path: inset(0 calc(50% - 0.7em))}	/* hover only near the glyph */
 #myBack {font-size: 1.4em}
 #myRibbon1 #Add {width: 1.2rem; color: red}
 #myRibbon1 #myList {width: 3rem; font-size: 0.8em; text-align: left}
 .innerPanel {opacity: 0; transition: opacity 0.6s}
-#myRibbon2 {position: absolute; top: -3px; left: 0; margin: 0; height: 2em; transition: opacity 0.6s}
+#myRibbon2 {position: absolute; bottom: 3px; left: 0; margin: 0; height: 2em; transition: opacity 0.6s}
 #myPanel.open .innerPanel {opacity: 1; transition: opacity 0.2s}
 #myPanel.open #myRibbon2 {opacity: 0; pointer-events: none; transition: opacity 0.2s}
 
@@ -75,7 +75,7 @@
   overflow: hidden;
   position: fixed;
   z-index: 5002;
-  top: 3em; bottom: 6em; left: 50%; translate: -50%;
+  top: 4em; bottom: 4em; left: 50%; translate: -50%;
   min-width: 250px;
   transition: none}
 
@@ -129,9 +129,9 @@
     flex:1;
     cursor: default;
     overflow-y:auto; 
-    padding: calc(50vh - 9.5em) 1.6em 8em 2em;
     scrollbar-width:thin;
     scrollbar-color:#ddc0cb24 transparent; 
+    padding: calc(50vh - 9.5em) 1.6em 8em 2em;
     display:flex; 
     flex-direction:column; 
     min-height:0;
@@ -307,6 +307,7 @@ linear-gradient(to left, black 0 14px, transparent 14px)}
 .entry-row:hover { background: #141211 }
 .entry-row::before {content: ''}
 .entry-row[data-params^="document"] .thumb-wrap {display: none !important;}
+body:not(:has(#myThumbs:hover)) .entry-row:not(:hover) .thumb-wrap {opacity: 0 !important}
 
 .entry-row .thumb-wrap {				/* thumb2 position	*/
   pointer-events: none;
@@ -338,6 +339,8 @@ linear-gradient(to left, black 0 14px, transparent 14px)}
   overflow: hidden;
   visibility: hidden;
   z-index: 5003;
+  outline: 6px solid black;
+  outline-offset: -2px;
   border-radius: 2.4em;
   line-height: 0;}
 
@@ -348,8 +351,8 @@ linear-gradient(to left, black 0 14px, transparent 14px)}
   border-radius: inherit;
   pointer-events: none;
   box-shadow: 
-    inset 0 0 6px 6px var(--bg),
-    inset 0 0 30px 30px var(--bg);
+    inset 0 0 6px 6px black,
+    inset 0 0 30px 30px black;
   z-index: 1;}
 
 .player-wrap:not(:has(.player[src], .player[poster]:not([poster=""]))) {visibility: hidden !important}
@@ -365,7 +368,7 @@ linear-gradient(to left, black 0 14px, transparent 14px)}
   border-radius: 1em;
   overflow: visible;
   padding: 0.4em;
-  padding-bottom: 1.2em}
+  padding-bottom: 2.2em}
 
 .thumb-wrap {
   position: relative;
@@ -374,9 +377,9 @@ linear-gradient(to left, black 0 14px, transparent 14px)}
   line-height: 0}
 
 .thumb-info {					/* hover: speed and skinny numbers */
-  position: absolute; display: flex; margin-top: -0.4em;
+  position: absolute; display: flex; margin-top: -0.2em;
   font-size: 0.75em; line-height: 1.6; color: #ffc0cb; white-space: nowrap;
-  pointer-events: none; opacity: 0; transition: opacity 0.5s}
+  pointer-events: none; opacity: 0; transition: opacity 0.4s}
 .thumb-info span { flex: 1; text-align: center }	/* speed centred at 25%, skinny at 75% */
 .thumb-wrap:hover ~ .thumb-info { opacity: 0.35 }
 @starting-style { .thumb-wrap:hover ~ .thumb-info { opacity: 0 } }
@@ -426,7 +429,8 @@ linear-gradient(to left, black 0 14px, transparent 14px)}
   background-size: 600%;			/* for thumb extraction from thumbSheet */
   background-repeat: no-repeat;
   box-shadow: inset 0 0 6px 6px var(--bg);	/* also removes edge artifacts */
-  outline: 3px solid var(--bg);
+  outline: 2px solid var(--bg);
+  outline-offset: -1px;
   transform-origin: top left;
   transition: opacity 0.6s;  
 /* filter: blur(0.4vmin); */
@@ -455,12 +459,13 @@ linear-gradient(to left, black 0 14px, transparent 14px)}
   position: fixed;
   left: 50%; 
   transform: translateX(-50%);
-  top: 40px;
+  bottom: 100px;
+  display: flex; flex-direction: column-reverse;	/* icons above panel strip */
   width: 65%;
   max-width: 54.5em;
   background: var(--bg)}
 
-.myPanel::before {content: ''; position: absolute; left: 0; right: 0; bottom: 100%; height: 40px}
+.myPanel::before {content: ''; position: absolute; left: 0; right: 0; top: 100%; height: 12px}
 
 .panel {					/* Top panel element showing folders etc. */
   position: relative;
@@ -484,23 +489,41 @@ linear-gradient(to left, black 0 14px, transparent 14px)}
   height: 100%;
   width: auto}
 #mySearch.letter {color: red !important; font-size: 1.3em}			/* large red alpha letter */
+#mySearch:hover { transform: translateY(-0.4em); font-size: 1.5em }
 
-.p2 {						/* panel entries: pill buttons */
-  flex: 0 1 auto;				/* long entries shrink only when the row is full */
+.p2 {                                   /* panel entries: pill buttons */
+  flex: 0 1 auto;
   min-width: 0;
   font-size: 1em;
-  margin: 0 0.3em;
-  padding: 0 0.7em;
-  border-radius:1em;
+  margin: -1em -0.7em;                  /* cancels the extra padding, layout unchanged */
+  padding: 1em 1.7em;                   /* +1em click zone on every side */
+  border-radius: 1.3em;
   line-height: 1.6em;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap}
-.p2:hover {border-color: #ffc0cb99; background: #ffc0cb1a}
-.p2 {transition: opacity 0.2s}
+  white-space: nowrap;
+  transition: opacity 0.2s;
+  box-shadow: inset 0 1.8em 1em -1em var(--bg),    /* top */
+            inset 0 -1.8em 1em -1em var(--bg),   /* bottom */
+            inset 1.8em 0 1em -1em var(--bg),    /* left */
+            inset -1.8em 0 1em -1em var(--bg) }  /* right */
+
+.p2:hover { position: relative; z-index: 1; border-color: #ffc0cb99; background: #ffc0cb1a }
+
+.panel, .innerPanel { overflow-x: clip; overflow-y: visible }
+
+#myMusic:hover, #myFav:hover, #myFol:hover, #mySearch:hover, #mySub:hover, #myBack:hover { background: #ffc0cb34 }
+
+#myRibbon1 a:is(#myMusic, #myFav, #myFol, #mySearch, #mySub, #myBack) {
+  width: 52px; padding: 11px 0; margin: -11px 6px;   /* 52 + 12 = 64px (4rem) slot, row height unchanged */
+  border-radius: 1em;
+  box-shadow: var(--soft-i) }
+
+:root { --soft-i: inset 0 28px 17px -17px var(--bg), inset 0 -28px 17px -17px var(--bg),
+                  inset 28px 0 17px -17px var(--bg), inset -28px 0 17px -17px var(--bg) }
 
 .fade {						/* between menu and scrolled thumbs */
-  position: absolute;
+  position: fixed; left: 0;
   display: block;
   width: 99vw;
   height: 0.8em;
@@ -510,11 +533,16 @@ linear-gradient(to left, black 0 14px, transparent 14px)}
 .mycontent {
   display: block;
   position: absolute;
-  scrollbar-width: thin;
+  scrollbar-width: none;
   margin: auto;
   overflow-x: hidden; 
   height: 100%;
   width: 100%}
+
+.mycontent::before {
+  content: ''; display: block; position: sticky; top: 0; z-index: 1;
+  height: 20mm; margin-bottom: -20mm; pointer-events: none;
+  background: linear-gradient(var(--bg) 10mm, transparent 20mm)}
 
 .mycontent::-webkit-scrollbar { width: 4px }	/* firefox */
 
@@ -526,12 +554,8 @@ linear-gradient(to left, black 0 14px, transparent 14px)}
   margin: auto;
   justify-content: space-around;
   flex-wrap: wrap;
-  top: var(--bar-h);
   width: 40%;
-  padding-top:3.4em;
-  padding-bottom: 68vh}
-
-.myview:has(.entry-row) { margin-top: -1em }
+  padding-bottom: 80vh}
 
 .ribbon {					/* menu, fol, fav, search ... */
   position: relative;
@@ -554,6 +578,9 @@ linear-gradient(to left, black 0 14px, transparent 14px)}
   font-size: 0.9em}
 .ribbon a {width: 4em; transition: 0.8s; border-radius: 1em; flex-shrink: 0}
 .ribbon a:hover, #myRibbon1 a:hover {transition: 0.2s; color: pink}
+a.sorted {border-bottom: 0.1px solid pink}				/* current sort heading (ribbonState) */
+body[data-toggles*=Reverse] a.sorted {border-bottom: 0; border-top: 0.1px solid pink}
+#myMenu a.on {color: red; border: 0}				/* active toggle / path icon, beats hover pink */
 
 .searchbox {					/* input searchbox in htm tab */
   text-overflow: ellipsis;
@@ -571,12 +598,14 @@ linear-gradient(to left, black 0 14px, transparent 14px)}
   outline: none;
   overflow: hidden;
   white-space: nowrap}
+
 #myTimes {					/* start / end under myPlayer: 25% and 75% */
   position: fixed; z-index: 5004; display: flex; font-size: 13px; line-height: 1.6; color: #ffc0cb59; white-space: nowrap;
   pointer-events: none; opacity: 0; transition: opacity 0.5s}	/* #ffc0cb59 = thumb label's 0.35 */
 #myTimes.on { opacity: 1 }
 #myTimes span { flex: 1; text-align: center }
-#myTimes .red { color: red }
+#myTimes .red { color: red }          /* unlinked end */
+#myTimes .nudge { color: pink }    /* editing / nudging */
 
 ::placeholder { color: pink }
 
@@ -696,7 +725,7 @@ linear-gradient(to left, black 0 14px, transparent 14px)}
   color: #826858;
   transition: 0s}
 
-body { animation: pageIn 0.7s ease }
+body { animation: pageIn 0.8s ease }
 @keyframes pageIn { from { opacity: 0 } }
 
 
@@ -780,6 +809,7 @@ body { animation: pageIn 0.7s ease }
 #osk .osk-suggestion:not(:empty) { background: #121212; }
 #osk .osk-suggestion:not(:empty):hover { background: #ffc0cb18; }
 #osk .osk-suggestion:active { color: #ffc0cbf0; }
+
 
 
 
